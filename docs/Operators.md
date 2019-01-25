@@ -12302,15 +12302,15 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
 
-  Upsample the input tensor.
+  Resize the input tensor.
   Each dimension value of the output tensor is:
     output_dimension = floor(input_dimension * scale).
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>, <a href="Changelog.md#Upsample-9">Upsample-9</a>
 
 #### Attributes
 
@@ -12325,7 +12325,7 @@ Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a
 <dt><tt>X</tt> : T</dt>
 <dd>N-D tensor</dd>
 <dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Outputs

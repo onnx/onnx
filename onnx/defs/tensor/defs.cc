@@ -1163,15 +1163,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           // interface to get values of constant inputs.
         }));
 
-static const char* Upsample_ver9_doc = R"DOC(
-Upsample the input tensor.
+static const char* Upsample_ver10_doc = R"DOC(
+Resize the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
-    9,
+    10,
     OpSchema()
         .Attr(
             "mode",
@@ -1182,15 +1182,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "scales",
-            "The scale array along each dimension. It takes value greater than or equal to 1."
-            " The number of elements of 'scales' should be the same as the rank of input 'X'.",
+            "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
+            " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
+			" be the same as the rank of input 'X'.",
             "tensor(float)")
         .Output(0, "Y", "N-D tensor after resizing", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver9_doc)
+        .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasNInputShapes(ctx, 1)) {
             return;
