@@ -29,17 +29,20 @@ Multidirectional broadcasting is the same as [Numpy's broadcasting](https://docs
 
 Multidirectional broadcasting is supported by the following operators in ONNX:
 - [Add](Operators.md#Add)
-- [Div](Operators.md#Div)
-- [Mul](Operators.md#Mul)
-- [Pow](Operators.md#Pow)
-- [Sub](Operators.md#Sub)
 - [And](Operators.md#And)
-- [Or](Operators.md#Or)
-- [Xor](Operators.md#Xor)
+- [Div](Operators.md#Div)
 - [Equal](Operators.md#Equal)
 - [Greater](Operators.md#Greater)
 - [Less](Operators.md#Less)
-
+- [Max](Operators.md#Max)
+- [Mean](Operators.md#Mean)
+- [Min](Operators.md#Min)
+- [Mul](Operators.md#Mul)
+- [Or](Operators.md#Or)
+- [Pow](Operators.md#Pow)
+- [Sub](Operators.md#Sub)
+- [Sum](Operators.md#Sum)
+- [Xor](Operators.md#Xor)
 
 ## Unidirectional Broadcasting
 
