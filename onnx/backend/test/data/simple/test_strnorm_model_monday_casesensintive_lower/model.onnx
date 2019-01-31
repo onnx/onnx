@@ -1,7 +1,7 @@
-backend-test:ž
-h
-xy"StringNormalizer*
-casechangeaction"LOWER *
+backend-test: 
+j
+xy"StringNormalizer*
+case_change_action"LOWER *
 is_case_sensitive *
 	stopwordsJmonday StringNormalizerZ
 x

@@ -1539,29 +1539,29 @@ StringNormalization performs string operations for basic cleaning.
 This operator has only one input (denoted by X) and only one output 
 (denoted by Y). This operator first examines the elements in the X, 
 and remove elements specified in "stopwords" attribute. 
-Note that an implementation should sequentially remove "stopwords[0]," then "stopwords[1]," 
-and so on. After removing stop words, the intermediate result can be further lowercased, 
-uppercased, or just returned depending the "casechangeaction" attribute.
+After removing stop words, the intermediate result can be further lowercased, 
+uppercased, or just returned depending the "case_change_action" attribute.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     StringNormalizer,
     10,
     OpSchema()
-        .Input(0, "X", "Strings to normalize", "T")
-        .Output(0, "Y", "Normalized strings", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(string)"},
-            "Input/Output is a UTF-8 string tensor")
+        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
+        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
         .Attr(
-            "casechangeaction",
-            "string enum that cases output to be lowercased/uppercases/unchanged. Valid values are \"LOWER\", \"UPPER\", \"NONE\"",
-            AttributeProto::STRING)
+            std::string("case_change_action"),
+            std::string(
+                "string enum that cases output to be lowercased/uppercases/unchanged."
+                " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
+            AttributeProto::STRING,
+            std::string("NONE"))
         .Attr(
-            "is_case_sensitive",
-            "Boolean. Whether the identification of stop words in X is case-sensitive.",
-            AttributeProto::INT)
+            std::string("is_case_sensitive"),
+            std::string(
+                "Boolean. Whether the identification of stop words in X is case-sensitive. Default is false"),
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Attr(
             "stopwords",
             "List of stop words. If not set, no work would be removed from X.",
@@ -1570,37 +1570,38 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "locale",
             "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
-            "Default en_US or platform specific equivalent",
+            "Default en_US or platform specific equivalent as decided by the implementation.",
             AttributeProto::STRING,
             OPTIONAL)
         .SetDoc(StringNormalizer_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_elem_type->set_elem_type(TensorProto::STRING);
-          if (hasInputShape(ctx, 0)) {
-            TensorShapeProto output_shape;
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            auto dim_size = input_shape.dim_size();
-            // Last axis dimension is unknown if we have stop-words since we do
-            // not know how many stop-words are dropped
-            if (dim_size == 1) {
-              // Unknown output dimension
-              output_shape.add_dim();
-            } else if (dim_size == 2) {
-              // Copy B-dim
-              auto& b_dim = input_shape.dim(0);
-              if (b_dim.has_dim_value() && b_dim.dim_value() != 1) {
-                fail_shape_inference(
-                    "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");
-              }
-              *output_shape.add_dim() = b_dim;
-              output_shape.add_dim();
-            } else {
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
+          TensorShapeProto output_shape;
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto dim_size = input_shape.dim_size();
+          // Last axis dimension is unknown if we have stop-words since we do
+          // not know how many stop-words are dropped
+          if (dim_size == 1) {
+            // Unknown output dimension
+            output_shape.add_dim();
+          } else if (dim_size == 2) {
+            // Copy B-dim
+            auto& b_dim = input_shape.dim(0);
+            if (b_dim.has_dim_value() && b_dim.dim_value() != 1) {
               fail_shape_inference(
                   "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");
             }
-            updateOutputShape(ctx, 0, output_shape);
+            *output_shape.add_dim() = b_dim;
+            output_shape.add_dim();
+          } else {
+            fail_shape_inference(
+                "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");
           }
+          updateOutputShape(ctx, 0, output_shape);
         }));
 
 } // namespace ONNX_NAMESPACE

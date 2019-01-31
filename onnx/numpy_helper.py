@@ -84,7 +84,6 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         # Special care for strings.
         tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
         flat_array = arr.flatten()
-        print(flat_array)
         for e in flat_array:
             if isinstance(e, text_type):
                 tensor.string_data.append(e.encode('utf-8'))

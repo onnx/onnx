@@ -9675,9 +9675,8 @@ This version of the operator has been available since version 9 of the default O
   This operator has only one input (denoted by X) and only one output 
   (denoted by Y). This operator first examines the elements in the X, 
   and remove elements specified in "stopwords" attribute. 
-  Note that an implementation should sequentially remove "stopwords[0]," then "stopwords[1]," 
-  and so on. After removing stop words, the intermediate result can be further lowercased, 
-  uppercased, or just returned depending the "casechangeaction" attribute.
+  After removing stop words, the intermediate result can be further lowercased, 
+  uppercased, or just returned depending the "case_change_action" attribute.
 
 #### Version
 
@@ -9686,12 +9685,12 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>casechangeaction</tt> : string (required)</dt>
-<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE"</dd>
-<dt><tt>is_case_sensitive</tt> : int (required)</dt>
-<dd>Boolean. Whether the identification of stop words in X is case-sensitive.</dd>
+<dt><tt>case_change_action</tt> : string (default is NONE)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE". Default is "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (default is 0)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive. Default is false</dd>
 <dt><tt>locale</tt> : string</dt>
-<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent</dd>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
 <dt><tt>stopwords</tt> : list of strings</dt>
 <dd>List of stop words. If not set, no work would be removed from X.</dd>
 </dl>
@@ -9699,21 +9698,17 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Strings to normalize</dd>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to normalize</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Normalized strings</dd>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Normalized strings</dd>
 </dl>
 
 #### Type Constraints
 
-<dl>
-<dt><tt>T</tt> : tensor(string)</dt>
-<dd>Input/Output is a UTF-8 string tensor</dd>
-</dl>
 

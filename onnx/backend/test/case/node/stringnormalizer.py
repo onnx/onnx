@@ -24,7 +24,6 @@ class StringNormalizer(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='NONE',
             is_case_sensitive=1,
         )
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwords_nochangecase')
@@ -39,7 +38,6 @@ class StringNormalizer(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='NONE',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -55,7 +53,7 @@ class StringNormalizer(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='LOWER',
+            case_change_action='LOWER',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -71,7 +69,7 @@ class StringNormalizer(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='UPPER',
+            case_change_action='UPPER',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -87,7 +85,7 @@ class StringNormalizer(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='UPPER',
+            case_change_action='UPPER',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -107,8 +105,7 @@ class StringNormalizer(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='UPPER',
-            is_case_sensitive=0,
+            case_change_action='UPPER',
             stopwords=stopwords
         )
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_twodim')

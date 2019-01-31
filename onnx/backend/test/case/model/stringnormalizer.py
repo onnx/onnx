@@ -35,7 +35,6 @@ class NormalizeStrings(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='NONE',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -52,7 +51,6 @@ class NormalizeStrings(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='NONE',
             is_case_sensitive=1
         )
 
@@ -69,7 +67,7 @@ class NormalizeStrings(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='LOWER',
+            case_change_action='LOWER',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -87,7 +85,7 @@ class NormalizeStrings(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='UPPER',
+            case_change_action='UPPER',
             is_case_sensitive=1,
             stopwords=stopwords
         )
@@ -105,8 +103,7 @@ class NormalizeStrings(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='UPPER',
-            is_case_sensitive=0,
+            case_change_action='UPPER',
             stopwords=stopwords
         )
 
@@ -125,7 +122,7 @@ class NormalizeStrings(Base):
             'StringNormalizer',
             inputs=['x'],
             outputs=['y'],
-            casechangeaction='UPPER',
+            case_change_action='UPPER',
             is_case_sensitive=0,
             stopwords=stopwords
         )
