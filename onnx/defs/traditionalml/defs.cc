@@ -67,7 +67,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(CastMap_ver1_doc)
         .Input(0, "X", "The input map that is to be cast to a tensor", "T1")
-        .Output(0, "Y", "A tensor representing the same data as the input map, ordered by their keys", "T2")
+        .Output(
+            0,
+            "Y",
+            "A tensor representing the same data as the input map, ordered by their keys",
+            "T2")
         .TypeConstraint(
             "T1",
             {"map(int64, string)", "map(int64, float)"},
@@ -188,7 +192,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(DictVectorizer_ver1_doc)
         .Input(0, "X", "A dictionary.", "T1")
-        .Output(0, "Y", "A 1-D tensor holding values from the input dictionary.", "T2")
+        .Output(
+            0,
+            "Y",
+            "A 1-D tensor holding values from the input dictionary.",
+            "T2")
         .TypeConstraint(
             "T1",
             {"map(string, int64)",
@@ -237,7 +245,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(FeatureVectorizer_ver1_doc)
-        .Input(0, "X", "An ordered collection of tensors, all with the same element type.", "T1", OpSchema::Variadic)
+        .Input(
+            0,
+            "X",
+            "An ordered collection of tensors, all with the same element type.",
+            "T1",
+            OpSchema::Variadic)
         .Output(
             0,
             "Y",
@@ -342,11 +355,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "A list of strings. One and only one of 'keys_*'s should be set.",
             AttributeProto::STRINGS,
             OPTIONAL)
-        .Attr(
-            "keys_int64s",
-            "A list of ints.",
-            AttributeProto::INTS,
-            OPTIONAL)
+        .Attr("keys_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL)
         .Attr(
             "keys_floats",
             "A list of floats.",
@@ -377,11 +386,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "An integer.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
-        .Attr(
-            "default_float",
-            "A float.",
-            AttributeProto::FLOAT,
-            -0.f)
+        .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Label encoder is one-to-one mapping.
           if (ctx.getNumInputs() != 1)
@@ -394,19 +399,20 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           // Load all key_* attributes.
           std::vector<std::string> keys_strings;
-          bool keys_strings_result = getRepeatedAttribute(
-              ctx, "keys_strings", keys_strings);
+          bool keys_strings_result =
+              getRepeatedAttribute(ctx, "keys_strings", keys_strings);
           std::vector<int64_t> keys_int64s;
-          bool keys_int64s_result = getRepeatedAttribute(
-              ctx, "keys_int64s", keys_int64s);
+          bool keys_int64s_result =
+              getRepeatedAttribute(ctx, "keys_int64s", keys_int64s);
           std::vector<float> keys_floats;
-          bool keys_floats_result = getRepeatedAttribute(
-              ctx, "keys_floats", keys_floats);
+          bool keys_floats_result =
+              getRepeatedAttribute(ctx, "keys_floats", keys_floats);
 
           // Check if only one keys_* attribute is set.
           if (static_cast<int>(keys_strings_result) +
                   static_cast<int>(keys_int64s_result) +
-                  static_cast<int>(keys_floats_result) != 1)
+                  static_cast<int>(keys_floats_result) !=
+              1)
             fail_shape_inference(
                 "Only one of keys_*'s can be set in label encoder.");
 
@@ -424,19 +430,20 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           // Load all values_* attributes.
           std::vector<std::string> values_strings;
-          bool values_strings_result = getRepeatedAttribute(
-              ctx, "values_strings", values_strings);
+          bool values_strings_result =
+              getRepeatedAttribute(ctx, "values_strings", values_strings);
           std::vector<int64_t> values_int64s;
-          bool values_int64s_result = getRepeatedAttribute(
-              ctx, "values_int64s", values_int64s);
+          bool values_int64s_result =
+              getRepeatedAttribute(ctx, "values_int64s", values_int64s);
           std::vector<float> values_floats;
-          bool values_floats_result = getRepeatedAttribute(
-              ctx, "values_floats", values_floats);
+          bool values_floats_result =
+              getRepeatedAttribute(ctx, "values_floats", values_floats);
 
           // Check if only one values_* attribute is set.
           if (static_cast<int>(values_strings_result) +
                   static_cast<int>(values_int64s_result) +
-                  static_cast<int>(values_floats_result) != 1)
+                  static_cast<int>(values_floats_result) !=
+              1)
             fail_shape_inference(
                 "Only one of values_*'s can be set in label encoder.");
 
@@ -477,7 +484,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(string)", "tensor(int64)"},
             "The output will be a tensor of strings or integers.")
-        .Attr("coefficients", "A collection of weights of the model(s).", AttributeProto::FLOATS)
+        .Attr(
+            "coefficients",
+            "A collection of weights of the model(s).",
+            AttributeProto::FLOATS)
         .Attr(
             "intercepts",
             "A collection of intercepts.",
@@ -582,7 +592,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Normalizer_ver1_doc)
-        .Input(0, "X", "Data to be encoded, a tensor of shape [N,C] or [C]", "T")
+        .Input(
+            0,
+            "X",
+            "Data to be encoded, a tensor of shape [N,C] or [C]",
+            "T")
         .Output(0, "Y", "Encoded output data", "tensor(float)")
         .TypeConstraint(
             "T",
@@ -614,7 +628,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(OneHotEncoder_ver1_doc)
         .Input(0, "X", "Data to be encoded.", "T")
-        .Output(0, "Y", "Encoded output data, having one more dimension than X.", "tensor(float)")
+        .Output(
+            0,
+            "Y",
+            "Encoded output data, having one more dimension than X.",
+            "tensor(float)")
         .TypeConstraint(
             "T",
             {"tensor(string)",
@@ -861,7 +879,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "Thresholds to do the splitting on for each node.",
             AttributeProto::FLOATS,
             OPTIONAL)
-        .Attr("nodes_hitrates", "Popularity of each node, used for performance and may be omitted.", AttributeProto::FLOATS, OPTIONAL)
+        .Attr(
+            "nodes_hitrates",
+            "Popularity of each node, used for performance and may be omitted.",
+            AttributeProto::FLOATS,
+            OPTIONAL)
         .Attr(
             "nodes_modes",
             "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
@@ -984,7 +1006,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "nodes_hitrates",
-            "Popularity of each node, used for performance and may be omitted.", 
+            "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::FLOATS,
             OPTIONAL)
         .Attr(
@@ -1095,6 +1117,79 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
               ctx, "classlabels_int64s", classlabels_int64s);
           if (result && !classlabels_int64s.empty()) {
             output_map_type->set_key_type(TensorProto::INT64);
+          }
+        }));
+
+static const char* Tokenizer_ver1_doc = R"DOC(
+    Tokenizer divides each string in X into a vector of strings along the last axis. Allowed input shapes are [C] and [N, C].
+    If the maximum number of tokens found per input string is D, the output shape would be [N, C, D] when input shape is [N, C].
+    Similarly, if input shape is [C] then the output should be [C, D]. Tokenizer has two different operation modes. 
+    The first mode is selected when "tokenexp" is not set and "separators" is set. If "tokenexp" is set and "separators"
+    is not set, the second mode will be used. The first mode breaks each input string into tokens by removing separators.
+    Let's assume "seperators" is [" "] and consider an example. If input is ["Hello World", "I love computer science !"]
+    whose shape is [2], then the output would be [["Hello", "World", padvalue, padvalue, padvalue],
+    ["I", "love", "computer", "science", "!"]] whose shape is [2, 5] because you can find at most 5 tokens per input string.
+    Note that the input at most can have two axes, so 3-D and higher dimension are not supported. 
+    For each input string, the second mode searches matches of "tokenexp" and each match will be a token in Y.
+    The matching of "tokenexp" is conducted greedily (i.e., a match should be as long as possible).
+    This operator searches for the first match starting from the beginning of the considered string,
+    and then launches another search starting from the first remained character after the first matched token.
+    If no match found, this operator will remove the first character from the remained string and do another search.
+    This procedure will be repeated until reaching the end of the considered string.
+)DOC";
+
+ONNX_ML_OPERATOR_SET_SCHEMA(
+    Tokenizer,
+    1,
+    OpSchema()
+        .SetDoc(Tokenizer_ver1_doc)
+        .Input(0, "X", "UTF-8 strings to tokenize", "tensor(string)")
+        .Output(0, "Y", "UTF-8 Tokenized strings", "tensor(string)")
+        .Attr(
+            "mark",
+            "Boolean whether to mark the beginning/end character with start of text character (0x02)/end of text character (0x03).",
+            AttributeProto::INT)
+        .Attr(
+            "pad_value",
+            "The string used to pad output tensors when the tokens extracted doesn't match the maximum number of tokens found. If start/end markers are needed, padding will appear outside the markers.",
+            AttributeProto::STRING)
+        .Attr(
+            "tokenexp",
+            "An optional string. Token's regular expression in ECMA format (http://ecma-international.org/ecma-262/5.1/#sec-15.10)."
+            " If set, tokenizer may produce tokens matching the specified pattern. Note that one and only of \"tokenexp\" and"
+            "\"separators\" should be set.",
+            AttributeProto::STRING,
+            OPTIONAL)
+        .Attr(
+            "separators",
+            "The list of separators, two consecutive segments in X connected by a separator would be divided into two tokens.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "mincharnum",
+            "Minimum number of characters allowed in the output. For example, if mincharnum is 2, tokens such as \"A\" and \"B\" would be ignored",
+            AttributeProto::INT)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
+          TensorShapeProto output_shape;
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto dim_size = input_shape.dim_size();
+          if (dim_size == 1) {
+            // Input is [C], Output is [C][?]
+            // Copy C
+            *output_shape.add_dim() = input_shape.dim(0);
+            // Add unknown D
+            output_shape.add_dim();
+          } else if (dim_size == 2) {
+            // Input is [N, C], Output is [N][C][?]
+            // Copy N, C
+            *output_shape.add_dim() = input_shape.dim(0);
+            *output_shape.add_dim() = input_shape.dim(1);
+            // Add unknown D
+            output_shape.add_dim();
           }
         }));
 
