@@ -7,6 +7,7 @@ import unittest
 import onnx.utils
 from onnx import helper, TensorProto
 
+
 class TestUtilityFunctions(unittest.TestCase):
     def test_polish_model(self):  # type: () -> None
         node_def = helper.make_node(
