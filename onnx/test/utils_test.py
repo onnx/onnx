@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import unittest
 import onnx.utils
 from onnx import helper, TensorProto
-import numpy as np
 
 class TestUtilityFunctions(unittest.TestCase):
     def test_polish_model(self):  # type: () -> None
