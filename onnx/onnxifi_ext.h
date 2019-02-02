@@ -1,6 +1,8 @@
 #ifndef ONNXIFI_EXT_H
 #define ONNXIFI_EXT_H 1
 
+#include "onnx/onnxifi.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,7 +14,6 @@ extern "C" {
  * pointer specific for an extension function type.
  */
 typedef onnxStatus (ONNXIFI_ABI* onnxExtensionFunctionPointer)(void);
-
 
 #ifdef __cplusplus
 } /* extern "C" */
