@@ -223,15 +223,6 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetIOAndRunGraph(
     const onnxTensorDescriptorV1* outputDescriptors,
     onnxMemoryFenceV1* outputFence);
 
-typedef ONNXIFI_CHECK_RESULT onnxStatus(
-    ONNXIFI_ABI* onnxSetIOAndRunGraphFunction)(
-    onnxGraph graph,
-    uint32_t inputsCount,
-    const onnxTensorDescriptorV1* inputDescriptors,
-    uint32_t outputsCount,
-    const onnxTensorDescriptorV1* outputDescriptors,
-    onnxMemoryFenceV1* outputFence);
-
 #ifdef __cpluscplus
 } /* extern "C" */
 #endif
