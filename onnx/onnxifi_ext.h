@@ -57,9 +57,8 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  *                                            the backend was disconnected or
  *                                            uninstalled from the system.
  */
-
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxGetExtensionFunctionAddress(
+  onnxGetExtensionFunctionAddress(
     onnxBackendID backendID,
     const char* name,
     onnxExtensionFunctionPointer* function);
@@ -72,16 +71,14 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
     const onnxTensorDescriptorV1* inputDescriptors,
     uint32_t outputsCount,
     const onnxTensorDescriptorV1* outputDescriptors,
+    const onnxMemoryFenceV1* inputFence,
     onnxMemoryFenceV1* outputFence);
 
+/* Extension functions */
 /**
  * A combination of onnxSetIO and onnxRunGraph, functionally equals to first run
- * onnxSetIO(graph, inputsCount, inputDescriptors, outputsCount,
- * outputDescriptors), then run onnxRunGraph(graph, inputFence, outputFence)
- *
- * As two separate functions, it is difficult to do atomic evaluation.
- * Therefore, we would like to unify this process and make it evaluable.
- *
+ * onnxSetIO(graph, inputsCount, inputDescriptors, outputsCount, outputDescriptors),
+ * then run onnxRunGraph(graph, inputFence, outputFence)
  * @param graph - graph handle created by onnxInitGraph.
  * @param inputsCount - number of elements in the inputDescriptors array.
  * @param[in] inputDescriptors - descriptors of input tensors for the graph.
@@ -214,16 +211,18 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  *                                       internal error.
  */
 
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetIOAndRunGraph(
-    onnxGraph graph,
-    uint32_t inputsCount,
-    const onnxTensorDescriptorV1* inputDescriptors,
-    uint32_t outputsCount,
-    const onnxTensorDescriptorV1* outputDescriptors,
-    onnxMemoryFenceV1* outputFence);
+ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+    onnxSetIOAndRunGraph(
+        onnxGraph graph,
+        uint32_t inputsCount,
+        const onnxTensorDescriptorV1* inputDescriptors,
+        uint32_t outputsCount,
+        const onnxTensorDescriptorV1* outputDescriptors,
+        const onnxMemoryFenceV1* inputFence,
+        onnxMemoryFenceV1* outputFence);
 
-#ifdef __cpluscplus
+#ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /* !defined(ONNXIFI_EXT_H) */
+#endif
