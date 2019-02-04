@@ -78,6 +78,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  * A combination of onnxSetIO and onnxRunGraph, functionally equals to first run
  * onnxSetIO(graph, inputsCount, inputDescriptors, outputsCount,
  * outputDescriptors), then run onnxRunGraph(graph, inputFence, outputFence)
+ * with an internal inputFence.
  *
  * As two separate functions, it is difficult to do atomic evaluation.
  * Therefore, we would like to unify this process and make it evaluable.
@@ -97,10 +98,6 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  *                                Elements of this array must provide a location
  *                                for each ValueInfoProto.name listed in
  *                                ModelProto.graph.output of the ONNX graph.
- * @param[in] inputFence - synchronization primitive that signals when graph
- *                         inputs are ready to use by the backend. The
- *                         synchronization primitive always must be initialized
- *                         by the caller.
  * @param[out] outputFence - synchronization primitive that signals when graph
  *                           outputs are ready to use by the caller. The type
  *                           of the synchronization primitive always must be
