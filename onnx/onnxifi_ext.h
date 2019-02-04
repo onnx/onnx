@@ -64,6 +64,17 @@ onnxGetExtensionFunctionAddress(
     const char* name,
     onnxExtensionFunctionPointer* function);
 
+/* Extension function pointer declarations for dynamic loading */
+typedef ONNXIFI_CHECK_RESULT onnxStatus(
+    ONNXIFI_ABI* onnxSetIOAndRunGraphFunction)(
+    onnxGraph graph,
+    uint32_t inputsCount,
+    const onnxTensorDescriptorV1* inputDescriptors,
+    uint32_t outputsCount,
+    const onnxTensorDescriptorV1* outputDescriptors,
+    const onnxMemoryFenceV1* inputFence,
+    onnxMemoryFenceV1* outputFence);
+
 /**
  * A combination of onnxSetIO and onnxRunGraph, functionally equals to first run
  * onnxSetIO(graph, inputsCount, inputDescriptors, outputsCount,
