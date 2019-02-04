@@ -72,7 +72,6 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus(
     const onnxTensorDescriptorV1* inputDescriptors,
     uint32_t outputsCount,
     const onnxTensorDescriptorV1* outputDescriptors,
-    const onnxMemoryFenceV1* inputFence,
     onnxMemoryFenceV1* outputFence);
 
 /**
