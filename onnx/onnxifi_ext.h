@@ -13,7 +13,7 @@ extern "C" {
  * The caller should convert this generic function pointer to the function
  * pointer specific for an extension function type.
  */
-typedef onnxStatus(ONNXIFI_ABI* onnxExtensionFunctionPointer)(void);
+typedef onnxStatus (ONNXIFI_ABI* onnxExtensionFunctionPointer)(void);
 
 /* Function pointer declarations for dynamic loading */
 typedef ONNXIFI_CHECK_RESULT onnxStatus(
