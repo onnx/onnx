@@ -16,8 +16,8 @@ extern "C" {
 typedef onnxStatus (ONNXIFI_ABI* onnxExtensionFunctionPointer)(void);
 
 /* Function pointer declarations for dynamic loading */
-typedef ONNXIFI_CHECK_RESULT onnxStatus(
-    ONNXIFI_ABI* onnxGetExtensionFunctionAddressFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetExtensionFunctionAddressFunction)(
     onnxBackendID backendID,
     const char* name,
     onnxExtensionFunctionPointer* function);
@@ -65,8 +65,8 @@ onnxGetExtensionFunctionAddress(
     onnxExtensionFunctionPointer* function);
 
 /* Extension function pointer declarations for dynamic loading */
-typedef ONNXIFI_CHECK_RESULT onnxStatus(
-    ONNXIFI_ABI* onnxSetIOAndRunGraphFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxSetIOAndRunGraphFunction)(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptorV1* inputDescriptors,
