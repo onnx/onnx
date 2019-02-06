@@ -101,7 +101,9 @@ else()
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
-    find_package(Protobuf REQUIRED)
+    # Protobuf 2.5.0 is no more compatible with onnx, and 2.7.0 not yet released.
+    # https://github.com/protocolbuffers/protobuf/releases
+    find_package(Protobuf 2.6.1 REQUIRED)
   endif()
 endif()
 
