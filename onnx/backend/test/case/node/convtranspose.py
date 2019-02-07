@@ -258,12 +258,12 @@ class ConvTranspose(Base):
         x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
                         [9., 5., 7.],
                         [3., 2., 6.]]]]).astype(np.float32)
-        w = np.array([[[[7., 2.],      # (1, 1, 2, 2)
+        w = np.array([[[[7., 2.],  # (1, 1, 2, 2)
                         [1., 9.]]]]).astype(np.float32)
 
         node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], dilations=[2, 2])
 
-        y = np.array([[[[21., 56., 13., 16.,  2.],
+        y = np.array([[[[21., 56., 13., 16.,  2.],  # [1, 1, 5, 5]
                         [63., 35., 67., 10., 14.],
                         [24., 22., 76., 76., 21.],
                         [ 9.,  5., 88., 45., 63.],
