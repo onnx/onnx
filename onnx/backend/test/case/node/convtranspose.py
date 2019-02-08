@@ -254,11 +254,12 @@ class ConvTranspose(Base):
 
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
 
+    @staticmethod
     def export_convtranspose_dilations():
         x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
                         [9., 5., 7.],
                         [3., 2., 6.]]]]).astype(np.float32)
-        w = np.array([[[[7., 2.],  # (1, 1, 2, 2)
+        W = np.array([[[[7., 2.],  # (1, 1, 2, 2)
                         [1., 9.]]]]).astype(np.float32)
 
         node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], dilations=[2, 2])
