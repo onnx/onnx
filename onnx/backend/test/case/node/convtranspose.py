@@ -255,7 +255,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
 
     @staticmethod
-    def export_convtranspose_dilations(): # type: () -> None
+    def export_convtranspose_dilations():  # type: () -> None
         x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
                         [9., 5., 7.],
                         [3., 2., 6.]]]]).astype(np.float32)
