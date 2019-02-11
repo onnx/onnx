@@ -2688,6 +2688,30 @@ expect(node, inputs=[x, W], outputs=[y],
 
 
 <details>
+<summary>convtranspose_dilations</summary>
+
+```python
+x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
+                [9., 5., 7.],
+                [3., 2., 6.]]]]).astype(np.float32)
+W = np.array([[[[7., 2.],  # (1, 1, 2, 2)
+                [1., 9.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], dilations=[2, 2])
+
+y = np.array([[[[21., 56., 13., 16., 2.],  # [1, 1, 5, 5]
+                [63., 35., 67., 10., 14.],
+                [24., 22., 76., 76., 21.],
+                [9., 5., 88., 45., 63.],
+                [3., 2., 33., 18., 54.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_dilations')
+```
+
+</details>
+
+
+<details>
 <summary>convtranspose_pads</summary>
 
 ```python
