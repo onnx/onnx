@@ -1538,7 +1538,7 @@ static const char* StringNormalizer_ver10_doc = R"DOC(
 StringNormalization performs string operations for basic cleaning. 
 This operator has only one input (denoted by X) and only one output 
 (denoted by Y). This operator first examines the elements in the X, 
-and remove elements specified in "stopwords" attribute. 
+and removes elements specified in "stopwords" attribute. 
 After removing stop words, the intermediate result can be further lowercased, 
 uppercased, or just returned depending the "case_change_action" attribute.
 )DOC";
@@ -1564,7 +1564,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "stopwords",
-            "List of stop words. If not set, no work would be removed from X.",
+            "List of stop words. If not set, no word would be removed from X.",
             AttributeProto::STRINGS,
             OPTIONAL)
         .Attr(
@@ -1591,15 +1591,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (dim_size == 2) {
             // Copy B-dim
             auto& b_dim = input_shape.dim(0);
-            if (b_dim.has_dim_value() && b_dim.dim_value() != 1) {
+            if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
               fail_shape_inference(
-                  "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");
+                  "Input shape must have either [C] or [1,C] dimensions where C > 0");
             }
             *output_shape.add_dim() = b_dim;
             output_shape.add_dim();
           } else {
             fail_shape_inference(
-                "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");
+                "Input shape must have either [C] or [1,C] dimensions where C > 0");
           }
           updateOutputShape(ctx, 0, output_shape);
         }));
