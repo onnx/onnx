@@ -9674,7 +9674,7 @@ This version of the operator has been available since version 9 of the default O
   StringNormalization performs string operations for basic cleaning. 
   This operator has only one input (denoted by X) and only one output 
   (denoted by Y). This operator first examines the elements in the X, 
-  and remove elements specified in "stopwords" attribute. 
+  and removes elements specified in "stopwords" attribute. 
   After removing stop words, the intermediate result can be further lowercased, 
   uppercased, or just returned depending the "case_change_action" attribute.
 
@@ -9692,7 +9692,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>locale</tt> : string</dt>
 <dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
 <dt><tt>stopwords</tt> : list of strings</dt>
-<dd>List of stop words. If not set, no work would be removed from X.</dd>
+<dd>List of stop words. If not set, no word would be removed from X.</dd>
 </dl>
 
 #### Inputs
