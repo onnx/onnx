@@ -510,27 +510,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
 
-    def test_constant_fill(self):  # type: () -> None
-        graph = self._make_graph(
-            [],
-            [make_node('ConstantFill', [], ['out'], dtype=TensorProto.INT32, shape=(3, 4, 5))],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (3, 4, 5))])
-
-    def test_constant_fill_with_input(self):  # type: () -> None
-        graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (2, 3, 4))],
-            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4))])
-
-    def test_constant_fill_with_extra_shape(self):  # type: () -> None
-        graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (2, 3, 4))],
-            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32, extra_shape=(5, 6))],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4, 5, 6))])
-
     def _logical_binary_op(self, op, input_type):  # type: (Text, TensorProto.DataType) -> None
         graph = self._make_graph(
             [('x', input_type, (30, 4, 5)),
@@ -993,6 +972,22 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 30, 30))])
 
+    def test_conv_transpose_with_group(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2], pads=[1, 1, 2, 2], group=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 64, 30, 30))])
+
+    def test_conv_transpose_with_group_and_output_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2], pads=[1, 1, 2, 2], group=2, output_shape=[36, 36])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 64, 36, 36))])
+
     def test_mvn_function_output_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16))],
@@ -1098,7 +1093,7 @@ class TestShapeInference(unittest.TestCase):
             [('loop_state_orig', TensorProto.FLOAT, (loop_state_size,)),
              ('scan_input', TensorProto.FLOAT, (axis_0_len, seq_len, input_size))],
             [make_node('Scan', ['loop_state_orig', 'scan_input'], ['loop_state_final', 'scan_output'],
-                       num_scan_inputs=1, body=subgraph, axes=[1])],
+                       num_scan_inputs=1, body=subgraph, scan_input_axes=[1])],
             []
         )
 
@@ -1106,6 +1101,72 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (loop_state_size,)),
              make_tensor_value_info('scan_output', TensorProto.FLOAT, (seq_len, axis_0_len, input_size))],
+            opset_imports=[helper.make_opsetid("", 9)])
+
+    def test_scan_opset9_output_axes(self):    # type: () -> None
+        axis_0_len = 'axis0'
+        seq_len = 'sequence'
+        input_size = 2
+        loop_state_size = 3
+
+        input_value_infos = [make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, None),
+                             make_tensor_value_info('input', TensorProto.UNDEFINED, None)]
+        output_value_infos = [make_tensor_value_info('loop_state_out', TensorProto.UNDEFINED, None),
+                              make_tensor_value_info('output', TensorProto.UNDEFINED, None)]
+
+        subgraph = helper.make_graph(
+            [make_node('Identity', ['loop_state_in'], ['loop_state_out']),
+             make_node('Identity', ['input'], ['output'])],
+            "subgraph",
+            input_value_infos,
+            output_value_infos
+        )
+
+        graph = self._make_graph(
+            [('loop_state_orig', TensorProto.FLOAT, (loop_state_size,)),
+             ('scan_input', TensorProto.FLOAT, (axis_0_len, seq_len, input_size))],
+            [make_node('Scan', ['loop_state_orig', 'scan_input'], ['loop_state_final', 'scan_output'],
+                       num_scan_inputs=1, body=subgraph, scan_input_axes=[1], scan_output_axes=[1])],
+            []
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (loop_state_size,)),
+             make_tensor_value_info('scan_output', TensorProto.FLOAT, (axis_0_len, seq_len, input_size))],
+            opset_imports=[helper.make_opsetid("", 9)])
+
+    def test_scan_opset9_negative_axes(self):    # type: () -> None
+        axis_0_len = 'axis0'
+        seq_len = 'sequence'
+        input_size = 2
+        loop_state_size = 3
+
+        input_value_infos = [make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, None),
+                             make_tensor_value_info('input', TensorProto.UNDEFINED, None)]
+        output_value_infos = [make_tensor_value_info('loop_state_out', TensorProto.UNDEFINED, None),
+                              make_tensor_value_info('output', TensorProto.UNDEFINED, None)]
+
+        subgraph = helper.make_graph(
+            [make_node('Identity', ['loop_state_in'], ['loop_state_out']),
+             make_node('Identity', ['input'], ['output'])],
+            "subgraph",
+            input_value_infos,
+            output_value_infos
+        )
+
+        graph = self._make_graph(
+            [('loop_state_orig', TensorProto.FLOAT, (loop_state_size,)),
+             ('scan_input', TensorProto.FLOAT, (axis_0_len, seq_len, input_size))],
+            [make_node('Scan', ['loop_state_orig', 'scan_input'], ['loop_state_final', 'scan_output'],
+                       num_scan_inputs=1, body=subgraph, scan_input_axes=[-2], scan_output_axes=[-2])],
+            []
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (loop_state_size,)),
+             make_tensor_value_info('scan_output', TensorProto.FLOAT, (axis_0_len, seq_len, input_size))],
             opset_imports=[helper.make_opsetid("", 9)])
 
     def test_if(self):  # type: () -> None

@@ -1,6 +1,7 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
+#include <algorithm>
 #include "onnx/defs/schema.h"
 using namespace ONNX_NAMESPACE;
 
@@ -297,8 +298,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
-    fail_type_inference(
-            "MaxUnpool op must have either two or three inputs.");
+    fail_type_inference("MaxUnpool op must have either two or three inputs.");
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasInputShape(ctx, 0)) {
@@ -340,21 +340,22 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 
   if (ctx.getNumInputs() == 3) {
-    // If the third input, output_size, is specified, then use that instead 
+    // If the third input, output_size, is specified, then use that instead
     // of inferring shape from inputs.
     if (hasInputShape(ctx, 2)) {
       auto& output_shape = getInputShape(ctx, 2);
       if (output_shape.dim_size() != 1) {
-        fail_type_inference(
-              "'output_shape' must be rank 1 tensor.");
+        fail_type_inference("'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim((int)0).has_dim_value() && 
-          static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
-          fail_shape_inference(
-                  "'output_shape' must have same number of elements as the shape of input tensor X.");
+      if (output_shape.dim((int)0).has_dim_value() &&
+          static_cast<int>(output_shape.dim((int)0).dim_value()) !=
+              input_shape.dim_size()) {
+        fail_shape_inference(
+            "'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
-    return; // 'output_shape' is specified as input. Actual shape will be determined at runtime.
+    return; // 'output_shape' is specified as input. Actual shape will be
+            // determined at runtime.
   }
 
   auto final_output_shape =
@@ -418,11 +419,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Stride along each axis.",
             AttributeProto::INTS,
             OPTIONAL)
-        .Attr(
-            "pads",
-            pads_doc,
-            AttributeProto::INTS,
-            OPTIONAL)
+        .Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL)
         .Input(
             0,
             "X",
@@ -464,9 +461,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
             "T2",
@@ -741,6 +736,8 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
+  int64_t group = getAttribute(ctx, "group", 1);
+
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return; // Input tensor should have at least two dimensions.
@@ -751,7 +748,10 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    return; // we don't handle the dialations.
+    for (auto i : dilations) {
+      if (i != 1)
+        return; // we don't handle dialations not 1.
+    }
   }
 
   std::vector<int64_t> pads;
@@ -788,10 +788,13 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> output_shape;
+  bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
     if (output_shape.size() != n_input_dims) {
       return;
     }
+  } else {
+    output_shape_presented = false;
   }
 
   std::vector<int64_t> output_padding;
@@ -808,38 +811,38 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
-      ctx.getInputType(1)->tensor_type().shape().dim(
-          1); // channels should be the second dim of second input.
+      ctx.getInputType(1)->tensor_type().shape().dim(1) *
+      group; // channels should be the second dim of second input multiply
+             // group.
 
-  int size_of_output = static_cast<int>(output_shape.size());
-  if (size_of_output > 0) {
+  int size_of_output;
+  if (output_shape_presented) {
+    size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-        // TODO: throw exception?
-        return; // output shape value cannot be smaller than the input shape
-                // value
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
+          // TODO: throw exception?
+          return; // output shape value cannot be smaller than the input shape
+                  // value
+        }
       }
-
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
-    return; // assume no need to proceed further when the output shape is given.
-  }
-
-  int kernel_shape_size = static_cast<int>(kernel_shape.size());
-  for (int i = 0; i < kernel_shape_size; ++i) {
-    auto newdim = final_output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
-      continue;
+    return;
+  } else {
+    size_of_output = input_shape.dim_size() - 2;
+    for (int i = 0; i < size_of_output; ++i) {
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        int64_t output_shape_dim =
+            strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
+            output_padding[i] + kernel_shape[i] - pads[i] -
+            pads[i + n_input_dims];
+        final_output_shape->add_dim()->set_dim_value(output_shape_dim);
+      } else {
+        final_output_shape->add_dim();
+      }
     }
-
-    int64_t newdim_value =
-        strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += (output_padding[i] + kernel_shape[i]);
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
-
-    // add in the initial position
-    newdim->set_dim_value(newdim_value);
+    return;
   }
 }
 
@@ -849,7 +852,7 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output. 
+and computes the output.
 
 If the pads parameter is provided the shape of the output is calculated via the following equation:
 
@@ -1075,28 +1078,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver7_doc = R"DOC(
+static const char* BatchNormalization_ver9_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-    )DOC";
+
+For previous (depreciated) non-spatial cases, implementors are suggested
+to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    7,
+    9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
-        .Attr(
-            "spatial",
-            "If true, compute the mean and variance across per activation. "
-            "If false, compute the mean and variance across per feature over "
-            "each mini-batch.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
+        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1112,49 +1111,33 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "X",
             "Input data tensor from the previous operator; "
-            "dimensions for image case are (N x C x H x W), "
-            "where N is the batch size, C is the number of "
-            "channels, and H and W are the height and the "
-            "width of the data. For non image case, the "
-            "dimensions are in the form of "
-            "(N x C x D1 x D2 ... Dn), where N is the batch "
-            "size.",
+            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
+            "where N is the batch size, C is the number of channels. "
+            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
             "T")
         .Input(
             1,
             "scale",
-            "If spatial is true, the dimension of scale is (C). "
-            "If spatial is false, the dimensions of scale are "
-            "(C x D1 x ... x Dn)",
+            "Scale tensor of shape (C).",
             "T")
         .Input(
             2,
             "B",
-            "If spatial is true, the dimension of bias is (C). "
-            "If spatial is false, the dimensions of bias are "
-            "(C x D1 x ... x Dn)",
+            "Bias tensor of shape (C).",
             "T")
         .Input(
             3,
             "mean",
-            "If spatial is true, the dimension of the running mean "
-            "(training) or the estimated mean (testing) is (C). "
-            "If spatial is false, the dimensions of the running mean "
-            "(training) or the estimated mean (testing) are (C x D1 x ... x Dn).",
+            "running (training) or estimated (testing) mean tensor of shape (C).",
             "T")
         .Input(
             4,
             "var",
-            "If spatial is true, the dimension of the running variance"
-            "(training) or the estimated variance (testing) is (C). "
-            "If spatial is false, the dimensions of the running variance"
-            "(training) or the estimated variance (testing) are (C x D1 x ... x Dn).",
+            "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
-        .Output(
-            0,
-            "Y",
-            "The output tensor of the same shape as X",
-            "T")
+        .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
             "mean",
@@ -1297,6 +1280,36 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Shrink_ver9_doc = R"DOC(
+Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+having same datatype and shape with input. It has two attributes, lambd and
+bias. The formula of this operator is: If x < -lambd, y = x + bias;
+If x > lambd, y = x - bias; Otherwise, y = 0.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Shrink,
+    9,
+    OpSchema()
+        .SetDoc(Shrink_ver9_doc)
+        .Attr(
+            "lambd",
+            "The lambd value for the Shrink formulation. Default is 0.5.",
+            AttributeProto::FLOAT,
+            0.5f)
+        .Attr(
+            "bias",
+            "The bias value added to output. Default is 0.",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Input(0, "input", "The input data as Tensor.", "T")
+        .Output(0, "output", "The output.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input to only numeric types.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Flatten_ver9_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
@@ -1397,5 +1410,136 @@ ONNX_OPERATOR_SET_SCHEMA(
             " types to float tensors.")
         .SetDoc(LRN_ver1_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* TfIdfVectorizer_ver9_doc = R"DOC(
+This transform extracts n-grams from the input sequence and save them as a vector. Input can 
+be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.  
+For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row. 
+More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1]. 
+If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor. 
+ 
+In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original 
+sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.  
+If the number of skips is 2, we should skip two tokens when scanning through the original sequence. 
+Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2. 
+The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4]. 
+If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28] 
+indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
+
+The output vector (denoted by Y) stores the count of each n-gram; 
+Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
+between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
+ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
+respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output. 
+Note that we may consider all skips up to S when generating the n-grams. 
+ 
+The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and 
+the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF", 
+this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute. 
+ 
+Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor. 
+If pool_strings is set, the input must be a string tensor. 
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    TfIdfVectorizer,
+    9,
+    OpSchema()
+        .Input(0, "X", "Input for n-gram extraction", "T")
+        .Output(0, "Y", "Ngram results", "T1")
+        .TypeConstraint(
+            "T",
+            {"tensor(string)", "tensor(int32)", "tensor(int64)"},
+            "Input is ether string UTF-8 or int32/int64")
+        .TypeConstraint("T1", {"tensor(float)"}, "1-D tensor of floats")
+        .Attr(
+            "max_gram_length",
+            "Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.",
+            AttributeProto::INT)
+        .Attr(
+            "min_gram_length",
+            "Minimum n-gram length. If this value is 2 and max_gram_length is 3, output may contain counts of 2-grams and 3-grams.",
+            AttributeProto::INT)
+        .Attr(
+            "max_skip_count",
+            "Maximum number of items (integers/strings) to be skipped when constructing an n-gram from X. "
+            "If max_skip_count=1, min_gram_length=2, max_gram_length=3, this operator may generate 2-grams "
+            "with skip_count=0 and skip_count=1, and 3-grams with skip_count=0 and skip_count=1",
+            AttributeProto::INT)
+        .Attr(
+            "pool_strings",
+            "List of strings n-grams learned from the training set. Either this or pool_int64s attributes must be present but not both. "
+            "It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. "
+            "The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "pool_int64s",
+            "List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both. "
+            "It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. "
+            "The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "ngram_counts",
+            "The starting indexes of 1-grams, 2-grams, and so on in pool. "
+            "It is useful when determining the boundary between two consecutive collections of n-grams. "
+            "For example, if ngram_counts is [0, 17, 36], the first index (zero-based) of 1-gram/2-gram/3-gram "
+            "in pool are 0/17/36. This format is essentially identical to CSR (or CSC) sparse matrix format, "
+            "and we choose to use this due to its popularity.",
+            AttributeProto::INTS)
+        .Attr(
+            "ngram_indexes",
+            "list of int64s (type: AttributeProto::INTS). This list is parallel to the specified 'pool_*' attribute. "
+            "The i-th element in ngram_indexes indicate the coordinate of the i-th n-gram in the output tensor.",
+            AttributeProto::INTS)
+        .Attr(
+            "weights",
+            "list of floats. This attribute stores the weight of each n-gram in pool. The i-th element in weights "
+            "is the weight of the i-th n-gram in pool. Its length equals to the size of ngram_indexes. "
+            "By default, weights is an all-one tensor.This attribute is used when mode is \"IDF\" or \"TFIDF\" "
+            "to scale the associated word counts.",
+            AttributeProto::FLOATS,
+            OPTIONAL)
+        .Attr(
+            "mode",
+            "The weighting criteria. It can be one of \"TF\" (term frequency), "
+            "\"IDF\" (inverse document frequency), and \"TFIDF\" (the combination of TF and IDF)",
+            AttributeProto::STRING)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+          output_elem_type->set_elem_type(TensorProto::FLOAT);
+
+          if (hasInputShape(ctx, 0)) {
+            std::vector<int64_t> ngram_indexes;
+            getRepeatedAttribute(ctx, "ngram_indexes", ngram_indexes);
+            if (ngram_indexes.empty() ||
+                !std::all_of(
+                    ngram_indexes.cbegin(),
+                    ngram_indexes.cend(),
+                    [](int64_t i) { return i >= 0; })) {
+              fail_shape_inference(
+                  "ngram_indexes must be non-empty with no negative values");
+            }
+
+            auto greatest_hit =
+                std::max_element(ngram_indexes.cbegin(), ngram_indexes.cend());
+            auto max_last_axis = *greatest_hit + 1;
+
+            TensorShapeProto output_shape;
+            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto dim_size = input_shape.dim_size();
+            if (dim_size == 1) {
+              output_shape.add_dim()->set_dim_value(max_last_axis);
+            } else if (dim_size == 2) {
+              *output_shape.add_dim() = input_shape.dim(0);
+              output_shape.add_dim()->set_dim_value(max_last_axis);
+            } else {
+              fail_shape_inference("Input tensor must have rank 1 or 2");
+            }
+            updateOutputShape(ctx, 0, output_shape);
+          }
+        })
+        .SetDoc(TfIdfVectorizer_ver9_doc));
 
 } // namespace ONNX_NAMESPACE

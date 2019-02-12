@@ -2,6 +2,7 @@
 #define ONNXIFI_LOADER_H 1
 
 #include "onnx/onnxifi.h"
+#include "onnx/onnxifi_ext.h"
 
 #define ONNXIFI_LOADER_FUNCTION_COUNT 15
 

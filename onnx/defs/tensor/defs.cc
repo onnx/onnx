@@ -7,22 +7,36 @@
 #include <cmath>
 
 namespace ONNX_NAMESPACE {
-static const char* Cast_ver6_doc = R"DOC(
+static const char* Cast_ver9_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
 in the 'DataType' enum field in the TensorProto message.
-NOTE: Casting to and from strings is not supported yet.
+
+Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+(e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+result 100. There are some string literals reserved for special floating-point values;
+"+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+
+Conversion from a numerical type to any numerical type is always allowed.
+User must be aware of precision loss and value change caused by range difference between two types.
+For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    6,
+    9,
     OpSchema()
-        .SetDoc(Cast_ver6_doc)
+        .SetDoc(Cast_ver9_doc)
         .Attr(
             "to",
-            "The data type to which the elements of the input tensor are cast."
+            "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::INT)
         .Input(0, "input", "Input tensor to be cast.", "T1")
@@ -45,8 +59,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)",
              "tensor(uint32)",
              "tensor(uint64)",
-             "tensor(bool)"},
-            "Constrain input types. Casting from strings and complex are not supported.")
+             "tensor(bool)",
+             "tensor(string)"},
+            "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -60,8 +75,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)",
              "tensor(uint32)",
              "tensor(uint64)",
-             "tensor(bool)"},
-            "Constrain output types. Casting to strings and complex are not supported.")
+             "tensor(bool)",
+             "tensor(string)"},
+            "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -1416,5 +1432,67 @@ ONNX_OPERATOR_SET_SCHEMA(
                                        propagateShapeFromInputToOutput(ctx, 0, 0);
                                      }}
       ));
+
+static const char* Where_ver9_doc = R"DOC(
+    Return elements, either from X or Y, depending on condition
+    (with Numpy-style broadcasting support).
+    Where behaves like numpy.where with three parameters:
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Where,
+    9,
+    OpSchema()
+        .SetDoc(Where_ver9_doc)
+        .Input(0, "condition", "When True (nonzero), yield X, otherwise yield Y", "B")
+        .Input(1, "X", "values selected at indices where condition is True", "T")
+        .Input(2, "Y", "values selected at indices where condition is False", "T")
+        .Output(
+            0,
+            "output",
+            "Tensor of shape equal to the broadcasted shape of condition, X, and Y.",
+            "T")
+        .TypeConstraint(
+            "B",
+            {"tensor(bool)"},
+            "Constrain to boolean tensors.")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateElemTypeFromInputToOutput(ctx, 1, 0);
+            if (hasNInputShapes(ctx, 3)) {
+                std::vector<const TensorShapeProto*> shapes;
+                shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
+                shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
+                shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
+                multidirectionalBroadcastShapeInference(shapes,
+                    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+            }
+            }));
+
+static const char* NonZero_ver9_doc = R"DOC(
+    Returns the indices of the elements that are non-zero
+    (in row-major order - by dimension).
+    NonZero behaves similar to numpy.nonzero:
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonZero,
+    9,
+    OpSchema()
+    .SetDoc(NonZero_ver9_doc)
+    .Input(0, "X", "input", "T")
+    .Output(0, "Y", "output (always 2D tensor)", "tensor(int64)")
+    .TypeConstraint(
+        "T",
+        OpSchema::all_tensor_types(),
+        "Constrain to all tensor types.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        updateOutputElemType(ctx, 0, TensorProto::INT64);
+        }));
 
 } // namespace ONNX_NAMESPACE

@@ -4,8 +4,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import re
 
-from typing import List, Text, Sequence
+from typing import List, Text, Sequence, Any
 import numpy as np  # type: ignore
 
 import onnx
@@ -28,6 +29,7 @@ def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
            name,  # type: Text
+           **kwargs  # type: Any
            ):  # type: (...) -> None
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
@@ -40,7 +42,8 @@ def expect(node,  # type: onnx.NodeProto
         name=name,
         inputs=inputs_vi,
         outputs=outputs_vi)
-    model = onnx.helper.make_model(graph, producer_name='backend-test')
+    kwargs[str('producer_name')] = 'backend-test'
+    model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
         name=name,
@@ -50,6 +53,8 @@ def expect(node,  # type: onnx.NodeProto
         model=model,
         data_sets=[(inputs, outputs)],
         kind='node',
+        rtol=1e-3,
+        atol=1e-7,
     ))
 
 
