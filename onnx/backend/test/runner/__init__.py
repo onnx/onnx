@@ -262,7 +262,7 @@ class Runner(object):
 
         def run(test_self, device):  # type: (Any, Text) -> None
             if model_test.model_dir is None:
-                model_dir = Runner._prepare_model_data(model_test)
+                model_dir = self._prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')
