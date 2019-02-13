@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/onnx-operators_pb.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/op_annotation.h"
 #include "onnx/defs/shape_inference.h"
@@ -655,7 +656,7 @@ class ISchemaRegistry {
       const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
- /**
+/**
  * @brief A registry to hold all the operator schemas.
  */
 class OpSchemaRegistry final : public ISchemaRegistry {
@@ -874,12 +875,12 @@ OpSchema GetOpSchema();
 // In this case, callers should set dbg_included_in_static_opset to true.  This
 // assists with runtime validation in in DEBUG builds ensuring the intended set
 // of operator schema is registered.
-#define ONNX_OPERATOR_SET_SCHEMA_EX(                                      \
-    name, domain, domain_str, ver, dbg_included_in_static_opset, impl)    \
-  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);           \
-  template <>                                                             \
-  OpSchema                                                                \
-  GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() { \
+#define ONNX_OPERATOR_SET_SCHEMA_EX(                                        \
+    name, domain, domain_str, ver, dbg_included_in_static_opset, impl)      \
+  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);             \
+  template <>                                                               \
+  OpSchema                                                                  \
+  GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {   \
     return impl.SetName(#name)                                              \
         .SetDomain(domain_str)                                              \
         .SinceVersion(ver)                                                  \
