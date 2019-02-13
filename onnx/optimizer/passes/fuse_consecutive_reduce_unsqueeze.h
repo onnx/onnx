@@ -8,17 +8,6 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-const std::unordered_set<NodeKind> reduction_operators{kReduceL1,
-                                                       kReduceL2,
-                                                       kReduceLogSum,
-                                                       kReduceLogSumExp,
-                                                       kReduceMax,
-                                                       kReduceMean,
-                                                       kReduceMin,
-                                                       kReduceProd,
-                                                       kReduceSum,
-                                                       kReduceSumSquare};
-
 struct FuseConsecutiveReduceUnsqueeze final : public PredicateBasedPass {
   explicit FuseConsecutiveReduceUnsqueeze()
       : PredicateBasedPass(
@@ -37,12 +26,13 @@ struct FuseConsecutiveReduceUnsqueeze final : public PredicateBasedPass {
       Node* prev_node = node->input()->node();
       // check that the previous node a reduction operator and has defined
       // axes/keepdims
-      bool reduction_node_check = reduction_operators.find(prev_node->kind()) !=
-              reduction_operators.end() &&
+      bool reduction_node_check =
+          prev_node->containsOpAnnotation(OpAnnotationFlag::Reduction) &&
           prev_node->hasAttribute(kaxes) && prev_node->hasAttribute(kkeepdims);
       if (reduction_node_check) {
         // insure that keepdims is set to false currently
-        return prev_node->i(kkeepdims) == 0 && node->is(kaxes) == prev_node->is(kaxes);
+        return prev_node->i(kkeepdims) == 0 &&
+            node->is(kaxes) == prev_node->is(kaxes);
       }
     }
     return false;
