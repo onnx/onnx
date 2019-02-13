@@ -20,6 +20,7 @@
 #include "data_type_utils.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
+#include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -170,6 +171,35 @@ class OpSchema final {
         file_(std::move(file)),
         line_(line),
         support_(SupportType::COMMON) {}
+
+  // Copy constructor handling unique_ptr deep copy
+  // for pybind APIs
+  OpSchema(const OpSchema& op) {
+    name_ = op.name_;
+    file_ = op.file_;
+    doc_ = op.doc_;
+    domain_ = op.domain_;
+    attributes_ = op.attributes_;
+    allows_unchecked_attributes_ = op.allows_unchecked_attributes_;
+    inputs_ = op.inputs_;
+    outputs_ = op.outputs_;
+    type_constraint_params_ = op.type_constraint_params_;
+    type_constraints_ = op.type_constraints_;
+    line_ = op.line_;
+    support_ = op.support_;
+    min_input_ = op.min_input_;
+    max_input_ = op.max_input_;
+    min_output_ = op.min_output_;
+    max_output_ = op.max_output_;
+    since_version_ = op.since_version_;
+    deprecated_ = op.deprecated_;
+    num_inputs_allowed_ = op.num_inputs_allowed_;
+    num_outputs_allowed_ = op.num_outputs_allowed_;
+    tensor_inference_function_ = op.tensor_inference_function_;
+    function_body_ = op.function_body_
+        ? std::unique_ptr<FunctionProto>(new FunctionProto(*op.function_body_))
+        : nullptr;
+  }
 
   /**
    * @brief Returns the file that the op schema is registered from.
@@ -558,6 +588,16 @@ class OpSchema final {
     return tensor_inference_function_ ? true : false;
   }
 
+  bool has_function_body() const {
+    return function_body_ ? true : false;
+  }
+
+  OpSchema& FunctionBody(const FunctionProto& func_proto);
+
+  const FunctionProto* GetFunctionBody() const {
+    return function_body_.get();
+  }
+
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
@@ -591,6 +631,7 @@ class OpSchema final {
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
+  std::unique_ptr<FunctionProto> function_body_ = nullptr;
 };
 
 // Map type to store operator schemas. The format is,
@@ -609,7 +650,7 @@ class ISchemaRegistry {
       const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
-/**
+ /**
  * @brief A registry to hold all the operator schemas.
  */
 class OpSchemaRegistry final : public ISchemaRegistry {
@@ -778,9 +819,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
-    for (auto x : map()) {
-      for (auto y : x.second) {
-        for (auto z : y.second) {
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
+        for (auto& z : y.second) {
           r.emplace_back(z.second);
         }
       }
@@ -801,6 +842,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 };
 
 void RegisterSchema(OpSchema&& schema);
+
+void VerifyFunction(const OpSchema& schema);
 
 // Registers all schema of a given operator set
 template <class T>
@@ -826,12 +869,12 @@ OpSchema GetOpSchema();
 // In this case, callers should set dbg_included_in_static_opset to true.  This
 // assists with runtime validation in in DEBUG builds ensuring the intended set
 // of operator schema is registered.
-#define ONNX_OPERATOR_SET_SCHEMA_EX(                                        \
-    name, domain, domain_str, ver, dbg_included_in_static_opset, impl)      \
-  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);             \
-  template <>                                                               \
-  OpSchema                                                                  \
-  GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {   \
+#define ONNX_OPERATOR_SET_SCHEMA_EX(                                      \
+    name, domain, domain_str, ver, dbg_included_in_static_opset, impl)    \
+  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);           \
+  template <>                                                             \
+  OpSchema                                                                \
+  GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() { \
     return impl.SetName(#name)                                              \
         .SetDomain(domain_str)                                              \
         .SinceVersion(ver)                                                  \

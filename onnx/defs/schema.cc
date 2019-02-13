@@ -20,6 +20,48 @@ void RegisterSchema(OpSchema&& schema) {
   OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration = schema;
 }
 
+void VerifyFunction(const OpSchema& schema, OpName_Domain_Version_Schema_Map& map) {
+  auto function_proto = schema.GetFunctionBody();
+  if (!function_proto)
+    return;
+ 
+  auto domain = schema.domain();
+  checker::CheckerContext ctx;
+  std::unordered_map<std::string, int> op_set;
+  auto version_range =
+      OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(domain);
+  if (function_proto->since_version() > version_range.second ||
+      function_proto->since_version() < version_range.first) {
+    fail_check("Invalid function version in '", function_proto->name(), "'");
+  }
+  op_set.insert({domain, (int)function_proto->since_version()});
+  ctx.set_opset_imports(op_set);
+  ctx.set_is_main_graph(false);
+  
+  checker::TENSOR_TYPES_MAP tc_map;
+  
+  for (const auto& input : schema.inputs()) {
+    std::string name = input.GetName();
+    for (const auto& t : input.GetTypes()) {
+      tc_map[name].emplace_back(*t);
+	}
+  }
+
+  for (const auto& output : schema.outputs()) {
+    std::string name = output.GetName();
+    for (const auto& t : output.GetTypes()) {
+      tc_map[name].emplace_back(*t);
+    }
+  }
+
+  try {
+    check_function(*function_proto, ctx, map, tc_map);
+  } catch (checker::ValidationError& ex) {
+    fail_check(
+        "Invalid function defined '", function_proto->name(), ": ", ex.what());
+  }
+}
+
 #ifndef NDEBUG
 DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
   static DbgOperatorSetTracker instance;
@@ -622,6 +664,12 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
+OpSchema& OpSchema::FunctionBody(const FunctionProto& func_proto) {
+  function_body_ =
+      std::unique_ptr<FunctionProto>(new FunctionProto(func_proto));
+  return *this;
+}
+
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   if (populator) {
     populator(*this);
@@ -775,6 +823,19 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #endif
 
       RegisterOnnxOperatorSetSchema();
+	  
+	  // Verify functionbody in every node
+	  // As we already has the mutex now, we
+	  // can directly access the registry map
+      auto& m = GetMapWithoutEnsuringRegistration();
+      for (auto& opset_entry_ : m) {
+        for (auto& op_versions_entry_ : opset_entry_.second) {
+          for (auto& op_entry_ : op_versions_entry_.second) {
+            VerifyFunction(op_entry_.second, m);
+          }
+        }
+      }
+
 #ifdef ONNX_ML
       RegisterOnnxMLOperatorSetSchema();
 #endif

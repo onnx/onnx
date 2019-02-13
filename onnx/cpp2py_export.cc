@@ -45,9 +45,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly(
           "type_constraints", &OpSchema::typeConstraintParams)
-      .def_static("is_infinite", [](int v) {
-        return v == std::numeric_limits<int>::max();
-      });
+      .def_static(
+          "is_infinite",
+          [](int v) { return v == std::numeric_limits<int>::max(); })
+      .def_property_readonly("has_function_body", &OpSchema::has_function_body)
+      .def_property_readonly("_function_body", [](OpSchema* op) -> py::bytes {
+        std::string bytes = "";
+        if (op->GetFunctionBody())
+          op->GetFunctionBody()->SerializeToString(&bytes);
+        return py::bytes(bytes);});
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -150,7 +156,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
     return OpSchemaRegistry::get_all_schemas_with_history();
   });
-
+  /*
   defs.def(
       "get_all_functions",
       [](const std::string& domain)
@@ -178,7 +184,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         }
         return temp_map;
       });
-
+  */
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
   checker.doc() = "Checker submodule";
@@ -245,7 +251,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_model(proto);
   });
 
-  checker.def("check_model_path", (void (*) (const std::string&)) &checker::check_model);
+  checker.def(
+      "check_model_path",
+      (void (*)(const std::string&)) & checker::check_model);
 
   // Submodule `optimizer`
   auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
@@ -285,8 +293,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         shape_inference::InferShapes(proto);
-        auto result =
-            version_conversion::ConvertVersion(proto, target);
+        auto result = version_conversion::ConvertVersion(proto, target);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);

@@ -101,14 +101,13 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const IFunctionBuilderRegistry* func_registry =
-        &FunctionBuilderRegistry::OnnxInstance()) {
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{
-      valueTypesByName, opset_imports, schema_registry, func_registry};
+      valueTypesByName, opset_imports, schema_registry};
 
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type())
@@ -154,25 +153,8 @@ static void InferShapesImpl(
     InferenceContextImpl ctx(
         n, valueTypesByName, inputDataByName, &graphInferenceContext);
     if (!schema) {
-      if (nullptr == func_registry) {
-        continue;
-      }
-      // The node is not referring a primitive operator.
-      // Check whether it's referring to a function.
-      // If it's referring to a function.
-      auto func =
-          func_registry->GetFunction(n.op_type(), domain_version, n.domain());
-      if (nullptr == func) {
-        continue;
-      }
-      try {
-        InferShapeForFunctionNode(*func, schema_registry, ctx);
-      } catch (const ONNX_NAMESPACE::InferenceError& ex) {
-        (void)ex;
-        // Continue with inference for remaining nodes
-        continue;
-      }
-    } else {
+      continue;
+    } else if (schema->has_type_and_shape_inference_function()){
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
@@ -180,7 +162,18 @@ static void InferShapesImpl(
         // Continue with inference for remaining nodes
         continue;
       }
-    }
+    } else if (schema->has_function_body()) {
+      try {
+        InferShapeForFunctionNode(
+            *schema->GetFunctionBody(), schema_registry, ctx);
+      } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
+        (void)function_ex;
+        continue;
+      }
+    } else {
+      // Continue with inference for remaining nodes
+      continue;
+	}
 
     try {
       for (int i = 0; i < n.output_size(); ++i) {
@@ -227,20 +220,19 @@ static void InferShapesImpl(
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry,
-    const IFunctionBuilderRegistry* func_registry) {
+    const ISchemaRegistry* schema_registry
+    ) {
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
-      schema_registry,
-      func_registry);
+      schema_registry);
 }
 
 void InferShapes(
     ModelProto& m,
-    const ISchemaRegistry* schema_registry,
-    const IFunctionBuilderRegistry* func_registry) {
+    const ISchemaRegistry* schema_registry
+    ) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] =
@@ -251,8 +243,7 @@ void InferShapes(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
-      schema_registry,
-      func_registry);
+      schema_registry);
 }
 
 void InferShapeForFunctionNode(
@@ -398,8 +389,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
-      context_->schema_registry,
-      context_->func_registry);
+      context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
   for (const ValueInfoProto& output : g_->output()) {

@@ -22,8 +22,14 @@ get_all_schemas_with_history = C.get_all_schemas_with_history
 def onnx_opset_version():  # type: () -> int
     return C.schema_version_map()[ONNX_DOMAIN][1]
 
+@property  # type: ignore
+def _Function_proto(self):  # type: ignore
+    func_proto = FunctionProto()
+    func_proto.ParseFromString(self._function_body)
+    return func_proto
 
 OpSchema = C.OpSchema
+C.OpSchema.function_body = _Function_proto  # type: ignore
 
 
 @property  # type: ignore
@@ -35,7 +41,7 @@ def _Attribute_default_value(self):  # type: ignore
 
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
 
-
+'''
 def get_functions(domain=ONNX_DOMAIN):  # type: ignore
     function_map = defaultdict(list)  # type: Dict[int, List[FunctionProto]]
     function_byte_map = C.get_all_functions(domain)  # type: ignore
@@ -45,3 +51,4 @@ def get_functions(domain=ONNX_DOMAIN):  # type: ignore
             function_proto.ParseFromString(function_bytes)
             function_map[function_name].append(function_proto)
     return function_map
+'''

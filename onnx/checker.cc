@@ -105,9 +105,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_data_field
 
   bool stored_externally = tensor.has_data_location() &&
-	                   tensor.data_location() == TensorProto::EXTERNAL;
-  if (stored_externally){
-    if (num_value_fields != 0){
+      tensor.data_location() == TensorProto::EXTERNAL;
+  if (stored_externally) {
+    if (num_value_fields != 0) {
       fail_check(
           "Data of TensorProto ( tensor name: ",
           tensor.name(),
@@ -116,10 +116,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     }
 
     bool has_location = false;
-    for (const StringStringEntryProto& entry : tensor.external_data()){
-      if (entry.has_key() && entry.has_value() && entry.key() == "location"){
+    for (const StringStringEntryProto& entry : tensor.external_data()) {
+      if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        if(!std::ifstream(ctx.get_model_dir() + entry.value())){
+        if (!std::ifstream(ctx.get_model_dir() + entry.value())) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -129,7 +129,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         }
       }
     }
-    if (!has_location){
+    if (!has_location) {
       fail_check(
           "TensorProto ( tensor name: ",
           tensor.name(),
@@ -304,6 +304,131 @@ void check_attribute(
   }
 }
 
+void verify_node_schema(
+    const NodeProto& node,
+    const OpSchema* schema,
+    int domain_version) {
+  if (!schema || schema->Deprecated()) {
+    // There's no primitive operator for the node.
+    // Check whether it's referring to a function.
+    fail_check(
+        "No Op registered for " + node.op_type() + " with domain_version of " +
+        ONNX_NAMESPACE::to_string(domain_version));
+  } else {
+    schema->Verify(node);
+  }
+}
+
+void check_function_node(
+    const NodeProto& node,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx,
+    OpName_Domain_Version_Schema_Map& map_,
+    TENSOR_TYPES_MAP& tc_map) {
+  enforce_non_empty_field(node, op_type);
+
+  if (node.input().empty() && node.output().empty()) {
+    fail_check(
+        "NodeProto (name: ",
+        node.name(),
+        ", type: ",
+        node.op_type(),
+        ") has zero input and zero output.");
+  }
+
+  // Resolve domain for node
+  const auto& opset_imports = ctx.get_opset_imports();
+  auto dit = opset_imports.find(node.domain());
+  if (dit == opset_imports.end()) {
+    fail_check("No opset import for domain '" + node.domain() + "'");
+  }
+  int domain_version = dit->second;
+
+  for (const auto& attr : node.attribute()) {
+    check_attribute(attr, ctx, lex_ctx);
+  }
+
+  OpSchema* schema = nullptr;
+  std::string op_type = node.op_type();
+  std::string domain = node.domain();
+  int maxInclusiveVersion = domain_version;
+  if (map_.count(op_type) && map_[op_type].count(domain)) {
+    auto pos = map_[op_type][domain].lower_bound(maxInclusiveVersion);
+    if (map_[op_type][domain].begin() == pos &&
+        pos->first > maxInclusiveVersion) {
+      // All versions are greater than specified version.
+      fail_check(
+          "No op import for function node '" + op_type + " in op " +
+          schema->Name());
+    }
+    if (map_[op_type][domain].end() == pos ||
+        pos->first > maxInclusiveVersion) {
+      // All versions are less than specified version, or,
+      // The <pos> version is greater than specified version.
+      pos--;
+    }
+    // Schema with exact version as specified one exists.
+    schema = &(pos->second);
+  } else {
+    fail_check(
+        "No op import for function node '" + op_type + " in op " +
+        schema->Name());
+  }
+  verify_node_schema(node, schema, domain_version);
+
+  // Type constraints check between op and function body.
+  // TC for function nodes should satisfy the definition defined in the opschema
+  // This is designed to be a best-effort test
+  std::unordered_map<std::string, int> input_tensor_name_idx_map;
+  std::unordered_map<std::string, int> output_tensor_name_idx_map;
+  // Enforce it on input
+  for (int i = 0; i < schema->inputs().size(); ++i) {
+    auto& input = schema->inputs().at(i);
+    input_tensor_name_idx_map[input.GetName()] = i;
+  }
+  for (auto& tensor_name_tc : tc_map) {
+    auto iter = input_tensor_name_idx_map.find(tensor_name_tc.first);
+    if (iter == input_tensor_name_idx_map.end())
+      continue;
+    const auto& types = schema->inputs().at(iter->second).GetTypes();
+    std::unordered_set<std::string> allowed_types;
+    for (auto& s : types) {
+      allowed_types.insert(*s);
+    }
+    for (auto& type : tensor_name_tc.second) {
+      if (allowed_types.find(type) == allowed_types.end()) {
+        fail_check(
+            "Input type " + type + " defined in " + schema->Name() +
+            "'s function body is not allowed in node " + op_type);
+      }
+    }
+  }
+
+  // Enforce it on output
+  for (int i = 0; i < schema->outputs().size(); ++i) {
+    auto& output = schema->outputs().at(i);
+    output_tensor_name_idx_map[output.GetName()] = i;
+  }
+
+  for (auto& tensor_name_tc : tc_map) {
+    auto iter = output_tensor_name_idx_map.find(tensor_name_tc.first);
+    if (iter == output_tensor_name_idx_map.end())
+      continue;
+    const auto& types = schema->outputs().at(iter->second).GetTypes();
+    std::unordered_set<std::string> allowed_types;
+    for (auto& s : types) {
+      allowed_types.insert(*s);
+    }
+    for (auto& type : tensor_name_tc.second) {
+      if (allowed_types.find(type) == allowed_types.end()) {
+        fail_check(
+            "Output type " + type + " defined in " + schema->Name() +
+            "'s function body is not allowed in node " + op_type);
+      }
+    }
+  }
+}
+
 void check_node(
     const NodeProto& node,
     const CheckerContext& ctx,
@@ -333,28 +458,7 @@ void check_node(
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
-  if (!schema || schema->Deprecated()) {
-    // There's no primitive operator for the node.
-    // Check whether it's referring to a function.
-    auto func_registry = ctx.get_func_registry();
-    if (nullptr == func_registry) {
-      fail_check(
-          "No Op or Function registered for " + node.op_type() +
-          " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
-    }
-    auto func = func_registry->GetFunction(
-        node.op_type(), domain_version, node.domain());
-    if (nullptr == func) {
-      fail_check(
-          "No Op or Function registered for " + node.op_type() +
-          " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
-    }
-    VerifyFunctionNode(node, *func, ctx, lex_ctx);
-  } else {
-    schema->Verify(node);
-  }
+  verify_node_schema(node, schema, domain_version);
 }
 
 void check_graph(
@@ -446,7 +550,8 @@ void check_graph(
 void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
-    const LexicalScopeContext& /*parent_lex*/) {
+    OpName_Domain_Version_Schema_Map& map,
+    TENSOR_TYPES_MAP& tc_map) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
@@ -500,7 +605,7 @@ void check_function(
 
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
-    check_node(node, ctx, lex_ctx);
+    check_function_node(node, ctx, lex_ctx, map, tc_map);
     // check for SSA form
     for (const auto& output : node.output()) {
       // optional output
@@ -560,24 +665,26 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 void check_model(const std::string& model_path) {
   ModelProto model;
   std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if(!model_stream.good()){
-    fail_check("Unable to open model file:",
-               model_path,
-               ". Please check if it is a valid file.");
+  if (!model_stream.good()) {
+    fail_check(
+        "Unable to open model file:",
+        model_path,
+        ". Please check if it is a valid file.");
   }
-  std::string data {std::istreambuf_iterator<char>{model_stream},
-                    std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())){
-    fail_check("Unable to parse model from file:",
-               model_path,
-               ". Please check if it is a valid protobuf file of model.");
+  std::string data{std::istreambuf_iterator<char>{model_stream},
+                   std::istreambuf_iterator<char>{}};
+  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
+    fail_check(
+        "Unable to parse model from file:",
+        model_path,
+        ". Please check if it is a valid protobuf file of model.");
   }
 
   CheckerContext ctx;
   std::string model_dir;
   size_t pos = model_path.find_last_of("\\/");
-  if (pos != std::string::npos){
-    model_dir = model_path.substr(0, pos+1);
+  if (pos != std::string::npos) {
+    model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
   check_model(model, ctx);

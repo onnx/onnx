@@ -3,19 +3,11 @@
 
 #include "onnx/common/constants.h"
 #include "onnx/common/model_helpers.h"
-#include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
-  if (nullptr == func_proto) {
-    return Common::Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "func_proto should not be nullptr.");
-  }
-
-  func_proto->reset(new FunctionProto);
-  auto& func = **func_proto;
+static FunctionProto BuildMVN() {
+  FunctionProto func;
   func.set_name("MeanVarianceNormalization");
   func.set_doc_string(
       "A MeanVarianceNormalization Function: Perform mean variance normalization "
@@ -168,12 +160,34 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"X_MVN"},
       node8);
 
-  return Common::Status::OK();
+  return func;
 }
 
-ONNX_FUNCTION_BUILD(
+static const char* mvn_ver9_doc = R"DOC(
+      A MeanVarianceNormalization Function: Perform mean variance normalization
+      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     9,
-    FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
+    OpSchema()
+        .SetDoc(mvn_ver9_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .Attr(
+            "axes",
+			"A list of integers, along which to reduce. The default is to reduce over "
+			"all the dimensions of the input tensor. Use [0,2,3] (without C axis for "
+            "N-D cases) for calculating means and variances along channels. Two "
+            "variables with the same C-coordinate are associated "
+            "with the same mean and variance.",
+			AttributeProto::INTS,
+			OPTIONAL)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to all numeric tensors.")
+       .FunctionBody(BuildMVN()));
 
 } // namespace ONNX_NAMESPACE
