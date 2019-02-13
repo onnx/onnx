@@ -453,6 +453,15 @@ void check_node(
         ") has zero input and zero output.");
   }
 
+  // Put the removed experimental ops here
+  if (node.op_type() == "ConstantFill") {
+    std::cerr << "Warning: " << node.op_type() << " was a removed "
+              << " experimental ops. In the future, we may directly "
+              << "reject this operator. Please update your model as soon "
+              << "as possible.";
+    return;
+  }
+
   // Resolve domain for node
   const auto& opset_imports = ctx.get_opset_imports();
   auto dit = opset_imports.find(node.domain());
