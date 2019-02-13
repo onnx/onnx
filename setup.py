@@ -41,7 +41,7 @@ extras_require = {}
 # Global variables for controlling the build variant
 ################################################################################
 
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 

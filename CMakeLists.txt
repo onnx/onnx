@@ -23,6 +23,7 @@ option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
+option(ONNX_ML "Enable traditional ML API." ON)
 option(ONNXIFI_DUMMY_BACKEND "Use dummy backend in onnxifi test driver." OFF)
 
 # Set C++11 as standard for the whole project

@@ -20,7 +20,7 @@ from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 SNIPPETS = collect_snippets()
 SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_ML = not bool(os.getenv('ONNX_ML') == '1')
 
 
 if ONNX_ML:
@@ -307,7 +307,7 @@ def main(args):  # type: (Type[Args]) -> None
             "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
             "            Do not modify directly and instead edit function definitions.*\n")
 
-        if os.getenv('ONNX_ML'):
+        if ONNX_ML:
             all_functions = defs.get_functions(ONNX_ML_DOMAIN)
         else:
             all_functions = defs.get_functions('')
@@ -317,7 +317,7 @@ def main(args):  # type: (Type[Args]) -> None
             for func in functions:
                 changelog_versionmap[func.since_version].append(func)
 
-        if os.getenv('ONNX_ML'):
+        if ONNX_ML:
             s = '## {}\n'.format(ONNX_ML_DOMAIN)
             domain_display_name = ONNX_ML_DOMAIN
             domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
@@ -431,13 +431,13 @@ def main(args):  # type: (Type[Args]) -> None
             "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
             "            Do not modify directly and instead edit function definitions.*\n")
 
-        if os.getenv('ONNX_ML'):
+        if ONNX_ML:
             all_functions = defs.get_functions(ONNX_ML_DOMAIN)
         else:
             all_functions = defs.get_functions('')
 
         if all_functions:
-            if os.getenv('ONNX_ML'):
+            if ONNX_ML:
                 s = '## {}\n'.format(ONNX_ML_DOMAIN)
                 domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
             else:
