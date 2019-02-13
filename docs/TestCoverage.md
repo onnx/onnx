@@ -1345,7 +1345,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 
 
 ### ConvTranspose
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>convtranspose</summary>
 
@@ -1566,6 +1566,28 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[x, W], outputs=[y],
        name='test_convtranspose_kernel_shape')
+```
+
+</details>
+<details>
+<summary>convtranspose_dilations</summary>
+
+```python
+x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
+                [9., 5., 7.],
+                [3., 2., 6.]]]]).astype(np.float32)
+W = np.array([[[[7., 2.],  # (1, 1, 2, 2)
+                [1., 9.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], dilations=[2, 2])
+
+y = np.array([[[[21., 56., 13., 16., 2.],  # [1, 1, 5, 5]
+                [63., 35., 67., 10., 14.],
+                [24., 22., 76., 76., 21.],
+                [9., 5., 88., 45., 63.],
+                [3., 2., 33., 18., 54.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_dilations')
 ```
 
 </details>
