@@ -391,7 +391,7 @@ void check_function_node(
   std::unordered_map<std::string, int> input_tensor_name_idx_map;
   std::unordered_map<std::string, int> output_tensor_name_idx_map;
   // Enforce it on input
-  for (int i = 0; i < schema->inputs().size(); ++i) {
+  for (unsigned int i = 0; i < schema->inputs().size(); ++i) {
     auto& input = schema->inputs().at(i);
     input_tensor_name_idx_map[input.GetName()] = i;
   }
@@ -414,7 +414,7 @@ void check_function_node(
   }
 
   // Enforce it on output
-  for (int i = 0; i < schema->outputs().size(); ++i) {
+  for (unsigned int i = 0; i < schema->outputs().size(); ++i) {
     auto& output = schema->outputs().at(i);
     output_tensor_name_idx_map[output.GetName()] = i;
   }
