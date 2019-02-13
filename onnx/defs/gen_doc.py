@@ -20,7 +20,7 @@ from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 SNIPPETS = collect_snippets()
 SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
-ONNX_ML = not bool(os.getenv('ONNX_ML') == '1')
+ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 
 
 if ONNX_ML:
