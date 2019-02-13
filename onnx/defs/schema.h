@@ -19,8 +19,9 @@
 
 #include "data_type_utils.h"
 #include "onnx/common/constants.h"
+#include "onnx/defs/op_annotation.h"
 #include "onnx/defs/shape_inference.h"
-#include "onnx/onnx-operators_pb.h"
+
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -385,7 +386,9 @@ class OpSchema final {
       bool required = true);
 
   OpSchema& AllowUncheckedAttributes();
-
+  OpSchema& AddOpAnnotation(std::shared_ptr<OpAnnotation> annotation);
+  OpSchema& AddOpAnnotation(OpAnnotationFlag annotation_flag);
+  bool ContainsOpAnnotation(OpAnnotationFlag flag) const;
   // Type constraint.
   struct TypeConstraintParam final {
     TypeConstraintParam(
@@ -618,6 +621,8 @@ class OpSchema final {
   std::vector<FormalParameter> inputs_;
   std::vector<FormalParameter> outputs_;
   std::vector<TypeConstraintParam> type_constraint_params_;
+  std::unordered_set<OpAnnotation, OpAnnotationHash> op_annotations_;
+  OpAnnotationFlagSet op_annotation_flags_;
   TypeConstraintMap type_constraints_;
   int line_ = 0;
   SupportType support_;

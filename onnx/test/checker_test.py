@@ -231,6 +231,11 @@ class TestChecker(unittest.TestCase):
         tensor = self._sample_0_elem_tensor
         checker.check_tensor(tensor)
 
+    def test_check_removed_experimental_op(self):  # type: () -> None
+        node = helper.make_node(
+            "ConstantFill", [], ["Y"], name="test", shape=[1, 2])
+        checker.check_node(node)
+
 
 if __name__ == '__main__':
     unittest.main()

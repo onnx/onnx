@@ -544,7 +544,21 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
   allows_unchecked_attributes_ = true;
   return *this;
 }
-
+OpSchema& OpSchema::AddOpAnnotation(std::shared_ptr<OpAnnotation> annotation) {
+  this->op_annotations_.insert(*annotation);
+  this->op_annotation_flags_.insert(
+      annotation->GetAnnotations()->begin(),
+      annotation->GetAnnotations()->end());
+  return *this;
+}
+OpSchema& OpSchema::AddOpAnnotation(OpAnnotationFlag annotation_flag) {
+  auto registry = OpAnnotationRegistry::GetInstance();
+  return this->AddOpAnnotation(registry->GetOpAnnotation(annotation_flag));
+}
+bool OpSchema::ContainsOpAnnotation(OpAnnotationFlag flag) const {
+  return this->op_annotation_flags_.find(flag) !=
+      this->op_annotation_flags_.end();
+}
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
