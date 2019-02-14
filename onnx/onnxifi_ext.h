@@ -219,6 +219,109 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetIOAndRunGraph(
     const onnxTensorDescriptorV1* outputDescriptors,
     onnxMemoryFenceV1* outputFence);
 
+/*
+ * Tag for version 1 of Caffe2 quantized tensor descriptor structure
+ * (onnxCaffe2QTensorDescriptorV1).
+ *
+ * The tag is unique for this tensor descriptor structure. If ONNXIFI introduce
+ * a new version of the tensor descriptor structure in the future, it will get
+ * a new tag value.
+ *
+ * This tag is a part of fb_caffe2_model extension.
+ * Backends which support this tag MUST list "fb_caffe2_model" in the
+ * result of onnxGetBackendInfo with ONNXIFI_BACKEND_EXTENSIONS information
+ * type. Users MUST check that this extension is reported by the backend before
+ * using this tag and onnxCaffe2QTensorDescriptorV1 structure.
+ */
+#define ONNXIFI_TAG_CAFFE2_QTENSOR_DESCRIPTOR_V1 0x3BC15AFE
+
+/*
+ * This structure is a part of fb_caffe2_model extension.
+ * Backends which support this structure MUST list "fb_caffe2_model" in the
+ * result of onnxGetBackendInfo with ONNXIFI_BACKEND_EXTENSIONS information
+ * type. Users MUST check that this extension is reported by the backend before
+ *     passing this structure to onnxInitGraph or onnxSetGraphIO functions.
+ */
+typedef struct onnxCaffe2QTensorDescriptorV1 {
+  /*
+   * 32-bit tag needed to distinguish different versions of a tensor descriptor
+   * structure. In the onnxTensorDescriptorV1 structure, the tag MUST be set to
+   * ONNXIFI_TAG_CAFFE2_QTENSOR_DESCRIPTOR_V1. If ONNXIFI introduce a new
+   * version of the tensor descriptor structure in the future, it WILL have
+   * 32-bit tag with a different value as the first member of the structure.
+   *
+   * ONNXIFI implementations MUST validate tag before accessing any other
+   * members of the structure.
+   */
+  int32_t tag;
+  /*
+   * Name of the blob corresponding to this tensor in the ONNX model. The name
+   * must exactly match the ValueInfoProto.name of one of the
+   * ModelProto.graph.input or ModelProto.graph.output
+   */
+  const char* name;
+  /*
+   * Base data type of the quantized elements in the tensor.
+   *
+   * Possible values:
+   * ONNXIFI_DATATYPE_UINT8
+   * ONNXIFI_DATATYPE_INT32
+   */
+  onnxEnum dataType;
+  /*
+   * Type of memory that stores the tensor.
+   *
+   * ONNXIFI_MEMORY_TYPE_CPU memory type is always supported by the backend, but
+   * other memory types are optional. The use MUST call onnxGetBackendInfo with
+   * ONNXIFI_BACKEND_MEMORY_TYPES to check if a particular memory type is
+   * supported before using it.
+   *
+   * If the memory type is different than ONNXIFI_MEMORY_TYPE_CPU, it must be
+   * allocated on the same device as the backend.
+   *
+   * Possible values:
+   *   ONNXIFI_MEMORY_TYPE_CPU                 (always supported)
+   *	 ONNXIFI_MEMORY_TYPE_CUDA_BUFFER         (support is optional)
+   */
+  onnxEnum memoryType;
+  /*
+   * Number of dimensions in the tensor.
+   * For a scalar, the number of dimensions is 0.
+   */
+  uint32_t dimensions;
+  /*
+   * Dimensions of the tensor.
+   * For a scalar, this pointer can be NULL.
+   */
+  const uint64_t* shape;
+  /*
+   * "Zero point" quantization parameter for the elements of the tensor.
+   *
+   * Possible values depend on dataType:
+   *   - For tensors of ONNXIFI_DATATYPE_UINT8 element type, this value must be
+   * in [0, 255] range.
+   *   - For tensors of ONNXIFI_DATATYPE_INT32 element type, this value must be
+   * 0.
+   */
+  int32_t zeroPoint;
+  /**
+   * "Scale" quantization parameter for the elements of the tensor.
+   *
+   * Scale must be a positive and normal floating-point number.
+   */
+  float scale;
+  /*
+   * Pointers to tensor data.
+   *
+   * Interpretation depends on memoryType:
+   *   - ONNXIFI_MEMORY_TYPE_CPU: buffer is a valid pointer to CPU memory.
+   *   - ONNXIFI_MEMORY_TYPE_CUDA_BUFFER: buffer is a valid pointer to CUDA
+   *     device memory, allocated via cudaMalloc or cuMalloc. CUDA device memory
+   *  must be allocated on the same device as the backend.
+   */
+  onnxPointer buffer;
+} onnxCaffe2QTensorDescriptorV1;
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
