@@ -21,7 +21,6 @@
 #include "onnx/common/interned_strings.h"
 #include "onnx/common/graph_node_list.h"
 #include "onnx/common/tensor.h"
-#include "onnx/defs/schema.h"
 
 
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -464,13 +463,6 @@ public:
   Node* setStage(size_t s) {
     stage_ = s;
     return this;
-  }
-  inline bool containsOpAnnotation(OpAnnotationFlag flag) const{
-    auto op_schema = OpSchemaRegistry::Instance()->Schema(this->kind().toString());
-    if (nullptr != op_schema) {
-      return op_schema->ContainsOpAnnotation(flag);
-    }
-    return false;
   }
   // NB: This returns an ArrayRef; that means that it will
   // get invalidated if you resize inputs (e.g., using addInput)
