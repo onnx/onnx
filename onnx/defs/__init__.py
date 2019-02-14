@@ -30,7 +30,7 @@ def _Function_proto(self):  # type: ignore
     return func_proto
 
 
-OpSchema = C.OpSchema
+OpSchema = C.OpSchema  # type: ignore
 C.OpSchema.function_body = _Function_proto  # type: ignore
 
 
@@ -42,3 +42,12 @@ def _Attribute_default_value(self):  # type: ignore
 
 
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
+
+
+def get_function_ops():  # type: () -> List(OpSchema)
+    schemas = C.get_all_schemas()
+    function_ops = []
+    for schema in schemas:
+        if schema.has_function_body:
+            function_ops.append(schema)
+    return function_ops
