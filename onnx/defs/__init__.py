@@ -44,10 +44,10 @@ def _Attribute_default_value(self):  # type: ignore
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
 
 
-def get_function_ops():  # type: () -> List(OpSchema)
+def get_function_ops():  # type: () -> List[OpSchema]
     schemas = C.get_all_schemas()
     function_ops = []
     for schema in schemas:
-        if schema.has_function_body:
+        if schema.has_function_body:  # type: ignore
             function_ops.append(schema)
     return function_ops

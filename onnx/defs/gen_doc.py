@@ -198,7 +198,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
         s += '</dl>\n'
 
     # Function Body
-    if schema.has_function_body:
+    if schema.has_function_body:  # type: ignore
         s += '\n#### Function Body\n'
         s += '\nThe Function can be represented as a function.\n'
 
@@ -208,11 +208,6 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
     return \
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
-
-
-def function_str(level):  # type: (OpSchema.SupportType) -> Text
-    return \
-        "<sub>function attached</sub> " if level == OpSchema.has_function_body else ""
 
 
 def main(args):  # type: (Type[Args]) -> None
@@ -289,7 +284,7 @@ def main(args):  # type: (Type[Args]) -> None
             function_ops = list()
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
-                    if schema.has_function_body:
+                    if schema.has_function_body:  # type: ignore
                         function_ops.append((n, schema, versions))
                         continue
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
