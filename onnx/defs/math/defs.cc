@@ -81,9 +81,6 @@ will throw errors.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.AddOpAnnotation(OpAnnotationFlag::ElementwiseDependent);
-    schema.AddOpAnnotation(
-        OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing);
     schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
@@ -226,10 +223,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Relu_ver6_doc = R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
@@ -248,9 +242,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseWeakMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver6_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -270,9 +262,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseWeakMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Selu_ver6_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
@@ -304,10 +294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
@@ -328,10 +315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Exp_ver6_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
@@ -353,10 +337,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Log_ver6_doc = R"DOC(
 Calculates the natural log of the given input tensor, element-wise.
@@ -378,10 +359,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Tanh_ver6_doc = R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
@@ -403,10 +381,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Pow_ver7_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
@@ -485,10 +460,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* HardSigmoid_ver6_doc = R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
@@ -509,9 +481,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseIndependent)
-        .AddOpAnnotation(OpAnnotationFlag::ElementwiseWeakMonotonicIncreasing));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
     const char* name) {

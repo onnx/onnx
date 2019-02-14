@@ -34,7 +34,6 @@ False instead of True.)DOC";
         "T",
         OpSchema::numeric_types_for_math_reduction(),
         "Constrain input and output types to high-precision numeric tensors.");
-    schema.AddOpAnnotation(OpAnnotationFlag::Reduction);
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {

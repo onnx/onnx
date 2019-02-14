@@ -7,6 +7,13 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
+const std::unordered_set<NodeKind> monotone_node_no_axis_kind{kLog,
+                                                              kExp,
+                                                              kSqrt};
+
+const std::unordered_set<NodeKind> monotone_node_axis_kind{kSoftmax,
+                                                           kLogSoftmax};
+
 struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
   explicit EliminateNopMonotoneArgmax()
       : PredicateBasedPass(
@@ -18,16 +25,18 @@ struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
     return "eliminate_nop_monotone_argmax";
   }
 
-  inline bool satisfies_monotone_condition(int64_t axis, Node* node) {
-    auto node_monotone =
-        node->containsOpAnnotation(
-            OpAnnotationFlag::ElementwiseWeakMonotonicIncreasing) ||
-        node->containsOpAnnotation(
-            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing);
-    if (node_monotone && node->hasAttribute(kaxis)) {
-      return node_monotone && axis == node->i(kaxis);
+  static inline bool satisfies_monotone_condition(int64_t axis, Node* node) {
+    if (monotone_node_no_axis_kind.find(node->kind()) !=
+        monotone_node_no_axis_kind.end()) {
+      return true;
     }
-    return node_monotone;
+    if (monotone_node_axis_kind.find(node->kind()) !=
+        monotone_node_axis_kind.end()) {
+      if (node->hasAttribute(kaxis)) {
+        return axis == node->i(kaxis);
+      }
+    }
+    return false;
   }
 
   bool patternMatchPredicate(Node* node) override {
@@ -41,7 +50,8 @@ struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
     return false;
   }
 
-  bool runTransform(Node* node, Graph&, NodeDestroyType&) override {
+  bool runTransform(Node* node, Graph&, NodeDestroyType&)
+      override {
     Node* monotone_node = node->input()->node();
     if (monotone_node->output()->uses().size() == 1) {
       monotone_node->output()->replaceAllUsesWith(monotone_node->input());
