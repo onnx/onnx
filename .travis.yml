@@ -4,6 +4,22 @@ matrix:
   include:
     - os: linux
       sudo: required
+      env: PYTHON_VERSION=python2 ONNX_ML=0
+      language: python
+      python: "2.7"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3 ONNX_ML=0
+      language: python
+      python: "3.6"
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python2 ONNX_ML=0
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python3 ONNX_ML=0
+    - os: linux
+      sudo: required
       env: PYTHON_VERSION=python2
       language: python
       python: "2.7"
@@ -20,28 +36,12 @@ matrix:
       env: PYTHON_VERSION=python3
     - os: linux
       sudo: required
-      env: PYTHON_VERSION=python2 ONNX_ML=1
-      language: python
-      python: "2.7"
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python3 ONNX_ML=1
-      language: python
-      python: "3.6"
-    - os: osx
-      osx_image: xcode9.3
-      env: PYTHON_VERSION=python2 ONNX_ML=1
-    - os: osx
-      osx_image: xcode9.3
-      env: PYTHON_VERSION=python3 ONNX_ML=1
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python2 ONNX_ML=1 LITE=1
+      env: PYTHON_VERSION=python2 LITE=1
       language: python
       python: "2.7"
     - os: osx
       osx_image: xcode9.3
-      env: PYTHON_VERSION=python2 ONNX_ML=1 LITE=1
+      env: PYTHON_VERSION=python2 LITE=1
 
 env:
   global:
