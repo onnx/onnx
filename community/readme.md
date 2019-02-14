@@ -132,8 +132,8 @@ Working Groups (WGs) are primarily used to facilitate topics of discussion that 
 
 If a set of folks in the community want to get together and discuss a topic, they can do so without forming a Working Group. While not exclusively the case, Working Groups output are more often specifications and recommendations for the SIGs than actual code implementation. At time of inception of this organizational structure, the following WGs will be present:
 
-    * Edge / Mobile - led by _name coming_, Qualcomm
-    * Training - led by _name coming_, IBM
+   * Edge / Mobile - led by _name coming_, Qualcomm
+   * Training - led by _name coming_, IBM
 
 Working Groups are formed by submitting a proposal via PR to the Steering Committee. The proposal should cover:
 
