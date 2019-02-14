@@ -176,30 +176,31 @@ class OpSchema final {
 
   // Copy constructor handling unique_ptr deep copy
   // for pybind APIs
-  OpSchema(const OpSchema& op) {
-    name_ = op.name_;
-    file_ = op.file_;
-    doc_ = op.doc_;
-    domain_ = op.domain_;
-    attributes_ = op.attributes_;
-    allows_unchecked_attributes_ = op.allows_unchecked_attributes_;
-    inputs_ = op.inputs_;
-    outputs_ = op.outputs_;
-    type_constraint_params_ = op.type_constraint_params_;
-    type_constraints_ = op.type_constraints_;
-    op_annotations_ = op.op_annotations_;
-    op_annotation_flags_ = op.op_annotation_flags_;
-    line_ = op.line_;
-    support_ = op.support_;
-    min_input_ = op.min_input_;
-    max_input_ = op.max_input_;
-    min_output_ = op.min_output_;
-    max_output_ = op.max_output_;
-    since_version_ = op.since_version_;
-    deprecated_ = op.deprecated_;
-    num_inputs_allowed_ = op.num_inputs_allowed_;
-    num_outputs_allowed_ = op.num_outputs_allowed_;
-    tensor_inference_function_ = op.tensor_inference_function_;
+  OpSchema(const OpSchema& op) : 
+	  name_(op.name_), 
+      file_(op.file_),
+      doc_(op.doc_),
+      domain_(op.domain_),
+      attributes_(op.attributes_),
+      allows_unchecked_attributes_(op.allows_unchecked_attributes_),
+      inputs_(op.inputs_),
+      outputs_(op.outputs_),
+      type_constraint_params_(op.type_constraint_params_),
+      type_constraints_(op.type_constraints_),
+      op_annotations_(op.op_annotations_),
+      op_annotation_flags_(op.op_annotation_flags_),
+      line_(op.line_),
+      support_(op.support_),
+      min_input_(op.min_input_),
+      max_input_(op.max_input_),
+      min_output_(op.min_output_),
+      max_output_(op.max_output_),
+      since_version_(op.since_version_),
+      deprecated_(op.deprecated_),
+      num_inputs_allowed_(op.num_inputs_allowed_),
+      num_outputs_allowed_(op.num_outputs_allowed_),
+      tensor_inference_function_(op.tensor_inference_function_)
+  {
     function_body_ = op.function_body_
         ? std::unique_ptr<FunctionProto>(new FunctionProto(*op.function_body_))
         : nullptr;

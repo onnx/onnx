@@ -156,35 +156,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
     return OpSchemaRegistry::get_all_schemas_with_history();
   });
-  /*
-  defs.def(
-      "get_all_functions",
-      [](const std::string& domain)
-          -> std::unordered_map<std::string, std::vector<py::bytes>> {
-        std::multimap<std::string, const FunctionProto*> temp_ptr_map;
-        std::unordered_map<std::string, std::vector<py::bytes>> temp_map;
-        FunctionBuilderRegistry& function_registry =
-            FunctionBuilderRegistry::OnnxInstance();
 
-        Common::Status status =
-            function_registry.GetFunctions(domain, &temp_ptr_map);
-        if (!status.IsOK()) {
-          throw std::runtime_error(
-              "Failed to retrieve function list for domain '" + domain + "'!");
-        }
-        for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
-             ++iter) {
-          std::string bytes;
-          if (!iter->second->SerializeToString(&bytes)) {
-            throw std::runtime_error(
-                "Failed to serialize registered function for '" + iter->first +
-                "'!");
-          }
-          temp_map[iter->first].emplace_back(py::bytes(bytes));
-        }
-        return temp_map;
-      });
-  */
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
   checker.doc() = "Checker submodule";
