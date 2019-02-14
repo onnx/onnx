@@ -185,8 +185,6 @@ class OpSchema final {
       outputs_(op.outputs_),
       type_constraint_params_(op.type_constraint_params_),
       type_constraints_(op.type_constraints_),
-      op_annotations_(op.op_annotations_),
-      op_annotation_flags_(op.op_annotation_flags_),
       line_(op.line_),
       support_(op.support_),
       min_input_(op.min_input_),
