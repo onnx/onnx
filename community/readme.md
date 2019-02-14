@@ -16,7 +16,7 @@ The ONNX community adheres to the following principles:
 * __Welcoming and respectful__: See Code of Conduct, below.
 * __Transparent and accessible__: Work and collaboration should be done in public. See SIG governance, below.
 * __Merit__: Ideas and contributions are accepted according to their technical merit and alignment with project objectives, scope and design principles. Engineering investment >> corporate sponsorship
-* _Speed_: Contributing the time and effort to ensure fast decision-making is key to ensuring that the specifications produced is aligned to the fast iteration of machine learning technologies.
+* __Speed__: Contributing the time and effort to ensure fast decision-making is key to ensuring that the specifications produced is aligned to the fast iteration of machine learning technologies.
 
 ## Community Roles
 
