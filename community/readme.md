@@ -132,8 +132,8 @@ Working Groups (WGs) are primarily used to facilitate topics of discussion that 
 
 If a set of folks in the community want to get together and discuss a topic, they can do so without forming a Working Group. While not exclusively the case, Working Groups output are more often specifications and recommendations for the SIGs than actual code implementation. At time of inception of this organizational structure, the following WGs will be present:
 
-   * Edge / Mobile - led by _name coming_, Qualcomm
-   * Training - led by _name coming_, IBM
+   * Edge / Mobile
+   * Training
 
 Working Groups are formed by submitting a proposal via PR to the Steering Committee. The proposal should cover:
 
@@ -158,4 +158,4 @@ Repositories can be removed when they are inactive by archiving them.
 
 ## CLA
 
-All contributors must sign the ONNX CLA, described at _https://cla-assistant.io/onnx/onnx_. The Steering Committee will update the CLA to reflect the ONNX organization/ownership as needed.
+All contributors must sign the ONNX CLA, described at https://cla-assistant.io/onnx/onnx. The Steering Committee will update the CLA to reflect the ONNX organization/ownership as needed.
