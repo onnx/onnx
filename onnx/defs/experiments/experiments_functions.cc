@@ -6,6 +6,9 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
+using SupportType = OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
+
 static FunctionProto BuildMVN() {
   FunctionProto func;
   func.set_name("MeanVarianceNormalization");
@@ -172,6 +175,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     9,
     OpSchema()
+        .SetSupportLevel(SupportType::COMMON)
         .SetDoc(mvn_ver9_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
