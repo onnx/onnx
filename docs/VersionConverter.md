@@ -1,12 +1,7 @@
 # ONNX Version Converter
 
-ONNX provides a C++ library for converting ONNX models between different
-opset versions. The library leverages the convenient in-memory
-representation that is much more convenient to manipulate than the raw
-protobuf structs, and converters to and from the protobuf format which
-were developed for the ONNX Optimizer.
-
-The primary motivation is to improve backwards compatibility of ONNX
+ONNX provides a library for converting ONNX models between different
+opset versions. The primary motivation is to improve backwards compatibility of ONNX
 models without having to strengthen the spec for ONNX backends.  This
 allows backend developers to offer support for a particular opset version
 and for users to write or export models to a particular opset version but
@@ -19,7 +14,9 @@ conversion methods, dependent on the nature of relevant breaking changes.
 
 ## Invoking The Version Converter
 
-The version converter may be invoked either via C++ or Python. The Python API
+The version converter may be invoked either via C++ or Python. 
+
+The Python API
 is described, with example,
 [here](PythonAPIOverview.md#converting-opset-version-of-an-onnx-model).
 
@@ -38,7 +35,7 @@ is the result of apply all relevant adapters between initial_version and
 target_version. For a list of available passes, see
 [convert.h](onnx/version_converter/convert.h).
 
-Implementing Adapters
+## Implementing Adapters
 
 You can implement a new adapter by subclassing `Adapter`, and registering
 your new adapter with `VersionConverter::registerAdapter()`. Adapters operate
