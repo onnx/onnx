@@ -5,7 +5,7 @@ opset versions. The primary motivation is to improve backwards compatibility of 
 models without having to strengthen the spec for ONNX backends.  This
 allows backend developers to offer support for a particular opset version
 and for users to write or export models to a particular opset version but
-run in an environment with a different opset version.
+run in an environment with a different opset version. Implementation wise, the library leverages the in-memory representation that is much more convenient to manipulate than the raw protobuf structs, and converters to and from the protobuf format which were developed for the ONNX Optimizer.
 
 You may be interested in invoking the provided op-specific adapters, or in
 implementing new ones (or both). Default adapters only work in the default
