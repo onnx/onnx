@@ -9677,6 +9677,9 @@ This version of the operator has been available since version 9 of the default O
   and removes elements specified in "stopwords" attribute. 
   After removing stop words, the intermediate result can be further lowercased, 
   uppercased, or just returned depending the "case_change_action" attribute.
+  This operator only accepts [C]- and [1, C]-tensor.
+  If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+  if input shape is [C] and shape [1, 1] if input shape is [1, C]. 
 
 #### Version
 
