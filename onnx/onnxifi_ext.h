@@ -7,6 +7,14 @@
 extern "C" {
 #endif
 
+/*
+ * This is the super set of all extension functions we support in onnxifi.
+ * All backend should support a subset of function of this list.
+ */
+static const int ALL_EXT_FUNCTION_NUMBER = 2;
+static const char* ALL_EXT_FUNCTION_LIST[] = {"onnxGetExtensionFunctionAddress",
+                                              "onnxSetIOAndRunGraph"};
+
 /**
  * Generic ONNXIFI extension function pointer.
  *
