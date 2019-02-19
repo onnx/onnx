@@ -1278,7 +1278,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateShapeAndTypeFromFirstInput(ctx);
+            if (ctx.getNumOutputs() == 2) {
+                propagateElemTypeFromInputToOutput(ctx, 0, 1);
+                if (hasNInputShapes(ctx, 1)) {
+                    propagateShapeFromInputToOutput(ctx, 0, 1);
+                }
+            }
+        }));
 
 static const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
