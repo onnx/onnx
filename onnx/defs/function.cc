@@ -223,4 +223,61 @@ void FunctionExpandHelper(
   }
 }
 
+FunctionProto FunctionProtoHelper::Define(
+    const std::string& name,
+    int since_version,
+    std::vector<std::string> inputs,
+    std::vector<std::string> outputs,
+    std::vector<std::string> attributes,
+    std::vector<NodeDef> node_defs) {
+  FunctionProto func;
+
+  func.set_name(name);
+  func.set_since_version(since_version);
+
+  for (const auto& i : inputs) {
+    func.add_input(i);
+  }
+  for (const auto& o : outputs) {
+    func.add_output(o);
+  }
+  for (const auto& a : attributes) {
+    func.add_attribute(a);
+  }
+
+  for (const auto& node : node_defs) {
+    NodeProto* n = func.add_node();
+
+    n->set_op_type(node.op_type);
+
+    for (const auto& i : node.inputs) {
+      n->add_input(i);
+    }
+
+    for (const auto& o : node.outputs) {
+      n->add_output(o);
+    }
+
+    for (const auto& attr_pair : node.attributes) {
+      AttributeProto* attr = n->add_attribute();
+      *attr = attr_pair.second.proto;
+      attr->set_name(attr_pair.first);
+    }
+  }
+
+  return func;
+}
+
+void FunctionProtoHelper::AttributeProtoWrapper::InitFromString(
+    const std::string& val) {
+  if (val.size() >= 2 && val[0] == '$') {
+    proto.set_ref_attr_name(val.substr(1, val.size() - 1));
+    // set type??
+
+  } else {
+    // set as string
+    SetAttrValue(val, &proto);
+  }
+}
+
 } // namespace ONNX_NAMESPACE

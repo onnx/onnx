@@ -12,6 +12,8 @@
 #include "onnx/common/status.h"
 #include "onnx/onnx-operators_pb.h"
 
+#include "attr_proto_util.h"
+
 namespace ONNX_NAMESPACE {
 
 typedef Common::Status (*BuildFunction)(std::unique_ptr<FunctionProto>*);
@@ -109,6 +111,106 @@ void FunctionExpandHelper(
     const FunctionProto& func,
     GraphProto& g,
     const std::string& node_prefix = "");
+
+class FunctionProtoHelper {
+ public:
+  struct AttributeProtoWrapper {
+    AttributeProto proto;
+
+    AttributeProtoWrapper() {}
+
+    template <typename T>
+    AttributeProtoWrapper(T val) {
+      SetAttrValue(val, &proto);
+    }
+
+   private:
+    void InitFromString(const std::string& val);
+  };
+
+  struct NodeDef {
+    std::vector<std::string> outputs;
+    std::string op_type;
+    std::vector<std::string> inputs;
+    std::vector<std::pair<std::string, AttributeProtoWrapper>> attributes;
+  };
+
+  static FunctionProto Define(
+      const std::string& name,
+      int since_version,
+      std::vector<std::string> inputs,
+      std::vector<std::string> outputs,
+      std::vector<std::string> attributes,
+      std::vector<NodeDef> node_defs);
+
+  template <typename T>
+  static ONNX_NAMESPACE::TensorProto ToTensor(T val);
+
+  template <>
+  static ONNX_NAMESPACE::TensorProto ToTensor<float>(float val) {
+    TensorProto t;
+    t.set_data_type(TensorProto_DataType_FLOAT);
+    t.add_float_data(val);
+    return t;
+  }
+
+  template <typename T>
+  static ONNX_NAMESPACE::TensorProto ToTensor(std::vector<T> vals);
+
+  template <>
+  static ONNX_NAMESPACE::TensorProto ToTensor<float>(std::vector<float> vals) {
+    TensorProto t;
+    t.set_data_type(TensorProto_DataType_FLOAT);
+    for (auto val : vals) {
+      t.add_float_data(val);
+    }
+    return t;
+  }
+
+  template <typename T>
+  static NodeDef Const(const std::string& name, const T& val) {
+    NodeDef n = {{name}, "Const"};
+
+    AttributeProto attr;
+    attr.set_name("value");
+    attr.set_type(AttributeProto_AttributeType_TENSOR);
+
+    TensorProto* t_proto = attr.mutable_t();
+    *t_proto = ToTensor<T>(val);
+
+    n.attributes.push_back(
+        std::make_pair("value", AttributeProtoWrapper(attr)));
+    return n;
+  }
+
+  template <typename T>
+  static NodeDef Const(const std::string& name, const std::vector<T>& vals) {
+    NodeDef n = {{name}, "Const"};
+
+    AttributeProto attr;
+    attr.set_name("value");
+    attr.set_type(AttributeProto_AttributeType_TENSOR);
+
+    TensorProto* t_proto = attr.mutable_t();
+    *t_proto = ToTensor(vals);
+
+    n.attributes.push_back(
+        std::make_pair("value", AttributeProtoWrapper(attr)));
+    return n;
+  }
+};
+
+template <>
+inline FunctionProtoHelper::AttributeProtoWrapper::AttributeProtoWrapper(
+    const char* val) {
+  InitFromString(val);
+}
+
+template <>
+inline FunctionProtoHelper::AttributeProtoWrapper::AttributeProtoWrapper(
+    const std::string& val) {
+  InitFromString(val);
+}
 
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
