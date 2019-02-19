@@ -4465,7 +4465,7 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>,
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -5472,7 +5472,7 @@ Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a hr
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>

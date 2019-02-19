@@ -544,12 +544,14 @@ class OpSet_Onnx_ver9 {
 };
 
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Upsample);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Resize);
 
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver10 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Upsample)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Resize)>());
   }
 };
 

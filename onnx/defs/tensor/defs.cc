@@ -1164,13 +1164,74 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Upsample_ver10_doc = R"DOC(
-Resize the input tensor.
+Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
+    10,
+    OpSchema()
+        .Deprecate()
+        .Attr(
+            "mode",
+            "Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)",
+            AttributeProto::STRING,
+            std::string("nearest"))
+        .Input(0, "X", "N-D tensor", "T")
+        .Input(
+            1,
+            "scales",
+            "The scale array along each dimension. It takes value greater than or equal to 1."
+            " The number of elements of 'scales' should be the same as the rank of input 'X'.",
+            "tensor(float)")
+        .Output(0, "Y", "N-D tensor after resizing", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input 'X' and output 'Y' to all tensor types.")
+        .SetDoc(Upsample_ver10_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto& input_shape = getInputShape(ctx, 0);
+          auto* output_shape = getOutputShape(ctx, 0);
+          output_shape->clear_dim();
+          auto scales = ctx.getInputData(1);
+          if (nullptr != scales) {
+            // Infer output shape's dimension value if 'scales' is known.
+            if (scales->data_type() == TensorProto::FLOAT &&
+                scales->float_data_size() == input_shape.dim_size()) {
+              for (int i = 0; i < input_shape.dim_size(); ++i) {
+                float dim_value =
+                    static_cast<float>(input_shape.dim(i).dim_value());
+                output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                    std::floor(dim_value * scales->float_data(i))));
+              }
+            } else {
+              fail_shape_inference(
+                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
+            }
+          } else {
+            // Infer output shape's rank in any case.
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape->add_dim();
+            }
+          }
+        }));
+
+
+static const char* Resize_ver10_doc = R"DOC(
+Resize the input tensor.
+Each dimension value of the output tensor is:
+  output_dimension = floor(input_dimension * scale).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Resize,
     10,
     OpSchema()
         .Attr(
@@ -1191,7 +1252,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver10_doc)
+        .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasNInputShapes(ctx, 1)) {
             return;
