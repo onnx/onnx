@@ -2,6 +2,7 @@
 
 #include "onnx/checker.h"
 #include "onnx/onnxifi.h"
+#include "onnx/onnxifi_ext.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnx/string_utils.h"
 
@@ -322,6 +323,17 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
                 true);
           }
         }
+/*
+ * Examine functions in onnxifi_ext
+ */
+#ifdef ONNXIFI_ENABLE_EXT
+        onnxExtensionFunctionPointer* f;
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxGetExtensionFunctionAddress(
+                backendID, "onnxGetExtensionFunctionAddress", f),
+            NULL,
+            lib));
+#endif
       }
       ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
           lib.onnxReleaseGraph(graph), NULL, lib));

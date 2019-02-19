@@ -1,9 +1,9 @@
 
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
-| Linux | Windows |
-|-------|---------|
-| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
+| Linux | Windows | Linux ppc64le |
+|-------|---------|---------------|
+| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) | [![Build Status](http://powerci.osuosl.org/buildStatus/icon?job=onnx-ppc64le-nightly-build)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
@@ -25,7 +25,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 # Programming utilities for working with ONNX Graphs
 * [Shape and Type Inference](docs/ShapeInference.md)
 * [Graph Optimization](docs/Optimizer.md)
-* [Opset Version Conversion](docs/OpsetVersionConverter.md)
+* [Opset Version Conversion](docs/VersionConverter.md)
 
 # Contribute
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
