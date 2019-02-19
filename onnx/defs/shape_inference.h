@@ -54,6 +54,7 @@ struct InferenceContext {
   virtual const TypeProto* getInputType(size_t index) const = 0;
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
+  virtual bool hasOutput(size_t index) = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual GraphInferencer* getGraphAttributeInferencer(
       const std::string& attribute_name) = 0;
@@ -151,6 +152,46 @@ multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
   return dim;
 }
 
+// Set the data_type in the output_type validating that there is no mismatch
+inline void validateAndSetElemType(
+    onnx::TensorProto_DataType data_type,
+    TypeProto* output_type) {
+  if (output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    output_type->mutable_tensor_type()->set_elem_type(data_type);
+  } else if (output_type->has_tensor_type()) {
+    if (output_type->tensor_type().has_elem_type()) {
+      if (data_type != output_type->tensor_type().elem_type()) {
+        fail_type_inference(
+            "Element type of ",
+            data_type,
+            " does not match existing output type of ",
+            output_type->tensor_type().elem_type());
+      }
+    } else {
+      output_type->mutable_tensor_type()->set_elem_type(data_type);
+    }
+  } else {
+    // This is not expected to happen
+    fail_type_inference(
+        "Output was expected to have tensor type. Got ",
+        output_type->value_case());
+  }
+}
+// TODO: Use protobuf with real enums
+inline void validateAndSetElemType(
+    ::google::protobuf::int32_t data_type,
+    TypeProto* output_type) {
+  validateAndSetElemType(static_cast<onnx::TensorProto_DataType>(data_type), output_type);
+}
+
+inline void updateOutputElemType(
+    InferenceContext& ctx,
+    size_t outputIndex,
+    int32_t elemType) {
+  auto output_type = ctx.getOutputType(outputIndex);
+  validateAndSetElemType(elemType, output_type);
+}
+
 // propagate the element type from an input type to an output type.
 // if an existing output element type exists, validate it matches.
 inline void propagateElemTypeWithValidation(
@@ -160,7 +201,7 @@ inline void propagateElemTypeWithValidation(
     fail_type_inference("Input type was null");
   }
 
-  if (input_type->value_case() != TypeProto::kTensorType) {
+  if (!input_type->has_tensor_type()) {
     fail_type_inference(
         "Input was expected to have tensor type. Got ",
         input_type->value_case());
@@ -169,30 +210,7 @@ inline void propagateElemTypeWithValidation(
   if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
     fail_type_inference("Element type of input was unknown");
   }
-
-  if (output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-    output_type->mutable_tensor_type()->set_elem_type(
-        input_type->tensor_type().elem_type());
-  } else if (output_type->value_case() == TypeProto::kTensorType) {
-    if (output_type->tensor_type().has_elem_type()) {
-      if (input_type->tensor_type().elem_type() !=
-          output_type->tensor_type().elem_type()) {
-        fail_type_inference(
-            "Input element type of ",
-            input_type->tensor_type().elem_type(),
-            " does not match existing output type of ",
-            output_type->tensor_type().elem_type());
-      }
-    } else {
-      output_type->mutable_tensor_type()->set_elem_type(
-          input_type->tensor_type().elem_type());
-    }
-  } else {
-    // This is not expected to happen
-    fail_type_inference(
-        "Output was expected to have tensor type. Got ",
-        output_type->value_case());
-  }
+  validateAndSetElemType(input_type->tensor_type().elem_type(), output_type);
 }
 
 // Note: for all methods below for propagating type or shape, callers are
@@ -204,43 +222,11 @@ inline void propagateElemTypeFromInputToOutput(
     size_t inputIndex,
     size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
-  if (nullptr == input_type ||
-      input_type->value_case() != TypeProto::kTensorType) {
-    fail_type_inference("Input ", inputIndex, " expected to have tensor type");
-  }
-  if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
-    fail_type_inference("Element type of input ", inputIndex, " unknown");
-  }
   auto output_type = ctx.getOutputType(outputIndex);
-  if (output_type->value_case() == TypeProto::kTensorType ||
-      output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-    output_type->mutable_tensor_type()->set_elem_type(
-        input_type->tensor_type().elem_type());
-  } else {
-    // This is not expected to happen
-    fail_type_inference(
-        "Output ", outputIndex, " expected to have tensor type");
-  }
+  propagateElemTypeWithValidation(input_type, output_type);
 }
 
-inline void propagateElemTypeFromDtypeToOutput(
-    InferenceContext& ctx,
-    const int& data_type,
-    size_t outputIndex) {
-  auto attribute_tensor_datatype = data_type;
-  auto output_type = ctx.getOutputType(outputIndex);
-  if (output_type->value_case() == TypeProto::kTensorType ||
-      output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-    output_type->mutable_tensor_type()->set_elem_type(
-        attribute_tensor_datatype);
-  } else {
-    // This is not expected to happen
-    fail_type_inference(
-        "Output ", outputIndex, " expected to have tensor type");
-  }
-}
-
-inline void propagateElemTypeFromDtypeToOutput(
+inline void propagateElemTypeFromAttributeTensorToOutput(
     InferenceContext& ctx,
     const AttributeProto* attr,
     size_t outputIndex) {
@@ -251,12 +237,20 @@ inline void propagateElemTypeFromDtypeToOutput(
     fail_type_inference("Attribute expected to have a one-dim tensor");
   }
   auto attribute_tensor_datatype = attr->t().data_type();
-  propagateElemTypeFromDtypeToOutput(
-      ctx, attribute_tensor_datatype, outputIndex);
+  validateAndSetElemType(attribute_tensor_datatype, ctx.getOutputType(outputIndex));
+}
+
+inline bool hasInputType(InferenceContext& ctx, size_t idx) {
+  if (idx >= ctx.getNumInputs()) {
+    return false;
+  }
+  auto inputType = ctx.getInputType(idx);
+  return inputType->has_tensor_type() &&
+      inputType->tensor_type().elem_type() != TensorProto::UNDEFINED;
 }
 
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
-  return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
+  return ctx.getNumInputs() > n && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
       ctx.getInputType(n)->tensor_type().has_shape();
 }
@@ -282,11 +276,11 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
     size_t fromDimIndex) {
   auto output_type = ctx.getOutputType(outputIndex);
   auto input_type = ctx.getInputType(inputIndex);
-  if (TypeProto::kTensorType != output_type->value_case()) {
+  if (!output_type->has_tensor_type()) {
     fail_type_inference(
         "Output ", outputIndex, " expected to have tensor type");
   }
-  if (TypeProto::kTensorType != input_type->value_case()) {
+  if (!input_type->has_tensor_type()) {
     fail_type_inference("Input ", inputIndex, " expected to have tensor type");
   }
   auto* dim = ctx.getOutputType(outputIndex)
@@ -302,8 +296,8 @@ inline void propagateShapeFromInputToOutput(
     size_t outputIndex) {
   auto output_type = ctx.getOutputType(outputIndex);
   auto input_type = ctx.getInputType(inputIndex);
-  if (TypeProto::kTensorType != input_type->value_case() ||
-      TypeProto::kTensorType != output_type->value_case()) {
+  if (!input_type->has_tensor_type() ||
+      !output_type->has_tensor_type()) {
     throw std::runtime_error(ONNX_NAMESPACE::to_string(
         ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
   }
@@ -312,27 +306,24 @@ inline void propagateShapeFromInputToOutput(
       ctx.getInputType(inputIndex)->tensor_type().shape();
 }
 
-inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  if (!hasNInputShapes(ctx, 1)) {
-    return;
+inline void propagateShapeAndTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  if (hasInputType(ctx, inputIndex)) {
+    propagateElemTypeFromInputToOutput(ctx, inputIndex, outputIndex);
   }
-  propagateShapeFromInputToOutput(ctx, 0, 0);
+  if (hasInputShape(ctx, inputIndex)) {
+    propagateShapeFromInputToOutput(ctx, inputIndex, outputIndex);
+  }
 }
 
-inline void updateOutputElemType(
-    InferenceContext& ctx,
-    size_t outputIndex,
-    int32_t elemType) {
-  auto output_type = ctx.getOutputType(outputIndex);
-  if ((output_type != nullptr) &&
-      (output_type->value_case() == TypeProto::kTensorType ||
-       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
-    output_type->mutable_tensor_type()->set_elem_type(elemType);
-  } else {
-    // This is not expected to happen
-    fail_type_inference(
-        "Output ", outputIndex, " expected to have tensor type");
+inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+  propagateShapeAndTypeFromInputToOutput(ctx, 0, 0);
+}
+
+inline void propagateShapeAndTypeFromFirstInputToAllOutputs(InferenceContext& ctx) {
+  for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+    if(ctx.hasOutput(i)) {
+      propagateShapeAndTypeFromInputToOutput(ctx, 0, i);
+    }
   }
 }
 
@@ -346,7 +337,7 @@ inline void propagateElemTypeFromAttributeToOutput(
   auto attr_proto = ctx.getAttribute(attributeName);
   if (nullptr == attr_proto) { // attribute not present
     if (default_value != TensorProto::UNDEFINED) {
-      updateOutputElemType(ctx, outputIndex, default_value);
+      validateAndSetElemType(default_value, ctx.getOutputType(outputIndex));
       return;
     } else
       fail_type_inference(
@@ -359,18 +350,18 @@ inline void propagateElemTypeFromAttributeToOutput(
         " should be of integer type and specify a type.");
   }
   auto attr_value = attr_proto->i();
-  auto elem_type = static_cast<TensorProto_DataType>(attr_value);
-  if (!TensorProto_DataType_IsValid(elem_type)) {
+  if (!TensorProto_DataType_IsValid(attr_value)) {
     fail_type_inference(
         "Attribute ", attributeName, " does not specify a valid type.");
   }
-  updateOutputElemType(ctx, outputIndex, elem_type);
+  auto elem_type = static_cast<TensorProto_DataType>(attr_value);
+  validateAndSetElemType(elem_type, ctx.getOutputType(outputIndex));
 }
 
 inline TensorShapeProto* getOutputShape(InferenceContext& ctx, size_t n) {
   auto output_type = ctx.getOutputType(n);
   if ((output_type != nullptr) &&
-      (output_type->value_case() == TypeProto::kTensorType ||
+      (output_type->has_tensor_type() ||
        output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
     return output_type->mutable_tensor_type()->mutable_shape();
   } else

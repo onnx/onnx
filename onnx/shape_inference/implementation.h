@@ -74,7 +74,9 @@ struct InferenceContextImpl : public InferenceContext {
       }
     }
 
-    allOutputTypes_.resize(n.output_size());
+    for (const auto& output : n.output()) {
+      allOutputs_.emplace_back(std::make_pair(output, TypeProto{}));
+    }
   }
 
   const AttributeProto* getAttribute(const std::string& name) const override {
@@ -107,15 +109,20 @@ struct InferenceContextImpl : public InferenceContext {
   }
 
   size_t getNumOutputs() const override {
-    return allOutputTypes_.size();
+    return allOutputs_.size();
+  }
+
+  bool hasOutput(size_t index) override {
+    // Optional tensors might be omitted are specified as empty string
+    return index < getNumOutputs() && !allOutputs_[index].first.empty();
   }
 
   TypeProto* getOutputType(size_t index) override {
-    if (index >= allOutputTypes_.size()) {
+    if (index >= getNumOutputs()) {
       throw std::runtime_error(
           "output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
-    return &allOutputTypes_[index];
+    return &allOutputs_[index].second;
   }
 
   GraphInferencer* getGraphAttributeInferencer(
@@ -152,7 +159,7 @@ struct InferenceContextImpl : public InferenceContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
-  std::vector<TypeProto> allOutputTypes_;
+  std::vector<std::pair<std::string, TypeProto>> allOutputs_;
   const GraphInferenceContext* graphInferenceContext_;
 
   // mutable as internal cache of GraphInferencer instances
