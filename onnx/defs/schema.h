@@ -692,7 +692,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it its version is not"
+              << op_schema.line() << ", but it its version is not "
               << "in the inclusive range [" << lower_bound_incl << ", "
               << upper_bound_incl << "] (usually, this means you "
               << "bumped the operator version but "
