@@ -9814,6 +9814,69 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>downsample_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+output = np.array([[[
+    [1, 3]
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_nearest')
+```
+
+</details>
+
+
 ### <a name="Scan"></a><a name="scan">**Scan**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
