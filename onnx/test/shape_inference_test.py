@@ -245,7 +245,7 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
             opset_imports=[helper.make_opsetid("", 9)])
-            
+
     def test_resize(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),

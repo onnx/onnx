@@ -37,7 +37,7 @@ class Resize(Base):
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_nearest')
-               
+
     @staticmethod
     def export_downsample_nearest():  # type: () -> None
         node = onnx.helper.make_node(
