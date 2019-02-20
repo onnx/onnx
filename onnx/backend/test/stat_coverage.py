@@ -234,7 +234,7 @@ def main():
     else:
         fname = os.path.join(docs_dir, 'TestCoverage.md')
 
-    with io.open(fname, 'w+', newline='') as f:  # type: ignore
+    with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
         gen_outlines(f, ml)
         gen_node_test_coverage(schemas, f, ml)
         gen_model_test_coverage(schemas, f, ml)
