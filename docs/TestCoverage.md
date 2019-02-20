@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 111/118 (94.07%, 5 generators excluded) common operators.
+Node tests have covered 112/119 (94.12%, 5 generators excluded) common operators.
 
 Node tests have covered 2/11 (18.18%, 0 generators excluded) experimental operators.
 
@@ -5171,6 +5171,67 @@ for test_name, shape in test_cases.items():
     reshaped = np.reshape(data, shape)
     expect(node, inputs=[data, shape], outputs=[reshaped],
            name='test_reshape_' + test_name)
+```
+
+</details>
+
+
+### Resize
+There are 2 test cases, listed as following:
+<details>
+<summary>downsample_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+output = np.array([[[
+    [1, 3]
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_nearest')
+```
+
+</details>
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_nearest')
 ```
 
 </details>
