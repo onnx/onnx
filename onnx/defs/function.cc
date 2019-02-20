@@ -268,11 +268,34 @@ FunctionProto FunctionProtoHelper::Define(
   return func;
 }
 
+std::unordered_map<std::string, AttributeProto_AttributeType>
+    FunctionProtoHelper ::AttributeProtoWrapper::attr_name_map = {
+        {"float", AttributeProto_AttributeType_FLOAT},
+        {"int", AttributeProto_AttributeType_INT},
+        {"string", AttributeProto_AttributeType_STRING},
+        {"tensor", AttributeProto_AttributeType_TENSOR},
+        {"graph", AttributeProto_AttributeType_GRAPH},
+        {"floats", AttributeProto_AttributeType_FLOATS},
+        {"ints", AttributeProto_AttributeType_INTS},
+        {"strings", AttributeProto_AttributeType_STRINGS},
+        {"tensors", AttributeProto_AttributeType_TENSORS},
+        {"graphs", AttributeProto_AttributeType_GRAPHS}};
+
 void FunctionProtoHelper::AttributeProtoWrapper::InitFromString(
     const std::string& val) {
   if (val.size() >= 2 && val[0] == '$') {
-    proto.set_ref_attr_name(val.substr(1, val.size() - 1));
-    // set type??
+    std::size_t found = val.find(':');
+
+    proto.set_ref_attr_name(val.substr(1, found - 1));
+
+    std::string type = val.substr(found + 1, val.size() - found - 1);
+
+    auto it = attr_name_map.find(type);
+    if (it != attr_name_map.end()) {
+      proto.set_type(it->second);
+    } else {
+      throw std::exception();
+    }
 
   } else {
     // set as string

@@ -27,10 +27,13 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
           // nodes: {outputs, op, inputs, attributes}
           FunctionProtoHelper::Const<float>("Exponent", 2.0f),
           FunctionProtoHelper::Const<float>("Epsilon", float(1e-9)),
-          {{"X_RM"}, "ReduceMean", {"X"}, {{"axes", "$axes"}}},
+          {{"X_RM"}, "ReduceMean", {"X"}, {{"axes", "$axes:ints"}}},
           {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
           {{"X_squared"}, "Pow", {"X", "Exponent"}},
-          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", "$axes"}}},
+          {{"E_Xsquared"},
+           "ReduceMean",
+           {"X_squared"},
+           {{"axes", "$axes:ints"}}},
           {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
           {{"STD"}, "Sqrt", {"Variance"}},
           {{"X_variance"}, "Sub", {"X", "X_RM"}},
@@ -205,19 +208,20 @@ ONNX_FUNCTION_BUILD(
     9,
     FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
 
-// FunctionProto SoftmaxGradFunc = FunctionProtoHelper::Define(
-//    "SoftmaxGrad", //
-//    {"x", "grad_softmax"},
-//    {"grad_x"},
-//    {},
-//    {{{"softmax"}, "Softmax", {"x"}},
-//     {{"n0"}, "Mul", {"grad_softmax", "softmax"}},
-//     FunctionProtoHelper::Const("indices", 1.0f),
-//     {{"n1"}, "Sum", {"n0", "indices"}},
-//     FunctionProtoHelper::Const<float>("newshape", {-1, 1}),
-//     {{"n2"}, "Reshape", {"n1", "newshape"}},
-//     {{"n3"}, "Sub", {"grad_softmax", "n2"}},
-//     {{"grad_x"}, "Mul", {"n3", "softmax"}}});
+FunctionProto SoftmaxGradFunc = FunctionProtoHelper::Define(
+   "SoftmaxGrad", //
+   9,
+   {"x", "grad_softmax"},
+   {"grad_x"},
+   {},
+   {{{"softmax"}, "Softmax", {"x"}},
+    {{"n0"}, "Mul", {"grad_softmax", "softmax"}},
+    FunctionProtoHelper::Const("indices", 1.0f),
+    {{"n1"}, "Sum", {"n0", "indices"}},
+    FunctionProtoHelper::Const<float>("newshape", {-1, 1}),
+    {{"n2"}, "Reshape", {"n1", "newshape"}},
+    {{"n3"}, "Sub", {"grad_softmax", "n2"}},
+    {{"grad_x"}, "Mul", {"n3", "softmax"}}});
 
 // ONNX_FUNCTION_BUILD(
 //    SoftmaxGrad,

@@ -117,6 +117,9 @@ class FunctionProtoHelper {
   struct AttributeProtoWrapper {
     AttributeProto proto;
 
+    static std::unordered_map<std::string, AttributeProto_AttributeType>
+        attr_name_map;
+
     AttributeProtoWrapper() {}
 
     template <typename T>
@@ -146,30 +149,41 @@ class FunctionProtoHelper {
   template <typename T>
   static ONNX_NAMESPACE::TensorProto ToTensor(T val);
 
-  template <>
-  static ONNX_NAMESPACE::TensorProto ToTensor<float>(float val) {
-    TensorProto t;
-    t.set_data_type(TensorProto_DataType_FLOAT);
-    t.add_float_data(val);
-    return t;
-  }
-
   template <typename T>
   static ONNX_NAMESPACE::TensorProto ToTensor(std::vector<T> vals);
 
-  template <>
-  static ONNX_NAMESPACE::TensorProto ToTensor<float>(std::vector<float> vals) {
-    TensorProto t;
-    t.set_data_type(TensorProto_DataType_FLOAT);
-    for (auto val : vals) {
-      t.add_float_data(val);
-    }
-    return t;
+#define DEFINE_TO_TENSOR_ONE(ARG_TYPE, ATTR_TYPE, FIELD)                \
+  template <>                                                           \
+  static ONNX_NAMESPACE::TensorProto ToTensor<ARG_TYPE>(ARG_TYPE val) { \
+    TensorProto t;                                                      \
+    t.set_data_type(TensorProto_DataType_##ATTR_TYPE);                  \
+    t.add_##FIELD##_data(val);                                          \
+    return t;                                                           \
   }
+
+#define DEFINE_TO_TENSOR_LIST(ARG_TYPE, ATTR_TYPE, FIELD) \
+  template <>                                             \
+  static ONNX_NAMESPACE::TensorProto ToTensor<ARG_TYPE>(  \
+      std::vector<ARG_TYPE> vals) {                       \
+    TensorProto t;                                        \
+    t.clear_float_data();                                 \
+    t.set_data_type(TensorProto_DataType_##ATTR_TYPE);    \
+    for (const auto& val : vals) {                        \
+      t.add_##FIELD##_data(val);                          \
+    }                                                     \
+    return t;                                             \
+  }
+
+  DEFINE_TO_TENSOR_ONE(float, FLOAT, float);
+  DEFINE_TO_TENSOR_ONE(int, INT32, int32);
+  DEFINE_TO_TENSOR_ONE(double, DOUBLE, double);
+  DEFINE_TO_TENSOR_LIST(float, FLOAT, float);
+  DEFINE_TO_TENSOR_LIST(int, INT32, int32);
+  DEFINE_TO_TENSOR_LIST(double, DOUBLE, double);
 
   template <typename T>
   static NodeDef Const(const std::string& name, const T& val) {
-    NodeDef n = {{name}, "Const"};
+    NodeDef n = {{name}, "Constant"};
 
     AttributeProto attr;
     attr.set_name("value");
@@ -185,7 +199,7 @@ class FunctionProtoHelper {
 
   template <typename T>
   static NodeDef Const(const std::string& name, const std::vector<T>& vals) {
-    NodeDef n = {{name}, "Const"};
+    NodeDef n = {{name}, "Constant"};
 
     AttributeProto attr;
     attr.set_name("value");
