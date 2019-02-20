@@ -308,13 +308,15 @@ void verify_node_schema(
     const NodeProto& node,
     const OpSchema* schema,
     int domain_version) {
-  if (!schema || schema->Deprecated()) {
-    // There's no primitive operator for the node.
-    // Check whether it's referring to a function.
+  if (!schema ) {
     fail_check(
         "No Op registered for " + node.op_type() + " with domain_version of " +
         ONNX_NAMESPACE::to_string(domain_version));
-  } else {
+  } else if (schema->Deprecated()) {
+    fail_check(
+        "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
+        ONNX_NAMESPACE::to_string(domain_version));
+  }  else {
     schema->Verify(node);
   }
 }
