@@ -5201,12 +5201,12 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_resize_nearest')
+       name='test_resize_downsample_nearest')
 ```
 
 </details>
 <details>
-<summary>nearest</summary>
+<summary>upsample_nearest</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -5231,7 +5231,7 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_resize_nearest')
+       name='test_resize_upsample_nearest')
 ```
 
 </details>
