@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -35,14 +37,19 @@ class Cast(Base):
                     TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
                 if ('STRING' == to_type):
                     # Converting input to str, then give it np.object dtype for generating script
-                    output = input.astype(np.dtype('str'))
-                    output = output.astype(np.dtype(np.object))
+                    ss = []
+                    for i in input.flatten():
+                        s = str(i).encode('utf-8')
+                        su = s.decode('utf-8')
+                        ss.append(su)
+
+                    output = np.array(ss).astype(np.object).reshape([3, 4])
                 else:
                     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
             else:
-                input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
-                   ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
-                   ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
+                input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+                    u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+                    u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
                 output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
             node = onnx.helper.make_node(
                 'Cast',

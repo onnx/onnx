@@ -114,6 +114,7 @@
   * <a href="#Split">Split</a>
   * <a href="#Sqrt">Sqrt</a>
   * <a href="#Squeeze">Squeeze</a>
+  * <a href="#StringNormalizer">StringNormalizer</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
   * <a href="#Tan">Tan</a>
@@ -1669,14 +1670,19 @@ for from_type, to_type in test_cases:
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
         if ('STRING' == to_type):
             # Converting input to str, then give it np.object dtype for generating script
-            output = input.astype(np.dtype('str'))
-            output = output.astype(np.dtype(np.object))
+            ss = []
+            for i in input.flatten():
+                s = str(i).encode('utf-8')
+                su = s.decode('utf-8')
+                ss.append(su)
+
+            output = np.array(ss).astype(np.object).reshape([3, 4])
         else:
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
-        input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
-           ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
-           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
+        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
@@ -11518,6 +11524,187 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+
+
+### <a name="StringNormalizer"></a><a name="stringnormalizer">**StringNormalizer**</a>
+
+  StringNormalization performs string operations for basic cleaning. 
+  This operator has only one input (denoted by X) and only one output 
+  (denoted by Y). This operator first examines the elements in the X, 
+  and removes elements specified in "stopwords" attribute. 
+  After removing stop words, the intermediate result can be further lowercased, 
+  uppercased, or just returned depending the "case_change_action" attribute.
+  This operator only accepts [C]- and [1, C]-tensor.
+  If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+  if input shape is [C] and shape [1, 1] if input shape is [1, C]. 
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>case_change_action</tt> : string (default is NONE)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE". Default is "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (default is 0)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive. Default is false</dd>
+<dt><tt>locale</tt> : string</dt>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
+<dt><tt>stopwords</tt> : list of strings</dt>
+<dd>List of stop words. If not set, no word would be removed from X.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to normalize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Normalized strings</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>monday_casesensintive_lower</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='LOWER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_lower')
+```
+
+</details>
+
+
+<details>
+<summary>monday_casesensintive_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_nochangecase')
+```
+
+</details>
+
+
+<details>
+<summary>monday_casesensintive_upper</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper')
+```
+
+</details>
+
+
+<details>
+<summary>monday_empty_output</summary>
+
+```python
+input = np.array([u'monday', u'monday']).astype(np.object)
+output = np.array([u'']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
+```
+
+</details>
+
+
+<details>
+<summary>monday_insensintive_upper_twodim</summary>
+
+```python
+input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape([1, 6])
+
+# It does upper case cecedille, accented E
+# and german umlaut but fails
+# with german eszett
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape([1, 4])
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_twodim')
+```
+
+</details>
+
+
+<details>
+<summary>nostopwords_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday']).astype(np.object)
+output = input
+
+# No stopwords. This is a NOOP
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwords_nochangecase')
 ```
 
 </details>
