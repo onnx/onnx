@@ -894,8 +894,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           // TODO: unclear what results should be if axis has less than k
           // elements.
 		  // Infer output shape if 'K' is available
-		  if (ctx.getNumInputs() == static_cast<size_t>(2)) {
-			auto k = ctx.getInputData(1);  
+		  if (hasNInputShapes(ctx, 2)) {
+			auto k_shape_dim_size = getInputShape(ctx, 1).dim_size()
+			if(k_shape_dim_size > 1) {
+				fail_shape_inference("K input must be a one-dimensional tensor.");
+			}			
+			auto k = ctx.getInputData(1);
             TensorShapeProto result_shape = input_shape;
             result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
 			updateOutputShape(ctx, 0, result_shape);
