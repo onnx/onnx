@@ -842,7 +842,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(TopK_ver1_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
-		.Input(1, "K", "A 1-D tensor containing a single value corresponding to the number of top elements to retrieve", "T1")
+		.Input(1, "K", "A 1-D tensor containing a single value corresponding to the number of top elements to retrieve", "tensor(int64)")
         .Output(
             0,
             "Values",
@@ -859,11 +859,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain optional K tensor to int64 tensors.")			
+            "Constrain input and output types to float tensors.")		
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
@@ -895,10 +891,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           // elements.
 		  // Infer output shape if 'K' is available
 		  if (hasNInputShapes(ctx, 2)) {
-			auto k_shape_dim_size = getInputShape(ctx, 1).dim_size()
-			if(k_shape_dim_size > 1) {
-				fail_shape_inference("K input must be a one-dimensional tensor.");
-			}			
+			auto k_shape_dim_size = getInputShape(ctx, 1).dim_size();
+			if(k_shape_dim_size > 1)
+				fail_shape_inference("K input must be a one-dimensional tensor.");			
 			auto k = ctx.getInputData(1);
             TensorShapeProto result_shape = input_shape;
             result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
