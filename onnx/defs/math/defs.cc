@@ -823,7 +823,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               resultShape;
         }));
 
-static const char* TopK_ver1_doc = R"DOC(
+static const char* TopK_ver10_doc = R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
@@ -838,10 +838,11 @@ Given two equivalent values, this operator uses the indices along the axis  as
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    1,
+    10,
     OpSchema()
         .SetDoc(TopK_ver1_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
+		.Input(1, "K", "A 1-D tensor containing a single value corresponding to the number of top elements to retrieve", "T1")
         .Output(
             0,
             "Values",
@@ -860,14 +861,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
+            "T1",
+            {"tensor(int64)"},
+            "Constrain optional K tensor to int64 tensors.")			
+        .TypeConstraint(
             "I",
             {"tensor(int64)"},
             "Constrain index tensor to int64")
-        .Attr(
-            "k",
-            "Number of top elements to retrieve",
-            AttributeProto::INT,
-            true)
         .Attr(
             "axis",
             "Dimension on which to do the sort.",
@@ -893,10 +893,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Invalid value for attribute k");
           // TODO: unclear what results should be if axis has less than k
           // elements.
-          TensorShapeProto result_shape = input_shape;
-          result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
-          updateOutputShape(ctx, 0, result_shape);
-          updateOutputShape(ctx, 1, result_shape);
+		  // Infer output shape if 'K' is available
+		  if (ctx.getNumInputs() == static_cast<size_t>(2)) {
+			auto k = ctx.getInputData(1);  
+            TensorShapeProto result_shape = input_shape;
+            result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
+			updateOutputShape(ctx, 0, result_shape);
+			updateOutputShape(ctx, 1, result_shape);				
+		  } else {
+		  // Infer output shapes' rank in any case
+			auto* output_shape_0 = getOutputShape(ctx, 0);
+			auto* output_shape_1 = getOutputShape(ctx, 1);
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape_0->add_dim();
+			  output_shape_1->add_dim();
+            }			
+		  }
+		  return;
         }));
 
 static const char* Sin_ver7_doc = R"DOC(
