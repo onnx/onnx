@@ -83,7 +83,17 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     if arr.dtype == np.object:
         # Special care for strings.
         tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
-        for e in arr:
+        # TODO: Introduce full string support.
+        # We flatten the array in case there are 2-D arrays are specified
+        # We throw the error below if we have a 3-D array or some kind of other
+        # object. If you want more complex shapes then follow the below instructions.
+        # Unlike other types where the shape is automatically inferred from
+        # nested arrays of values, the only reliable way now to feed strings
+        # is to put them into a flat array then specify type astype(np.object)
+        # (otherwise all strings may have different types depending on their length)
+        # and then specify shape .reshape([x, y, z])
+        flat_array = arr.flatten()
+        for e in flat_array:
             if isinstance(e, text_type):
                 tensor.string_data.append(e.encode('utf-8'))
             elif isinstance(e, np.ndarray):
@@ -91,7 +101,8 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
                     if isinstance(s, text_type):
                         tensor.string_data.append(s.encode('utf-8'))
             else:
-                raise NotImplementedError("Unrecognized object in the object array, expect a string, or array of bytes")
+                raise NotImplementedError(
+                    "Unrecognized object in the object array, expect a string, or array of bytes: ", str(type(e)))
         return tensor
 
     # For numerical types, directly use numpy raw bytes.
