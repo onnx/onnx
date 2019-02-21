@@ -3048,9 +3048,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
-  Dropout takes one input data (`Tensor<float>`) and produces two Tensor outputs,
-  output (`Tensor<float>`) and mask (`Tensor<bool>`). Depending on whether it is in
-  test mode or not, the output Y will either be a random dropout, or a simple
+  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
+  output (`Tensor<float>`) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -3090,7 +3090,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain mask output types to boolean tensors.</dd>
+<dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
 
