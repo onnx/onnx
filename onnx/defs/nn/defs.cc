@@ -1281,7 +1281,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             propagateShapeAndTypeFromFirstInput(ctx);
             if (ctx.getNumOutputs() == 2) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 1);
+                updateOutputElemType(ctx, 1, TensorProto::BOOL);
                 if (hasNInputShapes(ctx, 1)) {
                     propagateShapeFromInputToOutput(ctx, 0, 1);
                 }
