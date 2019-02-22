@@ -24,7 +24,7 @@ class TopK(Base):
             [4, 5, 6, 7],
             [8, 9, 10, 11],
         ], dtype=np.float32)
-		K = np.array([3], dtype=np.int64)
+        K = np.array([3], dtype=np.int64)
         values_ref = np.array([
             [3, 2, 1],
             [7, 6, 5],
