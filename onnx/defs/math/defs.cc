@@ -872,7 +872,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         // Type inference:
         propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        updateOutputElemType(ctx, 1, ONNX_NAMESPACE::TensorProto::INT64);
+        updateOutputElemType(ctx, 1, TensorProto::INT64);
 
         // Shape inference:
         if (!hasInputShape(ctx, 0))
@@ -889,9 +889,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         // Infer output shape if 'K' is available
         const auto* k = ctx.getInputData(1);
         if (nullptr != k) {
-          if (k->dims_size() != 1 || k->int64_data_size() != 1 || k->data_type() != ONNX_NAMESPACE::TensorProto::INT64)
+          if (k->dims_size() != 1 || k->int64_data_size() != 1 || k->data_type() != TensorProto::INT64)
             fail_shape_inference("K input must be a one-dimensional tensor of size 1 and of type int64.");
-          ONNX_NAMESPACE::TensorShapeProto result_shape = input_shape;
+          TensorShapeProto result_shape = input_shape;
           result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k->int64_data(0));
           updateOutputShape(ctx, 0, result_shape);
           updateOutputShape(ctx, 1, result_shape);
