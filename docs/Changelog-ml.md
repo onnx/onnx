@@ -963,3 +963,4 @@ This version of the operator has been available since version 2 of the 'ai.onnx.
 <dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
+
