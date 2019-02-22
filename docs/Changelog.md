@@ -6976,8 +6976,8 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="Dropout-7"></a>**Dropout-7**</a>
 
-  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-  output (`Tensor<float>`) and mask (`Tensor<bool>`). Depending on whether it is
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
   in test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
