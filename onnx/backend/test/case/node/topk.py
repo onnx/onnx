@@ -38,4 +38,3 @@ class TopK(Base):
 
         expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
                name='test_top_k')
-               
