@@ -4803,7 +4803,6 @@ This version of the operator has been available since version 1 of the default O
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
@@ -9714,4 +9713,55 @@ This version of the operator has been available since version 10 of the default 
 
 #### Type Constraints
 
+
+### <a name="TopK-10"></a>**TopK-10**</a>
+
+  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+  
+  Given two equivalent values, this operator uses the indices along the axis  as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Dimension on which to do the sort.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : I</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
 
