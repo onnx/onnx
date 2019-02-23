@@ -1247,9 +1247,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Dropout_ver7_doc = R"DOC(
-Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-test mode or not, the output Y will either be a random dropout, or a simple
+Dropout takes one input floating tensor and produces two tensor outputs,
+output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+in test mode or not, the output Y will either be a random dropout, or a simple
 copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
 )DOC";
@@ -1266,12 +1266,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Output(0, "output", "The output.", "T")
-        .Output(1, "mask", "The output mask.", "T", OpSchema::Optional)
+        .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain output mask types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateShapeAndTypeFromFirstInput(ctx);
+            if (ctx.getNumOutputs() == 2) {
+                updateOutputElemType(ctx, 1, TensorProto::BOOL);
+                if (hasNInputShapes(ctx, 1)) {
+                    propagateShapeFromInputToOutput(ctx, 0, 1);
+                }
+            }
+        }));
 
 static const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
