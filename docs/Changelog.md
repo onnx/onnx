@@ -6976,9 +6976,9 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="Dropout-7"></a>**Dropout-7**</a>
 
-  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-  test mode or not, the output Y will either be a random dropout, or a simple
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -7006,7 +7006,7 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T</dt>
+<dt><tt>mask</tt> (optional) : T1</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -7015,6 +7015,8 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
 ### <a name="Equal-7"></a>**Equal-7**</a>
@@ -9667,4 +9669,51 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
+
+## Version 10 of the default ONNX operator set
+### <a name="StringNormalizer-10"></a>**StringNormalizer-10**</a>
+
+  StringNormalization performs string operations for basic cleaning. 
+  This operator has only one input (denoted by X) and only one output 
+  (denoted by Y). This operator first examines the elements in the X, 
+  and removes elements specified in "stopwords" attribute. 
+  After removing stop words, the intermediate result can be further lowercased, 
+  uppercased, or just returned depending the "case_change_action" attribute.
+  This operator only accepts [C]- and [1, C]-tensor.
+  If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+  if input shape is [C] and shape [1, 1] if input shape is [1, C]. 
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>case_change_action</tt> : string (default is NONE)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE". Default is "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (default is 0)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive. Default is false</dd>
+<dt><tt>locale</tt> : string</dt>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
+<dt><tt>stopwords</tt> : list of strings</dt>
+<dd>List of stop words. If not set, no word would be removed from X.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to normalize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Normalized strings</dd>
+</dl>
+
+#### Type Constraints
+
 

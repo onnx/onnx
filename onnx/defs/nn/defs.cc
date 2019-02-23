@@ -732,7 +732,8 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   // don't bother with legacy auto_pad for now
-  if (ctx.getAttribute("auto_pad")) {
+  const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+  if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "NOTSET")) {
     return;
   }
 
@@ -1117,16 +1118,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For image data, input dimensions become (N x C x H x W). "
             "The op also accepts single dimension input of size N in which case C is assumed to be 1",
             "T")
-        .Input(
-            1,
-            "scale",
-            "Scale tensor of shape (C).",
-            "T")
-        .Input(
-            2,
-            "B",
-            "Bias tensor of shape (C).",
-            "T")
+        .Input(1, "scale", "Scale tensor of shape (C).", "T")
+        .Input(2, "B", "Bias tensor of shape (C).", "T")
         .Input(
             3,
             "mean",
@@ -1254,9 +1247,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Dropout_ver7_doc = R"DOC(
-Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-test mode or not, the output Y will either be a random dropout, or a simple
+Dropout takes one input floating tensor and produces two tensor outputs,
+output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+in test mode or not, the output Y will either be a random dropout, or a simple
 copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
 )DOC";
@@ -1273,11 +1266,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Output(0, "output", "The output.", "T")
-        .Output(1, "mask", "The output mask.", "T", OpSchema::Optional)
+        .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain output mask types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             propagateShapeAndTypeFromFirstInput(ctx);
             if (ctx.getNumOutputs() == 2) {
@@ -1549,5 +1546,78 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
+
+static const char* StringNormalizer_ver10_doc = R"DOC(
+StringNormalization performs string operations for basic cleaning. 
+This operator has only one input (denoted by X) and only one output 
+(denoted by Y). This operator first examines the elements in the X, 
+and removes elements specified in "stopwords" attribute. 
+After removing stop words, the intermediate result can be further lowercased, 
+uppercased, or just returned depending the "case_change_action" attribute.
+This operator only accepts [C]- and [1, C]-tensor.
+If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+if input shape is [C] and shape [1, 1] if input shape is [1, C]. 
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    StringNormalizer,
+    10,
+    OpSchema()
+        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
+        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
+        .Attr(
+            std::string("case_change_action"),
+            std::string(
+                "string enum that cases output to be lowercased/uppercases/unchanged."
+                " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
+            AttributeProto::STRING,
+            std::string("NONE"))
+        .Attr(
+            std::string("is_case_sensitive"),
+            std::string(
+                "Boolean. Whether the identification of stop words in X is case-sensitive. Default is false"),
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "stopwords",
+            "List of stop words. If not set, no word would be removed from X.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "locale",
+            "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
+            "Default en_US or platform specific equivalent as decided by the implementation.",
+            AttributeProto::STRING,
+            OPTIONAL)
+        .SetDoc(StringNormalizer_ver10_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+          output_elem_type->set_elem_type(TensorProto::STRING);
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
+          TensorShapeProto output_shape;
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto dim_size = input_shape.dim_size();
+          // Last axis dimension is unknown if we have stop-words since we do
+          // not know how many stop-words are dropped
+          if (dim_size == 1) {
+            // Unknown output dimension
+            output_shape.add_dim();
+          } else if (dim_size == 2) {
+            // Copy B-dim
+            auto& b_dim = input_shape.dim(0);
+            if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
+              fail_shape_inference(
+                  "Input shape must have either [C] or [1,C] dimensions where C > 0");
+            }
+            *output_shape.add_dim() = b_dim;
+            output_shape.add_dim();
+          } else {
+            fail_shape_inference(
+                "Input shape must have either [C] or [1,C] dimensions where C > 0");
+          }
+          updateOutputShape(ctx, 0, output_shape);
+        }));
 
 } // namespace ONNX_NAMESPACE
