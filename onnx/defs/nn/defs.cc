@@ -1275,7 +1275,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             {"tensor(bool)"},
             "Constrain output mask types to boolean tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateShapeAndTypeFromFirstInput(ctx);
+            if (ctx.getNumOutputs() == 2) {
+                updateOutputElemType(ctx, 1, TensorProto::BOOL);
+                if (hasNInputShapes(ctx, 1)) {
+                    propagateShapeFromInputToOutput(ctx, 0, 1);
+                }
+            }
+        }));
 
 static const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
