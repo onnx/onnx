@@ -844,8 +844,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
 void RegisterSchema(OpSchema&& schema);
 
-void VerifyFunction(const OpSchema& schema);
-
 // Registers all schema of a given operator set
 template <class T>
 void RegisterOpSetSchema() {

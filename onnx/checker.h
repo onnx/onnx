@@ -85,8 +85,6 @@ struct LexicalScopeContext final {
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
-using TENSOR_TYPES_MAP =
-    std::unordered_map<std::string, std::vector<std::string>>;
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
 void check_tensor(const TensorProto& tensor, const CheckerContext&);
 void check_attribute(
@@ -103,18 +101,16 @@ void check_graph(
     const LexicalScopeContext&);
 void check_function(
     const FunctionProto& function,
-    const CheckerContext& ctx,
-    OpName_Domain_Version_Schema_Map& map,
-	TENSOR_TYPES_MAP& tc_map);
+    const CheckerContext&,
+    const LexicalScopeContext&);
 
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
-
 void VerifyFunctionNode(
-    const NodeProto&,
-    const FunctionProto&,
-    const CheckerContext&,
-    const LexicalScopeContext&);
+    const NodeProto& node,
+    const FunctionProto& func,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE
