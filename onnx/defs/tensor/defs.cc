@@ -435,17 +435,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Slice_ver1_doc = R"DOC(
+static const char* Slice_ver10_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
-dimension for each axis in the list of axes, it uses this information to
+Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+dimension and step for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represent number of elements before the end of that
 dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
 end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+If a negative value is passed for step, it represents slicing backward.
 If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 Example 1:
   data = [
       [1, 2, 3, 4],
@@ -454,8 +456,9 @@ Example 1:
   axes = [0, 1]
   starts = [1, 0]
   ends = [2, 3]
+  steps = [1, 2]
   result = [
-      [5, 6, 7],
+      [5, 7],
   ]
 Example 2:
   data = [
@@ -471,55 +474,96 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
-    1,
+    10,
     OpSchema()
-        .SetDoc(Slice_ver1_doc)
+        .SetDoc(Slice_ver10_doc)
         .Input(0, "data", "Tensor of data to extract slices from.", "T")
-        .Attr(
-            "axes",
-            "Axes that `starts` and `ends` apply to. "
-            "It's optional. If not present, will be treated as "
-            "[0, 1, ..., len(`starts`) - 1].",
-            AttributeProto::INTS,
-            OPTIONAL)
-        .Attr(
-            "starts",
-            "Starting indices of corresponding axis in `axes`",
-            AttributeProto::INTS)
-        .Attr(
-            "ends",
-            "Ending indices (exclusive) of corresponding axis in axes`",
-            AttributeProto::INTS)
+        .Input(1, "starts", "1-D tensor of starting indices of corresponding axis in `axes`", "Tind")
+        .Input(2, "ends", "1-D tensor of ending indices (exclusive) of corresponding axis in `axes`", "Tind")
+        .Input(3, "axes", "1-D tensor of axes that `starts` and `ends` apply to.", "Tind", OpSchema::Optional)
+        .Input(4, "steps", "1-D tensor of slice step of corresponding axis in `axes`. Default to 1. ", "Tind", OpSchema::Optional)
         .Output(0, "output", "Sliced data tensor.", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          size_t num_inputs = ctx.getNumInputs();
+          if (num_inputs != 3 && num_inputs != 4 && num_inputs != 5) {
+            fail_type_inference("Slice op must have either three, four or five inputs.");
+          }
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          std::vector<int64_t> starts;
-          std::vector<int64_t> ends;
-          if (!getRepeatedAttribute(ctx, "starts", starts) ||
-              !getRepeatedAttribute(ctx, "ends", ends) ||
-              starts.size() != ends.size()) {
+          // Shape Inference if 
+          //     1. 2nd and 3rd input data (starts, ends) are available.
+          // and 2. 4th and 5th optional input (axes, steps) are either not set, or set but not initializer.
+          const TensorProto* startsInitializer = ctx.getInputData(1);
+          const TensorProto* endsInitializer = ctx.getInputData(2);
+          const TensorProto* axesInitializer = hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
+          const TensorProto* stepsInitializer = hasInputShape(ctx, 4) ? ctx.getInputData(4) : nullptr;
+
+          if (!startsInitializer ||
+              !endsInitializer ||
+              (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
+              (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            return;
+          }
+
+          auto getInitializerData = [](const TensorProto* initializer) -> std::vector<int64_t> {
+            std::vector<int64_t> vec;
+            if (initializer->has_raw_data()) {
+              const std::string& bytes = initializer->raw_data();
+              vec.insert(
+                vec.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+            } else {
+              const auto& data = initializer->int64_data();
+              vec.insert(vec.end(), data.begin(), data.end());
+            }
+            return vec;
+          };
+
+          std::vector<int64_t> starts = getInitializerData(startsInitializer);
+          std::vector<int64_t> ends = getInitializerData(endsInitializer);
+
+          if (starts.size() != ends.size()) {
             fail_shape_inference(
-                "Incorrect or missing attribute value for starts and ends");
+                "Incorrect or missing input value for starts and ends");
             ;
           }
+
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          if (!axesInitializer) {
             for (int i = 0; (size_t)i < starts.size(); ++i) {
               axes.push_back(i);
             }
-          } else if (axes.size() != starts.size()) {
-            fail_shape_inference("Attribute axes has incorrect length");
-            ;
-          } else if (!std::is_sorted(axes.begin(), axes.end())) {
-            // TODO support shape inference for unsorted axes
-            return;
+          } else {
+            axes = getInitializerData(axesInitializer);
+            if (axes.size() != starts.size()) {
+              fail_shape_inference("Input axes has incorrect length");
+              ;
+            } else if (!std::is_sorted(axes.begin(), axes.end())) {
+              // TODO support shape inference for unsorted axes
+              return;
+            }
+          }
+
+          std::vector<int64_t> steps;
+          if (!stepsInitializer) {
+            steps = std::vector<int64_t>(starts.size(), 1);
+          } else {
+            steps = getInitializerData(stepsInitializer);
+            if (steps.size() != starts.size()) {
+              fail_shape_inference("Input steps has incorrect length");
+              ;
+            }
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -534,12 +578,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
               // handle some simple cases.
+              std::cout << " ends[j] " << ends[j] << " starts[j] " << starts[j] << " steps[j] " << steps[j] << std::endl;
               if (ctx.getInputType(0)
                       ->tensor_type()
                       .shape()
                       .dim((int)i)
                       .has_dim_value() &&
-                  starts[j] >= 0 && ends[j] >= 0) {
+                  starts[j] >= 0 && ends[j] >= 0 && steps[j] > 0) {
                 auto newval = std::min(
                                   (int64_t)ctx.getInputType(0)
                                       ->tensor_type()
@@ -548,6 +593,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                                       .dim_value(),
                                   ends[j]) -
                     starts[j];
+                std::cout << "gap:" << newval << std::endl;
+                std::cout << newval / steps[j] << std::endl;
+                std::cout << (newval % steps[j] && steps[j] != 1 ? 1 : 0) << std::endl;
+                newval = newval / steps[j] + (newval % steps[j] && steps[j] != 1 ? 1 : 0);
+                // if (newval % steps[j]) newval++;
+                std::cout << "newval: " << newval << std::endl;
                 if (newval >= 0) {
                   newdim->set_dim_value(newval);
                 }
