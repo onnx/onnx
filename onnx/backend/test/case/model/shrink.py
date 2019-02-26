@@ -21,11 +21,9 @@ class ShrinkTest(Base):
             nodes=[node],
             name='Shrink',
             inputs=[onnx.helper.make_tensor_value_info(
-                'x', onnx.TensorProto.FLOAT, [1,
-                                              5])],
+                'x', onnx.TensorProto.FLOAT, [5])],
             outputs=[onnx.helper.make_tensor_value_info(
-                'y', onnx.TensorProto.FLOAT, [1,
-                                              5])])
+                'y', onnx.TensorProto.FLOAT, [5])])
         model = onnx.helper.make_model(graph,
                                        producer_name='backend-test')
 
