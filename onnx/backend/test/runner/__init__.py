@@ -94,7 +94,7 @@ class Runner(object):
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def set_float_tolerance(self, rtol = None, atol = None): #type:(float, float) -> Runner
+    def set_float_tolerance(self, rtol=None, atol=None):  # type:(float, float) -> Runner
         self._rtol = rtol
         self._atol = atol
         return self
