@@ -18,10 +18,10 @@ void VerifyTypeConstraint(
     const FunctionProto* function_proto) {
   // TC for function nodes should satisfy the definition defined in the opschema
   // This is designed to be a best-effort test
+  // TODO: Revisit to have a more consummate check on it
   TENSOR_TYPES_MAP tc_map;
   std::set<std::string> primitive_types(
-      OpSchema::all_numeric_types().begin(),
-      OpSchema::all_numeric_types().end());
+      OpSchema::all_tensor_types().begin(), OpSchema::all_tensor_types().end());
   for (const auto& input : function_op.inputs()) {
     std::string name = input.GetName();
     for (const auto& t : input.GetTypes()) {

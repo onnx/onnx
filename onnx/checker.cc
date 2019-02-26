@@ -304,6 +304,59 @@ void check_attribute(
   }
 }
 
+void check_node(
+    const NodeProto& node,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx) {
+  enforce_non_empty_field(node, op_type);
+
+  if (node.input().empty() && node.output().empty()) {
+    fail_check(
+        "NodeProto (name: ",
+        node.name(),
+        ", type: ",
+        node.op_type(),
+        ") has zero input and zero output.");
+  }
+
+  // Put the removed experimental ops here
+  if (node.op_type() == "ConstantFill") {
+    std::cerr << "Warning: " << node.op_type() << " was a removed "
+      << " experimental ops. In the future, we may directly "
+      << "reject this operator. Please update your model as soon "
+      << "as possible.";
+    return;
+  }
+
+  // Resolve domain for node
+  const auto& opset_imports = ctx.get_opset_imports();
+  auto dit = opset_imports.find(node.domain());
+  if (dit == opset_imports.end()) {
+    fail_check("No opset import for domain '" + node.domain() + "'");
+  }
+  auto domain_version = dit->second;
+
+  for (const auto& attr : node.attribute()) {
+    check_attribute(attr, ctx, lex_ctx);
+  }
+
+  const auto* schema = ctx.get_schema_registry()->GetSchema(
+      node.op_type(), domain_version, node.domain());
+  if (!schema) {
+      fail_check(
+          "No Op registered for " + node.op_type() +
+          " with domain_version of " +
+          ONNX_NAMESPACE::to_string(domain_version));
+  } else if (schema->Deprecated()) {
+    fail_check(
+        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
+        ONNX_NAMESPACE::to_string(domain_version));
+  } else {
+    schema->Verify(node);
+  }
+}
+
+
 void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
@@ -376,58 +429,6 @@ void check_function(
       }
       output_names.insert(output);
     }
-  }
-}
-
-void check_node(
-    const NodeProto& node,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& lex_ctx) {
-  enforce_non_empty_field(node, op_type);
-
-  if (node.input().empty() && node.output().empty()) {
-    fail_check(
-        "NodeProto (name: ",
-        node.name(),
-        ", type: ",
-        node.op_type(),
-        ") has zero input and zero output.");
-  }
-
-  // Put the removed experimental ops here
-  if (node.op_type() == "ConstantFill") {
-    std::cerr << "Warning: " << node.op_type() << " was a removed "
-      << " experimental ops. In the future, we may directly "
-      << "reject this operator. Please update your model as soon "
-      << "as possible.";
-    return;
-  }
-
-  // Resolve domain for node
-  const auto& opset_imports = ctx.get_opset_imports();
-  auto dit = opset_imports.find(node.domain());
-  if (dit == opset_imports.end()) {
-    fail_check("No opset import for domain '" + node.domain() + "'");
-  }
-  auto domain_version = dit->second;
-
-  for (const auto& attr : node.attribute()) {
-    check_attribute(attr, ctx, lex_ctx);
-  }
-
-  const auto* schema = ctx.get_schema_registry()->GetSchema(
-      node.op_type(), domain_version, node.domain());
-  if (!schema) {
-      fail_check(
-          "No Op registered for " + node.op_type() +
-          " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
-  } else if (schema->Deprecated()) {
-    fail_check(
-        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
-        ONNX_NAMESPACE::to_string(domain_version));
-  } else {
-    schema->Verify(node);
   }
 }
 
@@ -585,20 +586,6 @@ void check_model(const std::string& model_path) {
 void check_model(const ModelProto& model) {
   CheckerContext ctx;
   check_model(model, ctx);
-}
-
-void VerifyFunctionNode(
-    const NodeProto& node,
-    const FunctionProto& func,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& lex_ctx) {
-  // Create a temporary graphproto to hold the expanded subgraph
-  GraphProto g;
-  g.set_name("func_" + func.name() + "_expanded_subgraph");
-  // To Generate unique internal tensor names
-  // while preserving node's input/output names
-  FunctionExpandHelper(node, func, g);
-  check_graph(g, ctx, lex_ctx);
 }
 
 #undef fail_check

@@ -106,11 +106,6 @@ void check_function(
 
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
-void VerifyFunctionNode(
-    const NodeProto& node,
-    const FunctionProto& func,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& lex_ctx);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE
