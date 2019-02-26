@@ -502,7 +502,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Shape Inference if 
           //     1. 2nd and 3rd input data (starts, ends) are available.
-          // and 2. 4th and 5th optional input (axes, steps) are either not set, or set but not initializer.
+          // and 2. 4th and 5th optional input (axes, steps) are either not set, or set and is initializer.
           const TensorProto* startsInitializer = ctx.getInputData(1);
           const TensorProto* endsInitializer = ctx.getInputData(2);
           const TensorProto* axesInitializer = hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
@@ -578,7 +578,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
               // handle some simple cases.
-              std::cout << " ends[j] " << ends[j] << " starts[j] " << starts[j] << " steps[j] " << steps[j] << std::endl;
               if (ctx.getInputType(0)
                       ->tensor_type()
                       .shape()
@@ -593,12 +592,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                                       .dim_value(),
                                   ends[j]) -
                     starts[j];
-                std::cout << "gap:" << newval << std::endl;
-                std::cout << newval / steps[j] << std::endl;
-                std::cout << (newval % steps[j] && steps[j] != 1 ? 1 : 0) << std::endl;
                 newval = newval / steps[j] + (newval % steps[j] && steps[j] != 1 ? 1 : 0);
-                // if (newval % steps[j]) newval++;
-                std::cout << "newval: " << newval << std::endl;
                 if (newval >= 0) {
                   newdim->set_dim_value(newval);
                 }
