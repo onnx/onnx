@@ -1,6 +1,7 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
+#include <algorithm>
 #include <cmath>
 #include "onnx/defs/schema.h"
 
