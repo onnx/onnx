@@ -447,7 +447,6 @@ void check_function(
     const CheckerContext& ctx,
     const LexicalScopeContext& /*parent_lex*/) {
   enforce_non_empty_field(function, name);
-  enforce_has_field(function, since_version);
 
   std::unordered_set<std::string> output_names;
   for (const auto& input : function.input()) {
