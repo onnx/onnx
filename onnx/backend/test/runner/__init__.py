@@ -56,6 +56,8 @@ class Runner(object):
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
         self._exclude_patterns = set()  # type: Set[Pattern[Text]]
+        self._rtol = None
+        self._atol = None
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -90,6 +92,11 @@ class Runner(object):
 
     def exclude(self, pattern):  # type: (Text) -> Runner
         self._exclude_patterns.add(re.compile(pattern))
+        return self
+
+    def set_float_tolerance(self, rtol = None, atol = None): #type:(float, float) -> Runner
+        self._rtol = rtol
+        self._atol = atol
         return self
 
     def enable_report(self):  # type: () -> Runner
@@ -163,9 +170,12 @@ class Runner(object):
                 setattr(tests, name, item.func)
         return tests
 
-    @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
+    def _assert_similar_outputs(self, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
         np.testing.assert_equal(len(ref_outputs), len(outputs))
+
+        rtol = self._rtol if self._rtol else rtol
+        atol = self._atol if self._atol else atol
+
         for i in range(len(outputs)):
             np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
             np.testing.assert_allclose(
