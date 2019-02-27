@@ -128,7 +128,12 @@
   * <a href="#Where">Where</a>
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
+<<<<<<< HEAD
   * <sub>experimental</sub> <a href="#DynamicSlice">DynamicSlice</a>
+=======
+  * <sub>experimental</sub> <a href="#Affine">Affine</a>
+  * <sub>experimental</sub> <a href="#Crop">Crop</a>
+>>>>>>> add Changelogs. Need to export ONNX_ML=0 to enable gen_doc.py for non ONNX_ML changelogs
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
   * <sub>experimental</sub> <a href="#Scale">Scale</a>
@@ -10787,14 +10792,16 @@ expect(node, inputs=[x], outputs=[y],
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
-  dimension for each axis in the list of axes, it uses this information to
+  Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+  dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
   end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If a negative value is passed for step, it represents slicing backward.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
     data = [
         [1, 2, 3, 4],
@@ -10803,8 +10810,9 @@ expect(node, inputs=[x], outputs=[y],
     axes = [0, 1]
     starts = [1, 0]
     ends = [2, 3]
+    steps = [1, 2]
     result = [
-        [5, 6, 7],
+        [5, 7],
     ]
   Example 2:
     data = [
@@ -10819,24 +10827,23 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-#### Attributes
+Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>
 
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., len(`starts`) - 1].</dd>
-<dt><tt>ends</tt> : list of ints (required)</dt>
-<dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
-<dt><tt>starts</tt> : list of ints (required)</dt>
-<dd>Starting indices of corresponding axis in `axes`</dd>
-</dl>
-
-#### Inputs
+#### Inputs (3 - 5)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
+<dt><tt>axes</tt> (optional) : Tind</dt>
+<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
+<dt><tt>steps</tt> (optional) : Tind</dt>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
 </dl>
 
 #### Outputs
@@ -10851,6 +10858,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -10862,17 +10871,18 @@ This version of the operator has been available since version 1 of the default O
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.int64)
+ends = np.array([3, 10], dtype=np.int64)
+axes = np.array([0, 1], dtype=np.int64)
+steps = np.array([1, 1], dtype=np.int64)
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice')
 ```
 
@@ -10885,17 +10895,40 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends'],
     outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
 y = x[:, :, 3:4]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends], outputs=[y],
        name='test_slice_default_axes')
+```
+
+</details>
+
+
+<details>
+<summary>slice_default_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_default_steps')
 ```
 
 </details>
@@ -10907,17 +10940,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_end_out_of_bounds')
 ```
 
@@ -10930,18 +10964,43 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.int64)
+ends = np.array([-1], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 0:-1]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_neg')
+```
+
+</details>
+
+
+<details>
+<summary>slice_neg_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([20, 10, 4], dtype=np.int64)
+ends = np.array([0, 0, 1], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -3, -2])
+y = x[20:0:-1, 10:0:-3, 4:1:-2]
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_neg_steps')
 ```
 
 </details>
@@ -10953,17 +11012,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1000],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1000:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_start_out_of_bounds')
 ```
 
@@ -12886,6 +12946,7 @@ No versioning maintained for experimental ops.
 </dl>
 
 
+<<<<<<< HEAD
 ### <sub>experimental</sub> <a name="DynamicSlice"></a><a name="dynamicslice">**DynamicSlice**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
@@ -12919,10 +12980,18 @@ No versioning maintained for experimental ops.
     result = [
         [2, 3, 4],
     ]
+=======
+### <sub>experimental</sub> <a name="Affine"></a><a name="affine">**Affine**</a>
+
+  Affine takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the affine function, y = alpha * x + beta,
+  is applied to the tensor elementwise.
+>>>>>>> add Changelogs. Need to export ONNX_ML=0 to enable gen_doc.py for non ONNX_ML changelogs
 
 #### Version
 
 No versioning maintained for experimental ops.
+<<<<<<< HEAD
 #### Inputs (3 - 4)
 
 <dl>
@@ -13067,6 +13136,77 @@ expect(node, inputs=[x, starts, ends, axes], outputs=[y],
 ```
 
 </details>
+=======
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float (default is 0.0)</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <sub>experimental</sub> <a name="Crop"></a><a name="crop">**Crop**</a>
+
+  Crop and image to the specified spatial dimensions. If scale is given,
+  then optionally start the crop offset by the left/top border amounts.
+  If scale is not provided, crop the borders as provided.
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>border</tt> : list of ints</dt>
+<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
+<dt><tt>scale</tt> : list of ints</dt>
+<dd>A 1-D values of (height, width).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+>>>>>>> add Changelogs. Need to export ONNX_ML=0 to enable gen_doc.py for non ONNX_ML changelogs
 
 
 ### <sub>experimental</sub> <a name="GRUUnit"></a><a name="gruunit">**GRUUnit**</a>
