@@ -163,8 +163,8 @@ class Runner(object):
                 setattr(tests, name, item.func)
         return tests
 
-    @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
+    @classmethod
+    def assert_similar_outputs(cls, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
             np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
@@ -174,9 +174,9 @@ class Runner(object):
                 rtol=rtol,
                 atol=atol)
 
-    @staticmethod
+    @classmethod
     @retry_excute(3)
-    def _download_model(model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+    def download_model(cls, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
         download_file = tempfile.NamedTemporaryFile(delete=False)
@@ -196,8 +196,8 @@ class Runner(object):
         finally:
             os.remove(download_file.name)
 
-    @staticmethod
-    def _prepare_model_data(model_test):  # type: (TestCase) -> Text
+    @classmethod
+    def prepare_model_data(cls, model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
@@ -214,7 +214,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            Runner._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
+            cls.download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
@@ -262,7 +262,7 @@ class Runner(object):
 
         def run(test_self, device):  # type: (Any, Text) -> None
             if model_test.model_dir is None:
-                model_dir = Runner._prepare_model_data(model_test)
+                model_dir = self.prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')
@@ -282,9 +282,9 @@ class Runner(object):
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
-                self._assert_similar_outputs(ref_outputs, outputs,
-                                             rtol=model_test.rtol,
-                                             atol=model_test.atol)
+                self.assert_similar_outputs(ref_outputs, outputs,
+                                            rtol=model_test.rtol,
+                                            atol=model_test.atol)
 
             for test_data_dir in glob.glob(
                     os.path.join(model_dir, "test_data_set*")):
@@ -305,8 +305,8 @@ class Runner(object):
                         tensor.ParseFromString(f.read())
                     ref_outputs.append(numpy_helper.to_array(tensor))
                 outputs = list(prepared_model.run(inputs))
-                self._assert_similar_outputs(ref_outputs, outputs,
-                                             rtol=model_test.rtol,
-                                             atol=model_test.atol)
+                self.assert_similar_outputs(ref_outputs, outputs,
+                                            rtol=model_test.rtol,
+                                            atol=model_test.atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
