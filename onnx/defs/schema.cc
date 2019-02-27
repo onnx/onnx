@@ -313,20 +313,48 @@ OpSchema& OpSchema::Deprecate() {
   return *this;
 }
 
+OpSchema& OpSchema::NumInputs(int min, int max) {
+  min_input_ = min;
+  max_input_ = max;
+  return *this;
+}
+
+OpSchema& OpSchema::NumInputs(int n) {
+  return NumInputs(n, n);
+}
+
+OpSchema& OpSchema::NumInputs(std::function<bool(int)> func) {
+  num_inputs_allowed_ = func;
+  return *this;
+}
+
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ =
+  return NumInputs(
       [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
-    return allowed_input_nums.count(n);
-  };
+        return allowed_input_nums.count(n);
+      });
+}
+
+OpSchema& OpSchema::NumOutputs(int min, int max) {
+  min_output_ = min;
+  max_output_ = max;
+  return *this;
+}
+
+OpSchema& OpSchema::NumOutputs(int n) {
+  return NumOutputs(n, n);
+}
+
+OpSchema& OpSchema::NumOutputs(std::function<bool(int)> func) {
+  num_outputs_allowed_ = func;
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ =
+  return NumOutputs(
       [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
-    return allowed_output_nums.count(n);
-  };
-  return *this;
+        return allowed_output_nums.count(n);
+      });
 }
 
 OpSchema& OpSchema::TypeAndShapeInferenceFunction(

@@ -234,15 +234,45 @@ class OpSchema final {
     return deprecated_;
   }
 
+  // Sets the number of inputs, either a fixed number or a min and a max，
+  // or a function that takes in the input number and produces an output
+  // number. Use only one function in the set below.
+  /**
+   * @brief A single input.
+   */
+  OpSchema& NumInputs(int n);
+  /**
+   * @brief Input could be in range [min, max], inclusive.
+   */
+  OpSchema& NumInputs(int min, int max);
   /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
+  /**
+   * @brief Input is checked with a specified function.
+   */
+  OpSchema& NumInputs(std::function<bool(int)> func);
 
+  // Sets the number of outputs, either a fixed number, a min and a max,
+  // or a function that takes in the input number and produces an output
+  // number. Use only one function in the set below.
+  /**
+   * @brief A single output.
+   */
+  OpSchema& NumOutputs(int n);
+  /**
+   * @brief Output could be in range [min, max], inclusive.
+   */
+  OpSchema& NumOutputs(int min, int max);
   /**
    * @brief Output could be one of the values specified in allowed_output_nums.
    */
   OpSchema& NumOutputs(std::set<int> allowed_output_nums);
+  /**
+   * @brief Output is checked with a specified function.
+   */
+  OpSchema& NumOutputs(std::function<bool(int)> func);
 
   // Shape Inference
   //
