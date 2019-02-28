@@ -46,4 +46,4 @@ OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
 
 def get_function_ops():  # type: () -> List[OpSchema]
     schemas = C.get_all_schemas()
-    return [schema for schema in schemas if schema.has_function_body]
+    return [schema for schema in schemas if schema.has_function_body]  # type: ignore
