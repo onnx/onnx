@@ -105,10 +105,16 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto) {
   }
   CheckerContext ctx;
   std::unordered_map<std::string, int> op_set;
-  
+  if ((int)function_proto->since_version() != op.since_version()) {
+    fail_check("Unmatched since_version defined in function op '", op.Name(), "'");
+  }
   auto version_range =
       OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(
           op.domain());
+  if (function_proto->since_version() > version_range.second ||
+      function_proto->since_version() < version_range.first) {
+    fail_check("Invalid function version in function op '", op.Name(), "'");
+  }
   
   op_set.insert(
       {op.domain(), op.since_version()});

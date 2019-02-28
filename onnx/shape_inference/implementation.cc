@@ -165,7 +165,7 @@ static void InferShapesImpl(
     } else if (schema->has_function_body()) {
       try {
         InferShapeForFunctionNode(
-            *schema->GetFunctionBody(), schema_registry, schema->since_version(), ctx);
+            *schema->GetFunctionBody(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
         (void)function_ex;
         continue;
@@ -249,9 +249,8 @@ void InferShapes(
 void InferShapeForFunctionNode(
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
-    const int since_version,
     InferenceContext& ctx) {
-  int domain_version = since_version;
+  int domain_version = (int)func.since_version();
   GraphProto g;
   // Get a temporary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
