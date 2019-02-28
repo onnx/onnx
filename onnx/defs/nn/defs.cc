@@ -743,7 +743,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+  int n_input_dims = input_shape.dim_size() - 2;
 
   auto output_shape_tensor = ctx.getInputData(3);
   if (nullptr == output_shape_tensor) {
@@ -751,8 +751,9 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
+  int size_of_output = output_shape_tensor->int64_data_size();
   if (output_shape_tensor->data_type() != TensorProto::INT64 ||
-      output_shape_tensor->int64_data_size() != n_input_dims) {
+      size_of_output != n_input_dims) {
     fail_shape_inference(
         "Output shape specified is invalid (wrong type or rank value).")
   }
@@ -767,7 +768,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       group; // channels should be the second dim of second input
              // multiply group.
 
-  int size_of_output = static_cast<int>(output_shape_tensor->int64_data_size());
   for (int i = 0; i < size_of_output; ++i) {
     if (input_shape.dim(i + 2).has_dim_value()) {
       if (output_shape_tensor->int64_data(i) <
