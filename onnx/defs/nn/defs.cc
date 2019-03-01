@@ -52,7 +52,8 @@ void convPoolTypeAndShapeInference(
   }
 
   // don't bother with legacy auto_pad for now
-  if (ctx.getAttribute("auto_pad")) {
+  const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+  if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "NOTSET")) {
     return;
   }
 
