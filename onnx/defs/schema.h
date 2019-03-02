@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <set>
 #include <string>
@@ -16,7 +17,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <memory>
 
 #include "data_type_utils.h"
 #include "onnx/common/constants.h"
@@ -172,35 +172,6 @@ class OpSchema final {
         file_(std::move(file)),
         line_(line),
         support_(SupportType::COMMON) {}
-
-  // Copy constructor handling unique_ptr deep copy
-  // for pybind APIs
-  OpSchema(const OpSchema& op)
-      : name_(op.name_),
-        file_(op.file_),
-        doc_(op.doc_),
-        domain_(op.domain_),
-        attributes_(op.attributes_),
-        allows_unchecked_attributes_(op.allows_unchecked_attributes_),
-        inputs_(op.inputs_),
-        outputs_(op.outputs_),
-        type_constraint_params_(op.type_constraint_params_),
-        type_constraints_(op.type_constraints_),
-        line_(op.line_),
-        support_(op.support_),
-        min_input_(op.min_input_),
-        max_input_(op.max_input_),
-        min_output_(op.min_output_),
-        max_output_(op.max_output_),
-        since_version_(op.since_version_),
-        deprecated_(op.deprecated_),
-        num_inputs_allowed_(op.num_inputs_allowed_),
-        num_outputs_allowed_(op.num_outputs_allowed_),
-        tensor_inference_function_(op.tensor_inference_function_) {
-    function_body_ = op.function_body_
-        ? std::unique_ptr<FunctionProto>(new FunctionProto(*op.function_body_))
-        : nullptr;
-  }
 
   /**
    * @brief Returns the file that the op schema is registered from.
@@ -590,14 +561,12 @@ class OpSchema final {
   }
 
   bool has_function_body() const {
-    return function_body_ ? true : false;
+    return !function_body_nodes_.empty();
   }
 
-  OpSchema& FunctionBody(const FunctionProto& func_proto);
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
 
-  const FunctionProto* GetFunctionBody() const {
-    return function_body_.get();
-  }
+  FunctionProto GetFunctionBody() const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -632,7 +601,7 @@ class OpSchema final {
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
-  std::unique_ptr<FunctionProto> function_body_ = nullptr;
+  std::vector<NodeProto> function_body_nodes_ = {};
 };
 
 // Map type to store operator schemas. The format is,
@@ -742,7 +711,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << "in onnx/defs/schema.h)." << std::endl;
           fail_schema(err.str());
         }
-        m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
+
+        
+        m[op_name][op_domain].insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {
         std::cerr << "Schema error: " << e.what() << std::endl;

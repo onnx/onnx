@@ -137,12 +137,12 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto) {
 TEST(FunctionVerification, VerifyFunctionOps) {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
   
-  for (auto s : schemas) {
+  for (const auto s : schemas) {
     if (!s.has_function_body()) continue;
 	try{
-	  VerifyFunction(s, s.GetFunctionBody());
+	  VerifyFunction(s, &s.GetFunctionBody());
 	}catch (ONNX_NAMESPACE::checker::ValidationError e){
-      FAIL() << e.what();
+    FAIL() << e.what();
 	}
   }
 }

@@ -622,10 +622,36 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
-OpSchema& OpSchema::FunctionBody(const FunctionProto& func_proto) {
-  function_body_ =
-      std::unique_ptr<FunctionProto>(new FunctionProto(func_proto));
+OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
+  for (const auto node : func_nodes) {
+    function_body_nodes_.emplace_back(node);
+  }
   return *this;
+}
+
+FunctionProto OpSchema::GetFunctionBody() const {
+  FunctionProto function_proto;
+  function_proto.set_name(this->name_);
+  function_proto.set_doc_string(this->doc_);
+  function_proto.set_since_version(this->since_version_);
+  function_proto.set_status(OperatorStatus(1-(int)this->support_));
+
+  for (auto& node : function_body_nodes_) {
+    auto n_ptr = function_proto.add_node();
+    n_ptr->CopyFrom(node);
+  }
+
+  for (auto& i : this->inputs_) {
+    function_proto.add_input(i.GetName());
+  }
+  for (auto& o : this->outputs_) {
+    function_proto.add_output(o.GetName());
+  }
+  for (auto& a : this->attributes_) {
+    function_proto.add_attribute(a.first);
+  }
+
+  return function_proto;
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
@@ -802,8 +828,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
    private:
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
-      for (auto x : GetMapWithoutEnsuringRegistration()) {
-        for (auto y : x.second) {
+      for (auto& x : GetMapWithoutEnsuringRegistration()) {
+        for (auto& y : x.second) {
           count += y.second.size();
         }
       }

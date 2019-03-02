@@ -51,8 +51,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("has_function_body", &OpSchema::has_function_body)
       .def_property_readonly("_function_body", [](OpSchema* op) -> py::bytes {
         std::string bytes = "";
-        if (op->GetFunctionBody())
-          op->GetFunctionBody()->SerializeToString(&bytes);
+        if (op->has_function_body())
+          op->GetFunctionBody().SerializeToString(&bytes);
         return py::bytes(bytes);});
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")

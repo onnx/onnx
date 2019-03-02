@@ -11,7 +11,7 @@ TEST(FunctionAPITest, Get_Function_op_With_Version) {
   EXPECT_TRUE(schema);
   EXPECT_TRUE(schema->has_function_body());
   auto func = schema->GetFunctionBody();
-  EXPECT_EQ(func->name(), "MeanVarianceNormalization");
+  EXPECT_EQ(func.name(), "MeanVarianceNormalization");
 }
 
 } // namespace Test
