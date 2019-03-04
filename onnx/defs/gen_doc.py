@@ -199,7 +199,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     # Function Body
     if schema.has_function_body:  # type: ignore
-        s += '\n#### Function Body\n'
+        s += '\n#### Function\n'
         s += '\nThe Function can be represented as a function.\n'
 
     return s
@@ -294,7 +294,7 @@ def main(args):  # type: (Type[Args]) -> None
                     fout.write(s)
             if len(function_ops):
                 fout.write('\n')
-                fout.write('  **Operators with function body:**\n')
+                fout.write('  **Operators with function registered:**\n')
                 for n, schema, versions in function_ops:
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
                         support_level_str(schema.support_level),

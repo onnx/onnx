@@ -139,7 +139,7 @@
   * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
   * <sub>experimental</sub> <a href="#ThresholdedRelu">ThresholdedRelu</a>
 
-  **Operators with function body:**
+  **Operators with function registered:**
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
 
 ## ai.onnx (default)
@@ -6859,7 +6859,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-#### Function Body
+#### Function
 
 The Function can be represented as a function.
 
