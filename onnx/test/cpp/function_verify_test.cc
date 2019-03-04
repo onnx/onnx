@@ -139,11 +139,12 @@ TEST(FunctionVerification, VerifyFunctionOps) {
   
   for (const auto s : schemas) {
     if (!s.has_function_body()) continue;
-	try{
-	  VerifyFunction(s, &s.GetFunctionBody());
-	}catch (ONNX_NAMESPACE::checker::ValidationError e){
-    FAIL() << e.what();
-	}
+    try{
+      auto function_body = s.GetFunctionBody();
+      VerifyFunction(s, &function_body);
+    }catch (ONNX_NAMESPACE::checker::ValidationError e){
+      FAIL() << e.what();
+    }
   }
 }
 
