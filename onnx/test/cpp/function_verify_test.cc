@@ -138,7 +138,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
   
   for (const auto s : schemas) {
-    if (!s.has_function_body()) continue;
+    if (!s.is_function()) continue;
     try{
       auto function_body = s.GetFunctionBody();
       VerifyFunction(s, function_body);

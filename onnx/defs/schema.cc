@@ -631,7 +631,7 @@ OpSchema& OpSchema::FunctionBody(std::vector<NodeProto>& func_nodes) {
 }
 
 const FunctionProto* OpSchema::GetFunctionBody() const {
-  return &function_body_;
+  return function_body_.node_size()>0 ? &function_body_ : nullptr;
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
@@ -721,7 +721,7 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  if (this->has_function_body()) {
+  if (this->is_function()) {
     FunctionBuilder();
   }
 }

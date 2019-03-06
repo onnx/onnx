@@ -560,7 +560,7 @@ class OpSchema final {
     return tensor_inference_function_ ? true : false;
   }
 
-  bool has_function_body() const {
+  bool is_function() const {
     return function_body_.node_size() > 0;
   }
 
