@@ -564,7 +564,7 @@ class OpSchema final {
     return function_body_.node_size() > 0;
   }
 
-  OpSchema& FunctionBody(std::vector<NodeProto>& func_nodes);
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
 
   const FunctionProto* GetFunctionBody() const;
 
