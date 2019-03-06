@@ -622,36 +622,16 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
-OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
+OpSchema& OpSchema::FunctionBody(std::vector<NodeProto>& func_nodes) {
   for (const auto node : func_nodes) {
-    function_body_nodes_.emplace_back(node);
+    auto new_node = function_body_.add_node();
+    new_node->CopyFrom(node);
   }
   return *this;
 }
 
-FunctionProto OpSchema::GetFunctionBody() const {
-  FunctionProto function_proto;
-  function_proto.set_name(this->name_);
-  function_proto.set_doc_string(this->doc_);
-  function_proto.set_since_version(this->since_version_);
-  function_proto.set_status(OperatorStatus(1-(int)this->support_));
-
-  for (auto& node : function_body_nodes_) {
-    auto n_ptr = function_proto.add_node();
-    n_ptr->CopyFrom(node);
-  }
-
-  for (auto& i : this->inputs_) {
-    function_proto.add_input(i.GetName());
-  }
-  for (auto& o : this->outputs_) {
-    function_proto.add_output(o.GetName());
-  }
-  for (auto& a : this->attributes_) {
-    function_proto.add_attribute(a.first);
-  }
-
-  return function_proto;
+const FunctionProto* OpSchema::GetFunctionBody() const {
+  return &function_body_;
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
@@ -659,6 +639,22 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
     populator(*this);
   }
   return *this;
+}
+
+void OpSchema::FunctionBuilder(){
+  function_body_.set_name(this->name_);
+  function_body_.set_doc_string(this->doc_);
+  function_body_.set_since_version(this->since_version_);
+  function_body_.set_status(OperatorStatus(1 - (int)this->support_));
+  for (auto& i : inputs_) {
+    function_body_.add_input(i.GetName());
+  }
+  for (auto& o : outputs_) {
+    function_body_.add_output(o.GetName());
+  }
+  for (auto& a : attributes_) {
+    function_body_.add_attribute(a.first);
+  }
 }
 
 void OpSchema::Finalize() {
@@ -724,6 +720,10 @@ void OpSchema::Finalize() {
 
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
+
+  if (this->has_function_body()) {
+    FunctionBuilder();
+  }
 }
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {

@@ -561,12 +561,12 @@ class OpSchema final {
   }
 
   bool has_function_body() const {
-    return !function_body_nodes_.empty();
+    return function_body_.node_size() > 0;
   }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+  OpSchema& FunctionBody(std::vector<NodeProto>& func_nodes);
 
-  FunctionProto GetFunctionBody() const;
+  const FunctionProto* GetFunctionBody() const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -577,6 +577,9 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+
+  // Build function with inofrmation stored in opschema
+  void FunctionBuilder();
 
   std::string name_;
   std::string file_;
@@ -601,7 +604,7 @@ class OpSchema final {
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
-  std::vector<NodeProto> function_body_nodes_ = {};
+  FunctionProto function_body_;
 };
 
 // Map type to store operator schemas. The format is,

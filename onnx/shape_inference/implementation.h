@@ -178,7 +178,7 @@ void InferShapes(
     );
 
 void InferShapeForFunctionNode(
-    const FunctionProto& func,
+    const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
 

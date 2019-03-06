@@ -247,33 +247,33 @@ void InferShapes(
 }
 
 void InferShapeForFunctionNode(
-    const FunctionProto& func,
+    const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx) {
-  int domain_version = (int)func.since_version();
+  int domain_version = (int)func->since_version();
   GraphProto g;
   // Get a temporary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
-  std::vector<TypeProto> temp_types_cache(func.input_size());
-  for (int i = 0; i < func.input_size(); ++i) {
+  std::vector<TypeProto> temp_types_cache(func->input_size());
+  for (int i = 0; i < func->input_size(); ++i) {
     temp_types_cache[i] = *ctx.getInputType(i);
-    temp_valueTypesByName[func.input().Get(i)] = &temp_types_cache.back();
+    temp_valueTypesByName[func->input().Get(i)] = &temp_types_cache.back();
   }
   // Get a temporary initial value map
   std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
   for (int i = 0; i < static_cast<int>(ctx.getNumInputs()); ++i) {
-    if (ctx.getInputData(i) != nullptr && i < func.input_size()) {
-      temp_initializersByName[func.input().Get(i)] = ctx.getInputData(i);
+    if (ctx.getInputData(i) != nullptr && i < func->input_size()) {
+      temp_initializersByName[func->input().Get(i)] = ctx.getInputData(i);
     }
   }
   std::unordered_map<std::string, const AttributeProto*> attr_map;
-  for (auto& attr : func.attribute()) {
+  for (auto& attr : func->attribute()) {
     if (ctx.getAttribute(attr) != nullptr) {
       attr_map[attr] = ctx.getAttribute(attr);
     }
   }
 
-  for (auto& n : func.node()) {
+  for (auto& n : func->node()) {
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     if (!schema) {
@@ -325,8 +325,8 @@ void InferShapeForFunctionNode(
       temp_valueTypesByName[copy_n.output(i)] = existingType;
     }
   }
-  for (int i = 0; i < func.output_size(); ++i) {
-    std::string output_name = func.output().Get(i);
+  for (int i = 0; i < func->output_size(); ++i) {
+    std::string output_name = func->output().Get(i);
     // Skip if no type inferred for the tensor
     if (!temp_valueTypesByName.count(output_name)) {
       continue;

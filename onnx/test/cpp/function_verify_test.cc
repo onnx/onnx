@@ -141,7 +141,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
     if (!s.has_function_body()) continue;
     try{
       auto function_body = s.GetFunctionBody();
-      VerifyFunction(s, &function_body);
+      VerifyFunction(s, function_body);
     }catch (ONNX_NAMESPACE::checker::ValidationError e){
       FAIL() << e.what();
     }
