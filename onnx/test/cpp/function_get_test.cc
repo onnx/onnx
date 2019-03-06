@@ -10,7 +10,7 @@ TEST(FunctionAPITest, Get_Function_op_With_Version) {
   const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   EXPECT_TRUE(schema);
   EXPECT_TRUE(schema->is_function());
-  auto func = schema->GetFunctionBody();
+  auto func = schema->GetFunction();
   EXPECT_EQ(func->name(), "MeanVarianceNormalization");
 }
 

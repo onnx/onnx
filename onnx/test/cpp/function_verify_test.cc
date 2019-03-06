@@ -140,7 +140,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
   for (const auto s : schemas) {
     if (!s.is_function()) continue;
     try{
-      auto function_body = s.GetFunctionBody();
+      auto function_body = s.GetFunction();
       VerifyFunction(s, function_body);
     }catch (ONNX_NAMESPACE::checker::ValidationError e){
       FAIL() << e.what();

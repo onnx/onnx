@@ -165,7 +165,7 @@ static void InferShapesImpl(
     } else if (schema->is_function()) {
       try {
         InferShapeForFunctionNode(
-          schema->GetFunctionBody(), schema_registry, ctx);
+          schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
         (void)function_ex;
         continue;

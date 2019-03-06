@@ -566,7 +566,7 @@ class OpSchema final {
 
   OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
 
-  const FunctionProto* GetFunctionBody() const;
+  const FunctionProto* GetFunction() const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -578,8 +578,8 @@ class OpSchema final {
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 
-  // Build function with inofrmation stored in opschema
-  void FunctionBuilder();
+  // Build function with information stored in opschema
+  void BuildFunction();
 
   std::string name_;
   std::string file_;

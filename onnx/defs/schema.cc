@@ -630,7 +630,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
   return *this;
 }
 
-const FunctionProto* OpSchema::GetFunctionBody() const {
+const FunctionProto* OpSchema::GetFunction() const {
   return function_body_.node_size()>0 ? &function_body_ : nullptr;
 }
 
@@ -641,7 +641,7 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::FunctionBuilder(){
+void OpSchema::BuildFunction(){
   function_body_.set_name(this->name_);
   function_body_.set_doc_string(this->doc_);
   function_body_.set_since_version(this->since_version_);
@@ -722,7 +722,7 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&outputs_);
 
   if (this->is_function()) {
-    FunctionBuilder();
+    BuildFunction();
   }
 }
 
