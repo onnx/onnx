@@ -12283,21 +12283,21 @@ expect(node,
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
+     
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>Dimension on which to do the sort.</dd>
-<dt><tt>k</tt> : int (required)</dt>
-<dd>Number of top elements to retrieve</dd>
 </dl>
 
 #### Inputs
@@ -12305,6 +12305,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
 
 #### Outputs
@@ -12334,15 +12336,15 @@ This version of the operator has been available since version 1 of the default O
 ```python
 node = onnx.helper.make_node(
     'TopK',
-    inputs=['x'],
+    inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    k=3
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
+K = np.array([3], dtype=np.int64)
 values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
@@ -12354,7 +12356,7 @@ indices_ref = np.array([
     [3, 2, 1],
 ], dtype=np.int64)
 
-expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
 ```
 
