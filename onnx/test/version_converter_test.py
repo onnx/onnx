@@ -444,8 +444,8 @@ class TestVersionConverter(unittest.TestCase):
 
         nodes = [onnx.helper.make_node(
             'BatchNormalization',
-            inputs = ['X', 'scale', 'B', 'mean', 'var'], 
-            outputs = ['Y'], 
+            inputs=['X', 'scale', 'B', 'mean', 'var'],
+            outputs=['Y'],
         )]
 
         input_shape = (2, 3, 4, 5)
@@ -454,7 +454,7 @@ class TestVersionConverter(unittest.TestCase):
         B = onnx.helper.make_tensor_value_info("B", data_type, [input_shape[1]])
         mean = onnx.helper.make_tensor_value_info("mean", data_type, [input_shape[1]])
         var = onnx.helper.make_tensor_value_info("var", data_type, [input_shape[1]])
-        y = onnx.helper.make_tensor_value_info("Y",data_type, input_shape)
+        y = onnx.helper.make_tensor_value_info("Y", data_type, input_shape)
 
         graph = onnx.helper.make_graph(
             nodes, "test_batchnormalization", [x, scale, B, mean, var], [y]
@@ -666,9 +666,9 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("Scales", data_type, [4])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             [onnx.helper.make_tensor("Scales", onnx.TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 3.0])])
-        
+
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
-        
+
         assert converted_model.graph.node[0].op_type == "Upsample"
         assert len(converted_model.graph.initializer) == 0
         assert len(converted_model.graph.node[0].attribute) == 2
@@ -684,9 +684,9 @@ class TestVersionConverter(unittest.TestCase):
         nodes = [
             onnx.helper.make_node(
                 'Constant',
-                inputs = [],
-                outputs = ['Constant_Output'],
-                value = onnx.helper.make_tensor(name = 'const_value', data_type=onnx.TensorProto.FLOAT, dims=[4], vals=[1.0, 1.0, 2.0, 3.0])),
+                inputs=[],
+                outputs=['Constant_Output'],
+                value=onnx.helper.make_tensor(name='const_value', data_type=onnx.TensorProto.FLOAT, dims=[4], vals=[1.0, 1.0, 2.0, 3.0])),
             onnx.helper.make_node(
                 "Upsample",
                 inputs=["X", "Constant_Output"],
@@ -699,9 +699,9 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             value_info=[onnx.helper.make_tensor_value_info("Constant_Output", data_type, [4])])
-        
+
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
-        
+
         assert converted_model.graph.node[2].op_type == "Upsample"
         assert len(converted_model.graph.node[2].attribute) == 2
         assert converted_model.graph.node[2].attribute[1].name == "scales"

@@ -19,13 +19,13 @@ struct Upsample_9_8 final : public Adapter {
     
       if (initializers.size() > 0)
       {
-        for(int i = 0; i < initializers.size(); i++)
+        for(size_t i = 0; i < initializers.size(); i++)
         {
             if(initializers[i].name() == inputs[1]->uniqueName())
             {
               const std::vector<float>& value = initializers[i].floats();
               std::vector<double> d_values;
-              for (int j = 0; j < value.size(); j++)
+              for (size_t j = 0; j < value.size(); j++)
               {
                 d_values.push_back(static_cast<double>(value[j]));
               }
@@ -33,7 +33,7 @@ struct Upsample_9_8 final : public Adapter {
               
               node->removeInput(1);
               graph->eraseInitializer(initializers[i].name());            
-              for(int j = 0; j < graph->inputs().size(); j++)
+              for(size_t j = 0; j < graph->inputs().size(); j++)
               {
                 if(graph->inputs()[j]->uniqueName() == scale_input_name)
                 {
@@ -53,7 +53,7 @@ struct Upsample_9_8 final : public Adapter {
           {
             const std::vector<float>& value = op->t(kvalue).floats();
             std::vector<double> d_values;
-            for (int j = 0; j < value.size(); j++)
+            for (size_t j = 0; j < value.size(); j++)
             {
               d_values.push_back(static_cast<double>(value[j]));
             }            
