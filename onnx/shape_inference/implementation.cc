@@ -162,7 +162,7 @@ static void InferShapesImpl(
         // Continue with inference for remaining nodes
         continue;
       }
-    } else if (schema->is_function()) {
+    } else if (schema->has_function()) {
       try {
         InferShapeForFunctionNode(
           schema->GetFunction(), schema_registry, ctx);
