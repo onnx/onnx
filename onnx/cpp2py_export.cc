@@ -48,10 +48,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_static(
           "is_infinite",
           [](int v) { return v == std::numeric_limits<int>::max(); })
-      .def_property_readonly("has_function", &OpSchema::has_function)
+      .def_property_readonly("has_function", &OpSchema::HasFunction)
       .def_property_readonly("_function_body", [](OpSchema* op) -> py::bytes {
         std::string bytes = "";
-        if (op->has_function())
+        if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
         return py::bytes(bytes);});
 

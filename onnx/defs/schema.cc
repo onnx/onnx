@@ -721,7 +721,7 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  if (this->has_function()) {
+  if (this->HasFunction()) {
     BuildFunction();
   }
 }

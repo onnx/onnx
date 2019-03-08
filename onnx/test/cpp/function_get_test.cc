@@ -9,7 +9,7 @@ namespace Test {
 TEST(FunctionAPITest, Get_Function_op_With_Version) {
   const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   EXPECT_TRUE(schema);
-  EXPECT_TRUE(schema->has_function());
+  EXPECT_TRUE(schema->HasFunction());
   auto func = schema->GetFunction();
   EXPECT_EQ(func->name(), "MeanVarianceNormalization");
 }

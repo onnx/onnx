@@ -142,7 +142,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
   int function_counter = 0, verified_counter = 0;
   for (const auto s : schemas) {
-    if (!s.has_function()) continue;
+    if (!s.HasFunction()) continue;
     try{
       ++function_counter;
       auto function_body = s.GetFunction();
