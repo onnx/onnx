@@ -9,7 +9,7 @@ namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
-static std::vector<NodeProto> BuildMVN() {
+static std::vector<NodeProto> BuildMVNFunctionBody() {
 	std::vector<NodeProto> function_nodes;
 
   NodeProto initial_node0;
@@ -186,6 +186,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to all numeric tensors.")
-       .FunctionBody(BuildMVN()));
+       .FunctionBody(BuildMVNFunctionBody()));
 
 } // namespace ONNX_NAMESPACE

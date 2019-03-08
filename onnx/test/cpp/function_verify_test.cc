@@ -15,7 +15,9 @@ using TENSOR_TYPES_MAP =
 
 void VerifyTypeConstraint(
     const OpSchema& function_op,
-    const FunctionProto* function_proto) {
+    const FunctionProto* function_proto,
+    int& counter
+) {
   // TC for function nodes should satisfy the definition defined in the opschema
   // This is designed to be a best-effort test
   // TODO: Revisit to have a more consummate check on it
@@ -96,9 +98,11 @@ void VerifyTypeConstraint(
       }
     }
   }
+
+  ++counter;
 }
 
-void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto) {
+void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
   // Verify function proto is valid
   if (!function_proto) {
     fail_check("Cannot get function body for op '", op.Name(), "'");
@@ -129,23 +133,26 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto) {
 
   // Verify function op has compatible Type constraints defined in
   // op and function body.
-  VerifyTypeConstraint(op, function_proto);
+  VerifyTypeConstraint(op, function_proto, counter);
 }
 
 // Verify registered ops with function body has compatible
 // definition on TypeConstraints between ops and function body
 TEST(FunctionVerification, VerifyFunctionOps) {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
-  
+  int function_counter = 0, verified_counter = 0;
   for (const auto s : schemas) {
     if (!s.is_function()) continue;
     try{
+      ++function_counter;
       auto function_body = s.GetFunction();
-      VerifyFunction(s, function_body);
+      VerifyFunction(s, function_body, verified_counter);
     }catch (ONNX_NAMESPACE::checker::ValidationError e){
       FAIL() << e.what();
     }
   }
+  std::cerr << "[          ] Verified " << verified_counter << "/" 
+    << function_counter << " Functions." << std::endl;
 }
 
 } // namespace Test
