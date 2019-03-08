@@ -1247,7 +1247,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* Dropout_ver7_doc = R"DOC(
+static const char* Dropout_ver10_doc = R"DOC(
 Dropout takes one input floating tensor and produces two tensor outputs,
 output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
 in test mode or not, the output Y will either be a random dropout, or a simple
@@ -1257,9 +1257,9 @@ the training phase, so during testing nothing needs to be done.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
-    7,
+    10,
     OpSchema()
-        .SetDoc(Dropout_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1277,13 +1277,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrain output mask types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            propagateShapeAndTypeFromFirstInput(ctx);
-            if (ctx.getNumOutputs() == 2) {
-                updateOutputElemType(ctx, 1, TensorProto::BOOL);
-                if (hasNInputShapes(ctx, 1)) {
-                    propagateShapeFromInputToOutput(ctx, 0, 1);
-                }
+          propagateShapeAndTypeFromFirstInput(ctx);
+          if (ctx.getNumOutputs() == 2) {
+            updateOutputElemType(ctx, 1, TensorProto::BOOL);
+            if (hasNInputShapes(ctx, 1)) {
+              propagateShapeFromInputToOutput(ctx, 0, 1);
             }
+          }
         }));
 
 static const char* Shrink_ver9_doc = R"DOC(
