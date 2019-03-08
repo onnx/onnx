@@ -168,11 +168,14 @@ class Runner(object):
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
             np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
-            np.testing.assert_allclose(
-                ref_outputs[i],
-                outputs[i],
-                rtol=rtol,
-                atol=atol)
+            if ref_outputs[i].dtype == np.object:
+                np.testing.assert_array_equal(ref_outputs[i], outputs[i])
+            else:
+                np.testing.assert_allclose(
+                    ref_outputs[i],
+                    outputs[i],
+                    rtol=rtol,
+                    atol=atol)
 
     @classmethod
     @retry_excute(3)
