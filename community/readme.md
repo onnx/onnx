@@ -36,7 +36,7 @@ New Contributors also need to be sponsored by 2 existing Approvers from differen
 
 Approvers need to be active Contributors for at least 3 months and be sponsored by a SIG chair with no objections from other SIG chairs.
 
-**Member Companies** are organizations that support ONNX. They generally fund people to work on the project and resources for running the project, their logos are displayed on the website and other materials, and they sometimes help host community events. Member companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations.
+**Member Companies** are organizations that support ONNX. They generally fund people to work on the project and resources for running the project, their logos are displayed on the website and other materials, and they sometimes help host community events. Member companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations. Being a Member Company does not by itself confer any compliance or certification to the Member Company's products.
 
 ## Organizational Structure
 
