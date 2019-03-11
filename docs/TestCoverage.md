@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 112/119 (94.12%, 5 generators excluded) common operators.
 
-Node tests have covered 2/11 (18.18%, 0 generators excluded) experimental operators.
+Node tests have covered 2/7 (28.57%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -6518,15 +6518,15 @@ There are 1 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'TopK',
-    inputs=['x'],
+    inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    k=3
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
+K = np.array([3], dtype=np.int64)
 values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
@@ -6538,7 +6538,7 @@ indices_ref = np.array([
     [3, 2, 1],
 ], dtype=np.int64)
 
-expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
 ```
 
@@ -6959,22 +6959,10 @@ expect(node, inputs=[x], outputs=[y],
 ### ATen (call for test cases)
 
 
-### Affine (call for test cases)
-
-
-### Crop (call for test cases)
-
-
 ### GRUUnit (call for test cases)
 
 
 ### GivenTensorFill (call for test cases)
-
-
-### ImageScaler (call for test cases)
-
-
-### ParametricSoftplus (call for test cases)
 
 
 ### Scale (call for test cases)

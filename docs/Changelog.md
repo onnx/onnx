@@ -134,45 +134,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Affine-1"></a>**Affine-1**</a>
-
-  Affine takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the affine function, y = alpha * x + beta,
-  is applied to the tensor elementwise.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float (default is 0.0)</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="And-1"></a>**And-1**</a>
 
   Returns the tensor resulted from performing the `and` logical operation
@@ -730,45 +691,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, pad lengths and group count. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Crop-1"></a>**Crop-1**</a>
-
-  Crop and image to the specified spatial dimensions. If scale is given,
-  then optionally start the crop offset by the left/top border amounts.
-  If scale is not provided, crop the borders as provided.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>border</tt> : list of ints</dt>
-<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
-<dt><tt>scale</tt> : list of ints</dt>
-<dd>A 1-D values of (height, width).</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
 </dl>
 
 #### Type Constraints
@@ -1848,44 +1770,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
-</dl>
-
-### <a name="ImageScaler-1"></a>**ImageScaler-1**</a>
-
-  Scale and bias the input image. Bias values are stored in
-  the same ordering as the image pixel format.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>bias</tt> : list of floats</dt>
-<dd>Bias applied to each channel, same size as C.</dd>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="InstanceNormalization-1"></a>**InstanceNormalization-1**</a>
@@ -3062,45 +2946,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Tensor after padding.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="ParametricSoftplus-1"></a>**ParametricSoftplus-1**</a>
-
-  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
-  the tensor elementwise.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D input tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -4803,7 +4648,6 @@ This version of the operator has been available since version 1 of the default O
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
@@ -6976,9 +6820,9 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="Dropout-7"></a>**Dropout-7**</a>
 
-  Dropout takes one input floating tensor and produces two tensor outputs,
-  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-  in test mode or not, the output Y will either be a random dropout, or a simple
+  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
+  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
+  test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -7006,7 +6850,7 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T1</dt>
+<dt><tt>mask</tt> (optional) : T</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -7015,8 +6859,6 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
 ### <a name="Equal-7"></a>**Equal-7**</a>
@@ -9757,4 +9599,55 @@ This version of the operator has been available since version 10 of the default 
 
 #### Type Constraints
 
+
+### <a name="TopK-10"></a>**TopK-10**</a>
+
+  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+     
+  Given two equivalent values, this operator uses the indices along the axis  as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Dimension on which to do the sort.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : I</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
 

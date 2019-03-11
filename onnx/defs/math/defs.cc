@@ -823,7 +823,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               resultShape;
         }));
 
-static const char* TopK_ver1_doc = R"DOC(
+static const char* TopK_ver10_doc = R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
@@ -831,17 +831,18 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-
+   
 Given two equivalent values, this operator uses the indices along the axis  as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    1,
+    10,
     OpSchema()
-        .SetDoc(TopK_ver1_doc)
+        .SetDoc(TopK_ver10_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
+		.Input(1, "K", "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve", "tensor(int64)")
         .Output(
             0,
             "Values",
@@ -864,39 +865,46 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int64)"},
             "Constrain index tensor to int64")
         .Attr(
-            "k",
-            "Number of top elements to retrieve",
-            AttributeProto::INT,
-            true)
-        .Attr(
             "axis",
             "Dimension on which to do the sort.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference:
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          updateOutputElemType(ctx, 1, TensorProto::INT64);
+        // Type inference:
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        updateOutputElemType(ctx, 1, TensorProto::INT64);
 
-          // Shape inference:
-          if (!hasInputShape(ctx, 0))
-            return;
-          auto& input_shape = getInputShape(ctx, 0);
-          int64_t rank = input_shape.dim_size();
-          int64_t axis = getAttribute(ctx, "axis", -1);
-          if (axis < 0)
-            axis += rank;
-          if (axis < 0 || axis >= rank)
-            fail_shape_inference("Invalid value for attribute axis");
-          int64_t k = getAttribute(ctx, "k", -1);
-          if (k <= 0)
-            fail_shape_inference("Invalid value for attribute k");
-          // TODO: unclear what results should be if axis has less than k
-          // elements.
+        // Shape inference:
+        if (!hasInputShape(ctx, 0))
+          return;
+        auto& input_shape = getInputShape(ctx, 0);
+        int64_t rank = input_shape.dim_size();
+        int64_t axis = getAttribute(ctx, "axis", -1);
+        if (axis < 0)
+          axis += rank;
+        if (axis < 0 || axis >= rank)
+          fail_shape_inference("Invalid value for attribute axis");
+        // TODO: unclear what results should be if axis has less than k
+        // elements.
+        // Infer output shape if 'K' is available
+        const auto* k = ctx.getInputData(1);
+        if (nullptr != k) {
+          if (k->dims_size() != 1 || k->int64_data_size() != 1 || k->data_type() != TensorProto::INT64)
+            fail_shape_inference("K input must be a one-dimensional tensor of size 1 and of type int64.");
           TensorShapeProto result_shape = input_shape;
-          result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
+          result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k->int64_data(0));
           updateOutputShape(ctx, 0, result_shape);
           updateOutputShape(ctx, 1, result_shape);
+        } else {
+          // Infer output shapes' rank in any case
+          auto* output_shape_0 = getOutputShape(ctx, 0);
+          auto* output_shape_1 = getOutputShape(ctx, 1);
+          for (int i = 0; i < input_shape.dim_size(); ++i) {
+            output_shape_0->add_dim();
+            output_shape_1->add_dim();
+          }
+        }
+        return;
         }));
 
 static const char* Sin_ver7_doc = R"DOC(

@@ -16,15 +16,15 @@ class TopK(Base):
     def export_top_k():  # type: () -> None
         node = onnx.helper.make_node(
             'TopK',
-            inputs=['x'],
+            inputs=['x', 'k'],
             outputs=['values', 'indices'],
-            k=3
         )
         X = np.array([
             [0, 1, 2, 3],
             [4, 5, 6, 7],
             [8, 9, 10, 11],
         ], dtype=np.float32)
+        K = np.array([3], dtype=np.int64)
         values_ref = np.array([
             [3, 2, 1],
             [7, 6, 5],
@@ -36,5 +36,5 @@ class TopK(Base):
             [3, 2, 1],
         ], dtype=np.int64)
 
-        expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
                name='test_top_k')
