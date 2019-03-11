@@ -104,7 +104,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Squeeze);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Sub);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Sum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Tanh);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, ThresholdedRelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Tile);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, TopK);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Transpose);
@@ -231,8 +230,6 @@ class OpSet_Onnx_ver1 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Sub)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Sum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Tanh)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 1, ThresholdedRelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Tile)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, TopK)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Transpose)>());
@@ -536,6 +533,7 @@ class OpSet_Onnx_ver9 {
 // Forward declarations for ai.onnx version 10
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, StringNormalizer);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, TopK);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, ThresholdedRelu);
 
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver10 {
@@ -544,7 +542,9 @@ class OpSet_Onnx_ver10 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, StringNormalizer)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 10, TopK)>());		   
+           Onnx, 10, TopK)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 10, ThresholdedRelu)>());
   }
 };
 
