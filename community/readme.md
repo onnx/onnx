@@ -84,9 +84,7 @@ If a member of the Steering Committee changes companies, by default they retain 
 
 The ONNX project is organized primarily into Special Interest Groups, or SIGs. Each SIG is comprised of individuals from multiple companies and organizations, with a common purpose of advancing the project with respect to a specific topic. 
 
-Our goal is to enable a distributed decision structure and code ownership, as well as providing focused forums for getting work done, making decisions, and on-boarding new contributors. Every identifiable part of the project (e.g., repository, subdirectory, API, test, issue, PR, Gitter channel) is intended to be owned by some SIG.
-
-Areas covered by SIGs may be vertically focused on particular components or functions, cross-cutting/horizontal, spanning many/all functional areas of the project, or in support of the project itself. At the time of inception of this organizational structure, the following SIGs will be present:
+Our goal is to enable a distributed decision structure and code ownership, as well as providing focused forums for getting work done, making decisions, and on-boarding new contributors. Every identifiable part of the project (e.g., repository, subdirectory, API, test, issue, PR, Gitter channel) is intended to be owned by some SIG. At the time of inception of this organizational structure, the following SIGs will be present:
 
 * Core Architecture
     * This SIG is responsible for defining and maintaining the core ONNX format and is the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
@@ -103,7 +101,7 @@ Areas covered by SIGs may be vertically focused on particular components or func
 
 SIGs must have at least one, and may have up to two SIG chairs at any given time. SIG chairs are intended to be organizers and facilitators, responsible for the operation of the SIG and for communication and coordination with the other SIGs, the Steering Committee, and the broader community. All SIG chairs are appointed by the Steering Committee. If there are more than two contributors being considered for a particular SIG, the Steering Committee will vote on and resolve who the chairs would be. Candidates need to be Approvers.
 
-Each SIG must have a charter that specifies its scope (topics, subsystems, code repos and directories), responsibilities, areas of authority, how members and roles of authority/leadership are selected/granted, how decisions are made, and how conflicts are resolved. Charters are submitted to the ONNX GitHub via PR for review and approval by the Steering Committee who will be looking to ensure the scope of the SIG as represented in the charter is reasonable and that processes are fair.
+Each SIG must have a charter that specifies its scope (topics, subsystems, code repos and directories), responsibilities, and areas of authority. Charters are submitted to the ONNX GitHub via PR for review and approval by the Steering Committee who will be looking to ensure the scope of the SIG as represented in the charter is reasonable. All SIGs are expected to follow the standards established by the Steering Committee for how Contributors are roles of authority/leadership are selected/granted, how decisions are made, and how conflicts are resolved.
 
 A primary reason that SIGs exist is as forums for collaboration. Much work in a SIG should stay local within that SIG. However, SIGs must communicate in the open, ensure other SIGs and community members can find meeting notes, discussions, designs, and decisions, and periodically communicate a high-level summary of the SIG's work to the community. SIGs are also responsible to:
 
