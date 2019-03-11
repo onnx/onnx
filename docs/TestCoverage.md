@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 112/119 (94.12%, 5 generators excluded) common operators.
 
-Node tests have covered 2/11 (18.18%, 0 generators excluded) experimental operators.
+Node tests have covered 2/7 (28.57%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -3578,6 +3578,43 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### MeanVarianceNormalization
+There are 1 test cases, listed as following:
+<details>
+<summary>meanvariancenormalization</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MeanVarianceNormalization',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+# Calculate expected output data
+data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
+data_mean_squared = np.power(data_mean, 2)
+data_squared = np.power(input_data, 2)
+data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+std = np.sqrt(data_squared_mean - data_mean_squared)
+expected_output = (input_data - data_mean) / (std + 1e-9)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mvn')
+```
+
+</details>
+
+
 ### Min
 There are 1 test cases, listed as following:
 <details>
@@ -6542,15 +6579,15 @@ There are 1 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'TopK',
-    inputs=['x'],
+    inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    k=3
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
+K = np.array([3], dtype=np.int64)
 values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
@@ -6562,7 +6599,7 @@ indices_ref = np.array([
     [3, 2, 1],
 ], dtype=np.int64)
 
-expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
 ```
 
@@ -6983,22 +7020,10 @@ expect(node, inputs=[x], outputs=[y],
 ### ATen (call for test cases)
 
 
-### Affine (call for test cases)
-
-
-### Crop (call for test cases)
-
-
 ### GRUUnit (call for test cases)
 
 
 ### GivenTensorFill (call for test cases)
-
-
-### ImageScaler (call for test cases)
-
-
-### ParametricSoftplus (call for test cases)
 
 
 ### Scale (call for test cases)

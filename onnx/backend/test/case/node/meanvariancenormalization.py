@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-class MVN(Base):
+class MeanVarianceNormalization(Base):
 
     @staticmethod
     def export():  # type: () -> None

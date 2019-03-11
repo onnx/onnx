@@ -13,19 +13,17 @@ struct GraphInferenceContext {
       const std::unordered_map<std::string, TypeProto*>&
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
-      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
-      const IFunctionBuilderRegistry* func_registry_in =
-          &FunctionBuilderRegistry::OnnxInstance())
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
-        schema_registry{schema_registry_in},
-        func_registry{func_registry_in} {}
+        schema_registry{schema_registry_in} {}
+        
 
   const std::unordered_map<std::string, TypeProto*>*
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
-  const IFunctionBuilderRegistry* func_registry;
+  
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -170,19 +168,17 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const IFunctionBuilderRegistry* func_registry =
-        &FunctionBuilderRegistry::OnnxInstance());
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    );
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const IFunctionBuilderRegistry* func_registry =
-        &FunctionBuilderRegistry::OnnxInstance());
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    );
 
 void InferShapeForFunctionNode(
-    const FunctionProto& func,
+    const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
 
