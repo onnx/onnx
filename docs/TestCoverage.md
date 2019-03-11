@@ -7,11 +7,7 @@
 ## Summary
 Node tests have covered 112/119 (94.12%, 5 generators excluded) common operators.
 
-<<<<<<< HEAD
-Node tests have covered 2/7 (28.57%, 0 generators excluded) experimental operators.
-=======
-Node tests have covered 1/10 (10.00%, 0 generators excluded) experimental operators.
->>>>>>> update TestCoverage.md change
+Node tests have covered 1/6 (16.67%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
