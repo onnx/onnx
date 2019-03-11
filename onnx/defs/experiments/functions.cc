@@ -3,38 +3,16 @@
 
 #include "onnx/common/constants.h"
 #include "onnx/common/model_helpers.h"
-#include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
-  if (nullptr == func_proto) {
-    return Common::Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "func_proto should not be nullptr.");
-  }
+using SupportType = OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
-  func_proto->reset(new FunctionProto);
-  auto& func = **func_proto;
-  func.set_name("MeanVarianceNormalization");
-  func.set_doc_string(
-      "A MeanVarianceNormalization Function: Perform mean variance normalization "
-      "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><br/>"
-      "<b>INPUT: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/><br/>"
-      "<b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;<tt>axes: </tt>will be passed to ReducedMean "
-      "Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances "
-      "along channels. Two variables with the same C-coordinate are associated "
-      "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
-      "global mean and global variance with all variables sharing the same mean/variance.<br/>"
-      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/>"
-      "<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with the same shape as input X<br/>");
-  func.set_since_version(9);
-  func.add_input("X");
-  func.add_output("X_MVN");
-  func.add_attribute("axes");
-  func.set_status(OperatorStatus::STABLE);
+static std::vector<NodeProto> BuildMVNFunctionBody() {
+	std::vector<NodeProto> function_nodes;
 
-  NodeProto* initial_node0 = func.add_node();
+  NodeProto initial_node0;
   BuildNode(
       "Pow_exponent_0",
       ONNX_DOMAIN,
@@ -42,8 +20,8 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Constant",
       std::vector<std::string>{},
       std::vector<std::string>{"Exponent"},
-      initial_node0);
-  AttributeProto* value_attr_0 = initial_node0->add_attribute();
+      &initial_node0);
+  AttributeProto* value_attr_0 = initial_node0.add_attribute();
   value_attr_0->set_name("value");
   value_attr_0->set_doc_string(
       "Exponent (default to 2.0) to element-wisely calculate the square of a tensor");
@@ -51,8 +29,9 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   TensorProto* tensor_proto_0 = value_attr_0->mutable_t();
   tensor_proto_0->set_data_type(TensorProto_DataType_FLOAT);
   tensor_proto_0->add_float_data(2.0); // [2.0]
+  function_nodes.emplace_back(initial_node0);
 
-  NodeProto* initial_node1 = func.add_node();
+  NodeProto initial_node1;
   BuildNode(
       "Div_epsilon_0",
       ONNX_DOMAIN,
@@ -60,8 +39,8 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Constant",
       std::vector<std::string>{},
       std::vector<std::string>{"Epsilon"},
-      initial_node1);
-  AttributeProto* value_attr_1 = initial_node1->add_attribute();
+      &initial_node1);
+  AttributeProto* value_attr_1 = initial_node1.add_attribute();
   value_attr_1->set_name("value");
   value_attr_1->set_doc_string(
       "Epsilon (default to 1e-9) to element-wisely add to the divisor tensor");
@@ -69,8 +48,9 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   TensorProto* tensor_proto_1 = value_attr_1->mutable_t();
   tensor_proto_1->set_data_type(TensorProto_DataType_FLOAT);
   tensor_proto_1->add_float_data((float)1e-9); // [1e-9]
+  function_nodes.emplace_back(initial_node1);
 
-  NodeProto* node0 = func.add_node();
+  NodeProto node0;
   BuildNode(
       "Reduced_Mean_0",
       ONNX_DOMAIN,
@@ -78,13 +58,14 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "ReduceMean",
       std::vector<std::string>{"X"},
       std::vector<std::string>{"X_RM"},
-      node0);
-  AttributeProto* attr0 = node0->add_attribute();
+      &node0);
+  AttributeProto* attr0 = node0.add_attribute();
   attr0->set_ref_attr_name("axes");
   attr0->set_name("axes");
   attr0->set_type(AttributeProto_AttributeType_INTS);
+  function_nodes.emplace_back(node0);
 
-  NodeProto* node1 = func.add_node();
+  NodeProto node1;
   BuildNode(
       "Pow_0",
       ONNX_DOMAIN,
@@ -92,9 +73,10 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Pow",
       std::vector<std::string>{"X_RM", "Exponent"},
       std::vector<std::string>{"EX_squared"},
-      node1);
+      &node1);
+  function_nodes.emplace_back(node1);
 
-  NodeProto* node2 = func.add_node();
+  NodeProto node2;
   BuildNode(
       "Pow_1",
       ONNX_DOMAIN,
@@ -102,9 +84,10 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Pow",
       std::vector<std::string>{"X", "Exponent"},
       std::vector<std::string>{"X_squared"},
-      node2);
+      &node2);
+  function_nodes.emplace_back(node2);
 
-  NodeProto* node3 = func.add_node();
+  NodeProto node3;
   BuildNode(
       "Reduced_Mean_1",
       ONNX_DOMAIN,
@@ -112,13 +95,14 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "ReduceMean",
       std::vector<std::string>{"X_squared"},
       std::vector<std::string>{"E_Xsquared"},
-      node3);
-  AttributeProto* attr1 = node3->add_attribute();
+      &node3);
+  AttributeProto* attr1 = node3.add_attribute();
   attr1->set_ref_attr_name("axes");
   attr1->set_name("axes");
   attr1->set_type(AttributeProto_AttributeType_INTS);
+  function_nodes.emplace_back(node3);
 
-  NodeProto* node4 = func.add_node();
+  NodeProto node4;
   BuildNode(
       "SUB_0",
       ONNX_DOMAIN,
@@ -126,9 +110,10 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Sub",
       std::vector<std::string>{"E_Xsquared", "EX_squared"},
       std::vector<std::string>{"Variance"},
-      node4);
+      &node4);
+  function_nodes.emplace_back(node4);
 
-  NodeProto* node5 = func.add_node();
+  NodeProto node5;
   BuildNode(
       "SQRT_0",
       ONNX_DOMAIN,
@@ -136,9 +121,10 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Sqrt",
       std::vector<std::string>{"Variance"},
       std::vector<std::string>{"STD"},
-      node5);
+      &node5);
+  function_nodes.emplace_back(node5);
 
-  NodeProto* node6 = func.add_node();
+  NodeProto node6;
   BuildNode(
       "SUB_1",
       ONNX_DOMAIN,
@@ -146,9 +132,10 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Sub",
       std::vector<std::string>{"X", "X_RM"},
       std::vector<std::string>{"X_variance"},
-      node6);
+      &node6);
+  function_nodes.emplace_back(node6);
 
-  NodeProto* node7 = func.add_node();
+  NodeProto node7;
   BuildNode(
       "ADD_0",
       ONNX_DOMAIN,
@@ -156,24 +143,49 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "Add",
       std::vector<std::string>{"STD", "Epsilon"},
       std::vector<std::string>{"Processed_STD"},
-      node7);
+      &node7);
+  function_nodes.emplace_back(node7);
 
-  NodeProto* node8 = func.add_node();
+  NodeProto node8;
   BuildNode(
       "DIV_0",
       ONNX_DOMAIN,
       "Calculate MVN-ed tensor for output",
       "Div",
       std::vector<std::string>{"X_variance", "Processed_STD"},
-      std::vector<std::string>{"X_MVN"},
-      node8);
+      std::vector<std::string>{"Y"},
+      &node8);
+  function_nodes.emplace_back(node8);
 
-  return Common::Status::OK();
+  return function_nodes;
 }
 
-ONNX_FUNCTION_BUILD(
+static const char* mvn_ver9_doc = R"DOC(
+      A MeanVarianceNormalization Function: Perform mean variance normalization
+      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     9,
-    FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
+    OpSchema()
+        .SetSupportLevel(SupportType::COMMON)
+        .SetDoc(mvn_ver9_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .Attr(
+            "axes",
+			"A list of integers, along which to reduce. The default is to reduce over "
+			"all the dimensions of the input tensor. Use [0,2,3] (without C axis for "
+            "N-D cases) for calculating means and variances along channels. Two "
+            "variables with the same C-coordinate are associated "
+            "with the same mean and variance.",
+			AttributeProto::INTS,
+			OPTIONAL)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to all numeric tensors.")
+       .FunctionBody(BuildMVNFunctionBody()));
 
 } // namespace ONNX_NAMESPACE

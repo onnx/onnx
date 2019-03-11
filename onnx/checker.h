@@ -62,14 +62,6 @@ class CheckerContext final {
     return schema_registry_;
   }
 
-  void set_func_registry(const IFunctionBuilderRegistry* func_registry) {
-    func_registry_ = func_registry;
-  }
-
-  const IFunctionBuilderRegistry* get_func_registry() const {
-    return func_registry_;
-  }
-
   void set_model_dir(const std::string& model_dir){
     model_dir_ = model_dir;
   }
@@ -85,8 +77,6 @@ class CheckerContext final {
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
-  const IFunctionBuilderRegistry* func_registry_ =
-      &FunctionBuilderRegistry::OnnxInstance();
   std::string model_dir_;
 };
 
@@ -116,12 +106,6 @@ void check_function(
 
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
-
-void VerifyFunctionNode(
-    const NodeProto&,
-    const FunctionProto&,
-    const CheckerContext&,
-    const LexicalScopeContext&);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

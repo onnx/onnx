@@ -23,7 +23,15 @@ def onnx_opset_version():  # type: () -> int
     return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
-OpSchema = C.OpSchema
+@property  # type: ignore
+def _Function_proto(self):  # type: ignore
+    func_proto = FunctionProto()
+    func_proto.ParseFromString(self._function_body)
+    return func_proto
+
+
+OpSchema = C.OpSchema  # type: ignore
+C.OpSchema.function_body = _Function_proto  # type: ignore
 
 
 @property  # type: ignore
@@ -36,12 +44,6 @@ def _Attribute_default_value(self):  # type: ignore
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
 
 
-def get_functions(domain=ONNX_DOMAIN):  # type: ignore
-    function_map = defaultdict(list)  # type: Dict[int, List[FunctionProto]]
-    function_byte_map = C.get_all_functions(domain)  # type: ignore
-    for function_name, raw_functions in function_byte_map.items():
-        for function_bytes in raw_functions:
-            function_proto = FunctionProto()
-            function_proto.ParseFromString(function_bytes)
-            function_map[function_name].append(function_proto)
-    return function_map
+def get_function_ops():  # type: () -> List[OpSchema]
+    schemas = C.get_all_schemas()
+    return [schema for schema in schemas if schema.has_function]  # type: ignore

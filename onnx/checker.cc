@@ -342,25 +342,15 @@ void check_node(
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
-  if (!schema || schema->Deprecated()) {
-    // There's no primitive operator for the node.
-    // Check whether it's referring to a function.
-    auto func_registry = ctx.get_func_registry();
-    if (nullptr == func_registry) {
+  if (!schema) {
       fail_check(
-          "No Op or Function registered for " + node.op_type() +
+          "No Op registered for " + node.op_type() +
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
-    }
-    auto func = func_registry->GetFunction(
-        node.op_type(), domain_version, node.domain());
-    if (nullptr == func) {
-      fail_check(
-          "No Op or Function registered for " + node.op_type() +
-          " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
-    }
-    VerifyFunctionNode(node, *func, ctx, lex_ctx);
+  } else if (schema->Deprecated()) {
+    fail_check(
+        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
+        ONNX_NAMESPACE::to_string(domain_version));
   } else {
     schema->Verify(node);
   }
@@ -595,20 +585,6 @@ void check_model(const std::string& model_path) {
 void check_model(const ModelProto& model) {
   CheckerContext ctx;
   check_model(model, ctx);
-}
-
-void VerifyFunctionNode(
-    const NodeProto& node,
-    const FunctionProto& func,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& lex_ctx) {
-  // Create a temporary graphproto to hold the expanded subgraph
-  GraphProto g;
-  g.set_name("func_" + func.name() + "_expanded_subgraph");
-  // To Generate unique internal tensor names
-  // while preserving node's input/output names
-  FunctionExpandHelper(node, func, g);
-  check_graph(g, ctx, lex_ctx);
 }
 
 #undef fail_check
