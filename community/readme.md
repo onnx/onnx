@@ -36,7 +36,7 @@ New Contributors also need to be sponsored by 2 existing Approvers from differen
 
 Approvers need to be active Contributors for at least 3 months and be sponsored by a SIG chair with no objections from other SIG chairs.
 
-**Member companies** are organizations that support ONNX. They generally fund people to work on the project and resources for running the project, their logos are displayed on the website and other materials, and they sometimes help host community events. Member companies do not have any voting rights, except via their employees who are Contributors.
+**Member Companies** are organizations that support ONNX. They generally fund people to work on the project and resources for running the project, their logos are displayed on the website and other materials, and they sometimes help host community events. Member companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations.
 
 ## Organizational Structure
 
@@ -52,7 +52,7 @@ The ONNX community is organized in the following manner, with all governance and
 
 The Steering Committee has a set of rights and responsibilities including the following:
 
-* Define, evolve, and defend the vision, values,  mission, and scope of the project.
+* Define, evolve, and defend the vision, values, mission, and scope of the project.
 * Define, evolve, and defend a Code of Conduct,  which must include a neutral, unbiased process for resolving conflicts.
 * Define and evolve project governance structures and policies, including how members become contributors, approvers, SIG chairs, etc.
 * Charter and refine policy for defining new community groups (Special Interest Groups, Working Groups, and any future possible defined structure), and establish transparency and accountability policies for such groups.
@@ -61,22 +61,22 @@ The Steering Committee has a set of rights and responsibilities including the fo
 * Decide how and when official releases of ONNX artifacts are made and what they include.
 * Declare releases when quality/feature/other requirements are met.
 * Control access to, establish processes regarding, and provide a final escalation path for any ONNX  repository, which currently includes all repositories under the ONNX GitHub organizations
-* Control and delegate access to and establish  processes regarding other project resources/assets, including artifact  repositories, build and test infrastructure, web sites and their domains,  blogs, social-media accounts, etc.
+* Control and delegate access to and establish  processes regarding other project resources/assets, including artifact repositories, build and test infrastructure, web sites and their domains, blogs, social-media accounts, etc.
 * Define any certification process.
 * Manage the ONNX brand, all outbound Marketing, and any associated budget.
 * Make decisions by majority vote if consensus cannot be reached.
 
 #### Structure
 
-The Steering Committee consists of 5 individuals. No single company/organization may have more than 1 representative. Members serve 2 year terms. In order to ensure continuity, terms will be staggered.
+The Steering Committee consists of 5 individuals. No single Member Company may have more than 1 representative. Members serve 2 year terms. In order to ensure continuity, terms will be staggered.
 
 The Steering Committee will decide on and publish an election process within 3 months of formalizing this organizational structure. This will cover voting eligibility, eligibility for candidacy, election process and schedule. During this time period, the Steering Committee will also establish SIGs and Working Groups.
 
-The starting composition will be individuals from Microsoft, Facebook, Amazon, and 2 other companies, who have been picked by the three founding members based on the following contribution criteria of code contributions, Gitter activity, and GitHub issues resolved.  These two companies are X and Y. As part of the initial governance formation bootstrapping, Microsoft, Facebook, and Amazon representatives will have 2 year terms and the other two representatives will have 1 year terms. 
+The starting composition will be individuals from Microsoft, Facebook, Amazon, and 2 other Member Companies, who have been picked by the three founding members based on the following contribution criteria of code contributions, Gitter activity, and GitHub issues resolved.  These two companies are X and Y. As part of the initial governance formation bootstrapping, Microsoft, Facebook, and Amazon representatives will have 2 year terms and the other two representatives will have 1 year terms. 
 
-After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per company/organization. Therefore, if a company had three contributors in good standing, the three contributors would have to select who would vote on their behalf.
+After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per Member Company. Therefore, if a Member Company had three contributors in good standing, the three contributors would have to select who would vote on their behalf.
 
-If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. However, should their company/organization ask this person to resign from the role, new elections will be held. If the employment change results in a single company having more than one member, then one of them must resign, and new elections also held.
+If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. However, should their company/organization ask this person to resign from the role, new elections will be held. If the employment change results in a single Member Company having more than one representative, then one of them must resign, and new elections are held.
 
 ### SIG - Special Interest Groups
 
@@ -118,7 +118,7 @@ A primary reason that SIGs exist is as forums for collaboration. Much work in a 
 
 #### Decision making
 
-When it is time to formalize the work-product from a SIG, votes are taken from every contributor who participates in the SIG. The list of active contributors is determined by the one (or two) SIG leads to ensure that only those who have actively participated in the SIG can vote. At this time there is no restrictions on how many contributors from any one company can participate (and hence vote). The Steering Committee will monitor how the community behaves and apply constraints if needed in the future.
+When it is time to formalize the work-product from a SIG, votes are taken from every contributor who participates in the SIG. The list of active contributors is determined by the one (or two) SIG leads to ensure that only those who have actively participated in the SIG can vote. At this time there is no restrictions on how many contributors from any one Member Company can participate (and hence vote). The Steering Committee will monitor how the community behaves and apply constraints if needed in the future.
 
 While most work shouldn’t require expensive coordination with other SIGs, there will be efforts (features, refactoring, etc.) that cross SIG boundaries. In this case, it is expected that the SIGs coordinate with each other and come to mutually agreed solutions. In some cases, it may make sense to form a Working Group for joint work. Cross-SIG coordination will naturally require more time and implies a certain amount of overhead. This is intentional to encourage changes to be well encapsulated whenever possible.
 
@@ -148,11 +148,11 @@ Working Groups are disbanded when there is no activity for more than *3 months* 
 
 All repositories under the ONNX github org:
 
-* Must adopt  the ONNX Code of Conduct
-* All code  projects use the MIT license. Documentation repositories must use the  Creative Commons License version 4.0.
-* Must adopt  the ONNX CLA bot
-* All OWNERS  must be members of standing as defined by ability to vote in ONNX steering  committee elections
-* Repository  must be approved by the Steering Committee
+* Must adopt the ONNX Code of Conduct
+* All code projects use the MIT license. Documentation repositories must use the Creative Commons License version 4.0.
+* Must adopt the ONNX CLA bot
+* All OWNERS must be members of standing as defined by ability to vote in ONNX steering committee elections
+* Repository must be approved by the Steering Committee
 
 Repositories can be removed when they are inactive by archiving them.
 
