@@ -63,7 +63,7 @@ The Steering Committee has a set of rights and responsibilities including the fo
 * Control access to, establish processes regarding, and provide a final escalation path for any ONNX  repository, which currently includes all repositories under the ONNX GitHub organizations
 * Control and delegate access to and establish  processes regarding other project resources/assets, including artifact  repositories, build and test infrastructure, web sites and their domains,  blogs, social-media accounts, etc.
 * Define any certification process.
-* Manage the ONNX brand, all outbound Marketing, and any associated budget.
+* Manage the ONNX brand and any outbound marketing.
 * Make decisions by majority vote if consensus cannot be reached.
 
 #### Structure
