@@ -1085,7 +1085,35 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensors."));
+            "Constrain input and output types to all tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape Inference if 2nd input data (the target shape) is available
+          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
+          if (!targetShapeInitializer) {
+            return;
+          }
+          // The targetShape vector represents the specified shape for output.
+          std::vector<int64_t> targetShape;
+          if (targetShapeInitializer->has_raw_data()) {
+            const std::string& bytes = targetShapeInitializer->raw_data();
+            targetShape.insert(
+                targetShape.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+          } else {
+            const auto& data = targetShapeInitializer->int64_data();
+            targetShape.insert(targetShape.end(), data.begin(), data.end());
+          }
+          auto* outputShape =
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          for (int64_t dim : targetShape) {
+            // Add a new dimension to outputShape
+            auto* new_dim = outputShape->add_dim();
+            new_dim->set_dim_value(dim);
+          }
+        }));
 
 static const char* Sinh_ver9_doc = R"DOC(
 Calculates the hyperbolic sine of the given input tensor element-wise.
