@@ -88,14 +88,12 @@ Our goal is to enable a distributed decision structure and code ownership, as we
 
 Areas covered by SIGs may be vertically focused on particular components or functions, cross-cutting/horizontal, spanning many/all functional areas of the project, or in support of the project itself. At the time of inception of this organizational structure, the following SIGs will be present:
 
-* Core Architecture
-    * This SIG is responsible for defining and maintaining the core ONNX format and is the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
+* Architecture & Infra
+    * This SIG is responsible for defining and maintaining the core ONNX format, the build and CI/CD systems for ONNX repositories, publishing release packages for ONNX, the onnx-docker repository, and creating tools to help integrate with and test against the ONNX standard. This SIG is also the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
 * Operator Standardization
     * This SIG is responsible for determining the operators that are part of the ONNX spec (ONNX and ONNX-ML domains), ensuring high quality operator definitions and documentation, establishing criteria for adding new operators, managing ops domains and compliance tiers, and enforcing versioning mechanisms.
 * Converters
     * This SIG is responsible for developing and maintaining the various converter repositories under ONNX.
-* Infrastructure
-    * This SIG is responsible for the build and CI/CD systems for ONNX repositories, publishing release packages for ONNX, the onnx-docker repository, and creating tools to help integrate with and test against the ONNX standard.
 * Model zoo and tutorials
     * This SIG is responsible for the respective repositories with the charter of providing a comprehensive collection of state of the art ONNX models from a variety of sources and making it easy for users to get started with ONNX and the ecosystem around it.
 
