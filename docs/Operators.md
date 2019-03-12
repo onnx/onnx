@@ -12265,6 +12265,7 @@ expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uni
 #### Version
 
 This version of the operator has been available since version 10 of the default ONNX operator set.
+
 #### Attributes
 
 <dl>
