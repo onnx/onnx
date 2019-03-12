@@ -60,3 +60,52 @@ class Resize(Base):
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_nearest')
+
+    @staticmethod
+    def export_upsample_linear():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'scales'],
+            outputs=['Y'],
+            mode='linear',
+        )
+
+        data = np.array([[[
+            [1, 2],
+            [3, 4],
+        ]]], dtype=np.float32)
+
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        output = np.array([[[
+            [1, 1.5, 2, 2]
+            [2, 2.5, 3, 3]
+            [3, 3.5, 4, 4]
+            [3, 3.5, 4, 4]
+        ]]], dtype=np.float32)
+
+        expect(node, inputs=[data, scales], outputs=[output],
+               name='test_resize_upsample_linear')
+
+    @staticmethod
+    def export_downsample_linear():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'scales'],
+            outputs=['Y'],
+            mode='linear',
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+        ]]], dtype=np.float32)
+
+        scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+        output = np.array([[[
+            [1, 2.66666651]
+        ]]], dtype=np.float32)
+
+        expect(node, inputs=[data, scales], outputs=[output],
+               name='test_resize_upsample_linear')
