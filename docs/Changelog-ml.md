@@ -695,6 +695,60 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
+### <a name="ai.onnx.ml.Tokenizer-1"></a>**ai.onnx.ml.Tokenizer-1**</a>
+
+  Tokenizer divides each string in X into a vector of strings along the last axis. Allowed input shapes are [C] and [N, C].
+      If the maximum number of tokens found per input string is D, the output shape would be [N, C, D] when input shape is [N, C].
+      Similarly, if input shape is [C] then the output should be [C, D]. Tokenizer has two different operation modes. 
+      The first mode is selected when "tokenexp" is not set and "separators" is set. If "tokenexp" is set and "separators"
+      is not set, the second mode will be used. The first mode breaks each input string into tokens by removing separators.
+      Let's assume "seperators" is [" "] and consider an example. If input is ["Hello World", "I love computer science !"]
+      whose shape is [2], then the output would be [["Hello", "World", padvalue, padvalue, padvalue],
+      ["I", "love", "computer", "science", "!"]] whose shape is [2, 5] because you can find at most 5 tokens per input string.
+      Note that the input at most can have two axes, so 3-D and higher dimension are not supported. 
+      For each input string, the second mode searches matches of "tokenexp" and each match will be a token in Y.
+      The matching of "tokenexp" is conducted greedily (i.e., a match should be as long as possible).
+      This operator searches for the first match starting from the beginning of the considered string,
+      and then launches another search starting from the first remained character after the first matched token.
+      If no match found, this operator will remove the first character from the remained string and do another search.
+      This procedure will be repeated until reaching the end of the considered string.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mark</tt> : int (required)</dt>
+<dd>Boolean whether to mark the beginning/end character with start of text character (0x02)/end of text character (0x03).</dd>
+<dt><tt>mincharnum</tt> : int (required)</dt>
+<dd>Minimum number of characters allowed in the output. For example, if mincharnum is 2, tokens such as "A" and "B" would be ignored</dd>
+<dt><tt>pad_value</tt> : string (required)</dt>
+<dd>The string used to pad output tensors when the tokens extracted doesn't match the maximum number of tokens found. If start/end markers are needed, padding will appear outside the markers.</dd>
+<dt><tt>separators</tt> : list of strings</dt>
+<dd>The list of separators, two consecutive segments in X connected by a separator would be divided into two tokens.</dd>
+<dt><tt>tokenexp</tt> : string</dt>
+<dd>An optional string. Token's regular expression in ECMA format (http://ecma-international.org/ecma-262/5.1/#sec-15.10). If set, tokenizer may produce tokens matching the specified pattern. Note that one and only of "tokenexp" and"separators" should be set.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to tokenize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Tokenized strings</dd>
+</dl>
+
+#### Type Constraints
+
+
 ### <a name="ai.onnx.ml.TreeEnsembleClassifier-1"></a>**ai.onnx.ml.TreeEnsembleClassifier-1**</a>
 
   Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
