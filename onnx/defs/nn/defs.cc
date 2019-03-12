@@ -250,12 +250,15 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  data into the output tensor Y for further processing. The output spatial shape will be following:
  ```
  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ ``` 
  or
- output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
- if ceil_mode is enabled
-
- * pad_shape[i] is sum of pads along axis i
  ```
+ output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ ```
+ if ceil_mode is enabled
+ 
+ * pad_shape[i] is sum of pads along axis i
+ 
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
