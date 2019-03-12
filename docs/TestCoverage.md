@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 112/119 (94.12%, 5 generators excluded) common operators.
 
-Node tests have covered 2/7 (28.57%, 0 generators excluded) experimental operators.
+Node tests have covered 1/6 (16.67%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -5618,24 +5618,25 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Slice
-There are 5 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>slice</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.int64)
+ends = np.array([3, 10], dtype=np.int64)
+axes = np.array([0, 1], dtype=np.int64)
+steps = np.array([1, 1], dtype=np.int64)
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice')
 ```
 
@@ -5646,17 +5647,38 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends'],
     outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
 y = x[:, :, 3:4]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends], outputs=[y],
        name='test_slice_default_axes')
+```
+
+</details>
+<details>
+<summary>slice_default_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_default_steps')
 ```
 
 </details>
@@ -5666,17 +5688,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_end_out_of_bounds')
 ```
 
@@ -5687,18 +5710,41 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.int64)
+ends = np.array([-1], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 0:-1]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_neg')
+```
+
+</details>
+<details>
+<summary>slice_neg_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([20, 10, 4], dtype=np.int64)
+ends = np.array([0, 0, 1], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -3, -2])
+y = x[20:0:-1, 10:0:-3, 4:1:-2]
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_neg_steps')
 ```
 
 </details>
@@ -5708,17 +5754,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1000],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1000:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_start_out_of_bounds')
 ```
 
@@ -6794,114 +6841,6 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
-### DynamicSlice
-There are 5 test cases, listed as following:
-<details>
-<summary>dynamic_slice</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[0:3, 0:10]
-starts = np.array([0, 0], dtype=np.int64)
-ends = np.array([3, 10], dtype=np.int64)
-axes = np.array([0, 1], dtype=np.int64)
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice')
-```
-
-</details>
-<details>
-<summary>dynamic_slice_default_axes</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0, 0, 3], dtype=np.int64)
-ends = np.array([20, 10, 4], dtype=np.int64)
-y = x[:, :, 3:4]
-
-expect(node, inputs=[x, starts, ends], outputs=[y],
-       name='test_dynamic_slice_default_axes')
-```
-
-</details>
-<details>
-<summary>dynamic_slice_end_out_of_bounds</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1], dtype=np.int64)
-ends = np.array([1000], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
-y = x[:, 1:1000]
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice_end_out_of_bounds')
-```
-
-</details>
-<details>
-<summary>dynamic_slice_neg</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0], dtype=np.int64)
-ends = np.array([-1], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
-y = x[:, 0:-1]
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice_neg')
-```
-
-</details>
-<details>
-<summary>dynamic_slice_start_out_of_bounds</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1000], dtype=np.int64)
-ends = np.array([1000], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
-y = x[:, 1000:1000]
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice_start_out_of_bounds')
-```
-
-</details>
-
-
 ### ThresholdedRelu
 There are 2 test cases, listed as following:
 <details>
