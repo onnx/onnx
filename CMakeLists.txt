@@ -122,7 +122,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
 # customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
 function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
-  if(NOT ARGN)
+  if(NOT ${ARGN})
     message(
       SEND_ERROR
         "Error: RELATIVE_PROTOBUF_GENERATE_CPP() called without any proto files"
