@@ -152,7 +152,7 @@ void convPoolTypeAndShapeInference(
     
     if(ceil_mode)
         strided_kernel_positions =
-            std::ceil((effective_input_size - effective_kernel_size) / float(strides[i]));
+            (int64_t)(std::ceil((effective_input_size - effective_kernel_size) / float(strides[i])));
     else
         strided_kernel_positions =
             (effective_input_size - effective_kernel_size) / strides[i];
