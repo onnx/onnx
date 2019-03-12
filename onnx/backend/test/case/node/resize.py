@@ -108,4 +108,4 @@ class Resize(Base):
         ]]], dtype=np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
-               name='test_resize_upsample_linear')
+               name='test_resize_downsample_linear')
