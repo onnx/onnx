@@ -219,6 +219,7 @@ polished_model = onnx.utils.polish_model(model)
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
 to the provided values in the parameter. You could provide both static and dynamic dimension size,
 by using dim_param.
+The function runs model checker after the input/output sizes are updated.
 ```python
 import onnx
 import onnx.utils
