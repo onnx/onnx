@@ -78,10 +78,10 @@ class Resize(Base):
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         output = np.array([[[
-            [1, 1.5, 2, 2]
-            [2, 2.5, 3, 3]
-            [3, 3.5, 4, 4]
-            [3, 3.5, 4, 4]
+            [1, 1.5, 2, 2],
+            [2, 2.5, 3, 3],
+            [3, 3.5, 4, 4],
+            [3, 3.5, 4, 4],
         ]]], dtype=np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
