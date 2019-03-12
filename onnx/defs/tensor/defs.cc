@@ -7,22 +7,36 @@
 #include <cmath>
 
 namespace ONNX_NAMESPACE {
-static const char* Cast_ver6_doc = R"DOC(
+static const char* Cast_ver9_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
 in the 'DataType' enum field in the TensorProto message.
-NOTE: Casting to and from strings is not supported yet.
+
+Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+(e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+result 100. There are some string literals reserved for special floating-point values;
+"+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+
+Conversion from a numerical type to any numerical type is always allowed.
+User must be aware of precision loss and value change caused by range difference between two types.
+For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    6,
+    9,
     OpSchema()
-        .SetDoc(Cast_ver6_doc)
+        .SetDoc(Cast_ver9_doc)
         .Attr(
             "to",
-            "The data type to which the elements of the input tensor are cast."
+            "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::INT)
         .Input(0, "input", "Input tensor to be cast.", "T1")
@@ -45,8 +59,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)",
              "tensor(uint32)",
              "tensor(uint64)",
-             "tensor(bool)"},
-            "Constrain input types. Casting from strings and complex are not supported.")
+             "tensor(bool)",
+             "tensor(string)"},
+            "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -60,8 +75,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)",
              "tensor(uint32)",
              "tensor(uint64)",
-             "tensor(bool)"},
-            "Constrain output types. Casting to strings and complex are not supported.")
+             "tensor(bool)",
+             "tensor(string)"},
+            "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -419,17 +435,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Slice_ver1_doc = R"DOC(
+static const char* Slice_ver10_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
-dimension for each axis in the list of axes, it uses this information to
+Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+dimension and step for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represent number of elements before the end of that
 dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
 end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+If a negative value is passed for step, it represents slicing backward.
 If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 Example 1:
   data = [
       [1, 2, 3, 4],
@@ -438,8 +456,9 @@ Example 1:
   axes = [0, 1]
   starts = [1, 0]
   ends = [2, 3]
+  steps = [1, 2]
   result = [
-      [5, 6, 7],
+      [5, 7],
   ]
 Example 2:
   data = [
@@ -455,55 +474,96 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
-    1,
+    10,
     OpSchema()
-        .SetDoc(Slice_ver1_doc)
+        .SetDoc(Slice_ver10_doc)
         .Input(0, "data", "Tensor of data to extract slices from.", "T")
-        .Attr(
-            "axes",
-            "Axes that `starts` and `ends` apply to. "
-            "It's optional. If not present, will be treated as "
-            "[0, 1, ..., len(`starts`) - 1].",
-            AttributeProto::INTS,
-            OPTIONAL)
-        .Attr(
-            "starts",
-            "Starting indices of corresponding axis in `axes`",
-            AttributeProto::INTS)
-        .Attr(
-            "ends",
-            "Ending indices (exclusive) of corresponding axis in axes`",
-            AttributeProto::INTS)
+        .Input(1, "starts", "1-D tensor of starting indices of corresponding axis in `axes`", "Tind")
+        .Input(2, "ends", "1-D tensor of ending indices (exclusive) of corresponding axis in `axes`", "Tind")
+        .Input(3, "axes", "1-D tensor of axes that `starts` and `ends` apply to.", "Tind", OpSchema::Optional)
+        .Input(4, "steps", "1-D tensor of slice step of corresponding axis in `axes`. Default to 1. ", "Tind", OpSchema::Optional)
         .Output(0, "output", "Sliced data tensor.", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          size_t num_inputs = ctx.getNumInputs();
+          if (num_inputs != 3 && num_inputs != 4 && num_inputs != 5) {
+            fail_type_inference("Slice op must have either three, four or five inputs.");
+          }
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          std::vector<int64_t> starts;
-          std::vector<int64_t> ends;
-          if (!getRepeatedAttribute(ctx, "starts", starts) ||
-              !getRepeatedAttribute(ctx, "ends", ends) ||
-              starts.size() != ends.size()) {
+          // Shape Inference if 
+          //     1. 2nd and 3rd input data (starts, ends) are available.
+          // and 2. 4th and 5th optional input (axes, steps) are either not set, or set and is initializer.
+          const TensorProto* startsInitializer = ctx.getInputData(1);
+          const TensorProto* endsInitializer = ctx.getInputData(2);
+          const TensorProto* axesInitializer = hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
+          const TensorProto* stepsInitializer = hasInputShape(ctx, 4) ? ctx.getInputData(4) : nullptr;
+
+          if (!startsInitializer ||
+              !endsInitializer ||
+              (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
+              (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            return;
+          }
+
+          auto getInitializerData = [](const TensorProto* initializer) -> std::vector<int64_t> {
+            std::vector<int64_t> vec;
+            if (initializer->has_raw_data()) {
+              const std::string& bytes = initializer->raw_data();
+              vec.insert(
+                vec.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+            } else {
+              const auto& data = initializer->int64_data();
+              vec.insert(vec.end(), data.begin(), data.end());
+            }
+            return vec;
+          };
+
+          std::vector<int64_t> starts = getInitializerData(startsInitializer);
+          std::vector<int64_t> ends = getInitializerData(endsInitializer);
+
+          if (starts.size() != ends.size()) {
             fail_shape_inference(
-                "Incorrect or missing attribute value for starts and ends");
+                "Incorrect or missing input value for starts and ends");
             ;
           }
+
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          if (!axesInitializer) {
             for (int i = 0; (size_t)i < starts.size(); ++i) {
               axes.push_back(i);
             }
-          } else if (axes.size() != starts.size()) {
-            fail_shape_inference("Attribute axes has incorrect length");
-            ;
-          } else if (!std::is_sorted(axes.begin(), axes.end())) {
-            // TODO support shape inference for unsorted axes
-            return;
+          } else {
+            axes = getInitializerData(axesInitializer);
+            if (axes.size() != starts.size()) {
+              fail_shape_inference("Input axes has incorrect length");
+              ;
+            } else if (!std::is_sorted(axes.begin(), axes.end())) {
+              // TODO support shape inference for unsorted axes
+              return;
+            }
+          }
+
+          std::vector<int64_t> steps;
+          if (!stepsInitializer) {
+            steps = std::vector<int64_t>(starts.size(), 1);
+          } else {
+            steps = getInitializerData(stepsInitializer);
+            if (steps.size() != starts.size()) {
+              fail_shape_inference("Input steps has incorrect length");
+              ;
+            }
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -523,7 +583,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                       .shape()
                       .dim((int)i)
                       .has_dim_value() &&
-                  starts[j] >= 0 && ends[j] >= 0) {
+                  starts[j] >= 0 && ends[j] >= 0 && steps[j] > 0) {
                 auto newval = std::min(
                                   (int64_t)ctx.getInputType(0)
                                       ->tensor_type()
@@ -532,6 +592,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                                       .dim_value(),
                                   ends[j]) -
                     starts[j];
+                newval = newval / steps[j] + (newval % steps[j] && steps[j] != 1 ? 1 : 0);
                 if (newval >= 0) {
                   newdim->set_dim_value(newval);
                 }
@@ -1416,5 +1477,67 @@ ONNX_OPERATOR_SET_SCHEMA(
                                        propagateShapeFromInputToOutput(ctx, 0, 0);
                                      }}
       ));
+
+static const char* Where_ver9_doc = R"DOC(
+    Return elements, either from X or Y, depending on condition
+    (with Numpy-style broadcasting support).
+    Where behaves like numpy.where with three parameters:
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Where,
+    9,
+    OpSchema()
+        .SetDoc(Where_ver9_doc)
+        .Input(0, "condition", "When True (nonzero), yield X, otherwise yield Y", "B")
+        .Input(1, "X", "values selected at indices where condition is True", "T")
+        .Input(2, "Y", "values selected at indices where condition is False", "T")
+        .Output(
+            0,
+            "output",
+            "Tensor of shape equal to the broadcasted shape of condition, X, and Y.",
+            "T")
+        .TypeConstraint(
+            "B",
+            {"tensor(bool)"},
+            "Constrain to boolean tensors.")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateElemTypeFromInputToOutput(ctx, 1, 0);
+            if (hasNInputShapes(ctx, 3)) {
+                std::vector<const TensorShapeProto*> shapes;
+                shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
+                shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
+                shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
+                multidirectionalBroadcastShapeInference(shapes,
+                    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+            }
+            }));
+
+static const char* NonZero_ver9_doc = R"DOC(
+    Returns the indices of the elements that are non-zero
+    (in row-major order - by dimension).
+    NonZero behaves similar to numpy.nonzero:
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonZero,
+    9,
+    OpSchema()
+    .SetDoc(NonZero_ver9_doc)
+    .Input(0, "X", "input", "T")
+    .Output(0, "Y", "output (always 2D tensor)", "tensor(int64)")
+    .TypeConstraint(
+        "T",
+        OpSchema::all_tensor_types(),
+        "Constrain to all tensor types.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        updateOutputElemType(ctx, 0, TensorProto::INT64);
+        }));
 
 } // namespace ONNX_NAMESPACE

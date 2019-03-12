@@ -7,6 +7,11 @@
 #include <math.h>
 
 #include "onnx/onnxifi.h"
+#include "onnx/onnxifi_ext.h"
+
+/*
+ * ONNXIFI Functions
+ */
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxGetBackendIDs(onnxBackendID* backendIDs, size_t* numBackends) {
@@ -134,5 +139,58 @@ onnxGetEventState(onnxEvent event, onnxEventState* state) {
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxReleaseGraph(onnxGraph graph) {
+  return ONNXIFI_STATUS_SUCCESS;
+}
+
+/*
+ * ONNXIFI Extension Functions
+ */
+
+/*
+ * This is the function list and the number of functions in onnxifi_ext
+ * we have in this backend. It should be a subset of ALL_EXT_FUNCTION_LIST
+ * in onnxifi_ext.h
+ */
+const int extension_function_number = 2;
+const char* extension_function_list[] = {"onnxGetExtensionFunctionAddress",
+                                         "onnxSetIOAndRunGraph"};
+
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+onnxGetExtensionFunctionAddress(
+    onnxBackendID backendID,
+    const char* name,
+    onnxExtensionFunctionPointer* function) {
+  if (name == NULL || function == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
+  *function = NULL;
+  int i;
+  for (i = 0; i < extension_function_number; i++) {
+    /* target function found */
+    if (strcmp(name, extension_function_list[i]) == 0) {
+      switch (i) {
+        case 0:
+          *function = &onnxGetExtensionFunctionAddress;
+          break;
+        case 1:
+          *function = &onnxSetIOAndRunGraph;
+          break;
+      }
+    }
+  }
+
+  if (*function == NULL) {
+    return ONNXIFI_STATUS_UNIDENTIFIED_NAME;
+  }
+  return ONNXIFI_STATUS_SUCCESS;
+}
+
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetIOAndRunGraph(
+    onnxGraph graph,
+    uint32_t inputsCount,
+    const onnxTensorDescriptorV1* inputDescriptors,
+    uint32_t outputsCount,
+    const onnxTensorDescriptorV1* outputDescriptors,
+    onnxMemoryFenceV1* outputFence) {
   return ONNXIFI_STATUS_SUCCESS;
 }

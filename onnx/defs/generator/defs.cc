@@ -33,69 +33,38 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static const char* ConstantLike_ver9_doc = R"DOC(
-Generate a tensor with specific constant value. The value can be specified by the 'value' 
-attribute. The shape of the output tensor is the same as the input tensor, if the input 
-tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
-the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
-argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
-tensor is also not specified, then the type defaults to 'float'.
-
-The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-TensorProto message and be valid as an output type.
+static const char* ConstantOfShape_ver9_doc = R"DOC(
+Generate a tensor with given value and shape.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    ConstantLike,
+    ConstantOfShape,
     9,
     OpSchema()
-        .SetDoc(ConstantLike_ver9_doc)
+        .SetDoc(ConstantOfShape_ver9_doc)
         .Attr(
             "value",
-            "(Optional) The value for the elements of the output tensor.",
-            AttributeProto::FLOAT,
-            0.0f)
-        .Attr(
-            "dtype",
-            "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not "
-            "specified, then output tensor type defaults to 'float'.",
-            AttributeProto::INT,
-            OPTIONAL)
-        .Attr(
-            "shape",
-            "(Optional) The shape of the output tensor. If input tensor T1 is provided, then"
-            " 'shape' attribute is ignored and the output follows the shape of the input."
-            " One of either input tensor T1 or 'shape' attribute must be provided.",
-            AttributeProto::INTS,
+            "(Optional) The value of the output elements."
+            "Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32",
+            AttributeProto::TENSOR,
             OPTIONAL)
         .Input(
             0,
             "input",
-            "Input tensor to copy shape, and optionally, type information from."
-            " One of either input tensor T1 or 'shape' attribute must be provided.",
-            "T1",
-            OpSchema::Optional)
+            "1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.",
+            "T1")
         .Output(
             0,
             "output",
-            "Output tensor, same shape as input tensor T1.",
+            "Output tensor of shape specified by 'input'."
+            "If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'."
+            "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
+            "defaults to float32.",
             "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)"},
-            "Constrain input types. Strings and complex are not supported.")
+            {"tensor(int64)"},
+            "Constrain input types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -110,27 +79,76 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)"},
-            "Constrain output types. Strings and complex are not supported.")
+            "Constrain output types to be numerics.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (ctx.getAttribute("dtype") != nullptr) {
-            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (ctx.getAttribute("value") != nullptr) {
+            propagateElemTypeFromDtypeToOutput(
+                ctx, ctx.getAttribute("value"), 0);
           } else {
-            if (hasNInputShapes(ctx, 1)) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 0);
-            }
+            propagateElemTypeFromDtypeToOutput(ctx, TensorProto::FLOAT, 0);
           }
-          if (hasNInputShapes(ctx, 1)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference based on input shape
+          auto final_output_shape =
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const TensorProto* targetShapeInitializer = ctx.getInputData(0);
+          if (!targetShapeInitializer) {
+            // This is the case when exact shape input is not available.
+            // In this case, if the number of dimensions can be infered 
+            // from the input 'shape' tensor, then we add the same number
+            // of dimensions (without any dim_value information) to the output.
+            if (ctx.getInputType(0)->tensor_type().has_shape()) {
+                auto& input_shape = getInputShape(ctx, 0);
+                auto input_shape_dim_size = input_shape.dim_size();
+                if(input_shape_dim_size > 1) {
+                    fail_shape_inference("Shape input must be a one-dimensional tensor.");
+                }
+                if (input_shape.dim(0).has_dim_value()) {
+                    const auto& input_shape_dim_value = input_shape.dim(0).dim_value();
+                    if (input_shape_dim_value > 0) {
+                        for (int i = 0; i < input_shape_dim_value; ++i) {
+                            auto newdim = final_output_shape->add_dim();
+                            (void)(newdim); // To eliminate "unused variable" compiler warning.
+                        }
+                    }
+                }
+            }
+            return;
+          }
+
+          // This is the second case when exact shape data is available.
+          // In this case, we extract the shape values from input tensor
+          // and create output tensor of that shape.
+          // First, extract target shape value.
+          std::vector<int64_t> targetShape;
+          if (targetShapeInitializer->has_raw_data()) {
+            const std::string& bytes = targetShapeInitializer->raw_data();
+            targetShape.insert(
+                targetShape.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+          } else {
+            const auto& data = targetShapeInitializer->int64_data();
+            targetShape.insert(targetShape.end(), data.begin(), data.end());
+          }
+          // Next, set output shape to the target shape.
+          for (const int64_t& targetShapeElem : targetShape) {
+            if(targetShapeElem > 0) {
+              auto* new_dim = final_output_shape->add_dim();
+              new_dim->set_dim_value(targetShapeElem);
+            } else {
+              // Check if value is less than -1; fail if so
+              fail_shape_inference("Invalid shape value: ", targetShapeElem);
+            }
           }
         }));
 
 static const char* EyeLike_ver9_doc = R"DOC(
-Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D 
-tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the 
-same as the input tensor. The data type can be specified by the 'dtype' argument. If 
-'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal 
+Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
+tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
+same as the input tensor. The data type can be specified by the 'dtype' argument. If
+'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal
 is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
-
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message and be valid as an output type.
 )DOC";
@@ -309,11 +327,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* RandomUniformLike_ver1_doc = R"DOC(
-Generate a tensor with random values drawn from a uniform distribution. 
-The shape of the output tensor is copied from the shape of the input tensor, 
+Generate a tensor with random values drawn from a uniform distribution.
+The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the uniform distribution are specified by `low` and `high`.
 
-The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message and be valid as an output type.
 )DOC";
@@ -374,11 +392,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* RandomNormalLike_ver1_doc = R"DOC(
-Generate a tensor with random values drawn from a normal distribution. 
-The shape of the output tensor is copied from the shape of the input tensor, 
+Generate a tensor with random values drawn from a normal distribution.
+The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the normal distribution are specified by `mean` and `scale`.
 
-The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message, and be valid as an output type.
 )DOC";
