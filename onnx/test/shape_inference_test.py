@@ -313,46 +313,142 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))])
 
-    def test_slice(self):  # type: () -> None
+    def test_slice_without_input_shape(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 2))],
-            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, 0], ends=[2, 2])],
+            [('x', TensorProto.FLOAT, (3, 2)), ('starts', TensorProto.INT64, (1,)), ('ends', TensorProto.INT64, (1,))],
+            [make_node('Slice', ['x', 'starts', 'ends'], ['y'])],
             [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])
+
+    def test_slice_with_input_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2)), ('starts', TensorProto.INT64, (2, )), ('ends', TensorProto.INT64, (2, ))],
+            [make_node('Slice', ['x', 'starts', 'ends'], ['y'])],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2, ), (1, 0)), make_tensor('ends', TensorProto.INT64, (2, ), (2, 2))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2))])
+
+    def test_slice_with_input_shape_steps(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7)),
+             ('starts', TensorProto.INT64, (3,)),
+             ('ends', TensorProto.INT64, (3,)),
+             ('axes'),
+             ('steps', TensorProto.INT64, (3,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], ['y'])],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (3,), (1, 0, 0)),
+                         make_tensor('ends', TensorProto.INT64, (3,), (2, 6, 6)),
+                         make_tensor('steps', TensorProto.INT64, (3,), (1, 4, 3))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2, 2))])
+
+    def test_slice_with_input_shape_axes(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 6, 2)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,)),
+             ('steps')],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], ['y'])],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (2, 2)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (0, 2))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 6, 2))])
 
     def test_slice_unsorted_axes(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 2))],
-            [make_node('Slice', 'x', 'y', axes=[1, 0], starts=[1, 0], ends=[2, 2])],
-            [])
+            [('x', TensorProto.FLOAT, (3, 2)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (2, 2)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (1, 0))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])
 
     def test_slice_giant_number(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 2))],
-            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, 0], ends=[200, 22000])],
-            [])
+            [('x', TensorProto.FLOAT, (3, 2)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (200, 22000)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (0, 1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2))])
+
+    def test_slice_giant_step(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,)),
+             ('steps', TensorProto.INT64, (2,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (200, 200)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (0, 1)),
+                         make_tensor('steps', TensorProto.INT64, (2,), (1, 200))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 1))])
 
     def test_slice_negative_end(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 2))],
-            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, 0], ends=[200, -1])],
-            [])
+            [('x', TensorProto.FLOAT, (3, 2)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (200, -1)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (0, 1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])  # type: ignore
 
     def test_slice_negative_start(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 2))],
-            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, -2], ends=[200, 3])],
-            [])
+            [('x', TensorProto.FLOAT, (3, 2)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, -2)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (200, 3)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (0, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])  # type: ignore
+
+    def test_slice_negative_step(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4)),
+             ('starts', TensorProto.INT64, (2,)),
+             ('ends', TensorProto.INT64, (2,)),
+             ('axes', TensorProto.INT64, (2,)),
+             ('steps', TensorProto.INT64, (2,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 4)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (200, 0)),
+                         make_tensor('axes', TensorProto.INT64, (2,), (0, 1)),
+                         make_tensor('steps', TensorProto.INT64, (2,), (1, -1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])  # type: ignore
 
     def test_slice_variable_copy(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, ("a", 2))],
-            [make_node('Slice', 'x', 'y', axes=[1], starts=[1], ends=[200])],
-            [])
+            [('x', TensorProto.FLOAT, ("a", 2)),
+             ('starts', TensorProto.INT64, (1,)),
+             ('ends', TensorProto.INT64, (1,)),
+             ('axes', TensorProto.INT64, (1,))],
+            [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (1,), (1,)),
+                         make_tensor('ends', TensorProto.INT64, (1,), (200,)),
+                         make_tensor('axes', TensorProto.INT64, (1,), (1,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ("a", 1))])  # type: ignore
 
     def test_pad(self):  # type: () -> None
