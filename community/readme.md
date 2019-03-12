@@ -68,15 +68,17 @@ The Steering Committee has a set of rights and responsibilities including the fo
 
 #### Structure
 
-The Steering Committee consists of 5 individuals. No single company/organization may have more than 1 representative. Members serve 2 year terms. In order to ensure continuity, terms will be staggered.
+The Steering Committee consists of 5 individuals. No single company/organization may have more than 1 representative. Members serve 1 year terms.
+
+If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. However, should their company/organization ask this person to resign from the role, new elections will be held. If the employment change results in a single company having more than one member, then one of them must resign, and new elections also held.
+
+The starting composition will be individuals from Microsoft, Facebook, Amazon, and 2 other companies, who have been picked by the three founding members based on contributions and experience.
 
 The Steering Committee will decide on and publish an election process within 3 months of formalizing this organizational structure. This will cover voting eligibility, eligibility for candidacy, election process and schedule. During this time period, the Steering Committee will also establish SIGs and Working Groups.
 
-The starting composition will be individuals from Microsoft, Facebook, Amazon, and 2 other companies, who have been picked by the three founding members based on the following contribution criteria of code contributions, Gitter activity, and GitHub issues resolved.  These two companies are X and Y. As part of the initial governance formation bootstrapping, Microsoft, Facebook, and Amazon representatives will have 2 year terms and the other two representatives will have 1 year terms. 
+After the initial term of each Steering Committee representative is completed, their seat will be open for any Contributor in the community to be elected into the seat via a community vote. Only Contributors may vote, but would be restricted to one vote per company/organization. Therefore, if a company had three contributors in good standing, the three contributors would have to select who would vote on their behalf.
 
-After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per company/organization. Therefore, if a company had three contributors in good standing, the three contributors would have to select who would vote on their behalf.
-
-If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. However, should their company/organization ask this person to resign from the role, new elections will be held. If the employment change results in a single company having more than one member, then one of them must resign, and new elections also held.
+A Steering Committee member can be removed due to Code of Conduct violations.
 
 ### SIG - Special Interest Groups
 
