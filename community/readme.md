@@ -22,15 +22,14 @@ The ONNX community adheres to the following principles:
 
 **Members** are individuals who are interested in or participate in the ONNX community. Members are able to follow and participate in all public modes of communication used by the ONNX community including but not limited to GitHub, Gitter, Stack Overflow, email announcements and discussion aliases. Members are expected to adhere to the Code of Conduct but do not have any specific responsibilities.
 
-**Contributors** are Members who are active contributors in the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors are expected to remain active Contributors.
-Contributors can participate in many ways including but not limited to:
+**Contributors** are Members who are active contributors in the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors can be active in many ways including but not limited to:
 
 * Authoring or reviewing PRs on GitHub
 * Filing or commenting on issues on GitHub
 * Contributing to SIG, subproject, or community discussions (e.g. Gitter, meetings, email discussion forums, Stack Overflow, etc)
 * Creator of content, promoting and advocating the ONNX specification
 
-New Contributors also need to be sponsored by 2 existing Approvers from different companies.
+A Member can become a Contributor by being sponsored by 2 existing Approvers from different companies. Contributors who are not active in the last 12 months will be removed.
 
 **Approvers** are Contributors who are experienced with some aspect of the project and with general software engineering principles. Approvers are responsible for reviewing contributions for acceptance by considering not just code quality but also holistic impact of the contribution including compatibility, performance, and interactions with other areas.
 
