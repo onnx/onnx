@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <algorithm>
+#include <cmath>
 #include "onnx/defs/schema.h"
 using namespace ONNX_NAMESPACE;
 
@@ -142,11 +143,19 @@ void convPoolTypeAndShapeInference(
     int64_t effective_kernel_size = kernel_shape[i];
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
+    
+    bool ceil_mode = ctx.getAttribute("ceil_mode");
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
-    int64_t strided_kernel_positions =
-        (effective_input_size - effective_kernel_size) / strides[i];
+    int64_t strided_kernel_positions;
+    
+    if(ceil_mode)
+        strided_kernel_positions =
+            std::ceil((effective_input_size - effective_kernel_size) / float(strides[i]));
+    else
+        strided_kernel_positions =
+            (effective_input_size - effective_kernel_size) / strides[i];
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
@@ -257,8 +266,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  if ceil_mode is enabled
  
+ ```
  * pad_shape[i] is sum of pads along axis i
- 
+ ```
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```

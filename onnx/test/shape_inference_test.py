@@ -844,7 +844,7 @@ class TestShapeInference(unittest.TestCase):
     def test_maxpool_ceil(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 4, 4))],
-            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[3, 3], strides=[1, 1], ceil_mode=True)],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[3, 3], strides=[2, 2], ceil_mode=True)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 2, 2))])
 
@@ -879,7 +879,7 @@ class TestShapeInference(unittest.TestCase):
     def test_averagepool_ceil(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 4, 4))],
-            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[3, 3], strides=[1, 1], ceil_mode=True)],
+            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[3, 3], strides=[2, 2], ceil_mode=True)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 2, 2))])
 

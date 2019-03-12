@@ -9570,8 +9570,9 @@ This version of the operator has been available since version 9 of the default O
    ```
    if ceil_mode is enabled
    
+   ```
    * pad_shape[i] is sum of pads along axis i
-   
+   ```
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -9643,8 +9644,9 @@ This version of the operator has been available since version 10 of the default 
    ```
    if ceil_mode is enabled
    
+   ```
    * pad_shape[i] is sum of pads along axis i
-   
+   ```
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```

@@ -1011,8 +1011,9 @@ expect(node, inputs=[x], outputs=[y],
    ```
    if ceil_mode is enabled
    
+   ```
    * pad_shape[i] is sum of pads along axis i
-   
+   ```
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -6168,8 +6169,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    ```
    if ceil_mode is enabled
    
+   ```
    * pad_shape[i] is sum of pads along axis i
-   
+   ```
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
