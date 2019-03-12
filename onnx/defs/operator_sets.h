@@ -539,7 +539,6 @@ class OpSet_Onnx_ver10 {
            Onnx, 10, TopK)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, Slice)>());
-           Onnx, 10, TopK)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, ThresholdedRelu)>());
   }
