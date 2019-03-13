@@ -5238,7 +5238,7 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_resize_upsample_linear')
+       name='test_resize_downsample_linear')
 ```
 
 </details>
@@ -6804,7 +6804,7 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_upsample_nearest')
+       name='test_upsample_nearest', opset_imports=[helper.make_opsetid("", 9)])
 ```
 
 </details>
