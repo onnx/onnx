@@ -19,9 +19,13 @@ from ..test_case import TestCase
 _NodeTestCases = []
 
 from onnx.onnx_pb import NodeProto, AttributeProto
+from onnx.onnx_operators_pb import FunctionProto
 
 
-def function_expand_helper(node, function_proto, op_prefix):
+def function_expand_helper(node,  # type: NodeProto
+                           function_proto,  # type: FunctionProto
+                           op_prefix  # type:  Text
+                           ):  # type:  (...) -> List[NodeProto]
     node_list = []
     input_names_map = dict()
     output_names_map = dict()
@@ -57,7 +61,7 @@ def function_expand_helper(node, function_proto, op_prefix):
             if attr.HasField("ref_attr_name"):
                 if attr.ref_attr_name in attribute_map:
                     new_attr = AttributeProto()
-                    new_attr.CopyFrom(attribute_map[attr.ref_attr_name])
+                    new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
                     new_node.attribute.extend([new_attr])
             else:
                 new_attr = AttributeProto()
@@ -67,13 +71,13 @@ def function_expand_helper(node, function_proto, op_prefix):
     return node_list
 
 
-def function_testcase_helper(node, name):
+def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[NodeProto]
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op)
-    if not schema.has_function:
+    if not schema.has_function:  # type: ignore
         return []
-    function_proto = schema.function_body
+    function_proto = schema.function_body  # type: ignore
 
     # function_proto.attributes
     node_list = function_expand_helper(node, function_proto, op_prefix)
