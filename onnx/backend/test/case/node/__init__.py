@@ -33,12 +33,12 @@ def function_expand_helper(node,  # type: NodeProto
 
     for idx in range(len(node.input)):
         if idx not in range(len(function_proto.input)):
-            continue
+            return []
         input_names_map[function_proto.input[idx]] = node.input[idx]
 
     for idx in range(len(node.output)):
         if idx not in range(len(function_proto.output)):
-            continue
+            return []
         output_names_map[function_proto.output[idx]] = node.output[idx]
 
     for internal_node in function_proto.node:
