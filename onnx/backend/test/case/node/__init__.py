@@ -79,6 +79,7 @@ def function_testcase_helper(node, name):
     node_list = function_expand_helper(node, function_proto, op_prefix)
     return node_list
 
+
 def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
     return onnx.helper.make_tensor_value_info(
         name=name,
@@ -139,7 +140,6 @@ def expect(node,  # type: onnx.NodeProto
             rtol=1e-3,
             atol=1e-7,
         ))
-
 
 
 def collect_testcases():  # type: () -> List[TestCase]
