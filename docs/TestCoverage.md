@@ -6898,22 +6898,10 @@ expect(node, inputs=[x], outputs=[y],
 ### ATen (call for test cases)
 
 
-### Affine (call for test cases)
-
-
-### Crop (call for test cases)
-
-
 ### GRUUnit (call for test cases)
 
 
 ### GivenTensorFill (call for test cases)
-
-
-### ImageScaler (call for test cases)
-
-
-### ParametricSoftplus (call for test cases)
 
 
 ### Scale (call for test cases)
