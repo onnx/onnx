@@ -101,18 +101,4 @@ class FunctionBodyHelper {
   }
 };
 
-template <>
-inline FunctionBodyHelper::AttributeProtoWrapper::AttributeProtoWrapper(
-    const std::string& attr_name,
-    const char* value) {
-  InitFromString(attr_name, value);
-}
-
-template <>
-inline FunctionBodyHelper::AttributeProtoWrapper::AttributeProtoWrapper(
-    const std::string& attr_name,
-    const std::string& value) {
-  InitFromString(attr_name, value);
-}
-
 } // namespace ONNX_NAMESPACE

@@ -107,41 +107,4 @@ std::vector<NodeProto> FunctionBodyHelper::Define(
   return nodes;
 }
 
-std::unordered_map<std::string, AttributeProto_AttributeType>
-    FunctionBodyHelper ::AttributeProtoWrapper::attr_name_map = {
-        {"float", AttributeProto_AttributeType_FLOAT},
-        {"int", AttributeProto_AttributeType_INT},
-        {"string", AttributeProto_AttributeType_STRING},
-        {"tensor", AttributeProto_AttributeType_TENSOR},
-        {"graph", AttributeProto_AttributeType_GRAPH},
-        {"floats", AttributeProto_AttributeType_FLOATS},
-        {"ints", AttributeProto_AttributeType_INTS},
-        {"strings", AttributeProto_AttributeType_STRINGS},
-        {"tensors", AttributeProto_AttributeType_TENSORS},
-        {"graphs", AttributeProto_AttributeType_GRAPHS}};
-
-void FunctionBodyHelper::AttributeProtoWrapper::InitFromString(
-    const std::string& attr_name,
-    const std::string& value) {
-  if (value.size() >= 2 && value[0] == '$') {
-    std::size_t found = value.find(':');
-
-    proto.set_name(attr_name);
-    proto.set_ref_attr_name(value.substr(1, found - 1));
-
-    std::string type = value.substr(found + 1, value.size() - found - 1);
-
-    auto it = attr_name_map.find(type);
-    if (it != attr_name_map.end()) {
-      proto.set_type(it->second);
-    } else {
-      throw std::exception();
-    }
-
-  } else {
-    // set as string
-    proto = MakeAttribute(attr_name, value);
-  }
-}
-
 } // namespace ONNX_NAMESPACE

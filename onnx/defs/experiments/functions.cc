@@ -40,17 +40,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             {// nodes: {outputs, op, inputs, attributes}
              FunctionBodyHelper::Const<float>("Exponent", 2.0f),
              FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-             {{"X_RM"}, "ReduceMean", {"X"}, {{"axes", "$axes:ints"}}},
+             {{"X_RM"},
+              "ReduceMean",
+              {"X"},
+              {MakeRefAttribute("axes", AttributeProto::INTS)}},
              {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
              {{"X_squared"}, "Pow", {"X", "Exponent"}},
              {{"E_Xsquared"},
               "ReduceMean",
               {"X_squared"},
-              {{"axes", "$axes:ints"}}},
+              {MakeRefAttribute("axes", AttributeProto::INTS)}},
              {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
              {{"STD"}, "Sqrt", {"Variance"}},
              {{"X_variance"}, "Sub", {"X", "X_RM"}},
              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-             {{"X_MVN"}, "Div", {"X_variance", "Processed_STD"}}})));
+             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
 } // namespace ONNX_NAMESPACE

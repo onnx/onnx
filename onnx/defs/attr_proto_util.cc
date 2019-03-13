@@ -47,4 +47,14 @@ ADD_LIST_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRINGS, strings)
 ADD_LIST_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSORS, tensors)
 ADD_LIST_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPHS, graphs)
 
+AttributeProto MakeRefAttribute(
+    const std::string& attr_name,
+    AttributeProto_AttributeType type) {
+  AttributeProto a;
+  a.set_name(attr_name);
+  a.set_ref_attr_name(attr_name);
+  a.set_type(type);
+  return a;
+}
+
 } // namespace ONNX_NAMESPACE
