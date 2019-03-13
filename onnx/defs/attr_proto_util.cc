@@ -19,11 +19,11 @@ namespace ONNX_NAMESPACE {
   }
 
 DEFINE_SET_ATTR_VALUE_ONE(float, FLOAT, f);
-DEFINE_SET_ATTR_VALUE_ONE(int, INT, i);
+DEFINE_SET_ATTR_VALUE_ONE(int64_t, INT, i);
 DEFINE_SET_ATTR_VALUE_ONE(const std::string&, STRING, s);
 
 DEFINE_SET_ATTR_VALUE_LIST(std::vector<float>, FLOATS, floats);
-DEFINE_SET_ATTR_VALUE_LIST(std::vector<int>, INTS, ints);
+DEFINE_SET_ATTR_VALUE_LIST(std::vector<int64_t>, INTS, ints);
 DEFINE_SET_ATTR_VALUE_LIST(const std::vector<std::string>&, STRINGS, strings);
 
 void SetAttrValue(const AttributeProto& value, AttributeProto* out) {

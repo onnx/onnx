@@ -48,7 +48,7 @@ class FunctionBodyHelper {
     std::vector<std::pair<std::string, AttributeProtoWrapper>> attributes;
   };
 
-  static std::vector<NodeProto> Define(std::vector<NodeDef> node_defs);
+  static std::vector<NodeProto> Define(const std::vector<NodeDef>& node_defs);
 
   template <typename T>
   static ONNX_NAMESPACE::TensorProto ToTensor(T val);

@@ -3,6 +3,7 @@
 
 #include "onnx/common/constants.h"
 #include "onnx/common/model_helpers.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
@@ -24,30 +25,32 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T")
         .Attr(
             "axes",
-			"A list of integers, along which to reduce. The default is to reduce over "
-			"all the dimensions of the input tensor. Use [0,2,3] (without C axis for "
+            "A list of integers, along which to reduce. The default is to reduce over "
+            "all the dimensions of the input tensor. Use [0,2,3] (without C axis for "
             "N-D cases) for calculating means and variances along channels. Two "
             "variables with the same C-coordinate are associated "
             "with the same mean and variance.",
-			AttributeProto::INTS,
-			OPTIONAL)
+            AttributeProto::INTS,
+            OPTIONAL)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to all numeric tensors.")
-       .FunctionBody(FunctionBodyHelper::Define({
-              // nodes: {outputs, op, inputs, attributes}
-              FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-              FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-              {{"X_RM"}, "ReduceMean", {"X"}, {{"axes", "$axes:ints"}}},
-              {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-              {{"X_squared"}, "Pow", {"X", "Exponent"}},
-              {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", "$axes:ints"}}},
-              {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-              {{"STD"}, "Sqrt", {"Variance"}},
-              {{"X_variance"}, "Sub", {"X", "X_RM"}},
-              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-              {{"X_MVN"}, "Div", {"X_variance", "Processed_STD"}}
-          })));
+        .FunctionBody(FunctionBodyHelper::Define(
+            {// nodes: {outputs, op, inputs, attributes}
+             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
+             {{"X_RM"}, "ReduceMean", {"X"}, {{"axes", "$axes:ints"}}},
+             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
+             {{"X_squared"}, "Pow", {"X", "Exponent"}},
+             {{"E_Xsquared"},
+              "ReduceMean",
+              {"X_squared"},
+              {{"axes", "$axes:ints"}}},
+             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
+             {{"STD"}, "Sqrt", {"Variance"}},
+             {{"X_variance"}, "Sub", {"X", "X_RM"}},
+             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
+             {{"X_MVN"}, "Div", {"X_variance", "Processed_STD"}}})));
 
 } // namespace ONNX_NAMESPACE
