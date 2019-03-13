@@ -45,14 +45,14 @@ def function_expand_helper(node, function_proto, op_prefix):
         new_node.ClearField("attribute")
         for internal_name in internal_node.input:
             if internal_name in input_names_map:
-                new_node.input.extend(input_names_map[internal_name])
+                new_node.input.append(input_names_map[internal_name])
             else:
-                new_node.input.extend(op_prefix + internal_name)
+                new_node.input.append(op_prefix + internal_name)
         for internal_name in internal_node.output:
             if internal_name in output_names_map:
-                new_node.output.extend(output_names_map[internal_name])
+                new_node.output.append(output_names_map[internal_name])
             else:
-                new_node.output.extend(op_prefix + internal_name)
+                new_node.output.append(op_prefix + internal_name)
         for attr in internal_node.attribute:
             if attr.HasField("ref_attr_name"):
                 if attr.ref_attr_name in attribute_map:
