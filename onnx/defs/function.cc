@@ -92,21 +92,15 @@ std::vector<NodeProto> FunctionBodyHelper::Define(
     NodeProto n;
 
     n.set_op_type(node.op_type);
-
     for (const auto& i : node.inputs) {
       n.add_input(i);
     }
-
     for (const auto& o : node.outputs) {
       n.add_output(o);
     }
-
-    for (const auto& attr_pair : node.attributes) {
-      AttributeProto* attr = n.add_attribute();
-      *attr = attr_pair.second.proto;
-      attr->set_name(attr_pair.first);
+    for (const auto& attr : node.attributes) {
+      *(n.add_attribute()) = attr.proto;
     }
-
     nodes.push_back(n);
   }
 
@@ -127,13 +121,15 @@ std::unordered_map<std::string, AttributeProto_AttributeType>
         {"graphs", AttributeProto_AttributeType_GRAPHS}};
 
 void FunctionBodyHelper::AttributeProtoWrapper::InitFromString(
-    const std::string& val) {
-  if (val.size() >= 2 && val[0] == '$') {
-    std::size_t found = val.find(':');
+    const std::string& attr_name,
+    const std::string& value) {
+  if (value.size() >= 2 && value[0] == '$') {
+    std::size_t found = value.find(':');
 
-    proto.set_ref_attr_name(val.substr(1, found - 1));
+    proto.set_name(attr_name);
+    proto.set_ref_attr_name(value.substr(1, found - 1));
 
-    std::string type = val.substr(found + 1, val.size() - found - 1);
+    std::string type = value.substr(found + 1, value.size() - found - 1);
 
     auto it = attr_name_map.find(type);
     if (it != attr_name_map.end()) {
@@ -144,7 +140,7 @@ void FunctionBodyHelper::AttributeProtoWrapper::InitFromString(
 
   } else {
     // set as string
-    SetAttrValue(val, &proto);
+    proto = MakeAttribute(attr_name, value);
   }
 }
 

@@ -1,33 +1,50 @@
+// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Licensed under the MIT license.
 
 #include "attr_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
-#define DEFINE_SET_ATTR_VALUE_ONE(ARG_TYPE, ATTR_TYPE, FIELD) \
-  void SetAttrValue(ARG_TYPE value, AttributeProto* out) {    \
-    out->set_type(AttributeProto_AttributeType_##ATTR_TYPE);  \
-    out->set_##FIELD(value);                                  \
-  }
+#define ADD_BASIC_ATTR_IMPL(type, enumType, field)       \
+  AttributeProto MakeAttribute(                          \
+      const std::string& attr_name, const type& value) { \
+    AttributeProto a;                                    \
+    a.set_name(attr_name);                               \
+    a.set_type(enumType);                                \
+    a.set_##field(value);                                \
+    return a;                                            \
+  };
 
-#define DEFINE_SET_ATTR_VALUE_LIST(ARG_TYPE, ATTR_TYPE, FIELD) \
-  void SetAttrValue(ARG_TYPE value, AttributeProto* out) {     \
-    out->set_type(AttributeProto_AttributeType_##ATTR_TYPE);   \
-    out->clear_##FIELD();                                      \
-    for (const auto& v : value) {                              \
-      out->add_##FIELD(v);                                     \
-    }                                                          \
-  }
+#define ADD_ATTR_IMPL(type, enumType, field)             \
+  AttributeProto MakeAttribute(                          \
+      const std::string& attr_name, const type& value) { \
+    AttributeProto a;                                    \
+    a.set_name(attr_name);                               \
+    a.set_type(enumType);                                \
+    *(a.mutable_##field()) = value;                      \
+    return a;                                            \
+  };
 
-DEFINE_SET_ATTR_VALUE_ONE(float, FLOAT, f);
-DEFINE_SET_ATTR_VALUE_ONE(int64_t, INT, i);
-DEFINE_SET_ATTR_VALUE_ONE(const std::string&, STRING, s);
+#define ADD_LIST_ATTR_IMPL(type, enumType, field)                      \
+  AttributeProto MakeAttribute(                                        \
+      const std::string& attr_name, const std::vector<type>& values) { \
+    AttributeProto a;                                                  \
+    a.set_name(attr_name);                                             \
+    a.set_type(enumType);                                              \
+    for (const auto& val : values) {                                   \
+      *(a.mutable_##field()->Add()) = val;                             \
+    }                                                                  \
+    return a;                                                          \
+  };
 
-DEFINE_SET_ATTR_VALUE_LIST(std::vector<float>, FLOATS, floats);
-DEFINE_SET_ATTR_VALUE_LIST(std::vector<int64_t>, INTS, ints);
-DEFINE_SET_ATTR_VALUE_LIST(const std::vector<std::string>&, STRINGS, strings);
-
-void SetAttrValue(const AttributeProto& value, AttributeProto* out) {
-  *out = value;
-}
+ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
+ADD_BASIC_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INT, i)
+ADD_BASIC_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRING, s)
+ADD_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSOR, t)
+ADD_LIST_ATTR_IMPL(float, AttributeProto_AttributeType_FLOATS, floats)
+ADD_LIST_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INTS, ints)
+ADD_LIST_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRINGS, strings)
+ADD_LIST_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSORS, tensors)
+ADD_LIST_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPHS, graphs)
 
 } // namespace ONNX_NAMESPACE
