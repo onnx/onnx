@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 112/119 (94.12%, 5 generators excluded) common operators.
 
-Node tests have covered 2/7 (28.57%, 0 generators excluded) experimental operators.
+Node tests have covered 2/11 (18.18%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -6959,10 +6959,22 @@ expect(node, inputs=[x], outputs=[y],
 ### ATen (call for test cases)
 
 
+### Affine (call for test cases)
+
+
+### Crop (call for test cases)
+
+
 ### GRUUnit (call for test cases)
 
 
 ### GivenTensorFill (call for test cases)
+
+
+### ImageScaler (call for test cases)
+
+
+### ParametricSoftplus (call for test cases)
 
 
 ### Scale (call for test cases)
