@@ -84,30 +84,13 @@ void FunctionExpandHelper(
   }
 }
 
-FunctionProto FunctionProtoHelper::Define(
-    const std::string& name,
-    int since_version,
-    std::vector<std::string> inputs,
-    std::vector<std::string> outputs,
-    std::vector<std::string> attributes,
-    std::vector<NodeDef> node_defs) {
-  FunctionProto func;
+std::vector<NodeProto> FunctionBodyHelper::Define(
+      const std::vector<NodeDef>& node_defs){
 
-  func.set_name(name);
-  func.set_since_version(since_version);
-
-  for (const auto& i : inputs) {
-    func.add_input(i);
-  }
-  for (const auto& o : outputs) {
-    func.add_output(o);
-  }
-  for (const auto& a : attributes) {
-    func.add_attribute(a);
-  }
+  std::vector<NodeProto> nodes;
 
   for (const auto& node : node_defs) {
-    NodeProto* n = func.add_node();
+    NodeProto n;
 
     n->set_op_type(node.op_type);
 
@@ -124,13 +107,15 @@ FunctionProto FunctionProtoHelper::Define(
       *attr = attr_pair.second.proto;
       attr->set_name(attr_pair.first);
     }
+
+    nodes.push_back(n);
   }
 
-  return func;
+  return nodes;
 }
 
 std::unordered_map<std::string, AttributeProto_AttributeType>
-    FunctionProtoHelper ::AttributeProtoWrapper::attr_name_map = {
+    FunctionBodyHelper ::AttributeProtoWrapper::attr_name_map = {
         {"float", AttributeProto_AttributeType_FLOAT},
         {"int", AttributeProto_AttributeType_INT},
         {"string", AttributeProto_AttributeType_STRING},
@@ -142,7 +127,7 @@ std::unordered_map<std::string, AttributeProto_AttributeType>
         {"tensors", AttributeProto_AttributeType_TENSORS},
         {"graphs", AttributeProto_AttributeType_GRAPHS}};
 
-void FunctionProtoHelper::AttributeProtoWrapper::InitFromString(
+void FunctionBodyHelper::AttributeProtoWrapper::InitFromString(
     const std::string& val) {
   if (val.size() >= 2 && val[0] == '$') {
     std::size_t found = val.find(':');

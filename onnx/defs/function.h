@@ -22,7 +22,7 @@ void FunctionExpandHelper(
     GraphProto& g,
     const std::string& node_prefix = "");
 
-class FunctionProtoHelper {
+class FunctionBodyHelper {
  public:
   struct AttributeProtoWrapper {
     AttributeProto proto;
@@ -48,13 +48,7 @@ class FunctionProtoHelper {
     std::vector<std::pair<std::string, AttributeProtoWrapper>> attributes;
   };
 
-  static FunctionProto Define(
-      const std::string& name,
-      int since_version,
-      std::vector<std::string> inputs,
-      std::vector<std::string> outputs,
-      std::vector<std::string> attributes,
-      std::vector<NodeDef> node_defs);
+  static std::vector<NodeProto> Define(std::vector<NodeDef> node_defs);
 
   template <typename T>
   static ONNX_NAMESPACE::TensorProto ToTensor(T val);
@@ -125,13 +119,13 @@ class FunctionProtoHelper {
 };
 
 template <>
-inline FunctionProtoHelper::AttributeProtoWrapper::AttributeProtoWrapper(
+inline FunctionBodyHelper::AttributeProtoWrapper::AttributeProtoWrapper(
     const char* val) {
   InitFromString(val);
 }
 
 template <>
-inline FunctionProtoHelper::AttributeProtoWrapper::AttributeProtoWrapper(
+inline FunctionBodyHelper::AttributeProtoWrapper::AttributeProtoWrapper(
     const std::string& val) {
   InitFromString(val);
 }
