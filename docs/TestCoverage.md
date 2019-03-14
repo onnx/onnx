@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 113/120 (94.17%, 5 generators excluded) common operators.
 
-Node tests have covered 1/6 (16.67%, 0 generators excluded) experimental operators.
+Node tests have covered 0/5 (0.00%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -6617,6 +6617,57 @@ expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uni
 </details>
 
 
+### ThresholdedRelu
+There are 2 test cases, listed as following:
+<details>
+<summary>default</summary>
+
+```python
+default_alpha = 1.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y']
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, default_alpha, np.inf)
+y[y == default_alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_default')
+```
+
+</details>
+<details>
+<summary>thresholdedrelu</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=alpha
+)
+
+x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, alpha, np.inf)
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu')
+```
+
+</details>
+
+
 ### Tile
 There are 2 test cases, listed as following:
 <details>
@@ -6959,57 +7010,6 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
-### ThresholdedRelu
-There are 2 test cases, listed as following:
-<details>
-<summary>default</summary>
-
-```python
-default_alpha = 1.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y']
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, default_alpha, np.inf)
-y[y == default_alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_default')
-```
-
-</details>
-<details>
-<summary>thresholdedrelu</summary>
-
-```python
-alpha = 2.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y'],
-    alpha=alpha
-)
-
-x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
-y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_example')
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, alpha, np.inf)
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu')
-```
-
-</details>
-
-
 <br/>
 
 ## &#x1F494;No Cover Experimental Operators
