@@ -403,6 +403,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* ScaledTanh_ver10_doc = R"DOC(
+Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
+alpha * tanh(beta * x).
+    )DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScaledTanh,
+    10,
+    OpSchema()
+        .SetDoc(ScaledTanh_ver10_doc)
+        .Attr("alpha", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
+        .Attr("beta", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The scaled hyperbolic tangent values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Pow_ver7_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,

@@ -12,32 +12,6 @@ using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 // do not need to implement these ops. An experimental op should be either removed
 // or promoted after a while. In this file, a default since_version "1" is used for all exp ops.
 
-static const char* ScaledTanh_ver1_doc = R"DOC(
-Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-alpha * tanh(beta * x).
-    )DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ScaledTanh,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(ScaledTanh_ver1_doc)
-        .Attr("alpha", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
-        .Attr("beta", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
-        .Input(0, "input", "Input tensor", "T")
-        .Output(
-            0,
-            "output",
-            "The scaled hyperbolic tangent values of the input tensor "
-            "computed element-wise",
-            "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
 ONNX_OPERATOR_SET_SCHEMA(
     GivenTensorFill,
     1,
