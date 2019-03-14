@@ -59,6 +59,7 @@ struct Upsample_9_8 final : public Adapter {
             }            
             node->fs_(kscales, const_cast<std::vector<double>&&>(d_values));
             node->removeInput(1);
+            op->destroy();
             return;
           }
         }

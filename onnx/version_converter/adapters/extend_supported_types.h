@@ -32,20 +32,26 @@ struct ExtendSupportedTypes final : public Adapter {
 
         const int input_type = inputs.size() > 0 ? inputs[0]->elemType() : -1;
         const int output_type = outputs[0]->elemType();
-        
-        const std::unordered_set<int> &unsupported_types = { 
+
+        const std::unordered_set<int> &supported_version8_types = {
+            TensorProto_DataType::TensorProto_DataType_FLOAT,
+            TensorProto_DataType::TensorProto_DataType_FLOAT16,
+            TensorProto_DataType::TensorProto_DataType_DOUBLE,
+        };
+
+        const std::unordered_set<int> &unsupported_version9_types = { 
             TensorProto_DataType::TensorProto_DataType_COMPLEX128,
             TensorProto_DataType::TensorProto_DataType_COMPLEX64,
             TensorProto_DataType::TensorProto_DataType_STRING,
         };
 
-        ONNX_ASSERTM(unsupported_types.find(input_type) == unsupported_types.end(), "Unsupported Input Type");
-        ONNX_ASSERTM(unsupported_types.find(output_type) == unsupported_types.end(), "Unsupported Output Type");
+        ONNX_ASSERTM(unsupported_version9_types.find(input_type) == unsupported_version9_types.end(), "Unsupported Input Type");
+        ONNX_ASSERTM(unsupported_version9_types.find(output_type) == unsupported_version9_types.end(), "Unsupported Output Type");
 
         bool castInput = (node->kind() != kConstant);
         bool castOutput = (node->kind() != kGreater && node->kind() != kLess);
         
-        if(castInput)
+        if(castInput && supported_version8_types.find(input_type) == supported_version8_types.end())
         {  
             for (size_t i = 0; i < inputs.size(); i++)
             {
@@ -57,15 +63,22 @@ struct ExtendSupportedTypes final : public Adapter {
             }
         }
         
-        if(castOutput)
+        if(castOutput && supported_version8_types.find(output_type) == supported_version8_types.end())
         {
-            node->output()->setElemType(TensorProto_DataType::TensorProto_DataType_FLOAT);
-            node->output()->setUniqueName(std::string(node->kind().toString()) + "_output");
+            const use_list original_uses(node->output()->uses());
         
+            node->output()->setElemType(TensorProto_DataType::TensorProto_DataType_FLOAT);
+            node->output()->setUniqueName(original_output_name + "_intermediate_output");
+                        
             Node* post_cast = create_cast_op(
                 graph, outputs[0], output_type, outputs[0]->sizes(), original_output_name);
 
             post_cast->insertAfter(node);
+
+            for (Use u: original_uses)
+            {
+                u.user->replaceInputWith(node->output(), post_cast->output());
+            }
 
             for (size_t i = 0; i < graph->outputs().size(); i++)
             {

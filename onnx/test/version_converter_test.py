@@ -702,9 +702,10 @@ class TestVersionConverter(unittest.TestCase):
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
-        assert converted_model.graph.node[2].op_type == "Upsample"
-        assert len(converted_model.graph.node[2].attribute) == 2
-        assert converted_model.graph.node[2].attribute[1].name == "scales"
+        assert len(converted_model.graph.node) == 1
+        assert converted_model.graph.node[0].op_type == "Upsample"
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "scales"
         assert converted_model.opset_import[0].version == to_opset
 
 
