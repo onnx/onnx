@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 113/120 (94.17%, 5 generators excluded) common operators.
+Node tests have covered 114/121 (94.21%, 5 generators excluded) common operators.
 
 Node tests have covered 0/5 (0.00%, 0 generators excluded) experimental operators.
 
