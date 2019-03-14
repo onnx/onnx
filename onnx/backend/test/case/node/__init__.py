@@ -31,15 +31,13 @@ def function_expand_helper(node,  # type: NodeProto
     output_names_map = dict()
     attribute_map = node.attribute
 
-    for idx in range(len(node.input)):
-        if idx not in range(len(function_proto.input)):
-            return []
-        input_names_map[function_proto.input[idx]] = node.input[idx]
+    for idx in range(len(function_proto.input)):
+        input_names_map[function_proto.input[idx]] = node.input[idx] \
+            if idx in range(len(node.input)) else ""
 
-    for idx in range(len(node.output)):
-        if idx not in range(len(function_proto.output)):
-            return []
-        output_names_map[function_proto.output[idx]] = node.output[idx]
+    for idx in range(len(function_proto.output)):
+        output_names_map[function_proto.output[idx]] = node.output[idx] \
+            if idx in range(len(node.output)) else ""
 
     for internal_node in function_proto.node:
         new_node = NodeProto()
