@@ -163,7 +163,8 @@ void convPoolTypeAndShapeInference(
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
-    const char* additionalDescription) {
+    const char* additionalDescription,
+    bool use_dilation) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
@@ -231,8 +232,8 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      convPoolTypeAndShapeInference(ctx, false, true);
+    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
+      convPoolTypeAndShapeInference(ctx, use_dilation, true);
     });
   };
 } // namespace ONNX_NAMESPACE
@@ -243,7 +244,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(PoolOpSchemaGenerator(
         "AveragePool",
         "average",
-        "The output of each pooling window is divided by the number of elements exclude pad.")));
+        "The output of each pooling window is divided by the number of elements exclude pad.",
+        false)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
@@ -252,7 +254,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
             "average",
-            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
+            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
+            false))
         .Attr(
             "count_include_pad",
             "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
@@ -265,7 +268,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(PoolOpSchemaGenerator(
         "MaxPool",
         "max",
-        "The output of each pooling window is maximum number of elements exclude pad.")));
+        "The output of each pooling window is maximum number of elements exclude pad.",
+        false)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
@@ -274,12 +278,48 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
             "max",
-            "The output of each pooling window is maximum number of elements exclude pad."))
+            "The output of each pooling window is maximum number of elements exclude pad.",
+            false))
         .Attr(
             "storage_order",
             "The storage order of the tensor. 0 is row major, and 1 is column major.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "I",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64"));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    10,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad.",
+            true))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "dilations",
+            "Dilation value along each axis of filter.",
+            AttributeProto::INTS,
+            OPTIONAL)
         .Output(
             1,
             "Indices",
