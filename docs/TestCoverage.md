@@ -6953,9 +6953,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 2
 storage_order: 0
@@ -7024,9 +7025,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7100,9 +7102,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7176,9 +7179,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7252,9 +7256,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7328,9 +7333,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7409,9 +7415,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7490,9 +7497,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 2
 pads: 3
 storage_order: 0
@@ -7571,9 +7579,10 @@ bias: 2
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+dilations: 0
 kernel_shape: 2
 pads: 3
 storage_order: 0
