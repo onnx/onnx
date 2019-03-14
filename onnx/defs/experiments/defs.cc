@@ -12,27 +12,6 @@ using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 // do not need to implement these ops. An experimental op should be either removed
 // or promoted after a while. In this file, a default since_version "1" is used for all exp ops.
 
-static const char* ThresholdedRelu_ver1_doc = R"DOC(
-ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
-is applied to the tensor elementwise.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ThresholdedRelu,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(ThresholdedRelu_ver1_doc)
-        .Attr("alpha", "Threshold value", AttributeProto::FLOAT, 1.0f)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
 static const char* ScaledTanh_ver1_doc = R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
 alpha * tanh(beta * x).
