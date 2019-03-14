@@ -11,7 +11,7 @@
 #include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx-operators_pb.h"
-
+#include "tensor_proto_util.h"
 #include "attr_proto_util.h"
 
 namespace ONNX_NAMESPACE {
@@ -27,9 +27,6 @@ class FunctionBodyHelper {
   struct AttributeProtoWrapper {
     AttributeProto proto;
 
-    static std::unordered_map<std::string, AttributeProto_AttributeType>
-        attr_name_map;
-
     AttributeProtoWrapper() {}
 
     AttributeProtoWrapper(const AttributeProto& attr_prot) {
@@ -40,9 +37,6 @@ class FunctionBodyHelper {
     AttributeProtoWrapper(const std::string& attr_name, T value) {
       proto = MakeAttribute(attr_name, value);
     }
-
-   private:
-    void InitFromString(const std::string& attr_name, const std::string& value);
   };
 
   struct NodeDef {
@@ -55,40 +49,6 @@ class FunctionBodyHelper {
   static std::vector<NodeProto> Define(const std::vector<NodeDef>& node_defs);
 
   template <typename T>
-  static TensorProto ToTensor(const T& value);
-
-  template <typename T>
-  static TensorProto ToTensor(const std::vector<T>& values);
-
-#define DEFINE_TO_TENSOR_ONE(type, enumType, field)      \
-  template <>                                            \
-  static TensorProto ToTensor<type>(const type& value) { \
-    TensorProto t;                                       \
-    t.set_data_type(##enumType);                         \
-    t.add_##field##_data(value);                         \
-    return t;                                            \
-  }
-
-#define DEFINE_TO_TENSOR_LIST(type, enumType, field)                   \
-  template <>                                                          \
-  static TensorProto ToTensor<type>(const std::vector<type>& values) { \
-    TensorProto t;                                                     \
-    t.clear_##field##_data();                                          \
-    t.set_data_type(##enumType);                                       \
-    for (const auto& val : values) {                                   \
-      t.add_##field##_data(val);                                       \
-    }                                                                  \
-    return t;                                                          \
-  }
-
-  DEFINE_TO_TENSOR_ONE(float, TensorProto_DataType_FLOAT, float);
-  DEFINE_TO_TENSOR_ONE(int, TensorProto_DataType_INT32, int32);
-  DEFINE_TO_TENSOR_ONE(double, TensorProto_DataType_DOUBLE, double);
-  DEFINE_TO_TENSOR_LIST(float, TensorProto_DataType_FLOAT, float);
-  DEFINE_TO_TENSOR_LIST(int, TensorProto_DataType_INT32, int32);
-  DEFINE_TO_TENSOR_LIST(double, TensorProto_DataType_DOUBLE, double);
-
-  template <typename T>
   static NodeDef Const(const std::string& name, const T& value) {
     AttributeProto attr = MakeAttribute("value", ToTensor<T>(value));
     return NodeDef{{name}, "Constant", {}, {AttributeProtoWrapper(attr)}};
@@ -96,7 +56,7 @@ class FunctionBodyHelper {
 
   template <typename T>
   static NodeDef Const(const std::string& name, const std::vector<T>& values) {
-    AttributeProto attr = MakeAttribute("value", ToTensor<T>(value));
+    AttributeProto attr = MakeAttribute("value", ToTensor<T>(values));
     return NodeDef{{name}, "Constant", {}, {AttributeProtoWrapper(attr)}};
   }
 };
