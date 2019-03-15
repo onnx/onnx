@@ -8,11 +8,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "attr_proto_util.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx-operators_pb.h"
 #include "tensor_proto_util.h"
-#include "attr_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 // Helper function to expand a function node given the function proto
@@ -46,7 +46,8 @@ class FunctionBodyHelper {
     std::vector<AttributeProtoWrapper> attributes;
   };
 
-  static std::vector<NodeProto> Define(const std::vector<NodeDef>& node_defs);
+  static std::vector<NodeProto> BuildNodes(
+      const std::vector<NodeDef>& node_defs);
 
   template <typename T>
   static NodeDef Const(const std::string& name, const T& value) {

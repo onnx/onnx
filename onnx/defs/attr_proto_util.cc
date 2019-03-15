@@ -13,7 +13,7 @@ namespace ONNX_NAMESPACE {
     a.set_type(enumType);                                \
     a.set_##field(value);                                \
     return a;                                            \
-  };
+  }
 
 #define ADD_ATTR_IMPL(type, enumType, field)             \
   AttributeProto MakeAttribute(                          \
@@ -23,7 +23,7 @@ namespace ONNX_NAMESPACE {
     a.set_type(enumType);                                \
     *(a.mutable_##field()) = value;                      \
     return a;                                            \
-  };
+  }
 
 #define ADD_LIST_ATTR_IMPL(type, enumType, field)                      \
   AttributeProto MakeAttribute(                                        \
@@ -35,7 +35,7 @@ namespace ONNX_NAMESPACE {
       *(a.mutable_##field()->Add()) = val;                             \
     }                                                                  \
     return a;                                                          \
-  };
+  }
 
 ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
 ADD_BASIC_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INT, i)

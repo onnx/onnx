@@ -26,20 +26,20 @@ namespace ONNX_NAMESPACE {
     return t;                                                          \
   }
 
-DEFINE_TO_TENSOR_ONE(float, TensorProto_DataType_FLOAT, float);
-DEFINE_TO_TENSOR_ONE(bool, TensorProto_DataType_BOOL, int32);
-DEFINE_TO_TENSOR_ONE(int32_t, TensorProto_DataType_INT32, int32);
-DEFINE_TO_TENSOR_ONE(int64_t, TensorProto_DataType_INT64, int64);
-DEFINE_TO_TENSOR_ONE(uint64_t, TensorProto_DataType_UINT64, uint64);
-DEFINE_TO_TENSOR_ONE(double, TensorProto_DataType_DOUBLE, double);
-DEFINE_TO_TENSOR_ONE(std::string, TensorProto_DataType_STRING, string);
+DEFINE_TO_TENSOR_ONE(float, TensorProto_DataType_FLOAT, float)
+DEFINE_TO_TENSOR_ONE(bool, TensorProto_DataType_BOOL, int32)
+DEFINE_TO_TENSOR_ONE(int32_t, TensorProto_DataType_INT32, int32)
+DEFINE_TO_TENSOR_ONE(int64_t, TensorProto_DataType_INT64, int64)
+DEFINE_TO_TENSOR_ONE(uint64_t, TensorProto_DataType_UINT64, uint64)
+DEFINE_TO_TENSOR_ONE(double, TensorProto_DataType_DOUBLE, double)
+DEFINE_TO_TENSOR_ONE(std::string, TensorProto_DataType_STRING, string)
 
-DEFINE_TO_TENSOR_LIST(float, TensorProto_DataType_FLOAT, float);
-DEFINE_TO_TENSOR_LIST(bool, TensorProto_DataType_BOOL, int32);
-DEFINE_TO_TENSOR_LIST(int32_t, TensorProto_DataType_INT32, int32);
-DEFINE_TO_TENSOR_LIST(int64_t, TensorProto_DataType_INT64, int64);
-DEFINE_TO_TENSOR_LIST(uint64_t, TensorProto_DataType_UINT64, uint64);
-DEFINE_TO_TENSOR_LIST(double, TensorProto_DataType_DOUBLE, double);
-DEFINE_TO_TENSOR_LIST(std::string, TensorProto_DataType_STRING, string);
-  
+DEFINE_TO_TENSOR_LIST(float, TensorProto_DataType_FLOAT, float)
+DEFINE_TO_TENSOR_LIST(bool, TensorProto_DataType_BOOL, int32)
+DEFINE_TO_TENSOR_LIST(int32_t, TensorProto_DataType_INT32, int32)
+DEFINE_TO_TENSOR_LIST(int64_t, TensorProto_DataType_INT64, int64)
+DEFINE_TO_TENSOR_LIST(uint64_t, TensorProto_DataType_UINT64, uint64)
+DEFINE_TO_TENSOR_LIST(double, TensorProto_DataType_DOUBLE, double)
+DEFINE_TO_TENSOR_LIST(std::string, TensorProto_DataType_STRING, string)
+
 } // namespace ONNX_NAMESPACE

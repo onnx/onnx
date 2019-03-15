@@ -84,12 +84,13 @@ void FunctionExpandHelper(
   }
 }
 
-std::vector<NodeProto> FunctionBodyHelper::Define(
+std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
     const std::vector<NodeDef>& node_defs) {
-  std::vector<NodeProto> nodes;
+  std::vector<NodeProto> nodes(node_defs.size());
 
-  for (const auto& node : node_defs) {
-    NodeProto n;
+  for (int i = 0; i < node_defs.size(); i++) {
+    const NodeDef& node = node_defs[i];
+    NodeProto& n = nodes[i];
 
     n.set_op_type(node.op_type);
     for (const auto& i : node.inputs) {
@@ -101,7 +102,6 @@ std::vector<NodeProto> FunctionBodyHelper::Define(
     for (const auto& attr : node.attributes) {
       *(n.add_attribute()) = attr.proto;
     }
-    nodes.push_back(n);
   }
 
   return nodes;
