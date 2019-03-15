@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <algorithm>
+#include <cmath>
 #include "onnx/defs/schema.h"
 using namespace ONNX_NAMESPACE;
 
@@ -142,11 +143,19 @@ void convPoolTypeAndShapeInference(
     int64_t effective_kernel_size = kernel_shape[i];
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
+    
+    bool ceil_mode = ctx.getAttribute("ceil_mode");
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
-    int64_t strided_kernel_positions =
-        (effective_input_size - effective_kernel_size) / strides[i];
+    int64_t strided_kernel_positions;
+    
+    if(ceil_mode)
+        strided_kernel_positions =
+            (int64_t)(std::ceil((effective_input_size - effective_kernel_size) / float(strides[i])));
+    else
+        strided_kernel_positions =
+            (effective_input_size - effective_kernel_size) / strides[i];
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
@@ -160,7 +169,7 @@ void convPoolTypeAndShapeInference(
   }
 }
 
-std::function<void(OpSchema&)> PoolOpSchemaGenerator(
+std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
     const char* name,
     const char* opName,
     const char* additionalDescription) {
@@ -237,10 +246,99 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
   };
 } // namespace ONNX_NAMESPACE
 
+std::function<void(OpSchema&)> PoolOpSchemaGenerator(
+    const char* name,
+    const char* opName,
+    const char* additionalDescription) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+ {name} consumes an input tensor X and applies {opName} pooling across
+ the tensor according to kernel sizes, stride sizes, and pad lengths.
+ {opName} pooling consisting of computing the {opName} on all values of a
+ subset of the input tensor according to the kernel size and downsampling the
+ data into the output tensor Y for further processing. The output spatial shape will be following:
+ ```
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ ``` 
+ or
+ ```
+ output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ ```
+ if ceil_mode is enabled
+ 
+ ```
+ * pad_shape[i] is sum of pads along axis i
+ ```
+
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ ```
+ VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+ ```
+ And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+ ```
+ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+ ```
+ {additionalDescription}
+ )DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{opName}", opName);
+    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+    schema.SetDoc(doc);
+    schema.Attr(
+        "kernel_shape",
+        "The size of the kernel along each axis.",
+        AttributeProto::INTS);
+    schema.Attr(
+        "strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL);
+    schema.Attr(
+        "auto_pad",
+        auto_pad_doc,
+        AttributeProto::STRING,
+        std::string("NOTSET"));
+    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
+    schema.Attr(
+        "ceil_mode", 
+        "Wether to use ceil or floor (default) to compute the output shape.", 
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Input(
+        0,
+        "X",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size. Optionally, if dimension denotation is "
+        "in effect, the operation expects the input "
+        "data tensor to arrive with the dimension denotation "
+        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+        "T");
+    schema.Output(
+        0,
+        "Y",
+        "Output data tensor from average or max pooling across "
+        "the input tensor. Dimensions will vary based "
+        "on various kernel, stride, and pad sizes. Floor value of "
+        "the dimension is used",
+        "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      convPoolTypeAndShapeInference(ctx, false, true);
+    });
+  };
+} // namespace ONNX_NAMESPACE
+
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
     1,
-    OpSchema().FillUsing(PoolOpSchemaGenerator(
+    OpSchema().FillUsing(PoolOpSchemaGenerator_9(
         "AveragePool",
         "average",
         "The output of each pooling window is divided by the number of elements exclude pad.")));
@@ -248,6 +346,20 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
     7,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator_9(
+            "AveragePool",
+            "average",
+            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
+        .Attr(
+            "count_include_pad",
+            "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0)));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    AveragePool,
+    10,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
@@ -262,7 +374,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
     1,
-    OpSchema().FillUsing(PoolOpSchemaGenerator(
+    OpSchema().FillUsing(PoolOpSchemaGenerator_9(
         "MaxPool",
         "max",
         "The output of each pooling window is maximum number of elements exclude pad.")));
@@ -270,6 +382,35 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
     8,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator_9(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad."))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "I",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64"));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    10,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
