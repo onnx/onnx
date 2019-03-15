@@ -465,7 +465,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### AveragePool
-There are 12 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -489,6 +489,36 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+```
+
+</details>
+<details>
+<summary>averagepool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [6, 7.5],
+    [12, 13.5]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='export_averagepool_2d_ceil')
 ```
 
 </details>
@@ -3112,7 +3142,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MaxPool
-There are 12 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -3136,6 +3166,36 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
+```
+
+</details>
+<details>
+<summary>maxpool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='export_maxpool_2d_ceil')
 ```
 
 </details>
@@ -6953,9 +7013,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 2
 storage_order: 0
@@ -6973,9 +7034,10 @@ densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 1
 pads: 1
@@ -7024,9 +7086,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7049,9 +7112,10 @@ inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 2
 pads: 2
@@ -7100,9 +7164,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7125,9 +7190,10 @@ inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 3
 pads: 3
@@ -7176,9 +7242,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7201,9 +7268,10 @@ resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 3
 pads: 3
@@ -7252,9 +7320,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7277,9 +7346,10 @@ shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 3
 pads: 3
@@ -7328,9 +7398,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7358,9 +7429,10 @@ squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 3
 pads: 3
@@ -7409,9 +7481,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 1
 pads: 3
 storage_order: 0
@@ -7439,9 +7512,10 @@ vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 3
 pads: 3
@@ -7490,9 +7564,10 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 2
 pads: 3
 storage_order: 0
@@ -7520,9 +7595,10 @@ zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 count_include_pad: 0
 kernel_shape: 3
 pads: 3
@@ -7571,9 +7647,10 @@ bias: 2
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
+ceil_mode: 0
 kernel_shape: 2
 pads: 3
 storage_order: 0
