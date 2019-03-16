@@ -5,25 +5,25 @@
 
 namespace ONNX_NAMESPACE {
 
-#define DEFINE_TO_TENSOR_ONE(type, enumType, field)      \
-  template <>                                            \
-  static TensorProto ToTensor<type>(const type& value) { \
-    TensorProto t;                                       \
-    t.set_data_type(##enumType);                         \
-    t.add_##field##_data(value);                         \
-    return t;                                            \
+#define DEFINE_TO_TENSOR_ONE(type, enumType, field) \
+  template <>                                       \
+  TensorProto ToTensor<type>(const type& value) {   \
+    TensorProto t;                                  \
+    t.set_data_type(enumType);                      \
+    t.add_##field##_data(value);                    \
+    return t;                                       \
   }
 
-#define DEFINE_TO_TENSOR_LIST(type, enumType, field)                   \
-  template <>                                                          \
-  static TensorProto ToTensor<type>(const std::vector<type>& values) { \
-    TensorProto t;                                                     \
-    t.clear_##field##_data();                                          \
-    t.set_data_type(##enumType);                                       \
-    for (const type& val : values) {                                   \
-      t.add_##field##_data(val);                                       \
-    }                                                                  \
-    return t;                                                          \
+#define DEFINE_TO_TENSOR_LIST(type, enumType, field)            \
+  template <>                                                   \
+  TensorProto ToTensor<type>(const std::vector<type>& values) { \
+    TensorProto t;                                              \
+    t.clear_##field##_data();                                   \
+    t.set_data_type(enumType);                                  \
+    for (const type& val : values) {                            \
+      t.add_##field##_data(val);                                \
+    }                                                           \
+    return t;                                                   \
   }
 
 DEFINE_TO_TENSOR_ONE(float, TensorProto_DataType_FLOAT, float)
