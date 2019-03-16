@@ -40,6 +40,22 @@ class FunctionBodyHelper {
   };
 
   struct NodeDef {
+    NodeDef(
+        const std::vector<std::string>& outputs,
+        const std::string& op_type,
+        const std::vector<std::string>& inputs)
+        : outputs(outputs), op_type(op_type), inputs(inputs) {}
+
+    NodeDef(
+        const std::vector<std::string>& outputs,
+        const std::string& op_type,
+        const std::vector<std::string>& inputs,
+        const std::vector<AttributeProtoWrapper>& attributes)
+        : outputs(outputs),
+          op_type(op_type),
+          inputs(inputs),
+          attributes(attributes) {}
+
     std::vector<std::string> outputs;
     std::string op_type;
     std::vector<std::string> inputs;
