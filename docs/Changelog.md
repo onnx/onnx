@@ -3847,45 +3847,6 @@ No versioning maintained for experimental ops.
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ScaledTanh-1"></a>**ScaledTanh-1**</a>
-
-  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x).
-      
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Scaling value</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Scaling value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Selu-1"></a>**Selu-1**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
