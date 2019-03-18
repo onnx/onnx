@@ -78,7 +78,12 @@ enum Version {
   // IR VERSION 4 published on Jan 22, 2019
   // - Relax constraint that initializers should be a subset of graph inputs
   // - Add type BFLOAT16
-  IR_VERSION = 0x0000000000000004;
+  IR_VERSION_2019_1_22 = 0x0000000000000004;
+
+  // IR VERSION 5 published on March 18, 2019
+  // - Add message TensorAnnotation.
+  // - Add quantization annotation in GraphProto to map tensor with its scale and zero point quantization parameters.
+  IR_VERSION = 0x0000000000000005;
 }
 
 // Attributes
