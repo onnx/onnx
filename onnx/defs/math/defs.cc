@@ -862,7 +862,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(TopK_ver10_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
-		.Input(1, "K", "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve", "tensor(int64)")
+        .Input(
+            1,
+            "K",
+            "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
+            "tensor(int64)")
         .Output(
             0,
             "Values",
@@ -890,41 +894,44 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        // Type inference:
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        updateOutputElemType(ctx, 1, TensorProto::INT64);
+          // Type inference:
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          updateOutputElemType(ctx, 1, TensorProto::INT64);
 
-        // Shape inference:
-        if (!hasInputShape(ctx, 0))
-          return;
-        auto& input_shape = getInputShape(ctx, 0);
-        int64_t rank = input_shape.dim_size();
-        int64_t axis = getAttribute(ctx, "axis", -1);
-        if (axis < 0)
-          axis += rank;
-        if (axis < 0 || axis >= rank)
-          fail_shape_inference("Invalid value for attribute axis");
-        // TODO: unclear what results should be if axis has less than k
-        // elements.
-        // Infer output shape if 'K' is available
-        const auto* k = ctx.getInputData(1);
-        if (nullptr != k) {
-          if (k->dims_size() != 1 || k->int64_data_size() != 1 || k->data_type() != TensorProto::INT64)
-            fail_shape_inference("K input must be a one-dimensional tensor of size 1 and of type int64.");
-          TensorShapeProto result_shape = input_shape;
-          result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k->int64_data(0));
-          updateOutputShape(ctx, 0, result_shape);
-          updateOutputShape(ctx, 1, result_shape);
-        } else {
-          // Infer output shapes' rank in any case
-          auto* output_shape_0 = getOutputShape(ctx, 0);
-          auto* output_shape_1 = getOutputShape(ctx, 1);
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
-            output_shape_0->add_dim();
-            output_shape_1->add_dim();
+          // Shape inference:
+          if (!hasInputShape(ctx, 0))
+            return;
+          auto& input_shape = getInputShape(ctx, 0);
+          int64_t rank = input_shape.dim_size();
+          int64_t axis = getAttribute(ctx, "axis", -1);
+          if (axis < 0)
+            axis += rank;
+          if (axis < 0 || axis >= rank)
+            fail_shape_inference("Invalid value for attribute axis");
+          // TODO: unclear what results should be if axis has less than k
+          // elements.
+          // Infer output shape if 'K' is available
+          const auto* k = ctx.getInputData(1);
+          if (nullptr != k) {
+            if (k->dims_size() != 1 || k->int64_data_size() != 1 ||
+                k->data_type() != TensorProto::INT64)
+              fail_shape_inference(
+                  "K input must be a one-dimensional tensor of size 1 and of type int64.");
+            TensorShapeProto result_shape = input_shape;
+            result_shape.mutable_dim(static_cast<int>(axis))
+                ->set_dim_value(k->int64_data(0));
+            updateOutputShape(ctx, 0, result_shape);
+            updateOutputShape(ctx, 1, result_shape);
+          } else {
+            // Infer output shapes' rank in any case
+            auto* output_shape_0 = getOutputShape(ctx, 0);
+            auto* output_shape_1 = getOutputShape(ctx, 1);
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape_0->add_dim();
+              output_shape_1->add_dim();
+            }
           }
-        }
-        return;
+          return;
         }));
 
 static const char* Sin_ver7_doc = R"DOC(
@@ -1197,26 +1204,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-
 static const char* Sign_ver9_doc = R"DOC(
 Calculate the sign of the given input tensor element-wise.
 If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Sign,
-	9,
-	OpSchema()
-		.SetDoc(Sign_ver9_doc)
-		.Input(0, "input", "Input tensor", "T")
-		.Output(
-			0,
-			"output",
-			"The sign of the input tensor "
-			"computed element-wise. It has the same shape and type of the input.",
-			"T")
-		.TypeConstraint(
-			"T",
+    Sign,
+    9,
+    OpSchema()
+        .SetDoc(Sign_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The sign of the input tensor "
+            "computed element-wise. It has the same shape and type of the input.",
+            "T")
+        .TypeConstraint(
+            "T",
             OpSchema::all_numeric_types(),
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
@@ -1226,20 +1232,138 @@ Computes the error function of the given input tensor element-wise.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Erf,
-	9,
-	OpSchema()
-		.SetDoc(Erf_ver9_doc)
-		.Input(0, "input", "Input tensor", "T")
-		.Output(
-			0,
-			"output",
-			"The error function of the input tensor "
-			"computed element-wise. It has the same shape and type of the input.",
-			"T")
-		.TypeConstraint(
-			"T",
+    Erf,
+    9,
+    OpSchema()
+        .SetDoc(Erf_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The error function of the input tensor "
+            "computed element-wise. It has the same shape and type of the input.",
+            "T")
+        .TypeConstraint(
+            "T",
             OpSchema::all_numeric_types(),
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    QLinearMatMul,
+    10,
+    OpSchema()
+        .SetDoc(R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+It consumes two quantized input tensors, their scales and zero points, and output's scale and zero point, and computes the quantized output.
+The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it’s rounding to nearest ties to even.
+Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
+They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
+the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
+and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+Production must never overflow, and accumulation may overflow if and only if in 32 bits.)DOC")
+        .Input(0, "a", "N-dimensional quantized matrix a", "T1")
+        .Input(1, "a_scale", "scale of quantized input a", "tensor(float)")
+        .Input(2, "a_zero_point", "zero point of quantized input a", "T1")
+        .Input(3, "b", "N-dimensional quantized matrix b", "T2")
+        .Input(4, "b_scale", "scale of quantized input b", "tensor(float)")
+        .Input(5, "b_zero_point", "zero point of quantized input b", "T2")
+        .Input(6, "y_scale", "scale of quantized output y", "tensor(float)")
+        .Input(7, "y_zero_point", "zero point of quantized output y", "T3")
+        .Output(0, "y", "Quantized matrix multiply results from a * b", "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input a and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input b and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain output y and its zero point data type to 8-bit integer tensor.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+                                              ctx) {
+          auto a_type = ctx.getInputType(0);
+          auto b_type = ctx.getInputType(3);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+              a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+              b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          if (ONNX_NAMESPACE::TensorProto::UINT8 ==
+                  a_type->tensor_type().elem_type() &&
+              ONNX_NAMESPACE::TensorProto::UINT8 ==
+                  b_type->tensor_type().elem_type()) {
+            y_type->mutable_tensor_type()->set_elem_type(
+                ONNX_NAMESPACE::TensorProto::UINT8);
+          } else {
+            y_type->mutable_tensor_type()->set_elem_type(
+                ONNX_NAMESPACE::TensorProto::INT8);
+          }
+
+          // matmulShapeInference(ctx, 0, 3);
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MatMulInteger,
+    10,
+    OpSchema()
+        .SetDoc(R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+ The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.)DOC")
+        .Input(0, "A", "N-dimensional matrix A", "T1")
+        .Input(1, "B", "N-dimensional matrix B", "T2")
+        .Input(
+            2,
+            "a_zero_point",
+            "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, "
+            "which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements "
+            "should be equal to the number of rows of input 'A'.",
+            "T1",
+            OpSchema::Optional)
+        .Input(
+            3,
+            "b_zero_point",
+            "Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
+            "which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number "
+            "of elements should be equal to the number of columns of input 'B'.",
+            "T2",
+            OpSchema::Optional)
+        .Output(0, "Y", "Matrix multiply results from A * B", "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input A data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input B data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int32)"},
+            "Constrain output Y data type as 32-bit integer tensor.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+                                              ctx) {
+          auto a_type = ctx.getInputType(0);
+          auto b_type = ctx.getInputType(1);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+              a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+              b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          // Right now we only support int32
+          y_type->mutable_tensor_type()->set_elem_type(
+              ONNX_NAMESPACE::TensorProto::INT32);
+
+          // matmulShapeInference(ctx, 0, 1);
+        }));
+
 } // namespace ONNX_NAMESPACE
