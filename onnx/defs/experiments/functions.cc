@@ -1,4 +1,4 @@
-﻿// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
 #include "onnx/common/constants.h"

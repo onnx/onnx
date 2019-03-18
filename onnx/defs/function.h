@@ -62,6 +62,25 @@ class FunctionBodyHelper {
     std::vector<AttributeProtoWrapper> attributes;
   };
 
+  /*
+  BuildNodes() is an utility function for easily define a Function Body.
+
+  To build a simple node:
+    {{"Z"}, "Add", {"X", "Y"}} represents Z = Add(X,Y)
+
+  To build a node with attribute:
+    {{"Y"}, "Concat", {"X1", "X2", "X3"}, {{"axis", 1}}}
+      represents Y = Concat(X1,X2,X3) with axis = 1
+    The attribute type are infered from the attribute value's c++ type
+    Supported value types are
+      int64_t -> int, vector<int64_t> -> ints
+      float -> float, vector<float> -> floats
+      string -> string, vector<string> ->strings
+    For refering an attribute from parent, use:
+      {MakeRefAttribute("axes", AttributeProto::INTS)}}
+
+  For more examples, please find the references of this function
+  */
   static std::vector<NodeProto> BuildNodes(
       const std::vector<NodeDef>& node_defs);
 
