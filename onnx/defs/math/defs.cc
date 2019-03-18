@@ -747,6 +747,79 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+void matmulShapeInference(
+    ONNX_NAMESPACE::InferenceContext& ctx,
+    int input1Idx,
+    int input2Idx) {
+  if (!hasInputShape(ctx, input1Idx) && !hasInputShape(ctx, input2Idx)) {
+    return;
+  }
+
+  const auto shape0 = ctx.getInputType(input1Idx)->tensor_type().shape();
+  const auto shape1 = ctx.getInputType(input2Idx)->tensor_type().shape();
+
+  if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
+    fail_shape_inference("Input tensors of wrong rank (0).");
+  }
+
+  ONNX_NAMESPACE::TensorShapeProto shapeL, shapeR;
+
+  // First promote each shape to at least rank-2. This logic is
+  // specific to matmul, not generic broadcasting.
+  {
+    if (shape0.dim_size() == 1) {
+      shapeL.add_dim()->set_dim_value(1);
+      *shapeL.add_dim() = shape0.dim(0);
+    } else {
+      *shapeL.mutable_dim() = shape0.dim();
+    }
+    if (shape1.dim_size() == 1) {
+      *shapeR.add_dim() = shape1.dim(0);
+      shapeR.add_dim()->set_dim_value(1);
+    } else {
+      *shapeR.mutable_dim() = shape1.dim();
+    }
+  }
+
+  // Check for compatible matrix multiply dimensions
+  {
+    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
+    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    if (dimL.has_dim_value() && dimR.has_dim_value() &&
+        dimL.dim_value() != dimR.dim_value()) {
+      fail_shape_inference("Incompatible dimensions for matrix multiplication");
+    }
+  }
+
+  ONNX_NAMESPACE::TensorShapeProto resultShape;
+
+  // Now call out to generic multidimensional broadcasting for
+  // the broadcastable prefixes.
+  {
+    ONNX_NAMESPACE::TensorShapeProto prefixShapeL, prefixShapeR;
+    for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
+      *prefixShapeL.add_dim() = shapeL.dim(i);
+    }
+    for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
+      *prefixShapeR.add_dim() = shapeR.dim(i);
+    }
+    bidirectionalBroadcastShapeInference(
+        prefixShapeL, prefixShapeR, resultShape);
+  }
+
+  // Back to matmul-specific. Add the trailing dimensions back in.
+  {
+    if (shape0.dim_size() != 1) {
+      *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
+    }
+    if (shape1.dim_size() != 1) {
+      *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
+    }
+  }
+
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+}
+
 static const char* MatMul_ver9_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC";
@@ -771,76 +844,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(MatMul_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (!hasNInputShapes(ctx, 2)) {
-            return;
-          }
-
-          const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
-          const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
-
-          if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-            fail_shape_inference("Input tensors of wrong rank (0).");
-          }
-
-          TensorShapeProto shapeL, shapeR;
-
-          // First promote each shape to at least rank-2. This logic is
-          // specific to matmul, not generic broadcasting.
-          {
-            if (shape0.dim_size() == 1) {
-              shapeL.add_dim()->set_dim_value(1);
-              *shapeL.add_dim() = shape0.dim(0);
-            } else {
-              *shapeL.mutable_dim() = shape0.dim();
-            }
-            if (shape1.dim_size() == 1) {
-              *shapeR.add_dim() = shape1.dim(0);
-              shapeR.add_dim()->set_dim_value(1);
-            } else {
-              *shapeR.mutable_dim() = shape1.dim();
-            }
-          }
-
-          // Check for compatible matrix multiply dimensions
-          {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
-            if (dimL.has_dim_value() && dimR.has_dim_value() &&
-                dimL.dim_value() != dimR.dim_value()) {
-              fail_shape_inference(
-                  "Incompatible dimensions for matrix multiplication");
-              ;
-            }
-          }
-
-          TensorShapeProto resultShape;
-
-          // Now call out to generic multidimensional broadcasting for
-          // the broadcastable prefixes.
-          {
-            TensorShapeProto prefixShapeL, prefixShapeR;
-            for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
-              *prefixShapeL.add_dim() = shapeL.dim(i);
-            }
-            for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
-              *prefixShapeR.add_dim() = shapeR.dim(i);
-            }
-            bidirectionalBroadcastShapeInference(
-                prefixShapeL, prefixShapeR, resultShape);
-          }
-
-          // Back to matmul-specific. Add the trailing dimensions back in.
-          {
-            if (shape0.dim_size() != 1) {
-              *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
-            }
-            if (shape1.dim_size() != 1) {
-              *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
-            }
-          }
-
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
-              resultShape;
+          matmulShapeInference(ctx, 0, 1);
         }));
 
 static const char* TopK_ver10_doc = R"DOC(
@@ -1306,7 +1310,7 @@ Production must never overflow, and accumulation may overflow if and only if in 
                 ONNX_NAMESPACE::TensorProto::INT8);
           }
 
-          // matmulShapeInference(ctx, 0, 3);
+          matmulShapeInference(ctx, 0, 3);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1363,7 +1367,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
           y_type->mutable_tensor_type()->set_elem_type(
               ONNX_NAMESPACE::TensorProto::INT32);
 
-          // matmulShapeInference(ctx, 0, 1);
+          matmulShapeInference(ctx, 0, 1);
         }));
 
 } // namespace ONNX_NAMESPACE
