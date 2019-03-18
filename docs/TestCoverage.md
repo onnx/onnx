@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 113/120 (94.17%, 5 generators excluded) common operators.
 
-Node tests have covered 0/5 (0.00%, 0 generators excluded) experimental operators.
+Node tests have covered 0/4 (0.00%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -6965,9 +6965,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Scale (call for test cases)
-
-
-### ScaledTanh (call for test cases)
 
 
 <br/>
