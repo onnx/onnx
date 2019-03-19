@@ -96,6 +96,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(MathDocGenerator("subtraction")));
 
 ONNX_OPERATOR_SET_SCHEMA(
+    Mod,
+    10,
+    OpSchema().FillUsing(MathDocGenerator("modulus")));
+	
+ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     7,
     OpSchema().FillUsing(MathDocGenerator("multiplication")));
