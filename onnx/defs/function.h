@@ -91,7 +91,7 @@ class FunctionBodyHelper {
 
   template <typename T>
   static NodeDef Const(const std::string& name, const std::vector<T>& values) {
-    return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(value)}}};
+    return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(values)}}};
   }
 };
 
