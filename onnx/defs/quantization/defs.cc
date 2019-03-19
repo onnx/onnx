@@ -5,6 +5,13 @@
 
 namespace ONNX_NAMESPACE {
 
+static const char* QuantizeLinear_ver10_doc = R"DOC(
+The linear quantization operator. It consumes a high precision tensor, a scale, a zero point and computes the low precision / quantized tensor.
+The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+Scale and zero point must have same shape. They must be either scalar (per tensor) or 1-D tensor (per 'axis'). 'y_zero_point' and 'y' must have same type.
+)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
     10,
@@ -38,11 +45,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(int8)", "tensor(uint8)"},
             "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
-        .SetDoc(R"DOC(
-The linear quantization operator. It consumes a high precision tensor, a scale, a zero point and computes the low precision / quantized tensor.
-The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it’s uint8, or [-128, 127] if it’s int8.
-For (x / y_scale), it’s rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-Scale and zero point must have same shape. They must be either scalar (per tensor) or 1-D tensor (per 'axis'). 'y_zero_point' and 'y' must have same type.)DOC")
+        .SetDoc(QuantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction(
             [](ONNX_NAMESPACE::InferenceContext& ctx) {
               propagateElemTypeFromInputToOutput(ctx, 2, 0);
@@ -53,6 +56,13 @@ Scale and zero point must have same shape. They must be either scalar (per tenso
               auto& input_shape = getInputShape(ctx, 0);
               updateOutputShape(ctx, 0, input_shape);
             }));
+
+static const char* DequantizeLinear_ver10_doc = R"DOC(
+The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point and computes the full precision tensor.
+The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
+there's no zero point (zero point is supposed to be 0).
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
@@ -80,11 +90,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(int8)", "tensor(uint8), tensor(int32)"},
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
-        .SetDoc(R"DOC(
-The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point and computes the full precision tensor.
-The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
-'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
-there’s no zero point (zero point is supposed to be 0).)DOC")
+        .SetDoc(DequantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction(
             [](ONNX_NAMESPACE::InferenceContext& ctx) {
               auto y_type = ctx.getOutputType(0);
