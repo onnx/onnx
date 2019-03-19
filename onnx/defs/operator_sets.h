@@ -86,7 +86,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, ReduceSumSquare);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Relu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Reshape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Scale);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, ScaledTanh);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Selu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Shape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Sigmoid);
@@ -209,7 +208,6 @@ class OpSet_Onnx_ver1 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Relu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Reshape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Scale)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, ScaledTanh)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Selu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Shape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Sigmoid)>());
