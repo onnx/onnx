@@ -388,4 +388,3 @@ class MaxPool(Base):
             [15, 16]]]]).astype(np.float32)
 
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_dilations')
-
