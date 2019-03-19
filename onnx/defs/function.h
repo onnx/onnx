@@ -86,14 +86,12 @@ class FunctionBodyHelper {
 
   template <typename T>
   static NodeDef Const(const std::string& name, const T& value) {
-    AttributeProto attr = MakeAttribute("value", ToTensor<T>(value));
-    return NodeDef{{name}, "Constant", {}, {AttributeProtoWrapper(attr)}};
+    return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(value)}}};
   }
 
   template <typename T>
   static NodeDef Const(const std::string& name, const std::vector<T>& values) {
-    AttributeProto attr = MakeAttribute("value", ToTensor<T>(values));
-    return NodeDef{{name}, "Constant", {}, {AttributeProtoWrapper(attr)}};
+    return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(value)}}};
   }
 };
 
