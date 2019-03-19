@@ -884,16 +884,19 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    QLinearConv,
-    10,
-    OpSchema()
-        .SetDoc(R"DOC(
+static const char* QLinearConv_ver10_doc = R"DOC(
 The convolution operator consumes a quantized input tensor, its scale and zero point,
 a quantized filter, its scale and zero point, and output’s scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
 It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
-Each input or output and its related zero point must have same type.)DOC")
+Each input or output and its related zero point must have same type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    QLinearConv,
+    10,
+    OpSchema()
+        .SetDoc(QLinearConv_ver10_doc)
         .Input(
             0,
             "x",
@@ -1045,13 +1048,16 @@ Each input or output and its related zero point must have same type.)DOC")
           convPoolShapeInference(ctx, true, false, 0, 3);
         }));
 
+static const char* ConvInteger_ver10_doc = R"DOC(
+The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
+and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     ConvInteger,
     10,
     OpSchema()
-        .SetDoc(R"DOC(
-The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
-and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.)DOC")
+        .SetDoc(ConvInteger_ver10_doc)
         .Input(
             0,
             "x",

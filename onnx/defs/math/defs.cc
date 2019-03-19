@@ -1253,19 +1253,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    QLinearMatMul,
-    10,
-    OpSchema()
-        .SetDoc(R"DOC(
+static const char* QLinearMatMul_ver10_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-It consumes two quantized input tensors, their scales and zero points, and output's scale and zero point, and computes the quantized output.
-The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it’s rounding to nearest ties to even.
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
+The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
 Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
 They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
 the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
 and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
-Production must never overflow, and accumulation may overflow if and only if in 32 bits.)DOC")
+Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    QLinearMatMul,
+    10,
+    OpSchema()
+        .SetDoc(QLinearMatMul_ver10_doc)
         .Input(0, "a", "N-dimensional quantized matrix a", "T1")
         .Input(1, "a_scale", "scale of quantized input a", "tensor(float)")
         .Input(2, "a_zero_point", "zero point of quantized input a", "T1")
@@ -1313,13 +1316,16 @@ Production must never overflow, and accumulation may overflow if and only if in 
           matmulShapeInference(ctx, 0, 3);
         }));
 
+static const char* MatMulInteger_ver10_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     MatMulInteger,
     10,
     OpSchema()
-        .SetDoc(R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
- The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.)DOC")
+        .SetDoc(MatMulInteger_ver10_doc)
         .Input(0, "A", "N-dimensional matrix A", "T1")
         .Input(1, "B", "N-dimensional matrix B", "T2")
         .Input(
