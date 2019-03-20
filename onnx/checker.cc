@@ -343,10 +343,24 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
+    if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN ||
+        node.domain() == "ai.onnx") {
+      // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() +
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
+    } else {
+      // TODO: expose the registration of the op schemas appropriately in
+      // python, so we can load and register operators in other domains
+      //
+      // before we complete the above todo, let's skip the schema check for now
+      std::cerr
+          << "Warning: Op " << node.op_type() << " in domain " << node.domain()
+          << " version " << ONNX_NAMESPACE::to_string(domain_version)
+          << " has no corresponding schema. Very likely the schema is not registered with"
+          << " ONNX checker. Skip the schema check on this op now.";
+    }
   } else if (schema->Deprecated()) {
     fail_check(
         "Op registered for " + node.op_type() + " is depracted in domain_version of " +
