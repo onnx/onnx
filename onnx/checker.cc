@@ -355,11 +355,6 @@ void check_node(
       // python, so we can load and register operators in other domains
       //
       // before we complete the above todo, let's skip the schema check for now
-      std::cerr
-          << "Warning: Op " << node.op_type() << " in domain " << node.domain()
-          << " version " << ONNX_NAMESPACE::to_string(domain_version)
-          << " has no corresponding schema. Very likely the schema is not registered with"
-          << " ONNX checker. Skip the schema check on this op now.";
     }
   } else if (schema->Deprecated()) {
     fail_check(
