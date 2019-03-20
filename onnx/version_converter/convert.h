@@ -25,6 +25,7 @@
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
+#include "onnx/version_converter/adapters/scan_9_8.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -151,6 +152,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<ExtendSupportedTypes>("Less",
         OpSetID(9), OpSetID(8)));
       registerAdapter(make_unique<Upsample_9_8>());
+      registerAdapter(make_unique<Scan_9_8>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",

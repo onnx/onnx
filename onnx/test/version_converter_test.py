@@ -708,6 +708,68 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "scales"
         assert converted_model.opset_import[0].version == to_opset
 
+    # Test Scan Adapter: 9 -> 8
+    def test_scan_node_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+
+        sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+        next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+        sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+        scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+
+        add_node = onnx.helper.make_node(
+            'Add',
+            inputs=['sum_in', 'next'],
+            outputs=['sum_out']
+        )
+
+        id_node = onnx.helper.make_node(
+            'Identity',
+            inputs=['sum_out'],
+            outputs=['scan_out']
+        )
+
+        scan_body = onnx.helper.make_graph(
+            [add_node, id_node],
+            'scan_body',
+            [sum_in, next],
+            [sum_out, scan_out]
+        )
+
+        # create scan op node
+        scan_node = onnx.helper.make_node(
+            'Scan',
+            inputs=['initial', 'x'],
+            outputs=['y', 'z'],
+            num_scan_inputs=1,
+            scan_input_directions=[0],
+            scan_output_directions=[0],
+            scan_input_axes=[0],
+            scan_output_axes=[0],
+            body=scan_body,
+        )
+
+        initial_state = onnx.helper.make_tensor_value_info("initial", onnx.TensorProto.FLOAT, (2,))
+        input = onnx.helper.make_tensor_value_info("x", onnx.TensorProto.FLOAT, (3, 2))
+        output_state = onnx.helper.make_tensor_value_info("y", onnx.TensorProto.FLOAT, (2,))
+        output = onnx.helper.make_tensor_value_info("z", onnx.TensorProto.FLOAT, (3, 2))
+
+        graph = onnx.helper.make_graph(
+            [scan_node],
+            "test_scan",
+            [initial_state, input],
+            [output_state, output]
+        )
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert len(converted_model.graph.node) == 1
+        assert converted_model.graph.node[0].op_type == "Scan"
+        assert len(converted_model.graph.node[0].attribute) == 3
+        assert len(converted_model.graph.node[0].input) == 3
+        assert converted_model.opset_import[0].version == to_opset
+
 
 if __name__ == '__main__':
     unittest.main()
