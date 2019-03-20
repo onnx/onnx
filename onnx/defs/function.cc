@@ -2,148 +2,9 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
-#include "onnx/checker.h"
-#include "onnx/defs/operator_sets.h"
-#include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-using namespace checker;
-FunctionBuilder& FunctionBuilder::SetDomain(const std::string& domain) {
-  domain_ = domain;
-  return *this;
-}
-
-const std::string& FunctionBuilder::GetDomain() const {
-  return domain_;
-}
-
-FunctionBuilder& FunctionBuilder::SetBuildFunction(BuildFunction build_func) {
-  build_func_ = build_func;
-  return *this;
-}
-
-BuildFunction FunctionBuilder::GetBuildFunction() const {
-  return build_func_;
-}
-
-Common::Status FunctionBuilderRegistry::Register(
-    const FunctionBuilder& function_builder) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  function_builders.push_back(function_builder);
-  std::unique_ptr<FunctionProto> function_proto;
-  auto status = function_builder.GetBuildFunction()(&function_proto);
-  if (!status.IsOK()) {
-    return status;
-  }
-
-  CheckerContext ctx;
-  std::unordered_map<std::string, int> op_set;
-  auto version_range =
-      OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(
-          function_builder.GetDomain());
-  if (function_proto->since_version() > version_range.second ||
-      function_proto->since_version() < version_range.first) {
-    fail_check("Invalid function version in '", function_proto->name(), "'");
-  }
-  op_set.insert(
-      {function_builder.GetDomain(), (int)function_proto->since_version()});
-  ctx.set_opset_imports(op_set);
-  ctx.set_is_main_graph(false);
-  LexicalScopeContext lex_ctx;
-  try {
-    check_function(*function_proto, ctx, lex_ctx);
-  } catch (ValidationError& ex) {
-    return Common::Status(Common::CHECKER, Common::INVALID_PROTOBUF, ex.what());
-  }
-
-  auto& func_name = function_proto->name();
-  // Check no op version conflicts.
-  auto range =
-      domain_functions_map[function_builder.GetDomain()].equal_range(func_name);
-  for (auto i = range.first; i != range.second; ++i) {
-    auto version = i->second->since_version();
-    if (function_proto->since_version() == version) {
-      return Common::Status(
-          Common::CHECKER,
-          Common::FAIL,
-          ONNX_NAMESPACE::MakeString(
-              "A function (",
-              func_name,
-              ") with version (",
-              version,
-              ") has already been registered."));
-    }
-  }
-  domain_functions_map[function_builder.GetDomain()].emplace(
-      func_name, std::move(function_proto));
-  return Common::Status::OK();
-}
-
-// Get functions for specific domain.
-Common::Status FunctionBuilderRegistry::GetFunctions(
-    const std::string& domain,
-    /*out*/
-    std::multimap<std::string, const FunctionProto*>* function_set) const {
-  if (nullptr == function_set) {
-    return Common::Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "function_set should not be nullptr.");
-  }
-
-#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
-  static bool ONNX_UNUSED functionBuilder_registerer =
-      (RegisterOnnxFunctionBuilder(), false);
-#endif
-
-  auto function_name_map_iter = domain_functions_map.find(domain);
-  if (function_name_map_iter != domain_functions_map.end()) {
-    for (auto iter = function_name_map_iter->second.begin();
-         iter != function_name_map_iter->second.end();
-         ++iter) {
-      function_set->emplace(iter->first, iter->second.get());
-    }
-  }
-  return Common::Status::OK();
-}
-
-const FunctionProto* FunctionBuilderRegistry::GetFunction(
-    const std::string& func_name,
-    const int maxInclusiveVersion,
-    const std::string& domain) const {
-  std::multimap<std::string, const FunctionProto*> funcs;
-  auto status = GetFunctions(domain, &funcs);
-  if (!status.IsOK()) {
-    return nullptr;
-  }
-  std::map<int, const FunctionProto*> version_to_func;
-  auto range = funcs.equal_range(func_name);
-  for (auto i = range.first; i != range.second; ++i) {
-    version_to_func[static_cast<int>(i->second->since_version())] =
-        std::move(i->second);
-  }
-
-  if (version_to_func.empty()) {
-    return nullptr;
-  }
-  auto pos = version_to_func.lower_bound(maxInclusiveVersion);
-  if (version_to_func.begin() == pos && pos->first > maxInclusiveVersion) {
-    return nullptr;
-  }
-  if (version_to_func.end() == pos || pos->first > maxInclusiveVersion) {
-    // All versions are less than specified version, or,
-    // The <pos> version is greater than specified version.
-    pos--;
-  }
-  return pos->second;
-}
-
-FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
-  static FunctionBuilderRegistry func_builder_registry;
-  return func_builder_registry;
-}
-
 std::string InteralTensorNameGenerator(
     const std::string& node_name,
     const std::string& internal_name) {
@@ -221,6 +82,29 @@ void FunctionExpandHelper(
       }
     }
   }
+}
+
+std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
+    const std::vector<NodeDef>& node_defs) {
+  std::vector<NodeProto> nodes(node_defs.size());
+
+  for (size_t i = 0; i < node_defs.size(); i++) {
+    const NodeDef& node = node_defs[i];
+    NodeProto& n = nodes[i];
+
+    n.set_op_type(node.op_type);
+    for (const auto& i : node.inputs) {
+      n.add_input(i);
+    }
+    for (const auto& o : node.outputs) {
+      n.add_output(o);
+    }
+    for (const auto& attr : node.attributes) {
+      *(n.add_attribute()) = attr.proto;
+    }
+  }
+
+  return nodes;
 }
 
 } // namespace ONNX_NAMESPACE

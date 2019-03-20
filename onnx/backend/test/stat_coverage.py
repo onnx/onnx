@@ -129,12 +129,12 @@ def gen_model_test_coverage(schemas, f, ml):
     schema_dict = dict()
     for schema in schemas:
         schema_dict[schema.name] = schema
-    # Load models from each model test using Runner._prepare_model_data
+    # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
     attrs = dict()  # type: Dict[Text, Dict[Text, List[Any]]]
     model_paths = []  # type: List[Any]
     for rt in load_model_tests(kind='real'):
-        model_dir = Runner._prepare_model_data(rt)
+        model_dir = Runner.prepare_model_data(rt)
         model_paths.append(os.path.join(model_dir, 'model.onnx'))
     model_paths.sort()
     model_written = False
@@ -234,7 +234,7 @@ def main():
     else:
         fname = os.path.join(docs_dir, 'TestCoverage.md')
 
-    with io.open(fname, 'w+', newline='') as f:  # type: ignore
+    with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
         gen_outlines(f, ml)
         gen_node_test_coverage(schemas, f, ml)
         gen_model_test_coverage(schemas, f, ml)
