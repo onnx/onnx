@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 using namespace ONNX_NAMESPACE;
 
@@ -143,19 +144,19 @@ void convPoolTypeAndShapeInference(
     int64_t effective_kernel_size = kernel_shape[i];
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
-    
+
     bool ceil_mode = ctx.getAttribute("ceil_mode");
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
     int64_t strided_kernel_positions;
-    
-    if(ceil_mode)
-        strided_kernel_positions =
-            (int64_t)(std::ceil((effective_input_size - effective_kernel_size) / float(strides[i])));
+
+    if (ceil_mode)
+      strided_kernel_positions = (int64_t)(std::ceil(
+          (effective_input_size - effective_kernel_size) / float(strides[i])));
     else
-        strided_kernel_positions =
-            (effective_input_size - effective_kernel_size) / strides[i];
+      strided_kernel_positions =
+          (effective_input_size - effective_kernel_size) / strides[i];
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
@@ -260,13 +261,13 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  data into the output tensor Y for further processing. The output spatial shape will be following:
  ```
  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
- ``` 
+ ```
  or
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
  ```
  if ceil_mode is enabled
- 
+
  ```
  * pad_shape[i] is sum of pads along axis i
  ```
@@ -299,8 +300,8 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
     schema.Attr(
-        "ceil_mode", 
-        "Wether to use ceil or floor (default) to compute the output shape.", 
+        "ceil_mode",
+        "Wether to use ceil or floor (default) to compute the output shape.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(
@@ -1567,33 +1568,33 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* TfIdfVectorizer_ver9_doc = R"DOC(
-This transform extracts n-grams from the input sequence and save them as a vector. Input can 
-be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.  
-For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row. 
-More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1]. 
-If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor. 
- 
-In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original 
-sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.  
-If the number of skips is 2, we should skip two tokens when scanning through the original sequence. 
-Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2. 
-The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4]. 
-If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28] 
+This transform extracts n-grams from the input sequence and save them as a vector. Input can
+be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
+For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
+More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
+If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
+
+In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
+sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
+If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
+Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2.
+The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
+If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
 indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
 
-The output vector (denoted by Y) stores the count of each n-gram; 
-Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
+The output vector (denoted by Y) stores the count of each n-gram;
+Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
 between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
 ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
-respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output. 
-Note that we may consider all skips up to S when generating the n-grams. 
- 
-The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and 
-the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF", 
-this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute. 
- 
-Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor. 
-If pool_strings is set, the input must be a string tensor. 
+respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
+Note that we may consider all skips up to S when generating the n-grams.
+
+The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
+the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
+this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
+
+Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
+If pool_strings is set, the input must be a string tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1698,15 +1699,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
 static const char* StringNormalizer_ver10_doc = R"DOC(
-StringNormalization performs string operations for basic cleaning. 
-This operator has only one input (denoted by X) and only one output 
-(denoted by Y). This operator first examines the elements in the X, 
-and removes elements specified in "stopwords" attribute. 
-After removing stop words, the intermediate result can be further lowercased, 
+StringNormalization performs string operations for basic cleaning.
+This operator has only one input (denoted by X) and only one output
+(denoted by Y). This operator first examines the elements in the X,
+and removes elements specified in "stopwords" attribute.
+After removing stop words, the intermediate result can be further lowercased,
 uppercased, or just returned depending the "case_change_action" attribute.
 This operator only accepts [C]- and [1, C]-tensor.
 If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
-if input shape is [C] and shape [1, 1] if input shape is [1, C]. 
+if input shape is [C] and shape [1, 1] if input shape is [1, C].
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1769,5 +1770,50 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           updateOutputShape(ctx, 0, output_shape);
         }));
+
+static const char* mvn_ver9_doc = R"DOC(
+      A MeanVarianceNormalization Function: Perform mean variance normalization
+      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MeanVarianceNormalization,
+    9,
+    OpSchema()
+        .SetDoc(mvn_ver9_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .Attr(
+            "axes",
+            "A list of integers, along which to reduce. The default is to reduce over "
+            "all the dimensions of the input tensor. Use [0,2,3] (without C axis for "
+            "N-D cases) for calculating means and variances along channels. Two "
+            "variables with the same C-coordinate are associated "
+            "with the same mean and variance.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to all numeric tensors.")
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
+             {{"X_RM"},
+              "ReduceMean",
+              {"X"},
+              {MakeRefAttribute("axes", AttributeProto::INTS)}},
+             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
+             {{"X_squared"}, "Pow", {"X", "Exponent"}},
+             {{"E_Xsquared"},
+              "ReduceMean",
+              {"X_squared"},
+              {MakeRefAttribute("axes", AttributeProto::INTS)}},
+             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
+             {{"STD"}, "Sqrt", {"Variance"}},
+             {{"X_variance"}, "Sub", {"X", "X_RM"}},
+             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
+             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
 } // namespace ONNX_NAMESPACE
