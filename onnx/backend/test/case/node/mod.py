@@ -36,6 +36,6 @@ class Mod(Base):
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.random.randn(1).astype(np.float32)
-        z = np.mod(x, y) # expected output [0, 1, 2]
+        z = np.mod(x, y)  # expected output [0, 1, 2]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_mod_bcast')
