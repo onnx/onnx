@@ -96,11 +96,8 @@
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
-<<<<<<< HEAD
   * <a href="#Resize">Resize</a>
-=======
   * <a href="#Reverse">Reverse</a>
->>>>>>> Adding Reverse Op
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -9937,58 +9934,11 @@ for test_name, shape in test_cases.items():
 </details>
 
 
-<<<<<<< HEAD
 ### <a name="Resize"></a><a name="resize">**Resize**</a>
 
   Resize the input tensor.
   Each dimension value of the output tensor is:
     output_dimension = floor(input_dimension * scale).
-=======
-### <a name="Reverse"></a><a name="reverse">**Reverse**</a>
-
-  Reverse a tensor of arbitrary shape along the given 'axes' in its dimensions.
-  
-  Example 1:
-    input = [
-      [0.0, 1.0, 2.0],
-      [3.0, 4.0, 5.0],
-    ]
-  
-    output = [
-      [5.0, 4.0, 3.0],
-      [2.0, 1.0, 0.0],
-    ]
-  
-  Example 2:
-    input = [
-      [0.0, 1.0, 2.0],
-      [3.0, 4.0, 5.0],
-    ]
-  
-    axes = [0]
-  
-    output = [
-      [3.0, 4.0, 5.0],
-      [0.0, 1.0, 2.0],
-    ]
-    
-  Example 3:
-    input = [
-      [[0.0, 1.0, 2.0],
-       [3.0, 4.0, 5.0]],
-      [[6.0, 7.0, 8.0],
-       [9.0, 10.0, 11.0]],
-    ]
-  
-    axes = [1,-1]
-  
-    output = [
-      [[5.0, 4.0, 3.0],
-       [2.0, 1.0, 0.0]],
-      [[11.0, 10.0, 9.0],
-       [8.0, 7.0, 6.0]],
-    ]
->>>>>>> Adding Reverse Op
 
 #### Version
 
@@ -9997,57 +9947,37 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>mode</tt> : string (default is nearest)</dt>
 <dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
-=======
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers indicating the axes to reverse. Negative values mean counting dimensions from the back.By default, reverse over all axes of input dimensions</dd>
->>>>>>> Adding Reverse Op
 </dl>
 
 #### Inputs
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>X</tt> : T</dt>
 <dd>N-D tensor</dd>
 <dt><tt>scales</tt> : tensor(float)</dt>
 <dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
-=======
-<dt><tt>input</tt> : T</dt>
-<dd>Tensor of rank r >= 1.</dd>
->>>>>>> Adding Reverse Op
 </dl>
 
 #### Outputs
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>Y</tt> : T</dt>
 <dd>N-D tensor after resizing</dd>
-=======
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor of rank r >= 1 (same rank as input).</dd>
->>>>>>> Adding Reverse Op
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<<<<<<< HEAD
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
-=======
-<dd>Input and output types can be of any tensor type.</dd>
->>>>>>> Adding Reverse Op
 </dl>
 
 
 #### Examples
 
 <details>
-<<<<<<< HEAD
 <summary>downsample_linear</summary>
 
 ```python
@@ -10100,30 +10030,12 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_nearest')
-=======
-<summary>default</summary>
-
-```python
-input = np.arange(6.0).reshape(2, 3)
-
-node = onnx.helper.make_node(
-    'Reverse',
-    inputs=['input'],
-    outputs=['output']
-)
-
-output = np.flip(np.flip(input, 0), 1)
-
-expect(node, inputs=[input], outputs=[output],
-       name='test_reverse_default')
->>>>>>> Adding Reverse Op
 ```
 
 </details>
 
 
 <details>
-<<<<<<< HEAD
 <summary>upsample_linear</summary>
 
 ```python
@@ -10150,31 +10062,12 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_linear')
-=======
-<summary>with_axes</summary>
-
-```python
-input = np.arange(6.0).reshape(2, 3)
-
-node = onnx.helper.make_node(
-    'Reverse',
-    inputs=['input'],
-    outputs=['output'],
-    axes=[0]
-)
-
-output = np.flip(input, 0)
-
-expect(node, inputs=[input], outputs=[output],
-       name='test_reverse_with_axes')
->>>>>>> Adding Reverse Op
 ```
 
 </details>
 
 
 <details>
-<<<<<<< HEAD
 <summary>upsample_nearest</summary>
 
 ```python
@@ -10201,7 +10094,135 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_nearest')
-=======
+```
+
+</details>
+
+
+### <a name="Reverse"></a><a name="reverse">**Reverse**</a>
+
+  Reverse a tensor of arbitrary shape along the given 'axes' in its dimensions.
+  
+  Example 1:
+    input = [
+      [0.0, 1.0, 2.0],
+      [3.0, 4.0, 5.0],
+    ]
+  
+    output = [
+      [5.0, 4.0, 3.0],
+      [2.0, 1.0, 0.0],
+    ]
+  
+  Example 2:
+    input = [
+      [0.0, 1.0, 2.0],
+      [3.0, 4.0, 5.0],
+    ]
+  
+    axes = [0]
+  
+    output = [
+      [3.0, 4.0, 5.0],
+      [0.0, 1.0, 2.0],
+    ]
+    
+  Example 3:
+    input = [
+      [[0.0, 1.0, 2.0],
+       [3.0, 4.0, 5.0]],
+      [[6.0, 7.0, 8.0],
+       [9.0, 10.0, 11.0]],
+    ]
+  
+    axes = [1,-1]
+  
+    output = [
+      [[5.0, 4.0, 3.0],
+       [2.0, 1.0, 0.0]],
+      [[11.0, 10.0, 9.0],
+       [8.0, 7.0, 6.0]],
+    ]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers indicating the axes to reverse. Negative values mean counting dimensions from the back.By default, reverse over all axes of input dimensions</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r >= 1 (same rank as input).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+input = np.arange(6.0).reshape(2, 3)
+
+node = onnx.helper.make_node(
+    'Reverse',
+    inputs=['input'],
+    outputs=['output']
+)
+
+output = np.flip(np.flip(input, 0), 1)
+
+expect(node, inputs=[input], outputs=[output],
+       name='test_reverse_default')
+```
+
+</details>
+
+
+<details>
+<summary>with_axes</summary>
+
+```python
+input = np.arange(6.0).reshape(2, 3)
+
+node = onnx.helper.make_node(
+    'Reverse',
+    inputs=['input'],
+    outputs=['output'],
+    axes=[0]
+)
+
+output = np.flip(input, 0)
+
+expect(node, inputs=[input], outputs=[output],
+       name='test_reverse_with_axes')
+```
+
+</details>
+
+
+<details>
 <summary>with_negative_axes</summary>
 
 ```python
@@ -10218,7 +10239,6 @@ output = np.flip(np.flip(input, 1), -1)
 
 expect(node, inputs=[input], outputs=[output],
        name='test_reverse_with_negative_axes')
->>>>>>> Adding Reverse Op
 ```
 
 </details>

@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 114/121 (94.21%, 5 generators excluded) common operators.
+Node tests have covered 115/122 (94.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/4 (0.00%, 0 generators excluded) experimental operators.
 
@@ -5273,7 +5273,6 @@ for test_name, shape in test_cases.items():
 </details>
 
 
-<<<<<<< HEAD
 ### Resize
 There are 4 test cases, listed as following:
 <details>
@@ -5327,31 +5326,10 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_nearest')
-=======
-### Reverse
-There are 3 test cases, listed as following:
-<details>
-<summary>default</summary>
-
-```python
-input = np.arange(6.0).reshape(2, 3)
-
-node = onnx.helper.make_node(
-    'Reverse',
-    inputs=['input'],
-    outputs=['output']
-)
-
-output = np.flip(np.flip(input, 0), 1)
-
-expect(node, inputs=[input], outputs=[output],
-       name='test_reverse_default')
->>>>>>> Adding Reverse Op
 ```
 
 </details>
 <details>
-<<<<<<< HEAD
 <summary>upsample_linear</summary>
 
 ```python
@@ -5378,29 +5356,10 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_linear')
-=======
-<summary>with_axes</summary>
-
-```python
-input = np.arange(6.0).reshape(2, 3)
-
-node = onnx.helper.make_node(
-    'Reverse',
-    inputs=['input'],
-    outputs=['output'],
-    axes=[0]
-)
-
-output = np.flip(input, 0)
-
-expect(node, inputs=[input], outputs=[output],
-       name='test_reverse_with_axes')
->>>>>>> Adding Reverse Op
 ```
 
 </details>
 <details>
-<<<<<<< HEAD
 <summary>upsample_nearest</summary>
 
 ```python
@@ -5427,7 +5386,53 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_nearest')
-=======
+```
+
+</details>
+
+
+### Reverse
+There are 3 test cases, listed as following:
+<details>
+<summary>default</summary>
+
+```python
+input = np.arange(6.0).reshape(2, 3)
+
+node = onnx.helper.make_node(
+    'Reverse',
+    inputs=['input'],
+    outputs=['output']
+)
+
+output = np.flip(np.flip(input, 0), 1)
+
+expect(node, inputs=[input], outputs=[output],
+       name='test_reverse_default')
+```
+
+</details>
+<details>
+<summary>with_axes</summary>
+
+```python
+input = np.arange(6.0).reshape(2, 3)
+
+node = onnx.helper.make_node(
+    'Reverse',
+    inputs=['input'],
+    outputs=['output'],
+    axes=[0]
+)
+
+output = np.flip(input, 0)
+
+expect(node, inputs=[input], outputs=[output],
+       name='test_reverse_with_axes')
+```
+
+</details>
+<details>
 <summary>with_negative_axes</summary>
 
 ```python
@@ -5444,7 +5449,6 @@ output = np.flip(np.flip(input, 1), -1)
 
 expect(node, inputs=[input], outputs=[output],
        name='test_reverse_with_negative_axes')
->>>>>>> Adding Reverse Op
 ```
 
 </details>
