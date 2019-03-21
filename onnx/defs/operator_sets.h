@@ -530,6 +530,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, AveragePool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Slice);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, ThresholdedRelu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Dropout);
 
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver10 {
@@ -544,11 +545,13 @@ class OpSet_Onnx_ver10 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, MaxPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 10, AveragePool)>());	   
+           Onnx, 10, AveragePool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, Slice)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, ThresholdedRelu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 10, Dropout)>());
   }
 };
 
