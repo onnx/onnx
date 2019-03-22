@@ -234,6 +234,33 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('shape', TensorProto.INT64, (2,)),
             make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
 
+    def test_expand_static_shape_inferred_full(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 1, 3)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (3,), (2, 4, 3))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 4, 3))])
+
+    def test_expand_static_shape_inferred_broadcast(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 1, 3)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2,), (1, 4))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 4, 3))])
+
+    def test_expand_static_shape_inferred_incomplete(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (None, None, None)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2,), (2, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, None, None))])
+
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),

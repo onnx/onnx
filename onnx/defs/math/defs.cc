@@ -1090,28 +1090,41 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // Shape Inference if 2nd input data (the target shape) is available
-          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          if (!targetShapeInitializer) {
+          const TensorProto* target_shape_initializer = ctx.getInputData(1);
+          if (!target_shape_initializer) {
             return;
           }
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
+          std::vector<int64_t> target_shape;
+          if (target_shape_initializer->has_raw_data()) {
+            const std::string& bytes = target_shape_initializer->raw_data();
+            target_shape.insert(
+                target_shape.end(),
                 reinterpret_cast<const int64_t*>(bytes.c_str()),
                 reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
           } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
+            const auto& data = target_shape_initializer->int64_data();
+            target_shape.insert(target_shape.end(), data.begin(), data.end());
           }
-          auto* outputShape =
+          auto& input_shape = getInputShape(ctx, 0);
+          auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          for (int64_t dim : targetShape) {
-            // Add a new dimension to outputShape
-            auto* new_dim = outputShape->add_dim();
-            new_dim->set_dim_value(dim);
+          for (size_t i = 0; i < static_cast<size_t>(input_shape.dim_size()); ++i) {
+            auto* new_dim = output_shape->add_dim();
+            int64_t target_dim = i < target_shape.size() ? target_shape[i] : 1;
+            if (input_shape.dim(i).has_dim_value()) {
+              const int64_t input_dim = input_shape.dim(i).dim_value();
+              if (input_dim != target_dim && input_dim != 1) {
+                if (target_dim != 1) {
+                  fail_shape_inference("Incompatible dimensions in Expand (",
+                                       input_dim, " vs ", target_dim);
+                }
+                target_dim = input_dim;
+              }
+              new_dim->set_dim_value(target_dim);
+            } else if (target_dim != 1) {
+              new_dim->set_dim_value(target_dim);
+            }
           }
         }));
 
