@@ -5397,7 +5397,7 @@ There are 3 test cases, listed as following:
 <summary>default</summary>
 
 ```python
-input = np.arange(6.0).reshape(2, 3)
+input = np.arange(6.0).reshape(2, 3).astype(np.float32)
 
 node = onnx.helper.make_node(
     'Reverse',
@@ -5416,7 +5416,7 @@ expect(node, inputs=[input], outputs=[output],
 <summary>with_axes</summary>
 
 ```python
-input = np.arange(6.0).reshape(2, 3)
+input = np.arange(6.0).reshape(2, 3).astype(np.float32)
 
 node = onnx.helper.make_node(
     'Reverse',
@@ -5436,7 +5436,7 @@ expect(node, inputs=[input], outputs=[output],
 <summary>with_negative_axes</summary>
 
 ```python
-input = np.arange(12.0).reshape(2, 2, 3)
+input = np.arange(12.0).reshape(2, 2, 3).astype(np.float32)
 
 node = onnx.helper.make_node(
     'Reverse',
