@@ -1109,9 +1109,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = getInputShape(ctx, 0);
           auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          for (size_t i = 0; i < static_cast<size_t>(input_shape.dim_size()); ++i) {
+          for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto* new_dim = output_shape->add_dim();
-            int64_t target_dim = i < target_shape.size() ? target_shape[i] : 1;
+            int64_t target_dim = static_cast<size_t>(i) < target_shape.size() ? target_shape[i] : 1;
             if (input_shape.dim(i).has_dim_value()) {
               const int64_t input_dim = input_shape.dim(i).dim_value();
               if (input_dim != target_dim && input_dim != 1) {
