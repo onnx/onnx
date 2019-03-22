@@ -96,6 +96,7 @@
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
+  * <a href="#Resize">Resize</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -114,11 +115,13 @@
   * <a href="#Split">Split</a>
   * <a href="#Sqrt">Sqrt</a>
   * <a href="#Squeeze">Squeeze</a>
+  * <a href="#StringNormalizer">StringNormalizer</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
   * <a href="#Tan">Tan</a>
   * <a href="#Tanh">Tanh</a>
   * <a href="#TfIdfVectorizer">TfIdfVectorizer</a>
+  * <a href="#ThresholdedRelu">ThresholdedRelu</a>
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
@@ -127,16 +130,12 @@
   * <a href="#Where">Where</a>
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
-  * <sub>experimental</sub> <a href="#Affine">Affine</a>
-  * <sub>experimental</sub> <a href="#Crop">Crop</a>
-  * <sub>experimental</sub> <a href="#DynamicSlice">DynamicSlice</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
-  * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
-  * <sub>experimental</sub> <a href="#ParametricSoftplus">ParametricSoftplus</a>
   * <sub>experimental</sub> <a href="#Scale">Scale</a>
-  * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
-  * <sub>experimental</sub> <a href="#ThresholdedRelu">ThresholdedRelu</a>
+
+  **Operators with function registered:**
+  * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -1004,7 +1003,14 @@ expect(node, inputs=[x], outputs=[y],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
   
+   ```
    * pad_shape[i] is sum of pads along axis i
    ```
   
@@ -1022,15 +1028,17 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>, <a href="Changelog.md#AveragePool-7">AveragePool-7</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
 <dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
@@ -1088,6 +1096,38 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [6, 7.5],
+    [12, 13.5]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='export_averagepool_2d_ceil')
 ```
 
 </details>
@@ -1666,14 +1706,19 @@ for from_type, to_type in test_cases:
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
         if ('STRING' == to_type):
             # Converting input to str, then give it np.object dtype for generating script
-            output = input.astype(np.dtype('str'))
-            output = output.astype(np.dtype(np.object))
+            ss = []
+            for i in input.flatten():
+                s = str(i).encode('utf-8')
+                su = s.decode('utf-8')
+                ss.append(su)
+
+            output = np.array(ss).astype(np.object).reshape([3, 4])
         else:
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
-        input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
-           ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
-           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
+        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
@@ -3048,18 +3093,18 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
-  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-  test mode or not, the output Y will either be a random dropout, or a simple
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>
 
 #### Attributes
 
@@ -3080,7 +3125,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T</dt>
+<dt><tt>mask</tt> (optional) : T1</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -3089,6 +3134,8 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
 
@@ -6116,7 +6163,14 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
   
+   ```
    * pad_shape[i] is sum of pads along axis i
    ```
   
@@ -6134,15 +6188,17 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -6204,6 +6260,38 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='export_maxpool_2d_ceil')
 ```
 
 </details>
@@ -6806,6 +6894,85 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_mean_two_inputs')
+```
+
+</details>
+
+
+### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
+
+  A MeanVarianceNormalization Function: Perform mean variance normalization
+        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances along channels. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+
+#### Examples
+
+<details>
+<summary>meanvariancenormalization</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MeanVarianceNormalization',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+# Calculate expected output data
+data_mean = np.mean(input_data, axis=(0, 1, 2, 3), keepdims=1)
+data_mean_squared = np.power(data_mean, 2)
+data_squared = np.power(input_data, 2)
+data_squared_mean = np.mean(data_squared, axis=(0, 1, 2, 3), keepdims=1)
+std = np.sqrt(data_squared_mean - data_mean_squared)
+expected_output = (input_data - data_mean) / (std + 1e-9)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mvn')
 ```
 
 </details>
@@ -9766,6 +9933,171 @@ for test_name, shape in test_cases.items():
 </details>
 
 
+### <a name="Resize"></a><a name="resize">**Resize**</a>
+
+  Resize the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is nearest)</dt>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>N-D tensor</dd>
+<dt><tt>scales</tt> : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>downsample_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+output = np.array([[[
+    [1, 2.66666651]
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_downsample_linear')
+```
+
+</details>
+
+
+<details>
+<summary>downsample_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+output = np.array([[[
+    [1, 3]
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_downsample_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>upsample_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1.5, 2, 2],
+    [2, 2.5, 3, 3],
+    [3, 3.5, 4, 4],
+    [3, 3.5, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_linear')
+```
+
+</details>
+
+
+<details>
+<summary>upsample_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_nearest')
+```
+
+</details>
+
+
 ### <a name="Scan"></a><a name="scan">**Scan**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
@@ -10703,14 +11035,16 @@ expect(node, inputs=[x], outputs=[y],
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
-  dimension for each axis in the list of axes, it uses this information to
+  Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+  dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
   end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If a negative value is passed for step, it represents slicing backward.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
     data = [
         [1, 2, 3, 4],
@@ -10719,8 +11053,9 @@ expect(node, inputs=[x], outputs=[y],
     axes = [0, 1]
     starts = [1, 0]
     ends = [2, 3]
+    steps = [1, 2]
     result = [
-        [5, 6, 7],
+        [5, 7],
     ]
   Example 2:
     data = [
@@ -10735,24 +11070,23 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-#### Attributes
+Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>
 
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., len(`starts`) - 1].</dd>
-<dt><tt>ends</tt> : list of ints (required)</dt>
-<dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
-<dt><tt>starts</tt> : list of ints (required)</dt>
-<dd>Starting indices of corresponding axis in `axes`</dd>
-</dl>
-
-#### Inputs
+#### Inputs (3 - 5)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
+<dt><tt>axes</tt> (optional) : Tind</dt>
+<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
+<dt><tt>steps</tt> (optional) : Tind</dt>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
 </dl>
 
 #### Outputs
@@ -10767,6 +11101,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -10778,17 +11114,18 @@ This version of the operator has been available since version 1 of the default O
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.int64)
+ends = np.array([3, 10], dtype=np.int64)
+axes = np.array([0, 1], dtype=np.int64)
+steps = np.array([1, 1], dtype=np.int64)
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice')
 ```
 
@@ -10801,17 +11138,40 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends'],
     outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
 y = x[:, :, 3:4]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends], outputs=[y],
        name='test_slice_default_axes')
+```
+
+</details>
+
+
+<details>
+<summary>slice_default_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_default_steps')
 ```
 
 </details>
@@ -10823,17 +11183,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_end_out_of_bounds')
 ```
 
@@ -10846,18 +11207,43 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.int64)
+ends = np.array([-1], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 0:-1]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_neg')
+```
+
+</details>
+
+
+<details>
+<summary>slice_neg_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([20, 10, 4], dtype=np.int64)
+ends = np.array([0, 0, 1], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -3, -2])
+y = x[20:0:-1, 10:0:-3, 4:1:-2]
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_neg_steps')
 ```
 
 </details>
@@ -10869,17 +11255,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1000],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1000:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_start_out_of_bounds')
 ```
 
@@ -11441,6 +11828,187 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="StringNormalizer"></a><a name="stringnormalizer">**StringNormalizer**</a>
+
+  StringNormalization performs string operations for basic cleaning.
+  This operator has only one input (denoted by X) and only one output
+  (denoted by Y). This operator first examines the elements in the X,
+  and removes elements specified in "stopwords" attribute.
+  After removing stop words, the intermediate result can be further lowercased,
+  uppercased, or just returned depending the "case_change_action" attribute.
+  This operator only accepts [C]- and [1, C]-tensor.
+  If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+  if input shape is [C] and shape [1, 1] if input shape is [1, C].
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>case_change_action</tt> : string (default is NONE)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE". Default is "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (default is 0)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive. Default is false</dd>
+<dt><tt>locale</tt> : string</dt>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
+<dt><tt>stopwords</tt> : list of strings</dt>
+<dd>List of stop words. If not set, no word would be removed from X.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to normalize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Normalized strings</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>monday_casesensintive_lower</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='LOWER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_lower')
+```
+
+</details>
+
+
+<details>
+<summary>monday_casesensintive_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_nochangecase')
+```
+
+</details>
+
+
+<details>
+<summary>monday_casesensintive_upper</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper')
+```
+
+</details>
+
+
+<details>
+<summary>monday_empty_output</summary>
+
+```python
+input = np.array([u'monday', u'monday']).astype(np.object)
+output = np.array([u'']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
+```
+
+</details>
+
+
+<details>
+<summary>monday_insensintive_upper_twodim</summary>
+
+```python
+input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape([1, 6])
+
+# It does upper case cecedille, accented E
+# and german umlaut but fails
+# with german eszett
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape([1, 4])
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_twodim')
+```
+
+</details>
+
+
+<details>
+<summary>nostopwords_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday']).astype(np.object)
+output = input
+
+# No stopwords. This is a NOOP
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwords_nochangecase')
+```
+
+</details>
+
+
 ### <a name="Sub"></a><a name="sub">**Sub**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
@@ -11714,33 +12282,33 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="TfIdfVectorizer"></a><a name="tfidfvectorizer">**TfIdfVectorizer**</a>
 
-  This transform extracts n-grams from the input sequence and save them as a vector. Input can 
-  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.  
-  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row. 
-  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1]. 
-  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor. 
-   
-  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original 
-  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.  
-  If the number of skips is 2, we should skip two tokens when scanning through the original sequence. 
-  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2. 
-  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4]. 
-  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28] 
+  This transform extracts n-grams from the input sequence and save them as a vector. Input can
+  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
+  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
+  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
+  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
+  
+  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
+  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
+  If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
+  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2.
+  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
+  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
   indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
   
-  The output vector (denoted by Y) stores the count of each n-gram; 
-  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
+  The output vector (denoted by Y) stores the count of each n-gram;
+  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
   between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
   ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
-  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output. 
-  Note that we may consider all skips up to S when generating the n-grams. 
-   
-  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and 
-  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF", 
-  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute. 
-   
-  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor. 
-  If pool_strings is set, the input must be a string tensor. 
+  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
+  Note that we may consider all skips up to S when generating the n-grams.
+  
+  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
+  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
+  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
+  
+  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
+  If pool_strings is set, the input must be a string tensor.
 
 #### Version
 
@@ -11991,6 +12559,98 @@ expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uni
 </details>
 
 
+### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**ThresholdedRelu**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+default_alpha = 1.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y']
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, default_alpha, np.inf)
+y[y == default_alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_default')
+```
+
+</details>
+
+
+<details>
+<summary>thresholdedrelu</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=alpha
+)
+
+x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, alpha, np.inf)
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu')
+```
+
+</details>
+
+
 ### <a name="Tile"></a><a name="tile">**Tile**</a>
 
   Constructs a tensor by tiling a given tensor.
@@ -12098,21 +12758,21 @@ expect(node,
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
+     
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>Dimension on which to do the sort.</dd>
-<dt><tt>k</tt> : int (required)</dt>
-<dd>Number of top elements to retrieve</dd>
 </dl>
 
 #### Inputs
@@ -12120,6 +12780,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
 
 #### Outputs
@@ -12149,15 +12811,15 @@ This version of the operator has been available since version 1 of the default O
 ```python
 node = onnx.helper.make_node(
     'TopK',
-    inputs=['x'],
+    inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    k=3
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
+K = np.array([3], dtype=np.int64)
 values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
@@ -12169,7 +12831,7 @@ indices_ref = np.array([
     [3, 2, 1],
 ], dtype=np.int64)
 
-expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
 ```
 
@@ -12324,7 +12986,7 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+### <a name="Upsample"></a><a name="upsample">**Upsample** (deprecated)</a>
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -12332,39 +12994,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>mode</tt> : string (default is nearest)</dt>
-<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>N-D tensor</dd>
-<dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>N-D tensor after resizing</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>, <a href="Changelog.md#Upsample-9">Upsample-9</a>
 
 
 #### Examples
@@ -12395,7 +13027,7 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_upsample_nearest')
+       name='test_upsample_nearest', opset_imports=[helper.make_opsetid("", 9)])
 ```
 
 </details>
@@ -12619,269 +13251,6 @@ No versioning maintained for experimental ops.
 </dl>
 
 
-### <sub>experimental</sub> <a name="Affine"></a><a name="affine">**Affine**</a>
-
-  Affine takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the affine function, y = alpha * x + beta,
-  is applied to the tensor elementwise.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float (default is 0.0)</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Crop"></a><a name="crop">**Crop**</a>
-
-  Crop and image to the specified spatial dimensions. If scale is given,
-  then optionally start the crop offset by the left/top border amounts.
-  If scale is not provided, crop the borders as provided.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>border</tt> : list of ints</dt>
-<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
-<dt><tt>scale</tt> : list of ints</dt>
-<dd>A 1-D values of (height, width).</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="DynamicSlice"></a><a name="dynamicslice">**DynamicSlice**</a>
-
-  Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `axes`, `starts` and `ends` inputs to specify the start and end
-  dimension for each axis in the list of axes, it uses this information to
-  slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
-  dimension. If the value passed to start or end is larger than the `n` (the
-  number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
-  Example 1:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    axes = [0, 1]
-    starts = [1, 0]
-    ends = [2, 3]
-    result = [
-        [5, 6, 7],
-    ]
-  Example 2:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    starts = [0, 1]
-    ends = [-1, 1000]
-    result = [
-        [2, 3, 4],
-    ]
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Inputs (3 - 4)
-
-<dl>
-<dt><tt>data</tt> : T</dt>
-<dd>Tensor of data to extract slices from.</dd>
-<dt><tt>starts</tt> : Tind</dt>
-<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
-<dt><tt>ends</tt> : Tind</dt>
-<dd>1-D tensor of ending indices (exclusive) of corresponding axis in axes</dd>
-<dt><tt>axes</tt> (optional) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Sliced data tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>dynamic_slice</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[0:3, 0:10]
-starts = np.array([0, 0], dtype=np.int64)
-ends = np.array([3, 10], dtype=np.int64)
-axes = np.array([0, 1], dtype=np.int64)
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice')
-```
-
-</details>
-
-
-<details>
-<summary>dynamic_slice_default_axes</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0, 0, 3], dtype=np.int64)
-ends = np.array([20, 10, 4], dtype=np.int64)
-y = x[:, :, 3:4]
-
-expect(node, inputs=[x, starts, ends], outputs=[y],
-       name='test_dynamic_slice_default_axes')
-```
-
-</details>
-
-
-<details>
-<summary>dynamic_slice_end_out_of_bounds</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1], dtype=np.int64)
-ends = np.array([1000], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
-y = x[:, 1:1000]
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice_end_out_of_bounds')
-```
-
-</details>
-
-
-<details>
-<summary>dynamic_slice_neg</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0], dtype=np.int64)
-ends = np.array([-1], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
-y = x[:, 0:-1]
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice_neg')
-```
-
-</details>
-
-
-<details>
-<summary>dynamic_slice_start_out_of_bounds</summary>
-
-```python
-node = onnx.helper.make_node(
-    'DynamicSlice',
-    inputs=['x', 'starts', 'ends', 'axes'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1000], dtype=np.int64)
-ends = np.array([1000], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
-y = x[:, 1000:1000]
-
-expect(node, inputs=[x, starts, ends, axes], outputs=[y],
-       name='test_dynamic_slice_start_out_of_bounds')
-```
-
-</details>
-
-
 ### <sub>experimental</sub> <a name="GRUUnit"></a><a name="gruunit">**GRUUnit**</a>
 
   GRUUnit computes the activations of a standard GRU,
@@ -12969,85 +13338,6 @@ No versioning maintained for experimental ops.
 </dl>
 
 
-### <sub>experimental</sub> <a name="ImageScaler"></a><a name="imagescaler">**ImageScaler**</a>
-
-  Scale and bias the input image. Bias values are stored in
-  the same ordering as the image pixel format.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>bias</tt> : list of floats</dt>
-<dd>Bias applied to each channel, same size as C.</dd>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**ParametricSoftplus**</a>
-
-  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
-  the tensor elementwise.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <sub>experimental</sub> <a name="Scale"></a><a name="scale">**Scale**</a>
 
   Scale takes one input data (Tensor<float>) and produces one output data
@@ -13083,136 +13373,5 @@ No versioning maintained for experimental ops.
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
-
-
-### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
-
-  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x).
-      
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Scaling value</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Scaling value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**ThresholdedRelu**</a>
-
-  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
-  is applied to the tensor elementwise.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Threshold value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>default</summary>
-
-```python
-default_alpha = 1.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y']
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, default_alpha, np.inf)
-y[y == default_alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_default')
-```
-
-</details>
-
-
-<details>
-<summary>thresholdedrelu</summary>
-
-```python
-alpha = 2.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y'],
-    alpha=alpha
-)
-
-x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
-y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_example')
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, alpha, np.inf)
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu')
-```
-
-</details>
 
 
