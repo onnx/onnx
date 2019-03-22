@@ -1124,6 +1124,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               new_dim->set_dim_value(target_dim);
             } else if (target_dim != 1) {
               new_dim->set_dim_value(target_dim);
+            } else {
+              new_dim->CopyFrom(input_shape.dim(i));
             }
           }
         }));
