@@ -9609,6 +9609,39 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+### <a name="Mod-10"></a>**Mod-10**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same element type as two inputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Resize-10"></a>**Resize-10**</a>
 
   Resize the input tensor.

@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 114/121 (94.21%, 5 generators excluded) common operators.
+Node tests have covered 115/122 (94.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/4 (0.00%, 0 generators excluded) experimental operators.
 
@@ -3709,6 +3709,46 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+### Mod
+There are 2 test cases, listed as following:
+<details>
+<summary>mod</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.float32)
+y = np.array([2, 3, 8]).astype(np.float32)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_example')
+```
+
+</details>
+<details>
+<summary>mul_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(1).astype(np.float32)
+z = np.mod(x, y)  # expected output [0, 1, 2]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_bcast')
 ```
 
 </details>
