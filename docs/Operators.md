@@ -96,6 +96,7 @@
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
+  * <a href="#Resize">Resize</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -1002,13 +1003,13 @@ expect(node, inputs=[x], outputs=[y],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   ``` 
+   ```
    or
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-   
+  
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
@@ -3092,18 +3093,18 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
-  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-  test mode or not, the output Y will either be a random dropout, or a simple
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>
 
 #### Attributes
 
@@ -3124,7 +3125,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T</dt>
+<dt><tt>mask</tt> (optional) : T1</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -3133,6 +3134,8 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
 
@@ -6160,13 +6163,13 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   ``` 
+   ```
    or
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-   
+  
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
@@ -9930,6 +9933,171 @@ for test_name, shape in test_cases.items():
 </details>
 
 
+### <a name="Resize"></a><a name="resize">**Resize**</a>
+
+  Resize the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is nearest)</dt>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>N-D tensor</dd>
+<dt><tt>scales</tt> : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>downsample_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+output = np.array([[[
+    [1, 2.66666651]
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_downsample_linear')
+```
+
+</details>
+
+
+<details>
+<summary>downsample_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+output = np.array([[[
+    [1, 3]
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_downsample_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>upsample_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1.5, 2, 2],
+    [2, 2.5, 3, 3],
+    [3, 3.5, 4, 4],
+    [3, 3.5, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_linear')
+```
+
+</details>
+
+
+<details>
+<summary>upsample_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_nearest')
+```
+
+</details>
+
+
 ### <a name="Scan"></a><a name="scan">**Scan**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
@@ -11662,15 +11830,15 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="StringNormalizer"></a><a name="stringnormalizer">**StringNormalizer**</a>
 
-  StringNormalization performs string operations for basic cleaning. 
-  This operator has only one input (denoted by X) and only one output 
-  (denoted by Y). This operator first examines the elements in the X, 
-  and removes elements specified in "stopwords" attribute. 
-  After removing stop words, the intermediate result can be further lowercased, 
+  StringNormalization performs string operations for basic cleaning.
+  This operator has only one input (denoted by X) and only one output
+  (denoted by Y). This operator first examines the elements in the X,
+  and removes elements specified in "stopwords" attribute.
+  After removing stop words, the intermediate result can be further lowercased,
   uppercased, or just returned depending the "case_change_action" attribute.
   This operator only accepts [C]- and [1, C]-tensor.
   If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
-  if input shape is [C] and shape [1, 1] if input shape is [1, C]. 
+  if input shape is [C] and shape [1, 1] if input shape is [1, C].
 
 #### Version
 
@@ -12114,33 +12282,33 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="TfIdfVectorizer"></a><a name="tfidfvectorizer">**TfIdfVectorizer**</a>
 
-  This transform extracts n-grams from the input sequence and save them as a vector. Input can 
-  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.  
-  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row. 
-  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1]. 
-  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor. 
-   
-  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original 
-  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.  
-  If the number of skips is 2, we should skip two tokens when scanning through the original sequence. 
-  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2. 
-  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4]. 
-  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28] 
+  This transform extracts n-grams from the input sequence and save them as a vector. Input can
+  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
+  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
+  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
+  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
+  
+  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
+  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
+  If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
+  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2.
+  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
+  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
   indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
   
-  The output vector (denoted by Y) stores the count of each n-gram; 
-  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
+  The output vector (denoted by Y) stores the count of each n-gram;
+  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
   between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
   ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
-  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output. 
-  Note that we may consider all skips up to S when generating the n-grams. 
-   
-  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and 
-  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF", 
-  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute. 
-   
-  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor. 
-  If pool_strings is set, the input must be a string tensor. 
+  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
+  Note that we may consider all skips up to S when generating the n-grams.
+  
+  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
+  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
+  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
+  
+  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
+  If pool_strings is set, the input must be a string tensor.
 
 #### Version
 
@@ -12818,7 +12986,7 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+### <a name="Upsample"></a><a name="upsample">**Upsample** (deprecated)</a>
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -12826,39 +12994,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>mode</tt> : string (default is nearest)</dt>
-<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>N-D tensor</dd>
-<dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>N-D tensor after resizing</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>, <a href="Changelog.md#Upsample-9">Upsample-9</a>
 
 
 #### Examples
@@ -12889,7 +13027,7 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_upsample_nearest')
+       name='test_upsample_nearest', opset_imports=[helper.make_opsetid("", 9)])
 ```
 
 </details>
