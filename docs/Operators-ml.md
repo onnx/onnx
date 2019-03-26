@@ -773,7 +773,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 

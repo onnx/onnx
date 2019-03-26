@@ -1120,7 +1120,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Tokenizer_ver1_doc = R"DOC(
+static const char* Tokenizer_ver2_doc = R"DOC(
     Tokenizer divides each string in X into a vector of strings along the last axis. Allowed input shapes are [C] and [N, C].
     If the maximum number of tokens found per input string is D, the output shape would be [N, C, D] when input shape is [N, C].
     Similarly, if input shape is [C] then the output should be [C, D]. Tokenizer has two different operation modes. 
@@ -1142,9 +1142,9 @@ static const char* Tokenizer_ver1_doc = R"DOC(
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     Tokenizer,
-    1,
+    2,
     OpSchema()
-        .SetDoc(Tokenizer_ver1_doc)
+        .SetDoc(Tokenizer_ver2_doc)
         .Input(0, "X", "UTF-8 strings to tokenize", "tensor(string)")
         .Output(0, "Y", "UTF-8 Tokenized strings", "tensor(string)")
         .Attr(
