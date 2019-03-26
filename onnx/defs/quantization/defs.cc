@@ -6,7 +6,7 @@
 namespace ONNX_NAMESPACE {
 
 static const char* QuantizeLinear_ver10_doc = R"DOC(
-The linear quantization operator. It consumes a high precision tensor, a scale, a zero point and computes the low precision / quantized tensor.
+The linear quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
 The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
 For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
 Scale and zero point must have same shape. They must be either scalar (per tensor) or 1-D tensor (per 'axis'). 'y_zero_point' and 'y' must have same type.
@@ -58,7 +58,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }));
 
 static const char* DequantizeLinear_ver10_doc = R"DOC(
-The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point and computes the full precision tensor.
+The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
 The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
 'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
