@@ -1528,7 +1528,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (5 - 6)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
@@ -1541,6 +1541,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+<dt><tt>is_train</tt> (optional) : T1</dt>
+<dd>If set to nonzero, run spatial batch normalization in training mode, default is 0.</dd>
 </dl>
 
 #### Outputs (1 - 5)
@@ -1563,6 +1565,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain input 'is_train' types to boolean tensors.</dd>
 </dl>
 
 
@@ -3095,7 +3099,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Dropout takes one input floating tensor and produces two tensor outputs,
   output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-  in test mode or not, the output Y will either be a random dropout, or a simple
+  in training mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -3113,11 +3117,13 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dd>The ratio of random dropout</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
+<dt><tt>is_train</tt> (optional) : T1</dt>
+<dd>If non-zero, output will be a random dropout of input, default is 0.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -3135,7 +3141,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output mask types to boolean tensors.</dd>
+<dd>Constrain input 'is_train' and output 'mask' types to boolean tensors.</dd>
 </dl>
 
 

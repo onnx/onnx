@@ -1238,7 +1238,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     9,
     OpSchema()
-        .NumOutputs({1, 5})
+        .NumOutputs({1, 6})
         .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
@@ -1273,6 +1273,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
+        .Input(
+            5,
+            "is_train",
+            "If set to nonzero, run spatial batch normalization in training mode, default is 0.",
+            "T1",
+            OpSchema::Optional)
         .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
@@ -1304,6 +1310,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain input 'is_train' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           // TODO in training mode, it may be possible to infer some of
@@ -1392,7 +1402,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Dropout_ver10_doc = R"DOC(
 Dropout takes one input floating tensor and produces two tensor outputs,
 output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-in test mode or not, the output Y will either be a random dropout, or a simple
+in training mode or not, the output Y will either be a random dropout, or a simple
 copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
 )DOC";
@@ -1408,6 +1418,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
+        .Input(
+            1,
+            "is_train",
+            "If non-zero, output will be a random dropout of input, default is 0.",
+            "T1",
+            OpSchema::Optional)
         .Output(0, "output", "The output.", "T")
         .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
         .TypeConstraint(
@@ -1417,7 +1433,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrain output mask types to boolean tensors.")
+            "Constrain input 'is_train' and output 'mask' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           if (ctx.getNumOutputs() == 2) {
