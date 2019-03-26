@@ -24,8 +24,8 @@
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
-#include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
+#include "onnx/version_converter/adapters/cast_9_8.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 

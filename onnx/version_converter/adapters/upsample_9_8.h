@@ -20,10 +20,10 @@ struct Upsample_9_8 final : public Adapter {
       {
           if(initializers[i].name() == inputs[1]->uniqueName())
           {
-            const std::vector<float>& value = initializers[i].floats();
+            std::vector<float> value = initializers[i].floats();
             if (initializers[i].is_raw_data()){
               const std::string& bytes = initializers[i].raw();
-              const_cast<std::vector<float>& >(value).insert(
+              value.insert(
                   value.end(),
                   reinterpret_cast<const float*>(bytes.c_str()),
                   reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));
@@ -53,10 +53,10 @@ struct Upsample_9_8 final : public Adapter {
       {
         if (op->kind() == kConstant && op->outputs()[0]->uniqueName() == scale_input_name)
         {
-          const std::vector<float>& value = op->t(kvalue).floats();
+          std::vector<float> value = op->t(kvalue).floats();
           if (op->t(kvalue).is_raw_data()){
             const std::string& bytes = op->t(kvalue).raw();
-            const_cast<std::vector<float>& >(value).insert(
+            value.insert(
                 value.end(),
                 reinterpret_cast<const float*>(bytes.c_str()),
                 reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));

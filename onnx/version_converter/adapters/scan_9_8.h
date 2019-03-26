@@ -52,7 +52,7 @@ struct Scan_9_8 final : public Adapter {
       node->removeAttribute(output_axes);
     }
 
-    // Handling Input  and Ouput Changes
+    // Handling Input and Ouput Changes
     
     node->removeAllInputs();
     

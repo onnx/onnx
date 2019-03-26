@@ -647,7 +647,8 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
         assert converted_model.opset_import[0].version == to_opset
 
-    def helper_upsample_with_initializer(self, raw_scale=False):
+    # Test Helper for Upsample Adapter: 9 -> 8
+    def helper_upsample_with_initializer(self, raw_scale=False):  # type: (bool) -> None
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -678,7 +679,8 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "scales"
         assert converted_model.opset_import[0].version == to_opset
 
-    def helper_upsample_with_constant(self, raw_scale=False):
+    # Test Helper for Upsample Adapter: 9 -> 8
+    def helper_upsample_with_constant(self, raw_scale=False):  # type: (bool) -> None
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
