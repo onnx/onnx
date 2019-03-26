@@ -8,6 +8,7 @@ from typing import Sequence, Text, Tuple, List, Callable
 from onnx import numpy_helper
 
 import numpy as np  # type: ignore
+import struct
 
 import onnx.version_converter
 import unittest
@@ -646,8 +647,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
         assert converted_model.opset_import[0].version == to_opset
 
-    # Test Upsample Adapter: 9 -> 8
-    def test_upsample_with_initializer_9_8(self):  # type: () -> None
+    def helper_upsample_with_initializer(self, raw_scale=False):
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -659,13 +659,16 @@ class TestVersionConverter(unittest.TestCase):
             mode="nearest"
         )]
 
+        scale_value = [1.0, 1.0, 2.0, 3.0]
+        scale_tensor = onnx.helper.make_tensor("Scales", onnx.TensorProto.FLOAT, [4], bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
+
         graph = helper.make_graph(
             nodes,
             "test_upsample",
             [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2]),
              onnx.helper.make_tensor_value_info("Scales", data_type, [4])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
-            [onnx.helper.make_tensor("Scales", onnx.TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 3.0])])
+            [scale_tensor])
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
@@ -675,18 +678,19 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "scales"
         assert converted_model.opset_import[0].version == to_opset
 
-    # Test Upsample Adapter: 9 -> 8
-    def test_upsample_with_constant_node_9_8(self):  # type: () -> None
+    def helper_upsample_with_constant(self, raw_scale=False):
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
 
+        scale_value = [1.0, 1.0, 2.0, 3.0]
+        scale_tensor = onnx.helper.make_tensor("const_value", onnx.TensorProto.FLOAT, [4], bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
         nodes = [
             onnx.helper.make_node(
                 'Constant',
                 inputs=[],
                 outputs=['Constant_Output'],
-                value=onnx.helper.make_tensor(name='const_value', data_type=onnx.TensorProto.FLOAT, dims=[4], vals=[1.0, 1.0, 2.0, 3.0])),
+                value=scale_tensor),
             onnx.helper.make_node(
                 "Upsample",
                 inputs=["X", "Constant_Output"],
@@ -708,67 +712,21 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "scales"
         assert converted_model.opset_import[0].version == to_opset
 
-    # Test Scan Adapter: 9 -> 8
-    def test_scan_node_9_8(self):  # type: () -> None
-        from_opset = 9
-        to_opset = 8
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_constant_node_9_8(self):  # type: () -> None
+        self.helper_upsample_with_constant(raw_scale=False)
 
-        sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
-        next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
-        sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
-        scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_initializer_9_8(self):  # type: () -> None
+        self.helper_upsample_with_initializer(raw_scale=False)
 
-        add_node = onnx.helper.make_node(
-            'Add',
-            inputs=['sum_in', 'next'],
-            outputs=['sum_out']
-        )
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_raw_initializer_9_8(self):  # type: () -> None
+        self.helper_upsample_with_constant(raw_scale=True)
 
-        id_node = onnx.helper.make_node(
-            'Identity',
-            inputs=['sum_out'],
-            outputs=['scan_out']
-        )
-
-        scan_body = onnx.helper.make_graph(
-            [add_node, id_node],
-            'scan_body',
-            [sum_in, next],
-            [sum_out, scan_out]
-        )
-
-        # create scan op node
-        scan_node = onnx.helper.make_node(
-            'Scan',
-            inputs=['initial', 'x'],
-            outputs=['y', 'z'],
-            num_scan_inputs=1,
-            scan_input_directions=[0],
-            scan_output_directions=[0],
-            scan_input_axes=[0],
-            scan_output_axes=[0],
-            body=scan_body,
-        )
-
-        initial_state = onnx.helper.make_tensor_value_info("initial", onnx.TensorProto.FLOAT, (2,))
-        input = onnx.helper.make_tensor_value_info("x", onnx.TensorProto.FLOAT, (3, 2))
-        output_state = onnx.helper.make_tensor_value_info("y", onnx.TensorProto.FLOAT, (2,))
-        output = onnx.helper.make_tensor_value_info("z", onnx.TensorProto.FLOAT, (3, 2))
-
-        graph = onnx.helper.make_graph(
-            [scan_node],
-            "test_scan",
-            [initial_state, input],
-            [output_state, output]
-        )
-
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
-
-        assert len(converted_model.graph.node) == 1
-        assert converted_model.graph.node[0].op_type == "Scan"
-        assert len(converted_model.graph.node[0].attribute) == 3
-        assert len(converted_model.graph.node[0].input) == 3
-        assert converted_model.opset_import[0].version == to_opset
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_raw_constant_node_9_8(self):  # type: () -> None
+        self.helper_upsample_with_constant(raw_scale=True)
 
 
 if __name__ == '__main__':
