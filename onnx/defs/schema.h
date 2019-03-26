@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #pragma once
@@ -715,7 +715,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           fail_schema(err.str());
         }
 
-        
         m[op_name][op_domain].insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {

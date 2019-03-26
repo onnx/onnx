@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
@@ -82,6 +82,29 @@ void FunctionExpandHelper(
       }
     }
   }
+}
+
+std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
+    const std::vector<NodeDef>& node_defs) {
+  std::vector<NodeProto> nodes(node_defs.size());
+
+  for (size_t i = 0; i < node_defs.size(); i++) {
+    const NodeDef& node = node_defs[i];
+    NodeProto& n = nodes[i];
+
+    n.set_op_type(node.op_type);
+    for (const auto& i : node.inputs) {
+      n.add_input(i);
+    }
+    for (const auto& o : node.outputs) {
+      n.add_output(o);
+    }
+    for (const auto& attr : node.attributes) {
+      *(n.add_attribute()) = attr.proto;
+    }
+  }
+
+  return nodes;
 }
 
 } // namespace ONNX_NAMESPACE

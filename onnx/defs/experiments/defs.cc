@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -11,32 +11,6 @@ using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 // before checked into ONNX or ONNX-ML domain as official ops, and partners
 // do not need to implement these ops. An experimental op should be either removed
 // or promoted after a while. In this file, a default since_version "1" is used for all exp ops.
-
-static const char* ScaledTanh_ver1_doc = R"DOC(
-Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-alpha * tanh(beta * x).
-    )DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ScaledTanh,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(ScaledTanh_ver1_doc)
-        .Attr("alpha", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
-        .Attr("beta", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
-        .Input(0, "input", "Input tensor", "T")
-        .Output(
-            0,
-            "output",
-            "The scaled hyperbolic tangent values of the input tensor "
-            "computed element-wise",
-            "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
     GivenTensorFill,
@@ -175,63 +149,4 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)"},
             "Constrain output types to bool, int32, int64, float16, float, double tensors."));
 
-static const char* ImageScaler_ver1_doc =
-    R"DOC(Scale and bias the input image. Bias values are stored in
-the same ordering as the image pixel format.)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ImageScaler,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(ImageScaler_ver1_doc)
-        .Attr(
-            "bias",
-            "Bias applied to each channel, same size as C.",
-            AttributeProto::FLOATS,
-            OPTIONAL)
-        .Attr(
-            "scale",
-            "The scale to apply.",
-            AttributeProto::FLOAT,
-            1.0f)
-        .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
-        .Output(0, "output", "Result, has same shape and type as input", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static const char* Crop_ver1_doc =
-    R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
-then optionally start the crop offset by the left/top border amounts.
-If scale is not provided, crop the borders as provided.)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Crop,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(Crop_ver1_doc)
-        .Attr(
-            "border",
-            "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).",
-            AttributeProto::INTS,
-            OPTIONAL)
-        .Attr(
-            "scale",
-            "A 1-D values of (height, width).",
-            AttributeProto::INTS,
-            OPTIONAL)
-        .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
-        .Output(
-            0,
-            "output",
-            "Result, has same type as input, with H and W dimensions reduced.",
-            "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors."));
 } // namespace ONNX_NAMESPACE
