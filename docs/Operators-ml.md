@@ -768,6 +768,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       and then launches another search starting from the first remained character after the first matched token.
       If no match found, this operator will remove the first character from the remained string and do another search.
       This procedure will be repeated until reaching the end of the considered string.
+      If the tokenizer receives empty input of [0] then the output is [0] if empty input
+      of [N, 0] then [N, 0].
 
 #### Version
 
