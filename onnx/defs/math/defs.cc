@@ -95,11 +95,50 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema().FillUsing(MathDocGenerator("subtraction")));
 
+static const char* Mod_doc = R"DOC(
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+  The sign of the remainder is the same as that of the Divisor.
+
+  Mod operator can also behave like C fmod() or numpy.fmod . In this case the remainder will be 
+  floating point.  The sign of the remainder however, will be the same as the Dividend 
+  (in contrast to integer mod). 
+  
+  Mod operator can be forces to behave like fmod using a provided 'fmod' Attribute. 
+  This attribute is set to 0 by default causing the behavior to be like integer mod. 
+  Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+
+  In case of dividend being zero, the results will be platform dependenant.
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
     10,
-    OpSchema().FillUsing(MathDocGenerator("modulus")));
-	
+    OpSchema()
+        .SetDoc(Mod_doc)
+        .Attr(
+            "fmod",
+            "Whether the operator should behave like fmod (default=0)",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "A", "Dividend tensor", "T")
+        .Input(1, "B", "Divisor tensor", "T")
+        .Output(0, "C", "Remainder tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            if (hasNInputShapes(ctx, 2))
+                bidirectionalBroadcastShapeInference(
+                    ctx.getInputType(0)->tensor_type().shape(),
+                    ctx.getInputType(1)->tensor_type().shape(),
+                    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        })
+);
+
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     7,

@@ -7054,34 +7054,52 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
-  Performs element-wise binary modulus (with Numpy-style broadcasting support).
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+    The sign of the remainder is the same as that of the Divisor.
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+    Mod operator can also behave like C fmod() or numpy.fmod . In this case the remainder will be 
+    floating point.  The sign of the remainder however, will be the same as the Dividend 
+    (in contrast to integer mod). 
+    
+    Mod operator can be forces to behave like fmod using a provided 'fmod' Attribute. 
+    This attribute is set to 0 by default causing the behavior to be like integer mod. 
+    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+    In case of dividend being zero, the results will be platform dependenant.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
 This version of the operator has been available since version 10 of the default ONNX operator set.
 
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0)</dd>
+</dl>
+
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand.</dd>
+<dd>Dividend tensor</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand.</dd>
+<dd>Divisor tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same element type as two inputs</dd>
+<dd>Remainder tensor</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -7089,7 +7107,7 @@ This version of the operator has been available since version 10 of the default 
 #### Examples
 
 <details>
-<summary>mod</summary>
+<summary>float_mixed_sign</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -7098,11 +7116,52 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.array([4, 7, 5]).astype(np.float32)
-y = np.array([2, 3, 8]).astype(np.float32)
-z = np.mod(x, y)  # expected output [0, 1, 5]
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.mod(x, y)  # expected output [2., -3.,  5., -2.,  3.,  3.]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_mod_example')
+       name='test_mod_float_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>fmod_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_fmod_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>int64_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_mixed_sign_example')
 ```
 
 </details>
@@ -7118,9 +7177,9 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(1).astype(np.float32)
-z = np.mod(x, y)  # expected output [0, 1, 2]
+x = np.arange(0,30).reshape([3,2,5])
+y = np.array([7])
+z = np.mod(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mod_bcast')
 ```
