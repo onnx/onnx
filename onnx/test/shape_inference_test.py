@@ -298,7 +298,7 @@ class TestShapeInference(unittest.TestCase):
     def test_index_put(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 2, 3)),
-             ('i', TensorProto.INT64, (3, 1))],
+             ('i', TensorProto.INT64, (3, 1)),
              ('u', TensorProto.INT64, (3, 1))],
             [make_node("IndexPut", ['x', 'i'], ['y'])],
             [])
