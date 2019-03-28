@@ -19,8 +19,8 @@ class IndexPut(Base):
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
-        data = np.zeros([5,3], dtype=np.float32)
-        indices = np.array([[0,1],[1,2],[4,1]], dtype=np.int64)
+        data = np.zeros([5, 3], dtype=np.float32)
+        indices = np.array([[0, 1],[1, 2],[4, 1]], dtype=np.int64)
         updates = np.array([1, 2, 3], dtype=np.float32)
 
         y = np.array([[0, 1, 0],
@@ -30,17 +30,17 @@ class IndexPut(Base):
                      [0, 3, 0]], dtype=np.float32)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='export_index_put')
+               name='test_index_put')
 
     @staticmethod
-    def export_index_put_with_broadcast():  # type: () -> None
+    def export_index_put_slice():  # type: () -> None
         node = onnx.helper.make_node(
             'IndexPut',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
-        data = np.zeros([5,3], dtype=np.float32)
-        indices = np.array([[0],[1],[4]], dtype=np.int64)
+        data = np.zeros([5, 3], dtype=np.float32)
+        indices = np.array([[0], [1], [4]], dtype=np.int64)
         updates = np.array([1, 2, 3], dtype=np.float32)
 
         y = np.array([[1, 2, 3],
@@ -50,17 +50,17 @@ class IndexPut(Base):
                      [1, 2, 3]], dtype=np.float32)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='export_index_put')
+               name='test_index_put_slice')
 
     @staticmethod
-    def export_index_put_with_broadcast2():  # type: () -> None
+    def export_index_put_with_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'IndexPut',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
-        data = np.zeros([5,3], dtype=np.float32)
-        indices = np.array([[0],[1],[4]], dtype=np.int64)
+        data = np.zeros([5, 3], dtype=np.float32)
+        indices = np.array([[0], [1], [4]], dtype=np.int64)
         updates = np.array([[1], [2], [3]], dtype=np.float32)
 
         y = np.array([[1, 1, 1],
@@ -70,4 +70,4 @@ class IndexPut(Base):
                      [3, 3, 3]], dtype=np.float32)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='export_index_put')
+               name='test_index_put_with_broadcast')
