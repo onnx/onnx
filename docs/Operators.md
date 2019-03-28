@@ -7211,7 +7211,7 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.arange(0,30).reshape([3,2,5])
+x = np.arange(0, 30).reshape([3, 2, 5])
 y = np.array([7])
 z = np.mod(x, y)
 expect(node, inputs=[x, y], outputs=[z],

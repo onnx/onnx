@@ -3745,9 +3745,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### Mod
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
-<summary>mod</summary>
+<summary>float_mixed_sign</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -3756,11 +3756,48 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.array([4, 7, 5]).astype(np.float32)
-y = np.array([2, 3, 8]).astype(np.float32)
-z = np.mod(x, y)  # expected output [0, 1, 5]
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.mod(x, y)  # expected output [2., -3.,  5., -2.,  3.,  3.]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_mod_example')
+       name='test_mod_float_mixed_sign_example')
+```
+
+</details>
+<details>
+<summary>fmod_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_fmod_mixed_sign_example')
+```
+
+</details>
+<details>
+<summary>int64_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_mixed_sign_example')
 ```
 
 </details>
@@ -3774,9 +3811,9 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(1).astype(np.float32)
-z = np.mod(x, y)  # expected output [0, 1, 2]
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mod_bcast')
 ```
