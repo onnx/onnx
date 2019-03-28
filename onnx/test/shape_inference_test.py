@@ -295,6 +295,15 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
 
+    def test_index_put(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 2, 3)),
+             ('i', TensorProto.INT64, (3, 1))],
+             ('u', TensorProto.INT64, (3, 1))],
+            [make_node("IndexPut", ['x', 'i'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2, 3))])
+
     def test_scatter(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 3)),

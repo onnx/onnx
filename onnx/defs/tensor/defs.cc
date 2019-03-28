@@ -691,6 +691,117 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* IndexPut_ver10_doc = R"DOC(
+Given `data`, `updates` and `indices`, write the values provided by `updates` into `data` at corresponding `indices`.
+The input and output have the same shape.
+
+Example 1:
+  data = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+  ]
+  indices = [
+      [0, 1],
+      [1, 2],
+      [4, 1],
+  ]
+  updates = [
+      [1, 2, 3],
+  ]
+  output = [
+      [0, 1, 0],
+      [0, 0, 2],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 3, 0]
+  ]
+
+Example 2:
+  data = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+  ]
+  indices = [
+      [0],
+      [1],
+      [4],
+  ]
+  updates = [
+      [1, 2, 3],
+  ]
+  output = [
+      [1, 2, 3],
+      [1, 2, 3],
+      [0, 0, 0],
+      [0, 0, 0],
+      [1, 2, 3]
+  ]
+
+Example 3:
+  data = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+  ]
+  indices = [
+      [0],
+      [1],
+      [4],
+  ]
+  updates = [
+      [1], 
+      [2], 
+      [3],
+  ]
+  output = [
+      [1, 1, 1],
+      [2, 2, 2],
+      [0, 0, 0],
+      [0, 0, 0],
+      [3, 3, 3]
+  ]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    IndexPut,
+    10,
+    OpSchema()
+        .SetDoc(IndexPut_ver10_doc)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices of rank q <=r, can be the indexes of a particular element or a slice (Example 2).",
+            "Tind")
+        .Input(
+            2,
+            "updates",
+            "Tensor with the same type as input and with the same dimension as the dimension indexed, otherwise it is broadcasted on the dimension (Example 3).",
+            "T")
+        .Output(0, "output", "Tensor with same type and shape as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input and output types can be of any tensor type.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 static const char* Scatter_ver9_doc = R"DOC(
 Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
 into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
