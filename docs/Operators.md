@@ -6201,6 +6201,8 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each axis of filter.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -6322,6 +6324,38 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[1, 1],
+    dilations=[2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_dilations')
 ```
 
 </details>
@@ -6913,8 +6947,8 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances along channels. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -6966,10 +7000,10 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
 
 # Calculate expected output data
-data_mean = np.mean(input_data, axis=(0, 1, 2, 3), keepdims=1)
+data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
 data_mean_squared = np.power(data_mean, 2)
 data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 1, 2, 3), keepdims=1)
+data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
 std = np.sqrt(data_squared_mean - data_mean_squared)
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
