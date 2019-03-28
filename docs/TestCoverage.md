@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 114/121 (94.21%, 5 generators excluded) common operators.
+Node tests have covered 115/122 (94.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/4 (0.00%, 0 generators excluded) experimental operators.
 
@@ -2630,6 +2630,82 @@ data = np.array([[[
 
 expect(node, inputs=[data], outputs=[data],
        name='test_identity')
+```
+
+</details>
+
+
+### IndexPut
+There are 3 test cases, listed as following:
+<details>
+<summary>index_put</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IndexPut',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5,3], dtype=np.float32)
+indices = np.array([[0,1],[1,2],[4,1]], dtype=np.int64)
+updates = np.array([1, 2, 3], dtype=np.float32)
+
+y = np.array([[0, 1, 0],
+             [0, 0, 2],
+             [0, 0, 0],
+             [0, 0, 0],
+             [0, 3, 0]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='export_index_put')
+```
+
+</details>
+<details>
+<summary>index_put_with_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IndexPut',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5,3], dtype=np.float32)
+indices = np.array([[0],[1],[4]], dtype=np.int64)
+updates = np.array([1, 2, 3], dtype=np.float32)
+
+y = np.array([[1, 2, 3],
+             [1, 2, 3],
+             [0, 0, 0],
+             [0, 0, 0],
+             [1, 2, 3]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='export_index_put')
+```
+
+</details>
+<details>
+<summary>index_put_with_broadcast2</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IndexPut',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5,3], dtype=np.float32)
+indices = np.array([[0],[1],[4]], dtype=np.int64)
+updates = np.array([[1], [2], [3]], dtype=np.float32)
+
+y = np.array([[1, 1, 1],
+             [2, 2, 2],
+             [0, 0, 0],
+             [0, 0, 0],
+             [3, 3, 3]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='export_index_put')
 ```
 
 </details>
