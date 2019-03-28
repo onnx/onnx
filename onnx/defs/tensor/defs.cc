@@ -765,10 +765,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Gather_ver1_doc = R"DOC(
+static const char* Gather_ver10_doc = R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
-them in an output tensor of rank q + (r - 1).
+them in an output tensor.
+If elem_index is disabled (default),  the indices represent the indices of the slices in the axis chosen, and the 
+output is of rank q + (r - 1).
+Otherwise the indices represent the indices of the elements in the tensor in the chosen axis, and the output shape is
+the same as the input shape.
 Example 1:
   data = [
       [1.0, 1.2],
@@ -806,26 +810,57 @@ Example 2:
           [4.5, 5.9],
       ],
   ]
+Example 3:
+  data = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+  ]
+  indices = [
+      [1, 2, 0],
+      [2, 0, 0],
+  ]
+  output = [
+      [
+          [4, 8, 3],
+          [7, 2, 3],
+      ],
+  ]
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
-    1,
+    10,
     OpSchema()
-        .SetDoc(Gather_ver1_doc)
+        .SetDoc(Gather_ver10_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
             "counting dimensions from the back. Accepted range in [-r, r-1]",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "elem_index",
+            "Whether to index on elements or slices. "
+            "If it is the case, the input and indices rank should be the same,"
+            "and the output will have the same shape as indices. ",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of any rank q.",
+            "Tensor of int32/int64 indices, of rank q. "
+            "If elem_index = False, q is of any rank, "
+            "otherwise q has the same rank as the input (q = r), "
+            "and indices has the same size as input, apart from the axis size.",
             "Tind")
-        .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
+        .Output(
+            0,
+            "output",
+            "Tensor of rank q + (r - 1) if elem_index = False,"
+            "otherwise the output shape is the same as the indices shape.",
+            "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -836,9 +871,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
           if (!hasNInputShapes(ctx, 2)) {
             return;
           }
+
+          int elem_index = static_cast<int>(getAttribute(ctx, "elem_index", 0));
+          if (elem_index == 0) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+
           const TensorShapeProto& data_shape =
               ctx.getInputType(0)->tensor_type().shape();
           const TensorShapeProto& indices_shape =
