@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include <algorithm>
@@ -260,7 +260,8 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
-    const char* additionalDescription) {
+    const char* additionalDescription,
+    bool use_dilation) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
@@ -384,7 +385,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
             "average",
-            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
+            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
+            false))
         .Attr(
             "count_include_pad",
             "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
@@ -435,12 +437,18 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
             "max",
-            "The output of each pooling window is maximum number of elements exclude pad."))
+            "The output of each pooling window is maximum number of elements exclude pad.",
+            true))
         .Attr(
             "storage_order",
             "The storage order of the tensor. 0 is row major, and 1 is column major.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "dilations",
+            "Dilation value along each axis of filter.",
+            AttributeProto::INTS,
+            OPTIONAL)
         .Output(
             1,
             "Indices",

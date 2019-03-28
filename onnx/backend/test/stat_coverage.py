@@ -229,6 +229,7 @@ def main():
     schemas = defs.get_all_schemas()
 
     ml = is_ml(schemas)
+    ml = False
     if ml:
         fname = os.path.join(docs_dir, 'TestCoverage-ml.md')
     else:
