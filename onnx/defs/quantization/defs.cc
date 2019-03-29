@@ -6,21 +6,15 @@
 namespace ONNX_NAMESPACE {
 
 static const char* QuantizeLinear_ver10_doc = R"DOC(
-The linear quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
+The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
 The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
-For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-Scale and zero point must have same shape. They must be either scalar (per tensor) or 1-D tensor (per 'axis'). 'y_zero_point' and 'y' must have same type.
+For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
     10,
     OpSchema()
-        .Attr(
-            "axis",
-            "The axis along which same quantization parameters are applied. It's optional. If it's not specified, it means per-tensor quantization and input 'x_scale' and 'x_zero_point' must be scalars. If it's specified, it means per 'axis' quantization and input 'x_scale' and 'x_zero_point' must be 1-D tensors.",
-            AttributeProto::INT,
-            false)
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
             1,
