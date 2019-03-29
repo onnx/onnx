@@ -341,7 +341,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (ctx.getNumOutputs() > 1) {
         // MaxPool with two outputs case.
@@ -351,7 +351,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
           output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
         }
       }
-      convPoolShapeInference(ctx, false, true, 0, 1);
+      convPoolShapeInference(ctx, use_dilation, true, 0, 1);
     });
   };
 } // namespace ONNX_NAMESPACE
