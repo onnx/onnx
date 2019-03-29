@@ -6945,8 +6945,8 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances along channels. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -6998,10 +6998,10 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
 
 # Calculate expected output data
-data_mean = np.mean(input_data, axis=(0, 1, 2, 3), keepdims=1)
+data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
 data_mean_squared = np.power(data_mean, 2)
 data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 1, 2, 3), keepdims=1)
+data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
 std = np.sqrt(data_squared_mean - data_mean_squared)
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
