@@ -20,7 +20,7 @@ class IndexPut(Base):
             outputs=['y'],
         )
         data = np.zeros([5, 3], dtype=np.float32)
-        indices = np.array([[0, 1],[1, 2],[4, 1]], dtype=np.int64)
+        indices = np.array([[0, 1], [1, 2], [4, 1]], dtype=np.int64)
         updates = np.array([1, 2, 3], dtype=np.float32)
 
         y = np.array([[0, 1, 0],

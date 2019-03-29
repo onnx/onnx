@@ -303,7 +303,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node("IndexPut", ['x', 'i', 'u'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3))])
-                
+
     def test_index_put_slice(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 3)),
@@ -312,7 +312,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node("IndexPut", ['x', 'i', 'u'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3))])
-                
+
     def test_index_put_with_broadcast(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 3)),
