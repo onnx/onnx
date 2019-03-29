@@ -878,7 +878,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           bool elem_index = ctx.getAttribute("elem_index");
           if (elem_index) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
+            propagateShapeFromInputToOutput(ctx, 1, 0);
           }
 
           const TensorShapeProto& data_shape =
