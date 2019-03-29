@@ -7137,9 +7137,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 1
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7211,9 +7212,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 1
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7290,9 +7292,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7369,9 +7372,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7448,9 +7452,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7527,9 +7532,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7611,9 +7617,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7695,9 +7702,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -7779,9 +7787,10 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 2 attributes covered</summary>
 
 ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
