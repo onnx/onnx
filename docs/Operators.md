@@ -4057,7 +4057,11 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
-  them in an output tensor of rank q + (r - 1).
+  them in an output tensor.
+  If elem_index is disabled (default),  the indices represent the indices of the slices in the axis chosen, and the 
+  output is of rank q + (r - 1).
+  Otherwise the indices represent the indices of the elements in the tensor in the chosen axis, and the output shape is
+  the same as the input shape.
   Example 1:
     data = [
         [1.0, 1.2],
@@ -4095,16 +4099,36 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.9],
         ],
     ]
+  Example 3:
+    data = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+    ]
+    indices = [
+        [1, 2, 0],
+        [2, 0, 0],
+    ]
+    output = [
+        [
+            [4, 8, 3],
+            [7, 2, 3],
+        ],
+    ]
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dt><tt>elem_index</tt> : int (default is 0)</dt>
+<dd>Whether to index on elements or slices. If it is the case, the input and indices rank should be the same,and the output will have the same shape as indices. </dd>
 </dl>
 
 #### Inputs
@@ -4113,14 +4137,14 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of any rank q.</dd>
+<dd>Tensor of int32/int64 indices, of rank q. If elem_index = False, q is of any rank, otherwise q has the same rank as the input (q = r), and indices has the same size as input, apart from the axis size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Tensor of rank q + (r - 1).</dd>
+<dd>Tensor of rank q + (r - 1) if elem_index = False,otherwise the output shape is the same as the indices shape.</dd>
 </dl>
 
 #### Type Constraints
@@ -4172,6 +4196,31 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+
+
+<details>
+<summary>gather_elem_index</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    elem_index=True,
+)        
+data = np.array([[1, 2, 3],
+                [4, 5, 6],
+                [7, 8, 9]], dtype=np.float32)
+indices = np.array([[1, 2, 0],
+                    [2, 0, 0]], dtype=np.int64)
+y = np.array([[4, 8, 3],
+              [7, 2, 3],], dtype=np.float32)
+
+expect(node, inputs=[data, indices], outputs=[y],
+       name='test_gather_elem_index')
 ```
 
 </details>
