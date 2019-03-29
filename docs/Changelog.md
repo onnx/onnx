@@ -6557,7 +6557,7 @@ This version of the operator has been available since version 7 of the default O
   Carries out batch normalization as described in the paper
       https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
       there are multiple cases for the number of outputs, which we list below:
-      
+  
       Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
       Output case #2: Y (test mode)
           This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -8147,7 +8147,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
-#### Inputs (5 - 6)
+#### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
@@ -8160,8 +8160,6 @@ This version of the operator has been available since version 9 of the default O
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
-<dt><tt>is_train</tt> (optional) : T1</dt>
-<dd>If set to nonzero, run spatial batch normalization in training mode, default is 0.</dd>
 </dl>
 
 #### Outputs (1 - 5)
@@ -8184,8 +8182,6 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain input 'is_train' types to boolean tensors.</dd>
 </dl>
 
 ### <a name="Cast-9"></a>**Cast-9**</a>
@@ -9508,6 +9504,8 @@ This version of the operator has been available since version 10 of the default 
 <dl>
 <dt><tt>ratio</tt> : float (default is 0.5)</dt>
 <dd>The ratio of random dropout</dd>
+<dt><tt>seed</tt> : float</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
 #### Inputs (1 - 2)
