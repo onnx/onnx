@@ -1222,7 +1222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
+static const char* BatchNormalization_ver10_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
@@ -1236,10 +1236,10 @@ to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    9,
+    10,
     OpSchema()
         .NumOutputs({1, 6})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(BatchNormalization_ver10_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1417,6 +1417,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The ratio of random dropout",
             AttributeProto::FLOAT,
             0.5f)
+        .Attr(
+            "seed",
+            "(Optional) Seed to the random generator, if not specified we will auto generate one.",
+            AttributeProto::FLOAT,
+            OPTIONAL)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Input(
             1,
