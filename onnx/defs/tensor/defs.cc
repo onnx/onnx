@@ -876,8 +876,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int elem_index = static_cast<int>(getAttribute(ctx, "elem_index", 0));
-          if (elem_index == 0) {
+          bool elem_index = ctx.getAttribute("elem_index");
+          if (elem_index) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
 
