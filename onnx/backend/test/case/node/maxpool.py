@@ -361,7 +361,7 @@ class MaxPool(Base):
             [11, 12],
             [15, 16]]]]).astype(np.float32)
 
-        expect(node, inputs=[x], outputs=[y], name='export_maxpool_2d_ceil')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_ceil')
 
     @staticmethod
     def export_maxpool_2d_dilations():  # type: () -> None
