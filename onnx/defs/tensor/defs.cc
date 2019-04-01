@@ -1228,9 +1228,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain repeat's type to int64 tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          // Only rank of output can be inferred. We can do better if second
-          // input is a constant, but this requires extending InferenceContext
-          // interface to get values of constant inputs.
+          auto& input_shape = getInputShape(ctx, 0);
+          auto* output_shape = getOutputShape(ctx, 0);
+          output_shape->clear_dim();
+          auto repeats = ctx.getInputData(1);
+          if (nullptr != repeats) {
+            // Infer output shape's dimension value if 'repeats' is known.
+            if (repeats->data_type() == TensorProto::INT64 &&
+                repeats->int64_data_size() == input_shape.dim_size()) {
+              for (int i = 0; i < input_shape.dim_size(); ++i) {
+                int64_t dim_value = input_shape.dim(i).dim_value();
+                output_shape->add_dim()->set_dim_value(dim_value * repeats->int64_data(i));
+              }
+            } else {
+              fail_shape_inference(
+                  "Number of elements of input 'repeats' must be same as"
+                  " rank of input 'X' and element type must be int64.");
+            }
+          } else {
+            // Infer output shape's rank in any case
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape->add_dim();
+            }
+          }
         }));
 
 static const char* Upsample_ver10_doc = R"DOC(

@@ -376,7 +376,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
-  InferenceContextImpl ctx(scan, valueTypesByName, {}, &graphInfCtx);
+  InferenceContextImpl ctx(scan, valueTypesByName, {{}}, &graphInfCtx);
   if (use_scan_opset8)
     ScanInferenceFunctionOpset8(ctx);
   else
