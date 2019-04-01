@@ -478,8 +478,8 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
     if (kernel_shape.size() != n_input_dims) {
       fail_shape_inference("Attribute kernel_shape has incorrect size.");
     }
-  } else {
-    fail_shape_inference("Attribute kernel_shape must be specified.");
+  } else if (ctx.getNumInputs() != 3) {
+    fail_shape_inference("Attribute kernel_shape must be specified when output_shape is not provided.");
   }
 
   if (ctx.getNumInputs() == 3) {
@@ -555,8 +555,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(MaxUnpool_ver9_doc)
         .Attr(
             "kernel_shape",
-            "The size of the kernel along each axis.",
-            AttributeProto::INTS)
+            "The size of the kernel along each axis. "
+            "Optional if output_shape is provided.",
+            AttributeProto::INTS,
+            OPTIONAL)
         .Attr(
             "strides",
             "Stride along each axis.",
