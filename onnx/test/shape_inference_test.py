@@ -234,6 +234,16 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('shape', TensorProto.INT64, (2,)),
             make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
 
+    def test_tile(self): # type: () -> None
+        graph = self._make_graph(
+            [('in', TensorProto.FLOAT, (2, 300, 10, 10)),
+             ('repeats', TensorProto.INT64, (4,))],
+            [make_node('Tile', ['in', 'repeats'], ['z'])],
+            [],
+            initializer=[make_tensor('repeats', TensorProto.INT64, (4,), (2, 3, 4, 5))])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('z', TensorProto.FLOAT, (4, 900, 40, 50))])
+
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
