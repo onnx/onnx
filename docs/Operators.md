@@ -1127,7 +1127,7 @@ y = np.array([[[
     [6, 7.5],
     [12, 13.5]]]]).astype(np.float32)
 
-expect(node, inputs=[x], outputs=[y], name='export_averagepool_2d_ceil')
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_ceil')
 ```
 
 </details>
@@ -6342,7 +6342,7 @@ y = np.array([[[
     [11, 12],
     [15, 16]]]]).astype(np.float32)
 
-expect(node, inputs=[x], outputs=[y], name='export_maxpool_2d_ceil')
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_ceil')
 ```
 
 </details>
