@@ -299,7 +299,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 3)),
              ('i', TensorProto.INT64, (2, 3))],
-            [make_node("Gather", ['x', 'i'], ['y'])],
+            [make_node("Gather", ['x', 'i'], ['y'], elem_index=True)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3))])
 
