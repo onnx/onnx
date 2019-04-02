@@ -295,30 +295,30 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
 
-    def test_index_put(self):  # type: () -> None
+    def test_replace(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 3)),
              ('i', TensorProto.INT64, (3, 2)),
              ('u', TensorProto.INT64, (1, 3))],
-            [make_node("IndexPut", ['x', 'i', 'u'], ['y'])],
+            [make_node("Replace", ['x', 'i', 'u'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3))])
 
-    def test_index_put_slice(self):  # type: () -> None
+    def test_replace_slice(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 3)),
              ('i', TensorProto.INT64, (3, 1)),
              ('u', TensorProto.INT64, (1, 3))],
-            [make_node("IndexPut", ['x', 'i', 'u'], ['y'])],
+            [make_node("Replace", ['x', 'i', 'u'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3))])
 
-    def test_index_put_with_broadcast(self):  # type: () -> None
+    def test_replace_with_broadcast(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 3)),
              ('i', TensorProto.INT64, (3, 1)),
              ('u', TensorProto.INT64, (3, 1))],
-            [make_node("IndexPut", ['x', 'i', 'u'], ['y'])],
+            [make_node("Replace", ['x', 'i', 'u'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3))])
 

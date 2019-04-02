@@ -50,7 +50,6 @@
   * <a href="#Hardmax">Hardmax</a>
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
-  * <a href="#IndexPut">IndexPut</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
   * <a href="#IsNaN">IsNaN</a>
   * <a href="#LRN">LRN</a>
@@ -96,6 +95,7 @@
   * <a href="#ReduceSum">ReduceSum</a>
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
+  * <a href="#Replace">Replace</a>
   * <a href="#Reshape">Reshape</a>
   * <a href="#Resize">Resize</a>
   * <a href="#Scan">Scan</a>
@@ -4874,197 +4874,6 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
-
-
-### <a name="IndexPut"></a><a name="indexput">**IndexPut**</a>
-
-  Given `data`, `updates` and `indices`, write the values provided by `updates` into `data` at corresponding `indices`.
-  The input and output have the same shape.
-  
-  Example 1:
-    data = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
-    indices = [
-        [0, 1],
-        [1, 2],
-        [4, 1],
-    ]
-    updates = [
-        [1, 2, 3],
-    ]
-    output = [
-        [0, 1, 0],
-        [0, 0, 2],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 3, 0]
-    ]
-  
-  Example 2:
-    data = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
-    indices = [
-        [0],
-        [1],
-        [4],
-    ]
-    updates = [
-        [1, 2, 3],
-    ]
-    output = [
-        [1, 2, 3],
-        [1, 2, 3],
-        [0, 0, 0],
-        [0, 0, 0],
-        [1, 2, 3]
-    ]
-  
-  Example 3:
-    data = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-    ]
-    indices = [
-        [0],
-        [1],
-        [4],
-    ]
-    updates = [
-        [1], 
-        [2], 
-        [3],
-    ]
-    output = [
-        [1, 1, 1],
-        [2, 2, 2],
-        [0, 0, 0],
-        [0, 0, 0],
-        [3, 3, 3]
-    ]
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>data</tt> : T</dt>
-<dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices of rank q <=r, can be the indexes of a particular element or a slice (Example 2).</dd>
-<dt><tt>updates</tt> : T</dt>
-<dd>Tensor with the same type as input and with the same dimension as the dimension indexed, otherwise it is broadcasted on the dimension (Example 3).</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor with same type and shape as input.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Input and output types can be of any tensor type.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>index_put</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IndexPut',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros([5,3], dtype=np.float32)
-indices = np.array([[0,1],[1,2],[4,1]], dtype=np.int64)
-updates = np.array([1, 2, 3], dtype=np.float32)
-
-y = np.array([[0, 1, 0],
-             [0, 0, 2],
-             [0, 0, 0],
-             [0, 0, 0],
-             [0, 3, 0]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='export_index_put')
-```
-
-</details>
-
-
-<details>
-<summary>index_put_with_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IndexPut',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros([5,3], dtype=np.float32)
-indices = np.array([[0],[1],[4]], dtype=np.int64)
-updates = np.array([1, 2, 3], dtype=np.float32)
-
-y = np.array([[1, 2, 3],
-             [1, 2, 3],
-             [0, 0, 0],
-             [0, 0, 0],
-             [1, 2, 3]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='export_index_put')
-```
-
-</details>
-
-
-<details>
-<summary>index_put_with_broadcast2</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IndexPut',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros([5,3], dtype=np.float32)
-indices = np.array([[0],[1],[4]], dtype=np.int64)
-updates = np.array([[1], [2], [3]], dtype=np.float32)
-
-y = np.array([[1, 1, 1],
-             [2, 2, 2],
-             [0, 0, 0],
-             [0, 0, 0],
-             [3, 3, 3]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='export_index_put')
-```
-
-</details>
 
 
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
@@ -10084,6 +9893,197 @@ y = np.clip(x, 0, np.inf)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_relu')
+```
+
+</details>
+
+
+### <a name="Replace"></a><a name="replace">**Replace**</a>
+
+  Given `data`, `updates` and `indices`, write the values provided by `updates` into `data` at corresponding `indices`.
+  The input and output have the same shape.
+  
+  Example 1:
+    data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+    indices = [
+        [0, 1],
+        [1, 2],
+        [4, 1],
+    ]
+    updates = [
+        [1, 2, 3],
+    ]
+    output = [
+        [0, 1, 0],
+        [0, 0, 2],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 3, 0]
+    ]
+  
+  Example 2:
+    data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+    indices = [
+        [0],
+        [1],
+        [4],
+    ]
+    updates = [
+        [1, 2, 3],
+    ]
+    output = [
+        [1, 2, 3],
+        [1, 2, 3],
+        [0, 0, 0],
+        [0, 0, 0],
+        [1, 2, 3]
+    ]
+  
+  Example 3:
+    data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+    indices = [
+        [0],
+        [1],
+        [4],
+    ]
+    updates = [
+        [1], 
+        [2], 
+        [3],
+    ]
+    output = [
+        [1, 1, 1],
+        [2, 2, 2],
+        [0, 0, 0],
+        [0, 0, 0],
+        [3, 3, 3]
+    ]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices of rank q <= r, can be the indexes of a particular element or a slice (Example 2).</dd>
+<dt><tt>updates</tt> : T</dt>
+<dd>Tensor with the same type as input and with the same dimension as the dimension indexed, otherwise it is broadcasted on the dimension (Example 3).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor with same type and shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>replace</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Replace',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5, 3], dtype=np.float32)
+indices = np.array([[0, 1], [1, 2], [4, 1]], dtype=np.int64)
+updates = np.array([1, 2, 3], dtype=np.float32)
+
+y = np.array([[0, 1, 0],
+             [0, 0, 2],
+             [0, 0, 0],
+             [0, 0, 0],
+             [0, 3, 0]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_replace')
+```
+
+</details>
+
+
+<details>
+<summary>replace_slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Replace',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5, 3], dtype=np.float32)
+indices = np.array([[0], [1], [4]], dtype=np.int64)
+updates = np.array([1, 2, 3], dtype=np.float32)
+
+y = np.array([[1, 2, 3],
+             [1, 2, 3],
+             [0, 0, 0],
+             [0, 0, 0],
+             [1, 2, 3]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_replace_slice')
+```
+
+</details>
+
+
+<details>
+<summary>replace_with_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Replace',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5, 3], dtype=np.float32)
+indices = np.array([[0], [1], [4]], dtype=np.int64)
+updates = np.array([[1], [2], [3]], dtype=np.float32)
+
+y = np.array([[1, 1, 1],
+             [2, 2, 2],
+             [0, 0, 0],
+             [0, 0, 0],
+             [3, 3, 3]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_replace_with_broadcast')
 ```
 
 </details>

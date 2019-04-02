@@ -2635,82 +2635,6 @@ expect(node, inputs=[data], outputs=[data],
 </details>
 
 
-### IndexPut
-There are 3 test cases, listed as following:
-<details>
-<summary>index_put</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IndexPut',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros([5,3], dtype=np.float32)
-indices = np.array([[0,1],[1,2],[4,1]], dtype=np.int64)
-updates = np.array([1, 2, 3], dtype=np.float32)
-
-y = np.array([[0, 1, 0],
-             [0, 0, 2],
-             [0, 0, 0],
-             [0, 0, 0],
-             [0, 3, 0]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='export_index_put')
-```
-
-</details>
-<details>
-<summary>index_put_with_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IndexPut',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros([5,3], dtype=np.float32)
-indices = np.array([[0],[1],[4]], dtype=np.int64)
-updates = np.array([1, 2, 3], dtype=np.float32)
-
-y = np.array([[1, 2, 3],
-             [1, 2, 3],
-             [0, 0, 0],
-             [0, 0, 0],
-             [1, 2, 3]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='export_index_put')
-```
-
-</details>
-<details>
-<summary>index_put_with_broadcast2</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IndexPut',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros([5,3], dtype=np.float32)
-indices = np.array([[0],[1],[4]], dtype=np.int64)
-updates = np.array([[1], [2], [3]], dtype=np.float32)
-
-y = np.array([[1, 1, 1],
-             [2, 2, 2],
-             [0, 0, 0],
-             [0, 0, 0],
-             [3, 3, 3]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='export_index_put')
-```
-
-</details>
-
-
 ### InstanceNormalization
 There are 1 test cases, listed as following:
 <details>
@@ -5343,6 +5267,82 @@ y = np.clip(x, 0, np.inf)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_relu')
+```
+
+</details>
+
+
+### Replace
+There are 3 test cases, listed as following:
+<details>
+<summary>replace</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Replace',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5, 3], dtype=np.float32)
+indices = np.array([[0, 1], [1, 2], [4, 1]], dtype=np.int64)
+updates = np.array([1, 2, 3], dtype=np.float32)
+
+y = np.array([[0, 1, 0],
+             [0, 0, 2],
+             [0, 0, 0],
+             [0, 0, 0],
+             [0, 3, 0]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_replace')
+```
+
+</details>
+<details>
+<summary>replace_slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Replace',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5, 3], dtype=np.float32)
+indices = np.array([[0], [1], [4]], dtype=np.int64)
+updates = np.array([1, 2, 3], dtype=np.float32)
+
+y = np.array([[1, 2, 3],
+             [1, 2, 3],
+             [0, 0, 0],
+             [0, 0, 0],
+             [1, 2, 3]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_replace_slice')
+```
+
+</details>
+<details>
+<summary>replace_with_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Replace',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros([5, 3], dtype=np.float32)
+indices = np.array([[0], [1], [4]], dtype=np.int64)
+updates = np.array([[1], [2], [3]], dtype=np.float32)
+
+y = np.array([[1, 1, 1],
+             [2, 2, 2],
+             [0, 0, 0],
+             [0, 0, 0],
+             [3, 3, 3]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_replace_with_broadcast')
 ```
 
 </details>

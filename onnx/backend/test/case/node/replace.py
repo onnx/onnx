@@ -10,12 +10,12 @@ from ..base import Base
 from . import expect
 
 
-class IndexPut(Base):
+class Replace(Base):
 
     @staticmethod
-    def export_index_put():  # type: () -> None
+    def export_replace():  # type: () -> None
         node = onnx.helper.make_node(
-            'IndexPut',
+            'Replace',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
@@ -30,12 +30,12 @@ class IndexPut(Base):
                      [0, 3, 0]], dtype=np.float32)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='test_index_put')
+               name='test_replace')
 
     @staticmethod
-    def export_index_put_slice():  # type: () -> None
+    def export_replace_slice():  # type: () -> None
         node = onnx.helper.make_node(
-            'IndexPut',
+            'Replace',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
@@ -50,12 +50,12 @@ class IndexPut(Base):
                      [1, 2, 3]], dtype=np.float32)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='test_index_put_slice')
+               name='test_replace_slice')
 
     @staticmethod
-    def export_index_put_with_broadcast():  # type: () -> None
+    def export_replace_with_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
-            'IndexPut',
+            'Replace',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
@@ -70,4 +70,4 @@ class IndexPut(Base):
                      [3, 3, 3]], dtype=np.float32)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='test_index_put_with_broadcast')
+               name='test_replace_with_broadcast')

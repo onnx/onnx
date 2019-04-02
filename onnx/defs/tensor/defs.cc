@@ -691,7 +691,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* IndexPut_ver10_doc = R"DOC(
+static const char* Replace_ver10_doc = R"DOC(
 Given `data`, `updates` and `indices`, write the values provided by `updates` into `data` at corresponding `indices`.
 The input and output have the same shape.
 
@@ -771,15 +771,15 @@ Example 3:
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    IndexPut,
+    Replace,
     10,
     OpSchema()
-        .SetDoc(IndexPut_ver10_doc)
+        .SetDoc(Replace_ver10_doc)
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices of rank q <=r, can be the indexes of a particular element or a slice (Example 2).",
+            "Tensor of int32/int64 indices of rank q <= r, can be the indexes of a particular element or a slice (Example 2).",
             "Tind")
         .Input(
             2,
