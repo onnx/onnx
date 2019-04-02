@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# export ONNX_ML=1, # if you need to use ONNX_ML
+# export ONNX_ML=0, # if you need to disable ONNX_ML
 
 python_exist=`command -v python`
 if [ -z $python_exist ]; then
@@ -25,5 +25,6 @@ python onnx/backend/test/stat_coverage.py
 
 echo -e "\n===> regenerate the docs"
 python onnx/defs/gen_doc.py
+ONNX_ML=0 python onnx/defs/gen_doc.py
 
 echo -e "\n===> the update is done!"

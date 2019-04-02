@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -622,11 +622,39 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
+OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
+  for (const auto node : func_nodes) {
+    auto new_node = function_body_.add_node();
+    new_node->CopyFrom(node);
+  }
+  return *this;
+}
+
+const FunctionProto* OpSchema::GetFunction() const {
+  return function_body_.node_size()>0 ? &function_body_ : nullptr;
+}
+
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   if (populator) {
     populator(*this);
   }
   return *this;
+}
+
+void OpSchema::BuildFunction(){
+  function_body_.set_name(this->name_);
+  function_body_.set_doc_string(this->doc_);
+  function_body_.set_since_version(this->since_version_);
+  function_body_.set_status(OperatorStatus(1 - (int)this->support_));
+  for (auto& i : inputs_) {
+    function_body_.add_input(i.GetName());
+  }
+  for (auto& o : outputs_) {
+    function_body_.add_output(o.GetName());
+  }
+  for (auto& a : attributes_) {
+    function_body_.add_attribute(a.first);
+  }
 }
 
 void OpSchema::Finalize() {
@@ -692,6 +720,10 @@ void OpSchema::Finalize() {
 
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
+
+  if (this->HasFunction()) {
+    BuildFunction();
+  }
 }
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
@@ -775,6 +807,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #endif
 
       RegisterOnnxOperatorSetSchema();
+
 #ifdef ONNX_ML
       RegisterOnnxMLOperatorSetSchema();
 #endif
@@ -795,8 +828,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
    private:
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
-      for (auto x : GetMapWithoutEnsuringRegistration()) {
-        for (auto y : x.second) {
+      for (auto& x : GetMapWithoutEnsuringRegistration()) {
+        for (auto& y : x.second) {
           count += y.second.size();
         }
       }

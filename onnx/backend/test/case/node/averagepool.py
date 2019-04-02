@@ -195,7 +195,7 @@ class AveragePool(Base):
     @staticmethod
     def export_averagepool_2d_same_upper():  # type: () -> None
         """
-        iutput_shape: [1, 3, 32, 32]
+        input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
         """
@@ -225,7 +225,7 @@ class AveragePool(Base):
     @staticmethod
     def export_averagepool_2d_same_lower():  # type: () -> None
         """
-        iutput_shape: [1, 3, 32, 32]
+        input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
         """
@@ -335,3 +335,29 @@ class AveragePool(Base):
         y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
+
+    @staticmethod
+    def export_averagepool_2d_ceil():  # type: () -> None
+        """
+        input_shape: [1, 1, 4, 4]
+        output_shape: [1, 1, 2, 2]
+        """
+        node = onnx.helper.make_node(
+            'AveragePool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[3, 3],
+            strides=[2, 2],
+            ceil_mode=True
+        )
+        x = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]]).astype(np.float32)
+        y = np.array([[[
+            [6, 7.5],
+            [12, 13.5]]]]).astype(np.float32)
+
+        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_ceil')
