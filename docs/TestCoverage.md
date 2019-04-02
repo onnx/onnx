@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 114/121 (94.21%, 5 generators excluded) common operators.
+Node tests have covered 114/122 (93.44%, 5 generators excluded) common operators.
 
 Node tests have covered 0/4 (0.00%, 0 generators excluded) experimental operators.
 
@@ -2325,14 +2325,14 @@ node = onnx.helper.make_node(
     inputs=['data', 'indices'],
     outputs=['y'],
     elem_index=True,
-)        
+)
 data = np.array([[1, 2, 3],
                 [4, 5, 6],
                 [7, 8, 9]], dtype=np.float32)
 indices = np.array([[1, 2, 0],
                     [2, 0, 0]], dtype=np.int64)
 y = np.array([[4, 8, 3],
-              [7, 2, 3],], dtype=np.float32)
+              [7, 2, 3]], dtype=np.float32)
 
 expect(node, inputs=[data, indices], outputs=[y],
        name='test_gather_elem_index')
@@ -7115,6 +7115,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### RandomUniformLike (random generator operator)
+
+
+### Replace (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)

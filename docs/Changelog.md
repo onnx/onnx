@@ -9531,107 +9531,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
-### <a name="Gather-10"></a>**Gather-10**</a>
-
-  Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
-  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
-  them in an output tensor.
-  If elem_index is disabled (default),  the indices represent the indices of the slices in the axis chosen, and the 
-  output is of rank q + (r - 1).
-  Otherwise the indices represent the indices of the elements in the tensor in the chosen axis, and the output shape is
-  the same as the input shape.
-  Example 1:
-    data = [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
-    indices = [
-        [0, 1],
-        [1, 2],
-    ]
-    output = [
-        [
-            [1.0, 1.2],
-            [2.3, 3.4],
-        ],
-        [
-            [2.3, 3.4],
-            [4.5, 5.7],
-        ],
-    ]
-  Example 2:
-    data = [
-        [1.0, 1.2, 1.9],
-        [2.3, 3.4, 3.9],
-        [4.5, 5.7, 5.9],
-    ]
-    indices = [
-        [0, 2],
-    ]
-    axis = 1,
-    output = [
-        [
-            [1.0, 1.9],
-            [2.3, 3.9],
-            [4.5, 5.9],
-        ],
-    ]
-  Example 3:
-    data = [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-    ]
-    indices = [
-        [1, 2, 0],
-        [2, 0, 0],
-    ]
-    output = [
-        [
-            [4, 8, 3],
-            [7, 2, 3],
-        ],
-    ]
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
-<dt><tt>elem_index</tt> : int (default is 0)</dt>
-<dd>Whether to index on elements or slices. If it is the case, the input and indices rank should be the same,and the output will have the same shape as indices. </dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>data</tt> : T</dt>
-<dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of rank q. If elem_index = False, q is of any rank, otherwise q has the same rank as the input (q = r), and indices has the same size as input, apart from the axis size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor of rank q + (r - 1) if elem_index = False,otherwise the output shape is the same as the indices shape.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
-</dl>
-
 ### <a name="MaxPool-10"></a>**MaxPool-10**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
@@ -9710,6 +9609,116 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
+</dl>
+
+### <a name="Replace-10"></a>**Replace-10**</a>
+
+  Given `data`, `updates` and `indices`, write the values provided by `updates` into `data` at corresponding `indices`.
+  The input and output have the same shape.
+  
+  Example 1:
+    data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+    indices = [
+        [0, 1],
+        [1, 2],
+        [4, 1],
+    ]
+    updates = [
+        [1, 2, 3],
+    ]
+    output = [
+        [0, 1, 0],
+        [0, 0, 2],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 3, 0]
+    ]
+  
+  Example 2:
+    data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+    indices = [
+        [0],
+        [1],
+        [4],
+    ]
+    updates = [
+        [1, 2, 3],
+    ]
+    output = [
+        [1, 2, 3],
+        [1, 2, 3],
+        [0, 0, 0],
+        [0, 0, 0],
+        [1, 2, 3]
+    ]
+  
+  Example 3:
+    data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+    indices = [
+        [0],
+        [1],
+        [4],
+    ]
+    updates = [
+        [1], 
+        [2], 
+        [3],
+    ]
+    output = [
+        [1, 1, 1],
+        [2, 2, 2],
+        [0, 0, 0],
+        [0, 0, 0],
+        [3, 3, 3]
+    ]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices of rank q <= r, can be the indexes of a particular element or a slice (Example 2).</dd>
+<dt><tt>updates</tt> : T</dt>
+<dd>Tensor with the same type as input and with the same dimension as the dimension indexed, otherwise it is broadcasted on the dimension (Example 3).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor with same type and shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 ### <a name="Resize-10"></a>**Resize-10**</a>

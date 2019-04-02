@@ -836,13 +836,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range in [-r, r-1]. ",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
             "elem_index",
             "Whether to index on elements or slices. "
-            "If it is the case, the input and indices rank should be the same,"
+            "If it is the case, the input and indices rank should be the same, "
             "and the output will have the same shape as indices. ",
             AttributeProto::INT,
             static_cast<int64_t>(0))
@@ -858,7 +858,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "Tensor of rank q + (r - 1) if elem_index = False,"
+            "Tensor of rank q + (r - 1) if elem_index = False, "
             "otherwise the output shape is the same as the indices shape.",
             "T")
         .TypeConstraint(
@@ -868,7 +868,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
-            "Constrain indices to integer types")
+            "Constrain indices to integer types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
