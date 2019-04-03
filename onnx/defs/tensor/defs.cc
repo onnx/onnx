@@ -1585,6 +1585,41 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    IsInf,
+    10,
+    OpSchema()
+        .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
+        .Input(0, "X", "input", "T1")
+        .Output(0, "Y", "output", "T2")
+        .Attr("detect_positive",
+        "(Optional) Whether map positive infinity to true. Default to 1 "
+        "so that positive infinity induces true. Set this attribute to 0 "
+        "if positive infinity should be mapped to false.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1))
+        .Attr(
+        "detect_negative",
+        "(Optional) Whether map negative infinity to true. Default to 1 "
+        "so that negative infinity induces true. Set this attribute to 0 "
+        "if negative infinity should be mapped to false.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1))
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)", "tensor(double)"},
+            "Constrain input types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(bool)"},
+            "Constrain output types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 static const char* Where_ver9_doc = R"DOC(
     Return elements, either from X or Y, depending on condition
     (with Numpy-style broadcasting support).
