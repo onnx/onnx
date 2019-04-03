@@ -1127,7 +1127,7 @@ y = np.array([[[
     [6, 7.5],
     [12, 13.5]]]]).astype(np.float32)
 
-expect(node, inputs=[x], outputs=[y], name='export_averagepool_2d_ceil')
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_ceil')
 ```
 
 </details>
@@ -6293,7 +6293,7 @@ y = np.array([[[
     [11, 12],
     [15, 16]]]]).astype(np.float32)
 
-expect(node, inputs=[x], outputs=[y], name='export_maxpool_2d_ceil')
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_ceil')
 ```
 
 </details>
@@ -11815,7 +11815,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>List of positive integers, indicate the dimensions to squeeze.</dd>
+<dd>List of non-negative integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
 #### Inputs
@@ -12973,7 +12973,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of positive integers, indicate the dimensions to be inserted</dd>
+<dd>List of non-negative integers, indicate the dimensions to be inserted</dd>
 </dl>
 
 #### Inputs
