@@ -851,7 +851,7 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-   
+
 Given two equivalent values, this operator uses the indices along the axis  as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
@@ -1094,7 +1094,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!target_shape_initializer) {
             return;
           }
-          // The targetShape vector represents the specified shape for output.
+          // The target_shape vector represents the specified shape for output.
           std::vector<int64_t> target_shape;
           if (target_shape_initializer->has_raw_data()) {
             const std::string& bytes = target_shape_initializer->raw_data();
@@ -1111,7 +1111,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto* new_dim = output_shape->add_dim();
-            int64_t target_dim = static_cast<size_t>(i) < target_shape.size() ? target_shape[i] : 1;
+            int target_index = i + target_shape.size() - input_shape.dim_size();
+            int64_t target_dim = target_index < 0 ? 1 : target_shape[target_index];
             if (input_shape.dim(i).has_dim_value()) {
               const int64_t input_dim = input_shape.dim(i).dim_value();
               if (input_dim != target_dim && input_dim != 1) {
