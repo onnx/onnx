@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 114/122 (93.44%, 5 generators excluded) common operators.
+Node tests have covered 114/121 (94.21%, 5 generators excluded) common operators.
 
 Node tests have covered 0/4 (0.00%, 0 generators excluded) experimental operators.
 
@@ -7115,9 +7115,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### RandomUniformLike (random generator operator)
-
-
-### Replace (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)
