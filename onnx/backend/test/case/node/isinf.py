@@ -31,7 +31,7 @@ class IsInf(Base):
         node = onnx.helper.make_node('IsInf',
                 inputs = ['x'],
                 outputs = ['y'],
-                detect_negative_infinity=0
+                detect_negative=0
         )
 
         x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf],
@@ -46,7 +46,7 @@ class IsInf(Base):
         node = onnx.helper.make_node('IsInf',
                 inputs = ['x'],
                 outputs = ['y'],
-                detect_positive_infinity=0
+                detect_positive=0
         )
 
         x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf],
