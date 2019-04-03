@@ -1,9 +1,9 @@
-backend-test:ž
+backend-test:œ
 J
 xy"MaxPool*
 	ceil_mode *
 kernel_shape@@ *
-strides@@ export_maxpool_2d_ceilZ
+strides@@ test_maxpool_2d_ceilZ
 x
 
 
