@@ -1,4 +1,4 @@
-# ONNX Open Governance | Draft
+# ONNX Open Governance
 
 ## TL;DR
 
@@ -138,7 +138,7 @@ Working Groups are formed by submitting a proposal via PR to the Steering Commit
 
 * what is the exact problem being worked on
 * what is the exit criteria
-* who is the chair
+* who are the chairs (up to 2)
 * what are the meeting and discussion mechanics
 
 Working Groups are disbanded when there is no activity for more than *3 months* or when the chair informs the Steering Committee.
