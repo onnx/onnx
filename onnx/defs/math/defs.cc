@@ -1111,7 +1111,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto* new_dim = output_shape->add_dim();
-            int target_index = i + target_shape.size() - input_shape.dim_size();
+            int target_index = i + static_cast<int>(target_shape.size()) - input_shape.dim_size();
             int64_t target_dim = target_index < 0 ? 1 : target_shape[target_index];
             if (input_shape.dim(i).has_dim_value()) {
               const int64_t input_dim = input_shape.dim(i).dim_value();
