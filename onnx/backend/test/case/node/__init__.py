@@ -29,7 +29,7 @@ def function_expand_helper(node,  # type: NodeProto
     node_list = []
     input_names_map = dict()
     output_names_map = dict()
-    attribute_map = node.attribute
+    attribute_map = dict((a.name, a) for a in node.attribute)
 
     for idx in range(len(function_proto.input)):
         input_names_map[function_proto.input[idx]] = node.input[idx] \
@@ -76,6 +76,12 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     if not schema.has_function:  # type: ignore
         return []
     function_proto = schema.function_body  # type: ignore
+
+    for attr in schema.attributes:
+        if attr in [a.name for a in node.attribute]:
+            continue
+        if schema.attributes[attr].default_value:
+            node.attribute.extend([schema.attributes[attr].default_value])
 
     # function_proto.attributes
     node_list = function_expand_helper(node, function_proto, op_prefix)
