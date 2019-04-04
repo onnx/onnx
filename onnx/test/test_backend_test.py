@@ -77,8 +77,9 @@ class DummyBackend(onnx.backend.base.Backend):
 
 
 test_coverage_whitelist = set(
-    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
-     'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
+    ['bvlc_alexnet', 'densenet121', 'inception_v1',
+        'inception_v2', 'resnet50', 'shufflenet', 'SingleRelu',
+        'squeezenet_old', 'vgg19', 'zfnet'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
