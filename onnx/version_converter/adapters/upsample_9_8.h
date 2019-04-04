@@ -14,6 +14,8 @@ struct Upsample_9_8 final : public Adapter {
   void adapt_upsample_9_8(std::shared_ptr<Graph> graph, Node* node) const {
       const ArrayRef<Value*>& inputs = node->inputs();
       const std::vector<Tensor>& initializers = graph->initializers();
+
+      ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.");
       std::string scale_input_name = node->inputs()[1]->uniqueName();
     
       for(size_t i = 0; i < initializers.size(); i++)
