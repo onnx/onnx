@@ -24,10 +24,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "y_zero_point",
-            "Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization."
-			" Default value is 0 if it's not specified.",
+            "Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. "
+            "Default value is 0 if it's not specified.",
             "T2",
-			OpSchema::Optional)
+            OpSchema::Optional)
         .Output(
             0,
             "y",
@@ -35,7 +35,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(float), tensor(int32)"},
+            {"tensor(float)", "tensor(int32)"},
             "Constrain 'x' to float or int32 tensor.")
         .TypeConstraint(
             "T2",
@@ -51,7 +51,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               auto& input_shape = getInputShape(ctx, 0);
               updateOutputShape(ctx, 0, input_shape);
-            }));
+        }));
 
 static const char* DequantizeLinear_ver10_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
@@ -73,7 +73,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "x_zero_point",
-            "Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization."
+            "Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization. "
             "It's optional. 0 is the default value when it's not specified.",
             "T",
             OpSchema::Optional)
@@ -84,7 +84,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(int8)", "tensor(uint8), tensor(int32)"},
+            {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
         .SetDoc(DequantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction(

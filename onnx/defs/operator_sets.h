@@ -535,6 +535,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, MatMulInteger);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, QLinearMatMul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, ConvInteger);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, QLinearConv);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, DequantizeLinear);
 
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver10 {
@@ -564,6 +566,10 @@ class OpSet_Onnx_ver10 {
            Onnx, 10, ConvInteger)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, QLinearConv)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 10, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 10, DequantizeLinear)>());
   }
 };
 
