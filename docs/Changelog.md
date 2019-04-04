@@ -9543,42 +9543,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output y data type to 32-bit integer tensor.</dd>
 </dl>
 
-### <a name="DequantizeLinear-10"></a>**DequantizeLinear-10**</a>
-
-  The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
-  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
-  'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
-  there's no zero point (zero point is supposed to be 0).
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>x</tt> : T</dt>
-<dd>N-D quantized input tensor to be de-quantized.</dd>
-<dt><tt>x_scale</tt> : tensor(float)</dt>
-<dd>Scale for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>x_zero_point</tt> (optional) : T</dt>
-<dd>Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization.It's optional. 0 is the default value when it's not specified.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>y</tt> : tensor(float)</dt>
-<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32)</dt>
-<dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
-</dl>
-
 ### <a name="Dropout-10"></a>**Dropout-10**</a>
 
   Dropout takes one input floating tensor and produces two tensor outputs,
@@ -9868,43 +9832,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
 <dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
-</dl>
-
-### <a name="QuantizeLinear-10"></a>**QuantizeLinear-10**</a>
-
-  The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
-  The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
-  For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>x</tt> : T1</dt>
-<dd>N-D full precision Input tensor to be quantized.</dd>
-<dt><tt>y_scale</tt> : tensor(float)</dt>
-<dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is 0 if it's not specified.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>y</tt> : T2</dt>
-<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
-<dd>Constrain 'x' to float or int32 tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
 
 ### <a name="Resize-10"></a>**Resize-10**</a>
