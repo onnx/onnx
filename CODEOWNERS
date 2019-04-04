@@ -6,3 +6,4 @@
 /docs/Operators*.md @onnx/sig-operators-approvers
 /docs/OpConventions.md @onnx/sig-operators-approvers
 /docs/Broadcasting.md @onnx/sig-operators-approvers
+/docs/Changelog*.md @onnx/sig-operators-approvers
