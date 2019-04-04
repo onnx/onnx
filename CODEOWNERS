@@ -1,2 +1,2 @@
-* @onnx/sig-archinfra
-/onnx/onnx/defs @onnx/sig-operators
+* @onnx/sig-archinfra-approvers
+/onnx/onnx/defs @onnx/sig-operators-approvers
