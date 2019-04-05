@@ -11,11 +11,12 @@ from onnx import mapping
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
+#ifndef _AIX
 if sys.byteorder != 'little':
     raise RuntimeError(
         'Numpy helper for tensor/ndarray is not available on big endian '
         'systems yet.')
-
+#endif
 
 def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.complex64]
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
