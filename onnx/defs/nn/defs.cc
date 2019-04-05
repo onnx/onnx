@@ -32,15 +32,6 @@ void convPoolShapeInference(
     bool require_kernel_shape,
     int input1Idx,
     int input2Idx) {
-  // propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  // if (ctx.getNumOutputs() > 1) {
-  //  // MaxPool with two outputs case.
-  //  auto output_type = ctx.getOutputType(1);
-  //  if (output_type->value_case() == TypeProto::kTensorType ||
-  //      output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-  //    output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-  //  }
-  //}
 
   // we need the first input shape for this inference.
   if (!hasInputShape(ctx, input1Idx)) {
