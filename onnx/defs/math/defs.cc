@@ -851,7 +851,7 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-   
+
 Given two equivalent values, this operator uses the indices along the axis  as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
@@ -1109,12 +1109,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = getInputShape(ctx, 0);
           auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
+          int num_target_dims = static_cast<int>(target_shape.size());
+          int num_new_dims = std::max(input_shape.dim_size(), num_target_dims);
+          for (int i = 0; i < num_new_dims; ++i) {
             auto* new_dim = output_shape->add_dim();
-            int target_index = i + static_cast<int>(target_shape.size()) - input_shape.dim_size();
+            int target_index = i + num_target_dims - num_new_dims;
             int64_t target_dim = target_index < 0 ? 1 : target_shape[target_index];
-            if (input_shape.dim(i).has_dim_value()) {
-              const int64_t input_dim = input_shape.dim(i).dim_value();
+            int input_index = i + input_shape.dim_size() - num_new_dims;
+            if (input_index < 0) {
+              new_dim->set_dim_value(target_dim);
+            } else if (input_shape.dim(input_index).has_dim_value()) {
+              const int64_t input_dim = input_shape.dim(input_index).dim_value();
               if (input_dim != target_dim && input_dim != 1) {
                 if (target_dim != 1) {
                   fail_shape_inference("Incompatible dimensions in Expand (",
@@ -1126,7 +1131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else if (target_dim != 1) {
               new_dim->set_dim_value(target_dim);
             } else {
-              new_dim->CopyFrom(input_shape.dim(i));
+              new_dim->CopyFrom(input_shape.dim(input_index));
             }
           }
         }));

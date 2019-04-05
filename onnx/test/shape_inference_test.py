@@ -261,6 +261,15 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('shape', TensorProto.INT64, (2,), (2, 1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, ('d1', 2, 'd3'))])
 
+    def test_expand_static_shape_inferred_enlarge(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 1, 3)),
+             ('shape', TensorProto.INT64, (5,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2,), (2, 3, 1, 4, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 3, 2, 4, 3))])
+
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
