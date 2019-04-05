@@ -43,15 +43,21 @@ class DummyBackend(onnx.backend.base.Backend):
         value_infos = {vi.name: vi for vi in itertools.chain(model.graph.value_info, model.graph.output)}
 
         if do_enforce_test_coverage_whitelist(model):
-            for node in model.graph.node:
-                for i, output in enumerate(node.output):
-                    if node.op_type == 'Dropout' and i != 0:
-                        continue
-                    assert output in value_infos
-                    tt = value_infos[output].type.tensor_type
-                    assert tt.elem_type != TensorProto.UNDEFINED
-                    for dim in tt.shape.dim:
-                        assert dim.WhichOneof('value') == 'dim_value'
+            # test version conversion
+            if model.graph.name not in ['vgg19', 'inception_v2', 'shufflenet', 'inception_v1']:
+                converted_model = onnx.version_converter.convert_version(model, 1)
+                converted_model = onnx.version_converter.convert_version(converted_model, 8)
+                del converted_model
+            if model.graph.name not in test_shape_inference_blacklist:
+                for node in model.graph.node:
+                    for i, output in enumerate(node.output):
+                        if node.op_type == 'Dropout' and i != 0:
+                            continue
+                        assert output in value_infos
+                        tt = value_infos[output].type.tensor_type
+                        assert tt.elem_type != TensorProto.UNDEFINED
+                        for dim in tt.shape.dim:
+                            assert dim.WhichOneof('value') == 'dim_value'
 
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
@@ -77,12 +83,22 @@ class DummyBackend(onnx.backend.base.Backend):
 
 
 test_coverage_whitelist = set(
-    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
-     'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
+    ['bvlc_alexnet', 'densenet121', 'inception_v1',
+        'inception_v2', 'resnet50', 'shufflenet', 'SingleRelu',
+        'squeezenet_old', 'vgg19', 'zfnet'])
+# In order to run these models, set the LOCAL_TEST environment variable to "True"
+test_coverage_whitelist_local = set(
+    ['bvlc_googlenet', 'bvlc_reference_caffenet',
+        'bvlc_reference_rcnn_ilsvrc13', 'emotion_ferplus', 'mnist',
+        '15fb3d9ea39f4068ad44a49de20faedc', 'mxnet_converted_model'])
+test_shape_inference_blacklist = set(
+    ['15fb3d9ea39f4068ad44a49de20faedc', 'mxnet_converted_model'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
     if model.graph.name not in test_coverage_whitelist:
+        if os.environ.get(str('LOCAL_TEST')) == 'True':
+            return True
         return False
     for node in model.graph.node:
         if node.op_type in set(['RNN', 'LSTM', 'GRU']):
