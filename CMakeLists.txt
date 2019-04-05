@@ -59,6 +59,10 @@ if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+  set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
+endif()
+
 if(ONNX_BUILD_TESTS)
   list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
   include(googletest)
@@ -331,7 +335,14 @@ else()
 endif()
 add_onnx_global_defines(onnx_proto)
 
-add_library(onnx ${ONNX_SRCS})
+if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+  #whole-archive linker option not available on AIX.
+  #So, create a object library
+  add_library(onnx OBJECT ${ONNX_SRCS})
+else()
+  add_library(onnx ${ONNX_SRCS})
+endif()
+
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -384,6 +395,10 @@ if(BUILD_ONNX_PYTHON)
     # In MSVC, we will add whole archive in default
     target_link_libraries(onnx_cpp2py_export
                           PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
+  elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+    # whole-archive linker option not available on AIX
+    target_sources(onnx_cpp2py_export
+                          PRIVATE $<TARGET_OBJECTS:onnx>)
   else()
     # Assume everything else is like gcc
     target_link_libraries(onnx_cpp2py_export
