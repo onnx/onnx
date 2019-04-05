@@ -10,7 +10,11 @@ import struct
 
 import numpy as np
 from onnx import onnx_pb as onnx_proto
-from .. import __version__, __producer__
+
+__producer__ = "onnx.quantize"
+__version__ = "0.1.0"
+onnx_domain = "ai.onnx"
+onnx_version = 10
 
 type_to_name = {
     1: "FLOAT",
@@ -69,9 +73,6 @@ quantization_modes = [getattr(QuantizationMode, attr) for attr in dir(Quantizati
 data_quantization_modes = [getattr(DataQuantizationMode, attr) for attr in dir(DataQuantizationMode)\
     if not callable(getattr(DataQuantizationMode, attr)) and not attr.startswith("__")]
 
-# OperatorSet version for custom operator for quantization
-ms_domain = 'com.microsoft'
-ms_version = 1
 
 class Weight:
     '''
@@ -115,57 +116,12 @@ def quantize_data(data, quantize_range, mode=DataQuantizationMode.Linear_NonScal
         max_range = max(abs(rmin), abs(rmax))
         scale = (float(max_range)*2) / quantize_range
         zero_point = 0
-        quantized_data = (np.asarray(data) / scale).astype('b') #signed byte type
+        quantized_data = (np.asarray(data) / scale).round().astype('b') #signed byte type
     else:
         scale = (float(rmax) - rmin) / quantize_range if rmin != rmax else 1
         zero_point = round((0 - rmin) / scale) # round to nearest integer
-        quantized_data = (np.asarray(data) / scale + zero_point).astype('B') # unsigned byte type
+        quantized_data = ((np.asarray(data) / scale).round() + zero_point).astype('B') # unsigned byte type
     return rmin, rmax, zero_point, scale, quantized_data
-
-
-# Currently ONNX 1.3 make_node on helper.py does not assign domain correctly.
-# TODO: remove this when newer onnx pypi package with commit
-# https://github.com/onnx/onnx/commit/f86e951d6957517af59a0b845f0e449794a371b2 is available.
-def make_node_domain(
-        op_type,  # type: Text
-        inputs,  # type: Sequence[Text]
-        outputs,  # type: Sequence[Text]
-        name=None,  # type: Optional[Text]
-        doc_string=None,  # type: Optional[Text]
-        domain=None,  # type: Optional[Text]
-        **kwargs  # type: Any
-):  # type: (...) -> NodeProto
-    """Construct a NodeProto.
-
-    Arguments:
-        op_type (string): The name of the operator to construct
-        inputs (list of string): list of input names
-        outputs (list of string): list of output names
-        name (string, default None): optional unique identifier for NodeProto
-        doc_string (string, default None): optional documentation string for NodeProto
-        domain (string, default None): optional domain for NodeProto.
-            If it's None, we will just use default domain (which is empty)
-        **kwargs (dict): the attributes of the node.  The acceptable values
-            are documented in :func:`make_attribute`.
-    """
-
-    node = onnx.NodeProto()
-    node.op_type = op_type
-    node.input.extend(inputs)
-    node.output.extend(outputs)
-    if name:
-        node.name = name
-    if doc_string:
-        node.doc_string = doc_string
-    if domain is not None:
-        node.domain = domain
-    if kwargs:
-        node.attribute.extend(
-            onnx.helper.make_attribute(key, value)
-            for key, value in sorted(kwargs.items()))
-    return node
-
-onnx.helper.make_node = make_node_domain
 
 
 def _attribute_to_kwarg(attribute):
@@ -284,11 +240,6 @@ class ONNXQuantizer:
         else:
             raise ValueError('unsupported quantization data type')
 
-        # Quantization is supported for opset 7 and higher. This is because operators support boradcasting starting in opset 7
-        opset_info = next((opset for opset in self.model.opset_import if opset.domain == '' or opset.domain == 'ai.onnx'), None)
-        if opset_info is None or opset_info.version < 7:
-            raise ValueError('the model does not have the required ai.onnx operator set (7 or higher) for quantization support.')
-
         # QuantizeRange tensor name and zero tensor name for scale and zero point calculation.
         # Used when QuantizationMode.is_static_mode() is False
         self.fixed_qrange_name = "fixed_quantization_range"
@@ -309,11 +260,13 @@ class ONNXQuantizer:
         # https://developers.google.com/protocol-buffers/docs/reference/python-generated?csw=1#fields
         self.model.graph.ClearField('node')
         self.model.graph.node.extend(new_list)
-        # update custom 'ms' opset
-        ms_opset = next(
-            (opset for opset in self.model.opset_import if opset.domain == ms_domain and opset.version >= ms_version), None)
-        if ms_opset is None:
-            self.model.opset_import.extend([onnx.helper.make_opsetid(ms_domain, ms_version)])
+
+        # update opset.
+        opset_info = next((opset for opset in self.model.opset_import if opset.domain == '' or opset.domain == onnx_domain), None)
+        if opset_info is not None:
+            self.model.opset_import.remove(opset_info)
+        self.model.opset_import.extend([onnx.helper.make_opsetid(onnx_domain, onnx_version)])
+
         return self.model
 
     def find_weight_data(self, initializer):
@@ -342,8 +295,10 @@ class ONNXQuantizer:
         # Remove existing weight initializer
         self.model.graph.initializer.remove(weight.initializer)
         # Update packed weight, zero point, and scale initializers
-        packed_weight_initializer = onnx.helper.make_tensor(packed_weight_name, self.weight_qType,
-                                                  weight.initializer.dims, weight.quantized_data)
+        packed_weight_np_data = np.asarray(weight.quantized_data,
+            dtype=onnx.mapping.TENSOR_TYPE_TO_NP_TYPE[self.weight_qType]).reshape(weight.initializer.dims)
+        packed_weight_initializer = onnx.numpy_helper.from_array(packed_weight_np_data, packed_weight_name)
+
         if weight.axis is not None:
             zero_scale_shape = [weight.initializer.dims[weight.axis]]
         else: # scale and zero point must be scalar
@@ -390,9 +345,9 @@ class ONNXQuantizer:
             return self._get_quantized_weight(initializer)
 
         weights = self.find_weight_data(initializer)
-        # Assuming nchw, compute per-channel quantization
-        # https://arxiv.org/pdf/1806.08342.pdf
-        channel_count = initializer.dims[1]
+        # Quantize per output channel
+        # Assuming (M x C/group x kH x kW) format where M is number of output channels.
+        channel_count = initializer.dims[0]
         np_data = np.reshape(weights, initializer.dims)
         rmin_list = []
         rmax_list = []
@@ -400,8 +355,8 @@ class ONNXQuantizer:
         scale_list = []
         quantized_per_channel_data_list = []
         for i in range(channel_count):
-            # for each channel, compute quantization data. Assuming nchw
-            per_channel_data = np_data[:,i,:,:].flatten()
+            # for each channel, compute quantization data. Assuming (M x C/group x kH x kW)
+            per_channel_data = np_data[i,:,:,:].flatten()
             rmin, rmax, zero_point, scale, quantized_per_channel_data = quantize_data(per_channel_data.flatten().tolist(),
                 self.weight_qrange, mode=self.data_quantization_mode)
             rmin_list.append(rmin)
@@ -409,14 +364,14 @@ class ONNXQuantizer:
             zero_point_list.append(zero_point)
             scale_list.append(scale)
             quantized_per_channel_data_list.append(quantized_per_channel_data)
-        channel_index = 1 # nchw
+        channel_index = 0 # (M x C/group x kH x kW)
         # combine per_channel_data into one
         reshape_dims = list(initializer.dims)  # deep copy
         reshape_dims[channel_index] = 1  # only one per channel for reshape
         quantized_weights = np.asarray(quantized_per_channel_data_list[0]).reshape(reshape_dims)
         for i in range(1, len(quantized_per_channel_data_list)):
             channel_weights = np.asarray(quantized_per_channel_data_list[i]).reshape(reshape_dims)
-            quantized_weights = np.concatenate((quantized_weights, channel_weights), axis=1)
+            quantized_weights = np.concatenate((quantized_weights, channel_weights), axis=0)
 
         weight = Weight(initializer.name, initializer, rmin_list, rmax_list,
                         zero_point_list, scale_list, weights, quantized_weights.flatten().tolist(), channel_index)
@@ -485,35 +440,6 @@ class ONNXQuantizer:
 
         return input_scale_name, input_zp_name, [], []
 
-    def _get_input_quantization_params(self, input_name):
-        '''
-        Returns the zero point and scale values for an input if
-        specified in self.input_quantization_params
-            parameter input_name: name of the input.
-            return: [zero_point, scale] for the input.
-        '''
-        input_quantization_params = None
-        if self.input_quantization_params is not None and input_name in self.input_quantization_params:
-            input_quantization_params = self.input_quantization_params[input_name]
-        return input_quantization_params
-
-    def _get_quantization_axis(self, node, input_index):
-        '''
-        Get quantization axis for an input at input_index in node.
-            parameter node: node being quantized in NodeProto format..
-            parameter input_index: index of input in node.input.
-            return: axis if per-axis quantization is supported. None otherwise.
-        '''
-        axis = None
-        if node.op_type == "Conv":
-            axis = 1 # Assuming nchw, per-channel quantization.
-        elif node.op_type == "MatMul":
-            if input_index == 0: # first input
-                axis = 0 # per-row quantization.
-            elif input_index == 1: # second input
-                axis = 1 # per-column quantization.
-        return axis
-
     def _get_static_input_quantization_params(self, input_name):
         '''
         Create initializers and inputs in the graph for static quantization of input.
@@ -524,23 +450,27 @@ class ONNXQuantizer:
             parameter input_name: Name of the input.
             return: scale_name, zero_point_name, scale_shape, zero_point_shape.
         '''
-        params = self._get_input_quantization_params(input_name)
-        if params is None:
+        if self.input_quantization_params is None or input_name not in self.input_quantization_params:
             raise ValueError("Quantization parameters are not specified for input {}.".format(input_name))
-        if len(params) != 2:
+        params = self.input_quantization_params[input_name]
+        if params is None or len(params) != 2:
             raise ValueError("Quantization parameters should contain zero point and scale. \
                 Specified values for input {}: {}".format(input_name, params))
 
-        zero_point_values = params[0] if isinstance(params[0], list) else [params[0]]
-        zero_point_shape = [len(params[0])] if isinstance(params[0], list) else []
+        if not np.isscalar(params[0]):
+            raise ValueError("Zero point for input {} should be a scalar value. Value specified: {}".format(
+                input_name, params[0]))
+        if not np.isscalar(params[1]):
+            raise ValueError("Scale for input {} should be a scalar value. Value specified: {}".format(
+                input_name, params[1]))
+
+        zero_point_values = [params[0].item()]
+        zero_point_shape = []
         zero_point_name = input_name + "_zero_point"
 
-        scale_values = params[1] if isinstance(params[1], list) else [params[1]]
-        scale_shape = [len(params[1])] if isinstance(params[1], list) else []
+        scale_values = [params[1].item()]
+        scale_shape = []
         scale_name = input_name + "_scale"
-
-        if scale_shape != zero_point_shape:
-            raise ValueError("Zero point and scale have different shapes for input {}.".format(input_name))
 
         # Add initializers
         _add_initializer_if_not_present(self.model.graph, zero_point_name, zero_point_values,
@@ -568,21 +498,25 @@ class ONNXQuantizer:
             raise ValueError("Quantization parameters should contain zero point and scale. \
                 Specified values for output {}: {}".format(output_name, params))
 
-        zero_point_values = params[0] if isinstance(params[0], list) else [params[0]]
-        zero_point_shape = [len(params[0])] if isinstance(params[0], list) else []
-        zero_point_name = output_name + "_zero_point"
+        if not np.isscalar(params[0]):
+            raise ValueError("Zero point for output {} should be a scalar value. Value specified: {}".format(
+                output_name, params[0]))
+        if not np.isscalar(params[1]):
+            raise ValueError("Scale for output {} should be a scalar value. Value specified: {}".format(
+                output_name, params[1]))
 
-        scale_values = params[1] if isinstance(params[1], list) else [params[1]]
-        scale_shape = [len(params[1])] if isinstance(params[1], list) else []
+        zero_point_values = [params[0].item()]
+        zero_point_shape = []
+        zero_point_name = output_name + "_zero_point"
+        zero_point_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[params[0].dtype]
+
+        scale_values = [params[1].item()]
+        scale_shape = []
         scale_name = output_name + "_scale"
 
-        if scale_shape != zero_point_shape:
-            raise ValueError("Zero point and scale have different shapes for output {}.".format(output_name))
-
         # Add initializers
-        # TODO: Infer zero point type from zero_point_values instead of using weight_qType.
         _add_initializer_if_not_present(self.model.graph, zero_point_name, zero_point_values, zero_point_shape,
-            self.weight_qType)
+            zero_point_type)
         _add_initializer_if_not_present(self.model.graph, scale_name, scale_values, scale_shape,
             onnx_proto.TensorProto.FLOAT)
 
@@ -609,19 +543,9 @@ class ONNXQuantizer:
                 self._get_dynamic_input_quantization_params(input_name, nodes)
 
         # Add QuantizeLinear Node
-        quantization_axis = self._get_quantization_axis(node, input_index)
         output_name = input_name + "_quantized"
-        if scale_shape == []:
-            # Per-tensor quantization.
-            qlinear_node = onnx.helper.make_node("QuantizeLinear", [input_name, scale_name, zp_name],
-                [output_name], input_name + "_QuantizeLinear", domain=ms_domain)
-        elif quantization_axis is None:
-            raise ValueError("Zero point and scale for input {} are 1-D tensor, "
-                "but per-axis quantization is not supported in node.".format(input_name))
-        else:
-            # Per-axis quantization.
-            qlinear_node = onnx.helper.make_node("QuantizeLinear", [input_name, scale_name, zp_name],
-                [output_name], input_name + "_QuantizeLinear", domain=ms_domain, axis=quantization_axis)
+        qlinear_node = onnx.helper.make_node("QuantizeLinear", [input_name, scale_name, zp_name],
+            [output_name], input_name + "_QuantizeLinear")
         return nodes + [qlinear_node]
 
     def _quantize_inputs(self, node, indices, new_nodes_list):
@@ -652,7 +576,7 @@ class ONNXQuantizer:
             initializer = _find_by_name(node_input, self.model.graph.initializer)
             if initializer is not None:
                 # Quantize the data
-                if node.op_type == "Conv":
+                if node.op_type == "Conv" and input_index == 1: # Weight index
                     weight = self._get_quantized_weight_convolution(initializer)
                 else:
                     weight = self._get_quantized_weight(initializer)
@@ -694,11 +618,9 @@ class ONNXQuantizer:
             conv_integer_name = node.name + "_quant"
         kwargs = {}
         for attribute in node.attribute:
-            if attribute.name in ["dilations", "group", "kernel_shape", "pads", "strides"]:
-                # Attributes supported by ConvInteger node.
-                kwargs.update(_attribute_to_kwarg(attribute))
+            kwargs.update(_attribute_to_kwarg(attribute))
         conv_integer_node = onnx.helper.make_node("ConvInteger", quantized_input_names + zero_point_names,
-            [conv_integer_output], conv_integer_name, domain=ms_domain, **kwargs)
+            [conv_integer_output], conv_integer_name, **kwargs)
         nodes.append(conv_integer_node)
 
         # Add cast operation to cast convInteger output to float.
@@ -746,7 +668,7 @@ class ONNXQuantizer:
         if node.name != "":
             matmul_integer_name = node.name + "_quant"
         matmul_integer_node = onnx.helper.make_node("MatMulInteger", quantized_input_names + zero_point_names,
-            [matmul_integer_output], matmul_integer_name, domain=ms_domain)
+            [matmul_integer_output], matmul_integer_name)
         nodes.append(matmul_integer_node)
 
         # Add cast operation to cast matmulInteger output to float.
@@ -799,9 +721,7 @@ class ONNXQuantizer:
             qlinear_conv_name = node.name + "_quant"
         kwargs = {}
         for attribute in node.attribute:
-            if attribute.name in ["dilations", "group", "kernel_shape", "pads", "strides"]:
-                # Attributes supported by ConvInteger node.
-                kwargs.update(_attribute_to_kwarg(attribute))
+            kwargs.update(_attribute_to_kwarg(attribute))
         qlinear_conv_inputs = []
         # Input 0
         qlinear_conv_inputs.append(quantized_input_names[0])
@@ -816,7 +736,7 @@ class ONNXQuantizer:
         qlinear_conv_inputs.append(output_zp_name)
 
         qlinear_conv_node = onnx.helper.make_node("QLinearConv", qlinear_conv_inputs,
-            [qlinear_conv_output], qlinear_conv_name, domain=ms_domain, **kwargs)
+            [qlinear_conv_output], qlinear_conv_name, **kwargs)
         nodes.append(qlinear_conv_node)
 
         # Add DequantizeLinear node.
@@ -860,7 +780,7 @@ class ONNXQuantizer:
         qlinear_matmul_inputs.append(output_zp_name)
 
         qlinear_matmul_node = onnx.helper.make_node("QLinearMatMul", qlinear_matmul_inputs,
-            [qlinear_matmul_output], qlinear_matmul_name, domain=ms_domain, **kwargs)
+            [qlinear_matmul_output], qlinear_matmul_name)
         nodes.append(qlinear_matmul_node)
 
         # Add DequantizeLinear node.
@@ -939,11 +859,12 @@ def quantize(model, per_channel=True, nbits=8, quantization_mode=QuantizationMod
         The input_quantization_params should be specified in the following format:
             {
                 "input_name": [zero_point, scale]
-            }
+            }.
+        zero_point should be of type np.uint8 and scale should be of type np.float32.
         example:
             {
-                'resnet_model/Relu_1:0': [0, 0.019539741799235344],
-                'resnet_model/Relu_2:0': [0, 0.011359662748873234]
+                'resnet_model/Relu_1:0': [np.uint8(0), np.float32(0.019539741799235344)],
+                'resnet_model/Relu_2:0': [np.uint8(0), np.float32(0.011359662748873234)]
             }
     :param output_quantization_params:
         Dictionary to specify the zero point and scale values for outputs of conv and matmul nodes.
@@ -952,9 +873,11 @@ def quantize(model, per_channel=True, nbits=8, quantization_mode=QuantizationMod
             {
                 "output_name": [zero_point, scale]
             }
+        zero_point can be of type np.uint8/np.int8 and scale should be of type np.float32.
         example:
             {
-                'resnet_model/Relu_3:0': [0, 0.019539741799235344]
+                'resnet_model/Relu_3:0': [np.int8(0), np.float32(0.011359662748873234)],
+                'resnet_model/Relu_4:0': [np.uint8(0), np.float32(0.011359662748873234)]
             }
     :return: ModelProto with quantization
     '''
