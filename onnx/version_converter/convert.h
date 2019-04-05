@@ -22,6 +22,10 @@
 #include "onnx/version_converter/adapters/averagepool_7_6.h"
 #include "onnx/version_converter/adapters/dropout_6_7.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/extend_supported_types.h"
+#include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/scan_9_8.h"
+#include "onnx/version_converter/adapters/cast_9_8.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -108,6 +112,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
+        OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
+        OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mean",
+        OpSetID(8), OpSetID(7)));      
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<TypeRestriction>("Mul",
@@ -126,10 +136,29 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<SetIsTest>("BatchNormalization",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<Cast_9_8>());
+      registerAdapter(make_unique<ExtendSupportedTypes>("Flatten",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Constant",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("MatMul",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Gemm",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("PRelu",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Greater",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Less",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<Upsample_9_8>());
+      registerAdapter(make_unique<Scan_9_8>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
         OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
+        OpSetID(9), OpSetID(8)));
       registerAdapter(make_unique<Concat_3_4>());
       std::vector<TensorProto_DataType> concat_unallowed_types = {
         TensorProto_DataType_INT32, TensorProto_DataType_INT64,
