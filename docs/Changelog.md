@@ -5,36 +5,6 @@
 
 # ai.onnx (default)
 ## Version 1 of the default ONNX operator set
-### <a name="ATen-1"></a>**ATen-1**</a>
-
-  Experimental allowing ATen operations to be accessed directly from Caffe2
-  to allow for quick prototyping when ONNX is missing standard versions of
-  and op
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>input</tt> (variadic) : T</dt>
-<dd>Arbitrary input</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>output</tt> (variadic) : T</dt>
-<dd>Arbitrary output</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
 ### <a name="Abs-1"></a>**Abs-1**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
@@ -1179,52 +1149,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="GRUUnit-1"></a>**GRUUnit-1**</a>
-
-  GRUUnit computes the activations of a standard GRU,
-  in a sequence-length aware fashion.
-  Concretely, given the (fused) inputs X (TxNxD), the previous hidden
-  state (NxD), and the sequence lengths (N), computes the GRU
-  activations, avoiding computation if the input is invalid (as in, the
-  value at X[t][n] >= seqLengths[n].
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>drop_states</tt> : int</dt>
-<dd>Bool to determine if hidden state is zeroes or passed along for timesteps past the given sequence_length.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>hidden_prev</tt> : T</dt>
-<dd>The previous GRU hidden state.</dd>
-<dt><tt>gates</tt> : T</dt>
-<dd>Unactivated gate outputs from forget, update, and output gates, pre-activation.</dd>
-<dt><tt>seq_lengths</tt> : T</dt>
-<dd>Array of sequence lengths.  len(seq_lengths) should equal batch size N.</dd>
-<dt><tt>t</tt> : T</dt>
-<dd>The timestep for this operation.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>hidden</tt> : T</dt>
-<dd>The new GRU hidden state calculated by this op.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Gather-1"></a>**Gather-1**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
@@ -1350,45 +1274,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="GivenTensorFill-1"></a>**GivenTensorFill-1**</a>
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd></dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>values</tt> : list of floats</dt>
-<dd></dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>shape</tt> (optional) : T</dt>
-<dd>The shape of filled tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>The filled tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -3802,42 +3687,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>reshaped</tt> : T</dt>
 <dd>Reshaped data.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Scale-1"></a>**Scale-1**</a>
-
-  Scale takes one input data (Tensor<float>) and produces one output data
-  (Tensor<float>) whose value is the input data tensor scaled element-wise.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input data to be scaled</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output data after scaling</dd>
 </dl>
 
 #### Type Constraints
