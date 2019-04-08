@@ -50,44 +50,47 @@ struct ExtendSupportedTypes final : public Adapter {
 
         bool castInput = (node->kind() != kConstant);
         bool castOutput = (node->kind() != kGreater && node->kind() != kLess);
-        
-        if(castInput && supported_version8_types.find(input_type) == supported_version8_types.end())
-        {  
-            for (size_t i = 0; i < inputs.size(); i++)
-            {
-                Node* pre_cast = create_cast_op(
-                    graph, inputs[i], TensorProto_DataType::TensorProto_DataType_FLOAT, inputs[i]->sizes(), "pre_cast_" + std::to_string(i));
-                
-                pre_cast->insertBefore(node);
-                node->replaceInput(i, pre_cast->output());
-            }
+        if (castInput &&
+            supported_version8_types.find(input_type) ==
+                supported_version8_types.end()) {
+          for (size_t i = 0; i < inputs.size(); i++) {
+            Node* pre_cast = create_cast_op(
+                graph,
+                inputs[i],
+                TensorProto_DataType::TensorProto_DataType_FLOAT,
+                inputs[i]->sizes(),
+                "pre_cast_" + ONNX_NAMESPACE::to_string(i));
+            pre_cast->insertBefore(node);
+            node->replaceInput(i, pre_cast->output());
+          }
         }
-        
-        if(castOutput && supported_version8_types.find(output_type) == supported_version8_types.end())
-        {
-            const use_list original_uses(node->output()->uses());
-        
-            node->output()->setElemType(TensorProto_DataType::TensorProto_DataType_FLOAT);
-            node->output()->setUniqueName(original_output_name + "_intermediate_output");
-                        
-            Node* post_cast = create_cast_op(
-                graph, outputs[0], output_type, outputs[0]->sizes(), original_output_name);
+        if (castOutput &&
+            supported_version8_types.find(output_type) ==
+                supported_version8_types.end()) {
+          const use_list original_uses(node->output()->uses());
+          node->output()->setElemType(
+              TensorProto_DataType::TensorProto_DataType_FLOAT);
+          node->output()->setUniqueName(
+              original_output_name + "_intermediate_output");
+          Node* post_cast = create_cast_op(
+              graph,
+              outputs[0],
+              output_type,
+              outputs[0]->sizes(),
+              original_output_name);
 
-            post_cast->insertAfter(node);
+          post_cast->insertAfter(node);
 
-            for (Use u: original_uses)
-            {
-                u.user->replaceInputWith(node->output(), post_cast->output());
+          for (Use u : original_uses) {
+            u.user->replaceInputWith(node->output(), post_cast->output());
+          }
+
+          for (size_t i = 0; i < graph->outputs().size(); i++) {
+            if (graph->outputs()[i]->uniqueName() ==
+                node->output()->uniqueName()) {
+              graph->return_node()->replaceInput(i, post_cast->output());
             }
-
-            for (size_t i = 0; i < graph->outputs().size(); i++)
-            {
-                if (graph->outputs()[i]->uniqueName() == node->output()->uniqueName())
-                {
-                    graph->return_node()->replaceInput(i, post_cast->output());
-                }
-            }
-            
+          }
         }
     }
 
