@@ -320,7 +320,10 @@ void check_node(
   }
 
   // Put the removed experimental ops here
-  if (node.op_type() == "ConstantFill") {
+  static std::set<std::string> experimental_ops = {"ATen", "Affine",
+    "ConstantFill", "Crop", "DynamicSlice", "GRUUnit", "GivenTensorFill",
+    "ImageScaler", "ParametricSoftplus", "Scale", "ScaledTanh"};
+  if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
       << " experimental ops. In the future, we may directly "
       << "reject this operator. Please update your model as soon "

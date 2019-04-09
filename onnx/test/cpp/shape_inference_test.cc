@@ -61,8 +61,8 @@ static void Dump(TypeProto_Tensor& t) {
     auto y = x.has_dim_value();
     auto z = x.has_dim_param();
 
-    std::cout << "Dim " << i
-              << " Value:" << (y ? std::to_string(x.dim_value()) : "<unset>")
+    std::cout << "Dim " << i << " Value:"
+              << (y ? ONNX_NAMESPACE::to_string(x.dim_value()) : "<unset>")
               << ", Param:" << (z ? x.dim_param() : "<unset>") << "\n";
   }
 };
