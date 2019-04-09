@@ -9856,6 +9856,35 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+### <a name="Update-10"></a>**Update-10**</a>
+
+  Assign the input value (denoted by X) to its output (denoted by Y). Notice that this operator is not able to produce new variable, so Y must be created by another operator before evaluating this operator. One variable can only be assigned by one Update. When evaluating a graph, Update operators would be excluded in the beginning and evaluated in parallel after the rest of the graph are computed.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
+</dl>
+
 ### <a name="Upsample-10"></a>**Upsample-10** (deprecated)</a>
 
   Upsample the input tensor.
