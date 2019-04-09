@@ -774,4 +774,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Update,
+    10,
+    OpSchema()
+        .SetDoc("Assign the input value (denoted by X) to its output (denoted by Y). "
+            "Notice that this operator is not able to produce new variable, so Y must "
+            "be created by another operator before evaluating this operator. One variable "
+            "can only be assigned by one Update. When evaluating a graph, Update operators "
+            "would be excluded in the beginning and evaluated in parallel after the rest of "
+            "the graph are computed.")
+        .Input(0, "X", "input", "T")
+        .Output(0, "Y", "output", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::INT64);
+        }));
 } // namespace ONNX_NAMESPACE
