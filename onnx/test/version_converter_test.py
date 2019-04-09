@@ -8,6 +8,7 @@ from typing import Sequence, Text, Tuple, List, Callable
 from onnx import numpy_helper
 
 import numpy as np  # type: ignore
+import struct
 
 import onnx.version_converter
 import unittest
@@ -435,6 +436,299 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "MaxPool"
         assert converted_model.opset_import[0].version == 1
+
+    # Test BatchNormalization Adapter: 9 -> 8
+    def test_batchnormalization_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.FLOAT
+
+        nodes = [onnx.helper.make_node(
+            'BatchNormalization',
+            inputs=['X', 'scale', 'B', 'mean', 'var'],
+            outputs=['Y'],
+        )]
+
+        input_shape = (2, 3, 4, 5)
+        x = onnx.helper.make_tensor_value_info("X", data_type, input_shape)
+        scale = onnx.helper.make_tensor_value_info("scale", data_type, [input_shape[1]])
+        B = onnx.helper.make_tensor_value_info("B", data_type, [input_shape[1]])
+        mean = onnx.helper.make_tensor_value_info("mean", data_type, [input_shape[1]])
+        var = onnx.helper.make_tensor_value_info("var", data_type, [input_shape[1]])
+        y = onnx.helper.make_tensor_value_info("Y", data_type, input_shape)
+
+        graph = onnx.helper.make_graph(
+            nodes, "test_batchnormalization", [x, scale, B, mean, var], [y]
+        )
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "BatchNormalization"
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Constant Adapter: 9 -> 8
+    def test_constant_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        output_shape = [2, 3, 4]
+        output_value = np.arange(24)
+
+        nodes = [helper.make_node(
+            "Constant",
+            inputs=[],
+            outputs=["Y"],
+            value=helper.make_tensor("", data_type, output_shape, output_value))]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_constant",
+            [],
+            [onnx.helper.make_tensor_value_info("Y", data_type, output_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Flatten Adapter: 9 -> 8
+    def test_flatten_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        nodes = [onnx.helper.make_node(
+            "Flatten",
+            inputs=["X"],
+            outputs=["Y"],
+            axis=1
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_flatten",
+            [onnx.helper.make_tensor_value_info("X", data_type, [2, 3, 4])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [2, 12])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[1].op_type == "Flatten"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test PRelu Adapter: 9 -> 8
+    def test_prelu_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        nodes = [onnx.helper.make_node(
+            "PRelu",
+            inputs=["X", "Slope"],
+            outputs=["Y"]
+        )]
+
+        input_shape = [2, 3, 4]
+        graph = helper.make_graph(
+            nodes,
+            "test_prelu",
+            [onnx.helper.make_tensor_value_info("X", data_type, input_shape),
+             onnx.helper.make_tensor_value_info("Slope", data_type, input_shape)],
+            [onnx.helper.make_tensor_value_info("Y", data_type, input_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[2].op_type == "PRelu"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Greater Adapter: 9 -> 8
+    def test_greater_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        nodes = [onnx.helper.make_node(
+            "Greater",
+            inputs=["X1", "X2"],
+            outputs=["Y"]
+        )]
+
+        input_shape = [2, 3, 4]
+        graph = helper.make_graph(
+            nodes,
+            "test_greater",
+            [onnx.helper.make_tensor_value_info("X1", data_type, input_shape),
+             onnx.helper.make_tensor_value_info("X2", data_type, input_shape)],
+            [onnx.helper.make_tensor_value_info("Y", TensorProto.BOOL, input_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[2].op_type == "Greater"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == TensorProto.BOOL
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Less Adapter: 9 -> 8
+    def test_less_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        nodes = [onnx.helper.make_node(
+            "Less",
+            inputs=["X1", "X2"],
+            outputs=["Y"]
+        )]
+
+        input_shape = [2, 3, 4]
+        graph = helper.make_graph(
+            nodes,
+            "test_less",
+            [onnx.helper.make_tensor_value_info("X1", data_type, input_shape),
+             onnx.helper.make_tensor_value_info("X2", data_type, input_shape)],
+            [onnx.helper.make_tensor_value_info("Y", TensorProto.BOOL, input_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[2].op_type == "Less"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == TensorProto.BOOL
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test MatMul Adapter: 9 -> 8
+    def test_matmul_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        nodes = [onnx.helper.make_node(
+            "MatMul",
+            inputs=["X1", "X2"],
+            outputs=["Y"]
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_matmul",
+            [onnx.helper.make_tensor_value_info("X1", data_type, [3, 4]),
+             onnx.helper.make_tensor_value_info("X2", data_type, [4, 3])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [3, 3])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[2].op_type == "MatMul"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Gemm Adapter: 9 -> 8
+    def test_gemm_9_8(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.UINT64
+
+        nodes = [onnx.helper.make_node(
+            "Gemm",
+            inputs=["X1", "X2", "X3"],
+            outputs=["Y"]
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_gemm",
+            [onnx.helper.make_tensor_value_info("X1", data_type, [3, 4]),
+             onnx.helper.make_tensor_value_info("X2", data_type, [4, 3]),
+             onnx.helper.make_tensor_value_info("X3", data_type, [3, 3])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [3, 3])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[3].op_type == "Gemm"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Helper for Upsample Adapter: 9 -> 8
+    def helper_upsample_with_initializer(self, raw_scale=False):  # type: (bool) -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.FLOAT
+
+        nodes = [onnx.helper.make_node(
+            "Upsample",
+            inputs=["X", "Scales"],
+            outputs=["Y"],
+            mode="nearest"
+        )]
+
+        scale_value = [1.0, 1.0, 2.0, 3.0]
+        scale_tensor = onnx.helper.make_tensor("Scales", onnx.TensorProto.FLOAT, [4], bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
+
+        graph = helper.make_graph(
+            nodes,
+            "test_upsample",
+            [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2]),
+             onnx.helper.make_tensor_value_info("Scales", data_type, [4])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
+            [scale_tensor])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "Upsample"
+        assert len(converted_model.graph.initializer) == 0
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "scales"
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Helper for Upsample Adapter: 9 -> 8
+    def helper_upsample_with_constant(self, raw_scale=False):  # type: (bool) -> None
+        from_opset = 9
+        to_opset = 8
+        data_type = TensorProto.FLOAT
+
+        scale_value = [1.0, 1.0, 2.0, 3.0]
+        scale_tensor = onnx.helper.make_tensor("const_value", onnx.TensorProto.FLOAT, [4], bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
+        nodes = [
+            onnx.helper.make_node(
+                'Constant',
+                inputs=[],
+                outputs=['Constant_Output'],
+                value=scale_tensor),
+            onnx.helper.make_node(
+                "Upsample",
+                inputs=["X", "Constant_Output"],
+                outputs=["Y"],
+                mode="nearest")]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_upsample",
+            [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
+            value_info=[onnx.helper.make_tensor_value_info("Constant_Output", data_type, [4])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert len(converted_model.graph.node) == 1
+        assert converted_model.graph.node[0].op_type == "Upsample"
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "scales"
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_constant_node_9_8(self):  # type: () -> None
+        self.helper_upsample_with_constant(raw_scale=False)
+
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_initializer_9_8(self):  # type: () -> None
+        self.helper_upsample_with_initializer(raw_scale=False)
+
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_raw_initializer_9_8(self):  # type: () -> None
+        self.helper_upsample_with_constant(raw_scale=True)
+
+    # Test Upsample Adapter: 9 -> 8
+    def test_upsample_with_raw_constant_node_9_8(self):  # type: () -> None
+        self.helper_upsample_with_constant(raw_scale=True)
 
 
 if __name__ == '__main__':
