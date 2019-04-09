@@ -11,7 +11,7 @@ from . import expect
 from typing import Sequence
 
 
-class SingleSign(Base):
+class Update(Base):
 
     @staticmethod
     def export():  # type: () -> None
