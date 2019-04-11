@@ -1628,7 +1628,7 @@ class TestShapeInference(unittest.TestCase):
         self._make_qlinearmatmul_test_allow_unknown((4, None), (None, "a"), (4, "a"))
         self._make_qlinearmatmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), ("a", 4, 5))
         self._make_qlinearmatmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5))
-    
+
     def _make_matmulinteger_test(self, shape1, shape2):  # type: (Sequence[int], Sequence[int]) -> None
         expected_out_shape = np.matmul(np.arange(np.product(shape1)).reshape(shape1),
                                        np.arange(np.product(shape2)).reshape(shape2)).shape
@@ -1657,7 +1657,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('QuantizeLinear', ['x', 'y_scale', 'y_zero_point'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
-    
+
     def test_dequantizelinear(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (30, 4, 5)),
@@ -1666,6 +1666,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('DequantizeLinear', ['x', 'x_scale', 'x_zero_point'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
+
 
 if __name__ == '__main__':
     unittest.main()
