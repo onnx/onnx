@@ -115,7 +115,7 @@ void convPoolShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    auto& second_input_shape = getInputShape(ctx, 1);
+    auto& second_input_shape = getInputShape(ctx, input2Idx);
     if (second_input_shape.dim_size() < 1) {
       fail_shape_inference("Second input tensor has wrong dimension");
     }
@@ -1026,24 +1026,26 @@ ONNX_OPERATOR_SET_SCHEMA(
                                               ctx) {
           auto x_type = ctx.getInputType(0);
           auto w_type = ctx.getInputType(3);
-          auto y_type = ctx.getOutputType(0);
-          if (nullptr == x_type || nullptr == w_type || nullptr == y_type ||
+          if (nullptr == x_type || nullptr == w_type ||
               x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
               w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
             fail_type_inference(
-                "inputs are expected to have tensor type and output type should not be null.");
+                "inputs are expected to have tensor type.");
           }
 
-          if (ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  x_type->tensor_type().elem_type() &&
-              ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  w_type->tensor_type().elem_type()) {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::UINT8);
-          } else {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::INT8);
+          auto x_zero_point_type = ctx.getInputType(2);
+          if(nullptr == x_zero_point_type || x_zero_point_type->tensor_type().elem_type() != x_type->tensor_type().elem_type()) {
+              fail_type_inference(
+                "input and zero_point pair is expected to have be same type.");
           }
+
+          auto w_zero_point_type = ctx.getInputType(5);
+          if(nullptr == w_zero_point_type || w_zero_point_type->tensor_type().elem_type() != w_type->tensor_type().elem_type()) {
+              fail_type_inference(
+                "weight and zero_point pair is expected to have same type.");
+          }
+
+          propagateElemTypeFromInputToOutput(ctx, 7, 0);
 
           convPoolShapeInference(ctx, true, false, 0, 3);
         }));
