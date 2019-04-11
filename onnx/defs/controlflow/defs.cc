@@ -779,14 +779,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     Update,
     10,
     OpSchema()
-        .SetDoc("Assign the input value (denoted by X) to its output (denoted by Y). "
-            "Notice that this operator is not able to produce new variable, so Y must "
-            "be created by another operator before evaluating this operator. One variable "
-            "can only be assigned by one Update. When evaluating a graph, Update operators "
-            "would be excluded in the beginning and evaluated in parallel after the rest of "
-            "the graph are computed.")
-        .Input(0, "X", "input", "T")
-        .Output(0, "Y", "output", "T")
+        .SetDoc("Copy the input value (denoted by \"value\") to another existing variable "
+            "(denoted by \"ref\"). This operator can be evaluated once both inputs are "
+            "produced by other operators.")
+        .Input(0, "ref", "input", "T")
+        .Input(0, "value", "input", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),

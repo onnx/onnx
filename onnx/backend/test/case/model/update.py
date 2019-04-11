@@ -18,7 +18,7 @@ class Update(Base):
         node = onnx.helper.make_node(
             'Add', ['x', 'y'], ['z'], name='MyAdd')
         updateNode = onnx.helper.make_node(
-            'Update', ['x'], ['z'], name='MyUpdate')
+            'Update', ['z'], ['x'], name='MyUpdate')
 
         # Evaluate the graph while Update is ignored.
         x = np.array([4.0, -2.0]).astype(np.float32)

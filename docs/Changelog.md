@@ -9858,7 +9858,7 @@ This version of the operator has been available since version 10 of the default 
 
 ### <a name="Update-10"></a>**Update-10**</a>
 
-  Assign the input value (denoted by X) to its output (denoted by Y). Notice that this operator is not able to produce new variable, so Y must be created by another operator before evaluating this operator. One variable can only be assigned by one Update. When evaluating a graph, Update operators would be excluded in the beginning and evaluated in parallel after the rest of the graph are computed.
+  Copy the input value (denoted by "value") to another existing variable (denoted by "ref"). This operator can be evaluated once both inputs are produced by other operators.
 
 #### Version
 
@@ -9867,16 +9867,12 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>value</tt> : T</dt>
 <dd>input</dd>
 </dl>
 
 #### Outputs
 
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>output</dd>
-</dl>
 
 #### Type Constraints
 
