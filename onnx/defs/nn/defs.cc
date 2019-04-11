@@ -1845,7 +1845,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "max_output_boxes_per_class",
-            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Value should be greater than 0",
+            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.",
             "tensor(int32)",
             OpSchema::Optional)
         .Input(
