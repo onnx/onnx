@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -884,7 +884,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "axes",
-            "List of positive integers, indicate the dimensions to squeeze.",
+            "List of non-negative integers, indicate the dimensions to squeeze.",
             AttributeProto::INTS,
             OPTIONAL)
         .SetDoc(Squeeze_ver1_doc)
@@ -940,7 +940,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "axes",
-            "List of positive integers, indicate the dimensions to be inserted",
+            "List of non-negative integers, indicate the dimensions to be inserted",
             AttributeProto::INTS)
         .SetDoc(Unsqueeze_ver1_doc)
         .Input(0, "data", "Original tensor", "T")

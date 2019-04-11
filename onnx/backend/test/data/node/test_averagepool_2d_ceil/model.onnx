@@ -1,9 +1,9 @@
-backend-test:¦
+backend-test:¤
 N
 xy"AveragePool*
 	ceil_mode *
 kernel_shape@@ *
-strides@@ export_averagepool_2d_ceilZ
+strides@@ test_averagepool_2d_ceilZ
 x
 
 
