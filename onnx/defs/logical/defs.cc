@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -87,7 +87,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input to float tensors.")
+            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
@@ -101,7 +101,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input to float tensors.")
+            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},

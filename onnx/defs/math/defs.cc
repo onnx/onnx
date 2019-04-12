@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include <functional>
@@ -256,6 +256,26 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, 0.01f)
         .SetDoc(LeakyRelu_ver6_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* ThresholdedRelu_ver10_doc = R"DOC(
+ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
+is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ThresholdedRelu,
+    10,
+    OpSchema()
+        .SetDoc(ThresholdedRelu_ver10_doc)
+        .Attr("alpha", "Threshold value", AttributeProto::FLOAT, 1.0f)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .TypeConstraint(
@@ -727,6 +747,79 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+void matmulShapeInference(
+    ONNX_NAMESPACE::InferenceContext& ctx,
+    int input1Idx,
+    int input2Idx) {
+  if (!hasInputShape(ctx, input1Idx) && !hasInputShape(ctx, input2Idx)) {
+    return;
+  }
+
+  const auto shape0 = ctx.getInputType(input1Idx)->tensor_type().shape();
+  const auto shape1 = ctx.getInputType(input2Idx)->tensor_type().shape();
+
+  if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
+    fail_shape_inference("Input tensors of wrong rank (0).");
+  }
+
+  ONNX_NAMESPACE::TensorShapeProto shapeL, shapeR;
+
+  // First promote each shape to at least rank-2. This logic is
+  // specific to matmul, not generic broadcasting.
+  {
+    if (shape0.dim_size() == 1) {
+      shapeL.add_dim()->set_dim_value(1);
+      *shapeL.add_dim() = shape0.dim(0);
+    } else {
+      *shapeL.mutable_dim() = shape0.dim();
+    }
+    if (shape1.dim_size() == 1) {
+      *shapeR.add_dim() = shape1.dim(0);
+      shapeR.add_dim()->set_dim_value(1);
+    } else {
+      *shapeR.mutable_dim() = shape1.dim();
+    }
+  }
+
+  // Check for compatible matrix multiply dimensions
+  {
+    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
+    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    if (dimL.has_dim_value() && dimR.has_dim_value() &&
+        dimL.dim_value() != dimR.dim_value()) {
+      fail_shape_inference("Incompatible dimensions for matrix multiplication");
+    }
+  }
+
+  ONNX_NAMESPACE::TensorShapeProto resultShape;
+
+  // Now call out to generic multidimensional broadcasting for
+  // the broadcastable prefixes.
+  {
+    ONNX_NAMESPACE::TensorShapeProto prefixShapeL, prefixShapeR;
+    for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
+      *prefixShapeL.add_dim() = shapeL.dim(i);
+    }
+    for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
+      *prefixShapeR.add_dim() = shapeR.dim(i);
+    }
+    bidirectionalBroadcastShapeInference(
+        prefixShapeL, prefixShapeR, resultShape);
+  }
+
+  // Back to matmul-specific. Add the trailing dimensions back in.
+  {
+    if (shape0.dim_size() != 1) {
+      *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
+    }
+    if (shape1.dim_size() != 1) {
+      *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
+    }
+  }
+
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+}
+
 static const char* MatMul_ver9_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC";
@@ -751,79 +844,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(MatMul_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (!hasNInputShapes(ctx, 2)) {
-            return;
-          }
-
-          const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
-          const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
-
-          if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-            fail_shape_inference("Input tensors of wrong rank (0).");
-          }
-
-          TensorShapeProto shapeL, shapeR;
-
-          // First promote each shape to at least rank-2. This logic is
-          // specific to matmul, not generic broadcasting.
-          {
-            if (shape0.dim_size() == 1) {
-              shapeL.add_dim()->set_dim_value(1);
-              *shapeL.add_dim() = shape0.dim(0);
-            } else {
-              *shapeL.mutable_dim() = shape0.dim();
-            }
-            if (shape1.dim_size() == 1) {
-              *shapeR.add_dim() = shape1.dim(0);
-              shapeR.add_dim()->set_dim_value(1);
-            } else {
-              *shapeR.mutable_dim() = shape1.dim();
-            }
-          }
-
-          // Check for compatible matrix multiply dimensions
-          {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
-            if (dimL.has_dim_value() && dimR.has_dim_value() &&
-                dimL.dim_value() != dimR.dim_value()) {
-              fail_shape_inference(
-                  "Incompatible dimensions for matrix multiplication");
-              ;
-            }
-          }
-
-          TensorShapeProto resultShape;
-
-          // Now call out to generic multidimensional broadcasting for
-          // the broadcastable prefixes.
-          {
-            TensorShapeProto prefixShapeL, prefixShapeR;
-            for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
-              *prefixShapeL.add_dim() = shapeL.dim(i);
-            }
-            for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
-              *prefixShapeR.add_dim() = shapeR.dim(i);
-            }
-            bidirectionalBroadcastShapeInference(
-                prefixShapeL, prefixShapeR, resultShape);
-          }
-
-          // Back to matmul-specific. Add the trailing dimensions back in.
-          {
-            if (shape0.dim_size() != 1) {
-              *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
-            }
-            if (shape1.dim_size() != 1) {
-              *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
-            }
-          }
-
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
-              resultShape;
+          matmulShapeInference(ctx, 0, 1);
         }));
 
-static const char* TopK_ver1_doc = R"DOC(
+static const char* TopK_ver10_doc = R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
@@ -831,17 +855,22 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-
+   
 Given two equivalent values, this operator uses the indices along the axis  as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    1,
+    10,
     OpSchema()
-        .SetDoc(TopK_ver1_doc)
+        .SetDoc(TopK_ver10_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
+        .Input(
+            1,
+            "K",
+            "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
+            "tensor(int64)")
         .Output(
             0,
             "Values",
@@ -864,11 +893,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int64)"},
             "Constrain index tensor to int64")
         .Attr(
-            "k",
-            "Number of top elements to retrieve",
-            AttributeProto::INT,
-            true)
-        .Attr(
             "axis",
             "Dimension on which to do the sort.",
             AttributeProto::INT,
@@ -888,15 +912,30 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += rank;
           if (axis < 0 || axis >= rank)
             fail_shape_inference("Invalid value for attribute axis");
-          int64_t k = getAttribute(ctx, "k", -1);
-          if (k <= 0)
-            fail_shape_inference("Invalid value for attribute k");
           // TODO: unclear what results should be if axis has less than k
           // elements.
-          TensorShapeProto result_shape = input_shape;
-          result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
-          updateOutputShape(ctx, 0, result_shape);
-          updateOutputShape(ctx, 1, result_shape);
+          // Infer output shape if 'K' is available
+          const auto* k = ctx.getInputData(1);
+          if (nullptr != k) {
+            if (k->dims_size() != 1 || k->int64_data_size() != 1 ||
+                k->data_type() != TensorProto::INT64)
+              fail_shape_inference(
+                  "K input must be a one-dimensional tensor of size 1 and of type int64.");
+            TensorShapeProto result_shape = input_shape;
+            result_shape.mutable_dim(static_cast<int>(axis))
+                ->set_dim_value(k->int64_data(0));
+            updateOutputShape(ctx, 0, result_shape);
+            updateOutputShape(ctx, 1, result_shape);
+          } else {
+            // Infer output shapes' rank in any case
+            auto* output_shape_0 = getOutputShape(ctx, 0);
+            auto* output_shape_1 = getOutputShape(ctx, 1);
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape_0->add_dim();
+              output_shape_1->add_dim();
+            }
+          }
+          return;
         }));
 
 static const char* Sin_ver7_doc = R"DOC(
@@ -1168,4 +1207,173 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Sign_ver9_doc = R"DOC(
+Calculate the sign of the given input tensor element-wise.
+If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sign,
+    9,
+    OpSchema()
+        .SetDoc(Sign_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The sign of the input tensor "
+            "computed element-wise. It has the same shape and type of the input.",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Erf_ver9_doc = R"DOC(
+Computes the error function of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Erf,
+    9,
+    OpSchema()
+        .SetDoc(Erf_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The error function of the input tensor "
+            "computed element-wise. It has the same shape and type of the input.",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* QLinearMatMul_ver10_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
+The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
+Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
+They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
+the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
+and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    QLinearMatMul,
+    10,
+    OpSchema()
+        .SetDoc(QLinearMatMul_ver10_doc)
+        .Input(0, "a", "N-dimensional quantized matrix a", "T1")
+        .Input(1, "a_scale", "scale of quantized input a", "tensor(float)")
+        .Input(2, "a_zero_point", "zero point of quantized input a", "T1")
+        .Input(3, "b", "N-dimensional quantized matrix b", "T2")
+        .Input(4, "b_scale", "scale of quantized input b", "tensor(float)")
+        .Input(5, "b_zero_point", "zero point of quantized input b", "T2")
+        .Input(6, "y_scale", "scale of quantized output y", "tensor(float)")
+        .Input(7, "y_zero_point", "zero point of quantized output y", "T3")
+        .Output(0, "y", "Quantized matrix multiply results from a * b", "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input a and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input b and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain output y and its zero point data type to 8-bit integer tensor.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+                                              ctx) {
+          auto a_type = ctx.getInputType(0);
+          auto b_type = ctx.getInputType(3);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+              a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+              b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          if (ONNX_NAMESPACE::TensorProto::UINT8 ==
+                  a_type->tensor_type().elem_type() &&
+              ONNX_NAMESPACE::TensorProto::UINT8 ==
+                  b_type->tensor_type().elem_type()) {
+            y_type->mutable_tensor_type()->set_elem_type(
+                ONNX_NAMESPACE::TensorProto::UINT8);
+          } else {
+            y_type->mutable_tensor_type()->set_elem_type(
+                ONNX_NAMESPACE::TensorProto::INT8);
+          }
+
+          matmulShapeInference(ctx, 0, 3);
+        }));
+
+static const char* MatMulInteger_ver10_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MatMulInteger,
+    10,
+    OpSchema()
+        .SetDoc(MatMulInteger_ver10_doc)
+        .Input(0, "A", "N-dimensional matrix A", "T1")
+        .Input(1, "B", "N-dimensional matrix B", "T2")
+        .Input(
+            2,
+            "a_zero_point",
+            "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, "
+            "which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements "
+            "should be equal to the number of rows of input 'A'.",
+            "T1",
+            OpSchema::Optional)
+        .Input(
+            3,
+            "b_zero_point",
+            "Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
+            "which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number "
+            "of elements should be equal to the number of columns of input 'B'.",
+            "T2",
+            OpSchema::Optional)
+        .Output(0, "Y", "Matrix multiply results from A * B", "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input A data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input B data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int32)"},
+            "Constrain output Y data type as 32-bit integer tensor.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+                                              ctx) {
+          auto a_type = ctx.getInputType(0);
+          auto b_type = ctx.getInputType(1);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+              a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+              b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          // Right now we only support int32
+          y_type->mutable_tensor_type()->set_elem_type(
+              ONNX_NAMESPACE::TensorProto::INT32);
+
+          matmulShapeInference(ctx, 0, 1);
+        }));
+
 } // namespace ONNX_NAMESPACE
