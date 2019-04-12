@@ -138,4 +138,68 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrains input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
+static const char* LeftShift_ver10_doc = R"DOC(
+Left bitwise shift. For each input element, this operator moves its
+ binary representation toward the left side so that the input value 
+ is increased. The input X is the tensor to be shifted while another
+ input Y specifies the amounts of shift. For example, if X and S are
+ [1, 2] and [1, 2], respectively, then the corresponding output Y
+ would be [2, 8]. Because this operator supports Numpy-style broadcasting,
+ X's and Y's shapes are not necessarily identical.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LeftShift,
+    10,
+    OpSchema()
+        .SetDoc(std::string(LeftShift_ver10_doc) + GenerateBroadcastingDocMul())
+        .Input(0, "X", "First operand, input to be shifted.", "T")
+        .Input(1, "Y", "Second operand, amounts of shift.", "T")
+        .Output(0, "Z", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(uint8)", "tensor(uint16)", "tensor(uint32)", "tensor(uint64)"},
+            "Constrain input and output types to integer tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
+
+static const char* RightShift_ver10_doc = R"DOC(
+Right bitwise shift. For each input element, this operator moves its
+ binary representation toward the right side so that the input value 
+ is decreased. The input X is the tensor to be shifted while another
+ input Y specifies the amounts of shift. For example, if X and S are
+ [1, 4] and [1, 1], respectively, then the corresponding output Z
+ would be [0, 2]. Because this operator supports Numpy-style broadcasting,
+ X's and Y's shapes are not necessarily identical.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RightShift,
+    10,
+    OpSchema()
+        .SetDoc(std::string(RightShift_ver10_doc) + GenerateBroadcastingDocMul())
+        .Input(0, "X", "First operand, input to be shifted.", "T")
+        .Input(1, "Y", "Second operand, amounts of shift.", "T")
+        .Output(0, "Z", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(uint8)", "tensor(uint16)", "tensor(uint32)", "tensor(uint64)"},
+            "Constrain input and output types to integer tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
+
 }  // namespace ONNX_NAMESPACE
