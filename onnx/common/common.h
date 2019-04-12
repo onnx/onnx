@@ -9,4 +9,4 @@ namespace ONNX_NAMESPACE {
 #else
 #define ONNX_UNUSED_PARAMETER(x) (void)(x)
 #endif
-}
+} // namespace ONNX_NAMESPACE
