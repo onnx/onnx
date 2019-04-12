@@ -789,6 +789,5 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          updateOutputElemType(ctx, 0, TensorProto::INT64);
         }));
 } // namespace ONNX_NAMESPACE
