@@ -1080,6 +1080,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                                  ->mutable_tensor_type()
                                  ->mutable_shape()
                                  ->add_dim();
+              auto begin_pad_index = i * 2;
               if (ctx.getInputType(0)
                       ->tensor_type()
                       .shape()
@@ -1091,8 +1092,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                         .shape()
                         .dim((int)i)
                         .dim_value() +
-                    pads->int64_data(i) + pads->int64_data(i + 1));
-              } else if (pads->int64_data(i) + pads->int64_data(i + 1) == 0) {
+                    pads->int64_data((int)(begin_pad_index)) + pads->int64_data((int)(begin_pad_index + 1)));
+              } else if (pads->int64_data((int)(begin_pad_index)) + pads->int64_data((int)(begin_pad_index + 1)) == 0) {
                 *newdim = input_shape.dim((int)i);
               }
             }
