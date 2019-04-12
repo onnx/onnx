@@ -999,7 +999,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver2_doc = R"DOC(
+static const char* Pad_ver10_doc = R"DOC(
 Given `data` tensor, pads, mode, and value.
 Example:
   Insert 0 pads to the beginning of the second dimension.
@@ -1020,73 +1020,90 @@ Example:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    2,
+    10,
     OpSchema()
-        .Attr(
-            "pads",
-            "List of integers indicating the number of padding elements to add or remove (if negative) "
-            "at the beginning and end of each axis. For 2D it is the number of pixels. "
-            "`pads` rank should be double of the input's rank. `pads` format should be as follow "
-            "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-            "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-            "the end of axis `i`.",
-            AttributeProto::INTS)
         .Attr(
             "mode",
             "Three modes: constant(default), reflect, edge",
             AttributeProto::STRING,
             std::string("constant"))
-        .Attr(
-            "value",
-            "One float, indicates the value to be filled.",
-            AttributeProto::FLOAT,
-            0.0f)
-        .SetDoc(Pad_ver2_doc)
+        .SetDoc(Pad_ver10_doc)
         .Input(0, "data", "Input tensor.", "T")
+        .Input(
+            1,
+            "pads",
+            "2D tensor of integers indicating the number of padding elements to add or remove (if negative) "
+            "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
+            "`pads` shape should be [input_rank, 2]. `pads` format should be as follow "
+            "[[x1_begin, x1_end], ..., [xn_begin, xn_end,]], where xi_begin is the number of pixels "
+            "added at the beginning of axis `i` and xi_end, the number of pixels added at "
+            "the end of axis `i`.",
+            "T1")
+        .Input(
+            2,
+            "value",
+            "Optional rank 1 tensor containing 1 float indicating the value to be filled if the mode chosen is `constant` (by default it is 0.0f).",
+            "T2")
         .Output(0, "output", "Tensor after padding.", "T")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int64)"},
+            "Constrain `pads` tensor to int64 tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float)"},
+            "Constrain `value` tensor to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (!hasNInputShapes(ctx, 1)) {
+          // Shape inference
+          if (!hasNInputShapes(ctx, 2)) {
             return;
           }
 
           auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          // Infer output shape if 'pads' tensor is available
+          const auto* pads = ctx.getInputData(1);
+          if (nullptr != pads) {
+            if (pads->dims_size() != 2 ||
+                pads->data_type() != TensorProto::INT64)
+              fail_shape_inference(
+                  "'pads' input must be a one-dimensional tensor of type int64 and of size twice the input rank.");
 
-          std::vector<int64_t> pads;
-          if (!getRepeatedAttribute(ctx, "pads", pads))
-            fail_shape_inference("Attribute value for pads is required");
-          if (pads.size() != static_cast<size_t>(input_shape.dim_size() * 2)) {
-            fail_shape_inference("Attribute pads has incorrect length");
-            ;
-          }
-
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
-            auto* newdim = ctx.getOutputType(0)
-                               ->mutable_tensor_type()
-                               ->mutable_shape()
-                               ->add_dim();
-            if (ctx.getInputType(0)
-                    ->tensor_type()
-                    .shape()
-                    .dim((int)i)
-                    .has_dim_value()) {
-              newdim->set_dim_value(
-                  ctx.getInputType(0)
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
+              auto* newdim = ctx.getOutputType(0)
+                                 ->mutable_tensor_type()
+                                 ->mutable_shape()
+                                 ->add_dim();
+              if (ctx.getInputType(0)
                       ->tensor_type()
                       .shape()
                       .dim((int)i)
-                      .dim_value() +
-                  pads[i] + pads[input_shape.dim_size() + i]);
-            } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
-              *newdim = input_shape.dim((int)i);
+                      .has_dim_value()) {
+                newdim->set_dim_value(
+                    ctx.getInputType(0)
+                        ->tensor_type()
+                        .shape()
+                        .dim((int)i)
+                        .dim_value() +
+                    pads->int64_data(i) + pads->int64_data(i + 1));
+              } else if (pads->int64_data(i) + pads->int64_data(i + 1) == 0) {
+                *newdim = input_shape.dim((int)i);
+              }
+            }
+          } else {
+            // Infer ouput shapes' rank in any case
+            auto* output_shape_0 = getOutputShape(ctx, 0);
+            for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
+              output_shape_0->add_dim();
             }
           }
+          return;
         }));
 
 static const char* SpaceToDepth_ver1_doc =
