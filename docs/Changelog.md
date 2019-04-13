@@ -9335,6 +9335,55 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="BitShift-10"></a>**BitShift-10**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+   attribute "direction" is "RIGHT", this operator moves its binary representation toward
+   the right side so that the input value is effectively decreased. If the attribute "direction"
+   is "LEFT", bits of binary representation moves toward the left side, which results the
+   increase of its actual value. The input X is the tensor to be shifted and another input
+   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+   
+   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+   not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
 ### <a name="ConvInteger-10"></a>**ConvInteger-10**</a>
 
   The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
@@ -9471,45 +9520,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrain output mask types to boolean tensors.</dd>
-</dl>
-
-### <a name="LeftShift-10"></a>**LeftShift-10**</a>
-
-  Left bitwise shift. For each input element, this operator moves its
-   binary representation toward the left side so that the input value 
-   is increased. The input X is the tensor to be shifted while another
-   input Y specifies the amounts of shift. For example, if X and S are
-   [1, 2] and [1, 2], respectively, then the corresponding output Y
-   would be [2, 8]. Because this operator supports Numpy-style broadcasting,
-   X's and Y's shapes are not necessarily identical.
-  
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>First operand, input to be shifted.</dd>
-<dt><tt>Y</tt> : T</dt>
-<dd>Second operand, amounts of shift.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Z</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
-<dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 ### <a name="MatMulInteger-10"></a>**MatMulInteger-10**</a>
@@ -9833,45 +9843,6 @@ This version of the operator has been available since version 10 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
-</dl>
-
-### <a name="RightShift-10"></a>**RightShift-10**</a>
-
-  Right bitwise shift. For each input element, this operator moves its
-   binary representation toward the right side so that the input value 
-   is decreased. The input X is the tensor to be shifted while another
-   input Y specifies the amounts of shift. For example, if X and S are
-   [1, 4] and [1, 1], respectively, then the corresponding output Z
-   would be [0, 2]. Because this operator supports Numpy-style broadcasting,
-   X's and Y's shapes are not necessarily identical.
-  
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>First operand, input to be shifted.</dd>
-<dt><tt>Y</tt> : T</dt>
-<dd>Second operand, amounts of shift.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Z</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
-<dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 ### <a name="Slice-10"></a>**Slice-10**</a>

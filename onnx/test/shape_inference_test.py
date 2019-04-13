@@ -570,6 +570,30 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_bitshift(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT32, (16, 4, 1)),
+             ('y', TensorProto.UINT32, (1, 2, 3))],
+            [make_node('BitShift', ['x', 'y'], 'z', direction="RIGHT")],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.UINT32, (8, 1, 0))])
+
+    def test_bitshift_broadcast_to_first(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT32, (16, 4, 1)),
+             ('y', TensorProto.UINT32, (1))],
+            [make_node('BitShift', ['x', 'y'], 'z', direction="RIGHT")],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.UINT32, (8, 2, 0))])
+
+    def test_bitshift_broadcast_to_second(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT32, (16)),
+             ('y', TensorProto.UINT32, (1, 2, 3))],
+            [make_node('BitShift', ['x', 'y'], 'z', direction="RIGHT")],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.UINT32, (2, 4, 8))])
+
     def test_sum_single(self):  # type: () -> None
         self._identity_prop('Sum')
 

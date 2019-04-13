@@ -156,7 +156,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     10,
     OpSchema()
-        .SetDoc(std::string(RightShift_ver10_doc) + GenerateBroadcastingDocMul())
+        .SetDoc(std::string(BitShift_ver10_doc) + GenerateBroadcastingDocMul())
         .Input(0, "X", "First operand, input to be shifted.", "T")
         .Input(1, "Y", "Second operand, amounts of shift.", "T")
         .Output(0, "Z", "Output tensor", "T")
