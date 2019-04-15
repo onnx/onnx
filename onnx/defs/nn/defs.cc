@@ -32,7 +32,6 @@ void convPoolShapeInference(
     bool require_kernel_shape,
     int input1Idx,
     int input2Idx) {
-
   // we need the first input shape for this inference.
   if (!hasInputShape(ctx, input1Idx)) {
     return;
@@ -1029,19 +1028,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr == x_type || nullptr == w_type ||
               x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
               w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
-            fail_type_inference(
-                "inputs are expected to have tensor type.");
+            fail_type_inference("inputs are expected to have tensor type.");
           }
 
           auto x_zero_point_type = ctx.getInputType(2);
-          if(nullptr == x_zero_point_type || x_zero_point_type->tensor_type().elem_type() != x_type->tensor_type().elem_type()) {
-              fail_type_inference(
+          if (nullptr == x_zero_point_type ||
+              x_zero_point_type->tensor_type().elem_type() !=
+                  x_type->tensor_type().elem_type()) {
+            fail_type_inference(
                 "input and zero_point pair is expected to have be same type.");
           }
 
           auto w_zero_point_type = ctx.getInputType(5);
-          if(nullptr == w_zero_point_type || w_zero_point_type->tensor_type().elem_type() != w_type->tensor_type().elem_type()) {
-              fail_type_inference(
+          if (nullptr == w_zero_point_type ||
+              w_zero_point_type->tensor_type().elem_type() !=
+                  w_type->tensor_type().elem_type()) {
+            fail_type_inference(
                 "weight and zero_point pair is expected to have same type.");
           }
 

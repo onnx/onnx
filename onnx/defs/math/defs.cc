@@ -1297,19 +1297,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr == a_type || nullptr == b_type ||
               a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
               b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
-            fail_type_inference(
-                "inputs are expected to have tensor type.");
+            fail_type_inference("inputs are expected to have tensor type.");
           }
 
           auto a_zero_point_type = ctx.getInputType(2);
-          if(nullptr == a_zero_point_type || a_zero_point_type->tensor_type().elem_type() != a_type->tensor_type().elem_type()) {
-              fail_type_inference(
+          if (nullptr == a_zero_point_type ||
+              a_zero_point_type->tensor_type().elem_type() !=
+                  a_type->tensor_type().elem_type()) {
+            fail_type_inference(
                 "input and zero_point pair is expected to have be same type.");
           }
 
           auto b_zero_point_type = ctx.getInputType(5);
-          if(nullptr == b_zero_point_type || b_zero_point_type->tensor_type().elem_type() != b_type->tensor_type().elem_type()) {
-              fail_type_inference(
+          if (nullptr == b_zero_point_type ||
+              b_zero_point_type->tensor_type().elem_type() !=
+                  b_type->tensor_type().elem_type()) {
+            fail_type_inference(
                 "input and zero_point pair is expected to have same type.");
           }
 
