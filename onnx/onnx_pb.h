@@ -26,9 +26,9 @@
 // This is used in e.g. ONNX's protobuf files: when building the main library,
 // it is defined as ONNX_EXPORT to fix a Windows global-variable-in-dll
 // issue, and for anyone dependent on ONNX it will be defined as
-// ONNX_IMPORT. ONNX_EXPORT_SYMBOL can also be set when being built
+// ONNX_IMPORT. ONNX_EXPORT_SYMBOLS can also be set when being built
 // statically if ONNX is being linked into a shared library that wants
-// to export the ONNX APIs and classes, in this case, ONNX_IMPORT_SYMBOL
+// to export the ONNX APIs and classes, in this case, ONNX_IMPORT_SYMBOLS
 // should be set when building the program that links to the shared library.
 //
 // More details on Windows dllimport / dllexport can be found at
@@ -36,14 +36,18 @@
 //
 // This solution is similar to
 // https://github.com/pytorch/pytorch/blob/master/caffe2/core/common.h
-#if defined(ONNX_EXPORT_SYMBOL)
+
+#if defined(_MSC_VER)
+// dllimport will fail non-dll build, so extra flags is used.
+#if defined(ONNX_EXPORT_SYMBOLS)
 #define ONNX_API ONNX_EXPORT
-#else 
-#if defined(ONNX_IMPORT_SYMBOL)
+#elif defined(ONNX_IMPORT_SYMBOLS)
 #define ONNX_API ONNX_IMPORT
 #else
 #define ONNX_API
 #endif
+#else
+#define ONNX_API ONNX_IMPORT
 #endif
 
 #ifdef ONNX_ML
