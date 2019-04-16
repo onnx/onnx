@@ -40,7 +40,7 @@ before_build:
   IF "%_prefix%"=="C:\Miniconda37"
   (
   conda install -y -c conda-forge libprotobuf=3.6.1 numpy &&
-  setx “%path%;%CONDA_PREFIX%\Library\bin”
+  set PATH=%PATH%;%CONDA_PREFIX%\Library\bin
   )
   ELSE
   (
