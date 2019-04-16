@@ -35,7 +35,7 @@ install:
 
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
-- cmd: conda install -y -c conda-forge libprotobuf=3.6.1 numpy
+- cmd: conda install -y -c conda-forge libprotobuf=3.7.0 numpy
 - cmd: pip install --quiet pytest nbval numpy
 
 build_script:
