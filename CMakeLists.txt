@@ -458,6 +458,8 @@ if(MSVC)
                                          # unsigned type, result still unsigned:
                                          # include\google\protobuf\wire_format_l
                                          # ite.h
+			         /wd4244 # new potential loss of precition introduced
+				         # in 3.7.0
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
