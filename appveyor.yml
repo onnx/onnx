@@ -18,13 +18,13 @@ environment:
 
   matrix:
   # onnx-ml
-  - CONDA_PREFIX: C:\Miniconda35-x64
+  #- CONDA_PREFIX: C:\Miniconda35-x64
 
-  - CONDA_PREFIX: C:\Miniconda36-x64
+  #- CONDA_PREFIX: C:\Miniconda36-x64
 
-  - CONDA_PREFIX: C:\Miniconda36
+  #- CONDA_PREFIX: C:\Miniconda36
 
-  - CONDA_PREFIX: C:\Miniconda35
+  #- CONDA_PREFIX: C:\Miniconda35
 
   - CONDA_PREFIX: C:\Miniconda37-x64
 
@@ -39,7 +39,7 @@ before_build:
 - >
   IF "%_prefix%"=="C:\Miniconda37"
   (
-  conda install -y -c conda-forge libprotobuf=3.6.1 numpy
+  conda install -y -c libprotobuf=3.6.1 numpy
   )
   ELSE
   (
