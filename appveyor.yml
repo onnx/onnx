@@ -39,7 +39,7 @@ before_build:
 - >
   IF "%_prefix%"=="C:\Miniconda37"
   (
-  conda install -y -c libprotobuf=3.6.1 numpy
+  conda install -y libprotobuf=3.6.1 numpy
   )
   ELSE
   (
