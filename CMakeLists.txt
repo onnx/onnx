@@ -306,7 +306,7 @@ if (MSVC)
   if (BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
   else()
-    set(ONNX_API_DEFINE "-DONNX_API=")
+    set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllimport)")
   endif()
 else()
   # On non-Windows, hide all symbols we don't need
