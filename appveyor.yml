@@ -35,9 +35,9 @@ install:
 
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
+- cmd: SET _prefix=%CONDA_PREFIX:~0,14%
 - >
-  SET _prefix=%CONDA_PREFIX:~0,14% &&
-  IF "%_prefix%" == "C:\Miniconda37"
+  IF "%_prefix%"=="C:\Miniconda37"
   (
     conda install -y -c conda-forge libprotobuf=3.6.1 numpy &&
   ) ELSE (
