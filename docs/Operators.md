@@ -70,6 +70,7 @@
   * <a href="#MaxRoiPool">MaxRoiPool</a>
   * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
+  * <a href="#MeanSquaredError">MeanSquaredError</a>
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
@@ -7069,6 +7070,47 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 ```
 
 </details>
+
+
+### <a name="MeanSquaredError"></a><a name="meansquarederror">**MeanSquaredError**</a>
+
+  Loss function that measures the
+  mean squared error (squared L2 norm) between each element in the predictions
+  and labels.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output, </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>predictions</tt> : T</dt>
+<dd>The predicted outputs.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, same dimensions as 'predictions'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is none, this has the same shape as labels; otherwise, it is scalar.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
