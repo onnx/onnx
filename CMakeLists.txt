@@ -306,14 +306,16 @@ if (MSVC)
   if (BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     target_compile_definitions(onnx_proto INTERFACE "-DONNX_IMPORT_SYMBOLS")
     target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=__declspec(dllexport)")
+  else()
+    target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=")
   endif()
 else()
   # On non-Windows, hide all symbols we don't need
   set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
   set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+  # ONNX_API is set here only for compiling onnx_proto itself
+  target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
 endif()
-# ONNX_API is set here only for compiling onnx_proto itself
-target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=")
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
