@@ -751,7 +751,7 @@ void matmulShapeInference(
     ONNX_NAMESPACE::InferenceContext& ctx,
     int input1Idx,
     int input2Idx) {
-  if (!hasInputShape(ctx, input1Idx) && !hasInputShape(ctx, input2Idx)) {
+  if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
   }
 
