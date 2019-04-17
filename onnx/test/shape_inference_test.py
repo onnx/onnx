@@ -467,19 +467,22 @@ class TestShapeInference(unittest.TestCase):
 
     def test_pad(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (1, None, 2))],
+            [('x', TensorProto.FLOAT, (1, None, 2)),
+             ('pads', TensorProto.INT64, (6,))],
             [make_node('Pad', ['x', 'pads'], 'y')],
             [],
-            initializer=[make_tensor('pads', TensorProto.INT64, (3, 2,), (1, 1, 3, 0, 1, 1,))])
+            initializer=[make_tensor('pads', TensorProto.INT64, (6,), (1, 3, 1, 1, 0, 1,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, None, 4))])  # type: ignore
-
+        
     def test_constant_pad_2d(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (2, 3, 4, 4))],        
+            [('x', TensorProto.FLOAT, (2, 3, 4, 4)),
+             ('pads', TensorProto.INT64, (8,)),
+             ('value', TensorProto.FLOAT, (1,))],        
             [make_node('Pad', ['x', 'pads', 'value'], 'y', mode="constant")],
             [],
-            initializer=[make_tensor('pads', TensorProto.INT64, (4, 2,), (0, 0, 0, 0, 3, 4, 1, 2,)),
-                         make_tensor('value', TensorProto.FLOAT, (1,), (2.0,))])
+            initializer=[make_tensor('pads', TensorProto.INT64, (8,), (0, 0, 3, 1, 0, 0, 4, 2,)), 
+                         make_tensor('value', TensorProto.FLOAT, (1,), (2,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 11, 7))])
 
     def test_conv(self):  # type: () -> None

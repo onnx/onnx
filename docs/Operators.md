@@ -7860,26 +7860,26 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href="Changelog.md#Pad-2">Pad-2</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>mode</tt> : string (default is constant)</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>One float, indicates the value to be filled.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
+<dt><tt>pads</tt> : T1</dt>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [input_rank] or a 2D tensor of shape [1, input_rank]. `pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, xn_end,...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dt><tt>value</tt> (optional) : T2</dt>
+<dd>(Optional) Rank 1 tensor containing 1 float indicating the value to be filled if the mode chosen is `constant` (by default it is 0.0f).</dd>
 </dl>
 
 #### Outputs
@@ -7894,24 +7894,28 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain `pads` tensor to int64 tensors.</dd>
+<dt><tt>T2</tt> : tensor(float)</dt>
+<dd>Constrain `value` tensor to float tensors.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>constant_pad</summary>
+<summary>constant_pad_with_1D_pads</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Pad',
-    inputs=['x'],
+    inputs=['x', 'pads', 'value'],
     outputs=['y'],
-    mode='constant',
-    value=1.2,
-    pads=[0, 0, 1, 3, 0, 0, 2, 4],
+    mode='constant'
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)
+value = np.array([1.2]).astype(np.float32)        
 y = np.pad(
     x,
     pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
@@ -7919,34 +7923,61 @@ y = np.pad(
     constant_values=1.2,
 )
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_constant_pad')
+expect(node, inputs=[x, pads, value], outputs=[y],
+       name='constant_pad_with_1D_pads')
 ```
 
 </details>
 
 
 <details>
-<summary>reflection_and_edge_pad</summary>
+<summary>constant_pad_with_2D_pads</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([[0, 0, 1, 3, 0, 0, 2, 4]]).astype(np.int64)
+value = np.array([1.2]).astype(np.float32)        
+y = np.pad(
+    x,
+    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+    mode='constant',
+    constant_values=1.2,
+)
+
+expect(node, inputs=[x, pads, value], outputs=[y],
+       name='constant_pad_with_2D_pads')
+```
+
+</details>
+
+
+<details>
+<summary>reflection_and_edge_pad_with_1D_pads</summary>
 
 ```python
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
         'Pad',
-        inputs=['x'],
+        inputs=['x', 'pads'],
         outputs=['y'],
-        mode=mode,
-        pads=[0, 0, 1, 1, 0, 0, 1, 1]
+        mode=mode
     )
     x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)
     y = np.pad(
         x,
         pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
         mode=mode,
     )
 
-    expect(node, inputs=[x], outputs=[y],
-           name='test_{}_pad'.format(mode))
+    expect(node, inputs=[x, pads], outputs=[y],
+           name='test_{}_pad_with_1D_pads'.format(mode))
 ```
 
 </details>

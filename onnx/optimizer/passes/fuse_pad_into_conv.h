@@ -19,7 +19,6 @@
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
-
 struct FusePadIntoConv final : public PredicateBasedPass {
   explicit FusePadIntoConv()
       : PredicateBasedPass(
@@ -32,17 +31,46 @@ struct FusePadIntoConv final : public PredicateBasedPass {
   bool patternMatchPredicate(Node* node) override {
     return node->kind() == kConv && node->inputs()[0]->node()->kind() == kPad;
   }
-  bool runTransform(Node* n, Graph& /*graph*/, NodeDestroyType& destroy_current)
+  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
       override {
     destroy_current = NodeDestroyType::DestroyZero;
 
     // check if Pad is only used by Conv
     if (n->inputs()[0]->uses().size() > 1) {
-        return false;
+      return false;
     }
 
     Node* conv = n;
     Node* pad = n->inputs()[0]->node();
+
+    // first check if 'pad' node has 'pads' input initialized
+    const auto pads_name = pad->inputs()[1]->uniqueName();
+    const auto pads_initializer = graph.getInitializer(pads_name);
+    // 'pad' node has the 'pads' input which has not been initialized -
+    // can't proceed with fusing
+    if (pads_initializer == graph.initializers().end())
+      return false;
+
+    // parse 'pads' data from the initialized input
+    std::vector<int64_t> pads;
+    if (pads_initializer->elem_type() == TensorProto::INT64 &&
+        pads_initializer->is_raw_data()) {
+      const auto& raw_data = pads_initializer->raw();
+      const size_t num_elements = static_cast<size_t>(raw_data.size() / 8);
+      pads.resize(num_elements);
+      const int64_t* int64_data =
+          reinterpret_cast<const int64_t*>(raw_data.c_str());
+      for (size_t i = 0; i < num_elements; ++i) {
+        pads[i] = int64_data[i];
+      }
+    } else if (pads_initializer->elem_type() == TensorProto::INT64) {
+      pads = pads_initializer->int64s();
+    }
+    // not relevant data type for this input -
+    // can't proceed with fusing
+    else {
+      return false;
+    }
 
     std::string pad_mode;
     if (pad->hasAttribute(kmode)) {
@@ -50,9 +78,32 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     } else {
       pad_mode = "constant";
     }
+
     float value = 0.0;
-    if (pad->hasAttribute(kvalue)) {
-      value = static_cast<float>(pad->f(kvalue));
+    // check if the 'pad' node has the optional 'value' input
+    if (pad->inputs().size() == 3) {
+      // check if it has data initialized
+      const auto value_name = pad->inputs()[2]->uniqueName();
+      const auto value_initializer = graph.getInitializer(value_name);
+
+      // 'pad' node has the 'value' input which has not been initialized -
+      // can't proceed with fusing
+      if (value_initializer == graph.initializers().end())
+        return false;
+
+      // parse 'value' data from the initialized input
+      if (value_initializer->elem_type() == TensorProto::FLOAT &&
+          value_initializer->is_raw_data()) {
+        const auto& raw_data = value_initializer->raw();
+        // value should be a 1D Tensor of size 1 containing a float value
+        value = *(reinterpret_cast<const float*>(raw_data.c_str()));
+      } else if (value_initializer->elem_type() == TensorProto::FLOAT) {
+        value = value_initializer->floats()[0];
+      }
+      // not relevant data type for this input
+      else {
+        return false;
+      }
     }
 
     // check if Pad is used to zero-pad the input
@@ -60,18 +111,18 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       return false;
     }
 
-    std::vector<int64_t> pads = pad->is(kpads);
     int pads_size = static_cast<int>(pads.size());
 
     // check if padding is applied only on feature dims
-    if (pads[0] != 0 || pads[1] != 0 ||
-        pads[pads_size / 2] != 0 || pads[pads_size / 2 + 1] != 0) {
+    if (pads[0] != 0 || pads[1] != 0 || pads[pads_size / 2] != 0 ||
+        pads[pads_size / 2 + 1] != 0) {
       return false;
     }
 
     // check if padding is only positive
-    if (std::any_of(pads.begin(), pads.end(),
-        [](int64_t local_value) { return local_value < 0; })) {
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t local_value) {
+          return local_value < 0;
+        })) {
       return false;
     }
 
