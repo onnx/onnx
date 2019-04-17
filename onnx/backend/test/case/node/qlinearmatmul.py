@@ -19,7 +19,7 @@ class QLinearMatMul(Base):
 
         #2D
         a = np.array([[208, 236, 0, 238],
-            [3, 214, 255, 29],], dtype=np.uint8)
+            [3, 214, 255, 29], ], dtype=np.uint8)
 
         a_scale = np.array([0.0066], dtype=np.float32)
         a_zero_point = np.array([113], dtype=np.uint8)
@@ -36,7 +36,7 @@ class QLinearMatMul(Base):
         y_zero_point = np.array([118], dtype=np.uint8)
 
         output = np.array([[168, 115, 255],
-            [1, 66, 151],], dtype=np.uint8)
+            [1, 66, 151], ], dtype=np.uint8)
 
         expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
                name='test_qlinearmatmul_2D')
