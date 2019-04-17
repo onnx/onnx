@@ -17,14 +17,13 @@ environment:
     ONNX_NAMESPACE: ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
   matrix:
-  # onnx-ml
-  #- CONDA_PREFIX: C:\Miniconda35-x64
+  - CONDA_PREFIX: C:\Miniconda35-x64
 
-  #- CONDA_PREFIX: C:\Miniconda36-x64
+  - CONDA_PREFIX: C:\Miniconda36-x64
 
-  #- CONDA_PREFIX: C:\Miniconda36
+  - CONDA_PREFIX: C:\Miniconda36
 
-  #- CONDA_PREFIX: C:\Miniconda35
+  - CONDA_PREFIX: C:\Miniconda35
 
   - CONDA_PREFIX: C:\Miniconda37-x64
 
