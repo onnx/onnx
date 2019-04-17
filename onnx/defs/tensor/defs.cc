@@ -1600,18 +1600,19 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "pads",
-            "2D tensor of integers indicating the number of padding elements to add or remove (if negative) "
+            "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
             "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
-            "`pads` shape should be [input_rank, 2]. `pads` format should be as follow "
-            "[[x1_begin, x1_end], ..., [xn_begin, xn_end,]], where xi_begin is the number of pixels "
-            "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-            "the end of axis `i`.",
+            "`pads` should be a 1D tensor of shape [input_rank] or a 2D tensor of shape [1, input_rank]. "
+            "`pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, xn_end,...], "
+            "where xi_begin is the number of pixels added at the beginning of axis `i` and "
+            "xi_end, the number of pixels added at the end of axis `i`.",
             "T1")
         .Input(
             2,
             "value",
-            "Optional rank 1 tensor containing 1 float indicating the value to be filled if the mode chosen is `constant` (by default it is 0.0f).",
-            "T2")
+            "(Optional) Rank 1 tensor containing 1 float indicating the value to be filled if the mode chosen is `constant` (by default it is 0.0f).",
+            "T2",
+            OpSchema::Optional)
         .Output(0, "output", "Tensor after padding.", "T")
         .TypeConstraint(
             "T",
@@ -1633,14 +1634,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           // Infer output shape if 'pads' tensor is available
           const auto* pads = ctx.getInputData(1);
           if (nullptr != pads) {
-            if (pads->dims_size() != 2 ||
+            const auto& pads_shape = ctx.getInputType(1)->tensor_type().shape();
+            if ((pads->dims_size() != 1 && pads->dims_size() != 2) ||
+                (pads->dims_size() == 2 &&
+                 pads_shape.dim((int)0).dim_value() != 1) ||
                 pads->data_type() != TensorProto::INT64)
               fail_shape_inference(
-                  "'pads' input must be a one-dimensional tensor of type int64 and of size twice the input rank.");
+                  "'pads' input must be a 1D (shape: [input_rank])or 2D tensor (shape: [1, input_rank]) "
+                  "of type int64 and of size twice the input rank.");
 
             ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
@@ -1648,7 +1653,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                                  ->mutable_tensor_type()
                                  ->mutable_shape()
                                  ->add_dim();
-              auto begin_pad_index = i * 2;
               if (ctx.getInputType(0)
                       ->tensor_type()
                       .shape()
@@ -1660,8 +1664,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                         .shape()
                         .dim((int)i)
                         .dim_value() +
-                    pads->int64_data((int)(begin_pad_index)) + pads->int64_data((int)(begin_pad_index + 1)));
-              } else if (pads->int64_data((int)(begin_pad_index)) + pads->int64_data((int)(begin_pad_index + 1)) == 0) {
+                    pads->int64_data((int)(i)) +
+                    pads->int64_data((int)(i + input_shape.dim_size())));
+              } else if (
+                  pads->int64_data((int)(i)) +
+                      pads->int64_data((int)(i + input_shape.dim_size())) ==
+                  0) {
                 *newdim = input_shape.dim((int)i);
               }
             }
@@ -1673,5 +1681,5 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
           return;
-        }));        
+        }));
 } // namespace ONNX_NAMESPACE

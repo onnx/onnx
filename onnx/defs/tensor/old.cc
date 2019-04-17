@@ -578,7 +578,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
-        
+
 static const char* Pad_ver2_doc = R"DOC(
 Given `data` tensor, pads, mode, and value.
 Example:
@@ -667,5 +667,5 @@ ONNX_OPERATOR_SET_SCHEMA(
               *newdim = input_shape.dim((int)i);
             }
           }
-        }));        
+        }));
 } // namespace ONNX_NAMESPACE
