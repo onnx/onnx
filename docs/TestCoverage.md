@@ -4044,20 +4044,20 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 
 ### Pad
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
-<summary>constant_pad</summary>
+<summary>constant_pad_with_1D_pads</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Pad',
-    inputs=['x'],
+    inputs=['x', 'pads', 'value'],
     outputs=['y'],
-    mode='constant',
-    value=1.2,
-    pads=[0, 0, 1, 3, 0, 0, 2, 4],
+    mode='constant'
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)
+value = np.array([1.2]).astype(np.float32)
 y = np.pad(
     x,
     pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
@@ -4065,32 +4065,57 @@ y = np.pad(
     constant_values=1.2,
 )
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_constant_pad')
+expect(node, inputs=[x, pads, value], outputs=[y],
+       name='test_constant_pad_with_1D_pads')
 ```
 
 </details>
 <details>
-<summary>reflection_and_edge_pad</summary>
+<summary>constant_pad_with_2D_pads</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([[0, 0, 1, 3, 0, 0, 2, 4]]).astype(np.int64)
+value = np.array([1.2]).astype(np.float32)
+y = np.pad(
+    x,
+    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+    mode='constant',
+    constant_values=1.2,
+)
+
+expect(node, inputs=[x, pads, value], outputs=[y],
+       name='test_constant_pad_with_2D_pads')
+```
+
+</details>
+<details>
+<summary>reflection_and_edge_pad_with_1D_pads</summary>
 
 ```python
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
         'Pad',
-        inputs=['x'],
+        inputs=['x', 'pads'],
         outputs=['y'],
-        mode=mode,
-        pads=[0, 0, 1, 1, 0, 0, 1, 1]
+        mode=mode
     )
     x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)
     y = np.pad(
         x,
         pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
         mode=mode,
     )
 
-    expect(node, inputs=[x], outputs=[y],
-           name='test_{}_pad'.format(mode))
+    expect(node, inputs=[x, pads], outputs=[y],
+           name='test_{}_pad_with_1D_pads'.format(mode))
 ```
 
 </details>
