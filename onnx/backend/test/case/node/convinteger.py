@@ -29,7 +29,7 @@ class ConvInteger(Base):
                name='test_basic_convinteger')
 
         # ConvInteger with padding
-        y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17,9]).astype(np.int32).reshape((1, 1, 4, 4))
+        y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
 
         convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
             inputs=['x', 'w', 'x_zero_point'],
