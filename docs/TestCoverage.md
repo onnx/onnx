@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 119/127 (93.70%, 5 generators excluded) common operators.
+Node tests have covered 120/127 (94.49%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4248,6 +4248,50 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### QLinearConv
+There are 1 test cases, listed as following:
+<details>
+<summary>qlinearconv</summary>
+
+```python
+node = onnx.helper.make_node('QLinearConv',
+    inputs=['x', 'x_scale', 'x_zero_point', 'w', 'w_scale', 'w_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([[255, 174, 162, 25, 203, 168, 58],
+    [15, 59, 237, 95, 129, 0, 64],
+    [56, 242, 153, 221, 168, 12, 166],
+    [232, 178, 186, 195, 237, 162, 237],
+    [188, 39, 124, 77, 80, 102, 43],
+    [127, 230, 21, 83, 41, 40, 134],
+    [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+x_scale = np.array([0.00369204697], dtype=np.float32)
+x_zero_point = np.array([132], dtype=np.uint8)
+
+w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+
+w_scale = np.array([0.00172794575], dtype=np.float32)
+w_zero_point = np.array([255], dtype=np.uint8)
+
+y_scale = np.array([0.00162681262], dtype=np.float32)
+y_zero_point = np.array([123], dtype=np.uint8)
+
+output = np.array([[0, 81, 93, 230, 52, 87, 197],
+    [240, 196, 18, 160, 126, 255, 191],
+    [199, 13, 102, 34, 87, 243, 89],
+    [23, 77, 69, 60, 18, 93, 18],
+    [67, 216, 131, 178, 175, 153, 212],
+    [128, 25, 234, 172, 214, 215, 121],
+    [0, 101, 163, 114, 213, 107, 8], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+expect(node, inputs=[x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearconv')
+```
+
+</details>
+
+
 ### QLinearMatMul
 There are 1 test cases, listed as following:
 <details>
@@ -7266,9 +7310,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Multinomial (random generator operator)
-
-
-### QLinearConv (call for test cases)
 
 
 ### RandomNormal (random generator operator)
