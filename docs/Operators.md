@@ -7924,7 +7924,7 @@ y = np.pad(
 )
 
 expect(node, inputs=[x, pads, value], outputs=[y],
-       name='constant_pad_with_1D_pads')
+       name='test_constant_pad_with_1D_pads')
 ```
 
 </details>
@@ -7951,7 +7951,7 @@ y = np.pad(
 )
 
 expect(node, inputs=[x, pads, value], outputs=[y],
-       name='constant_pad_with_2D_pads')
+       name='test_constant_pad_with_2D_pads')
 ```
 
 </details>

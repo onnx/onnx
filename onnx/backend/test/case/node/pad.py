@@ -31,7 +31,7 @@ class Pad(Base):
         )
 
         expect(node, inputs=[x, pads, value], outputs=[y],
-               name='constant_pad_with_1D_pads')
+               name='test_constant_pad_with_1D_pads')
 
     @staticmethod
     def export_constant_pad_with_2D_pads():  # type: () -> None
@@ -52,7 +52,7 @@ class Pad(Base):
         )
 
         expect(node, inputs=[x, pads, value], outputs=[y],
-               name='constant_pad_with_2D_pads')
+               name='test_constant_pad_with_2D_pads')
                
     @staticmethod
     def export_reflection_and_edge_pad_with_1D_pads():  # type: () -> None
