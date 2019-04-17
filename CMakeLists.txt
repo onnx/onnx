@@ -411,8 +411,6 @@ if(BUILD_ONNX_PYTHON)
                                            # unsigned type, result still
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
-			           /wd4244 # new potential loss of precition introduced
-				         # in 3.7.0
                                    ${EXTRA_FLAGS})
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
     add_onnx_global_defines(onnx_cpp2py_export)
@@ -460,8 +458,6 @@ if(MSVC)
                                          # unsigned type, result still unsigned:
                                          # include\google\protobuf\wire_format_l
                                          # ite.h
-			         /wd4244 # new potential loss of precition introduced
-				         # in 3.7.0
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
@@ -473,8 +469,6 @@ if(MSVC)
                                          # exceeded, name was truncated
                                  /wd4146 # unary minus operator applied to
                                          # unsigned type, result still unsigned
-			         /wd4244 # new potential loss of precition introduced
-				         # in 3.7.0
                                  ${EXTRA_FLAGS})
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
