@@ -1603,7 +1603,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
             "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
             "`pads` should be a 1D tensor of shape [input_rank] or a 2D tensor of shape [1, input_rank]. "
-            "`pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, xn_end,...], "
+            "`pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, x2_end,...], "
             "where xi_begin is the number of pixels added at the beginning of axis `i` and "
             "xi_end, the number of pixels added at the end of axis `i`.",
             "T1")
