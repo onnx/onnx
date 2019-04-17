@@ -22,7 +22,7 @@ class Pad(Base):
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
         pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)
-        value = np.array([1.2]).astype(np.float32)        
+        value = np.array([1.2]).astype(np.float32)
         y = np.pad(
             x,
             pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
@@ -43,7 +43,7 @@ class Pad(Base):
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
         pads = np.array([[0, 0, 1, 3, 0, 0, 2, 4]]).astype(np.int64)
-        value = np.array([1.2]).astype(np.float32)        
+        value = np.array([1.2]).astype(np.float32)
         y = np.pad(
             x,
             pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
@@ -53,7 +53,7 @@ class Pad(Base):
 
         expect(node, inputs=[x, pads, value], outputs=[y],
                name='test_constant_pad_with_2D_pads')
-               
+
     @staticmethod
     def export_reflection_and_edge_pad_with_1D_pads():  # type: () -> None
         for mode in ['edge', 'reflect']:
