@@ -31,7 +31,8 @@ struct EliminateNopPad final : public PredicateBasedPass {
     if (pads_initializer->elem_type() == TensorProto::INT64 &&
         pads_initializer->is_raw_data()) {
       const auto& raw_data = pads_initializer->raw();
-      const size_t num_elements = static_cast<size_t>(raw_data.size() / 8);
+      const size_t num_elements =
+          static_cast<size_t>(raw_data.size() / sizeof(int64_t));
       pads.resize(num_elements);
       const int64_t* int64_data =
           reinterpret_cast<const int64_t*>(raw_data.c_str());
