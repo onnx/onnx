@@ -2491,6 +2491,42 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>convinteger</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.array([1]).astype(np.uint8)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
+
+# ConvInteger without padding
+convinteger_node = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'])
+
+expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_basic_convinteger')
+
+# ConvInteger with padding
+y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+
+
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
@@ -3102,6 +3138,29 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>dequantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DequantizeLinear',
+    inputs=['x', 'x_scale', 'x_zero_point'],
+    outputs=['y'],)
+
+# scalar zero point and scale
+x = np.array([0, 3, 128, 255]).astype(np.uint8)
+x_scale = np.array([2], dtype=np.float32)
+x_zero_point = np.array([128], dtype=np.uint8)
+y = np.array([-256, -250, 0, 254], dtype=np.float32)
+
+expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
+       name='test_dequantizelinear')
+```
+
+</details>
 
 
 ### <a name="Div"></a><a name="div">**Div**</a>
@@ -6219,6 +6278,41 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>matmulinteger</summary>
+
+```python
+node = onnx.helper.make_node('MatMulInteger',
+    inputs=['A', 'B', 'a_zero_point', 'b_zero_point'],
+    outputs=['Y'],)
+
+A = np.array([[11, 7, 3],
+    [10, 6, 2],
+    [9, 5, 1],
+    [8, 4, 0], ], dtype=np.uint8)
+
+a_zero_point = np.array([12], dtype=np.uint8)
+
+B = np.array([[1, 4],
+    [2, 5],
+    [3, 6], ], dtype=np.uint8)
+
+b_zero_point = np.array([0], dtype=np.uint8)
+
+output = np.array([[-38, -83],
+    [-44, -98],
+    [-50, -113],
+    [-56, -128], ], dtype=np.int32)
+
+expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
+       name='test_matmulinteger')
+```
+
+</details>
+
+
 ### <a name="Max"></a><a name="max">**Max**</a>
 
   Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
@@ -8177,6 +8271,76 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>qlinearmatmul</summary>
+
+```python
+node = onnx.helper.make_node('QLinearMatMul',
+    inputs=['a', 'a_scale', 'a_zero_point', 'b', 'b_scale', 'b_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+#2D
+a = np.array([[208, 236, 0, 238],
+    [3, 214, 255, 29], ], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[168, 115, 255],
+    [1, 66, 151], ], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_2D')
+
+#3D
+a = np.array([[[208, 236, 0, 238],
+    [3, 214, 255, 29]],
+    [[208, 236, 0, 238],
+    [3, 214, 255, 29]]], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]],
+    [[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[[168, 115, 255],
+    [1, 66, 151]],
+    [[168, 115, 255],
+    [1, 66, 151]]], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_3D')
+```
+
+</details>
+
+
 ### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
 
   The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
@@ -8213,6 +8377,28 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>quantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('QuantizeLinear',
+    inputs=['x', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
+y_scale = np.array([2], dtype=np.float32)
+y_zero_point = np.array([128], dtype=np.uint8)
+y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
+
+expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+       name='test_quantizelinear')
+```
+
+</details>
 
 
 ### <a name="RNN"></a><a name="rnn">**RNN**</a>
