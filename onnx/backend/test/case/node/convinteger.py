@@ -12,7 +12,7 @@ from . import expect
 class ConvInteger(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
 
         x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
         x_zero_point = np.array([1]).astype(np.uint8)
