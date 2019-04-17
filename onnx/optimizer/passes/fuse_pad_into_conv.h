@@ -4,13 +4,13 @@
 #pragma once
 
 // Before:
-//   P = Pad(X)
+//   P = Pad(X, Pads, [Value])
 //   Z = Conv(P, Y)
 // After:
 //   Z = Conv(X, Y) with "pads" attribute set
 //
 // the pass handles the case when Pad is zero-padding the input
-// (i.e. mode=constant and value=0)
+// (i.e. mode=constant and Value=0)
 
 #include <numeric>
 
