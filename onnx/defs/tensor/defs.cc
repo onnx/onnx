@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver9_doc = R"DOC(
@@ -536,11 +537,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          // don't know data_type- can't proceed
+          if (!startsInitializer->has_data_type())
+            return;
+
           auto getInitializerData =
               [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
             if (initializer->has_raw_data() &&
-                initializer->data_type == TensorProto::INT64) {
+                initializer->data_type() == TensorProto::INT64) {
               const std::string& bytes = initializer->raw_data();
               vec.insert(
                   vec.end(),
@@ -549,17 +554,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                       bytes.c_str() + bytes.size()));
             } else if (
                 initializer->has_raw_data() &&
-                initializer->data_type == TensorProto::INT32) {
+                initializer->data_type() == TensorProto::INT32) {
               const std::string& bytes = initializer->raw_data();
               vec.insert(
                   vec.end(),
                   reinterpret_cast<const int32_t*>(bytes.c_str()),
                   reinterpret_cast<const int32_t*>(
                       bytes.c_str() + bytes.size()));
-            } else if (initializer->data_type == TensorProto::INT64) {
+            } else if (initializer->data_type() == TensorProto::INT64) {
               const auto& data = initializer->int64_data();
               vec.insert(vec.end(), data.begin(), data.end());
-            } else if (initializer->data_type == TensorProto::INT32) {
+            } else if (initializer->data_type() == TensorProto::INT32) {
               const auto& data = initializer->int32_data();
               vec.insert(vec.end(), data.begin(), data.end());
             } else {
@@ -568,6 +573,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "Only supports int32_t or int64_t inputs for starts/ends/axes/steps");
             }
             return vec;
+          };
+
+          auto clamp = [](int64_t low, int64_t high, int64_t val) -> int64_t {
+            if (val < low)
+              return low;
+            if (val > high)
+              return high;
+            return val;
           };
 
           std::vector<int64_t> starts = getInitializerData(startsInitializer);
@@ -584,7 +597,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axesInitializer) {
             std::iota(axes.begin(), axes.end(), 0);
           } else {
-            axes = getInt64InitializerData(axesInitializer);
+            axes = getInitializerData(axesInitializer);
             if (axes.size() != starts.size()) {
               fail_shape_inference("Input axes has incorrect length");
             }
@@ -600,21 +613,63 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          
+          // ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          bool all_input_dims_known = true;
+          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
+            // first update rank of output
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->add_dim();
+            if (!ctx.getInputType(0)
+                     ->tensor_type()
+                     .shape()
+                     .dim((int)i)
+                     .has_dim_value()) {
+              all_input_dims_known = false;
+            }
+          }
+
+          // if all input dims are not known
+          // cannot confidently compute output shape
+          // as best effort we have already computed rank of output shape
+          if (!all_input_dims_known)
+            return;
+
+          // fill in values from input dims first
+          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim((int)i)
+                ->set_dim_value(ctx.getInputType(0)
+                                    ->tensor_type()
+                                    .shape()
+                                    .dim((int)i)
+                                    .dim_value());
+          }
+
           std::unordered_set<int64_t> unique_axes;
           for (int axis_index = 0; axis_index < axes.size(); ++axis_index) {
             auto axis = axes[axis_index] < 0
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
 
-			if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
               fail_shape_inference("Input axes has invalid data");
 
             if (unique_axes.find(axis) != unique_axes.end())
               fail_shape_inference("'axes' has duplicates");
 
-			unique_axes.insert(axis);
+            unique_axes.insert(axis);
+
+            // input dim for this axis (copied over from input to output in
+            // previous step)
+            auto input_dim = ctx.getInputType(0)
+                                 ->tensor_type()
+                                 .shape()
+                                 .dim((int)axis)
+                                 .dim_value();
 
             // process step
             auto step = steps[axis_index];
@@ -624,39 +679,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             // process start
             auto start = starts[axis_index];
             if (start < 0)
-              start += input_shape[axis];
+              start += input_dim;
             if (step < 0)
-              starts[axis] =
-                  clamp(start, int64_t{0}, input_dimensions[axis] - 1);
+              start = clamp(start, 0, input_dim - 1);
             else
-              starts[axis] = clamp(start, int64_t{0}, input_dimensions[axis]);
+              start = clamp(start, 0, input_dim);
 
             // process end
-            auto end = raw_ends[axesIndex];
-            // INT_MAX has a special meaning for end according to spec
-            // equivalent to 'None' in numpy
-            // it represent slicing to the end of the dimension
-            if (end == std::numeric_limits<int32_t>::max() ||
-                end == std::numeric_limits<int64_t>::max()) {
-              end = step < 0 ? -1 : input_dimensions[axis];
-            }
-
-            else {
-              if (end < 0)
-                end += input_dimensions[axis];
-              if (step < 0)
-                end = clamp(end, int64_t{-1}, input_dimensions[axis]);
-              else
-                end = clamp(end, int64_t{0}, input_dimensions[axis]);
-            }
+            auto end = ends[axis_index];
+            if (end < 0)
+              end += input_dim;
+            if (step < 0)
+              end = clamp(end, -1, input_dim);
+            else
+              end = clamp(end, 0, input_dim);
 
             // find output dim value for this axis
-            auto temp =
-                static_cast<int64_t>(ceil(1.0 * (end - starts[axis]) / step));
+            auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
             if (temp < 0)
-              output_dims[axis] = 0;
-            else
-              output_dims[axis] = temp;
+              temp = 0;
+
+            // assign output value
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim((int)axis)
+                ->set_dim_value(temp);
           }
         }));
 
