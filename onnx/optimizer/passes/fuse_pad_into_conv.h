@@ -79,7 +79,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       pad_mode = "constant";
     }
 
-    float value = 0.0;
+    double value = 0.0;
     // check if the 'pad' node has the optional 'value' input
     if (pad->inputs().size() == 3) {
       // check if it has data initialized
@@ -95,12 +95,19 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       if (value_initializer->elem_type() == TensorProto::FLOAT &&
           value_initializer->is_raw_data()) {
         const auto& raw_data = value_initializer->raw();
-        // value should be a 1D Tensor of size 1 containing a float value
-        value = *(reinterpret_cast<const float*>(raw_data.c_str()));
-      } else if (value_initializer->elem_type() == TensorProto::FLOAT) {
-        value = value_initializer->floats()[0];
+        value = static_cast<double>(*(reinterpret_cast<const float*>(raw_data.c_str())));
+      } 
+      else if (value_initializer->elem_type() == TensorProto::DOUBLE &&
+          value_initializer->is_raw_data()) {
+        const auto& raw_data = value_initializer->raw();
+        value = *(reinterpret_cast<const double*>(raw_data.c_str()));
+      }       
+      else if (value_initializer->elem_type() == TensorProto::FLOAT) {
+        value = static_cast<double>(value_initializer->floats()[0]);
+      } else if (value_initializer->elem_type() == TensorProto::DOUBLE) {
+        value = value_initializer->doubles()[0];
       }
-      // not relevant data type for this input
+      // either float16 or not relevant data type for this input - no fusing
       else {
         return false;
       }
