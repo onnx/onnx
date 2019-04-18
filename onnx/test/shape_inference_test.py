@@ -1694,5 +1694,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
 
+
 if __name__ == '__main__':
     unittest.main()
