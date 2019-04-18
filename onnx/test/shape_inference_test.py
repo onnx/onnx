@@ -381,7 +381,7 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
                          make_tensor('ends', TensorProto.INT64, (2,), (2, 2)),
                          make_tensor('axes', TensorProto.INT64, (2,), (1, 0))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 1))]) # can handle unsorted axes
 
     def test_slice_giant_number(self):  # type: () -> None
         graph = self._make_graph(
@@ -420,9 +420,9 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
             [],
             initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
-                         make_tensor('ends', TensorProto.INT64, (2,), (200, -1)),
+                         make_tensor('ends', TensorProto.INT64, (2,), (200, -1)), # negative end means begin from end of a dimension (here end = 2 - 1 = 1)
                          make_tensor('axes', TensorProto.INT64, (2,), (0, 1))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 1))])  # type: ignore
 
     def test_slice_negative_start(self):  # type: () -> None
         graph = self._make_graph(
@@ -432,10 +432,10 @@ class TestShapeInference(unittest.TestCase):
              ('axes', TensorProto.INT64, (2,))],
             [make_node('Slice', ['x', 'starts', 'ends', 'axes'], 'y')],
             [],
-            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, -2)),
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, -2)), # negative start means begin from end of a dimension (here end = 2 - 2 = 0)
                          make_tensor('ends', TensorProto.INT64, (2,), (200, 3)),
                          make_tensor('axes', TensorProto.INT64, (2,), (0, 1))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2))])  # type: ignore
 
     def test_slice_negative_step(self):  # type: () -> None
         graph = self._make_graph(
@@ -446,11 +446,11 @@ class TestShapeInference(unittest.TestCase):
              ('steps', TensorProto.INT64, (2,))],
             [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], 'y')],
             [],
-            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 4)),
+            initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 4)), # 4 will be clamped to 3 since we are negative stepping
                          make_tensor('ends', TensorProto.INT64, (2,), (200, 0)),
                          make_tensor('axes', TensorProto.INT64, (2,), (0, 1)),
                          make_tensor('steps', TensorProto.INT64, (2,), (1, -1))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3))])  # type: ignore
 
     def test_slice_variable_copy(self):  # type: () -> None
         graph = self._make_graph(

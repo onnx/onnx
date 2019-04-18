@@ -575,7 +575,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return vec;
           };
 
-          auto clamp = [](int64_t low, int64_t high, int64_t val) -> int64_t {
+          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
             if (val < low)
               return low;
             if (val > high)
