@@ -1803,7 +1803,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "sequence_lens",
             "Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.",
-            "tensor(int32)")
+            "tensor(int64)")
         .Output(0, "Y", "Tensor with same shape of input.", "T")
         .TypeConstraint(
             "T",
