@@ -628,7 +628,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           std::unordered_set<int64_t> unique_axes;
-          for (int axis_index = 0; axis_index < axes.size(); ++axis_index) {
+          size_t axes_size = axes.size();
+          for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
             auto axis = axes[axis_index] < 0
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
