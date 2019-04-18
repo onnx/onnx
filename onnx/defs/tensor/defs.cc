@@ -1676,7 +1676,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "'pads' input must be a 1D (shape: [input_rank])or 2D tensor (shape: [1, input_rank]) "
                   "of type int64 and of size twice the input rank.");
 
-            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
               auto* newdim = ctx.getOutputType(0)
                                  ->mutable_tensor_type()
