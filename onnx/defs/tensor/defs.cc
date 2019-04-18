@@ -1592,7 +1592,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "mode",
-            "Three modes: constant(default), reflect, edge",
+            "Three modes: constant(default) - pads with a given constant value, "
+            "reflect - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, " 
+            "edge - pads with the edge values of array",
             AttributeProto::STRING,
             std::string("constant"))
         .SetDoc(Pad_ver10_doc)
@@ -1606,26 +1608,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, x2_end,...], "
             "where xi_begin is the number of pixels added at the beginning of axis `i` and "
             "xi_end, the number of pixels added at the end of axis `i`.",
-            "T1")
+            "tensor(int64)")
         .Input(
             2,
             "value",
-            "(Optional) Rank 1 tensor containing 1 float indicating the value to be filled if the mode chosen is `constant` (by default it is 0.0f).",
-            "T2",
+            "(Optional) A scalar or rank 1 tensor containing a single value to be filled if the mode chosen is `constant` (by default it is 0.0).",
+            "T",
             OpSchema::Optional)
         .Output(0, "output", "Tensor after padding.", "T")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain `pads` tensor to int64 tensors.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float)"},
-            "Constrain `value` tensor to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
