@@ -541,7 +541,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!startsInitializer->has_data_type())
             return;
 
-          auto getInitializerData =
+          auto get_initializer_data =
               [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
             if (initializer->has_raw_data() &&
@@ -583,8 +583,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return val;
           };
 
-          std::vector<int64_t> starts = getInitializerData(startsInitializer);
-          std::vector<int64_t> ends = getInitializerData(endsInitializer);
+          std::vector<int64_t> starts = get_initializer_data(startsInitializer);
+          std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
           if (starts.size() != ends.size()) {
             fail_shape_inference(
@@ -597,7 +597,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axesInitializer) {
             std::iota(axes.begin(), axes.end(), 0);
           } else {
-            axes = getInitializerData(axesInitializer);
+            axes = get_initializer_data(axesInitializer);
             if (axes.size() != starts.size()) {
               fail_shape_inference("Input axes has incorrect length");
             }
@@ -607,46 +607,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!stepsInitializer) {
             steps = std::vector<int64_t>(starts.size(), 1);
           } else {
-            steps = getInitializerData(stepsInitializer);
+            steps = get_initializer_data(stepsInitializer);
             if (steps.size() != axes.size()) {
               fail_shape_inference("Input steps has incorrect length");
             }
           }
 
-          // ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          bool all_input_dims_known = true;
-          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
-            // first update rank of output
-            ctx.getOutputType(0)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim();
-            if (!ctx.getInputType(0)
-                     ->tensor_type()
-                     .shape()
-                     .dim((int)i)
-                     .has_dim_value()) {
-              all_input_dims_known = false;
+          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            // first update rank of output dim
+            auto* output_dim = ctx.getOutputType(0)
+                                   ->mutable_tensor_type()
+                                   ->mutable_shape()
+                                   ->add_dim();
+            const auto& input_dim = input_shape.dim((int)i);
+            if (input_dim.has_dim_value()) {
+              output_dim->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              output_dim->set_dim_param(input_dim.dim_param());
             }
-          }
-
-          // if all input dims are not known
-          // cannot confidently compute output shape
-          // as best effort we have already computed rank of output shape
-          if (!all_input_dims_known)
-            return;
-
-          // fill in values from input dims first
-          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
-            ctx.getOutputType(0)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->mutable_dim((int)i)
-                ->set_dim_value(ctx.getInputType(0)
-                                    ->tensor_type()
-                                    .shape()
-                                    .dim((int)i)
-                                    .dim_value());
           }
 
           std::unordered_set<int64_t> unique_axes;
@@ -663,13 +641,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             unique_axes.insert(axis);
 
-            // input dim for this axis (copied over from input to output in
-            // previous step)
-            auto input_dim = ctx.getInputType(0)
-                                 ->tensor_type()
-                                 .shape()
-                                 .dim((int)axis)
-                                 .dim_value();
+            auto input_dim =
+                ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+
+            // input dim value is missing - cannot perform shape inference for
+            // this axis
+            if (!input_dim.has_dim_value())
+              continue;
+
+            const auto input_dim_value = input_dim.dim_value();
 
             // process step
             auto step = steps[axis_index];
@@ -679,20 +659,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             // process start
             auto start = starts[axis_index];
             if (start < 0)
-              start += input_dim;
+              start += input_dim_value;
             if (step < 0)
-              start = clamp(start, 0, input_dim - 1);
+              start = clamp(start, 0, input_dim_value - 1);
             else
-              start = clamp(start, 0, input_dim);
+              start = clamp(start, 0, input_dim_value);
 
             // process end
             auto end = ends[axis_index];
             if (end < 0)
-              end += input_dim;
+              end += input_dim_value;
             if (step < 0)
-              end = clamp(end, -1, input_dim);
+              end = clamp(end, -1, input_dim_value);
             else
-              end = clamp(end, 0, input_dim);
+              end = clamp(end, 0, input_dim_value);
 
             // find output dim value for this axis
             auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
