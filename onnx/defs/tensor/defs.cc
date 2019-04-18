@@ -570,7 +570,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else {
               // unaccepted data type
               fail_shape_inference(
-                  "Only supports int32_t or int64_t inputs for starts/ends/axes/steps");
+                  "Only supports `int32_t` or `int64_t` inputs for starts/ends/axes/steps");
             }
             return vec;
           };
