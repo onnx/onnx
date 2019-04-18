@@ -7968,7 +7968,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href
 
 <dl>
 <dt><tt>mode</tt> : string (default is constant)</dt>
-<dd>Three modes: constant(default) - pads with a given constant value, reflect - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, edge - pads with the edge values of array</dd>
+<dd>Three modes: `constant`(default) - pads with a given constant value, `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, `edge` - pads with the edge values of array</dd>
 </dl>
 
 #### Inputs (2 - 3)

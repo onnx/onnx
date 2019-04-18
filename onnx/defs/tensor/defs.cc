@@ -1627,9 +1627,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "mode",
-            "Three modes: constant(default) - pads with a given constant value, "
-            "reflect - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, " 
-            "edge - pads with the edge values of array",
+            "Three modes: `constant`(default) - pads with a given constant value, "
+            "`reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, " 
+            "`edge` - pads with the edge values of array",
             AttributeProto::STRING,
             std::string("constant"))
         .SetDoc(Pad_ver10_doc)
