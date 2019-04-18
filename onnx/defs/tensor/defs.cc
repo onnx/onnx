@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 #include <algorithm>
 #include <cmath>
@@ -546,21 +547,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::vector<int64_t> vec;
             if (initializer->has_raw_data() &&
                 initializer->data_type() == TensorProto::INT64) {
-              const std::string& bytes = initializer->raw_data();
-              vec.insert(
-                  vec.end(),
-                  reinterpret_cast<const int64_t*>(bytes.c_str()),
-                  reinterpret_cast<const int64_t*>(
-                      bytes.c_str() + bytes.size()));
+              const auto& data = ParseRawData<int64_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
             } else if (
                 initializer->has_raw_data() &&
                 initializer->data_type() == TensorProto::INT32) {
-              const std::string& bytes = initializer->raw_data();
-              vec.insert(
-                  vec.end(),
-                  reinterpret_cast<const int32_t*>(bytes.c_str()),
-                  reinterpret_cast<const int32_t*>(
-                      bytes.c_str() + bytes.size()));
+              const auto& data = ParseRawData<int32_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
             } else if (initializer->data_type() == TensorProto::INT64) {
               const auto& data = initializer->int64_data();
               vec.insert(vec.end(), data.begin(), data.end());

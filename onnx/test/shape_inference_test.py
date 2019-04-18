@@ -341,7 +341,9 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (3, 2)), ('starts', TensorProto.INT64, (2, )), ('ends', TensorProto.INT64, (2, ))],
             [make_node('Slice', ['x', 'starts', 'ends'], ['y'])],
             [],
-            initializer=[make_tensor('starts', TensorProto.INT64, (2, ), (1, 0)), make_tensor('ends', TensorProto.INT64, (2, ), (2, 2))])
+            initializer=[make_tensor('starts', TensorProto.INT64, (2, ),
+                                      vals=np.array([1, 0], dtype='<i8').tobytes(), raw=True),  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+                         make_tensor('ends', TensorProto.INT64, (2, ), (2, 2))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2))])
 
     def test_slice_with_input_shape_steps(self):  # type: () -> None
