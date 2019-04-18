@@ -7635,7 +7635,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
 <dt><tt>scores</tt> : tensor(float)</dt>
 <dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
-<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int32)</dt>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
 <dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
 <dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
 <dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
@@ -7646,7 +7646,7 @@ This version of the operator has been available since version 10 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>selected_indices</tt> : tensor(int32)</dt>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
 <dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
 </dl>
 
@@ -7675,10 +7675,10 @@ boxes = np.array([[
     [0.5, 100.5, 1.0, 1.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([3]).astype(np.int32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_center_point_box_format')
 ```
@@ -7704,10 +7704,10 @@ boxes = np.array([[
     [1.0, 101.0, 0.0, 100.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([3]).astype(np.int32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_flipped_coordinates')
 ```
@@ -7738,10 +7738,10 @@ boxes = np.array([[
     [0.0, 0.0, 1.0, 1.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([3]).astype(np.int32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 0]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_identical_boxes')
 ```
@@ -7767,10 +7767,10 @@ boxes = np.array([[
     [0.0, 100.0, 1.0, 101.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([2]).astype(np.int32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_limit_output_size')
 ```
@@ -7791,10 +7791,10 @@ boxes = np.array([[
     [0.0, 0.0, 1.0, 1.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([3]).astype(np.int32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 0]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_single_box')
 ```
@@ -7820,10 +7820,10 @@ boxes = np.array([[
     [0.0, 100.0, 1.0, 101.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([3]).astype(np.int32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU')
 ```
@@ -7849,10 +7849,10 @@ boxes = np.array([[
     [0.0, 100.0, 1.0, 101.0]
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([3]).astype(np.int32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.4]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU_and_scores')
 ```
@@ -7886,10 +7886,10 @@ boxes = np.array([[
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
                     [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([2]).astype(np.int32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0], [1, 0, 3], [1, 0, 0]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [1, 0, 3], [1, 0, 0]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_batches')
 ```
@@ -7916,10 +7916,10 @@ boxes = np.array([[
 ]]).astype(np.float32)
 scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
                     [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
-max_output_boxes_per_class = np.array([2]).astype(np.int32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
-selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 1, 3], [0, 1, 0]]).astype(np.int32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 1, 3], [0, 1, 0]]).astype(np.int64)
 
 expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_classes')
 ```

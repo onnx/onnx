@@ -2154,7 +2154,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "max_output_boxes_per_class",
             "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.",
-            "tensor(int32)",
+            "tensor(int64)",
             OpSchema::Optional)
         .Input(
             3,
@@ -2172,7 +2172,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "selected_indices",
             "selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].",
-            "tensor(int32)")
+            "tensor(int64)")
         .Attr(
             "center_point_box",
             "Integer indicate the format of the box data. The default is 0."

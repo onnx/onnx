@@ -9662,7 +9662,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
 <dt><tt>scores</tt> : tensor(float)</dt>
 <dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
-<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int32)</dt>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
 <dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
 <dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
 <dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
@@ -9673,7 +9673,7 @@ This version of the operator has been available since version 10 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>selected_indices</tt> : tensor(int32)</dt>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
 <dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
 </dl>
 
