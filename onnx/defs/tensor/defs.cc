@@ -313,15 +313,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
 
-          // rank == 0 may mean that shape inference can't be done yet.
-          // today shape inference is not complete for all the operators.
-          // when such an op preceeds concat rank can be 0.
-          // TODO : Fix shape inferencing for all ops to fall back to rank
-          // inference when shape inferening cant be done.
-          if (rank == 0) {
-            return;
-          }
-
           auto axisAttr = ctx.getAttribute("axis");
           if (!axisAttr) {
             fail_shape_inference("Required attribute axis is missing");
