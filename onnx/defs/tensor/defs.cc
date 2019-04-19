@@ -2,9 +2,11 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver9_doc = R"DOC(
@@ -536,45 +538,61 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto getInitializerData =
+          // don't know data_type- can't proceed
+          if (!startsInitializer->has_data_type())
+            return;
+
+          auto get_initializer_data =
               [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
-            if (initializer->has_raw_data()) {
-              const std::string& bytes = initializer->raw_data();
-              vec.insert(
-                  vec.end(),
-                  reinterpret_cast<const int64_t*>(bytes.c_str()),
-                  reinterpret_cast<const int64_t*>(
-                      bytes.c_str() + bytes.size()));
-            } else {
+            if (initializer->has_raw_data() &&
+                initializer->data_type() == TensorProto::INT64) {
+              const auto& data = ParseRawData<int64_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else if (
+                initializer->has_raw_data() &&
+                initializer->data_type() == TensorProto::INT32) {
+              const auto& data = ParseRawData<int32_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else if (initializer->data_type() == TensorProto::INT64) {
               const auto& data = initializer->int64_data();
               vec.insert(vec.end(), data.begin(), data.end());
+            } else if (initializer->data_type() == TensorProto::INT32) {
+              const auto& data = initializer->int32_data();
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else {
+              // unaccepted data type
+              fail_shape_inference(
+                  "Only supports `int32_t` or `int64_t` inputs for starts/ends/axes/steps");
             }
             return vec;
           };
 
-          std::vector<int64_t> starts = getInitializerData(startsInitializer);
-          std::vector<int64_t> ends = getInitializerData(endsInitializer);
+          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
+            if (val < low)
+              return low;
+            if (val > high)
+              return high;
+            return val;
+          };
+
+          std::vector<int64_t> starts = get_initializer_data(startsInitializer);
+          std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
           if (starts.size() != ends.size()) {
             fail_shape_inference(
                 "Incorrect or missing input value for starts and ends");
-            ;
           }
 
-          std::vector<int64_t> axes;
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_rank = input_shape.dim_size();
+          std::vector<int64_t> axes(starts.size());
           if (!axesInitializer) {
-            for (int i = 0; (size_t)i < starts.size(); ++i) {
-              axes.push_back(i);
-            }
+            std::iota(axes.begin(), axes.end(), 0);
           } else {
-            axes = getInitializerData(axesInitializer);
+            axes = get_initializer_data(axesInitializer);
             if (axes.size() != starts.size()) {
               fail_shape_inference("Input axes has incorrect length");
-              ;
-            } else if (!std::is_sorted(axes.begin(), axes.end())) {
-              // TODO support shape inference for unsorted axes
-              return;
             }
           }
 
@@ -582,49 +600,85 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!stepsInitializer) {
             steps = std::vector<int64_t>(starts.size(), 1);
           } else {
-            steps = getInitializerData(stepsInitializer);
-            if (steps.size() != starts.size()) {
+            steps = get_initializer_data(stepsInitializer);
+            if (steps.size() != axes.size()) {
               fail_shape_inference("Input steps has incorrect length");
-              ;
             }
           }
 
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-          for (size_t i = 0, j = 0; (int64_t)i <
-               ctx.getInputType(0)->tensor_type().shape().dim_size();
-               ++i) {
-            auto* newdim = ctx.getOutputType(0)
-                               ->mutable_tensor_type()
-                               ->mutable_shape()
-                               ->add_dim();
-            if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
-              // There's a lot of potential behaviors. For now just
-              // handle some simple cases.
-              if (ctx.getInputType(0)
-                      ->tensor_type()
-                      .shape()
-                      .dim((int)i)
-                      .has_dim_value() &&
-                  starts[j] >= 0 && ends[j] >= 0 && steps[j] > 0) {
-                auto newval = std::min(
-                                  (int64_t)ctx.getInputType(0)
-                                      ->tensor_type()
-                                      .shape()
-                                      .dim((int)i)
-                                      .dim_value(),
-                                  ends[j]) -
-                    starts[j];
-                newval = newval / steps[j] +
-                    (newval % steps[j] && steps[j] != 1 ? 1 : 0);
-                if (newval >= 0) {
-                  newdim->set_dim_value(newval);
-                }
-              }
-              ++j;
-            } else {
-              *newdim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            // first update rank of output dim
+            auto* output_dim = ctx.getOutputType(0)
+                                   ->mutable_tensor_type()
+                                   ->mutable_shape()
+                                   ->add_dim();
+            const auto& input_dim = input_shape.dim((int)i);
+            if (input_dim.has_dim_value()) {
+              output_dim->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              output_dim->set_dim_param(input_dim.dim_param());
             }
+          }
+
+          std::unordered_set<int64_t> unique_axes;
+          size_t axes_size = axes.size();
+          for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
+            auto axis = axes[axis_index] < 0
+                ? axes[axis_index] + static_cast<int64_t>(input_rank)
+                : axes[axis_index];
+
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+              fail_shape_inference("Input axes has invalid data");
+
+            if (unique_axes.find(axis) != unique_axes.end())
+              fail_shape_inference("'axes' has duplicates");
+
+            unique_axes.insert(axis);
+
+            auto input_dim =
+                ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+
+            // input dim value is missing - cannot perform shape inference for
+            // this axis
+            if (!input_dim.has_dim_value())
+              continue;
+
+            const auto input_dim_value = input_dim.dim_value();
+
+            // process step
+            auto step = steps[axis_index];
+            if (step == 0)
+              fail_shape_inference("'step' cannot be 0");
+
+            // process start
+            auto start = starts[axis_index];
+            if (start < 0)
+              start += input_dim_value;
+            if (step < 0)
+              start = clamp(start, 0, input_dim_value - 1);
+            else
+              start = clamp(start, 0, input_dim_value);
+
+            // process end
+            auto end = ends[axis_index];
+            if (end < 0)
+              end += input_dim_value;
+            if (step < 0)
+              end = clamp(end, -1, input_dim_value);
+            else
+              end = clamp(end, 0, input_dim_value);
+
+            // find output dim value for this axis
+            auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
+            if (temp < 0)
+              temp = 0;
+
+            // assign output value
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim((int)axis)
+                ->set_dim_value(temp);
           }
         }));
 
@@ -1592,19 +1646,20 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
         .Input(0, "X", "input", "T1")
         .Output(0, "Y", "output", "T2")
-        .Attr("detect_positive",
-        "(Optional) Whether map positive infinity to true. Default to 1 "
-        "so that positive infinity induces true. Set this attribute to 0 "
-        "if positive infinity should be mapped to false.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1))
         .Attr(
-        "detect_negative",
-        "(Optional) Whether map negative infinity to true. Default to 1 "
-        "so that negative infinity induces true. Set this attribute to 0 "
-        "if negative infinity should be mapped to false.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1))
+            "detect_positive",
+            "(Optional) Whether map positive infinity to true. Default to 1 "
+            "so that positive infinity induces true. Set this attribute to 0 "
+            "if positive infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "detect_negative",
+            "(Optional) Whether map negative infinity to true. Default to 1 "
+            "so that negative infinity induces true. Set this attribute to 0 "
+            "if negative infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)"},
