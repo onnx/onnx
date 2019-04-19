@@ -1646,19 +1646,20 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
         .Input(0, "X", "input", "T1")
         .Output(0, "Y", "output", "T2")
-        .Attr("detect_positive",
-        "(Optional) Whether map positive infinity to true. Default to 1 "
-        "so that positive infinity induces true. Set this attribute to 0 "
-        "if positive infinity should be mapped to false.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1))
         .Attr(
-        "detect_negative",
-        "(Optional) Whether map negative infinity to true. Default to 1 "
-        "so that negative infinity induces true. Set this attribute to 0 "
-        "if negative infinity should be mapped to false.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1))
+            "detect_positive",
+            "(Optional) Whether map positive infinity to true. Default to 1 "
+            "so that positive infinity induces true. Set this attribute to 0 "
+            "if positive infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "detect_negative",
+            "(Optional) Whether map negative infinity to true. Default to 1 "
+            "so that negative infinity induces true. Set this attribute to 0 "
+            "if negative infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)"},
