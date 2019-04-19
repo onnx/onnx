@@ -14,7 +14,7 @@
 
 #include <numeric>
 
-#include "onnx/common/assertions.h"
+#include "onnx/defs/tensor_util.h"
 #include "onnx/optimizer/pass.h"
 
 namespace ONNX_NAMESPACE {
@@ -55,14 +55,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     std::vector<int64_t> pads;
     if (pads_initializer->elem_type() == TensorProto::INT64 &&
         pads_initializer->is_raw_data()) {
-      const auto& raw_data = pads_initializer->raw();
-      const size_t num_elements = static_cast<size_t>(raw_data.size() / sizeof(int64_t));
-      pads.resize(num_elements);
-      const int64_t* int64_data =
-          reinterpret_cast<const int64_t*>(raw_data.c_str());
-      for (size_t i = 0; i < num_elements; ++i) {
-        pads[i] = int64_data[i];
-      }
+      pads = ParseRawData<int64_t>(&*pads_initializer);
     } else if (pads_initializer->elem_type() == TensorProto::INT64) {
       pads = pads_initializer->int64s();
     }
@@ -94,15 +87,13 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       // parse 'value' data from the initialized input
       if (value_initializer->elem_type() == TensorProto::FLOAT &&
           value_initializer->is_raw_data()) {
-        const auto& raw_data = value_initializer->raw();
-        value = static_cast<double>(*(reinterpret_cast<const float*>(raw_data.c_str())));
-      } 
-      else if (value_initializer->elem_type() == TensorProto::DOUBLE &&
+        value =
+            static_cast<double>(ParseRawData<float>(&*value_initializer)[0]);
+      } else if (
+          value_initializer->elem_type() == TensorProto::DOUBLE &&
           value_initializer->is_raw_data()) {
-        const auto& raw_data = value_initializer->raw();
-        value = *(reinterpret_cast<const double*>(raw_data.c_str()));
-      }       
-      else if (value_initializer->elem_type() == TensorProto::FLOAT) {
+        value = ParseRawData<double>(&*value_initializer)[0];
+      } else if (value_initializer->elem_type() == TensorProto::FLOAT) {
         value = static_cast<double>(value_initializer->floats()[0]);
       } else if (value_initializer->elem_type() == TensorProto::DOUBLE) {
         value = value_initializer->doubles()[0];
