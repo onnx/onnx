@@ -1741,11 +1741,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             else
               pads_data.insert(
                   pads_data.end(),
-                  pads_initializer->int64_data().cbegin(),
-                  pads_initializer->int64_data().cend());
+                  pads_initializer->int64_data().begin(),
+                  pads_initializer->int64_data().end());
 
             // fill with zeros if needed to reach appropriate size
-            if (pads_data.size() != 2 * input_rank)
+            if (pads_data.size() != static_cast<size_t>(2 * input_rank))
               pads_data.resize(2 * input_rank, 0);
 
             const auto& output_shape =
