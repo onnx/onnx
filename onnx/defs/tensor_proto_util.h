@@ -13,5 +13,7 @@ TensorProto ToTensor(const T& value);
 template <typename T>
 TensorProto ToTensor(const std::vector<T>& values);
 
+template <typename T>
+const std::vector<T> ParseRawData(const TensorProto* tensor_proto);
 
 } // namespace ONNX_NAMESPACE
