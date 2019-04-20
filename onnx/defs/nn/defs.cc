@@ -1236,7 +1236,7 @@ https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
+Output case #2: Y (test mode, where other outputs will not be populated)
 
 For previous (depreciated) non-spatial cases, implementors are suggested
 to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
@@ -1291,27 +1291,29 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             1,
             "mean",
-            "The running mean after the BatchNormalization operator.",
+            "The running mean after the BatchNormalization operator. "
+            "This output is populated only when is_train is set to true.",
             "T",
             OpSchema::Optional)
         .Output(
             2,
             "var",
-            "The running variance after the BatchNormalization operator.",
+            "The running variance after the BatchNormalization operator."
+            "This output is populated only when is_train is set to true.",
             "T",
             OpSchema::Optional)
         .Output(
             3,
             "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation.",
+            "Saved mean used during training to speed up gradient computation. "
+            "This output is populated only when is_train is set to true.",
             "T",
             OpSchema::Optional)
         .Output(
             4,
             "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation.",
+            "Saved variance used during training to speed up gradient computation. "
+            "This output is populated only when is_train is set to true.",,
             "T",
             OpSchema::Optional)
         .TypeConstraint(
@@ -1408,11 +1410,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Dropout_ver10_doc = R"DOC(
-Dropout takes one input floating tensor and produces two tensor outputs,
-output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-in training mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
+Dropout takes an input floating tensor and an dropout ratio, it produces
+two tensor outputs, output (floating tensor) and mask (`Tensor<bool>`).
+Depending on the value of ratio, the output Y will either be a random dropout,
+or a simple copy of the input. Note that our implementation of Dropout does
+scaling in the training phase, so during testing nothing needs to be done.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1421,11 +1423,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
         .Attr(
-            "ratio",
-            "The ratio of random dropout",
-            AttributeProto::FLOAT,
-            0.5f)
-        .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
@@ -1433,9 +1430,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "data", "The input data as Tensor.", "T")
         .Input(
             1,
-            "is_train",
-            "If non-zero, output will be a random dropout of input, default is 0.",
-            "T1",
+            "ratio",
+            "The ratio of random dropout, with value in [0, 1]. If this input was not set, "
+            "or if it was set to 0, the output would be a simple copy of the input. "
+            "If it's non-zero, output will be a random dropout of input, which is typically "
+            "the case during training.",
+            "T",
             OpSchema::Optional)
         .Output(0, "output", "The output.", "T")
         .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
@@ -1446,7 +1446,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrain input 'is_train' and output 'mask' types to boolean tensors.")
+            "Constrain output 'mask' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           if (ctx.getNumOutputs() == 2) {
