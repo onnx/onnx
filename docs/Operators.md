@@ -53,6 +53,7 @@
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
+  * <a href="#IsInf">IsInf</a>
   * <a href="#IsNaN">IsNaN</a>
   * <a href="#LRN">LRN</a>
   * <a href="#LSTM">LSTM</a>
@@ -72,9 +73,11 @@
   * <a href="#Mean">Mean</a>
   * <a href="#MeanSquaredError">MeanSquaredError</a>
   * <a href="#Min">Min</a>
+  * <a href="#Mod">Mod</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
+  * <a href="#NonMaxSuppression">NonMaxSuppression</a>
   * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
   * <a href="#OneHot">OneHot</a>
@@ -2493,6 +2496,42 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>convinteger</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.array([1]).astype(np.uint8)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
+
+# ConvInteger without padding
+convinteger_node = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'])
+
+expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_basic_convinteger')
+
+# ConvInteger with padding
+y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+
+
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
@@ -3104,6 +3143,29 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>dequantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DequantizeLinear',
+    inputs=['x', 'x_scale', 'x_zero_point'],
+    outputs=['y'],)
+
+# scalar zero point and scale
+x = np.array([0, 3, 128, 255]).astype(np.uint8)
+x_scale = np.array([2], dtype=np.float32)
+x_zero_point = np.array([128], dtype=np.uint8)
+y = np.array([-256, -250, 0, 254], dtype=np.float32)
+
+expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
+       name='test_dequantizelinear')
+```
+
+</details>
 
 
 ### <a name="Div"></a><a name="div">**Div**</a>
@@ -5076,6 +5138,105 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 </details>
 
 
+### <a name="IsInf"></a><a name="isinf">**IsInf**</a>
+
+  Map infinity to true and other values to false.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>detect_negative</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map negative infinity to true. Default to 1 so that negative infinity induces true. Set this attribute to 0 if negative infinity should be mapped to false.</dd>
+<dt><tt>detect_positive</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map positive infinity to true. Default to 1 so that positive infinity induces true. Set this attribute to 0 if positive infinity should be mapped to false.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>infinity</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             )
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf')
+```
+
+</details>
+
+
+<details>
+<summary>negative_infinity_only</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             detect_positive=0
+                             )
+
+x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isneginf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf_negative')
+```
+
+</details>
+
+
+<details>
+<summary>positive_infinity_only</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             detect_negative=0
+                             )
+
+x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isposinf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf_positive')
+```
+
+</details>
+
+
 ### <a name="IsNaN"></a><a name="isnan">**IsNaN**</a>
 
   Returns which elements of the input are NaN.
@@ -6221,6 +6382,41 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>matmulinteger</summary>
+
+```python
+node = onnx.helper.make_node('MatMulInteger',
+    inputs=['A', 'B', 'a_zero_point', 'b_zero_point'],
+    outputs=['Y'],)
+
+A = np.array([[11, 7, 3],
+    [10, 6, 2],
+    [9, 5, 1],
+    [8, 4, 0], ], dtype=np.uint8)
+
+a_zero_point = np.array([12], dtype=np.uint8)
+
+B = np.array([[1, 4],
+    [2, 5],
+    [3, 6], ], dtype=np.uint8)
+
+b_zero_point = np.array([0], dtype=np.uint8)
+
+output = np.array([[-38, -83],
+    [-44, -98],
+    [-50, -113],
+    [-56, -128], ], dtype=np.int32)
+
+expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
+       name='test_matmulinteger')
+```
+
+</details>
+
+
 ### <a name="Max"></a><a name="max">**Max**</a>
 
   Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
@@ -7268,6 +7464,140 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### <a name="Mod"></a><a name="mod">**Mod**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+      The sign of the remainder is the same as that of the Divisor.
+    
+      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+      If the input type is floating point, then `fmod` attribute must be set to 1.
+    
+      In case of dividend being zero, the results will be platform dependent.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>float_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.mod(x, y)  # expected output [2., -3.,  5., -2.,  3.,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_float_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>fmod_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_fmod_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>int64_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>mul_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_bcast')
+```
+
+</details>
+
+
 ### <a name="Mul"></a><a name="mul">**Mul**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
@@ -7451,6 +7781,327 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
+```
+
+</details>
+
+
+### <a name="NonMaxSuppression"></a><a name="nonmaxsuppression">**NonMaxSuppression**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+  Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0.0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box cornersand the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models.1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>nonmaxsuppression_center_point_box_format</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices'],
+    center_point_box=1
+)
+boxes = np.array([[
+    [0.5, 0.5, 1.0, 1.0],
+    [0.5, 0.6, 1.0, 1.0],
+    [0.5, 0.4, 1.0, 1.0],
+    [0.5, 10.5, 1.0, 1.0],
+    [0.5, 10.6, 1.0, 1.0],
+    [0.5, 100.5, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_center_point_box_format')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_flipped_coordinates</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [1.0, 1.0, 0.0, 0.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, 0.9, 1.0, -0.1],
+    [0.0, 10.0, 1.0, 11.0],
+    [1.0, 10.1, 0.0, 11.1],
+    [1.0, 101.0, 0.0, 100.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_flipped_coordinates')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_identical_boxes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_identical_boxes')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_limit_output_size</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_limit_output_size')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_single_box</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_single_box')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_suppress_by_IOU</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_suppress_by_IOU_and_scores</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.4]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU_and_scores')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_two_batches</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0],
+
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
+                    [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [1, 0, 3], [1, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_batches')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_two_classes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
+                    [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 1, 3], [0, 1, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_classes')
 ```
 
 </details>
@@ -8167,6 +8818,50 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>qlinearconv</summary>
+
+```python
+node = onnx.helper.make_node('QLinearConv',
+    inputs=['x', 'x_scale', 'x_zero_point', 'w', 'w_scale', 'w_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([[255, 174, 162, 25, 203, 168, 58],
+    [15, 59, 237, 95, 129, 0, 64],
+    [56, 242, 153, 221, 168, 12, 166],
+    [232, 178, 186, 195, 237, 162, 237],
+    [188, 39, 124, 77, 80, 102, 43],
+    [127, 230, 21, 83, 41, 40, 134],
+    [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+x_scale = np.array([0.00369204697], dtype=np.float32)
+x_zero_point = np.array([132], dtype=np.uint8)
+
+w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+
+w_scale = np.array([0.00172794575], dtype=np.float32)
+w_zero_point = np.array([255], dtype=np.uint8)
+
+y_scale = np.array([0.00162681262], dtype=np.float32)
+y_zero_point = np.array([123], dtype=np.uint8)
+
+output = np.array([[0, 81, 93, 230, 52, 87, 197],
+    [240, 196, 18, 160, 126, 255, 191],
+    [199, 13, 102, 34, 87, 243, 89],
+    [23, 77, 69, 60, 18, 93, 18],
+    [67, 216, 131, 178, 175, 153, 212],
+    [128, 25, 234, 172, 214, 215, 121],
+    [0, 101, 163, 114, 213, 107, 8], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+expect(node, inputs=[x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearconv')
+```
+
+</details>
+
+
 ### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
@@ -8222,6 +8917,76 @@ This version of the operator has been available since version 10 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>qlinearmatmul</summary>
+
+```python
+node = onnx.helper.make_node('QLinearMatMul',
+    inputs=['a', 'a_scale', 'a_zero_point', 'b', 'b_scale', 'b_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+#2D
+a = np.array([[208, 236, 0, 238],
+    [3, 214, 255, 29], ], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[168, 115, 255],
+    [1, 66, 151], ], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_2D')
+
+#3D
+a = np.array([[[208, 236, 0, 238],
+    [3, 214, 255, 29]],
+    [[208, 236, 0, 238],
+    [3, 214, 255, 29]]], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]],
+    [[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[[168, 115, 255],
+    [1, 66, 151]],
+    [[168, 115, 255],
+    [1, 66, 151]]], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_3D')
+```
+
+</details>
+
+
 ### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
 
   The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
@@ -8258,6 +9023,28 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>quantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('QuantizeLinear',
+    inputs=['x', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
+y_scale = np.array([2], dtype=np.float32)
+y_zero_point = np.array([128], dtype=np.uint8)
+y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
+
+expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+       name='test_quantizelinear')
+```
+
+</details>
 
 
 ### <a name="RNN"></a><a name="rnn">**RNN**</a>

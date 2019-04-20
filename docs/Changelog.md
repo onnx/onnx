@@ -9473,6 +9473,46 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
+### <a name="IsInf-10"></a>**IsInf-10**</a>
+
+  Map infinity to true and other values to false.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>detect_negative</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map negative infinity to true. Default to 1 so that negative infinity induces true. Set this attribute to 0 if negative infinity should be mapped to false.</dd>
+<dt><tt>detect_positive</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map positive infinity to true. Default to 1 so that positive infinity induces true. Set this attribute to 0 if positive infinity should be mapped to false.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
 ### <a name="MatMulInteger-10"></a>**MatMulInteger-10**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
@@ -9593,11 +9633,29 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+<<<<<<< HEAD
 ### <a name="MeanSquaredError-10"></a>**MeanSquaredError-10**</a>
 
   Loss function that measures the
   mean squared error (squared L2 norm) between each element in the predictions
   and labels.
+=======
+### <a name="Mod-10"></a>**Mod-10**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+      The sign of the remainder is the same as that of the Divisor.
+    
+      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+      If the input type is floating point, then `fmod` attribute must be set to 1.
+    
+      In case of dividend being zero, the results will be platform dependent.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+>>>>>>> master
 
 #### Version
 
@@ -9606,6 +9664,7 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
+<<<<<<< HEAD
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
 </dl>
@@ -9619,22 +9678,94 @@ This version of the operator has been available since version 10 of the default 
 <dd>The ground truth output tensor, same dimensions as 'predictions'.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If weights is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the weights vector. If the shape of weights matches the shape of predictions, then the loss of each measurable element of predictions is scaled by the corresponding value of weights.</dd>
+=======
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Divisor tensor</dd>
+>>>>>>> master
 </dl>
 
 #### Outputs
 
 <dl>
+<<<<<<< HEAD
 <dt><tt>output</tt> : T</dt>
 <dd>Weighted loss float Tensor. If reduction is none, this has the same shape as labels; otherwise, it is scalar.</dd>
+=======
+<dt><tt>C</tt> : T</dt>
+<dd>Remainder tensor</dd>
+>>>>>>> master
 </dl>
 
 #### Type Constraints
 
 <dl>
+<<<<<<< HEAD
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+=======
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+### <a name="NonMaxSuppression-10"></a>**NonMaxSuppression-10**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+  Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0.0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box cornersand the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models.1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
+
+>>>>>>> master
 ### <a name="QLinearConv-10"></a>**QLinearConv-10**</a>
 
   The convolution operator consumes a quantized input tensor, its scale and zero point,
