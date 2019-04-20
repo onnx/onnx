@@ -1621,7 +1621,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             4,
             "saved_var",
             "Saved variance used during training to speed up gradient computation. "
-            "This output is populated only when is_train is set to true.",,
+            "This output is populated only when is_train is set to true.",
             "T",
             OpSchema::Optional)
         .TypeConstraint(

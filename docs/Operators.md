@@ -1512,7 +1512,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   there are multiple cases for the number of outputs, which we list below:
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode)
+  Output case #2: Y (test mode, where other outputs will not be populated)
   
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
@@ -1520,9 +1520,9 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>, <a href="Changelog.md#BatchNormalization-7">BatchNormalization-7</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>, <a href="Changelog.md#BatchNormalization-7">BatchNormalization-7</a>, <a href="Changelog.md#BatchNormalization-9">BatchNormalization-9</a>
 
 #### Attributes
 
@@ -1533,7 +1533,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (5 - 6)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
@@ -1546,6 +1546,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+<dt><tt>is_train</tt> (optional) : T1</dt>
+<dd>If set to nonzero, run spatial batch normalization in training mode, default is 0.</dd>
 </dl>
 
 #### Outputs (1 - 5)
@@ -1554,13 +1556,13 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the BatchNormalization operator.</dd>
+<dd>The running mean after the BatchNormalization operator. This output is populated only when is_train is set to true.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the BatchNormalization operator.</dd>
+<dd>The running variance after the BatchNormalization operator.This output is populated only when is_train is set to true.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation.</dd>
+<dd>Saved mean used during training to speed up gradient computation. This output is populated only when is_train is set to true.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation.</dd>
+<dd>Saved variance used during training to speed up gradient computation. This output is populated only when is_train is set to true.</dd>
 </dl>
 
 #### Type Constraints
@@ -1568,6 +1570,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain input 'is_train' types to boolean tensors.</dd>
 </dl>
 
 
@@ -3252,11 +3256,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
-  Dropout takes one input floating tensor and produces two tensor outputs,
-  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-  in training mode or not, the output Y will either be a random dropout, or a simple
-  copy of the input. Note that our implementation of Dropout does scaling in
-  the training phase, so during testing nothing needs to be done.
+  Dropout takes an input floating tensor and an dropout ratio, it produces
+  two tensor outputs, output (floating tensor) and mask (`Tensor<bool>`).
+  Depending on the value of ratio, the output Y will either be a random dropout,
+  or a simple copy of the input. Note that our implementation of Dropout does
+  scaling in the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -3268,8 +3272,6 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 #### Attributes
 
 <dl>
-<dt><tt>ratio</tt> : float (default is 0.5)</dt>
-<dd>The ratio of random dropout</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3279,8 +3281,8 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
-<dt><tt>is_train</tt> (optional) : T1</dt>
-<dd>If non-zero, output will be a random dropout of input, default is 0.</dd>
+<dt><tt>ratio</tt> (optional) : T</dt>
+<dd>The ratio of random dropout, with value in [0, 1]. If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of input, which is typically the case during training.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -3298,7 +3300,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain input 'is_train' and output 'mask' types to boolean tensors.</dd>
+<dd>Constrain output 'mask' types to boolean tensors.</dd>
 </dl>
 
 
