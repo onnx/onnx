@@ -9633,13 +9633,48 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-<<<<<<< HEAD
 ### <a name="MeanSquaredError-10"></a>**MeanSquaredError-10**</a>
 
   Loss function that measures the
   mean squared error (squared L2 norm) between each element in the predictions
   and labels.
-=======
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>predictions</tt> : T</dt>
+<dd>The predicted outputs.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, same dimensions as 'predictions'.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If weights is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the weights vector. If the shape of weights matches the shape of predictions, then the loss of each measurable element of predictions is scaled by the corresponding value of weights.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is none, this has the same shape as labels; otherwise, it is scalar.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Mod-10"></a>**Mod-10**</a>
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support). 
@@ -9655,7 +9690,6 @@ This version of the operator has been available since version 10 of the default 
       In case of dividend being zero, the results will be platform dependent.
   
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
->>>>>>> master
 
 #### Version
 
@@ -9664,21 +9698,6 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
-</dl>
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>predictions</tt> : T</dt>
-<dd>The predicted outputs.</dd>
-<dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'predictions'.</dd>
-<dt><tt>weights</tt> (optional) : T</dt>
-<dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If weights is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the weights vector. If the shape of weights matches the shape of predictions, then the loss of each measurable element of predictions is scaled by the corresponding value of weights.</dd>
-=======
 <dt><tt>fmod</tt> : int (default is 0)</dt>
 <dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
 </dl>
@@ -9690,30 +9709,18 @@ This version of the operator has been available since version 10 of the default 
 <dd>Dividend tensor</dd>
 <dt><tt>B</tt> : T</dt>
 <dd>Divisor tensor</dd>
->>>>>>> master
 </dl>
 
 #### Outputs
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is none, this has the same shape as labels; otherwise, it is scalar.</dd>
-=======
 <dt><tt>C</tt> : T</dt>
 <dd>Remainder tensor</dd>
->>>>>>> master
 </dl>
 
 #### Type Constraints
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-=======
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
@@ -9765,7 +9772,6 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 
->>>>>>> master
 ### <a name="QLinearConv-10"></a>**QLinearConv-10**</a>
 
   The convolution operator consumes a quantized input tensor, its scale and zero point,
