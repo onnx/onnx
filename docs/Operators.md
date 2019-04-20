@@ -116,6 +116,7 @@
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
+  * <a href="#SoftmaxCrossEntropy">SoftmaxCrossEntropy</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
@@ -7086,16 +7087,18 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output, </dd>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>predictions</tt> : T</dt>
 <dd>The predicted outputs.</dd>
 <dt><tt>labels</tt> : T</dt>
 <dd>The ground truth output tensor, same dimensions as 'predictions'.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If weights is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the weights vector. If the shape of weights matches the shape of predictions, then the loss of each measurable element of predictions is scaled by the corresponding value of weights.</dd>
 </dl>
 
 #### Outputs
@@ -11789,6 +11792,48 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="SoftmaxCrossEntropy"></a><a name="softmaxcrossentropy">**SoftmaxCrossEntropy**</a>
+
+  Loss function that measures the softmax cross entropy between 
+  each element in the predictions and labels.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>predictions</tt> : T</dt>
+<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, same dimensions as 'predictions'. Usualy, it's a one-hot representation of groud-truth class.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, d1, d2, ..., dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
