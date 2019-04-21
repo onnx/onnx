@@ -7,6 +7,7 @@
   * <a href="#Abs">Abs</a>
   * <a href="#Acos">Acos</a>
   * <a href="#Acosh">Acosh</a>
+  * <a href="#Adagrad">Adagrad</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
@@ -330,6 +331,91 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="Adagrad"></a><a name="adagrad">**Adagrad**</a>
+
+  Compute one iteration of ADAGRAD, a stochastic gradient based optimization
+      algorithm.
+  
+      Let's define the behavior of this operator.
+      First, the tensor to be updated "X", its gradient "G", the associated squared accumulated
+      gradient "H", the initial learning rate "R"," and "X"'s update count "T", the L2-norm 
+      regularization coefficient "Lambda," decay factor at one iteration "D," and a small constant
+      "Eps" should be given as inputs.
+      The output list includes the new value of "X" (called "X_new"), the new squared
+      accumulated gradient "H_new", the new update count of "X" (called "T_new").
+      Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+      The pseudo code to compute those outputs is:
+  
+        // Compute a scalar learning rate factor. If X is never updated, T is 0.
+        r = R / (1 + T * D);
+  
+        // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
+        G_regularized = Lambda * X + G;
+  
+        // Compute new squared accumulated gradient.
+        H_new = H + G_regularized * G_regularized;
+  
+        // Compute the adaptive part of per-coordinate learning rate.
+        H_adaptive = Sqrt(H_new) + Eps
+  
+        // Compute the new value of "X".
+        X_new = X - r * G_regularized / H_adaptive;
+  
+        // Increase update count.
+        T_new = T + 1;
+  
+      Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
+      In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
+      descent update.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input.</dd>
+<dt><tt>G</tt> : T1</dt>
+<dd>Gradient of "X".</dd>
+<dt><tt>H</tt> : T1</dt>
+<dd>Accumulated squared gradient of "X".</dd>
+<dt><tt>R</tt> : T2</dt>
+<dd>The initial learning rate.</dd>
+<dt><tt>D</tt> : T2</dt>
+<dd>The decay factor of learning rate after one update.</dd>
+<dt><tt>T</tt> : T3</dt>
+<dd>The update count of "X". It should be a scalar.</dd>
+<dt><tt>Lambda</tt> : T2</dt>
+<dd>Regularization coefficient of 0.5 * Lambda * ||X||_F^2.</dd>
+<dt><tt>Eps</tt> : T2</dt>
+<dd>Small scalar to avoid dividing by zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>X_new</tt> : T1</dt>
+<dd>Output</dd>
+<dt><tt>H_new</tt> : T1</dt>
+<dd>New accumulated squared gradient of "X".</dd>
+<dt><tt>T_new</tt> : T3</dt>
+<dd>New update count of "X"</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float scalars.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>Constrain output types to 64-bit integer scalars.</dd>
+</dl>
 
 
 ### <a name="Add"></a><a name="add">**Add**</a>

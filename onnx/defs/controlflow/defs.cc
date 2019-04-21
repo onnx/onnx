@@ -774,4 +774,78 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+
+static const char* Adagrad_ver10_doc = R"DOC(
+    Compute one iteration of ADAGRAD, a stochastic gradient based optimization
+    algorithm.
+
+    Let's define the behavior of this operator.
+    First, the tensor to be updated "X", its gradient "G", the associated squared accumulated
+    gradient "H", the initial learning rate "R"," and "X"'s update count "T", the L2-norm 
+    regularization coefficient "Lambda," decay factor at one iteration "D," and a small constant
+    "Eps" should be given as inputs.
+    The output list includes the new value of "X" (called "X_new"), the new squared
+    accumulated gradient "H_new", the new update count of "X" (called "T_new").
+    Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+    The pseudo code to compute those outputs is:
+
+      // Compute a scalar learning rate factor. If X is never updated, T is 0.
+      r = R / (1 + T * D);
+
+      // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
+      G_regularized = Lambda * X + G;
+
+      // Compute new squared accumulated gradient.
+      H_new = H + G_regularized * G_regularized;
+
+      // Compute the adaptive part of per-coordinate learning rate.
+      H_adaptive = Sqrt(H_new) + Eps
+
+      // Compute the new value of "X".
+      X_new = X - r * G_regularized / H_adaptive;
+
+      // Increase update count.
+      T_new = T + 1;
+
+    Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
+    In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
+    descent update.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Adagrad,
+    10,
+    OpSchema()
+        .SetDoc(Adagrad_ver10_doc)
+        .Input(0, "X", "Input.", "T1")
+        .Input(1, "G", "Gradient of \"X\".", "T1")
+        .Input(2, "H", "Accumulated squared gradient of \"X\".", "T1")
+        .Input(3, "R", "The initial learning rate.", "T2")
+        .Input(4, "D", "The decay factor of learning rate after one update.", "T2")
+        .Input(5, "T", "The update count of \"X\". It should be a scalar.", "T3")
+        .Input(6, "Lambda", "Regularization coefficient of 0.5 * Lambda * ||X||_F^2.", "T2")
+        .Input(7, "Eps", "Small scalar to avoid dividing by zero.", "T2")
+        .Output(0, "X_new", "Output", "T1")
+        .Output(1, "H_new", "New accumulated squared gradient of \"X\".", "T1")
+        .Output(2, "T_new", "New update count of \"X\"", "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)", "tensor(double)"},
+            "Constrain input types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float)", "tensor(double)"},
+            "Constrain input types to float scalars.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int64)"},
+            "Constrain output types to 64-bit integer scalars.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 2, 1);
+          propagateElemTypeFromInputToOutput(ctx, 5, 2);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 2, 1);
+          propagateShapeFromInputToOutput(ctx, 5, 2);
+        }));
 } // namespace ONNX_NAMESPACE
