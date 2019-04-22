@@ -820,9 +820,9 @@ static const char* Adagrad_ver10_doc = R"DOC(
       T_new = T + 1;
 
     If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
-    pseudo code would be applied to all tensors jointly. More specifically, we view "X" as a
+    pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
     concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-    be concatenated too) and just execute our pseudo code.
+    be concatenated too) and then just execute our pseudo code.
 
     Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
     In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
@@ -845,7 +845,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "It sequentially contains the current values of optimized tensors and then the "
             "current values of accumulated gradient. For example, if two tensor \"X_1\" and \"X_2\" "
             "are optimized, The input list would be [\"X_1\", \"X_2\", gradient of \"X_1\", "
-            "gradient of \"X_2\", accumulated gradient of \"X_1\", accumulated gradient of \"X_2\"]."
+            "gradient of \"X_2\", accumulated squared gradient of \"X_1\", accumulated squared gradient of \"X_2\"].",
             "T2",
             OpSchema::Variadic,
             false)
@@ -855,8 +855,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "outputs",
             "It sequentially contains the new values of optimized tensors and then the new "
             "values of accumulated gradient. For example, if two tensor \"X_1\" and \"X_2\" are "
-            "optimized, the output list would be [new value of \"X_1\", new value of \"X_2\",
-            new accumulated gradient of \"X_1\", new accumulated gradient of \"X_2\"]."
+            "optimized, the output list would be [new value of \"X_1,\" new value of \"X_2\" "
+            "new accumulated gradient of \"X_1\", new accumulated gradient of \"X_2\"].",
             "T2",
             OpSchema::Variadic,
             false)

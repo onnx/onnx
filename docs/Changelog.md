@@ -9264,19 +9264,31 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="Adagrad-10"></a>**Adagrad-10**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
-      algorithm.
+      algorithm. This operator can conduct the optimization of multiple tensor variables.
   
-      Let's define the behavior of this operator.
-      First, the tensor to be updated "X", its gradient "G", the associated squared accumulated
-      gradient "H", the initial learning rate "R"," and "X"'s update count "T", the L2-norm 
-      regularization coefficient "Lambda," decay factor at one iteration "D," and a small constant
-      "Eps" should be given as inputs.
-      The output list includes the new value of "X" (called "X_new"), the new squared
-      accumulated gradient "H_new", the new update count of "X" (called "T_new").
+      Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
+      some parameters:
+       
+       - The initial learning-rate "R".
+       - The update count "T". That is, the number of training iterations conducted.
+       - A Frobenius norm regularization coefficient "Lambda".
+       - A learning-rate decay factor per iteration "D".
+       - A small constant "Eps" to avoid dividing-by-zero. 
+  
+      At each ADAGRAD iteration, the optimized tensor variables are moved along a direction
+      computed based on their estimated gradient and squared accumulated gradient. Assume
+      that only a single tensor "X" is updated by this operator. We need the value of "X",
+      its gradient "G", and its squared accumulated gradient "H". Consequently, if "X" is
+      the only one tensor to be optimized, variables in this operator's input list are
+      sequentially "R", "T", "D", "Eps", "X", "G", and "H". Also, the corresponding output
+      tensors are the new update count of "X" (called "T_new"), the new value of "X"
+      (called "X_new"), and the new squared accumulated gradient (called "H_new"). Those
+      outputs are computed from the given inputs following the pseudo code below.
+  
       Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
       The pseudo code to compute those outputs is:
   
-        // Compute a scalar learning rate factor. If X is never updated, T is 0.
+        // Compute a scalar learning-rate factor. If X is never updated, T is 0.
         r = R / (1 + T * D);
   
         // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
@@ -9294,6 +9306,11 @@ This version of the operator has been available since version 9 of the default O
         // Increase update count.
         T_new = T + 1;
   
+      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+      pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+      be concatenated too) and then just execute our pseudo code.
+  
       Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
       In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
       descent update.
@@ -9302,45 +9319,39 @@ This version of the operator has been available since version 9 of the default O
 
 This version of the operator has been available since version 10 of the default ONNX operator set.
 
-#### Inputs
+#### Inputs (6 - &#8734;)
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
-<dd>Input.</dd>
-<dt><tt>G</tt> : T1</dt>
-<dd>Gradient of "X".</dd>
-<dt><tt>H</tt> : T1</dt>
-<dd>Accumulated squared gradient of "X".</dd>
-<dt><tt>R</tt> : T2</dt>
+<dt><tt>R</tt> : T1</dt>
 <dd>The initial learning rate.</dd>
-<dt><tt>D</tt> : T2</dt>
+<dt><tt>D</tt> : T1</dt>
 <dd>The decay factor of learning rate after one update.</dd>
 <dt><tt>T</tt> : T3</dt>
 <dd>The update count of "X". It should be a scalar.</dd>
-<dt><tt>Lambda</tt> : T2</dt>
+<dt><tt>Lambda</tt> : T1</dt>
 <dd>Regularization coefficient of 0.5 * Lambda * ||X||_F^2.</dd>
-<dt><tt>Eps</tt> : T2</dt>
+<dt><tt>Eps</tt> : T1</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>It sequentially contains the current values of optimized tensors and then the current values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
 </dl>
 
-#### Outputs
+#### Outputs (2 - &#8734;)
 
 <dl>
-<dt><tt>X_new</tt> : T1</dt>
-<dd>Output</dd>
-<dt><tt>H_new</tt> : T1</dt>
-<dd>New accumulated squared gradient of "X".</dd>
 <dt><tt>T_new</tt> : T3</dt>
-<dd>New update count of "X"</dd>
+<dd>New update count of inputs</dd>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>It sequentially contains the new values of optimized tensors and then the new values of accumulated gradient. For example, if two tensor X_1 and X_2 are optimized, the output list would be [new value of X_1, new value of X_2 new accumulated gradient of X_1, new accumulated gradient of X_2].</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
 <dt><tt>T3</tt> : tensor(int64)</dt>
 <dd>Constrain output types to 64-bit integer scalars.</dd>
 </dl>
