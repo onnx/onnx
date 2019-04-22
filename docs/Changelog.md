@@ -9276,14 +9276,14 @@ This version of the operator has been available since version 9 of the default O
        - A small constant "Eps" to avoid dividing-by-zero. 
   
       At each ADAGRAD iteration, the optimized tensor variables are moved along a direction
-      computed based on their estimated gradient and squared accumulated gradient. Assume
+      computed based on their estimated gradient and accumulated squared gradient. Assume
       that only a single tensor "X" is updated by this operator. We need the value of "X",
-      its gradient "G", and its squared accumulated gradient "H". Consequently, if "X" is
+      its gradient "G", and its accumulated squared gradient "H". Consequently, if "X" is
       the only one tensor to be optimized, variables in this operator's input list are
       sequentially "R", "T", "D", "Eps", "X", "G", and "H". Also, the corresponding output
-      tensors are the new update count of "X" (called "T_new"), the new value of "X"
-      (called "X_new"), and the new squared accumulated gradient (called "H_new"). Those
-      outputs are computed from the given inputs following the pseudo code below.
+      tensors are the new value of "X" (called "X_new"), and the new accumulated squared 
+      gradient (called "H_new"). Those outputs are computed from the given inputs following
+      the pseudo code below.
   
       Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
       The pseudo code to compute those outputs is:
@@ -9294,17 +9294,15 @@ This version of the operator has been available since version 9 of the default O
         // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
         G_regularized = Lambda * X + G;
   
-        // Compute new squared accumulated gradient.
+        // Compute new accumulated squared gradient.
         H_new = H + G_regularized * G_regularized;
   
-        // Compute the adaptive part of per-coordinate learning rate.
+        // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
+        // compute square root.
         H_adaptive = Sqrt(H_new) + Eps
   
         // Compute the new value of "X".
         X_new = X - r * G_regularized / H_adaptive;
-  
-        // Increase update count.
-        T_new = T + 1;
   
       If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
       pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
@@ -9336,13 +9334,11 @@ This version of the operator has been available since version 10 of the default 
 <dd>It sequentially contains the current values of optimized tensors and then the current values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
 </dl>
 
-#### Outputs (2 - &#8734;)
+#### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>T_new</tt> : T3</dt>
-<dd>New update count of inputs</dd>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : T2</dt>
-<dd>It sequentially contains the new values of optimized tensors and then the new values of accumulated gradient. For example, if two tensor X_1 and X_2 are optimized, the output list would be [new value of X_1, new value of X_2 new accumulated gradient of X_1, new accumulated gradient of X_2].</dd>
+<dd>It sequentially contains the new values of optimized tensors and then the new values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
 </dl>
 
 #### Type Constraints
