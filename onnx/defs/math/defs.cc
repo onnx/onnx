@@ -95,6 +95,49 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema().FillUsing(MathDocGenerator("subtraction")));
 
+static const char* Mod_doc = R"DOC(
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+    The sign of the remainder is the same as that of the Divisor.
+  
+    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+    This attribute is set to 0 by default causing the behavior to be like integer mod. 
+    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+
+    If the input type is floating point, then `fmod` attribute must be set to 1.
+  
+    In case of dividend being zero, the results will be platform dependent.
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mod,
+    10,
+    OpSchema()
+        .SetDoc(Mod_doc)
+        .Attr(
+            "fmod",
+            "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "A", "Dividend tensor", "T")
+        .Input(1, "B", "Divisor tensor", "T")
+        .Output(0, "C", "Remainder tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            if (hasNInputShapes(ctx, 2))
+                bidirectionalBroadcastShapeInference(
+                    ctx.getInputType(0)->tensor_type().shape(),
+                    ctx.getInputType(1)->tensor_type().shape(),
+                    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        })
+);
+
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     7,
@@ -751,7 +794,7 @@ void matmulShapeInference(
     ONNX_NAMESPACE::InferenceContext& ctx,
     int input1Idx,
     int input2Idx) {
-  if (!hasInputShape(ctx, input1Idx) && !hasInputShape(ctx, input2Idx)) {
+  if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
   }
 
@@ -1294,24 +1337,29 @@ ONNX_OPERATOR_SET_SCHEMA(
                                               ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(3);
-          auto y_type = ctx.getOutputType(0);
-          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+          if (nullptr == a_type || nullptr == b_type ||
               a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
               b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
-            fail_type_inference(
-                "inputs are expected to have tensor type and output type should not be null.");
+            fail_type_inference("inputs are expected to have tensor type.");
           }
 
-          if (ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  a_type->tensor_type().elem_type() &&
-              ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  b_type->tensor_type().elem_type()) {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::UINT8);
-          } else {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::INT8);
+          auto a_zero_point_type = ctx.getInputType(2);
+          if (nullptr == a_zero_point_type ||
+              a_zero_point_type->tensor_type().elem_type() !=
+                  a_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "input and zero_point pair is expected to have be same type.");
           }
+
+          auto b_zero_point_type = ctx.getInputType(5);
+          if (nullptr == b_zero_point_type ||
+              b_zero_point_type->tensor_type().elem_type() !=
+                  b_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "input and zero_point pair is expected to have same type.");
+          }
+
+          propagateElemTypeFromInputToOutput(ctx, 7, 0);
 
           matmulShapeInference(ctx, 0, 3);
         }));

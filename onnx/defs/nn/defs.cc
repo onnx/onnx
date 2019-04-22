@@ -32,7 +32,6 @@ void convPoolShapeInference(
     bool require_kernel_shape,
     int input1Idx,
     int input2Idx) {
-
   // we need the first input shape for this inference.
   if (!hasInputShape(ctx, input1Idx)) {
     return;
@@ -115,7 +114,7 @@ void convPoolShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    auto& second_input_shape = getInputShape(ctx, 1);
+    auto& second_input_shape = getInputShape(ctx, input2Idx);
     if (second_input_shape.dim_size() < 1) {
       fail_shape_inference("Second input tensor has wrong dimension");
     }
@@ -1026,24 +1025,29 @@ ONNX_OPERATOR_SET_SCHEMA(
                                               ctx) {
           auto x_type = ctx.getInputType(0);
           auto w_type = ctx.getInputType(3);
-          auto y_type = ctx.getOutputType(0);
-          if (nullptr == x_type || nullptr == w_type || nullptr == y_type ||
+          if (nullptr == x_type || nullptr == w_type ||
               x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
               w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
-            fail_type_inference(
-                "inputs are expected to have tensor type and output type should not be null.");
+            fail_type_inference("inputs are expected to have tensor type.");
           }
 
-          if (ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  x_type->tensor_type().elem_type() &&
-              ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  w_type->tensor_type().elem_type()) {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::UINT8);
-          } else {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::INT8);
+          auto x_zero_point_type = ctx.getInputType(2);
+          if (nullptr == x_zero_point_type ||
+              x_zero_point_type->tensor_type().elem_type() !=
+                  x_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "input and zero_point pair is expected to have be same type.");
           }
+
+          auto w_zero_point_type = ctx.getInputType(5);
+          if (nullptr == w_zero_point_type ||
+              w_zero_point_type->tensor_type().elem_type() !=
+                  w_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "weight and zero_point pair is expected to have same type.");
+          }
+
+          propagateElemTypeFromInputToOutput(ctx, 7, 0);
 
           convPoolShapeInference(ctx, true, false, 0, 3);
         }));
@@ -2120,5 +2124,67 @@ ONNX_OPERATOR_SET_SCHEMA(
              {{"X_variance"}, "Sub", {"X", "X_RM"}},
              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
              {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+
+static const char* NonMaxSuppression_doc = R"DOC(
+Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+result in the same boxes being selected by the algorithm.
+The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonMaxSuppression,
+    10,
+    OpSchema()
+        .Input(
+            0,
+            "boxes",
+            "An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.",
+            "tensor(float)")
+        .Input(
+            1,
+            "scores",
+            "An input tensor with shape [num_batches, num_classes, spatial_dimension]",
+            "tensor(float)")
+        .Input(
+            2,
+            "max_output_boxes_per_class",
+            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Input(
+            3,
+            "iou_threshold",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].",
+            "tensor(float)",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "score_threshold",
+            "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar",
+            "tensor(float)",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "selected_indices",
+            "selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].",
+            "tensor(int64)")
+        .Attr(
+            "center_point_box",
+            "Integer indicate the format of the box data. The default is 0."
+            "0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners"
+            "and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models."
+            "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .SetDoc(NonMaxSuppression_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
+            selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
+        }));
 
 } // namespace ONNX_NAMESPACE
