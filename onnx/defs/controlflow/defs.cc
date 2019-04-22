@@ -777,19 +777,31 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Adagrad_ver10_doc = R"DOC(
     Compute one iteration of ADAGRAD, a stochastic gradient based optimization
-    algorithm.
+    algorithm. This operator can conduct the optimization of multiple tensor variables.
 
-    Let's define the behavior of this operator.
-    First, the tensor to be updated "X", its gradient "G", the associated squared accumulated
-    gradient "H", the initial learning rate "R"," and "X"'s update count "T", the L2-norm 
-    regularization coefficient "Lambda," decay factor at one iteration "D," and a small constant
-    "Eps" should be given as inputs.
-    The output list includes the new value of "X" (called "X_new"), the new squared
-    accumulated gradient "H_new", the new update count of "X" (called "T_new").
+    Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
+    some parameters:
+     
+     - The initial learning-rate "R".
+     - The update count "T". That is, the number of training iterations conducted.
+     - A Frobenius norm regularization coefficient "Lambda".
+     - A learning-rate decay factor per iteration "D".
+     - A small constant "Eps" to avoid dividing-by-zero. 
+
+    At each ADAGRAD iteration, the optimized tensor variables are moved along a direction
+    computed based on their estimated gradient and squared accumulated gradient. Assume
+    that only a single tensor "X" is updated by this operator. We need the value of "X",
+    its gradient "G", and its squared accumulated gradient "H". Consequently, if "X" is
+    the only one tensor to be optimized, variables in this operator's input list are
+    sequentially "R", "T", "D", "Eps", "X", "G", and "H". Also, the corresponding output
+    tensors are the new update count of "X" (called "T_new"), the new value of "X"
+    (called "X_new"), and the new squared accumulated gradient (called "H_new"). Those
+    outputs are computed from the given inputs following the pseudo code below.
+
     Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
     The pseudo code to compute those outputs is:
 
-      // Compute a scalar learning rate factor. If X is never updated, T is 0.
+      // Compute a scalar learning-rate factor. If X is never updated, T is 0.
       r = R / (1 + T * D);
 
       // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
@@ -807,6 +819,11 @@ static const char* Adagrad_ver10_doc = R"DOC(
       // Increase update count.
       T_new = T + 1;
 
+    If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+    pseudo code would be applied to all tensors jointly. More specifically, we view "X" as a
+    concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+    be concatenated too) and just execute our pseudo code.
+
     Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
     In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
     descent update.
@@ -817,35 +834,45 @@ ONNX_OPERATOR_SET_SCHEMA(
     10,
     OpSchema()
         .SetDoc(Adagrad_ver10_doc)
-        .Input(0, "X", "Input.", "T1")
-        .Input(1, "G", "Gradient of \"X\".", "T1")
-        .Input(2, "H", "Accumulated squared gradient of \"X\".", "T1")
-        .Input(3, "R", "The initial learning rate.", "T2")
-        .Input(4, "D", "The decay factor of learning rate after one update.", "T2")
-        .Input(5, "T", "The update count of \"X\". It should be a scalar.", "T3")
-        .Input(6, "Lambda", "Regularization coefficient of 0.5 * Lambda * ||X||_F^2.", "T2")
-        .Input(7, "Eps", "Small scalar to avoid dividing by zero.", "T2")
-        .Output(0, "X_new", "Output", "T1")
-        .Output(1, "H_new", "New accumulated squared gradient of \"X\".", "T1")
-        .Output(2, "T_new", "New update count of \"X\"", "T3")
+        .Input(0, "R", "The initial learning rate.", "T1")
+        .Input(1, "D", "The decay factor of learning rate after one update.", "T1")
+        .Input(2, "T", "The update count of \"X\". It should be a scalar.", "T3")
+        .Input(3, "Lambda", "Regularization coefficient of 0.5 * Lambda * ||X||_F^2.", "T1")
+        .Input(4, "Eps", "Small scalar to avoid dividing by zero.", "T1")
+        .Input(
+            5,
+            "inputs",
+            "It sequentially contains the current values of optimized tensors and then the "
+            "current values of accumulated gradient. For example, if two tensor \"X_1\" and \"X_2\" "
+            "are optimized, The input list would be [\"X_1\", \"X_2\", gradient of \"X_1\", "
+            "gradient of \"X_2\", accumulated gradient of \"X_1\", accumulated gradient of \"X_2\"]."
+            "T2",
+            OpSchema::Variadic,
+            false)
+        .Output(0, "T_new", "New update count of inputs", "T3")
+        .Output(
+            1,
+            "outputs",
+            "It sequentially contains the new values of optimized tensors and then the new "
+            "values of accumulated gradient. For example, if two tensor \"X_1\" and \"X_2\" are "
+            "optimized, the output list would be [new value of \"X_1\", new value of \"X_2\",
+            new accumulated gradient of \"X_1\", new accumulated gradient of \"X_2\"]."
+            "T2",
+            OpSchema::Variadic,
+            false)
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+            "Constrain input types to float scalars.")
         .TypeConstraint(
             "T2",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float scalars.")
+            "Constrain input types to float tensors.")
         .TypeConstraint(
             "T3",
             {"tensor(int64)"},
             "Constrain output types to 64-bit integer scalars.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateElemTypeFromInputToOutput(ctx, 2, 1);
-          propagateElemTypeFromInputToOutput(ctx, 5, 2);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 2, 1);
-          propagateShapeFromInputToOutput(ctx, 5, 2);
+          // TODO: Update shape inference function.
         }));
 } // namespace ONNX_NAMESPACE
