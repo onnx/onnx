@@ -72,6 +72,7 @@
   * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
   * <a href="#Min">Min</a>
+  * <a href="#Mod">Mod</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
@@ -7418,6 +7419,140 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### <a name="Mod"></a><a name="mod">**Mod**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+      The sign of the remainder is the same as that of the Divisor.
+    
+      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+      If the input type is floating point, then `fmod` attribute must be set to 1.
+    
+      In case of dividend being zero, the results will be platform dependent.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>float_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.mod(x, y)  # expected output [2., -3.,  5., -2.,  3.,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_float_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>fmod_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_fmod_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>int64_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_mixed_sign_example')
+```
+
+</details>
+
+
+<details>
+<summary>mul_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_bcast')
+```
+
+</details>
+
+
 ### <a name="Mul"></a><a name="mul">**Mul**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
@@ -7869,23 +8004,20 @@ node = onnx.helper.make_node(
     inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
     outputs=['selected_indices']
 )
-boxes = np.array([[
-    [0.0, 0.0, 1.0, 1.0],
-    [0.0, 0.1, 1.0, 1.1],
-    [0.0, -0.1, 1.0, 0.9],
-    [0.0, 10.0, 1.0, 11.0],
-    [0.0, 10.1, 1.0, 11.1],
-    [0.0, 100.0, 1.0, 101.0],
-
-    [0.0, 0.0, 1.0, 1.0],
-    [0.0, 0.1, 1.0, 1.1],
-    [0.0, -0.1, 1.0, 0.9],
-    [0.0, 10.0, 1.0, 11.0],
-    [0.0, 10.1, 1.0, 11.1],
-    [0.0, 100.0, 1.0, 101.0]
-]]).astype(np.float32)
-scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
-                    [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+boxes = np.array([[[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]],
+                  [[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]],
+                   [[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
 max_output_boxes_per_class = np.array([2]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)

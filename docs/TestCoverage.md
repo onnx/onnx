@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 122/129 (94.57%, 5 generators excluded) common operators.
+Node tests have covered 123/130 (94.62%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3892,6 +3892,83 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### Mod
+There are 4 test cases, listed as following:
+<details>
+<summary>float_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.mod(x, y)  # expected output [2., -3.,  5., -2.,  3.,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_float_mixed_sign_example')
+```
+
+</details>
+<details>
+<summary>fmod_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_fmod_mixed_sign_example')
+```
+
+</details>
+<details>
+<summary>int64_mixed_sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_mixed_sign_example')
+```
+
+</details>
+<details>
+<summary>mul_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_bcast')
+```
+
+</details>
+
+
 ### Mul
 There are 2 test cases, listed as following:
 <details>
@@ -4165,23 +4242,20 @@ node = onnx.helper.make_node(
     inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
     outputs=['selected_indices']
 )
-boxes = np.array([[
-    [0.0, 0.0, 1.0, 1.0],
-    [0.0, 0.1, 1.0, 1.1],
-    [0.0, -0.1, 1.0, 0.9],
-    [0.0, 10.0, 1.0, 11.0],
-    [0.0, 10.1, 1.0, 11.1],
-    [0.0, 100.0, 1.0, 101.0],
-
-    [0.0, 0.0, 1.0, 1.0],
-    [0.0, 0.1, 1.0, 1.1],
-    [0.0, -0.1, 1.0, 0.9],
-    [0.0, 10.0, 1.0, 11.0],
-    [0.0, 10.1, 1.0, 11.1],
-    [0.0, 100.0, 1.0, 101.0]
-]]).astype(np.float32)
-scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
-                    [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+boxes = np.array([[[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]],
+                  [[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]],
+                   [[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
 max_output_boxes_per_class = np.array([2]).astype(np.int64)
 iou_threshold = np.array([0.5]).astype(np.float32)
 score_threshold = np.array([0.0]).astype(np.float32)
