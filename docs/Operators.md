@@ -106,6 +106,7 @@
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
   * <a href="#Resize">Resize</a>
+  * <a href="#ReverseSequence">ReverseSequence</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -11215,6 +11216,139 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_nearest')
+```
+
+</details>
+
+
+### <a name="ReverseSequence"></a><a name="reversesequence">**ReverseSequence**</a>
+
+  Reverse batch of sequences having different lengths specified by `sequence_lens`.
+  
+  For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+  and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+  sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+  
+  Example 1:
+    input = [[0.0, 4.0, 8.0,  12.0],
+             [1.0, 5.0, 9.0,  13.0],
+             [2.0, 6.0, 10.0, 14.0],
+             [3.0, 7.0, 11.0, 15.0]]
+    sequence_lens = [4, 3, 2, 1]
+    time_axis = 0
+    batch_axis = 1
+  
+    output = [[3.0, 6.0, 9.0,  12.0],
+              [2.0, 5.0, 8.0,  13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]]
+  
+  Example 2:
+    input = [[0.0,  1.0,  2.0,  3.0 ],
+             [4.0,  5.0,  6.0,  7.0 ],
+             [8.0,  9.0,  10.0, 11.0],
+             [12.0, 13.0, 14.0, 15.0]]
+    sequence_lens = [1, 2, 3, 4]
+    time_axis = 1
+    batch_axis = 0
+  
+    output = [[0.0,  1.0,  2.0,  3.0 ],
+              [5.0,  4.0,  6.0,  7.0 ],
+              [10.0, 9.0,  8.0,  11.0],
+              [15.0, 14.0, 13.0, 12.0]]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_axis</tt> : int (default is 1)</dt>
+<dd>(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.</dd>
+<dt><tt>time_axis</tt> : int (default is 0)</dt>
+<dd>(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 2.</dd>
+<dt><tt>sequence_lens</tt> : tensor(int64)</dt>
+<dd>Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape of input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>reversesequence_batch</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=1,
+    batch_axis=0,
+)
+x = np.array([[0.0, 1.0, 2.0, 3.0],
+              [4.0, 5.0, 6.0, 7.0],
+              [8.0, 9.0, 10.0, 11.0],
+              [12.0, 13.0, 14.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+
+y = np.array([[0.0, 1.0, 2.0, 3.0],
+              [5.0, 4.0, 6.0, 7.0],
+              [10.0, 9.0, 8.0, 11.0],
+              [15.0, 14.0, 13.0, 12.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_batch')
+```
+
+</details>
+
+
+<details>
+<summary>reversesequence_time</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=0,
+    batch_axis=1,
+)
+x = np.array([[0.0, 4.0, 8.0, 12.0],
+              [1.0, 5.0, 9.0, 13.0],
+              [2.0, 6.0, 10.0, 14.0],
+              [3.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([4, 3, 2, 1], dtype=np.int64)
+
+y = np.array([[3.0, 6.0, 9.0, 12.0],
+              [2.0, 5.0, 8.0, 13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_time')
 ```
 
 </details>
