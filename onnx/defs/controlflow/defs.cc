@@ -774,4 +774,94 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+
+static const char* Momentum_ver10_doc = R"DOC(
+    Compute one iteration of stochastic gradient update with momentum.
+    This operator can conduct the optimization of multiple tensor variables.
+
+    Let's define the behavior of this operator. As you can imagine, SG with momentum requires
+    several parameters:
+     
+     - The learning-rate "R".
+     - The decay coefficient of previous accumulated gradient (i.e., momentum) "Alpha".
+     - The scaling coefficient of current gradient when computing momentum "Beta".
+     - A Frobenius norm regularization coefficient "Lambda".
+
+    Below we explain the computation rule of this operator. For the sake of simplicity, 
+    we assume that there is only one tensor (called "X") to be optimized. Other necessary
+    variables include "X"'s gradient (called "G"), and "X"'s momentum (called "V"). Moreover,
+    there will be only two output tensors, the new value of "X" (called "X_new") and its new
+    momentum (called "V_new"). Depending on the mode attribute, this operator uses either
+    standard momentum or Nestrove's momentum. Setting the mode attribute to "Nestrove" activates
+    the second case. Otherwise, standard momentum may be used. Computation is detailed below.
+
+    Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+
+    Pseudo code for SG with Standard Momentum:
+
+      // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
+      G_regularized = Lambda * X + G;
+
+      // Compute the current momentum based on previous momentum and the current gradient.
+      V_new = Alpha * V + Beta * G;
+
+      // Update X.
+      X_new = X - R * V_new
+
+    Pseudo code for SG with Nestrove's Momentum:
+
+      // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
+      G_regularized = Lambda * X + G;
+
+      // Compute the current momentum based on previous momentum and the current gradient.
+      V_new = Alpha * V + Beta * G;
+
+      // Compute final update direction and then update X.
+      X_new = X - R * (G + Alpha * V_new)
+
+    If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+    pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+    concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+    be concatenated too) and then our pseudo code becomes applicable naturally.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Momentum,
+    10,
+    OpSchema()
+        .SetDoc(Momentum_ver10_doc)
+        .Input(0, "R", "The learning rate.", "T1")
+        .Input(1, "Alpha", "The decay factor of momentum. It should be a scalar.", "T2")
+        .Input(2, "Beta", "The coefficient of gradient in computing new momentum. It should be a scalar.", "T2")
+        .Input(3, "Lambda", "Regularization coefficient of 0.5 * Lambda * ||X||_F^2.", "T2")
+        .Input(
+            4,
+            "inputs",
+            "It sequentially contains the current values of optimized tensors and then their "
+            "momentum tensors. For example, if two tensor \"X_1\" and \"X_2\" are optimized, The "
+			"expected input list would be [\"X_1\", \"X_2\", momentum of \"X_1\", momentum of \"X_2\"].",
+            "T2",
+            OpSchema::Variadic,
+            false)
+        .Output(
+            0,
+            "outputs",
+            "It sequentially contains the new values of optimized tensors and then the new "
+            "values of their momentum tensors. For example, if two tensor \"X_1\" and \"X_2\" are "
+            "optimized, the output list would be [new value of \"X_1,\" new value of \"X_2\" "
+            "new momentum of \"X_1\", new momentum of \"X_2\"].",
+            "T2",
+            OpSchema::Variadic,
+            false)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)", "tensor(double)"},
+            "Constrain input types to float scalars.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float)", "tensor(double)"},
+            "Constrain input types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // TODO: Update shape inference function.
+        }));
 } // namespace ONNX_NAMESPACE
