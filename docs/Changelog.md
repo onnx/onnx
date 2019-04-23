@@ -9683,6 +9683,91 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
+### <a name="Momentum-10"></a>**Momentum-10**</a>
+
+  Compute one iteration of stochastic gradient update with momentum.
+      This operator can conduct the optimization of multiple tensor variables.
+  
+      Let's define the behavior of this operator. As you can imagine, SG with momentum requires
+      several parameters:
+       
+       - The learning-rate "R".
+       - The decay coefficient of previous accumulated gradient (i.e., momentum) "Alpha".
+       - The scaling coefficient of current gradient when computing momentum "Beta".
+       - A Frobenius norm regularization coefficient "Lambda".
+  
+      Below we explain the computation rule of this operator. For the sake of simplicity, 
+      we assume that there is only one tensor (called "X") to be optimized. Other necessary
+      variables include "X"'s gradient (called "G"), and "X"'s momentum (called "V"). Moreover,
+      there will be only two output tensors, the new value of "X" (called "X_new") and its new
+      momentum (called "V_new"). Depending on the mode attribute, this operator uses either
+      standard momentum or Nestrove's momentum. Setting the mode attribute to "Nestrove" activates
+      the second case. Otherwise, standard momentum may be used. Computation is detailed below.
+  
+      Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+  
+      Pseudo code for SG with Standard Momentum:
+  
+        // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
+        G_regularized = Lambda * X + G;
+  
+        // Compute the current momentum based on previous momentum and the current gradient.
+        V_new = Alpha * V + Beta * G;
+  
+        // Update X.
+        X_new = X - R * V_new
+  
+      Pseudo code for SG with Nestrove's Momentum:
+  
+        // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
+        G_regularized = Lambda * X + G;
+  
+        // Compute the current momentum based on previous momentum and the current gradient.
+        V_new = Alpha * V + Beta * G;
+  
+        // Compute final update direction and then update X.
+        X_new = X - R * (G + Alpha * V_new)
+  
+      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+      pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+      be concatenated too) and then our pseudo code becomes applicable naturally.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (5 - &#8734;)
+
+<dl>
+<dt><tt>R</tt> : T1</dt>
+<dd>The learning rate.</dd>
+<dt><tt>Alpha</tt> : T2</dt>
+<dd>The decay factor of momentum. It should be a scalar.</dd>
+<dt><tt>Beta</tt> : T2</dt>
+<dd>The coefficient of gradient in computing new momentum. It should be a scalar.</dd>
+<dt><tt>Lambda</tt> : T2</dt>
+<dd>Regularization coefficient of 0.5 * Lambda * ||X||_F^2.</dd>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>It sequentially contains the current values of optimized tensors and then their momentum tensors. For example, if two tensor "X_1" and "X_2" are optimized, The expected input list would be ["X_1", "X_2", momentum of "X_1", momentum of "X_2"].</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>It sequentially contains the new values of optimized tensors and then the new values of their momentum tensors. For example, if two tensor "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new momentum of "X_1", new momentum of "X_2"].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float scalars.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+</dl>
+
 ### <a name="NonMaxSuppression-10"></a>**NonMaxSuppression-10**</a>
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
