@@ -9636,8 +9636,33 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="MeanSquaredError-10"></a>**MeanSquaredError-10**</a>
 
   Loss function that measures the
-  mean squared error (squared L2 norm) between each element in the predictions
-  and labels.
+  mean squared error (squared L2 norm) between each element in the 'scores'
+  and 'labels'
+  
+  The loss can be described as:
+  
+  .. math::
+      \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
+      l_n = \left( x_n - y_n \right)^2,
+  
+  where :math:`N` is the batch size. If reduce is ``True``, then:
+  
+  .. math::
+      \ell(x, y) =
+      \begin{cases}
+          \operatorname{mean}(L), & \text{if}\; \text{size\_average} = \text{True},\\
+          \operatorname{sum}(L),  & \text{if}\; \text{size\_average} = \text{False}.
+      \end{cases}
+  
+  The sum operation still operates over all the elements, and divides by `n`.
+  
+  The division by `n` can be avoided if one sets :attr:`size_average` to ``False``.
+  
+  To get a batch of losses, a loss per batch element, set `reduce` to
+  ``False``. These losses are not averaged and are not affected by
+  `size_average`.
+  
+  .
 
 #### Version
 
@@ -9653,19 +9678,19 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>predictions</tt> : T</dt>
+<dt><tt>scores</tt> : T</dt>
 <dd>The predicted outputs.</dd>
 <dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'predictions'.</dd>
+<dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
-<dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If weights is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the weights vector. If the shape of weights matches the shape of predictions, then the loss of each measurable element of predictions is scaled by the corresponding value of weights.</dd>
+<dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If 'weights' is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the 'weights' vector. If the shape of 'weights' matches the shape of 'scores', then the loss of each measurable element of 'scores' is scaled by the corresponding value of 'weights'.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is none, this has the same shape as labels; otherwise, it is scalar.</dd>
+<dd>Weighted loss float Tensor. If reduction is none, this has the same shape as 'labels'; otherwise, it is scalar.</dd>
 </dl>
 
 #### Type Constraints
@@ -10049,8 +10074,8 @@ This version of the operator has been available since version 10 of the default 
 
 ### <a name="SoftmaxCrossEntropy-10"></a>**SoftmaxCrossEntropy-10**</a>
 
-  Loss function that measures the softmax cross entropy between 
-  each element in the predictions and labels.
+  Loss function that measures the softmax cross entropy between
+  each element in the 'scores' and 'labels'.
 
 #### Version
 
@@ -10066,10 +10091,10 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>predictions</tt> : T</dt>
+<dt><tt>scores</tt> : T</dt>
 <dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.</dd>
 <dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'predictions'. Usualy, it's a one-hot representation of groud-truth class.</dd>
+<dd>The ground truth output tensor, same dimensions as 'scores'. Usualy, it's a one-hot representation of groud-truth class.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
 </dl>

@@ -5,14 +5,28 @@
 namespace ONNX_NAMESPACE {
 const char* reduction_doc =
     "Type of reduction to apply to loss: none, sum, mean(default). "
-    "'none': no reduction will be applied, "
+    "'none': the output is the loss for each sample in the batch."
     "'sum': the output will be summed. "
-    "'mean': the sum of the output will be divided by the number of "
-    "elements in the output.";
+    "'mean': the sum of the output will be divided by the batch_size.";
 
 static const char* MSE_ver10_doc = R"DOC(Loss function that measures the
-mean squared error (squared L2 norm) between each element in the predictions
-and labels.)DOC";
+mean squared error (squared L2 norm) between each element in the 'scores'
+and 'labels'.
+
+The loss can be described as:
+    L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
+, where N is the batch size.
+
+If 'weights' is provided, it should be broadcastable to shape of 'scores'.
+    L = Mul(weights, L)
+, where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
+
+Finally, L is reduced:
+L = ReduceSum(L), if reduction = 'sum';
+    ReduceMean(L), if reduction = 'mean';
+    ReduceMean(L, axes=[0]), if reduction = 'none';
+
+.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanSquaredError,
@@ -24,29 +38,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             reduction_doc,
             AttributeProto::STRING,
             std::string("mean"))
-        .Input(0, "predictions", "The predicted outputs.", "T")
+        .Input(0, "scores", "The predicted outputs.", "T")
         .Input(
             1,
             "labels",
-            "The ground truth output tensor, same dimensions as 'predictions'.",
+            "The ground truth output tensor, same dimensions as 'scores'.",
             "T")
         .Input(
             2,
             "weights",
-            "Weights acts as a coefficient for the loss. If a scalar is provided, "
-            "then the loss is simply scaled by the given value. If weights is a "
-            "tensor of size [batch_size], then the total loss for each sample of the "
-            "batch is rescaled by the corresponding element in the weights vector. "
-            "If the shape of weights matches the shape of predictions, then the loss "
-            "of each measurable element of predictions is scaled by the corresponding "
-            "value of weights.",
+            "Weights acts as a coefficient for the loss, it should be "
+            "broadcastable to shape of 'scores'.",
             "T",
             OpSchema::Optional)
         .Output(
             0,
             "output",
             "Weighted loss float Tensor. If reduction is none, this has the "
-            "same shape as labels; otherwise, it is scalar.",
+            "shape of [batch_size]; otherwise, it is scalar.",
             "T")
         .TypeConstraint(
             "T",
@@ -55,8 +64,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {}));
 
 static const char* SoftmaxCrossEntropy_ver10_doc =
-    R"DOC(Loss function that measures the softmax cross entropy between 
-each element in the predictions and labels.)DOC";
+    R"DOC(Loss function that measures the softmax cross entropy
+between 'scores' and 'labels'.
+
+The loss can be described as:
+    L = (l_1, l_2, ..., l_N), where N is the batch_size
+
+The loss for one sample, l_n, can caculated as follows
+    let p = Softmax(scores)
+    l_n = -sum(label_i * log(p_i)), where i is the index of classes.
+or
+    l_n = -sum(weight_i * label_i * log(p_i)), if 'weights' is provided.
+
+Finally, L is reduced:
+L = ReduceSum(L), if reduction = 'sum';
+    ReduceMean(L), if reduction = 'mean';
+    L, if reduction = 'none'
+
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     SoftmaxCrossEntropy,
@@ -64,20 +89,20 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(SoftmaxCrossEntropy_ver10_doc)
         .Attr(
-            "reduction",
+            " ",
             reduction_doc,
             AttributeProto::STRING,
             std::string("mean"))
         .Input(
             0,
-            "predictions",
+            "scores",
             "The predicted outputs with shape [batch_size, class_size], or "
             "[batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.",
             "T")
         .Input(
             1,
             "labels",
-            "The ground truth output tensor, same dimensions as 'predictions'. "
+            "The ground truth output tensor, same dimensions as 'scores'. "
             "Usualy, it's a one-hot representation of groud-truth class.",
             "T")
         .Input(
