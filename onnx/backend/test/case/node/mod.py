@@ -18,6 +18,7 @@ class Mod(Base):
             'Mod',
             inputs=['x', 'y'],
             outputs=['z'],
+            fmod=1
         )
 
         x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
@@ -56,7 +57,7 @@ class Mod(Base):
                name='test_mod_int64_mixed_sign_example')
 
     @staticmethod
-    def export_mul_broadcast():  # type: () -> None
+    def export_mod_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],

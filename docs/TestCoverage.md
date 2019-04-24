@@ -3902,6 +3902,7 @@ node = onnx.helper.make_node(
     'Mod',
     inputs=['x', 'y'],
     outputs=['z'],
+    fmod=1
 )
 
 x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
@@ -3950,7 +3951,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
-<summary>mul_broadcast</summary>
+<summary>mod_broadcast</summary>
 
 ```python
 node = onnx.helper.make_node(
