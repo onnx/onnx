@@ -7273,30 +7273,20 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
   Loss function that measures the
   mean squared error (squared L2 norm) between each element in the 'scores'
-  and 'labels'
+  and 'labels'.
   
   The loss can be described as:
+      L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
+  , where N is the batch size.
   
-  .. math::
-      \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
-      l_n = \left( x_n - y_n \right)^2,
+  If 'weights' is provided, it should be broadcastable to shape of 'scores'.
+      L = Mul(weights, L)
+  , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
   
-  where :math:`N` is the batch size. If reduce is ``True``, then:
-  
-  .. math::
-      \ell(x, y) =
-      \begin{cases}
-          \operatorname{mean}(L), & \text{if}\; \text{size\_average} = \text{True},\\
-          \operatorname{sum}(L),  & \text{if}\; \text{size\_average} = \text{False}.
-      \end{cases}
-  
-  The sum operation still operates over all the elements, and divides by `n`.
-  
-  The division by `n` can be avoided if one sets :attr:`size_average` to ``False``.
-  
-  To get a batch of losses, a loss per batch element, set `reduce` to
-  ``False``. These losses are not averaged and are not affected by
-  `size_average`.
+  Finally, L is reduced:
+  L = ReduceSum(L), if reduction = 'sum';
+      ReduceMean(L), if reduction = 'mean';
+      ReduceMean(L, axes=[0]), if reduction = 'none';
   
   .
 
@@ -7308,7 +7298,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -7319,14 +7309,14 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>labels</tt> : T</dt>
 <dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
-<dd>Weights acts as a coefficient for the loss. If a scalar is provided, then the loss is simply scaled by the given value. If 'weights' is a tensor of size [batch_size], then the total loss for each sample of the batch is rescaled by the corresponding element in the 'weights' vector. If the shape of 'weights' matches the shape of 'scores', then the loss of each measurable element of 'scores' is scaled by the corresponding value of 'weights'.</dd>
+<dd>Weights acts as a coefficient for the loss, it should be broadcastable to shape of 'scores'.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is none, this has the same shape as 'labels'; otherwise, it is scalar.</dd>
+<dd>Weighted loss float Tensor. If reduction is none, this has the shape of [batch_size]; otherwise, it is scalar.</dd>
 </dl>
 
 #### Type Constraints
@@ -12608,8 +12598,23 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="SoftmaxCrossEntropy"></a><a name="softmaxcrossentropy">**SoftmaxCrossEntropy**</a>
 
-  Loss function that measures the softmax cross entropy between
-  each element in the 'scores' and 'labels'.
+  Loss function that measures the softmax cross entropy
+  between 'scores' and 'labels'.
+  
+  The loss can be described as:
+      L = (l_1, l_2, ..., l_N), where N is the batch_size
+  
+  The loss for one sample, l_n, can caculated as follows
+      let p = Softmax(scores)
+      l_n = -sum(label_i * log(p_i)), where i is the index of classes.
+  or
+      l_n = -sum(weight_i * label_i * log(p_i)), if 'weights' is provided.
+  
+  Finally, L is reduced:
+  L = ReduceSum(L), if reduction = 'sum';
+      ReduceMean(L), if reduction = 'mean';
+      L, if reduction = 'none'
+  
 
 #### Version
 
@@ -12618,8 +12623,8 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
+<dt><tt> </tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
 </dl>
 
 #### Inputs (2 - 3)
