@@ -3893,7 +3893,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### Mod
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>float_mixed_sign</summary>
 
@@ -3929,6 +3929,25 @@ y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
 z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mod_fmod_mixed_sign_example')
+```
+
+</details>
+<details>
+<summary>int64_fmod</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.fmod(x, y)  # expected output [ 0,  1,  5,  0, -1,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_fmod_example')
 ```
 
 </details>

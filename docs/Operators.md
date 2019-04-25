@@ -7517,6 +7517,27 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>int64_fmod</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.fmod(x, y)  # expected output [ 0,  1,  5,  0, -1,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_fmod_example')
+```
+
+</details>
+
+
+<details>
 <summary>int64_mixed_sign</summary>
 
 ```python
