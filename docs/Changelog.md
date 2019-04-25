@@ -9271,43 +9271,43 @@ This version of the operator has been available since version 9 of the default O
        
        - The initial learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
-       - A Frobenius norm regularization coefficient "Lambda".
-       - A learning-rate decay factor per iteration "D".
-       - A small constant "Eps" to avoid dividing-by-zero. 
+       - A L2-norm regularization coefficient "lambda".
+       - A learning-rate decay factor "decay_factor".
+       - A small constant "epsilon" to avoid dividing-by-zero. 
   
-      At each ADAGRAD iteration, the optimized tensor variables are moved along a direction
+      At each ADAGRAD iteration, the optimized tensors are moved along a direction
       computed based on their estimated gradient and accumulated squared gradient. Assume
       that only a single tensor "X" is updated by this operator. We need the value of "X",
-      its gradient "G", and its accumulated squared gradient "H". Consequently, if "X" is
-      the only one tensor to be optimized, variables in this operator's input list are
-      sequentially "R", "T", "D", "Eps", "X", "G", and "H". Also, the corresponding output
-      tensors are the new value of "X" (called "X_new"), and the new accumulated squared 
-      gradient (called "H_new"). Those outputs are computed from the given inputs following
-      the pseudo code below.
+      its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
+      this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
+      parameters are given as attributes because they are usually constants. Also, the
+      corresponding output tensors are the new value of "X" (called "X_new"), and then
+      the new accumulated squared gradient (called "H_new"). Those outputs are computed
+      from the given inputs following the pseudo code below.
   
-      Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
-      The pseudo code to compute those outputs is:
+      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+      numpy-style broadcasting support. The pseudo code to compute those outputs is:
   
-        // Compute a scalar learning-rate factor. If X is never updated, T is 0.
-        r = R / (1 + T * D);
+        // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
+        r = R / (1 + T * decay_factor);
   
-        // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
-        G_regularized = Lambda * X + G;
+        // Add gradient of 0.5 * lambda * ||X||_2^2, where ||X||_2 is the 2-norm.
+        G_regularized = lambda * X + G;
   
         // Compute new accumulated squared gradient.
         H_new = H + G_regularized * G_regularized;
   
         // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
-        // compute square root.
-        H_adaptive = Sqrt(H_new) + Eps
+        // compute square root element-wisely.
+        H_adaptive = Sqrt(H_new) + epsilon
   
         // Compute the new value of "X".
         X_new = X - r * G_regularized / H_adaptive;
   
-      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
-      pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
+      pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
       concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-      be concatenated too) and then just execute our pseudo code.
+      be concatenated too) and then just reuse the entire pseudo code.
   
       Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
       In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
@@ -9317,20 +9317,25 @@ This version of the operator has been available since version 9 of the default O
 
 This version of the operator has been available since version 10 of the default ONNX operator set.
 
-#### Inputs (6 - &#8734;)
+#### Attributes
+
+<dl>
+<dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
+<dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
+<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dd>Small scalar to avoid dividing by zero.</dd>
+<dt><tt>lambda</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient of 0.5 * lambda * ||X||_2^2. Default to 0, which means no regularization.</dd>
+</dl>
+
+#### Inputs (3 - &#8734;)
 
 <dl>
 <dt><tt>R</tt> : T1</dt>
 <dd>The initial learning rate.</dd>
-<dt><tt>D</tt> : T1</dt>
-<dd>The decay factor of learning rate after one update.</dd>
-<dt><tt>T</tt> : T3</dt>
+<dt><tt>T</tt> : T2</dt>
 <dd>The update count of "X". It should be a scalar.</dd>
-<dt><tt>Lambda</tt> : T1</dt>
-<dd>Regularization coefficient of 0.5 * Lambda * ||X||_F^2.</dd>
-<dt><tt>Eps</tt> : T1</dt>
-<dd>Small scalar to avoid dividing by zero.</dd>
-<dt><tt>inputs</tt> (variadic, heterogeneous) : T2</dt>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
 <dd>It sequentially contains the current values of optimized tensors and then the current values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
 </dl>
 
@@ -9346,10 +9351,10 @@ This version of the operator has been available since version 10 of the default 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-<dt><tt>T3</tt> : tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain output types to 64-bit integer scalars.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
 </dl>
 
 ### <a name="AveragePool-10"></a>**AveragePool-10**</a>
