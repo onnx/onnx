@@ -230,14 +230,13 @@ def make_attribute(
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
-        if all(isinstance(v, float) for v in value):
-            attr.floats.extend(value)
-            attr.type = AttributeProto.FLOATS
-        elif all(isinstance(v, numbers.Integral) for v in value):
+        if all(isinstance(v, numbers.Integral) for v in value):
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
         elif all(isinstance(v, numbers.Real) for v in value):
+            # Since ints and floats are members of Real, this allows a mix of ints and floats
+            # (and converts the ints to floats).
             attr.floats.extend(float(v) for v in value)
             attr.type = AttributeProto.FLOATS
         elif all(byte_array):
