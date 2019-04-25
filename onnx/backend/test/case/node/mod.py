@@ -13,21 +13,6 @@ from . import expect
 class Mod(Base):
 
     @staticmethod
-    def export_float_mixed_sign():  # type: () -> None
-        node = onnx.helper.make_node(
-            'Mod',
-            inputs=['x', 'y'],
-            outputs=['z'],
-            fmod=1
-        )
-
-        x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
-        y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
-        z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_mod_float_mixed_sign_example')
-
-    @staticmethod
     def export_fmod_mixed_sign():  # type: () -> None
         node = onnx.helper.make_node(
             'Mod',
