@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+
 namespace ONNX_NAMESPACE {
 static const char* Adagrad_ver10_doc = R"DOC(
     Compute one iteration of ADAGRAD, a stochastic gradient based optimization
@@ -111,8 +112,5 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T3",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // TODO: Update shape inference function.
-        }));
+            "Constrain input types to float tensors."));
 } // namespace ONNX_NAMESPACE
