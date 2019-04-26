@@ -154,7 +154,7 @@ class Mod(Base):
         z = np.mod(x, y)  # expected output [0, 1, 5]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_mod_uint32')
-               
+
     @staticmethod
     def export_mod_uint64():  # type: () -> None
         node = onnx.helper.make_node(
