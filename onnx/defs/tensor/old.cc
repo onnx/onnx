@@ -668,4 +668,5 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
 } // namespace ONNX_NAMESPACE

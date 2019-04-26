@@ -2184,7 +2184,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
-            selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT32);
+            selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
         }));
 
 } // namespace ONNX_NAMESPACE
