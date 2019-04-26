@@ -87,6 +87,12 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.ints), [1, 2])
         checker.check_attribute(attr)
 
+    def test_attr_repeated_mixed_floats_and_ints(self):  # type: () -> None
+        attr = helper.make_attribute("mixed", [1, 2, 3.0, 4.5])
+        self.assertEqual(attr.name, "mixed")
+        self.assertEqual(list(attr.floats), [1.0, 2.0, 3.0, 4.5])
+        checker.check_attribute(attr)
+
     def test_attr_repeated_str(self):  # type: () -> None
         attr = helper.make_attribute("strings", ["str1", "str2"])
         self.assertEqual(attr.name, "strings")
