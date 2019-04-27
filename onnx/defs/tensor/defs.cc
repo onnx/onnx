@@ -1324,7 +1324,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = getInputShape(ctx, 0);
           auto* output_shape = getOutputShape(ctx, 0);
           output_shape->clear_dim();
-          auto scales = ctx.getInputData(1); 
+          auto scales = ctx.getInputData(1);
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT) {
