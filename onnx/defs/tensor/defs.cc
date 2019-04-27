@@ -1324,16 +1324,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = getInputShape(ctx, 0);
           auto* output_shape = getOutputShape(ctx, 0);
           output_shape->clear_dim();
-          auto scales = ctx.getInputData(1);         
+          auto scales = ctx.getInputData(1); 
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT) {
-              bool invalid_scale_shape = false;
-              std::vector<float> vec;
+              bool invalid_scale_shape = false;              
               if (scales->has_raw_data()) {
                 const auto& data = ParseRawData<float>(scales);
+                std::vector<float> vec;
                 vec.insert(vec.end(), data.begin(), data.end());
-                if ((int)vec.size() == input_shape.dim_size()) {
+                if (static_cast<int>(vec.size()) == input_shape.dim_size()) {
                   for (int i = 0; i < input_shape.dim_size(); ++i) {
                     float dim_value =
                       static_cast<float>(input_shape.dim(i).dim_value());
@@ -1359,11 +1359,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               if (invalid_scale_shape) {
                 fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X'. ",
-                  "Number of elements in scales: ",
-                  vec.size(),
-                  " Dimension of X: ",
-                  input_shape.dim_size()
+                  "Number of elements of input 'scales' must be same as rank of input 'X'."
                 );
               }
             }

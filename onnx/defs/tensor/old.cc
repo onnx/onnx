@@ -442,7 +442,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (scales->has_raw_data()) {
                 const auto& data = ParseRawData<float>(scales);
                 vec.insert(vec.end(), data.begin(), data.end());
-                if ((int)vec.size() == input_shape.dim_size()) {
+                if (static_cast<int>(vec.size()) == input_shape.dim_size()) {
                   for (int i = 0; i < input_shape.dim_size(); ++i) {
                     float dim_value =
                       static_cast<float>(input_shape.dim(i).dim_value());
