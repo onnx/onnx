@@ -438,10 +438,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT) {
               bool invalid_scale_shape = false;
-              std::vector<float> vec;
               if (scales->has_raw_data()) {
                 const auto& data = ParseRawData<float>(scales);
-                vec.insert(vec.end(), data.begin(), data.end());
+                std::vector<float> vec(data.begin(), data.end());
                 if (static_cast<int>(vec.size()) == input_shape.dim_size()) {
                   for (int i = 0; i < input_shape.dim_size(); ++i) {
                     float dim_value =
@@ -466,11 +465,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               
               if (invalid_scale_shape){
                 fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X'. ",
-                  "Number of elements in scales: ",
-                  vec.size(),
-                  " Dimension of X: ",
-                  input_shape.dim_size()
+                  "Number of elements of input 'scales' must be same as rank of input 'X'."
                 );
               }
             } else {

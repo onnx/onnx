@@ -1331,8 +1331,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               bool invalid_scale_shape = false;              
               if (scales->has_raw_data()) {
                 const auto& data = ParseRawData<float>(scales);
-                std::vector<float> vec;
-                vec.insert(vec.end(), data.begin(), data.end());
+                std::vector<float> vec(data.begin(), data.end());
                 if (static_cast<int>(vec.size()) == input_shape.dim_size()) {
                   for (int i = 0; i < input_shape.dim_size(); ++i) {
                     float dim_value =
