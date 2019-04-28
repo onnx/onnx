@@ -13,7 +13,7 @@ static const char* Adagrad_ver10_doc = R"DOC(
      
      - The initial learning-rate "R".
      - The update count "T". That is, the number of training iterations conducted.
-     - A L2-norm regularization coefficient "lambda".
+     - A L2-norm regularization coefficient "norm_coefficient".
      - A learning-rate decay factor "decay_factor".
      - A small constant "epsilon" to avoid dividing-by-zero. 
 
@@ -33,8 +33,8 @@ static const char* Adagrad_ver10_doc = R"DOC(
       // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
       r = R / (1 + T * decay_factor);
 
-      // Add gradient of 0.5 * lambda * ||X||_2^2, where ||X||_2 is the 2-norm.
-      G_regularized = lambda * X + G;
+      // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+      G_regularized = norm_coefficient * X + G;
 
       // Compute new accumulated squared gradient.
       H_new = H + G_regularized * G_regularized;
@@ -96,8 +96,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
-            "lambda",
-            "Regularization coefficient of 0.5 * lambda * ||X||_2^2. Default to 0, "
+            "norm_coefficient",
+            "Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, "
             "which means no regularization.",
             AttributeProto::FLOAT,
             0.0f)
@@ -112,5 +112,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T3",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors."));
+            "Constrain input types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            auto num_inputs = ctx.getNumInputs();
+            // skip 'R' and 'T' in input list and then propoagate other shapes to outputs.
+            for (size_t i = 2; i < num_inputs; ++i) {
+              propagateElemTypeFromInputToOutput(ctx, i, i - 2);
+              propagateShapeFromInputToOutput(ctx, i, i - 2);
+            }}));
 } // namespace ONNX_NAMESPACE

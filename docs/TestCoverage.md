@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 125/133 (93.98%, 5 generators excluded) common operators.
+Node tests have covered 126/133 (94.74%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -83,6 +83,88 @@ x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
 y = np.arccosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh')
+```
+
+</details>
+
+
+### Adagrad
+There are 2 test cases, listed as following:
+<details>
+<summary>adagrad</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+epsilon = 1e-5
+decay_factor = 0.1
+
+# Create operator.
+node = onnx.helper.make_node('Adagrad',
+                             inputs=['R', 'T', 'X', 'G', 'H'],
+                             outputs=['X_new', 'H_new'],
+                             norm_coefficient=norm_coefficient,
+                             epsilon=epsilon,
+                             decay_factor=decay_factor
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)   # scalar
+t = np.array(0, dtype=np.int64)       # scalar
+x = np.array([1.0], dtype=np.float32)
+g = np.array([-1.0], dtype=np.float32)
+h = np.array([2.0], dtype=np.float32)
+
+# Compute expected outputs of Adagrad.
+x_new, h_new = apply_adagrad(r, t, x, g, h,
+                               norm_coefficient, epsilon, decay_factor)
+
+# Check results.
+expect(node, inputs=[r, t, x, g, h],
+       outputs=[x_new, h_new], name='test_adagrad')
+```
+
+</details>
+<details>
+<summary>adagrad_multiple</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+epsilon = 1e-5
+decay_factor = 0.1
+
+node = onnx.helper.make_node('Adagrad',
+                             inputs=['R', 'T', 'X1', 'X2',
+                                     'G1', 'G2', 'H1', 'H2'],
+                             outputs=['X1_new', 'X2_new',
+                                      'H1_new', 'H2_new'],
+                             norm_coefficient=norm_coefficient,
+                             epsilon=epsilon,
+                             decay_factor=decay_factor
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32) # scalar
+t = np.array(0, dtype=np.int64)     # scalar
+
+x1 = np.array([1.0], dtype=np.float32)
+g1 = np.array([-1.0], dtype=np.float32)
+h1 = np.array([2.0], dtype=np.float32)
+
+x2 = np.array([1.0, 2.0], dtype=np.float32)
+g2 = np.array([-1.0, -3.0], dtype=np.float32)
+h2 = np.array([4.0, 1.0], dtype=np.float32)
+
+# Compute expected outputs of Adagrad.
+x1_new, h1_new = apply_adagrad(r, t, x1, g1, h1,
+                               norm_coefficient, epsilon, decay_factor)
+x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
+                               norm_coefficient, epsilon, decay_factor)
+
+# Check results.
+expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
+       outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple')
 ```
 
 </details>
@@ -7921,9 +8003,6 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
-### Adagrad (call for test cases)
-
-
 ### GlobalLpPool (call for test cases)
 
 
