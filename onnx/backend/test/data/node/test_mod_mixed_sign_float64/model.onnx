@@ -1,8 +1,8 @@
-backend-test:n
+backend-test:m
 
 x
 yz"Mod*
-fmod test_fmod_mixed_sign_float64Z
+fmod test_mod_mixed_sign_float64Z
 x
 
 

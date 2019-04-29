@@ -13,7 +13,7 @@ from . import expect
 class Mod(Base):
 
     @staticmethod
-    def export_fmod_mixed_sign_float64():  # type: () -> None
+    def export_mod_mixed_sign_float64():  # type: () -> None
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -25,10 +25,10 @@ class Mod(Base):
         y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
         z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_fmod_mixed_sign_float64')
+               name='test_mod_mixed_sign_float64')
 
     @staticmethod
-    def export_fmod_mixed_sign_float32():  # type: () -> None
+    def export_mod_mixed_sign_float32():  # type: () -> None
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -40,10 +40,10 @@ class Mod(Base):
         y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
         z = np.fmod(x, y)  # expected output [-0.10000038, 0.39999962, 5. , 0.10000038, -0.39999962, 3.]
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_fmod_mixed_sign_float32')
+               name='test_mod_mixed_sign_float32')
 
     @staticmethod
-    def export_fmod_mixed_sign_float16():  # type: () -> None
+    def export_mod_mixed_sign_float16():  # type: () -> None
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -55,7 +55,7 @@ class Mod(Base):
         y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
         z = np.fmod(x, y)  # expected output [-0.10156, 0.3984 , 5. , 0.10156, -0.3984 ,  3.]
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_fmod_mixed_sign_float16')
+               name='test_mod_mixed_sign_float16')
 
     @staticmethod
     def export_mod_mixed_sign_int64():  # type: () -> None
@@ -170,7 +170,7 @@ class Mod(Base):
                name='test_mod_uint64')
 
     @staticmethod
-    def export_int64_fmod():  # type: () -> None
+    def export_mod_int64_fmod():  # type: () -> None
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
