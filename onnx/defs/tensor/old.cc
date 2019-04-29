@@ -447,8 +447,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
                       std::floor(dim_value * data[i])));
                   }
-                }
-                else {
+                } else {
                   invalid_scale_shape = true;
                 }
               } else if (scales->float_data_size() == input_shape.dim_size()) {

@@ -1338,20 +1338,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                     output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
                       std::floor(dim_value * data[i])));
                   }
-                }
-                else {
+                } else {
                   invalid_scale_shape = true;
                 }
-              }
-              else if (scales->float_data_size() == input_shape.dim_size()) {
+              } else if (scales->float_data_size() == input_shape.dim_size()) {
                 for (int i = 0; i < input_shape.dim_size(); ++i) {
                   float dim_value =
                     static_cast<float>(input_shape.dim(i).dim_value());
                   output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
                     std::floor(dim_value * scales->float_data(i))));
                 }
-              }
-              else {
+              } else {
                 invalid_scale_shape = true;
               }
 
@@ -1360,13 +1357,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "Number of elements of input 'scales' must be same as rank of input 'X'."
                 );
               }
-            }
-            else {
+            } else {
               fail_shape_inference(
                 "Input scales's element type must be float.");
             }
-          }
-          else {
+          } else {
             // Infer output shape's rank in any case.
             for (int i = 0; i < input_shape.dim_size(); ++i) {
               output_shape->add_dim();
