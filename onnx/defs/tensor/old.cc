@@ -440,13 +440,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               bool invalid_scale_shape = false;
               if (scales->has_raw_data()) {
                 const auto& data = ParseRawData<float>(scales);
-                std::vector<float> vec(data.begin(), data.end());
-                if (static_cast<int>(vec.size()) == input_shape.dim_size()) {
+                if (static_cast<int>(data.size()) == input_shape.dim_size()) {
                   for (int i = 0; i < input_shape.dim_size(); ++i) {
                     float dim_value =
                       static_cast<float>(input_shape.dim(i).dim_value());
                     output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-                      std::floor(dim_value * vec[i])));
+                      std::floor(dim_value * data[i])));
                   }
                 }
                 else {
