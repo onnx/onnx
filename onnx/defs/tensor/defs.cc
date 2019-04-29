@@ -1415,38 +1415,34 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT &&
-              scales->float_data_size() == input_shape.dim_size()) {
+                scales->float_data_size() == input_shape.dim_size()) {
               for (int i = 0; i < input_shape.dim_size(); ++i) {
                 int64_t dim_value = static_cast<int64_t>(std::floor(
-                  static_cast<float>(input_shape.dim(i).dim_value()) *
-                  scales->float_data(i)));
+                    static_cast<float>(input_shape.dim(i).dim_value()) *
+                    scales->float_data(i)));
                 if (output_shape->dim_size() > i) {
                   if (output_shape->dim(i).has_dim_value()) {
                     if (output_shape->dim(i).dim_value() != dim_value) {
                       fail_shape_inference(
-                        "Dimension value inferred (",
-                        dim_value,
-                        ") is not equal to the existing dim value (",
-                        output_shape->dim(i).dim_value(),
-                        ").");
+                          "Dimension value inferred (",
+                          dim_value,
+                          ") is not equal to the existing dim value (",
+                          output_shape->dim(i).dim_value(),
+                          ").");
                     }
-                  }
-                  else {
+                  } else {
                     output_shape->mutable_dim(i)->set_dim_value(dim_value);
                   }
-                }
-                else {
+                } else {
                   output_shape->add_dim()->set_dim_value(
-                    static_cast<int64_t>(dim_value));
+                      static_cast<int64_t>(dim_value));
                 }
               }
-            }
-            else {
+            } else {
               fail_shape_inference(
-                "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
+                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
             }
-          }
-          else {
+          } else {
             if (0 == output_shape->dim_size()) {
               // Infer output shape's rank in any case.
               for (int i = 0; i < input_shape.dim_size(); ++i) {
