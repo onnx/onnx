@@ -123,12 +123,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (size_t i = 0; i < num_optimized_tensors; ++i) {
               // Pass X1's and X2's shapes to X1_new and X2_new, respectively.
               size_t i_in = 2 + i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i);
-              propagateShapeFromInputToOutput(ctx, i_in, i);
+              size_t i_out = i;
+              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+              propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
               // Pass H1's and H2's shapes to H1_new and H2_new, respectively.
               i_in = 2 + 2 * num_optimized_tensors + i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i);
-              propagateShapeFromInputToOutput(ctx, i_in, i);
+              i_out = i + num_optimized_tensors;
+              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+              propagateShapeFromInputToOutput(ctx, i_in, i_out);
             }}));
 } // namespace ONNX_NAMESPACE
