@@ -1694,10 +1694,10 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
 
-    def test_adagrad(self): # type: () -> None
+    def test_adagrad(self):  # type: () -> None
         graph = self._make_graph(
-            [('R', TensorProto.FLOAT, ()), # scalar's shape is ()
-             ('T', TensorProto.INT64, ()), # scalar's shape is ()
+            [('R', TensorProto.FLOAT, ()),  # scalar's shape is ()
+             ('T', TensorProto.INT64, ()),  # scalar's shape is ()
              ('X', TensorProto.FLOAT, (1, 2)),
              ('G', TensorProto.FLOAT, (1, 2)),
              ('H', TensorProto.FLOAT, (1, 2))],
@@ -1707,10 +1707,10 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
              make_tensor_value_info('H_new', TensorProto.FLOAT, (1, 2))])
 
-    def test_adagrad_multiple(self): # type: () -> None
+    def test_adagrad_multiple(self):  # type: () -> None
         graph = self._make_graph(
-            [('R', TensorProto.FLOAT, ()), # scalar's shape is ()
-             ('T', TensorProto.INT64, ()), # scalar's shape is ()
+            [('R', TensorProto.FLOAT, ()),  # scalar's shape is ()
+             ('T', TensorProto.INT64, ()),  # scalar's shape is ()
              ('X1', TensorProto.FLOAT, (1, 2)),
              ('X2', TensorProto.FLOAT, (3, 4)),
              ('G1', TensorProto.FLOAT, (1, 2)),
@@ -1724,8 +1724,7 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('X1_new', TensorProto.FLOAT, (1, 2)),
              make_tensor_value_info('X2_new', TensorProto.FLOAT, (3, 4)),
              make_tensor_value_info('H1_new', TensorProto.FLOAT, (1, 2)),
-             make_tensor_value_info('H2_new', TensorProto.FLOAT, (3, 4))
-            ])
+             make_tensor_value_info('H2_new', TensorProto.FLOAT, (3, 4))])
 
 
 if __name__ == '__main__':
