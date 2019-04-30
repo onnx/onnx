@@ -10,8 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon,
-                  decay_factor):  # type: ignore
+def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore
     # Compute adjusted learning-rate.
     r_ = r / (1 + t * decay_factor)
     # Add gradient of regularization term.
