@@ -9,11 +9,13 @@ import onnx
 from ..base import Base
 from . import expect
 
-def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):
+
+def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon,
+                  decay_factor):  # type: ignore
     # Compute adjusted learning-rate.
-    r_ = r * (1 + t * decay_factor)
+    r_ = r / (1 + t * decay_factor)
     # Add gradient of regularization term.
-    g_regularized =  norm_coefficient * x + g
+    g_regularized = norm_coefficient * x + g
     # Update squared accumulated gradient.
     h_new = h + g * g
     # Compute ADAGRAD's gradient scaling factors
@@ -21,6 +23,7 @@ def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):
     # Apply ADAGRAD update rule.
     x_new = x - r_ * g_regularized / h_sqrt
     return (x_new, h_new)
+
 
 class Adagrad(Base):
 
@@ -41,15 +44,15 @@ class Adagrad(Base):
                                      )
 
         # Define operator inputs.
-        r = np.array(0.1, dtype=np.float32)   # scalar
-        t = np.array(0, dtype=np.int64)       # scalar
+        r = np.array(0.1, dtype=np.float32)  # scalar
+        t = np.array(0, dtype=np.int64)  # scalar
         x = np.array([1.0], dtype=np.float32)
         g = np.array([-1.0], dtype=np.float32)
         h = np.array([2.0], dtype=np.float32)
 
         # Compute expected outputs of Adagrad.
         x_new, h_new = apply_adagrad(r, t, x, g, h,
-                                       norm_coefficient, epsilon, decay_factor)
+                                     norm_coefficient, epsilon, decay_factor)
 
         # Check results.
         expect(node, inputs=[r, t, x, g, h],
@@ -73,8 +76,8 @@ class Adagrad(Base):
                                      )
 
         # Define operator inputs.
-        r = np.array(0.1, dtype=np.float32) # scalar
-        t = np.array(0, dtype=np.int64)     # scalar
+        r = np.array(0.1, dtype=np.float32)  # scalar
+        t = np.array(0, dtype=np.int64)  # scalar
 
         x1 = np.array([1.0], dtype=np.float32)
         g1 = np.array([-1.0], dtype=np.float32)
