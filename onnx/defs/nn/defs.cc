@@ -57,8 +57,8 @@ void convPoolShapeInference(
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
-  // Pooling operations don't support dilation, only Conv. For
-  // simplicity of the code, we just treat them as having all-1s
+  // Only MaxPool and Conv support dilation. For
+  // simplicity of the code, we just treat the rest of them as having all-1s
   // dilation.
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
