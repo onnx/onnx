@@ -345,7 +345,7 @@ expect(node, inputs=[x], outputs=[y],
        
        - The initial learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
-       - A L2-norm regularization coefficient "lambda".
+       - A L2-norm regularization coefficient "norm_coefficient".
        - A learning-rate decay factor "decay_factor".
        - A small constant "epsilon" to avoid dividing-by-zero. 
   
@@ -365,8 +365,8 @@ expect(node, inputs=[x], outputs=[y],
         // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
         r = R / (1 + T * decay_factor);
   
-        // Add gradient of 0.5 * lambda * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = lambda * X + G;
+        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+        G_regularized = norm_coefficient * X + G;
   
         // Compute new accumulated squared gradient.
         H_new = H + G_regularized * G_regularized;
@@ -398,8 +398,8 @@ This version of the operator has been available since version 10 of the default 
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
 <dt><tt>epsilon</tt> : float (default is 0.0)</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
-<dt><tt>lambda</tt> : float (default is 0.0)</dt>
-<dd>Regularization coefficient of 0.5 * lambda * ||X||_2^2. Default to 0, which means no regularization.</dd>
+<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
 </dl>
 
 #### Inputs (3 - &#8734;)
@@ -430,6 +430,90 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>adagrad</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+epsilon = 1e-5
+decay_factor = 0.1
+
+# Create operator.
+node = onnx.helper.make_node('Adagrad',
+                             inputs=['R', 'T', 'X', 'G', 'H'],
+                             outputs=['X_new', 'H_new'],
+                             norm_coefficient=norm_coefficient,
+                             epsilon=epsilon,
+                             decay_factor=decay_factor
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
+x = np.array([1.0], dtype=np.float32)
+g = np.array([-1.0], dtype=np.float32)
+h = np.array([2.0], dtype=np.float32)
+
+# Compute expected outputs of Adagrad.
+x_new, h_new = apply_adagrad(r, t, x, g, h,
+                             norm_coefficient, epsilon, decay_factor)
+
+# Check results.
+expect(node, inputs=[r, t, x, g, h],
+       outputs=[x_new, h_new], name='test_adagrad')
+```
+
+</details>
+
+
+<details>
+<summary>adagrad_multiple</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+epsilon = 1e-5
+decay_factor = 0.1
+
+node = onnx.helper.make_node('Adagrad',
+                             inputs=['R', 'T', 'X1', 'X2',
+                                     'G1', 'G2', 'H1', 'H2'],
+                             outputs=['X1_new', 'X2_new',
+                                      'H1_new', 'H2_new'],
+                             norm_coefficient=norm_coefficient,
+                             epsilon=epsilon,
+                             decay_factor=decay_factor
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
+
+x1 = np.array([1.0], dtype=np.float32)
+g1 = np.array([-1.0], dtype=np.float32)
+h1 = np.array([2.0], dtype=np.float32)
+
+x2 = np.array([1.0, 2.0], dtype=np.float32)
+g2 = np.array([-1.0, -3.0], dtype=np.float32)
+h2 = np.array([4.0, 1.0], dtype=np.float32)
+
+# Compute expected outputs of Adagrad.
+x1_new, h1_new = apply_adagrad(r, t, x1, g1, h1,
+                               norm_coefficient, epsilon, decay_factor)
+x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
+                               norm_coefficient, epsilon, decay_factor)
+
+# Check results.
+expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
+       outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple')
+```
+
+</details>
 
 
 ### <a name="Add"></a><a name="add">**Add**</a>

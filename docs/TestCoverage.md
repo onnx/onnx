@@ -109,15 +109,15 @@ node = onnx.helper.make_node('Adagrad',
                              )
 
 # Define operator inputs.
-r = np.array(0.1, dtype=np.float32)   # scalar
-t = np.array(0, dtype=np.int64)       # scalar
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
 x = np.array([1.0], dtype=np.float32)
 g = np.array([-1.0], dtype=np.float32)
 h = np.array([2.0], dtype=np.float32)
 
 # Compute expected outputs of Adagrad.
 x_new, h_new = apply_adagrad(r, t, x, g, h,
-                               norm_coefficient, epsilon, decay_factor)
+                             norm_coefficient, epsilon, decay_factor)
 
 # Check results.
 expect(node, inputs=[r, t, x, g, h],
@@ -145,8 +145,8 @@ node = onnx.helper.make_node('Adagrad',
                              )
 
 # Define operator inputs.
-r = np.array(0.1, dtype=np.float32) # scalar
-t = np.array(0, dtype=np.int64)     # scalar
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
 
 x1 = np.array([1.0], dtype=np.float32)
 g1 = np.array([-1.0], dtype=np.float32)

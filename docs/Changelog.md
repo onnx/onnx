@@ -9271,7 +9271,7 @@ This version of the operator has been available since version 9 of the default O
        
        - The initial learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
-       - A L2-norm regularization coefficient "lambda".
+       - A L2-norm regularization coefficient "norm_coefficient".
        - A learning-rate decay factor "decay_factor".
        - A small constant "epsilon" to avoid dividing-by-zero. 
   
@@ -9291,8 +9291,8 @@ This version of the operator has been available since version 9 of the default O
         // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
         r = R / (1 + T * decay_factor);
   
-        // Add gradient of 0.5 * lambda * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = lambda * X + G;
+        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+        G_regularized = norm_coefficient * X + G;
   
         // Compute new accumulated squared gradient.
         H_new = H + G_regularized * G_regularized;
@@ -9324,8 +9324,8 @@ This version of the operator has been available since version 10 of the default 
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
 <dt><tt>epsilon</tt> : float (default is 0.0)</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
-<dt><tt>lambda</tt> : float (default is 0.0)</dt>
-<dd>Regularization coefficient of 0.5 * lambda * ||X||_2^2. Default to 0, which means no regularization.</dd>
+<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
 </dl>
 
 #### Inputs (3 - &#8734;)
