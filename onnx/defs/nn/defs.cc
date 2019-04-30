@@ -136,13 +136,14 @@ void convPoolShapeInference(
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
 
-    bool ceil_mode = ctx.getAttribute("ceil_mode");
+    // default is floor mode .i.e. ceil_mode is set to 0
+    auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
     int64_t strided_kernel_positions;
 
-    if (ceil_mode)
+    if (ceil_mode == 1)
       strided_kernel_positions = (int64_t)(std::ceil(
           (effective_input_size - effective_kernel_size) / float(strides[i])));
     else
