@@ -12742,6 +12742,15 @@ expect(node, inputs=[x], outputs=[y],
   If a negative value is passed for step, it represents slicing backward.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
+  
+  Slice treats the start and end indices like: [start, end) meaning the produced
+  set will be inclusive of start but exclusive of end. One can include end in the
+  output by setting the `end_mask` bit (for that axis) to 1. Hence, the output would
+  be the range: [start, end].
+  `end_mask` is a bit vector of the same length of `ends`. So to include end in the
+  results for the axes 0 and 2 and not include that for the axis 1, the value for
+  `end_mask` would be 010 binary or 5 decimal.
+  
   Example 1:
     data = [
         [1, 2, 3, 4],
@@ -12764,12 +12773,31 @@ expect(node, inputs=[x], outputs=[y],
     result = [
         [2, 3, 4],
     ]
+    Example 3:
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    starts = [0, 1]
+    ends = [1, 4]
+    end_mask = 2 #  10 binary
+    result = [
+        [2, 3, 4],
+        [6, 7, 8],
+    ]
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>
+Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a href="Changelog.md#Slice-10">Slice-10</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>end_mask</tt> : int (default is 1)</dt>
+<dd>(Optional) The mask bits for ends vector which determines if the end index should be included in the slice (default = 0)</dd>
+</dl>
 
 #### Inputs (3 - 5)
 
@@ -12869,6 +12897,68 @@ y = x[:, :, 3:4]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
        name='test_slice_default_steps')
+```
+
+</details>
+
+
+<details>
+<summary>slice_end_mask_neg_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+    end_mask = 4  # 100 binary
+)
+
+x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
+starts = np.array([2, 1, 2], dtype=np.int64)
+ends = np.array([0, 0, 0], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -1, -1])
+y = x[2::-1, 1:0:-1, 2:0:-1]
+y
+# array([[[17., 16.]],
+
+#        [[11., 10.]],
+
+#        [[ 5.,  4.]]], dtype=float32)
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_end_mask_neg_step')
+```
+
+</details>
+
+
+<details>
+<summary>slice_end_mask_pos_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+    end_mask = 4  # 100 binary
+)
+
+x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
+starts = np.array([3, 0, 0], dtype=np.int64)
+ends = np.array([4, 2, 3], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([1, 1, 1])
+y = x[3:5:1, 0:2:1, 0:3:1]
+y
+# array([[[18., 19., 20.],
+#         [21., 22., 23.]],
+
+#        [[24., 25., 26.],
+#         [27., 28., 29.]]], dtype=float32)
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_end_mask_pos_step')
 ```
 
 </details>

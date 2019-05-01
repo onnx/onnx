@@ -134,3 +134,53 @@ class Slice(Base):
 
         expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
                name='test_slice_neg_steps')
+
+    @staticmethod
+    def export_slice_end_mask_neg_step():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Slice',
+            inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+            outputs=['y'],
+            end_mask = 4  # 100 binary
+        )
+
+        x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
+        starts = np.array([2, 1, 2], dtype=np.int64)
+        ends = np.array([0, 0, 0], dtype=np.int64)
+        axes = np.array([0, 1, 2], dtype=np.int64)
+        steps = np.array([-1, -1, -1])
+        y = x[2::-1, 1:0:-1, 2:0:-1]
+        y
+        # array([[[17., 16.]],
+
+        #        [[11., 10.]],
+
+        #        [[ 5.,  4.]]], dtype=float32)
+
+        expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+               name='test_slice_end_mask_neg_step')
+               
+    @staticmethod
+    def export_slice_end_mask_pos_step():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Slice',
+            inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+            outputs=['y'],
+            end_mask = 4  # 100 binary
+        )
+
+        x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
+        starts = np.array([3, 0, 0], dtype=np.int64)
+        ends = np.array([4, 2, 3], dtype=np.int64)
+        axes = np.array([0, 1, 2], dtype=np.int64)
+        steps = np.array([1, 1, 1])
+        y = x[3:5:1, 0:2:1, 0:3:1]
+        y
+        # array([[[18., 19., 20.],
+        #         [21., 22., 23.]],
+
+        #        [[24., 25., 26.],
+        #         [27., 28., 29.]]], dtype=float32)
+
+        expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+               name='test_slice_end_mask_pos_step')
