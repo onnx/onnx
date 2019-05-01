@@ -99,7 +99,7 @@ void convPoolShapeInference(
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
-      for (int i = 0; i < n_input_dims; ++i) {
+      for (auto i = 0; i < n_input_dims; ++i) {
         int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
@@ -1261,7 +1261,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
-      for (int i = 0; i < n_input_dims; ++i) {
+      for (auto i = 0; i < n_input_dims; ++i) {
         int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
