@@ -12910,7 +12910,7 @@ node = onnx.helper.make_node(
     'Slice',
     inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    end_mask = 4  # 100 binary
+    end_mask=4  # 100 binary
 )
 
 x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
@@ -12941,7 +12941,7 @@ node = onnx.helper.make_node(
     'Slice',
     inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    end_mask = 4  # 100 binary
+    end_mask=4  # 100 binary
 )
 
 x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
