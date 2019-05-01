@@ -141,7 +141,7 @@ class Slice(Base):
             'Slice',
             inputs=['x', 'starts', 'ends', 'axes', 'steps'],
             outputs=['y'],
-            end_mask = 4  # 100 binary
+            end_mask=4  # 100 binary
         )
 
         x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
@@ -159,14 +159,14 @@ class Slice(Base):
 
         expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
                name='test_slice_end_mask_neg_step')
-               
+
     @staticmethod
     def export_slice_end_mask_pos_step():  # type: () -> None
         node = onnx.helper.make_node(
             'Slice',
             inputs=['x', 'starts', 'ends', 'axes', 'steps'],
             outputs=['y'],
-            end_mask = 4  # 100 binary
+            end_mask=4  # 100 binary
         )
 
         x = np.arange(0, 30, 1).astype(np.float32).reshape((5, 2, 3))
