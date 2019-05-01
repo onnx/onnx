@@ -513,6 +513,7 @@ class OpSet_Onnx_ver9 {
 };
 
 // Forward declarations for ai.onnx version 10
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, MaxUnpool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, StringNormalizer);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Upsample);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Resize);
@@ -538,6 +539,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, RoiAlign);
 class OpSet_Onnx_ver10 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, MaxUnpool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Upsample)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Resize)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
