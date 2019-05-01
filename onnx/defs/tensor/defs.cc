@@ -1,10 +1,12 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver9_doc = R"DOC(
@@ -536,45 +538,61 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto getInitializerData =
+          // don't know data_type- can't proceed
+          if (!startsInitializer->has_data_type())
+            return;
+
+          auto get_initializer_data =
               [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
-            if (initializer->has_raw_data()) {
-              const std::string& bytes = initializer->raw_data();
-              vec.insert(
-                  vec.end(),
-                  reinterpret_cast<const int64_t*>(bytes.c_str()),
-                  reinterpret_cast<const int64_t*>(
-                      bytes.c_str() + bytes.size()));
-            } else {
+            if (initializer->has_raw_data() &&
+                initializer->data_type() == TensorProto::INT64) {
+              const auto& data = ParseRawData<int64_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else if (
+                initializer->has_raw_data() &&
+                initializer->data_type() == TensorProto::INT32) {
+              const auto& data = ParseRawData<int32_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else if (initializer->data_type() == TensorProto::INT64) {
               const auto& data = initializer->int64_data();
               vec.insert(vec.end(), data.begin(), data.end());
+            } else if (initializer->data_type() == TensorProto::INT32) {
+              const auto& data = initializer->int32_data();
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else {
+              // unaccepted data type
+              fail_shape_inference(
+                  "Only supports `int32_t` or `int64_t` inputs for starts/ends/axes/steps");
             }
             return vec;
           };
 
-          std::vector<int64_t> starts = getInitializerData(startsInitializer);
-          std::vector<int64_t> ends = getInitializerData(endsInitializer);
+          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
+            if (val < low)
+              return low;
+            if (val > high)
+              return high;
+            return val;
+          };
+
+          std::vector<int64_t> starts = get_initializer_data(startsInitializer);
+          std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
           if (starts.size() != ends.size()) {
             fail_shape_inference(
                 "Incorrect or missing input value for starts and ends");
-            ;
           }
 
-          std::vector<int64_t> axes;
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_rank = input_shape.dim_size();
+          std::vector<int64_t> axes(starts.size());
           if (!axesInitializer) {
-            for (int i = 0; (size_t)i < starts.size(); ++i) {
-              axes.push_back(i);
-            }
+            std::iota(axes.begin(), axes.end(), 0);
           } else {
-            axes = getInitializerData(axesInitializer);
+            axes = get_initializer_data(axesInitializer);
             if (axes.size() != starts.size()) {
               fail_shape_inference("Input axes has incorrect length");
-              ;
-            } else if (!std::is_sorted(axes.begin(), axes.end())) {
-              // TODO support shape inference for unsorted axes
-              return;
             }
           }
 
@@ -582,49 +600,85 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!stepsInitializer) {
             steps = std::vector<int64_t>(starts.size(), 1);
           } else {
-            steps = getInitializerData(stepsInitializer);
-            if (steps.size() != starts.size()) {
+            steps = get_initializer_data(stepsInitializer);
+            if (steps.size() != axes.size()) {
               fail_shape_inference("Input steps has incorrect length");
-              ;
             }
           }
 
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-          for (size_t i = 0, j = 0; (int64_t)i <
-               ctx.getInputType(0)->tensor_type().shape().dim_size();
-               ++i) {
-            auto* newdim = ctx.getOutputType(0)
-                               ->mutable_tensor_type()
-                               ->mutable_shape()
-                               ->add_dim();
-            if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
-              // There's a lot of potential behaviors. For now just
-              // handle some simple cases.
-              if (ctx.getInputType(0)
-                      ->tensor_type()
-                      .shape()
-                      .dim((int)i)
-                      .has_dim_value() &&
-                  starts[j] >= 0 && ends[j] >= 0 && steps[j] > 0) {
-                auto newval = std::min(
-                                  (int64_t)ctx.getInputType(0)
-                                      ->tensor_type()
-                                      .shape()
-                                      .dim((int)i)
-                                      .dim_value(),
-                                  ends[j]) -
-                    starts[j];
-                newval = newval / steps[j] +
-                    (newval % steps[j] && steps[j] != 1 ? 1 : 0);
-                if (newval >= 0) {
-                  newdim->set_dim_value(newval);
-                }
-              }
-              ++j;
-            } else {
-              *newdim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            // first update rank of output dim
+            auto* output_dim = ctx.getOutputType(0)
+                                   ->mutable_tensor_type()
+                                   ->mutable_shape()
+                                   ->add_dim();
+            const auto& input_dim = input_shape.dim((int)i);
+            if (input_dim.has_dim_value()) {
+              output_dim->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              output_dim->set_dim_param(input_dim.dim_param());
             }
+          }
+
+          std::unordered_set<int64_t> unique_axes;
+          size_t axes_size = axes.size();
+          for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
+            auto axis = axes[axis_index] < 0
+                ? axes[axis_index] + static_cast<int64_t>(input_rank)
+                : axes[axis_index];
+
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+              fail_shape_inference("Input axes has invalid data");
+
+            if (unique_axes.find(axis) != unique_axes.end())
+              fail_shape_inference("'axes' has duplicates");
+
+            unique_axes.insert(axis);
+
+            auto input_dim =
+                ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+
+            // input dim value is missing - cannot perform shape inference for
+            // this axis
+            if (!input_dim.has_dim_value())
+              continue;
+
+            const auto input_dim_value = input_dim.dim_value();
+
+            // process step
+            auto step = steps[axis_index];
+            if (step == 0)
+              fail_shape_inference("'step' cannot be 0");
+
+            // process start
+            auto start = starts[axis_index];
+            if (start < 0)
+              start += input_dim_value;
+            if (step < 0)
+              start = clamp(start, 0, input_dim_value - 1);
+            else
+              start = clamp(start, 0, input_dim_value);
+
+            // process end
+            auto end = ends[axis_index];
+            if (end < 0)
+              end += input_dim_value;
+            if (step < 0)
+              end = clamp(end, -1, input_dim_value);
+            else
+              end = clamp(end, 0, input_dim_value);
+
+            // find output dim value for this axis
+            auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
+            if (temp < 0)
+              temp = 0;
+
+            // assign output value
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim((int)axis)
+                ->set_dim_value(temp);
           }
         }));
 
@@ -884,7 +938,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "axes",
-            "List of positive integers, indicate the dimensions to squeeze.",
+            "List of non-negative integers, indicate the dimensions to squeeze.",
             AttributeProto::INTS,
             OPTIONAL)
         .SetDoc(Squeeze_ver1_doc)
@@ -940,7 +994,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "axes",
-            "List of positive integers, indicate the dimensions to be inserted",
+            "List of non-negative integers, indicate the dimensions to be inserted",
             AttributeProto::INTS)
         .SetDoc(Unsqueeze_ver1_doc)
         .Input(0, "data", "Original tensor", "T")
@@ -1273,17 +1327,39 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto scales = ctx.getInputData(1);
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == input_shape.dim_size()) {
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                float dim_value =
+            if (scales->data_type() == TensorProto::FLOAT) {
+              bool invalid_scale_shape = false;              
+              if (scales->has_raw_data()) {
+                const auto& data = ParseRawData<float>(scales);
+                if (static_cast<int>(data.size()) == input_shape.dim_size()) {
+                  for (int i = 0; i < input_shape.dim_size(); ++i) {
+                    float dim_value =
+                      static_cast<float>(input_shape.dim(i).dim_value());
+                    output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                      std::floor(dim_value * data[i])));
+                  }
+                } else {
+                  invalid_scale_shape = true;
+                }
+              } else if (scales->float_data_size() == input_shape.dim_size()) {
+                for (int i = 0; i < input_shape.dim_size(); ++i) {
+                  float dim_value =
                     static_cast<float>(input_shape.dim(i).dim_value());
-                output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                  output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
                     std::floor(dim_value * scales->float_data(i))));
+                }
+              } else {
+                invalid_scale_shape = true;
+              }
+
+              if (invalid_scale_shape) {
+                fail_shape_inference(
+                  "Number of elements of input 'scales' must be same as rank of input 'X'."
+                );
               }
             } else {
               fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
+                "Input scales's element type must be float.");
             }
           } else {
             // Infer output shape's rank in any case.
@@ -1585,6 +1661,42 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    IsInf,
+    10,
+    OpSchema()
+        .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
+        .Input(0, "X", "input", "T1")
+        .Output(0, "Y", "output", "T2")
+        .Attr(
+            "detect_positive",
+            "(Optional) Whether map positive infinity to true. Default to 1 "
+            "so that positive infinity induces true. Set this attribute to 0 "
+            "if positive infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "detect_negative",
+            "(Optional) Whether map negative infinity to true. Default to 1 "
+            "so that negative infinity induces true. Set this attribute to 0 "
+            "if negative infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)", "tensor(double)"},
+            "Constrain input types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(bool)"},
+            "Constrain output types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 static const char* Where_ver9_doc = R"DOC(
     Return elements, either from X or Y, depending on condition
     (with Numpy-style broadcasting support).
@@ -1657,4 +1769,83 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputElemType(ctx, 0, TensorProto::INT64);
         }));
 
+static const char* ReverseSequence_ver10_doc = R"DOC(
+Reverse batch of sequences having different lengths specified by `sequence_lens`.
+
+For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+
+Example 1:
+  input = [[0.0, 4.0, 8.0,  12.0],
+           [1.0, 5.0, 9.0,  13.0],
+           [2.0, 6.0, 10.0, 14.0],
+           [3.0, 7.0, 11.0, 15.0]]
+  sequence_lens = [4, 3, 2, 1]
+  time_axis = 0
+  batch_axis = 1
+
+  output = [[3.0, 6.0, 9.0,  12.0],
+            [2.0, 5.0, 8.0,  13.0],
+            [1.0, 4.0, 10.0, 14.0],
+            [0.0, 7.0, 11.0, 15.0]]
+
+Example 2:
+  input = [[0.0,  1.0,  2.0,  3.0 ],
+           [4.0,  5.0,  6.0,  7.0 ],
+           [8.0,  9.0,  10.0, 11.0],
+           [12.0, 13.0, 14.0, 15.0]]
+  sequence_lens = [1, 2, 3, 4]
+  time_axis = 1
+  batch_axis = 0
+
+  output = [[0.0,  1.0,  2.0,  3.0 ],
+            [5.0,  4.0,  6.0,  7.0 ],
+            [10.0, 9.0,  8.0,  11.0],
+            [15.0, 14.0, 13.0, 12.0]]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReverseSequence,
+    10,
+    OpSchema()
+        .SetDoc(ReverseSequence_ver10_doc)
+        .Attr(
+            "time_axis",
+            "(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "batch_axis",
+            "(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(0, "input", "Tensor of rank r >= 2.", "T")
+        .Input(
+            1,
+            "sequence_lens",
+            "Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.",
+            "tensor(int64)")
+        .Output(0, "Y", "Tensor with same shape of input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input and output types can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
+
+          auto& first_input_shape = getInputShape(ctx, 0);
+          if (first_input_shape.dim_size() < 2) {
+            fail_shape_inference("'input' must have rank >= 2");
+          }
+          auto& seq_len_input_shape = getInputShape(ctx, 1);
+          if (seq_len_input_shape.dim_size() != 1) {
+            fail_shape_inference("'sequence_lens' must have rank of 1");
+          }
+
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));
 } // namespace ONNX_NAMESPACE

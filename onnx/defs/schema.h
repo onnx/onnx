@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #pragma once
@@ -20,6 +20,7 @@
 
 #include "data_type_utils.h"
 #include "onnx/common/constants.h"
+#include "onnx/common/common.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
@@ -265,7 +266,7 @@ class OpSchema final {
 #ifndef __ONNX_NO_DOC_STRINGS
     SetDoc(std::string(doc));
 #else
-    doc;
+    ONNX_UNUSED_PARAMETER(doc);
 #endif
 
     return *this;
@@ -715,7 +716,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           fail_schema(err.str());
         }
 
-        
         m[op_name][op_domain].insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {
