@@ -293,18 +293,21 @@ private:
   use_list uses_;
   bool has_unique_name_;
   std::string unique_name_;
-  ONNX_NAMESPACE::TensorProto_DataType elem_type_;
+  int32_t elem_type_;
+  bool has_sizes_;
   std::vector<Dimension> sizes_;
 
 public:
-  Value* setElemType(ONNX_NAMESPACE::TensorProto_DataType elem_type) {
+  Value* setElemType(int32_t elem_type) {
     elem_type_ = elem_type;
     return this;
   }
-  ONNX_NAMESPACE::TensorProto_DataType elemType() const {
+  int32_t elemType() const {
     return elem_type_;
   }
+  bool has_sizes() const { return has_sizes_; }
   Value* setSizes(std::vector<Dimension> sizes) {
+    has_sizes_ = true;
     sizes_ = std::move(sizes);
     return this;
   }
@@ -406,6 +409,8 @@ private:
   size_t stage_;
   bool has_name_;
   std::string name_;
+  bool has_domain_;
+  std::string domain_;
   bool has_doc_string_;
   std::string doc_string_;
 
@@ -416,12 +421,22 @@ public:
   bool has_name() {
     return has_name_;
   }
-  const std::string& name() {
+  const std::string& name() const {
     return name_;
   }
   void setName(std::string name) {
     has_name_ = true;
     name_ = std::move(name);
+  }
+  bool has_domain() {
+    return has_domain_;
+  }
+  const std::string& domain() const {
+    return domain_;
+  }
+  void setDomain(std::string domain) {
+    has_domain_ = true;
+    domain_ = std::move(domain);
   }
   bool has_doc_string() const {
     return has_doc_string_;
@@ -767,6 +782,57 @@ protected:
   }
 };
 
+// A class with the same properties as OperatorSetIdProto, but without protobuf
+// overhead, resulting in a simpler and more readable workflow.
+class OpSetID final {
+  private:
+    std::string domain_;
+    int64_t version_;
+
+  public:
+    explicit OpSetID(const OperatorSetIdProto& proto)
+      :domain_(proto.domain()), version_(proto.version()) {}
+
+    // Default Domain Constructor
+    explicit OpSetID(const int64_t version)
+      :domain_(""), version_(version) {}
+
+    explicit OpSetID(const std::string& domain, int64_t version)
+      :domain_(domain), version_(version) {}
+
+    // target must be in the form "<domain>&<version>"
+    std::string toString() const {
+      return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
+    }
+
+    // target must be in the form "<domain>&<version>"
+    static OpSetID fromString(const std::string& target) {
+      try {
+        std::string new_domain = target.substr(0, target.find("$"));
+        int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+        return OpSetID(std::move(new_domain), new_version);
+      } catch (const std::runtime_error& e) {
+        ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+      }
+    }
+
+    const std::string& domain() const {
+      return domain_;
+    }
+
+    int64_t version() const {
+      return version_;
+    }
+
+    void incrementVersion(int64_t step) {
+      version_ += step;
+    }
+
+    void setVersion(int64_t newVal) {
+      version_ = newVal;
+    }
+};
+
 struct Graph final {
 ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
@@ -798,6 +864,8 @@ private:
   bool has_doc_string_;
   std::string doc_string_;
 
+  std::vector <OpSetID> opset_versions_;
+
 public:
   Graph()
   : next_unique_(0)
@@ -817,6 +885,7 @@ public:
     has_doc_string_ = true;
     doc_string_ = std::move(doc_string);
   }
+
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
@@ -847,6 +916,14 @@ public:
   const std::vector<std::string>& initializer_names() {
     return initializer_names_;
   }
+  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) {
+    for (auto it = initializers_.cbegin(); it != initializers_.cend(); ++it) {
+      if (name == it->name()) {
+        return it;
+      }
+    }
+    return initializers_.end();
+  }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
   }
@@ -866,6 +943,11 @@ public:
   const_graph_node_list nodes() const {
     return const_graph_node_list(output_, kNextDirection);
   }
+
+  std::vector<OpSetID>& opset_versions_mutable() {
+    return opset_versions_;
+  }
+
   // These invocations of begin() on output of function are OK
   // because graph_node_list is non-owning, so it doesn't matter
   // if it immediately dies after the invocation.
@@ -953,6 +1035,33 @@ public:
     return n;
   }
 
+  //Adds to graph initializer list, initializer names list, and as a graph input
+  //Also syncs the initializer name, tensor name, and value name
+  Value* addInitializerAndInput(const Tensor& initializer, std::string name) {
+    Tensor initializerCopy = initializer;
+    std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(),
+                                     initializerCopy.sizes().cend()};
+    Value* new_init = addInput();
+    initializerCopy.setName(name);
+    new_init->setUniqueName(name);
+    new_init->setSizes(dim_sizes);
+    new_init->setElemType(initializerCopy.elem_type());
+    addInitializer(std::move(initializerCopy), name);
+    return new_init;
+  }
+
+  Value* addInitializerAndInput(const Tensor &initializer) {
+    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(next_unique_++));
+  }
+
+
+  //Erases from graph initializer list, initializer names list, and as a graph input
+  //Must have no uses
+  void eraseInitializerAndInput(Value* v) {
+    eraseInitializer(v->uniqueName());
+    eraseInput(v->offset());
+  }
+
   ~Graph() {
     for (const Node * n : all_nodes)
       delete n;
@@ -1004,13 +1113,11 @@ private:
   }
 };
 
-inline Value::Value(Node * node_, size_t offset_)
-: node_(node_),
-  offset_(offset_),
-  unique_(node_->graph_->next_unique_++),
-  stage_(node_->graph_->new_node_stage_),
-  has_unique_name_(false),
-  elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
+inline Value::Value(Node *node_, size_t offset_)
+    : node_(node_), offset_(offset_), unique_(node_->graph_->next_unique_++),
+      stage_(node_->graph_->new_node_stage_), has_unique_name_(false),
+      elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
+      has_sizes_(false) {
   node_->graph_->all_values.emplace(this);
 }
 
@@ -1036,6 +1143,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
   graph_(graph_),
   stage_(graph_->new_node_stage_),
   has_name_(false),
+  has_domain_(false),
   has_doc_string_(false) {
   graph_->all_nodes.emplace(this);
 }

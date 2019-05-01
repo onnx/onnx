@@ -8,7 +8,7 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-During development, it's convenient to install ONNX in development mode (for ONNX-ML, set environment variable `ONNX_ML=1`):
+During development, it's convenient to install ONNX in development mode (to disable ONNX-ML, set environment variable `ONNX_ML=0`):
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
@@ -36,12 +36,18 @@ Then, after you have made changes to Python and C++ files:
 python onnx/defs/gen_doc.py
 ```
 
+## Adding a new operator
+
+ONNX is an open standard, and we encourage developers to contribute high
+quality operators to ONNX specification.
+Before proposing a new operator, please read [the tutorial](AddNewOp.md).
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
 ```
-pip install pytest-cov nbval
+pip install pytest nbval
 ```
 
 After installing pytest, run

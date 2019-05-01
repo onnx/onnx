@@ -10,43 +10,35 @@
 //
 //	 this pass can handle the case satisfy all following conditions:
 //	   condition 1: A is the output of a Constant node
-
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/common/assertions.h"
+#include "onnx/optimizer/pass.h"
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-struct ExtractConstantToInitializer final : public OptimizePass {
+struct ExtractConstantToInitializer final : public PredicateBasedPass {
   explicit ExtractConstantToInitializer()
-      : OptimizePass("extract_constant_to_initializer", API_TYPE::IR) {}
+      : PredicateBasedPass(
+            PassType::Nop,
+            PassEfficiency::Complete,
+            PassOptimizationType::Memory) {}
 
-  void extract_constant_to_initializer(Graph& graph) {
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(
-          n, [this](Graph& g) { extract_constant_to_initializer(g); });
-      if (n->kind() == kConstant) {
-        const auto name = n->output()->uniqueName();
-        Tensor t = n->t(kvalue);
-        t.setName(name);
-        std::vector<Dimension> tsizes;
-        for (auto v : t.sizes()) {
-          tsizes.push_back(v);
-        }
-        Node* param = graph.create(kParam, 1);
-        param->output()->setUniqueName(name);
-        param->output()->setSizes(tsizes);
-        param->output()->setElemType(t.elem_type());
-        graph.addInitializer(std::move(t), name);
-        graph.addInput()->copyMetadata(param->output());
-        n->replaceAllUsesWith(param);
-        it.destroyCurrent();
-      }
-    }
+  std::string getPassName() const override {
+    return "extract_constant_to_initializer";
   }
 
-  void optimize(Graph& graph) override {
-    extract_constant_to_initializer(graph);
+  bool patternMatchPredicate(Node* node) override {
+    return node->kind() == kConstant;
+  }
+
+  bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
+      override {
+    const auto name = node->output()->uniqueName();
+    Tensor t = node->t(kvalue);
+    Value* new_init = graph.addInitializerAndInput(t, name);
+    node->output()->replaceAllUsesWith(new_init);
+    destroy_current = NodeDestroyType::DestroyOne;
+    return true;
   }
 };
 

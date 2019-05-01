@@ -102,7 +102,7 @@ class PkgWriter(object):
         for i, segment in enumerate(split):
             if segment and segment[0].isupper() and segment[1].islower():
                 assert message_fd.name.endswith('.proto')
-                import_name = self._import("." + message_fd.name[:-6].replace('-', '_') + "_pb2", segment)
+                import_name = self._import(message_fd.name[:-6].replace('-', '_') + "_pb2", segment)
                 remains = ".".join(split[i + 1:])
                 if not remains:
                     return import_name
@@ -283,8 +283,8 @@ class PkgWriter(object):
 def is_scalar(fd):
     # type: (d.FileDescriptorProto) -> bool
     return not (
-        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE or
-        fd.type == d.FieldDescriptorProto.TYPE_GROUP
+        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE
+        or fd.type == d.FieldDescriptorProto.TYPE_GROUP
     )
 
 

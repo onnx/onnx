@@ -3,6 +3,8 @@
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
+#include <fstream>
+#include <iterator>
 #include <unordered_set>
 
 namespace ONNX_NAMESPACE {
@@ -55,6 +57,13 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
       enforce_has_field(type, key_type);
       enforce_has_field(type, value_type);
     } break;
+    case TypeProto::kOpaqueType:
+      break;
+    case TypeProto::kSparseTensorType: {
+      const auto& type = value_info.type().sparse_tensor_type();
+      enforce_has_field(type, elem_type);
+      enforce_has_field(type, shape);
+    } break;
 #endif
     default:
       fail_check(
@@ -65,7 +74,7 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
   }
 }
 
-void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
+void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check(
@@ -95,7 +104,50 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 
 #undef check_data_field
 
-  if (num_value_fields != 1) {
+  bool stored_externally = tensor.has_data_location() &&
+	                   tensor.data_location() == TensorProto::EXTERNAL;
+  if (stored_externally){
+    if (num_value_fields != 0){
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor.name(),
+          ") is stored externally and should not have data field.",
+          value_field);
+    }
+
+    bool has_location = false;
+    for (const StringStringEntryProto& entry : tensor.external_data()){
+      if (entry.has_key() && entry.has_value() && entry.key() == "location"){
+        has_location = true;
+        if(!std::ifstream(ctx.get_model_dir() + entry.value())){
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              ctx.get_model_dir() + entry.value(),
+              ", but it doesn't exist or is not accessible.");
+        }
+      }
+    }
+    if (!has_location){
+      fail_check(
+          "TensorProto ( tensor name: ",
+          tensor.name(),
+          ") is stored externally but doesn't have a location.");
+    }
+    return;
+  }
+  int64_t nelem = 1;
+  for (auto x : tensor.dims()) {
+    nelem *= x;
+  }
+  if (nelem == 0 && num_value_fields != 0) {
+    fail_check(
+        "TensorProto (tensor name: ",
+        tensor.name(),
+        ") is 0-element but contains data!");
+  }
+  if (nelem != 0 && num_value_fields != 1) {
     fail_check(
         "TensorProto (tensor name: ",
         tensor.name(),
@@ -111,7 +163,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
     return;
   } else {
 #define check_field(field)               \
-  if (!has_##field) {                    \
+  if (nelem != 0 && !has_##field) {      \
     fail_check(                          \
         "values of data_type '",         \
         tensor.data_type(),              \
@@ -125,17 +177,20 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
     switch (tensor.data_type()) {
       case TensorProto::FLOAT:
       case TensorProto::COMPLEX64:
-      case TensorProto::COMPLEX128:
         check_field(float_data);
         break;
 
       case TensorProto::DOUBLE:
+      case TensorProto::COMPLEX128:
         check_field(double_data);
         break;
 
       case TensorProto::INT32:
+      case TensorProto::UINT8:
       case TensorProto::UINT16:
       case TensorProto::BOOL:
+      case TensorProto::FLOAT16:
+      case TensorProto::BFLOAT16:
         check_field(int32_data);
         break;
 
@@ -211,20 +266,25 @@ void check_attribute(
 #undef check_singular_field
 #undef check_repeated_field
 
-  if (ctx.is_main_graph()) {
-    if (used_fields != 1) {
-      fail_check(
-          "Attribute (name: ",
-          attr.name(),
-          ") should contain one and only one value field.");
-    }
-  } else {
+  // Normally, used_fields is expected to be 1.
+  // In proto3, when the value to be set is type default value (say 0 for int),
+  // used_fields may be 0.
+  if (used_fields > 1) {
+    fail_check(
+        "Attribute (name: ",
+        attr.name(),
+        ") should not contain more than one value field.");
+  }
+
+  if (!ctx.is_main_graph()) {
     // It's an attribute of a node in function body.
-    if (used_fields != 1 && (used_fields != 0 || !attr.has_ref_attr_name())) {
+    if (attr.has_ref_attr_name() && used_fields != 0) {
+      // The attribute proto is supposed to refer to data outside and does not
+      // have its own value field set.
       fail_check(
           "Attribute (name: ",
           attr.name(),
-          ") should contain one value field or refer to attribute declared in function.");
+          ") should refer to attribute in parent node.");
     }
   }
 
@@ -259,6 +319,18 @@ void check_node(
         ") has zero input and zero output.");
   }
 
+  // Put the removed experimental ops here
+  static std::set<std::string> experimental_ops = {"ATen", "Affine",
+    "ConstantFill", "Crop", "DynamicSlice", "GRUUnit", "GivenTensorFill",
+    "ImageScaler", "ParametricSoftplus", "Scale", "ScaledTanh"};
+  if (experimental_ops.count(node.op_type())) {
+    std::cerr << "Warning: " << node.op_type() << " was a removed "
+      << " experimental ops. In the future, we may directly "
+      << "reject this operator. Please update your model as soon "
+      << "as possible.";
+    return;
+  }
+
   // Resolve domain for node
   const auto& opset_imports = ctx.get_opset_imports();
   auto dit = opset_imports.find(node.domain());
@@ -274,11 +346,26 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
+    if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN ||
+        node.domain() == "ai.onnx") {
+      // fail the checker if op in built-in domains has no schema
+      fail_check(
+          "No Op registered for " + node.op_type() +
+          " with domain_version of " +
+          ONNX_NAMESPACE::to_string(domain_version));
+    } else {
+      // TODO: expose the registration of the op schemas appropriately in
+      // python, so we can load and register operators in other domains
+      //
+      // before we complete the above todo, let's skip the schema check for now
+    }
+  } else if (schema->Deprecated()) {
     fail_check(
-        "No Schema registered for " + node.op_type() +
-        " with domain_version of " + ONNX_NAMESPACE::to_string(domain_version));
+        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
+        ONNX_NAMESPACE::to_string(domain_version));
+  } else {
+    schema->Verify(node);
   }
-  schema->Verify(node);
 }
 
 void check_graph(
@@ -310,8 +397,15 @@ void check_graph(
   output_names.insert(
       parent_lex.output_names.begin(), parent_lex.output_names.end());
   for (const auto& init : graph.initializer()) {
-    if (!output_names.count(init.name())) {
-      fail_check(init.name() + " in initializer but not in graph input");
+    if (ctx.get_ir_version() <= 0x00000003) {
+      // Initializers are a subset of graph inputs for IR_VERSION <= 3
+      if (!output_names.count(init.name())) {
+        fail_check(init.name() + " in initializer but not in graph input");
+      }
+    } else {
+      // An initializer is allowed to have the same name as an input,
+      // but is not required to (for IR_VERSION >= 4)
+      output_names.insert(init.name());
     }
     check_tensor(init, ctx);
   }
@@ -363,7 +457,7 @@ void check_graph(
 void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex) {
+    const LexicalScopeContext& /*parent_lex*/) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
@@ -435,7 +529,7 @@ void check_function(
   }
 }
 
-void check_model(const ModelProto& model) {
+void check_model(const ModelProto& model, CheckerContext& ctx) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
@@ -452,7 +546,6 @@ void check_model(const ModelProto& model) {
     }
   }
   std::unordered_map<std::string, int> versions;
-  CheckerContext ctx;
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
@@ -473,6 +566,37 @@ void check_model(const ModelProto& model) {
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
   check_graph(model.graph(), ctx, lex_ctx);
+}
+
+void check_model(const std::string& model_path) {
+  ModelProto model;
+  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
+  if(!model_stream.good()){
+    fail_check("Unable to open model file:",
+               model_path,
+               ". Please check if it is a valid file.");
+  }
+  std::string data {std::istreambuf_iterator<char>{model_stream},
+                    std::istreambuf_iterator<char>{}};
+  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())){
+    fail_check("Unable to parse model from file:",
+               model_path,
+               ". Please check if it is a valid protobuf file of model.");
+  }
+
+  CheckerContext ctx;
+  std::string model_dir;
+  size_t pos = model_path.find_last_of("\\/");
+  if (pos != std::string::npos){
+    model_dir = model_path.substr(0, pos+1);
+  }
+  ctx.set_model_dir(model_dir);
+  check_model(model, ctx);
+}
+
+void check_model(const ModelProto& model) {
+  CheckerContext ctx;
+  check_model(model, ctx);
 }
 
 #undef fail_check

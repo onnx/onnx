@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #pragma once
@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <set>
 #include <string>
@@ -19,7 +20,9 @@
 
 #include "data_type_utils.h"
 #include "onnx/common/constants.h"
+#include "onnx/common/common.h"
 #include "onnx/defs/shape_inference.h"
+#include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -102,13 +105,15 @@ class OpSchema final {
         DataTypeSet type_set,
         std::string type_str,
         std::string description,
-        FormalParameterOption param_option = Single);
+        FormalParameterOption param_option = Single,
+        bool is_homogeneous = true);
 
     explicit FormalParameter(
         std::string name,
         std::string description,
         std::string type_str,
-        FormalParameterOption param_option = Single);
+        FormalParameterOption param_option = Single,
+        bool is_homogeneous = true);
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -124,6 +129,9 @@ class OpSchema final {
 
     // Get the parameter option, it could be Single, Optional or Variadic.
     FormalParameterOption GetOption() const;
+
+    // Get whether a variadic parameter requires all to be of same type
+    bool GetIsHomogeneous() const;
 
    private:
     friend class OpSchema;
@@ -147,6 +155,10 @@ class OpSchema final {
 
     // Formal parameter option.
     FormalParameterOption param_option_;
+
+    // For variadic parameters, a flag indicating if all parameters must be of
+    // same type
+    bool is_homogeneous_;
   };
 
   enum class SupportType : uint8_t {
@@ -215,6 +227,17 @@ class OpSchema final {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
+   * Marks this op as deprecated as of it's since_version. This will cause the
+   * Schema() lookup functions to return nullptr when the version is in the
+   * deprecated range.
+   */
+  OpSchema& Deprecate();
+
+  bool Deprecated() const {
+    return deprecated_;
+  }
+
+  /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
@@ -243,7 +266,7 @@ class OpSchema final {
 #ifndef __ONNX_NO_DOC_STRINGS
     SetDoc(std::string(doc));
 #else
-    doc;
+    ONNX_UNUSED_PARAMETER(doc);
 #endif
 
     return *this;
@@ -386,7 +409,8 @@ class OpSchema final {
       std::string name,
       std::string description,
       std::string type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -394,13 +418,16 @@ class OpSchema final {
       const char* name,
       const char* description,
       const char* type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
+
   OpSchema& Output(
       int n,
       std::string name,
       std::string description,
       std::string type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -408,7 +435,9 @@ class OpSchema final {
       const char* name,
       const char* description,
       const char* type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
+
   OpSchema& TypeConstraint(
       std::string type_str,
       std::vector<std::string> constraints,
@@ -423,47 +452,51 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& high_precision_numeric_types() {
-    static const std::vector<std::string> high_precision_numeric_types = {
+  static const std::vector<std::string>& numeric_types_for_math_reduction() {
+    static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
         "tensor(uint64)",
         "tensor(int32)",
         "tensor(int64)",
+        "tensor(float16)",
         "tensor(float)",
         "tensor(double)"};
-    return high_precision_numeric_types;
+    return numeric_types_for_math_reduction;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
     static const std::vector<std::string> all_numeric_types = {
-        +"tensor(uint8)",
-        +"tensor(uint16)",
-        +"tensor(uint32)",
-        +"tensor(uint64)",
-        +"tensor(int8)",
-        +"tensor(int16)",
-        +"tensor(int32)",
-        +"tensor(int64)",
-        +"tensor(float16)",
-        +"tensor(float)",
-        +"tensor(double)"};
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)"};
     return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
-                                                              "tensor(uint16)",
-                                                              "tensor(uint32)",
-                                                              "tensor(uint64)",
-                                                              "tensor(int8)",
-                                                              "tensor(int16)",
-                                                              "tensor(int32)",
-                                                              "tensor(int64)",
-                                                              "tensor(float16)",
-                                                              "tensor(float)",
-                                                              "tensor(double)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)"};
+    static const std::vector<std::string> all_tensor_types = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
     return all_tensor_types;
   }
 
@@ -477,9 +510,6 @@ class OpSchema final {
     return domain_;
   }
 
-  int since_version() const {
-    return since_version_;
-  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -506,6 +536,14 @@ class OpSchema final {
     return since_version_;
   }
 
+  int since_version() const {
+    return since_version_;
+  }
+
+  bool deprecated() const {
+    return deprecated_;
+  }
+
   int min_input() const {
     return min_input_;
   }
@@ -523,6 +561,14 @@ class OpSchema final {
     return tensor_inference_function_ ? true : false;
   }
 
+  bool HasFunction() const {
+    return function_body_.node_size() > 0;
+  }
+
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+
+  const FunctionProto* GetFunction() const;
+
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
@@ -532,6 +578,9 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+
+  // Build function with information stored in opschema
+  void BuildFunction();
 
   std::string name_;
   std::string file_;
@@ -552,9 +601,11 @@ class OpSchema final {
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
+  bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
+  FunctionProto function_body_;
 };
 
 // Map type to store operator schemas. The format is,
@@ -585,8 +636,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
-      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 10);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -605,10 +656,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[domain] = std::make_pair(min_version, max_version);
     }
 
-    static DomainToVersionRange& Instance() {
-      static DomainToVersionRange domain_to_version_range;
-      return domain_to_version_range;
-    }
+    static DomainToVersionRange& Instance();
 
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
@@ -659,7 +707,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it its version is not"
+              << op_schema.line() << ", but it its version is not "
               << "in the inclusive range [" << lower_bound_incl << ", "
               << upper_bound_incl << "] (usually, this means you "
               << "bumped the operator version but "
@@ -667,7 +715,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << "in onnx/defs/schema.h)." << std::endl;
           fail_schema(err.str());
         }
-        m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
+
+        m[op_name][op_domain].insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {
         std::cerr << "Schema error: " << e.what() << std::endl;
@@ -706,8 +755,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         // All versions are less than specified version, or,
         // The <pos> version is greater than specified version.
         pos--;
-        return &(pos->second);
       }
+
       // Schema with exact version as specified one exists.
       return &(pos->second);
     } else {
@@ -745,9 +794,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
-    for (auto x : map()) {
-      for (auto y : x.second) {
-        for (auto z : y.second) {
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
+        for (auto& z : y.second) {
           r.emplace_back(z.second);
         }
       }
@@ -757,8 +806,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static const std::vector<OpSchema> get_all_schemas() {
     std::vector<OpSchema> r;
-    for (auto x : map()) {
-      for (auto y : x.second) {
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
         auto& version2schema = y.second;
         r.emplace_back(version2schema.rbegin()->second);
       }
@@ -785,8 +834,7 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, ONNX_DOMAIN, ver, true, impl)
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                       \
-      name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are

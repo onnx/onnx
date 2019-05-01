@@ -7,7 +7,9 @@ import unittest
 import numpy as np  # type: ignore
 
 from onnx import checker, helper
-from onnx import TensorProto
+from onnx import TensorProto, GraphProto
+import onnx.onnx_cpp2py_export.checker as C
+import onnx.defs
 
 
 class TestChecker(unittest.TestCase):
@@ -28,19 +30,45 @@ class TestChecker(unittest.TestCase):
         checker.check_node(node)
 
     def test_check_node_input_marked_optional(self):  # type: () -> None
-        # Constant fill's input is marked optional
+        # GivenTensorFill's input is marked optional, hence it is used in this test.
         node = helper.make_node(
-            "ConstantFill", [], ["Y"], name="test")
+            "GivenTensorFill", [], ["Y"], name="test")
         checker.check_node(node)
 
         # Explicitly pass the empty string as optional
         node = helper.make_node(
-            "ConstantFill", [""], ["Y"], name="test")
+            "GivenTensorFill", [""], ["Y"], name="test")
 
         # Input of RELU is not optional
         node = helper.make_node(
             "Relu", [""], ["Y"], name="test")
         self.assertRaises(checker.ValidationError, checker.check_node, node)
+
+    def test_check_graph_ir_version_3(self):  # type: () -> None
+        ctx = C.CheckerContext()
+        ctx.ir_version = 3
+        ctx.opset_imports = {'': onnx.defs.onnx_opset_version()}
+
+        def check_ir_version_3(g):   # type: (GraphProto) -> None
+            checker.check_graph(g, ctx)
+
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        check_ir_version_3(graph)
+
+        graph.initializer.extend([self._sample_float_tensor])
+
+        graph.initializer[0].name = 'no-exist'
+
+        self.assertRaises(checker.ValidationError, check_ir_version_3, graph)
+
+        graph.initializer[0].name = 'X'
+        check_ir_version_3(graph)
 
     def test_check_graph(self):  # type: () -> None
         node = helper.make_node(
@@ -55,14 +83,15 @@ class TestChecker(unittest.TestCase):
         graph.initializer.extend([self._sample_float_tensor])
 
         graph.initializer[0].name = 'no-exist'
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        checker.check_graph(graph)
 
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
 
     def test_check_graph_optional_input(self):  # type: () -> None
+        # GivenTensorFill's input is marked optional, hence it is used in this test.
         node = helper.make_node(
-            "ConstantFill", [""], ["Y"], name="test")
+            "GivenTensorFill", [""], ["Y"], name="test")
         graph = helper.make_graph(
             [node],
             "test",
@@ -187,6 +216,38 @@ class TestChecker(unittest.TestCase):
 
         checker.check_graph(graph)
         #self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
+    @property
+    def _sample_0_elem_tensor(self):  # type: () -> TensorProto
+        np_array = np.random.randn(0, 3).astype(np.float32)
+        return helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(0, 3),
+            vals=np_array.reshape(0).tolist()
+        )
+
+    def test_check_tensor_zero_elem(self):  # type: () -> None
+        tensor = self._sample_0_elem_tensor
+        checker.check_tensor(tensor)
+
+    def test_check_removed_experimental_op(self):  # type: () -> None
+        node = helper.make_node(
+            "ConstantFill", [], ["Y"], name="test", shape=[1, 2])
+        checker.check_node(node)
+
+    def test_skip_schema_check_on_non_standard_domain(self):  # type: () -> None
+        node = helper.make_node(
+            "NonExistOp", ["X"], ["Y"], name="test", domain="test.domain")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        onnx_id = helper.make_opsetid("test.domain", 1)
+        model = helper.make_model(graph, producer_name='test',
+                                  opset_imports=[onnx_id])
+        checker.check_model(model)
 
 
 if __name__ == '__main__':

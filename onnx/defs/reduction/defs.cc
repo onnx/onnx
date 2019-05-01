@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include <algorithm>
@@ -32,7 +32,7 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::high_precision_numeric_types(),
+        OpSchema::numeric_types_for_math_reduction(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -137,7 +137,7 @@ The type of the output tensor is integer.)DOC";
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
-        "The axis in which to compute the arg indices. Default is 0.",
+        "The axis in which to compute the arg indices.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Attr(

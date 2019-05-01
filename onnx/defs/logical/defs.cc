@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -81,13 +81,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
-    7,
+    9,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater"))
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrains input to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
@@ -95,13 +95,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
-    7,
+    9,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less"))
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrains input to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},

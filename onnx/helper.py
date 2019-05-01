@@ -23,6 +23,7 @@ def make_node(
         outputs,  # type: Sequence[Text]
         name=None,  # type: Optional[Text]
         doc_string=None,  # type: Optional[Text]
+        domain=None,  # type: Optional[Text]
         **kwargs  # type: Any
 ):  # type: (...) -> NodeProto
     """Construct a NodeProto.
@@ -33,6 +34,8 @@ def make_node(
         outputs (list of string): list of output names
         name (string, default None): optional unique identifier for NodeProto
         doc_string (string, default None): optional documentation string for NodeProto
+        domain (string, default None): optional domain for NodeProto.
+            If it's None, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
     """
@@ -45,11 +48,29 @@ def make_node(
         node.name = name
     if doc_string:
         node.doc_string = doc_string
+    if domain is not None:
+        node.domain = domain
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
             for key, value in sorted(kwargs.items()))
     return node
+
+
+def make_operatorsetid(
+        domain,  # type: Text
+        version,  # type: int
+):  # type: (...) -> OperatorSetIdProto
+    """Construct an OperatorSetIdProto.
+
+    Arguments:
+        domain (string): The domain of the operator set id
+        version (integer): Version of operator set id
+    """
+    operatorsetid = OperatorSetIdProto()
+    operatorsetid.domain = domain
+    operatorsetid.version = version
+    return operatorsetid
 
 
 def make_graph(
@@ -122,7 +143,7 @@ def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[in
 
 def make_tensor(
         name,  # type: Text
-        data_type,  # type: TensorProto.DataType
+        data_type,  # type: int
         dims,  # type: Sequence[int]
         vals,  # type: Any
         raw=False  # type: bool
@@ -141,8 +162,8 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    if (data_type == TensorProto.COMPLEX64 or
-            data_type == TensorProto.COMPLEX128):
+    if (data_type == TensorProto.COMPLEX64
+            or data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
     if raw:
         tensor.raw_data = vals
@@ -161,14 +182,14 @@ def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     The criteria for conversion is as follows and should be python 2 and 3
     compatible:
     - If val is py2 str or py3 bytes: return bytes
-    - If val is py2 unicode or py3 str: return val.decode('ascii')
+    - If val is py2 unicode or py3 str: return val.decode('utf-8')
     - Otherwise, return False
     """
     if isinstance(val, bytes):
         return val
     else:
         try:
-            return val.encode('ascii')
+            return val.encode('utf-8')
         except AttributeError:
             return False
 
@@ -268,8 +289,8 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 
 def make_tensor_value_info(
         name,  # type: Text
-        elem_type,  # type: TensorProto.DataType
-        shape,  # type: Optional[Sequence[int]]
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
@@ -323,7 +344,7 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     if isinstance(s, text_type):
         sanitized = s
     elif isinstance(s, binary_type):
-        sanitized = s.decode('ascii', errors='ignore')
+        sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)
     if len(sanitized) < 64:

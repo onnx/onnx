@@ -1,5 +1,6 @@
 #pragma once
 
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
@@ -7,20 +8,67 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
+struct GraphInferenceContext {
+  GraphInferenceContext(
+      const std::unordered_map<std::string, TypeProto*>&
+          outer_scope_value_types_by_name_in,
+      const std::unordered_map<std::string, int> opset_imports_in,
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
+      : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
+        opset_imports{opset_imports_in},
+        schema_registry{schema_registry_in} {}
+        
+
+  const std::unordered_map<std::string, TypeProto*>*
+      outer_scope_value_types_by_name;
+  const std::unordered_map<std::string, int> opset_imports;
+  const ISchemaRegistry* schema_registry;
+  
+};
+
+class GraphInferencerImpl : public GraphInferencer {
+ public:
+  GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
+      : g_{&g}, context_{&context} {}
+
+  std::vector<const TypeProto*> doInferencing(
+      const std::vector<const TypeProto*>& inputTypes,
+      const std::vector<const TensorProto*>& inputData) override;
+
+ private:
+  GraphProto* g_;
+  const GraphInferenceContext* context_;
+};
+
 struct InferenceContextImpl : public InferenceContext {
   InferenceContextImpl(
-      const NodeProto& n,
-      const std::unordered_map<std::string, TypeProto*>& valueTypesByName) {
-    for (const auto& attr : n.attribute()) {
+      NodeProto& n,
+      const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
+      const std::unordered_map<std::string, const TensorProto*>&
+          inputDataByName,
+      const GraphInferenceContext* graphInferenceContext = nullptr)
+      : graphInferenceContext_{graphInferenceContext} {
+    for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
+      if (attr.has_g()) {
+        // need a mutable GraphProto to run inferencing on this attribute
+        graphProtoAttributesByName_[attr.name()] = attr.mutable_g();
+      }
     }
 
     for (const auto& input : n.input()) {
-      auto iter = valueTypesByName.find(input);
-      if (iter != valueTypesByName.end()) {
-        allInputTypes_.push_back(iter->second);
+      auto valueTypesIter = valueTypesByName.find(input);
+      if (valueTypesIter != valueTypesByName.end()) {
+        allInputTypes_.push_back(valueTypesIter->second);
       } else {
         allInputTypes_.push_back(nullptr);
+      }
+
+      const auto inputDataIter = inputDataByName.find(input);
+      if (inputDataIter != inputDataByName.cend()) {
+        allInputData_.push_back(inputDataIter->second);
+      } else {
+        allInputData_.push_back(nullptr);
       }
     }
 
@@ -35,6 +83,7 @@ struct InferenceContextImpl : public InferenceContext {
       return iter->second;
     }
   }
+
   size_t getNumInputs() const override {
     return allInputTypes_.size();
   }
@@ -45,6 +94,14 @@ struct InferenceContextImpl : public InferenceContext {
           "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
     return allInputTypes_[index];
+  }
+
+  const TensorProto* getInputData(size_t index) const override {
+    if (index >= allInputData_.size()) {
+      throw std::runtime_error(
+          "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return allInputData_[index];
   }
 
   size_t getNumOutputs() const override {
@@ -58,171 +115,72 @@ struct InferenceContextImpl : public InferenceContext {
     }
     return &allOutputTypes_[index];
   }
+
+  GraphInferencer* getGraphAttributeInferencer(
+      const std::string& attr_name) override {
+    if (!graphInferenceContext_) {
+      fail_type_inference(
+          "GraphProto attribute inferencing is not enabled in this InferenceContextImpl instance.");
+    }
+
+    GraphInferencer* inferencer = nullptr;
+
+    auto entry = graphAttributeInferencers_.find(attr_name);
+    if (entry == graphAttributeInferencers_.cend()) {
+      // create GraphInferencer instance
+      auto attrNameToGraphProto = graphProtoAttributesByName_.find(attr_name);
+      if (attrNameToGraphProto == graphProtoAttributesByName_.cend()) {
+        fail_type_inference(
+            "Attribute ", attr_name, " does not contain a graph.");
+      }
+
+      std::unique_ptr<GraphInferencer> new_inferencer{new GraphInferencerImpl(
+          *attrNameToGraphProto->second, *graphInferenceContext_)};
+
+      inferencer = new_inferencer.get();
+      graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
+    } else {
+      inferencer = entry->second.get();
+    }
+
+    return inferencer;
+  }
+
+  std::vector<const TensorProto*> allInputData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
+  const GraphInferenceContext* graphInferenceContext_;
+
+  // mutable as internal cache of GraphInferencer instances
+  mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>>
+      graphAttributeInferencers_;
 };
 
 void checkShapesAndTypes(
     const TypeProto_Tensor& inferredType,
-    const TypeProto_Tensor& existingType) {
-  if (inferredType.elem_type() != TensorProto::UNDEFINED &&
-      existingType.elem_type() != TensorProto::UNDEFINED &&
-      existingType.elem_type() != inferredType.elem_type()) {
-    std::stringstream ss;
-    ss << "Inferred elem type differs from existing elem type: ("
-       << inferredType.elem_type()
-       << ") vs ("
-       << existingType.elem_type()
-       << ")";
-    throw std::runtime_error(ss.str());
-  }
-
-  if (!inferredType.has_shape() || !existingType.has_shape()) {
-    return;
-  }
-
-  if (inferredType.shape().dim_size() != existingType.shape().dim_size()) {
-    std::stringstream ss;
-    ss << "Inferred shape and existing shape differ in rank: ("
-       << inferredType.shape().dim_size()
-       << ") vs ("
-       << existingType.shape().dim_size()
-       << ")";
-    throw std::runtime_error(ss.str());
-  }
-
-  for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
-    const auto& inferredDim = inferredType.shape().dim(i);
-    const auto& existingDim = existingType.shape().dim(i);
-    if (inferredDim.has_dim_value() &&
-        existingDim.has_dim_value() &&
-        inferredDim.dim_value() != existingDim.dim_value()) {
-      std::stringstream ss;
-      ss << "Inferred shape and existing shape differ in dimension "
-         << i
-         << ": ("
-         << inferredDim.dim_value()
-         << ") vs ("
-         << existingDim.dim_value()
-         << ")";
-      throw std::runtime_error(ss.str());
-    }
-  }
-}
+    const TypeProto_Tensor& existingType);
 
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
-    TypeProto_Tensor* existingType) {
-  if (inferredType.elem_type() != TensorProto::UNDEFINED &&
-      existingType->elem_type() == TensorProto::UNDEFINED) {
-    existingType->set_elem_type(inferredType.elem_type());
-  }
-
-  if (!inferredType.has_shape()) {
-    return;
-  }
-
-  if (!existingType->has_shape()) {
-    // Ensure the shape is initialized. Note that this must be done
-    // even for (zero-dimensional) scalars.
-    existingType->mutable_shape();
-
-    for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-      existingType->mutable_shape()->add_dim();
-    }
-  }
-
-  for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
-    const auto& inferredDim = inferredType.shape().dim(i);
-    auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
-    if (!existingDim->has_dim_value()) {
-      *existingDim = inferredDim;
-    }
-  }
-}
+    TypeProto_Tensor* existingType);
 
 void InferShapes(
     ModelProto& m,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()) {
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : m.opset_import()) {
-    opset_imports[opset_import.domain()] =
-        static_cast<int>(opset_import.version());
-  }
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    );
 
-  auto* g = m.mutable_graph();
+void InferShapes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    );
 
-  std::unordered_map<std::string, TypeProto*> valueTypesByName;
-  for (auto& vi : *g->mutable_value_info()) {
-    if (vi.has_type())
-      valueTypesByName[vi.name()] = vi.mutable_type();
-  }
-  for (auto& vi : *g->mutable_input()) {
-    if (vi.has_type())
-      valueTypesByName[vi.name()] = vi.mutable_type();
-  }
-  for (auto& vi : *g->mutable_output()) {
-    if (vi.has_type())
-      valueTypesByName[vi.name()] = vi.mutable_type();
-  }
-
-  for (const auto& n : g->node()) {
-    // Resolve domain for node
-    auto dit = opset_imports.find(n.domain());
-    if (dit == opset_imports.end()) {
-      continue;
-    }
-    auto domain_version = dit->second;
-
-    const auto schema =
-        schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    if (!schema) {
-      continue;
-    }
-
-    InferenceContextImpl ctx(n, valueTypesByName);
-	try {
-      schema->GetTypeAndShapeInferenceFunction()(ctx);
-	} catch (ONNX_NAMESPACE::InferenceError& ex) {
-	  // Continue with inference for remaining nodes
-	  continue;
-	}
-
-    for (int i = 0; i < n.output_size(); ++i) {
-      if (!ctx.getOutputType(i)->has_tensor_type()) {
-        continue;
-      }
-      const auto& inferredType = ctx.getOutputType(i)->tensor_type();
-
-      // Bail out early if shape inference does nothing useful.
-      if (inferredType.elem_type() == TensorProto::UNDEFINED && !inferredType.has_shape()) {
-        continue;
-      }
-
-      // Find any pre-existing type and shape info. If there is such,
-      // then check for compatability with the inferred
-      // information. Otherwise, initialize it in an empty state.
-      auto iter = valueTypesByName.find(n.output(i));
-      TypeProto* existingType = nullptr;
-      if (iter != valueTypesByName.end()) {
-        existingType = iter->second;
-        checkShapesAndTypes(inferredType, existingType->tensor_type());
-      } else {
-        auto vi = g->add_value_info();
-        vi->set_name(n.output(i));
-        existingType = vi->mutable_type();
-      }
-
-      // Now we can merge pre-existing and inferred info, without
-      // further need for error-checking.
-      mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
-
-      // Make merged info available to futher inference.
-      valueTypesByName[n.output(i)] = existingType;
-    }
-  }
-}
+void InferShapeForFunctionNode(
+    const FunctionProto* func,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

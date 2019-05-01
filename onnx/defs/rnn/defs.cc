@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -190,7 +190,7 @@ Activation functions:
 
 Equations (Default: f=Tanh):
 
-  - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+  - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -294,13 +294,13 @@ Activation functions:
 
 Equations (Default: f=Sigmoid, g=Tanh):
 
-  - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+  - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
 
-  - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+  - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
 
-  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
+  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
@@ -420,15 +420,15 @@ Activation functions:
 
 Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
-  - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+  - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
 
-  - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+  - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
 
-  - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+  - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
 
   - Ct = ft (.) Ct-1 + it (.) ct
 
-  - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+  - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
 
   - Ht = ot (.) h(Ct)
 )DOC";
@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "input_forget",
-            "Couple the input and forget gates if 1, default 0.",
+            "Couple the input and forget gates if 1.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
