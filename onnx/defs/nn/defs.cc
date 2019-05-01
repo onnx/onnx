@@ -100,7 +100,7 @@ void convPoolShapeInference(
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       for (int i = 0; i < n_input_dims; ++i) {
-        int64_t residual =  0;
+        int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
             continue;
@@ -111,7 +111,6 @@ void convPoolShapeInference(
           }
         }
         int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i];
-        //int64_t total_pad = kernel_shape[i] - 1;
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
@@ -1263,7 +1262,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       for (int i = 0; i < n_input_dims; ++i) {
-        int64_t residual =  0;
+        int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
             continue;
@@ -1274,7 +1273,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
           }
         }
         int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i];
-        //int64_t total_pad = kernel_shape[i] - 1;
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
