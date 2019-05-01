@@ -43,12 +43,6 @@ void convPoolShapeInference(
     return;
   }
 
-  // don't bother with legacy auto_pad for now
-  const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
-  if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "NOTSET")) {
-    return;
-  }
-
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor must have atleast 2 dimensions");
@@ -67,15 +61,6 @@ void convPoolShapeInference(
     }
   } else {
     dilations.assign(n_input_dims, 1);
-  }
-
-  std::vector<int64_t> pads;
-  if (getRepeatedAttribute(ctx, "pads", pads)) {
-    if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
-    }
-  } else {
-    pads.assign(n_input_dims * 2, 0);
   }
 
   std::vector<int64_t> strides;
@@ -105,6 +90,41 @@ void convPoolShapeInference(
     }
   }
 
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
+      for (int i = 0; i < n_input_dims; ++i) {
+        int64_t residual =  0;
+        if (strides[i] > 1) {
+          if (!input_shape.dim(2 + i).has_dim_value()) {
+            continue;
+          }
+          residual =  input_shape.dim(2 + i).dim_value();
+          while (residual > 0) {
+            residual -= strides[i];
+          }
+        }
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i];
+        //int64_t total_pad = kernel_shape[i] - 1;
+        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_big = total_pad - half_pad_small;
+        if (auto_pad_attr->s() == "SAME_UPPER") {
+          pads[i] = half_pad_small;
+          pads[i + n_input_dims] = half_pad_big;
+        } else if (auto_pad_attr->s() == "SAME_LOWER") {
+          pads[i] = half_pad_big;
+          pads[i + n_input_dims] = half_pad_small;
+        }
+      }
+    }
+  }
+    
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -1191,12 +1211,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // don't bother with legacy auto_pad for now
-  const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
-  if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "NOTSET")) {
-    return;
-  }
-
   int64_t group = getAttribute(ctx, "group", 1);
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -1213,15 +1227,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       if (i != 1)
         return; // we don't handle dialations not 1.
     }
-  }
-
-  std::vector<int64_t> pads;
-  if (getRepeatedAttribute(ctx, "pads", pads)) {
-    if (pads.size() != n_input_dims * 2) {
-      return;
-    }
-  } else {
-    pads.assign(n_input_dims * 2, 0);
   }
 
   std::vector<int64_t> strides;
@@ -1248,6 +1253,41 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     }
   }
 
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
+      for (int i = 0; i < n_input_dims; ++i) {
+        int64_t residual =  0;
+        if (strides[i] > 1) {
+          if (!input_shape.dim(2 + i).has_dim_value()) {
+            continue;
+          }
+          residual =  input_shape.dim(2 + i).dim_value();
+          while (residual > 0) {
+            residual -= strides[i];
+          }
+        }
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i];
+        //int64_t total_pad = kernel_shape[i] - 1;
+        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_big = total_pad - half_pad_small;
+        if (auto_pad_attr->s() == "SAME_UPPER") {
+          pads[i] = half_pad_small;
+          pads[i + n_input_dims] = half_pad_big;
+        } else if (auto_pad_attr->s() == "SAME_LOWER") {
+          pads[i] = half_pad_big;
+          pads[i + n_input_dims] = half_pad_small;
+        }
+      }
+    }
+  }
+    
   std::vector<int64_t> output_shape;
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
