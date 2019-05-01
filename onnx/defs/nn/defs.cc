@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include <algorithm>
@@ -21,35 +21,25 @@ const char* auto_pad_doc =
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-    "beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
-    "only intended to support legacy uses, and for framework authors, one is explicitly "
-    "encouraged to use explicit padding specified in the pads attribute.";
+    "beginning for SAME_LOWER. VALID mean no padding.";
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
 
-void convPoolTypeAndShapeInference(
+void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
-    bool require_kernel_shape) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  if (ctx.getNumOutputs() > 1) {
-    // MaxPool with two outputs case.
-    auto output_type = ctx.getOutputType(1);
-    if (output_type->value_case() == TypeProto::kTensorType ||
-        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-    }
-  }
-
+    bool require_kernel_shape,
+    int input1Idx,
+    int input2Idx) {
   // we need the first input shape for this inference.
-  if (!hasNInputShapes(ctx, 1)) {
+  if (!hasInputShape(ctx, input1Idx)) {
     return;
   }
 
   // if kernel shape is an input (and not attribute)
   // we need the shape of the second input.
-  if (!require_kernel_shape && !hasNInputShapes(ctx, 2)) {
+  if (!require_kernel_shape && !hasInputShape(ctx, input2Idx)) {
     return;
   }
 
@@ -59,7 +49,7 @@ void convPoolTypeAndShapeInference(
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor must have atleast 2 dimensions");
   }
@@ -67,8 +57,8 @@ void convPoolTypeAndShapeInference(
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
-  // Pooling operations don't support dilation, only Conv. For
-  // simplicity of the code, we just treat them as having all-1s
+  // Only MaxPool and Conv support dilation. For
+  // simplicity of the code, we just treat the rest of them as having all-1s
   // dilation.
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
@@ -105,7 +95,8 @@ void convPoolTypeAndShapeInference(
   } else if (require_kernel_shape) {
     fail_shape_inference("Attribute kernel_shape must be specified");
   } else {
-    auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
+    auto second_input_shape =
+        ctx.getInputType(input2Idx)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
         return;
@@ -123,7 +114,7 @@ void convPoolTypeAndShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    auto& second_input_shape = getInputShape(ctx, 1);
+    auto& second_input_shape = getInputShape(ctx, input2Idx);
     if (second_input_shape.dim_size() < 1) {
       fail_shape_inference("Second input tensor has wrong dimension");
     }
@@ -145,13 +136,14 @@ void convPoolTypeAndShapeInference(
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
 
-    bool ceil_mode = ctx.getAttribute("ceil_mode");
+    // default is floor mode .i.e. ceil_mode is set to 0
+    auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
     int64_t strided_kernel_positions;
 
-    if (ceil_mode)
+    if (ceil_mode == 1)
       strided_kernel_positions = (int64_t)(std::ceil(
           (effective_input_size - effective_kernel_size) / float(strides[i])));
     else
@@ -242,7 +234,16 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      convPoolTypeAndShapeInference(ctx, false, true);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (ctx.getNumOutputs() > 1) {
+        // MaxPool with two outputs case.
+        auto output_type = ctx.getOutputType(1);
+        if (output_type->value_case() == TypeProto::kTensorType ||
+            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+        }
+      }
+      convPoolShapeInference(ctx, false, true, 0, 1);
     });
   };
 } // namespace ONNX_NAMESPACE
@@ -250,7 +251,8 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
-    const char* additionalDescription) {
+    const char* additionalDescription,
+    bool use_dilation) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
@@ -330,8 +332,17 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      convPoolTypeAndShapeInference(ctx, false, true);
+    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (ctx.getNumOutputs() > 1) {
+        // MaxPool with two outputs case.
+        auto output_type = ctx.getOutputType(1);
+        if (output_type->value_case() == TypeProto::kTensorType ||
+            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+        }
+      }
+      convPoolShapeInference(ctx, use_dilation, true, 0, 1);
     });
   };
 } // namespace ONNX_NAMESPACE
@@ -365,7 +376,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
             "average",
-            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
+            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
+            false))
         .Attr(
             "count_include_pad",
             "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
@@ -416,12 +428,18 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
             "max",
-            "The output of each pooling window is maximum number of elements exclude pad."))
+            "The output of each pooling window is maximum number of elements exclude pad.",
+            true))
         .Attr(
             "storage_order",
             "The storage order of the tensor. 0 is row major, and 1 is column major.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "dilations",
+            "Dilation value along each axis of filter.",
+            AttributeProto::INTS,
+            OPTIONAL)
         .Output(
             1,
             "Indices",
@@ -669,7 +687,8 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      convPoolTypeAndShapeInference(ctx, false, true);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      convPoolShapeInference(ctx, false, true, 0, 1);
     });
   };
 }
@@ -856,7 +875,8 @@ computes the output.)DOC";
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      convPoolTypeAndShapeInference(ctx, true, false);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      convPoolShapeInference(ctx, true, false, 0, 1);
     });
   };
 }
@@ -865,6 +885,303 @@ ONNX_OPERATOR_SET_SCHEMA(
     Conv,
     1,
     OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
+
+static const char* QLinearConv_ver10_doc = R"DOC(
+The convolution operator consumes a quantized input tensor, its scale and zero point,
+a quantized filter, its scale and zero point, and output's scale and zero point,
+and computes the quantized output. Each scale and zero-point pair must have same shape.
+It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
+Each input or output and its related zero point must have same type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    QLinearConv,
+    10,
+    OpSchema()
+        .SetDoc(QLinearConv_ver10_doc)
+        .Input(
+            0,
+            "x",
+            "Input data tensor from previous layer; "
+            "has size (N x C x H x W), where N is the batch size, "
+            "C is the number of channels, and H and W are the "
+            "height and width. Note that this is for the 2D image. "
+            "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
+            "Optionally, if dimension denotation is "
+            "in effect, the operation expects input data tensor "
+            "to arrive with the dimension denotation of [DATA_BATCH, "
+            "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+            "T1")
+        .Input(
+            1,
+            "x_scale",
+            "Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
+            "tensor(float)")
+        .Input(
+            2,
+            "x_zero_point",
+            "Zero point tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
+            "T1")
+        .Input(
+            3,
+            "w",
+            "The weight tensor that will be used in the "
+            "convolutions; has size (M x C/group x kH x kW), where C "
+            "is the number of channels, and kH and kW are the "
+            "height and width of the kernel, and M is the number "
+            "of feature maps. For more than 2 dimensions, the "
+            "kernel shape will be (M x C/group x k1 x k2 x ... x kn), "
+            "where (k1 x k2 x ... kn) is the dimension of the kernel. "
+            "Optionally, if dimension denotation is in effect, "
+            "the operation expects the weight tensor to arrive "
+            "with the dimension denotation of [FILTER_OUT_CHANNEL, "
+            "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
+            "X.shape[1] == (W.shape[1] * group) == C "
+            "(assuming zero based indices for the shape array). "
+            "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
+            "T2")
+        .Input(
+            4,
+            "w_scale",
+            "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
+            "tensor(float)")
+        .Input(
+            5,
+            "w_zero_point",
+            "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
+            "T2")
+        .Input(
+            6,
+            "y_scale",
+            "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
+            "tensor(float)")
+        .Input(
+            7,
+            "y_zero_point",
+            "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
+            "T3")
+        .Input(
+            8,
+            "B",
+            "Optional 1D bias to be added to the convolution, has size of M.",
+            "T4",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "y",
+            "Output data tensor that contains the result of the "
+            "convolution. The output dimensions are functions "
+            "of the kernel size, stride size, and pad lengths.",
+            "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain filter type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain output type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T4",
+            {"tensor(int32)"},
+            "Constrain bias type to 32-bit integer tensor.")
+        .Attr(
+            "auto_pad",
+            auto_pad_doc,
+            AttributeProto::STRING,
+            std::string("NOTSET"))
+        .Attr(
+            "kernel_shape",
+            "The shape of the convolution kernel. If not present, should be inferred from input 'w'.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "dilations",
+            "dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "strides",
+            "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "pads",
+            "Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0."
+            "The value represent the number of pixels added to the beginning and end part of the corresponding axis."
+            "`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of"
+            "pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`."
+            "This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults"
+            "to 0 along start and end of each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "group",
+            "number of groups input channels and output channels are divided into. default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+                                              ctx) {
+          auto x_type = ctx.getInputType(0);
+          auto w_type = ctx.getInputType(3);
+          if (nullptr == x_type || nullptr == w_type ||
+              x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+              w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+            fail_type_inference("inputs are expected to have tensor type.");
+          }
+
+          auto x_zero_point_type = ctx.getInputType(2);
+          if (nullptr == x_zero_point_type ||
+              x_zero_point_type->tensor_type().elem_type() !=
+                  x_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "input and zero_point pair is expected to have be same type.");
+          }
+
+          auto w_zero_point_type = ctx.getInputType(5);
+          if (nullptr == w_zero_point_type ||
+              w_zero_point_type->tensor_type().elem_type() !=
+                  w_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "weight and zero_point pair is expected to have same type.");
+          }
+
+          propagateElemTypeFromInputToOutput(ctx, 7, 0);
+
+          convPoolShapeInference(ctx, true, false, 0, 3);
+        }));
+
+static const char* ConvInteger_ver10_doc = R"DOC(
+The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
+and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ConvInteger,
+    10,
+    OpSchema()
+        .SetDoc(ConvInteger_ver10_doc)
+        .Input(
+            0,
+            "x",
+            "Input data tensor from previous layer; "
+            "has size (N x C x H x W), where N is the batch size, "
+            "C is the number of channels, and H and W are the "
+            "height and width. Note that this is for the 2D image. "
+            "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
+            "Optionally, if dimension denotation is "
+            "in effect, the operation expects input data tensor "
+            "to arrive with the dimension denotation of [DATA_BATCH, "
+            "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+            "T1")
+        .Input(
+            1,
+            "w",
+            "The weight tensor that will be used in the "
+            "convolutions; has size (M x C/group x kH x kW), where C "
+            "is the number of channels, and kH and kW are the "
+            "height and width of the kernel, and M is the number "
+            "of feature maps. For more than 2 dimensions, the "
+            "kernel shape will be (M x C/group x k1 x k2 x ... x kn), "
+            "where (k1 x k2 x ... kn) is the dimension of the kernel. "
+            "Optionally, if dimension denotation is in effect, "
+            "the operation expects the weight tensor to arrive "
+            "with the dimension denotation of [FILTER_OUT_CHANNEL, "
+            "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
+            "X.shape[1] == (W.shape[1] * group) == C "
+            "(assuming zero based indices for the shape array). "
+            "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
+            "T2")
+        .Input(
+            2,
+            "x_zero_point",
+            "Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.",
+            "T1",
+            OpSchema::Optional)
+        .Input(
+            3,
+            "w_zero_point",
+            "Scale tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
+            "which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number "
+            "of elements should be equal to the number of output channels (M)",
+            "T2",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "y",
+            "Output data tensor that contains the result of the "
+            "convolution. The output dimensions are functions "
+            "of the kernel size, stride size, and pad lengths.",
+            "T3")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input x and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input w and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int32)"},
+            "Constrain output y data type to 32-bit integer tensor.")
+        .Attr(
+            "auto_pad",
+            auto_pad_doc,
+            AttributeProto::STRING,
+            std::string("NOTSET"))
+        .Attr(
+            "kernel_shape",
+            "The shape of the convolution kernel. If not present, should be inferred from input 'w'.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "dilations",
+            "dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "strides",
+            "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "pads",
+            "Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0."
+            "The value represent the number of pixels added to the beginning and end part of the corresponding axis."
+            "`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of"
+            "pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`."
+            "This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults"
+            "to 0 along start and end of each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "group",
+            "number of groups input channels and output channels are divided into. default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+                                              ctx) {
+          auto x_type = ctx.getInputType(0);
+          auto w_type = ctx.getInputType(1);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == x_type || nullptr == w_type || nullptr == y_type ||
+              x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+              w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          // Right now we only support int32
+          y_type->mutable_tensor_type()->set_elem_type(
+              ONNX_NAMESPACE::TensorProto::INT32);
+
+          convPoolShapeInference(ctx, true, false, 0, 1);
+        }));
 
 } // namespace ONNX_NAMESPACE
 
@@ -1770,6 +2087,8 @@ static const char* mvn_ver9_doc = R"DOC(
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
 
+static std::vector<int64_t> mvn_default_axes = {0, 2, 3};
+
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     9,
@@ -1779,13 +2098,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T")
         .Attr(
             "axes",
-            "A list of integers, along which to reduce. The default is to reduce over "
-            "all the dimensions of the input tensor. Use [0,2,3] (without C axis for "
-            "N-D cases) for calculating means and variances along channels. Two "
-            "variables with the same C-coordinate are associated "
-            "with the same mean and variance.",
+            "A list of integers, along which to reduce. The default is to "
+            "caculate along axes [0,2,3] for calculating mean and variance "
+            "along each channel. Two variables with the same C-coordinate "
+            "are associated with the same mean and variance.",
             AttributeProto::INTS,
-            OPTIONAL)
+            mvn_default_axes)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1809,5 +2127,67 @@ ONNX_OPERATOR_SET_SCHEMA(
              {{"X_variance"}, "Sub", {"X", "X_RM"}},
              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
              {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+
+static const char* NonMaxSuppression_doc = R"DOC(
+Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+result in the same boxes being selected by the algorithm.
+The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonMaxSuppression,
+    10,
+    OpSchema()
+        .Input(
+            0,
+            "boxes",
+            "An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.",
+            "tensor(float)")
+        .Input(
+            1,
+            "scores",
+            "An input tensor with shape [num_batches, num_classes, spatial_dimension]",
+            "tensor(float)")
+        .Input(
+            2,
+            "max_output_boxes_per_class",
+            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Input(
+            3,
+            "iou_threshold",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].",
+            "tensor(float)",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "score_threshold",
+            "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar",
+            "tensor(float)",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "selected_indices",
+            "selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].",
+            "tensor(int64)")
+        .Attr(
+            "center_point_box",
+            "Integer indicate the format of the box data. The default is 0."
+            "0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners"
+            "and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models."
+            "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .SetDoc(NonMaxSuppression_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
+            selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
+        }));
 
 } // namespace ONNX_NAMESPACE

@@ -320,7 +320,10 @@ void check_node(
   }
 
   // Put the removed experimental ops here
-  if (node.op_type() == "ConstantFill") {
+  static std::set<std::string> experimental_ops = {"ATen", "Affine",
+    "ConstantFill", "Crop", "DynamicSlice", "GRUUnit", "GivenTensorFill",
+    "ImageScaler", "ParametricSoftplus", "Scale", "ScaledTanh"};
+  if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
       << " experimental ops. In the future, we may directly "
       << "reject this operator. Please update your model as soon "
@@ -343,10 +346,19 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
+    if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN ||
+        node.domain() == "ai.onnx") {
+      // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() +
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
+    } else {
+      // TODO: expose the registration of the op schemas appropriately in
+      // python, so we can load and register operators in other domains
+      //
+      // before we complete the above todo, let's skip the schema check for now
+    }
   } else if (schema->Deprecated()) {
     fail_check(
         "Op registered for " + node.op_type() + " is depracted in domain_version of " +
