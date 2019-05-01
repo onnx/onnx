@@ -99,7 +99,8 @@ void convPoolShapeInference(
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
-      for (auto i = 0; i < n_input_dims; ++i) {
+      int input_dims_size = static_cast<int>(n_input_dims);
+      for (auto i = 0; i < input_dims_size; ++i) {
         int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
@@ -115,10 +116,10 @@ void convPoolShapeInference(
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
-          pads[i + n_input_dims] = half_pad_big;
+          pads[i + input_dims_size] = half_pad_big;
         } else if (auto_pad_attr->s() == "SAME_LOWER") {
           pads[i] = half_pad_big;
-          pads[i + n_input_dims] = half_pad_small;
+          pads[i + input_dims_size] = half_pad_small;
         }
       }
     }
@@ -1261,7 +1262,8 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
-      for (auto i = 0; i < n_input_dims; ++i) {
+      int input_dims_size = static_cast<int>(n_input_dims);
+      for (int i = 0; i < input_dims_size; ++i) {
         int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
@@ -1277,10 +1279,10 @@ void convTransposeShapeInference(InferenceContext& ctx) {
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
-          pads[i + n_input_dims] = half_pad_big;
+          pads[i + input_dims_size] = half_pad_big;
         } else if (auto_pad_attr->s() == "SAME_LOWER") {
           pads[i] = half_pad_big;
-          pads[i + n_input_dims] = half_pad_small;
+          pads[i + input_dims_size] = half_pad_small;
         }
       }
     }
