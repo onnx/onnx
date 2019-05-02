@@ -336,8 +336,8 @@ endif()
 add_onnx_global_defines(onnx_proto)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-  #whole-archive linker option not available on AIX.
-  #So, create a object library
+  # whole-archive linker option not available on AIX.
+  # So, create a object library
   add_library(onnx OBJECT ${ONNX_SRCS})
 else()
   add_library(onnx ${ONNX_SRCS})
