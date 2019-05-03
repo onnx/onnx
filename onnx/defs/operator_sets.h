@@ -549,7 +549,7 @@ class OpSet_Onnx_ver10 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, Mod)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 10, AveragePool)>());	   
+           Onnx, 10, AveragePool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, Slice)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
@@ -579,6 +579,21 @@ class OpSet_Onnx_ver10 {
   }
 };
 
+// Forward declarations for ai.onnx version 11
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GreaterOrEqual);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, LessOrEqual);
+
+// Iterate over schema from ai.onnx version 11
+class OpSet_Onnx_ver11 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 11, GreaterOrEqual)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 11, LessOrEqual)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -590,6 +605,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver8>();
   RegisterOpSetSchema<OpSet_Onnx_ver9>();
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
+  RegisterOpSetSchema<OpSet_Onnx_ver11>();
 }
 
 } // namespace ONNX_NAMESPACE

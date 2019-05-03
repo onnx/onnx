@@ -48,6 +48,7 @@
   * <a href="#GlobalLpPool">GlobalLpPool</a>
   * <a href="#GlobalMaxPool">GlobalMaxPool</a>
   * <a href="#Greater">Greater</a>
+  * <a href="#GreaterOrEqual">GreaterOrEqual</a>
   * <a href="#HardSigmoid">HardSigmoid</a>
   * <a href="#Hardmax">Hardmax</a>
   * <a href="#Identity">Identity</a>
@@ -59,6 +60,7 @@
   * <a href="#LSTM">LSTM</a>
   * <a href="#LeakyRelu">LeakyRelu</a>
   * <a href="#Less">Less</a>
+  * <a href="#LessOrEqual">LessOrEqual</a>
   * <a href="#Log">Log</a>
   * <a href="#LogSoftmax">LogSoftmax</a>
   * <a href="#Loop">Loop</a>
@@ -412,7 +414,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
 ### <a name="And"></a><a name="and">**And**</a>
 
-  Returns the tensor resulted from performing the `and` logical operation
+  Returns tensor resulting from performing the `and` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -3432,7 +3434,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Equal"></a><a name="equal">**Equal**</a>
 
-  Returns the tensor resulted from performing the `equal` logical operation
+  Returns tensor resulting from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -4642,7 +4644,7 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
 
-  Returns the tensor resulted from performing the `greater` logical operation
+  Returns tensor resulting from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -4716,6 +4718,119 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_bcast')
+```
+
+</details>
+
+
+### <a name="GreaterOrEqual"></a><a name="greaterorequal">**GreaterOrEqual**</a>
+
+  Returns tensor resulting from performing the `greater or equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_or_equal_bcast')
+```
+
+</details>
+
+
+<details>
+<summary>greaterorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    ['x', 'y'],
+    ['less_or_equal'],
+    name='test')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+
+graph = onnx.helper.make_graph(
+    nodes=[node],
+    name='GreaterOrEqual',
+    inputs=[onnx.helper.make_tensor_value_info('x',
+                                               onnx.TensorProto.FLOAT,
+                                               x.shape),
+            onnx.helper.make_tensor_value_info('y',
+                                               onnx.TensorProto.FLOAT,
+                                               y.shape)],
+    outputs=[onnx.helper.make_tensor_value_info('z',
+                                                onnx.TensorProto.FLOAT,
+                                                z.shape)])
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[x], outputs=[y],
+       name='test_greater_or_equal_model')
+```
+
+</details>
+
+
+<details>
+<summary>greaterorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_or_equal')
 ```
 
 </details>
@@ -5748,7 +5863,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Less"></a><a name="less">**Less**</a>
 
-  Returns the tensor resulted from performing the `less` logical operation
+  Returns tensor resulting from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -5822,6 +5937,119 @@ y = np.random.randn(5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_less_bcast')
+```
+
+</details>
+
+
+### <a name="LessOrEqual"></a><a name="lessorequal">**LessOrEqual**</a>
+
+  Returns tensor resulting from performing the `less or equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_or_equal_bcast')
+```
+
+</details>
+
+
+<details>
+<summary>lessorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    ['x', 'y'],
+    ['less_or_equal'],
+    name='test')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+
+graph = onnx.helper.make_graph(
+    nodes=[node],
+    name='LessOrEqual',
+    inputs=[onnx.helper.make_tensor_value_info('x',
+                                               onnx.TensorProto.FLOAT,
+                                               x.shape),
+            onnx.helper.make_tensor_value_info('y',
+                                               onnx.TensorProto.FLOAT,
+                                               y.shape)],
+    outputs=[onnx.helper.make_tensor_value_info('z',
+                                                onnx.TensorProto.FLOAT,
+                                                z.shape)])
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[x], outputs=[y],
+       name='test_less_or_equal_model')
+```
+
+</details>
+
+
+<details>
+<summary>lessorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_or_equal')
 ```
 
 </details>
@@ -8477,7 +8705,7 @@ expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_wit
 
 ### <a name="Or"></a><a name="or">**Or**</a>
 
-  Returns the tensor resulted from performing the `or` logical operation
+  Returns tensor resulting from performing the `or` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -14794,7 +15022,7 @@ expect(node, inputs=[condition, x, y], outputs=[z],
 
 ### <a name="Xor"></a><a name="xor">**Xor**</a>
 
-  Returns the tensor resulted from performing the `xor` logical operation
+  Returns tensor resulting from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).

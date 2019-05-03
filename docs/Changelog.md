@@ -6244,7 +6244,7 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="And-7"></a>**And-7**</a>
 
-  Returns the tensor resulted from performing the `and` logical operation
+  Returns tensor resulting from performing the `and` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -6570,7 +6570,7 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="Equal-7"></a>**Equal-7**</a>
 
-  Returns the tensor resulted from performing the `equal` logical operation
+  Returns tensor resulting from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -7093,7 +7093,7 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="Or-7"></a>**Or-7**</a>
 
-  Returns the tensor resulted from performing the `or` logical operation
+  Returns tensor resulting from performing the `or` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -7448,7 +7448,7 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="Xor-7"></a>**Xor-7**</a>
 
-  Returns the tensor resulted from performing the `xor` logical operation
+  Returns tensor resulting from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -8403,7 +8403,7 @@ This version of the operator has been available since version 9 of the default O
 
 ### <a name="Greater-9"></a>**Greater-9**</a>
 
-  Returns the tensor resulted from performing the `greater` logical operation
+  Returns tensor resulting from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -8470,7 +8470,7 @@ This version of the operator has been available since version 9 of the default O
 
 ### <a name="Less-9"></a>**Less-9**</a>
 
-  Returns the tensor resulted from performing the `less` logical operation
+  Returns tensor resulting from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -10281,4 +10281,77 @@ This version of the operator has been available since version 10 of the default 
 #### Version
 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
+
+## Version 11 of the default ONNX operator set
+### <a name="GreaterOrEqual-11"></a>**GreaterOrEqual-11**</a>
+
+  Returns tensor resulting from performing the `greater or equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+### <a name="LessOrEqual-11"></a>**LessOrEqual-11**</a>
+
+  Returns tensor resulting from performing the `less or equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 

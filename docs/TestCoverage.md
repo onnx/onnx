@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 125/132 (94.70%, 5 generators excluded) common operators.
+Node tests have covered 127/134 (94.78%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2548,6 +2548,78 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### GreaterOrEqual
+There are 3 test cases, listed as following:
+<details>
+<summary>broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_or_equal_bcast')
+```
+
+</details>
+<details>
+<summary>greaterorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    ['x', 'y'],
+    ['less_or_equal'],
+    name='test')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+
+graph = onnx.helper.make_graph(
+    nodes=[node],
+    name='GreaterOrEqual',
+    inputs=[onnx.helper.make_tensor_value_info('x',
+                                               onnx.TensorProto.FLOAT,
+                                               x.shape),
+            onnx.helper.make_tensor_value_info('y',
+                                               onnx.TensorProto.FLOAT,
+                                               y.shape)],
+    outputs=[onnx.helper.make_tensor_value_info('z',
+                                                onnx.TensorProto.FLOAT,
+                                                z.shape)])
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[x], outputs=[y],
+       name='test_greater_or_equal_model')
+```
+
+</details>
+<details>
+<summary>greaterorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_or_equal')
+```
+
+</details>
+
+
 ### HardSigmoid
 There are 2 test cases, listed as following:
 <details>
@@ -3062,6 +3134,78 @@ y = np.random.randn(5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_less_bcast')
+```
+
+</details>
+
+
+### LessOrEqual
+There are 3 test cases, listed as following:
+<details>
+<summary>broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_or_equal_bcast')
+```
+
+</details>
+<details>
+<summary>lessorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    ['x', 'y'],
+    ['less_or_equal'],
+    name='test')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+
+graph = onnx.helper.make_graph(
+    nodes=[node],
+    name='LessOrEqual',
+    inputs=[onnx.helper.make_tensor_value_info('x',
+                                               onnx.TensorProto.FLOAT,
+                                               x.shape),
+            onnx.helper.make_tensor_value_info('y',
+                                               onnx.TensorProto.FLOAT,
+                                               y.shape)],
+    outputs=[onnx.helper.make_tensor_value_info('z',
+                                                onnx.TensorProto.FLOAT,
+                                                z.shape)])
+model = onnx.helper.make_model(graph, producer_name='backend-test')
+expect(model, inputs=[x], outputs=[y],
+       name='test_less_or_equal_model')
+```
+
+</details>
+<details>
+<summary>lessorequal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_or_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_or_equal')
 ```
 
 </details>

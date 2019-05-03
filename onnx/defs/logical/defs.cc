@@ -13,9 +13,10 @@ inline void unaryLogicalOpInference(InferenceContext& ctx) {
 }
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
-    return [=](OpSchema& schema) {
+  return
+      [=](OpSchema& schema) {
         std::string doc = R"DOC(
-Returns the tensor resulted from performing the `{name}` logical operation
+Returns tensor resulting from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
@@ -34,7 +35,7 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
                 ctx.getInputType(1)->tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         });
-    };
+      };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -116,6 +117,34 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
             "Constrains input to integral tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LessOrEqual,
+    11,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("less or equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GreaterOrEqual,
+    11,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("greater or equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
