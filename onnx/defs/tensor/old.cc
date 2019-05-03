@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver1_doc = R"DOC(
@@ -435,17 +436,39 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto scales = ctx.getInputData(1);
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == input_shape.dim_size()) {
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                float dim_value =
+            if (scales->data_type() == TensorProto::FLOAT) {
+              bool invalid_scale_shape = false;
+              if (scales->has_raw_data()) {
+                const auto& data = ParseRawData<float>(scales);
+                if (static_cast<int>(data.size()) == input_shape.dim_size()) {
+                  for (int i = 0; i < input_shape.dim_size(); ++i) {
+                    float dim_value =
+                      static_cast<float>(input_shape.dim(i).dim_value());
+                    output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                      std::floor(dim_value * data[i])));
+                  }
+                } else {
+                  invalid_scale_shape = true;
+                }
+              } else if (scales->float_data_size() == input_shape.dim_size()) {
+                for (int i = 0; i < input_shape.dim_size(); ++i) {
+                  float dim_value =
                     static_cast<float>(input_shape.dim(i).dim_value());
-                output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                  output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
                     std::floor(dim_value * scales->float_data(i))));
+                }
+              } else {
+                invalid_scale_shape = true; 
+              }
+              
+              if (invalid_scale_shape){
+                fail_shape_inference(
+                  "Number of elements of input 'scales' must be same as rank of input 'X'."
+                );
               }
             } else {
               fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
+                "Input scales's element type must be float.");
             }
           } else {
             // Infer output shape's rank in any case.
