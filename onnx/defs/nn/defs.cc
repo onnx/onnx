@@ -100,7 +100,7 @@ void convPoolShapeInference(
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
-      for (auto i = 0; i < input_dims_size; ++i) {
+      for (int i = 0; i < input_dims_size; ++i) {
         int64_t residual = 0;
         if (strides[i] > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
