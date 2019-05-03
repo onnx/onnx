@@ -11,7 +11,8 @@
 //
 // the pass can handle the following cases:
 //   case 1: A is 1D tensor and A.dim[0] == Z.dim[1]
-//   case 2: A is 1-element 1D tensor
+//   case 2: A is 1-element 1D tensor (broadcasting bias)
+//   case 3: A is N-element 1D tensor (per-channel bias)
 
 #include <numeric>
 
@@ -117,6 +118,13 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
         conv_3rd_input = tile->output();
         tile->insertBefore(orig_conv->node());
       }
+      orig_conv->node()->addInput(conv_3rd_input);
+    } else if (num_el == M && bias_shape.size() == 1) {
+      if (orig_bias->node()->kind() != kParam &&
+          orig_conv->node()->isBefore(orig_bias->node())) {
+        orig_bias->node()->moveBefore(orig_conv->node());
+      }
+      Value* conv_3rd_input = orig_bias;
       orig_conv->node()->addInput(conv_3rd_input);
     } else if (rank > static_cast<int64_t>(bias_shape.size()) + 1) {
       return false;
