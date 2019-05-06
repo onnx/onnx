@@ -1845,6 +1845,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (seq_len_input_shape.dim_size() != 1) {
             fail_shape_inference("'sequence_lens' must have rank of 1");
           }
+
+          propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
 static const char* Unique_ver11_doc = R"DOC(
