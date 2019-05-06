@@ -1850,10 +1850,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Unique_ver11_doc = R"DOC(
-Finds unique elements in an input 1-D tensor sorted in the same order that they occur in the input.
+Finds unique elements in an input 1-D tensor sorted in the same order of first occurrence in the input.
+Additionally, this operator returns the indices for each value in the input in the generated output of unique values.  
 
 Example:
-  input = [2, 1, 1, 3, 4, 3]
+  input_x = [2, 1, 1, 3, 4, 3]
   output_y = [2, 1, 3, 4]
   output_idx = [0, 1, 1, 2, 3, 2]
 )DOC";
@@ -1863,11 +1864,12 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(Unique_ver11_doc)
-        .Input(0, "input", "An 1-D input tensor that is to be processed.", "T")
-        .Output(0, "y", "A 1-D tensor of the same type as 'input' " 
-                        "containing all the unique values in 'input'", "T")
-        .Output(1, "idx", "A 1-D INT64 tensor of the same size as 'input' " 
-                          "containing the index of each value of 'input' "
+        .Input(0, "x", "A 1-D input tensor that is to be processed.", "T")
+        .Output(0, "y", "A 1-D tensor of the same type as 'x' " 
+                        "containing all the unique values in 'x' sorted " 
+                        "in the same order of first occurrence in 'x'", "T")
+        .Output(1, "idx", "A 1-D INT64 tensor of the same size as 'x' " 
+                          "containing the indices for each value in 'x' "
                           "in the unique output 'y'", "tensor(int64)")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {       
