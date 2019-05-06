@@ -14623,10 +14623,11 @@ expect(node, inputs=[data], outputs=[transposed],
 
 ### <a name="Unique"></a><a name="unique">**Unique**</a>
 
-  Finds unique elements in an input 1-D tensor sorted in the same order that they occur in the input.
+  Finds unique elements in an input 1-D tensor sorted in the same order of first occurrence in the input.
+  Additionally, this operator returns the indices for each value in the input in the generated output of unique values.  
   
   Example:
-    input = [2, 1, 1, 3, 4, 3]
+    input_x = [2, 1, 1, 3, 4, 3]
     output_y = [2, 1, 3, 4]
     output_idx = [0, 1, 1, 2, 3, 2]
 
@@ -14637,17 +14638,17 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
-<dd>An 1-D input tensor that is to be processed.</dd>
+<dt><tt>x</tt> : T</dt>
+<dd>A 1-D input tensor that is to be processed.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T</dt>
-<dd>A 1-D tensor of the same type as 'input' containing all the unique values in 'input'</dd>
+<dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order of first occurrence in 'x'</dd>
 <dt><tt>idx</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor of the same size as 'input' containing the index of each value of 'input' in the unique output 'y'</dd>
+<dd>A 1-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the unique output 'y'</dd>
 </dl>
 
 #### Type Constraints
