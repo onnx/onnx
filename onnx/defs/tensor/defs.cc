@@ -1845,7 +1845,54 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (seq_len_input_shape.dim_size() != 1) {
             fail_shape_inference("'sequence_lens' must have rank of 1");
           }
-
-          propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
+
+static const char* Unique_ver11_doc = R"DOC(
+Finds unique elements in an input 1-D tensor sorted in the same order that they occur in the input.
+
+Example:
+  input = [1, 1, 2, 3, 4, 3]
+  output_y = [1, 2, 3, 4]
+  output_idx = [0, 0, 1, 2, 3, 2]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unique,
+    11,
+    OpSchema()
+        .SetDoc(Unique_ver11_doc)
+        .Input(0, "input", "A 1-D input tensor that is to be processed.", "T")
+        .Output(0, "y", "A 1-D tensor of the same type as 'input' " 
+                        "containing all the unique values in 'input'", "T")
+        .Output(
+            1, "idx", "A 1-D INT64 tensor of the same size as 'input' " 
+                      "containing the index of each value of 'input' "
+                      "in the unique output 'y'", "tensor(int64)")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          
+          // Propogate input type to output type
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // if the first shape doesn't exist, shape inference is not possible
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          // idx output has same shape as input
+          propagateShapeFromInputToOutput(ctx, 0, 1);
+
+          // shape of output y depends on input
+          // but the rank is always 1
+          ctx.getOutputType(0)
+          ->mutable_tensor_type()
+          ->mutable_shape()
+          ->add_dim();
+          
+          return;
+        }));
+
 } // namespace ONNX_NAMESPACE
