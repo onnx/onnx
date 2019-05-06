@@ -10282,3 +10282,40 @@ This version of the operator has been available since version 10 of the default 
 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
+## Version 11 of the default ONNX operator set
+### <a name="Unique-11"></a>**Unique-11**</a>
+
+  Finds unique elements in an input 1-D tensor sorted in the same order that they occur in the input.
+  
+  Example:
+    input = [2, 1, 1, 3, 4, 3]
+    output_y = [2, 1, 3, 4]
+    output_idx = [0, 1, 1, 2, 3, 2]
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>An 1-D input tensor that is to be processed.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>A 1-D tensor of the same type as 'input' containing all the unique values in 'input'</dd>
+<dt><tt>idx</tt> : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor of the same size as 'input' containing the index of each value of 'input' in the unique output 'y'</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input can be of any tensor type.</dd>
+</dl>
+

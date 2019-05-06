@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 125/132 (94.70%, 5 generators excluded) common operators.
+Node tests have covered 126/133 (94.74%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7924,6 +7924,30 @@ node = onnx.helper.make_node(
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
        name='test_transpose_default')
+```
+
+</details>
+
+
+### Unique
+There are 1 test cases, listed as following:
+<details>
+<summary>unique</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Unique',
+    inputs=['x'],
+    outputs=['y', 'idx'],
+)
+
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+# numpy unique does not retain original order (it sorts the output unique values)
+# https://github.com/numpy/numpy/issues/8621
+# so going with hand-crafted test case
+y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
+idx = np.array([0, 1, 1, 2, 3, 2], dtype=np.int64)
+expect(node, inputs=[x], outputs=[y, idx], name='test_unique_float')
 ```
 
 </details>
