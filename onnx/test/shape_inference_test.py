@@ -1734,7 +1734,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (6,))],
             [make_node('Unique', ['x'], ['y', 'idx'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None,)),
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [None]),
                                       make_tensor_value_info('idx', TensorProto.INT64, (6,))])
 
 
