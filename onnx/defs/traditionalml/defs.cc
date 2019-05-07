@@ -1219,6 +1219,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             *output_shape.add_dim() = input_shape.dim(1);
             // Add unknown D
             output_shape.add_dim();
+          } else {
+            fail_shape_inference(
+                "Input is either empty of has more than 2 dimensions");
           }
         }));
 
