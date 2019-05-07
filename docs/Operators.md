@@ -3063,7 +3063,7 @@ expect(node, inputs=[x], outputs=[uniques, counts],
   Example:
     Input = [1, 2, 3, 3, 2, 2, 1]
     Uniques Output = [1, 2, 3]
-    Frequency Output = [2, 3, 2]
+    Counts Output = [2, 3, 2]
   
   
   Count-only: In this mode, Count accepts two inputs. The first being the tensor for which
@@ -3074,7 +3074,7 @@ expect(node, inputs=[x], outputs=[uniques, counts],
     Input0 = [1, 2, 3, 3, 2, 2, 1, 1]
     Input1 = [3, 2, 1]
     Uniques Output = [3, 2, 1]
-    Frequency Output = [2, 3, 3]
+    Counts Output = [2, 3, 3]
   
   
 
