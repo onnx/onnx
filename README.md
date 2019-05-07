@@ -1,9 +1,9 @@
 
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
-| Linux | Windows | Linux ppc64le |
-|-------|---------|---------------|
-| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) | [![Build Status](http://powerci.osuosl.org/buildStatus/icon?job=onnx-ppc64le-nightly-build)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
+[![Build Status](https://img.shields.io/travis/onnx/onnx/master.svg?label=Linux)](https://travis-ci.org/onnx/onnx)
+[![Build status](https://img.shields.io/appveyor/ci/onnx/onnx/master.svg?label=Windows)](https://ci.appveyor.com/project/onnx/onnx)
+[![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
