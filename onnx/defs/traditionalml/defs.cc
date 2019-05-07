@@ -1159,8 +1159,8 @@ static const char* Tokenizer_ver2_doc = R"DOC(
 If tokenizer removes the entire content of [C]-input, it will produce [[]].
 I.e. the output shape should be [C][0] or [N][C][0] if input shape was [N][C].
 
-If the tokenizer receives empty input of [0] then the output is [0] if empty input
-of [N, 0] then [N, 0].
+If the tokenizer receives empty input of shape[0] then the output is of shape[0], if empty input
+of shape[N, 0] then output is of shape [N, 0].
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
