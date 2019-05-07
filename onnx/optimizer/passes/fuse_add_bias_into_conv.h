@@ -133,7 +133,7 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
       std::vector<int64_t> axes(bias_shape.size());
       std::iota(axes.begin(), axes.end(), static_cast<int64_t>(0));
       axes.erase(
-          axes.begin() + 1 + bias_shape.size() - static_cast<unsigned>(rank));
+          axes.begin() + (1 + bias_shape.size() - static_cast<unsigned>(rank)));
       squeeze->is_(kaxes, std::move(axes));
       squeeze->addInput(orig_bias);
       squeeze->insertBefore(orig_conv->node());
