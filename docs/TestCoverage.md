@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 125/132 (94.70%, 5 generators excluded) common operators.
+Node tests have covered 125/133 (93.98%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1730,7 +1730,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Cosh
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>cosh</summary>
 
@@ -1750,6 +1750,42 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cosh')
+```
+
+</details>
+<details>
+<summary>count</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Count',
+    inputs=['x', 'uniques'],
+    outputs=['uniques', 'counts'],
+)
+
+x = np.array([1, 2, 3, 3, 2, 1, 1, 1, 2])
+uniques = np.array([3, 2, 1])
+counts = np.array([2, 3, 4])
+expect(node, inputs=[x, uniques], outputs=[uniques, counts],
+       name='test_count')
+```
+
+</details>
+<details>
+<summary>count_single_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Count',
+    inputs=['x'],
+    outputs=['uniques', 'counts'],
+)
+
+x = np.array([1, 2, 3, 3, 2, 1, 1, 1, 2])
+uniques = np.array([1, 2, 3])
+counts = np.array([4, 3, 2])
+expect(node, inputs=[x], outputs=[uniques, counts],
+       name='test_count_single_input')
 ```
 
 </details>
@@ -8095,6 +8131,9 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
+### Count (call for test cases)
+
+
 ### GlobalLpPool (call for test cases)
 
 

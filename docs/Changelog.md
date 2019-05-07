@@ -10282,3 +10282,60 @@ This version of the operator has been available since version 10 of the default 
 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
+## Version 11 of the default ONNX operator set
+### <a name="Count-11"></a>**Count-11**</a>
+
+  Count operator counts occurances of unique values in a given 1D Tensor.
+  Count has two modes of operation depending on its inputs:
+  
+  Unique Count: When Count is given only one input, it will determine the unique
+  values and then return them along with a corresponding frequency tensor. Both outputs
+  are also single dimensional.
+  
+  Example:
+    Input = [1, 2, 3, 3, 2, 2, 1]
+    Uniques Output = [1, 2, 3]
+    Frequency Output = [2, 3, 2]
+  
+  
+  Count-only: In this mode, Count accepts two inputs. The first being the tensor for which
+  we want to count its frequencies. The second input is the unique values for the first input.
+  Count will return the same unique values as well as the counted frequencies of them.
+  
+  Example:
+    Input0 = [1, 2, 3, 3, 2, 2, 1, 1]
+    Input1 = [3, 2, 1]
+    Uniques Output = [3, 2, 1]
+    Frequency Output = [2, 3, 3]
+  
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank 1.</dd>
+<dt><tt>uniques</tt> : T</dt>
+<dd>Tensor specifying unique values in the first input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>uniques</tt> : T</dt>
+<dd>Unique values in the first input.</dd>
+<dt><tt>counts</tt> : tensor(int64)</dt>
+<dd>Counted frequencies</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input type can be of any tensor type.</dd>
+</dl>
+

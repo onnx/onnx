@@ -1848,4 +1848,65 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
+
+ static const char* Count_ver11_doc = R"DOC(
+Count operator counts occurances of unique values in a given 1D Tensor.
+Count has two modes of operation depending on its inputs:
+
+Unique Count: When Count is given only one input, it will determine the unique
+values and then return them along with a corresponding frequency tensor. Both outputs
+are also single dimensional.
+
+Example:
+  Input = [1, 2, 3, 3, 2, 2, 1]
+  Uniques Output = [1, 2, 3]
+  Frequency Output = [2, 3, 2]
+
+
+Count-only: In this mode, Count accepts two inputs. The first being the tensor for which
+we want to count its frequencies. The second input is the unique values for the first input.
+Count will return the same unique values as well as the counted frequencies of them.
+
+Example:
+  Input0 = [1, 2, 3, 3, 2, 2, 1, 1]
+  Input1 = [3, 2, 1]
+  Uniques Output = [3, 2, 1]
+  Frequency Output = [2, 3, 3]
+
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Count,
+    11,
+    OpSchema()
+        .SetDoc(Count_ver11_doc)
+        .Input(0, "input", "Tensor of rank 1.", "T")
+        .Input(1, "uniques", "Tensor specifying unique values in the first input.", "T")
+        .Output(0, "uniques", "Unique values in the first input.", "T")
+        .Output(1, "counts", "Counted frequencies", "tensor(int64)")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input type can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if ( !hasNInputShapes(ctx, 1) ) {
+            fail_shape_inference("At least one input is needed");;
+          } else {
+            auto& first_input_shape = getInputShape(ctx, 0);
+            if (first_input_shape.dim_size() != 1) {
+              fail_shape_inference("'input' must have a rank of 1");
+            }
+            if ( !hasNInputShapes(ctx, 2) ) {
+              return;
+            } else {
+              auto& second_input_shape = getInputShape(ctx, 1);
+              if (second_input_shape.dim_size() != 1) {
+                fail_shape_inference("'uniques' must have a rank of 1");
+              }
+            }
+          }
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));       
 } // namespace ONNX_NAMESPACE
