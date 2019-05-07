@@ -1860,7 +1860,7 @@ are also single dimensional.
 Example:
   Input = [1, 2, 3, 3, 2, 2, 1]
   Uniques Output = [1, 2, 3]
-  Frequency Output = [2, 3, 2]
+  Counts Output = [2, 3, 2]
 
 
 Count-only: In this mode, Count accepts two inputs. The first being the tensor for which
@@ -1871,7 +1871,7 @@ Example:
   Input0 = [1, 2, 3, 3, 2, 2, 1, 1]
   Input1 = [3, 2, 1]
   Uniques Output = [3, 2, 1]
-  Frequency Output = [2, 3, 3]
+  Counts Output = [2, 3, 3]
 
 
 )DOC";

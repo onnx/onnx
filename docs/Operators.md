@@ -3011,46 +3011,6 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-<details>
-<summary>count</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Count',
-    inputs=['x', 'uniques'],
-    outputs=['uniques', 'counts'],
-)
-
-x = np.array([1, 2, 3, 3, 2, 1, 1, 1, 2])
-uniques = np.array([3, 2, 1])
-counts = np.array([2, 3, 4])
-expect(node, inputs=[x, uniques], outputs=[uniques, counts],
-       name='test_count')
-```
-
-</details>
-
-
-<details>
-<summary>count_single_input</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Count',
-    inputs=['x'],
-    outputs=['uniques', 'counts'],
-)
-
-x = np.array([1, 2, 3, 3, 2, 1, 1, 1, 2])
-uniques = np.array([1, 2, 3])
-counts = np.array([4, 3, 2])
-expect(node, inputs=[x], outputs=[uniques, counts],
-       name='test_count_single_input')
-```
-
-</details>
-
-
 ### <a name="Count"></a><a name="count">**Count**</a>
 
   Count operator counts occurances of unique values in a given 1D Tensor.
@@ -3106,6 +3066,48 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input type can be of any tensor type.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>count</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Count',
+    inputs=['x', 'uniques'],
+    outputs=['uniques', 'counts'],
+)
+
+x = np.array([1, 2, 3, 3, 2, 1, 1, 1, 2])
+uniques = np.array([3, 2, 1])
+counts = np.array([2, 3, 4])
+expect(node, inputs=[x, uniques], outputs=[uniques, counts],
+       name='test_count')
+```
+
+</details>
+
+
+<details>
+<summary>count_single_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Count',
+    inputs=['x'],
+    outputs=['uniques', 'counts'],
+)
+
+x = np.array([1, 2, 3, 3, 2, 1, 1, 1, 2])
+uniques = np.array([1, 2, 3])
+counts = np.array([4, 3, 2])
+expect(node, inputs=[x], outputs=[uniques, counts],
+       name='test_count_single_input')
+```
+
+</details>
 
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>

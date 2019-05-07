@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-class Cosh(Base):
+class Count(Base):
 
     @staticmethod
     def export_count_single_input():  # type: () -> None
