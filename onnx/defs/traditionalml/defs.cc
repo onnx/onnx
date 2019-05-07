@@ -1221,7 +1221,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             output_shape.add_dim();
           } else {
             fail_shape_inference(
-                "Input is either empty of has more than 2 dimensions");
+                "Input is either empty or has more than 2 dimensions");
           }
         }));
 
