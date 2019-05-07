@@ -43,12 +43,6 @@ void convPoolShapeInference(
     return;
   }
 
-  // don't bother with legacy auto_pad for now
-  const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
-  if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "NOTSET")) {
-    return;
-  }
-
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor must have atleast 2 dimensions");
@@ -57,8 +51,8 @@ void convPoolShapeInference(
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
-  // Pooling operations don't support dilation, only Conv. For
-  // simplicity of the code, we just treat them as having all-1s
+  // Only MaxPool and Conv support dilation. For
+  // simplicity of the code, we just treat the rest of them as having all-1s
   // dilation.
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
@@ -67,15 +61,6 @@ void convPoolShapeInference(
     }
   } else {
     dilations.assign(n_input_dims, 1);
-  }
-
-  std::vector<int64_t> pads;
-  if (getRepeatedAttribute(ctx, "pads", pads)) {
-    if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
-    }
-  } else {
-    pads.assign(n_input_dims * 2, 0);
   }
 
   std::vector<int64_t> strides;
@@ -105,6 +90,44 @@ void convPoolShapeInference(
     }
   }
 
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
+      int input_dims_size = static_cast<int>(n_input_dims);
+      for (int i = 0; i < input_dims_size; ++i) {
+        int64_t residual = 0;
+        if (strides[i] > 1) {
+          if (!input_shape.dim(2 + i).has_dim_value()) {
+            continue;
+          }
+          residual =  input_shape.dim(2 + i).dim_value();
+          while (residual > 0) {
+            residual -= strides[i];
+          }
+        }
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i] + residual;
+        if (total_pad < 0) {
+          fail_shape_inference("Stride is bigger than Kernel shape");
+        }
+        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_big = total_pad - half_pad_small;
+        if (auto_pad_attr->s() == "SAME_UPPER") {
+          pads[i] = half_pad_small;
+          pads[i + input_dims_size] = half_pad_big;
+        } else if (auto_pad_attr->s() == "SAME_LOWER") {
+          pads[i] = half_pad_big;
+          pads[i + input_dims_size] = half_pad_small;
+        }
+      }
+    }
+  }
+    
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -136,13 +159,14 @@ void convPoolShapeInference(
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
 
-    bool ceil_mode = ctx.getAttribute("ceil_mode");
+    // default is floor mode .i.e. ceil_mode is set to 0
+    auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
     int64_t strided_kernel_positions;
 
-    if (ceil_mode)
+    if (ceil_mode == 1)
       strided_kernel_positions = (int64_t)(std::ceil(
           (effective_input_size - effective_kernel_size) / float(strides[i])));
     else
@@ -1190,12 +1214,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // don't bother with legacy auto_pad for now
-  const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
-  if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "NOTSET")) {
-    return;
-  }
-
   int64_t group = getAttribute(ctx, "group", 1);
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -1212,15 +1230,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       if (i != 1)
         return; // we don't handle dialations not 1.
     }
-  }
-
-  std::vector<int64_t> pads;
-  if (getRepeatedAttribute(ctx, "pads", pads)) {
-    if (pads.size() != n_input_dims * 2) {
-      return;
-    }
-  } else {
-    pads.assign(n_input_dims * 2, 0);
   }
 
   std::vector<int64_t> strides;
@@ -1247,6 +1256,44 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     }
   }
 
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
+      int input_dims_size = static_cast<int>(n_input_dims);
+      for (int i = 0; i < input_dims_size; ++i) {
+        int64_t residual = 0;
+        if (strides[i] > 1) {
+          if (!input_shape.dim(2 + i).has_dim_value()) {
+            continue;
+          }
+          residual =  input_shape.dim(2 + i).dim_value();
+          while (residual > 0) {
+            residual -= strides[i];
+          }
+        }
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i] + residual;
+        if (total_pad < 0) {
+          fail_shape_inference("Stride is bigger than Kernel shape");
+        }          
+        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_big = total_pad - half_pad_small;
+        if (auto_pad_attr->s() == "SAME_UPPER") {
+          pads[i] = half_pad_small;
+          pads[i + input_dims_size] = half_pad_big;
+        } else if (auto_pad_attr->s() == "SAME_LOWER") {
+          pads[i] = half_pad_big;
+          pads[i + input_dims_size] = half_pad_small;
+        }
+      }
+    }
+  }
+    
   std::vector<int64_t> output_shape;
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {

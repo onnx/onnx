@@ -968,6 +968,20 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
 
+    def test_maxpool_with_floor_mode(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (32, 288, 35, 35))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], strides=[2, 2], ceil_mode=False)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (32, 288, 17, 17))])
+
+    def test_maxpool_with_ceil_mode(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (32, 288, 35, 35))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], strides=[2, 2], ceil_mode=True)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (32, 288, 18, 18))])
+
     def test_maxpool_ceil(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 4, 4))],
@@ -981,6 +995,27 @@ class TestShapeInference(unittest.TestCase):
             [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))])
+
+    def test_maxpool_with_same_upper_padding_and_stride(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_UPPER", kernel_shape=[2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))])
+
+    def test_maxpool_with_same_upper_padding_and_stride_one(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_UPPER", kernel_shape=[2, 2], strides=[1, 1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 4, 4))])
+
+    def test_maxpool_with_same_lower_padding_and_stride(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 9, 9))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_LOWER", kernel_shape=[2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))])
 
     def test_averagepool(self):  # type: () -> None
         graph = self._make_graph(
