@@ -130,14 +130,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_numeric_types(),
             "Constrain input and output types to high-precision numeric tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            propagateElemTypeFromInputToOutput(ctx, 0, 0);
-            if (hasNInputShapes(ctx, 2))
-                bidirectionalBroadcastShapeInference(
-                    ctx.getInputType(0)->tensor_type().shape(),
-                    ctx.getInputType(1)->tensor_type().shape(),
-                    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-        })
-);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
@@ -956,40 +955,42 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis < 0 || axis >= rank)
             fail_shape_inference("Invalid value for attribute axis");
 
-	      const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
+          const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto* k = ctx.getInputData(1);
 
- 		  // Infer output shape if: 
-		  // (1) 'K' is available
-		  // (2) axis_dim has dim value
-          // Othewise cannot reliably compute output shape as axis dim value is unknown
-          // and hence cannot determine if axis dim value >= k (which should be enforced)
+          // Infer output shape if:
+          // (1) 'K' is available
+          // (2) axis_dim has dim value
+          // Othewise cannot reliably compute output shape as axis dim value is
+          // unknown and hence cannot determine if axis dim value >= k (which
+          // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {
-            int64_t k_value = 0;  
+            int64_t k_value = 0;
             if (k->dims_size() != 1 || k->dims(0) != 1)
-                fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
-            if (k->has_raw_data() && 
-				k->data_type() == TensorProto::INT64)
-                k_value = ParseRawData<int64_t>(k)[0];
+              fail_shape_inference(
+                  "K input must be a one-dimensional tensor of size 1.");
+            if (k->has_raw_data() && k->data_type() == TensorProto::INT64)
+              k_value = ParseRawData<int64_t>(k)[0];
             else if (k->data_type() == TensorProto::INT64)
-                k_value = k->int64_data(0);             
-            else 
+              k_value = k->int64_data(0);
+            else
               fail_shape_inference("K input must be of type int64.");
 
             if (axis_dim.dim_value() < k_value)
-              fail_shape_inference("Axis has less than the requested k elements.");
+              fail_shape_inference(
+                  "Axis has less than the requested k elements.");
 
             TensorShapeProto result_shape = input_shape;
             result_shape.mutable_dim(static_cast<int>(axis))
                 ->set_dim_value(k_value);
 
-			updateOutputShape(ctx, 0, result_shape);
+            updateOutputShape(ctx, 0, result_shape);
             updateOutputShape(ctx, 1, result_shape);
 
-			return;
+            return;
           }
-              
-		  // Infer output shapes' rank in any case
+
+          // Infer output shapes' rank in any case
           auto* output_shape_0 = getOutputShape(ctx, 0);
           auto* output_shape_1 = getOutputShape(ctx, 1);
           for (int i = 0; i < input_shape.dim_size(); ++i) {
@@ -997,7 +998,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             output_shape_1->add_dim();
           }
 
-		  return;
+          return;
         }));
 
 static const char* Sin_ver7_doc = R"DOC(
