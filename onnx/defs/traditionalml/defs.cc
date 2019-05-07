@@ -1203,22 +1203,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (!hasInputShape(ctx, 0)) {
             return;
           }
-          TensorShapeProto output_shape;
           auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto dim_size = input_shape.dim_size();
-          if (dim_size == 1) {
-            // Input is [C], Output is [C][?]
-            // Copy C
-            *output_shape.add_dim() = input_shape.dim(0);
+          auto* output_shape =
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          *output_shape = input_shape;
+          if (dim_size == 1 || dim_size == 2) {
             // Add unknown D
-            output_shape.add_dim();
-          } else if (dim_size == 2) {
-            // Input is [N, C], Output is [N][C][?]
-            // Copy N, C
-            *output_shape.add_dim() = input_shape.dim(0);
-            *output_shape.add_dim() = input_shape.dim(1);
-            // Add unknown D
-            output_shape.add_dim();
+            output_shape->add_dim();
           } else {
             fail_shape_inference(
                 "Input is either empty or has more than 2 dimensions");
