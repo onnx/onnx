@@ -452,7 +452,7 @@ class TestVersionConverter(unittest.TestCase):
         input_shape = (1, 2, 1, 3)
         x = helper.make_tensor_value_info("x", data_type, input_shape)
         scale = helper.make_tensor_value_info("s", data_type, [input_shape[1]])
-        B = helper.make_tensor_value_info("bias", data_type, [input_shape[1]]
+        B = helper.make_tensor_value_info("bias", data_type, [input_shape[1]])
         mean = helper.make_tensor_value_info("mean", data_type, [input_shape[1]])
         var = helper.make_tensor_value_info("var", data_type, [input_shape[1]])
         y = helper.make_tensor_value_info("y", data_type, input_shape)
