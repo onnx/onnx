@@ -12795,8 +12795,8 @@ Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a 
 #### Attributes
 
 <dl>
-<dt><tt>end_mask</tt> : int (default is 1)</dt>
-<dd>(Optional) The mask bits for ends vector which determines if the end index should be included in the slice (default = 0)</dd>
+<dt><tt>end_mask</tt> : int (default is 0)</dt>
+<dd>(Optional) The mask bits for ends vector which determines if the end index should be included in the slice</dd>
 </dl>
 
 #### Inputs (3 - 5)

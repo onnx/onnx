@@ -1914,9 +1914,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Slice_ver11_doc)
         .Attr(
             "end_mask",
-            "(Optional) The mask bits for ends vector which determines if the end index should be included in the slice (default = 0)",
+            "(Optional) The mask bits for ends vector which determines if the end index should be included in the slice",
             AttributeProto::INT,
-            static_cast<int64_t>(1))
+            static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of data to extract slices from.", "T")
         .Input(
             1,
