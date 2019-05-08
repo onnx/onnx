@@ -545,20 +545,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto get_initializer_data =
               [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
-            if (initializer->has_raw_data() &&
-                initializer->data_type() == TensorProto::INT64) {
-              const auto& data = ParseRawData<int64_t>(initializer);
-              vec.insert(vec.end(), data.begin(), data.end());
-            } else if (
-                initializer->has_raw_data() &&
-                initializer->data_type() == TensorProto::INT32) {
-              const auto& data = ParseRawData<int32_t>(initializer);
-              vec.insert(vec.end(), data.begin(), data.end());
-            } else if (initializer->data_type() == TensorProto::INT64) {
-              const auto& data = initializer->int64_data();
+            if (initializer->data_type() == TensorProto::INT64) {
+              const auto& data = ParseData<int64_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else if (initializer->data_type() == TensorProto::INT32) {
-              const auto& data = initializer->int32_data();
+              const auto& data = ParseData<int32_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else {
               // unaccepted data type
@@ -1238,38 +1229,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT) {
-              bool invalid_scale_shape = false;              
-              if (scales->has_raw_data()) {
-                const auto& data = ParseRawData<float>(scales);
-                if (static_cast<int>(data.size()) == input_shape.dim_size()) {
-                  for (int i = 0; i < input_shape.dim_size(); ++i) {
-                    float dim_value =
-                      static_cast<float>(input_shape.dim(i).dim_value());
-                    output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-                      std::floor(dim_value * data[i])));
-                  }
-                } else {
-                  invalid_scale_shape = true;
-                }
-              } else if (scales->float_data_size() == input_shape.dim_size()) {
+              const auto& data = ParseData<float>(scales);
+              if (static_cast<int>(data.size()) == input_shape.dim_size()) {
                 for (int i = 0; i < input_shape.dim_size(); ++i) {
                   float dim_value =
-                    static_cast<float>(input_shape.dim(i).dim_value());
-                  output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-                    std::floor(dim_value * scales->float_data(i))));
+                      static_cast<float>(input_shape.dim(i).dim_value());
+                  output_shape->add_dim()->set_dim_value(
+                      static_cast<int64_t>(std::floor(dim_value * data[i])));
                 }
               } else {
-                invalid_scale_shape = true;
-              }
-
-              if (invalid_scale_shape) {
                 fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X'."
-                );
+                    "Number of elements of input 'scales' must be same as rank of input 'X'.");
               }
             } else {
               fail_shape_inference(
-                "Input scales's element type must be float.");
+                  "Input scales's element type must be float.");
             }
           } else {
             // Infer output shape's rank in any case.
@@ -1837,14 +1811,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // make a copy of the returned const vector - may have to resize
             // this in next step
-            std::vector<int64_t> pads_data;
-            if (pads_initializer->has_raw_data())
-              pads_data = ParseRawData<int64_t>(pads_initializer);
-            else
-              pads_data.insert(
-                  pads_data.end(),
-                  pads_initializer->int64_data().begin(),
-                  pads_initializer->int64_data().end());
+            std::vector<int64_t> pads_data = ParseData<int64_t>(pads_initializer);
 
             // fill with zeros if needed to reach appropriate size
             if (pads_data.size() != static_cast<size_t>(2 * input_rank))

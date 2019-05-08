@@ -28,12 +28,15 @@ namespace ONNX_NAMESPACE {
     return t;                                                   \
   }
 
-#define DEFINE_PARSE_RAW_DATA(type)                                        \
+#define DEFINE_PARSE_DATA(type, typed_data_fetch)                          \
   template <>                                                              \
-  const std::vector<type> ParseRawData(const TensorProto* tensor_proto) {  \
+  const std::vector<type> ParseData(const TensorProto* tensor_proto) {     \
     std::vector<type> res;                                                 \
-    if (!tensor_proto->has_raw_data())                                     \
+    if (!tensor_proto->has_raw_data()) {                                   \
+      const auto& data = tensor_proto->typed_data_fetch();                 \
+      res.insert(res.end(), data.begin(), data.end());                     \
       return res;                                                          \
+    }                                                                      \
     /* make copy as we may have to reverse bytes */                        \
     std::string raw_data = tensor_proto->raw_data();                       \
     /* okay to remove const qualifier as we have already made a copy */    \
@@ -78,8 +81,8 @@ DEFINE_TO_TENSOR_LIST(uint64_t, TensorProto_DataType_UINT64, uint64)
 DEFINE_TO_TENSOR_LIST(double, TensorProto_DataType_DOUBLE, double)
 DEFINE_TO_TENSOR_LIST(std::string, TensorProto_DataType_STRING, string)
 
-DEFINE_PARSE_RAW_DATA(int32_t)
-DEFINE_PARSE_RAW_DATA(int64_t)
-DEFINE_PARSE_RAW_DATA(float)
+DEFINE_PARSE_DATA(int32_t, int32_data)
+DEFINE_PARSE_DATA(int64_t, int64_data)
+DEFINE_PARSE_DATA(float, float_data)
 
 } // namespace ONNX_NAMESPACE
