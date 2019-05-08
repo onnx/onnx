@@ -969,11 +969,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (k->dims_size() != 1 || k->dims(0) != 1)
               fail_shape_inference(
                   "K input must be a one-dimensional tensor of size 1.");
-            if (k->has_raw_data() && k->data_type() == TensorProto::INT64)
-              k_value = ParseRawData<int64_t>(k)[0];
-            else if (k->data_type() == TensorProto::INT64)
-              k_value = k->int64_data(0);
-            else
+            if (k->data_type() == TensorProto::INT64) {
+              const auto& data = ParseData<int64_t>(k);
+              k_value = data[0];
+            } else
               fail_shape_inference("K input must be of type int64.");
 
             if (axis_dim.dim_value() < k_value)
