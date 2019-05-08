@@ -10286,7 +10286,7 @@ This version of the operator has been deprecated since version 10 of the default
 ### <a name="StringConcat-11"></a>**StringConcat-11**</a>
 
   Concatenates strings in the input tensor to form a larger string. 
-  A separator can be specified to seprate entries in the resulting string. 
+  A separator can be specified to separate entries in the resulting string. 
   One single space is used as the default.
   The input tensor can be of rank 1 or 2.
   The resulting tensor will be of rank 0 or 1.
