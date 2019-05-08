@@ -7,12 +7,15 @@
 
 namespace ONNX_NAMESPACE {
 
-#define DEFINE_PARSE_RAW_DATA(type)                                        \
+#define DEFINE_PARSE_DATA(type, typed_data_fetch)                          \
   template <>                                                              \
-  const std::vector<type> ParseRawData(const Tensor* tensor) {             \
+  const std::vector<type> ParseData(const Tensor* tensor) {                \
     std::vector<type> res;                                                 \
-    if (!tensor->is_raw_data())                                            \
+    if (!tensor->is_raw_data()) {                                          \
+      const auto& data = tensor->typed_data_fetch();                       \
+      res.insert(res.end(), data.begin(), data.end());                     \
       return res;                                                          \
+    }                                                                      \
     /* make copy as we may have to reverse bytes */                        \
     std::string raw_data = tensor->raw();                                  \
     /* okay to remove const qualifier as we have already made a copy */    \
@@ -41,9 +44,9 @@ namespace ONNX_NAMESPACE {
     return res;                                                            \
   }
 
-DEFINE_PARSE_RAW_DATA(int32_t)
-DEFINE_PARSE_RAW_DATA(int64_t)
-DEFINE_PARSE_RAW_DATA(float)
-DEFINE_PARSE_RAW_DATA(double)
+DEFINE_PARSE_DATA(int32_t, int32s)
+DEFINE_PARSE_DATA(int64_t, int64s)
+DEFINE_PARSE_DATA(float, floats)
+DEFINE_PARSE_DATA(double, doubles)
 
 } // namespace ONNX_NAMESPACE

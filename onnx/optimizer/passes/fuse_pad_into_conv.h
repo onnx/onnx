@@ -36,9 +36,8 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     destroy_current = NodeDestroyType::DestroyZero;
 
     // check if Pad is only used by Conv
-    if (n->inputs()[0]->uses().size() > 1) {
+    if (n->inputs()[0]->uses().size() > 1)
       return false;
-    }
 
     Node* conv = n;
     Node* pad = n->inputs()[0]->node();
@@ -51,19 +50,12 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     if (pads_initializer == graph.initializers().end())
       return false;
 
-    // parse 'pads' data from the initialized input
-    std::vector<int64_t> pads;
-    if (pads_initializer->elem_type() == TensorProto::INT64 &&
-        pads_initializer->is_raw_data()) {
-      pads = ParseRawData<int64_t>(&*pads_initializer);
-    } else if (pads_initializer->elem_type() == TensorProto::INT64) {
-      pads = pads_initializer->int64s();
-    }
-    // not relevant data type for this input -
-    // can't proceed with fusing
-    else {
+    // make sure the type of 'pads' is INT64
+    if (pads_initializer->elem_type() != TensorProto::INT64)
       return false;
-    }
+
+    // parse 'pads' data from the initialized input
+    const auto& pads = ParseData<int64_t>(&*pads_initializer);
 
     std::string pad_mode;
     if (pad->hasAttribute(kmode)) {
@@ -71,6 +63,10 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     } else {
       pad_mode = "constant";
     }
+
+    // cannot fuse if the pad mode is not "Constant"
+    if (pad_mode != "constant")
+      return false;
 
     double value = 0.0;
     // check if the 'pad' node has the optional 'value' input
@@ -85,27 +81,20 @@ struct FusePadIntoConv final : public PredicateBasedPass {
         return false;
 
       // parse 'value' data from the initialized input
-      if (value_initializer->elem_type() == TensorProto::FLOAT &&
-          value_initializer->is_raw_data()) {
-        value =
-            static_cast<double>(ParseRawData<float>(&*value_initializer)[0]);
-      } else if (
-          value_initializer->elem_type() == TensorProto::DOUBLE &&
-          value_initializer->is_raw_data()) {
-        value = ParseRawData<double>(&*value_initializer)[0];
-      } else if (value_initializer->elem_type() == TensorProto::FLOAT) {
-        value = static_cast<double>(value_initializer->floats()[0]);
+      if (value_initializer->elem_type() == TensorProto::FLOAT) {
+        const auto& data = ParseData<float>(&*value_initializer);
+        value = static_cast<double>(data[0]);
       } else if (value_initializer->elem_type() == TensorProto::DOUBLE) {
-        value = value_initializer->doubles()[0];
-      }
-      // either float16 or not relevant data type for this input - no fusing
-      else {
+        const auto& data = ParseData<double>(&*value_initializer);
+        value = data[0];
+      } else {
+        // either float16 or not relevant data type for this input - no fusing
         return false;
       }
     }
 
     // check if Pad is used to zero-pad the input
-    if (pad_mode != "constant" || value != 0.0) {
+    if (value != 0.0) {
       return false;
     }
 

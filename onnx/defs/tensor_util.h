@@ -8,6 +8,6 @@
 namespace ONNX_NAMESPACE {
 
 template <typename T>
-const std::vector<T> ParseRawData(const Tensor* tensor);
+const std::vector<T> ParseData(const Tensor* tensor);
 
 } // namespace ONNX_NAMESPACE

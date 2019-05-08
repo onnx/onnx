@@ -28,23 +28,18 @@ struct EliminateNopPad final : public PredicateBasedPass {
       return false;
 
     // validate values within 'pads'
-    std::vector<int64_t> pads;
-    if (pads_initializer->elem_type() == TensorProto::INT64 &&
-        pads_initializer->is_raw_data()) {
-      pads = ParseRawData<int64_t>(&*pads_initializer);
-    } else if (pads_initializer->elem_type() == TensorProto::INT64) {
-      pads = pads_initializer->int64s();
+    if (pads_initializer->elem_type() == TensorProto::INT64) {
+      const auto& pads = ParseData<int64_t>(&*pads_initializer);
+      for (const auto& val : pads) {
+        if (val > 0)
+          return false;
+      }
+      return true;
     }
+
     // not relevant data type for this input -
     // can't proceed with elimination
-    else {
-      return false;
-    }
-    for (const auto& val : pads) {
-      if (val > 0)
-        return false;
-    }
-    return true;
+    return false;
   }
 
   bool patternMatchPredicate(Node* node) override {
