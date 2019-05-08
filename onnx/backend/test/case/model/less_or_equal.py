@@ -35,7 +35,7 @@ class LessOrEqual(Base):
                                                        onnx.TensorProto.FLOAT,
                                                        y.shape)],
             outputs=[onnx.helper.make_tensor_value_info('z',
-                                                        onnx.TensorProto.FLOAT,
+                                                        onnx.TensorProto.BOOL,
                                                         z.shape)])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x], outputs=[y],
