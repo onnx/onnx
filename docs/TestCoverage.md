@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 125/132 (94.70%, 5 generators excluded) common operators.
+Node tests have covered 126/133 (94.74%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7289,6 +7289,44 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+
+
+### StringConcat
+There are 2 test cases, listed as following:
+<details>
+<summary>stringconcat_default_separator</summary>
+
+```python
+input = np.array([u'a', u'b', u'c']).astype(np.object)
+output = np.array([u'a b c']).astype(np.object)
+
+# No stopwords. This is a NOOP
+node = onnx.helper.make_node(
+    'StringConcat',
+    inputs=['input'],
+    outputs=['output'],
+)
+expect(node, inputs=[input], outputs=[output], name='test_stringconcat_default_separator')
+```
+
+</details>
+<details>
+<summary>stringconcat_with_separator</summary>
+
+```python
+input = np.array([u'a', u'b', u'c']).astype(np.object)
+output = np.array([u'a:b:c']).astype(np.object)
+
+node = onnx.helper.make_node(
+    'StringConcat',
+    inputs=['input'],
+    outputs=['output'],
+    separator=':'
+)
+expect(node, inputs=[input], outputs=[output], name='test_stringconcat_with_separator')
 ```
 
 </details>

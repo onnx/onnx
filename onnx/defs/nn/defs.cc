@@ -2234,4 +2234,61 @@ ONNX_OPERATOR_SET_SCHEMA(
             selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
         }));
 
+static const char* StringConcat_ver11_doc = R"DOC(
+Concatenates strings in the input tensor to form a larger string. 
+A separator can be specified to seprate entries in the resulting string. 
+One single space is used as the default.
+The input tensor can be of rank 1 or 2.
+The resulting tensor will be of rank 0 or 1.
+
+Example 1:
+  input = [['a', 'b', 'c'],
+           ['d', 'e', 'f']]
+
+  output = [['a b c', 'd e f']]
+
+Example 2:
+  input = [['a', 'b', 'c'],
+           ['d', 'e', 'f']]
+  separator = '-'
+
+  output = [['a-b-c', 'd-e-f']]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    StringConcat,
+    11,
+    OpSchema()
+        .SetDoc(StringConcat_ver11_doc)
+        .Attr(
+            "separator",
+            "(Optional) Specifies the string to be used when joining entries (default = single space)",
+            AttributeProto::STRING,
+            std::string(" "))
+        .Input(0, "input", "Tensor of rank 1 or 2", "T")
+        .Output(0, "output", "Tensor of rank 0 or 1", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(string)"},
+            "Input and output types can onlyt be of string tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          TensorShapeProto output_shape;
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto dim_size = input_shape.dim_size();
+          // Last axis dimension is unknown if we have stop-words since we do
+          // not know how many stop-words are dropped
+          if (dim_size == 1) {
+            // Unknown output dimension
+            output_shape.add_dim()->set_dim_value(1);
+          } else if (dim_size == 2) {
+            // Copy B-dim
+            auto& batch_dim = input_shape.dim(0);
+            *output_shape.add_dim() = batch_dim;
+            output_shape.add_dim()->set_dim_value(1);
+          } else {
+            fail_shape_inference(
+                "Input shape must have either [C] or [N,C] dimensions where C > 0");
+          }
+          updateOutputShape(ctx, 0, output_shape);
+        }));
 } // namespace ONNX_NAMESPACE

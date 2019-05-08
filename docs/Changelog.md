@@ -10282,3 +10282,57 @@ This version of the operator has been available since version 10 of the default 
 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
+## Version 11 of the default ONNX operator set
+### <a name="StringConcat-11"></a>**StringConcat-11**</a>
+
+  Concatenates strings in the input tensor to form a larger string. 
+  A separator can be specified to seprate entries in the resulting string. 
+  One single space is used as the default.
+  The input tensor can be of rank 1 or 2.
+  The resulting tensor will be of rank 0 or 1.
+  
+  Example 1:
+    input = [['a', 'b', 'c'],
+             ['d', 'e', 'f']]
+  
+    output = [['a b c', 'd e f']]
+  
+  Example 2:
+    input = [['a', 'b', 'c'],
+             ['d', 'e', 'f']]
+    separator = '-'
+  
+    output = [['a-b-c', 'd-e-f']]
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>separator</tt> : string (default is  )</dt>
+<dd>(Optional) Specifies the string to be used when joining entries (default = single space)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank 1 or 2</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank 0 or 1</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Input and output types can onlyt be of string tensor type.</dd>
+</dl>
+
