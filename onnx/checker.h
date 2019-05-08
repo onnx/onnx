@@ -98,7 +98,8 @@ void check_node(
 void check_graph(
     const GraphProto& graph,
     const CheckerContext&,
-    const LexicalScopeContext&);
+    const LexicalScopeContext&,
+    bool is_main_graph=true);
 void check_function(
     const FunctionProto& function,
     const CheckerContext&,

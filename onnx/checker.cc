@@ -293,14 +293,14 @@ void check_attribute(
   }
 
   if (attr.has_g()) {
-    check_graph(attr.g(), ctx, lex_ctx);
+    check_graph(attr.g(), ctx, lex_ctx, /*is_main_graph=*/false);
   }
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
   }
   for (const auto& graph : attr.graphs()) {
-    check_graph(graph, ctx, lex_ctx);
+    check_graph(graph, ctx, lex_ctx, /*is_main_graph=*/false);
   }
 }
 
@@ -371,14 +371,17 @@ void check_node(
 void check_graph(
     const GraphProto& graph,
     const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex) {
+    const LexicalScopeContext& parent_lex,
+    bool is_main_graph) {
   enforce_non_empty_field(graph, name);
 
-  for (const auto& value_info : graph.input()) {
-    check_value_info(value_info, ctx);
-  }
-  for (const auto& value_info : graph.output()) {
-    check_value_info(value_info, ctx);
+  if (is_main_graph) {
+    for (const auto& value_info : graph.input()) {
+      check_value_info(value_info, ctx);
+    }
+    for (const auto& value_info : graph.output()) {
+      check_value_info(value_info, ctx);
+    }
   }
 
   std::unordered_set<std::string> output_names{};
