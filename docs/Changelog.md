@@ -10285,13 +10285,16 @@ This version of the operator has been deprecated since version 10 of the default
 ## Version 11 of the default ONNX operator set
 ### <a name="Unique-11"></a>**Unique-11**</a>
 
-  Finds unique elements in an input 1-D tensor sorted in the same order of first occurrence in the input.
-  Additionally, this operator returns the indices for each value in the input in the generated output of unique values.  
+  Finds all the unique values (deduped list) present in the given input tensor. This operator returns 3 outputs. 
+  The first output tensor 'y' contains all of the unique elements of the input, sorted in the same order that they occur in the input.
+  The second output tensor 'idx' is the same size as the input and it contains the index of each value of the input in 'y'.
+  The third output tensor 'counts' contains the count of each element of 'y' in the input.
   
   Example:
     input_x = [2, 1, 1, 3, 4, 3]
     output_y = [2, 1, 3, 4]
     output_idx = [0, 1, 1, 2, 3, 2]
+    output_counts = [1, 2, 2, 1]
 
 #### Version
 
@@ -10308,9 +10311,11 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>y</tt> : T</dt>
-<dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order of first occurrence in 'x'</dd>
+<dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order that they occur in the input 'x'</dd>
 <dt><tt>idx</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the unique output 'y'</dd>
+<dd>A 1-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'y'</dd>
+<dt><tt>counts</tt> : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing the the count of each element of 'y' in the input 'x'</dd>
 </dl>
 
 #### Type Constraints

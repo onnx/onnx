@@ -1732,10 +1732,11 @@ class TestShapeInference(unittest.TestCase):
     def test_unique(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (6,))],
-            [make_node('Unique', ['x'], ['y', 'idx'])],
+            [make_node('Unique', ['x'], ['y', 'idx', 'counts'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None,)),  # type: ignore
-                                      make_tensor_value_info('idx', TensorProto.INT64, (6,))])
+                                      make_tensor_value_info('idx', TensorProto.INT64, (6,)),
+                                      make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
 
 if __name__ == '__main__':
