@@ -2575,7 +2575,7 @@ expect(node, inputs=[x, y], outputs=[z],
 node = onnx.helper.make_node(
     'GreaterOrEqual',
     ['x', 'y'],
-    ['less_or_equal'],
+    ['greater_or_equal'],
     name='test')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -2592,7 +2592,7 @@ graph = onnx.helper.make_graph(
                                                onnx.TensorProto.FLOAT,
                                                y.shape)],
     outputs=[onnx.helper.make_tensor_value_info('z',
-                                                onnx.TensorProto.FLOAT,
+                                                onnx.TensorProto.BOOL,
                                                 z.shape)])
 model = onnx.helper.make_model(graph, producer_name='backend-test')
 expect(model, inputs=[x], outputs=[y],
@@ -3183,7 +3183,7 @@ graph = onnx.helper.make_graph(
                                                onnx.TensorProto.FLOAT,
                                                y.shape)],
     outputs=[onnx.helper.make_tensor_value_info('z',
-                                                onnx.TensorProto.FLOAT,
+                                                onnx.TensorProto.BOOL,
                                                 z.shape)])
 model = onnx.helper.make_model(graph, producer_name='backend-test')
 expect(model, inputs=[x], outputs=[y],
