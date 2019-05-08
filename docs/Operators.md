@@ -6141,7 +6141,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Loop-1">Loop-1</a>
 

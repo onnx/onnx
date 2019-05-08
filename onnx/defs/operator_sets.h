@@ -533,7 +533,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, IsInf);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, NonMaxSuppression);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, ReverseSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, RoiAlign);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Loop);
 
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver10 {
@@ -570,7 +569,16 @@ class OpSet_Onnx_ver10 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, ReverseSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, RoiAlign)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Loop)>());
+  }
+};
+
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop);
+
+// Iterate over schema from ai.onnx version 10
+class OpSet_Onnx_ver11 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop)>());
   }
 };
 
@@ -585,6 +593,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver8>();
   RegisterOpSetSchema<OpSet_Onnx_ver9>();
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
+  RegisterOpSetSchema<OpSet_Onnx_ver11>();
 }
 
 } // namespace ONNX_NAMESPACE

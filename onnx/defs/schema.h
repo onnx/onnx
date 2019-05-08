@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "data_type_utils.h"
-#include "onnx/common/constants.h"
 #include "onnx/common/common.h"
+#include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
@@ -649,7 +649,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 10);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 11);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 

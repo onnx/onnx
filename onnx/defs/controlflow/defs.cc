@@ -411,7 +411,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver10_doc = R"DOC(
+static const char* Loop_ver11_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -529,9 +529,9 @@ point-wise operators (e.g. dropout, residual connections, linear layer).
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    10,
+    11,
     OpSchema()
-        .SetDoc(Loop_ver10_doc)
+        .SetDoc(Loop_ver11_doc)
         .Input(
             0,
             "M",
