@@ -1851,13 +1851,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Unique_ver11_doc = R"DOC(
 Finds all the unique values (deduped list) present in the given input tensor. This operator returns 3 outputs. 
-The first output tensor 'y' contains all of the unique elements of the input, sorted in the same order that they occur in the input.
-The second output tensor 'idx' is the same size as the input and it contains the index of each value of the input in 'y'.
-The third output tensor 'counts' contains the count of each element of 'y' in the input.
+The first output tensor 'uniques' contains all of the unique elements of the input, sorted in the same order that they occur in the input.
+The second output tensor 'idx' is the same size as the input and it contains the index of each value of the input in 'uniques'.
+The third output tensor 'counts' contains the count of each element of 'uniques' in the input.
 
 Example:
   input_x = [2, 1, 1, 3, 4, 3]
-  output_y = [2, 1, 3, 4]
+  output_uniques = [2, 1, 3, 4]
   output_idx = [0, 1, 1, 2, 3, 2]
   output_counts = [1, 2, 2, 1]
 )DOC";
@@ -1873,10 +1873,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                         "in the same order that they occur in the input 'x'", "T")
         .Output(1, "idx", "A 1-D INT64 tensor of the same size as 'x' " 
                           "containing the indices for each value in 'x' "
-                          "in the output 'y'", "tensor(int64)")
+                          "in the output 'uniques'", "tensor(int64)")
         .Output(2, "counts", "A 1-D INT64 tensor containing the " 
                              "the count of each element "
-                             "of 'y' in the input 'x'", "tensor(int64)")
+                             "of 'uniques' in the input 'x'", "tensor(int64)")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {       
           // Type inference
@@ -1886,7 +1886,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Shape inference
 
-          // shape of output 'y' and 'counts' 
+          // shape of output 'uniques' and 'counts' 
           // depends on actual input data, but the rank is always 1
           ctx.getOutputType(0)
               ->mutable_tensor_type()
