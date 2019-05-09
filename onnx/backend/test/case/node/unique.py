@@ -17,7 +17,7 @@ class Unique(Base):
         node = onnx.helper.make_node(
             'Unique',
             inputs=['x'],
-            outputs=['y', 'idx'],
+            outputs=['y', 'idx','counts'],
         )
 
         x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
@@ -26,4 +26,5 @@ class Unique(Base):
         # so going with hand-crafted test case
         y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
         idx = np.array([0, 1, 1, 2, 3, 2], dtype=np.int64)
-        expect(node, inputs=[x], outputs=[y, idx], name='test_unique_float')
+        counts = np.array([1, 2, 2, 1], dtype=np.int64)        
+        expect(node, inputs=[x], outputs=[y, idx, counts], name='test_unique_float')
