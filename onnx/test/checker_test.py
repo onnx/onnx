@@ -209,9 +209,10 @@ class TestChecker(unittest.TestCase):
             [i1],
             "test",
             inputs=[
-                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1])
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1]),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
             ],
-            outputs=[],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
         )
 
         checker.check_graph(graph)
@@ -243,9 +244,10 @@ class TestChecker(unittest.TestCase):
             [i1],
             "test",
             inputs=[
-                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1])
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1]),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
             ],
-            outputs=[],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
         )
 
         checker.check_graph(graph)
