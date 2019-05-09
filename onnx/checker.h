@@ -50,7 +50,7 @@ class CheckerContext final {
   bool is_main_graph() const {
     return is_main_graph_;
   }
-  void set_is_main_graph(bool is_main_graph) const {
+  void set_is_main_graph(bool is_main_graph) {
     is_main_graph_ = is_main_graph;
   }
 
@@ -75,7 +75,7 @@ class CheckerContext final {
  private:
   int ir_version_;
   std::unordered_map<std::string, int> opset_imports_;
-  mutable bool is_main_graph_ = true;
+  bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
 };

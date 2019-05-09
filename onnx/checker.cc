@@ -295,18 +295,20 @@ void check_attribute(
   }
 
   if (attr.has_g()) {
-    ctx.set_is_main_graph(false);
-    check_graph(attr.g(), ctx, lex_ctx);
-    ctx.set_is_main_graph(true);
+    CheckerContext subgraph_ctx(ctx);
+    subgraph_ctx.set_is_main_graph(false);
+    check_graph(attr.g(), subgraph_ctx, lex_ctx);
   }
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
   }
-  for (const auto& graph : attr.graphs()) {
-    ctx.set_is_main_graph(false);
-    check_graph(graph, ctx, lex_ctx);
-    ctx.set_is_main_graph(true);
+  if (attr.graphs().size() > 0) {
+    CheckerContext subgraph_ctx(ctx);
+    subgraph_ctx.set_is_main_graph(false);
+    for (const auto& graph : attr.graphs()) {
+      check_graph(graph, subgraph_ctx, lex_ctx);
+    }
   }
 }
 
