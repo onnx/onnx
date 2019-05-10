@@ -248,6 +248,19 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
             opset_imports=[helper.make_opsetid("", 9)])
 
+    def test_upsample_raw_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('scales', TensorProto.FLOAT, (4,))],
+            [make_node("Upsample", ['x', 'scales'], ['y'])],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (4,),
+                                     vals=np.array([1.0, 1.1, 1.3, 1.9], dtype='<f4').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid("", 9)])
+
     def test_resize(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
@@ -785,6 +798,27 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph,
                               [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 2, 10)),
                                make_tensor_value_info('z', TensorProto.INT64, (3, 4, 2, 10))])
+
+    def test_topk_raw_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node('TopK', ['x', 'k'], ['y', 'z'], axis=2)],
+            [],
+            initializer=[make_tensor('k', TensorProto.INT64, (1,),
+                                      vals=np.array([3], dtype='<i8').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 3, 10)),
+                               make_tensor_value_info('z', TensorProto.INT64, (3, 4, 3, 10))])
+
+    def test_topk_missing_k_value_output_rank_check(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 10)),
+            ('k', TensorProto.INT64, (1,))],
+            [make_node('TopK', ['x', 'k'], ['y', 'z'], axis=2)],
+            [])
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None, None)),  # type: ignore
+                               make_tensor_value_info('z', TensorProto.INT64, (None, None, None, None))])  # type: ignore
 
     def test_gemm(self):  # type: () -> None
         graph = self._make_graph(
