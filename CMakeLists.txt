@@ -308,11 +308,7 @@ if (MSVC)
     # ONNX_API is set here for compiling onnx_proto itself
     target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=__declspec(dllexport)")
   else()
-    if (ONNX_BUILD_MAIN_LIB)
-      target_compile_definitions(onnx_proto PUBLIC "-DONNX_EXPORT_SYMBOLS")
-    else()
-      target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=")
-    endif()
+    target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=")
   endif()
 else()
   # On non-Windows, hide all symbols we don't need

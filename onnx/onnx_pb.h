@@ -26,11 +26,7 @@
 // This is used in e.g. ONNX's protobuf files: when building the main library,
 // it is defined as ONNX_EXPORT to fix a Windows global-variable-in-dll
 // issue, and for anyone dependent on ONNX it will be defined as
-// ONNX_IMPORT. ONNX_EXPORT_SYMBOLS can also be set when being built
-// statically if ONNX is being linked into a shared library that wants
-// to export the ONNX APIs and classes, in this case, ONNX_IMPORT_SYMBOLS
-// should be set when building the program that links to the shared library.
-//
+// ONNX_IMPORT.
 // More details on Windows dllimport / dllexport can be found at
 // https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
 //
