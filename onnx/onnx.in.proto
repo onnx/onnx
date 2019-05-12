@@ -230,33 +230,54 @@ message FunctionProto {
   optional string doc_string = 8;
 }
 
-
 // Training information
 // TrainingInfoProto contains the minimized loss function (e.g., mean
 // squared error), the used optimization algorithm (a mapping from gradient
-// and the current tensors to its new values; that is, one training iteration),
+// and the current tensors to their new values; that is, one training iteration),
 // and the binding between the optimized tensors and their gradient tensors'
 // names (we need to give a name (e.g., "gradient_of_X") to the gradient of
-// tensor "X", so that gradient tensors can be referenced).
+// tensor "X", so that gradient tensors can be referenced in the training 
+// algorithm).
 //
 // This design is mainly designed for popular stochastic gradient-based methods.
+// Conceptually, a TrainingInfoProto defines a "partial computation graph"
+// which will be merged into the inference graph to form a full training
+// computation graph.
 message TrainingInfoProto {
+  // Training-specific initializers, for example, accumulated squared gradient
+  // in ADAGRAD optimizer, momentum, or number of executed training iterations.
+  // The values can only be inputs of "loss" and "optimizer" defined below.
+  repeated TensorProto additional_initializer = 1;
+
   // Training-specific inputs, for example, labels in classification problems.
-  repeated ValueInfoProto additional_training_inputs = 1;
+  // The values can only be inputs of "loss" and "optimizer" defined below.
+  // The full input list of the training computation graph is the concatenation
+  // of "ModelProto.graph.input" and
+  // "ModelProto.training_info.additional_input".
+  repeated ValueInfoProto additional_input = 2;
+
   // Training-specific outputs, for example, new tensor values computed by the
-  // specified training algorithm.
-  repeated ValueInfoProto additional_training_outputs = 2;
-  // Loss node. It can be an ONNX primitive operator or a function defined in
-  // ModelProto. This node can reference tensors in the ModelProto.graph.
-  // This output schema of this node must be a single scalar. 
-  required NodeProto loss = 3;
+  // specified training algorithm. The full output list of the training
+  // computation graph is the concatenation of "ModelProto.graph.output" and
+  // "ModelProto.training_info.additional_output".
+  repeated ValueInfoProto additional_output = 3;
+  
+  // Loss node which consumes tensors in "ModelProto.graph", "additional_inputs"
+  // , and "additional_initializer". Loss nodes produces a scalar loss value.
+  // In training phase, the optimization algorithm would be launch to minimizes
+  // loss node's output value. "loss" can be an ONNX primitive operator or a
+  // function defined in "ModelProto.function."
+  required NodeProto loss = 4;
+  
   // Optimization algorithm used to minimize the loss function. It can be an
-  // ONNX primitive operator or a function defined in ModelProto. This node
-  // can reference tensors in the ModelProto.graph and gradient tensor names
+  // ONNX primitive operator or a function defined in "ModelProto.function."
+  // This node can reference tensors in the "ModelProto.graph",
+  // "additional_inputs," "additional_initializer," and gradient tensor names
   // defined below.
   // To connect the optimizer's parameter, optimized tensors, optimized tensors'
-  // gradient, and optimizer correctly, "optimizer" has some restruction on
-  // its input and output schema.
+  // gradient, and optimizer correctly without breaking
+  // single-static-assignment, "optimizer" has some restruction on its input
+  // and output schema.
   //
   // Restructions on schema:
   //   1. Input list should be [gradient tensors, optimized tensors, 
@@ -264,18 +285,20 @@ message TrainingInfoProto {
   //      example, to minimize the loss function w.r.t. to tensors X1 and X2,
   //      the expected input list would be ["grad_X1", "grad_X2", "X1", "X2",
   //      "accumulated_Grad_X1", "accumulated_Grad_X2", "learning_rate", ...]
-  //   2. the output list's format is [optimized tensors' new values, new
+  //   2. The output list's format is [optimized tensors' new values, new
   //      optimizer states]. Consider the "X1"-"X2" example above again. The
   //      corresponding output list would be ["new_X1", "new_X2",
   //      "new_accumulate_grad_X1", "new_accumulate_grad_X2"].
-  //   3. Optimized tensors and optimizer states must be ModelProto.graph's
-  //      initializers.
-  required NodeProto optimizer = 4;
-  // Optimized tensors and their gradient tensor names. Each pair describes a
-  // tensor's name (key) and its gradient's name (value).
-  repeated StringStringEntryProto gradient_binding = 5;
-}
+  //   3. Optimized tensors and optimizer states must be defined in
+  //      "ModelProto.graph.initializer" or
+  //      "ModelProto.training_info.additional_initializer."
+  required NodeProto optimizer = 5;
 
+  // Optimized tensors and their gradient tensor names. Each pair describes a
+  // tensor's name (key) and its gradient's name (value). The gradient tensors
+  // are only visible to the input list of "optimizer."
+  repeated StringStringEntryProto gradient_bindings = 6;
+}
 
 // Models
 //
@@ -328,14 +351,14 @@ message ModelProto {
   // The functions can be referenced in the "graph" field and "training_info" field.
   // They are similar to static class functions in C++/C#, if we view this "graph" as
   // a class instance.
-  repeated FunctionProto functions = 9;
+  repeated FunctionProto function = 9;
 
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
 
-  // Training-specific information.
+  // Training-specific information. It tells how to apply a stochastic gradient
+  // method to train "graph."
   optional TrainingInfoProto training_info = 21;
-
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
