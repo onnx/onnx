@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "data_type_utils.h"
-#include "onnx/common/constants.h"
 #include "onnx/common/common.h"
+#include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
@@ -82,14 +82,15 @@ class OpSchema final {
  public:
   // Formal parameter options.
   enum FormalParameterOption : uint8_t {
-    // The input formal parameter is single and not optional.
-    // Number of this input is 1.
+    // The formal parameter is single and not optional.
+    // Number of supplied actual parameters must be 1.
     Single = 0,
-    // The input formal parameter is single and optional.
-    // Number of this input is 0 or 1.
+    // The formal parameter is single and optional.
+    // Number of supplied actual parameters may be 0 or 1.
     Optional = 1,
-    // The input formal parameter is variadic.
-    // Number of this input is [1, n].
+    // The formal parameter is variadic.
+    // Number of supplied actual parameters must be N or more, where
+    // the minimum value N is indicated separately (default value 1).
     Variadic = 2,
   };
 
@@ -106,14 +107,16 @@ class OpSchema final {
         std::string type_str,
         std::string description,
         FormalParameterOption param_option = Single,
-        bool is_homogeneous = true);
+        bool is_homogeneous = true,
+        int min_arity = 1);
 
     explicit FormalParameter(
         std::string name,
         std::string description,
         std::string type_str,
         FormalParameterOption param_option = Single,
-        bool is_homogeneous = true);
+        bool is_homogeneous = true,
+        int min_arity = 1);
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -132,6 +135,9 @@ class OpSchema final {
 
     // Get whether a variadic parameter requires all to be of same type
     bool GetIsHomogeneous() const;
+
+    // Get minimum arity. Applicable only in the Variadic case.
+    int GetMinArity() const;
 
    private:
     friend class OpSchema;
@@ -159,6 +165,9 @@ class OpSchema final {
     // For variadic parameters, a flag indicating if all parameters must be of
     // same type
     bool is_homogeneous_;
+
+    // Minimum number of parameters expected. Applicable only for Variadic.
+    int min_arity_;
   };
 
   enum class SupportType : uint8_t {
@@ -410,7 +419,8 @@ class OpSchema final {
       std::string description,
       std::string type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -419,7 +429,8 @@ class OpSchema final {
       const char* description,
       const char* type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   OpSchema& Output(
       int n,
@@ -427,7 +438,8 @@ class OpSchema final {
       std::string description,
       std::string type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -436,7 +448,8 @@ class OpSchema final {
       const char* description,
       const char* type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   OpSchema& TypeConstraint(
       std::string type_str,
@@ -636,7 +649,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 10);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 11);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 
@@ -716,7 +729,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           fail_schema(err.str());
         }
 
-        m[op_name][op_domain].insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
+        m[op_name][op_domain].insert(
+            std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {
         std::cerr << "Schema error: " << e.what() << std::endl;
