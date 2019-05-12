@@ -84,7 +84,13 @@ enum Version {
   // IR VERSION 5 published on March 18, 2019
   // - Add message TensorAnnotation.
   // - Add quantization annotation in GraphProto to map tensor with its scale and zero point quantization parameters.
-  IR_VERSION = 0x0000000000000005;
+  IR_VERSION_2019_3_18 = 0x0000000000000005;
+
+  // IR VERSION 6 published on May 11, 2019
+  // - Add message TrainingInfoProto.
+  // - Add training information in GraphProto to store gradient-based training
+  //   algorithm and the minimized loss function.
+  IR_VERSION = 0x0000000000000006;
 }
 
 // Attributes
@@ -186,6 +192,92 @@ message NodeProto {
   optional string doc_string = 6;
 }
 
+// Operator/function status.
+enum OperatorStatus {
+    EXPERIMENTAL = 0;
+    STABLE = 1;
+}
+
+message FunctionProto {
+  // The name of the function, similar usage of op_type in OperatorProto.
+  optional string name = 1;
+
+  // The first version of a function set which contains this function.
+  // When there's any breaking change for this function, the function set
+  // contains the function needs to bump its version, and since_version of
+  // the updated function will be changed to the updated function set version.  
+  optional int64 since_version = 2;
+
+  // This field indicates whether the syntax, semantics, or presence
+  // of this function is in an experimental or stable stage. Once an
+  // function is published as STABLE, its syntax and semantics MUST NOT
+  // change in subsequent versions of the operator set.
+  // When a function is published as EXPERIMENTAL, the syntax and semantics
+  // of the function MAY change across operator set versions.
+  // Functions "become" stable by deprecating the experimental version and
+  // introducing a new stable function with the same name.
+  optional OperatorStatus status = 3;
+
+  // The inputs and outputs of the function.
+  repeated string input = 4;
+  repeated string output = 5;
+
+  // The attributes of the function.
+  repeated string attribute= 6;
+
+  // The nodes in the function.
+  repeated NodeProto node = 7;
+  // A human-readable documentation for this function. Markdown is allowed.
+  optional string doc_string = 8;
+}
+
+
+// Training information
+// TrainingInfoProto contains the minimized loss function (e.g., mean
+// squared error), the used optimization algorithm (a mapping from gradient
+// and the current tensors to its new values; that is, one training iteration),
+// and the binding between the optimized tensors and their gradient tensors'
+// names (we need to give a name (e.g., "gradient_of_X") to the gradient of
+// tensor "X", so that gradient tensors can be referenced).
+//
+// This design is mainly designed for popular stochastic gradient-based methods.
+message TrainingInfoProto {
+  // Training-specific inputs, for example, labels in classification problems.
+  repeated ValueInfoProto additional_training_inputs = 1;
+  // Training-specific outputs, for example, new tensor values computed by the
+  // specified training algorithm.
+  repeated ValueInfoProto additional_training_outputs = 2;
+  // Loss node. It can be an ONNX primitive operator or a function defined in
+  // ModelProto. This node can reference tensors in the ModelProto.graph.
+  // This output schema of this node must be a single scalar. 
+  required NodeProto loss = 3;
+  // Optimization algorithm used to minimize the loss function. It can be an
+  // ONNX primitive operator or a function defined in ModelProto. This node
+  // can reference tensors in the ModelProto.graph and gradient tensor names
+  // defined below.
+  // To connect the optimizer's parameter, optimized tensors, optimized tensors'
+  // gradient, and optimizer correctly, "optimizer" has some restruction on
+  // its input and output schema.
+  //
+  // Restructions on schema:
+  //   1. Input list should be [gradient tensors, optimized tensors, 
+  //      optimizer states, other variables used in the optimizer]. For
+  //      example, to minimize the loss function w.r.t. to tensors X1 and X2,
+  //      the expected input list would be ["grad_X1", "grad_X2", "X1", "X2",
+  //      "accumulated_Grad_X1", "accumulated_Grad_X2", "learning_rate", ...]
+  //   2. the output list's format is [optimized tensors' new values, new
+  //      optimizer states]. Consider the "X1"-"X2" example above again. The
+  //      corresponding output list would be ["new_X1", "new_X2",
+  //      "new_accumulate_grad_X1", "new_accumulate_grad_X2"].
+  //   3. Optimized tensors and optimizer states must be ModelProto.graph's
+  //      initializers.
+  required NodeProto optimizer = 4;
+  // Optimized tensors and their gradient tensor names. Each pair describes a
+  // tensor's name (key) and its gradient's name (value).
+  repeated StringStringEntryProto gradient_binding = 5;
+}
+
+
 // Models
 //
 // ModelProto is a top-level file/container format for bundling a ML model and
@@ -234,8 +326,17 @@ message ModelProto {
   // The parameterized graph that is evaluated to execute the model.
   optional GraphProto graph = 7;
 
+  // The functions can be referenced in the "graph" field and "training_info" field.
+  // They are similar to static class functions in C++/C#, if we view this "graph" as
+  // a class instance.
+  repeated FunctionProto functions = 9;
+
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
+
+  // Training-specific information.
+  optional TrainingInfoProto training_info = 21;
+
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
