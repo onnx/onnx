@@ -861,7 +861,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Upsample Adapter: 8 -> 9
-    def test_upsample_8_9(self):
+    def test_upsample_8_9(self):  # type: () -> None
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -973,7 +973,7 @@ class TestVersionConverter(unittest.TestCase):
         self.helper_upsample_with_constant(raw_scale=True)
 
     # Test Scan Adapter: 8 -> 9
-    def test_scan_8_9(self):
+    def test_scan_8_9(self):  # type: () -> None
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
