@@ -100,7 +100,7 @@ class Join(Base):
         expected = np.array([
             [1.00, 10.00, 11.00, 0.00],
             [2.01, 20.00, 21.00, 92.02],
-            [3.02, 30.00, 31.00, 0.00]]).astype(np.int64)
+            [3.02, 30.00, 31.00, 0.00]]).astype(np.float32)
 
         node = onnx.helper.make_node(
             'Join',
