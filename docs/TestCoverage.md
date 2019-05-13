@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 125/132 (94.70%, 5 generators excluded) common operators.
+Node tests have covered 126/133 (94.74%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2817,6 +2817,131 @@ node = onnx.helper.make_node(
 x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name='test_isnan')
+```
+
+</details>
+
+
+### Join
+There are 6 test cases, listed as following:
+<details>
+<summary>join_full_outer_int</summary>
+
+```python
+left = np.array([[1, 10, 11], [2, 20, 21], [3, 30, 31]]).astype(np.int64)
+right = np.array([[4, 94], [2, 92]]).astype(np.int64)
+keys = np.array([0, 0]).astype(np.int64)
+expected = np.array([[4, 0, 0, 94], [2, 20, 21, 92]]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Join',
+    inputs=['left, right, keys'],
+    outputs=['output'],
+    type='FULL_OUTER'
+    # default_int=0
+)
+expect(node, inputs=[left, right, keys], outputs=expected, name='test_join_full_outer_int')
+```
+
+</details>
+<details>
+<summary>join_inner_int</summary>
+
+```python
+left = np.array([[1, 10, 11], [2, 20, 21], [3, 30, 31]]).astype(np.int64)
+right = np.array([[4, 94], [2, 92]]).astype(np.int64)
+keys = np.array([0, 0]).astype(np.int64)
+expected = np.array([[2, 20, 21, 92]]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Join',
+    inputs=['left, right, keys'],
+    outputs=['output']
+    # type='INNER'
+    # default_int=0
+)
+expect(node, inputs=[left, right, keys], outputs=expected, name='test_join_inner_int')
+```
+
+</details>
+<details>
+<summary>join_left_outer_int</summary>
+
+```python
+left = np.array([[1, 10, 11], [2, 20, 21], [3, 30, 31]]).astype(np.int64)
+right = np.array([[4, 94], [2, 92]]).astype(np.int64)
+keys = np.array([0, 0]).astype(np.int64)
+expected = np.array([[1, 10, 11, 0], [2, 20, 21, 92], [3, 30, 31, 0]]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Join',
+    inputs=['left, right, keys'],
+    outputs=['output'],
+    type='LEFT_OUTER'
+    # default_int=0
+)
+expect(node, inputs=[left, right, keys], outputs=expected, name='test_join_left_outer_int')
+```
+
+</details>
+<details>
+<summary>join_left_outer_with_default</summary>
+
+```python
+left = np.array([[1, 10, 11], [2, 20, 21], [3, 30, 31]]).astype(np.int64)
+right = np.array([[4, 94], [2, 92]]).astype(np.int64)
+keys = np.array([0, 0]).astype(np.int64)
+expected = np.array([[1, 10, 11, -1], [2, 20, 21, 92], [3, 30, 31, -1]]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Join',
+    inputs=['left, right, keys'],
+    outputs=['output'],
+    type='LEFT_OUTER',
+    default_int=-1
+)
+expect(node, inputs=[left, right, keys], outputs=expected, name='test_join_left_outer_with_default')
+```
+
+</details>
+<details>
+<summary>join_left_outer_with_epsilon</summary>
+
+```python
+left = np.array([[1.00, 10.00, 11.00], [2.01, 20.00, 21.00], [3.02, 30.00, 31.00]]).astype(np.float32)
+right = np.array([[4.04, 94.04], [2.02, 92.02]]).astype(np.float32)
+keys = np.array([0, 0]).astype(np.int64)
+expected = np.array([[1.00, 10.00, 11.00, 0.00], [2.01, 20.00, 21.00, 92.02], [3.02, 30.00, 31.00, 0.00]]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Join',
+    inputs=['left, right, keys'],
+    outputs=['output'],
+    type='LEFT_OUTER',
+    default_float=0.00,
+    epsilon=0.01
+)
+expect(node, inputs=[left, right, keys], outputs=expected, name='test_join_left_outer_with_default')
+```
+
+</details>
+<details>
+<summary>join_right_outer_int</summary>
+
+```python
+left = np.array([[1, 10, 11], [2, 20, 21], [3, 30, 31]]).astype(np.int64)
+right = np.array([[4, 94], [2, 92]]).astype(np.int64)
+keys = np.array([0, 0]).astype(np.int64)
+expected = np.array([[4, 0, 0, 94], [2, 20, 21, 92]]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Join',
+    inputs=['left, right, keys'],
+    outputs=['output'],
+    type='RIGHT_OUTER'
+    # default_int=0
+)
+expect(node, inputs=[left, right, keys], outputs=expected, name='test_join_right_outer_int')
 ```
 
 </details>
