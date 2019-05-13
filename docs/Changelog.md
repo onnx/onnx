@@ -10292,22 +10292,23 @@ This version of the operator has been deprecated since version 10 of the default
   Each of left and right tensors are two dimensional.
   We call axis 0 `rows` and axis 1 `columns`.
   A row or column at index `i` is a horizontal or vertical slice of that tensor at the given index.
-  In a Join operation, the values in given column indices (`keys` input), from left and right inputs, 
-  are compared with each other and if there's a match the rest of values for the given column and matched row
-  will be copied to the corresponding output row.
+  Keys are selected columns from left and right on which the match is performed.
+  In a Join operation, the keys are compared with each other and if there's a match the rest of values for the matched row
+  will be copied to the corresponding output row. If there is a row which does not produce a match, default values will
+  be placed in the output (more below).
   
   The only comparison allowed is the equality. For integral and string types, this is a straight equality of 
   values. For float types, there is an optional `epsilon` attribute which can be specified to be used in the
   comparison as the delta.
   
-  For non-matched rows default values will be used, depending on the type of Join. This is similar to the concept of NULL in SQL.
+  For non-matched rows default values will be used, depending on the type of the join. This is similar to the concept of NULL in SQL.
   Three attributes are provided to facilitate this: `default_string`, `default_int`, and `default_float`.
   For integral type inputs, `default_int` is used (defaults to 0).
   For string type inputs, `default_string` attribute is used. This attribute defaults to an empty string.
   For float type inputs, the value provided for the `default_float` attribute is used (defaults to 0.0).
   
   Matching of the join will be done on column indices provided in the `keys` input. This tensor is of dimensions 
-  [2], holding a list of two integer indices; the first one being the key column from the left and the second being
+  [2], basically holding a list of two integer indices; the first one being the key column from the left and the second being
   the key column from the right.
   
   Join Types
@@ -10325,17 +10326,17 @@ This version of the operator has been deprecated since version 10 of the default
   
   Example output: [[2, 20, 22]]
   
-  'LEFT-OUTER': This Join type returns all rows from the left input including the matched ones.
+  'LEFT_OUTER': This Join type returns all rows from the left input including the matched ones.
   
   Example output: [[1, 10, 0], [2, 20, 22], [3, 30, 0]]
   
-  'RIGHT-OUTER': This type operates similar to 'LEFT-OUTER', however it returns all rows from the right tensor (as well as matching ones)
+  'RIGHT_OUTER': This type operates similar to 'LEFT-OUTER', however it returns all rows from the right tensor (as well as matching ones)
   
-  Example output: [[2, 20, 22], [4, 44, 0]]
+  Example output: [[2, 20, 22], [4, 0, 44]]
   
-  'FULL-OUTER': This is essentially a union of 'LEFT-OUTER' and 'RIGHT-OUTER' where all rows from both inputs are returned.
+  'FULL_OUTER': This is essentially a union of 'LEFT-OUTER' and 'RIGHT-OUTER' where all rows from both inputs are returned.
   
-  Example output: [[1, 10, 0], [2, 20, 22], [3, 30, 0], [4, 44, 0]]
+  Example output: [[1, 10, 0], [2, 20, 22], [3, 30, 0], [4, 0, 44]]
   
   The output type is the same as the left or right input. The column count of the output will be equal to the sum of column count of left and right inputs minus 1 (the key column will not be repeated). The order of columns is always all columns from the left followed
   by the columns from the right excluding the key column.
@@ -10343,6 +10344,21 @@ This version of the operator has been deprecated since version 10 of the default
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>default_float</tt> : float (default is 0.0)</dt>
+<dd>(Optional) The float value to be used when there's no match</dd>
+<dt><tt>default_int</tt> : int (default is 0)</dt>
+<dd>(Optional) The integer value to be used when there's no match</dd>
+<dt><tt>default_string</tt> : string (default is )</dt>
+<dd>(Optional) The string value to be used when there's no match</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>(Optional) Delta to be used comparing two floats</dd>
+<dt><tt>type</tt> : string (default is INNER)</dt>
+<dd>(Optional) Specifies the type of join to be performed; can be one of 'INNER', 'LEFT_OUTER', 'RIGHT_OUTER', 'FULL_OUTER'</dd>
+</dl>
 
 #### Inputs
 

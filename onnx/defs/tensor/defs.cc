@@ -1916,7 +1916,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "type",
             "(Optional) Specifies the type of join to be performed; can be one of 'INNER', 'LEFT_OUTER', 'RIGHT_OUTER', 'FULL_OUTER'",
             AttributeProto::STRING,
-            std::string('INNER'))
+            std::string("INNER"))
         .Attr(
             "default_int",
             "(Optional) The integer value to be used when there's no match",
@@ -1926,14 +1926,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "default_float",
             "(Optional) The float value to be used when there's no match",
             AttributeProto::FLOAT,
-            0.0)
+            0.0f)
         .Attr(
             "default_string",
             "(Optional) The string value to be used when there's no match",
             AttributeProto::STRING,
-            std::string(''))
+            std::string(""))
         .Attr(
-            "epsilon",ll
+            "epsilon",
             "(Optional) Delta to be used comparing two floats",
             AttributeProto::FLOAT,
             1e-5f)

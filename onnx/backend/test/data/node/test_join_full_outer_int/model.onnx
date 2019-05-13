@@ -1,8 +1,10 @@
-backend-test:—
-!
+backend-test:³
+8
 left
 right
-keysoutput"Jointest_join_inner_intZ
+keysoutput"Join*
+type"
+FULL_OUTER test_join_full_outer_intZ
 left
 
 
@@ -17,5 +19,5 @@
 b
 output
 
-
+
 B
