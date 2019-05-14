@@ -27,10 +27,6 @@ SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
 
-DEFAULT_ONNX_NAMESPACE = 'onnx'
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
-ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
-
 WINDOWS = (os.name == 'nt')
 
 CMAKE = find_executable('cmake3') or find_executable('cmake')
@@ -40,6 +36,17 @@ install_requires = []
 setup_requires = []
 tests_require = []
 extras_require = {}
+
+################################################################################
+# Global variables for controlling the build variant
+################################################################################
+
+ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
+ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
+ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
+
+DEBUG = bool(os.getenv('DEBUG'))
+COVERAGE = bool(os.getenv('COVERAGE'))
 
 ################################################################################
 # Version
@@ -78,6 +85,7 @@ def cd(path):
         yield
     finally:
         os.chdir(orig_path)
+
 
 ################################################################################
 # Customized commands
@@ -140,6 +148,7 @@ class cmake_build(setuptools.Command):
             os.makedirs(CMAKE_BUILD_DIR)
 
         with cd(CMAKE_BUILD_DIR):
+            build_type = 'Release'
             # configure
             cmake_args = [
                 CMAKE,
@@ -150,6 +159,13 @@ class cmake_build(setuptools.Command):
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
                 '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
             ]
+            if COVERAGE:
+                cmake_args.append('-DONNX_COVERAGE=ON')
+            if COVERAGE or DEBUG:
+                # in order to get accurate coverage information, the
+                # build needs to turn off optimizations
+                build_type = 'Debug'
+            cmake_args.append('-DCMAKE_BUILD_TYPE=%s' % build_type)
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
@@ -164,6 +180,8 @@ class cmake_build(setuptools.Command):
                     cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
+            if ONNX_BUILD_TESTS:
+                cmake_args.append('-DONNX_BUILD_TESTS=ON')
             if 'CMAKE_ARGS' in os.environ:
                 extra_cmake_args = shlex.split(os.environ['CMAKE_ARGS'])
                 # prevent crossfire with downstream scripts
@@ -175,6 +193,7 @@ class cmake_build(setuptools.Command):
 
             build_args = [CMAKE, '--build', os.curdir]
             if WINDOWS:
+                build_args.extend(['--config', build_type])
                 build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
             else:
                 build_args.extend(['--', '-j', str(self.jobs)])
@@ -187,8 +206,8 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('cmake_build')
 
         generated_python_files = \
-          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
-          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
 
         for src in generated_python_files:
             dst = os.path.join(
@@ -227,12 +246,23 @@ class build_ext(setuptools.command.build_ext.build_ext):
             self.copy_file(src, dst)
 
 
+class mypy_type_check(ONNXCommand):
+    description = 'Run MyPy type checker'
+
+    def run(self):
+        """Run command."""
+        onnx_script = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools/mypy-onnx.py"))
+        returncode = subprocess.call([sys.executable, onnx_script])
+        sys.exit(returncode)
+
+
 cmdclass = {
     'create_version': create_version,
     'cmake_build': cmake_build,
     'build_py': build_py,
     'develop': develop,
     'build_ext': build_ext,
+    'typecheck': mypy_type_check,
 }
 
 ################################################################################
@@ -265,7 +295,7 @@ install_requires.extend([
 ################################################################################
 
 setup_requires.append('pytest-runner')
-tests_require.append('pytest-cov')
+tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
 tests_require.append('typing')
@@ -273,7 +303,7 @@ tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.570']
+    extras_require['mypy'] = ['mypy==0.600']
 
 ################################################################################
 # Final

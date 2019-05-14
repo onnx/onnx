@@ -13,7 +13,7 @@ from . import expect
 class Gather(Base):
 
     @staticmethod
-    def export_gather_0():
+    def export_gather_0():  # type: () -> None
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -28,7 +28,7 @@ class Gather(Base):
                name='test_gather_0')
 
     @staticmethod
-    def export_gather_1():
+    def export_gather_1():  # type: () -> None
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],

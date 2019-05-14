@@ -13,7 +13,7 @@ from . import expect
 class Reciprocal(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Reciprocal',
             inputs=['x'],

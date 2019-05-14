@@ -27,11 +27,10 @@ Return:
 """
 
 
-def infer_shapes(model):
+def infer_shapes(model):  # type: (ModelProto) -> ModelProto
     if not isinstance(model, ModelProto):
         raise ValueError('Shape inference only accepts ModelProto, '
                          'incorrect type: {}'.format(type(model)))
-
     model_str = model.SerializeToString()
     inferred_model_str = C.infer_shapes(model_str)
     return onnx.load_from_string(inferred_model_str)

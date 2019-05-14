@@ -13,7 +13,7 @@ from . import expect
 class Div(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Div',
             inputs=['x', 'y'],
@@ -33,12 +33,11 @@ class Div(Base):
                name='test_div')
 
     @staticmethod
-    def export_div_broadcast():
+    def export_div_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Div',
             inputs=['x', 'y'],
             outputs=['z'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)

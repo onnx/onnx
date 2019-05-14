@@ -8,7 +8,7 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-During development, it's convenient to install ONNX in development mode (for ONNX-ML, set environment variable `ONNX_ML=1`):
+During development, it's convenient to install ONNX in development mode (to disable ONNX-ML, set environment variable `ONNX_ML=0`):
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
@@ -36,12 +36,18 @@ Then, after you have made changes to Python and C++ files:
 python onnx/defs/gen_doc.py
 ```
 
+## Adding a new operator
+
+ONNX is an open standard, and we encourage developers to contribute high
+quality operators to ONNX specification.
+Before proposing a new operator, please read [the tutorial](AddNewOp.md).
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
 ```
-pip install pytest-cov nbval
+pip install pytest nbval
 ```
 
 After installing pytest, run
@@ -51,6 +57,29 @@ pytest
 ```
 
 to begin the tests.
+
+# Static typing (mypy)
+
+We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
+
+```
+pip install -e .[mypy]
+```
+
+The type checker cannot run in a python 2 environment (but it will check python 2 code).
+If you're using python 2, you need to install mypy into your system packages instead:
+
+```
+pip3 install mypy==[version]
+```
+*Note: You'll find the version we're currently using in `setup.py`.*
+
+After having installed mypy, you can run the type checks:
+
+```
+python setup.py typecheck
+```
+
 
 # Other developer documentation
 

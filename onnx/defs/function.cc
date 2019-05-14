@@ -1,96 +1,110 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
-#include "onnx/checker.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-using namespace checker;
-FunctionBuilder& FunctionBuilder::SetDomain(const std::string& domain) {
-  domain_ = domain;
-  return *this;
+std::string InteralTensorNameGenerator(
+    const std::string& node_name,
+    const std::string& internal_name) {
+  std::string new_name = "Func_" + node_name + internal_name;
+  return new_name;
 }
 
-const std::string& FunctionBuilder::GetDomain() const {
-  return domain_;
-}
+void FunctionExpandHelper(
+    const NodeProto& node,
+    const FunctionProto& func,
+    GraphProto& g,
+    const std::string& node_prefix) {
+  // Create a temporary unique node prefix for tensor names
+  std::string uniq_prefix = node_prefix;
+  if (uniq_prefix.empty()) {
+    const void* address = static_cast<const void*>(&node);
+    std::stringstream ss;
+    ss << address;
+    uniq_prefix = ss.str();
+  }
+  std::string node_name =
+      node.has_name() ? node.name() : func.name() + uniq_prefix;
+  std::unordered_map<std::string, std::string> input_names_map;
+  std::unordered_map<std::string, std::string> output_names_map;
+  std::unordered_map<std::string, AttributeProto> attr_map;
 
-FunctionBuilder& FunctionBuilder::SetBuildFunction(BuildFunction build_func) {
-  build_func_ = build_func;
-  return *this;
-}
-
-BuildFunction FunctionBuilder::GetBuildFunction() const {
-  return build_func_;
-}
-
-Status FunctionBuilderRegistry::Register(
-    const FunctionBuilder& function_builder) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  function_builders.push_back(function_builder);
-  return Status::OK();
-}
-
-// Get functions for specific domain.
-Status FunctionBuilderRegistry::GetFunctions(
-    const std::string& domain,
-    /*out*/
-    std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-    const {
-  if (nullptr == function_set) {
-    return Common::Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "function_set should not be nullptr.");
+  for (int idx = 0; idx < node.input_size(); ++idx) {
+    if (idx >= func.input_size()) {
+      throw std::runtime_error(
+          "Input for function node " + node_name + " is out of bounds");
+    }
+    input_names_map[func.input().Get(idx)] = node.input().Get(idx);
+  }
+  for (int idx = 0; idx < node.output_size(); ++idx) {
+    if (idx >= func.output_size()) {
+      throw std::runtime_error(
+          "Output for function node " + node_name + " is out of bounds");
+    }
+    output_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }
 
-  for (auto func_builder : function_builders) {
-    if (func_builder.GetDomain() != domain) {
-      continue;
-    }
-    std::unique_ptr<FunctionProto> function_proto;
-    auto status = func_builder.GetBuildFunction()(&function_proto);
-    if (!status.IsOK()) {
-      return status;
-    }
+  for (auto& attr : node.attribute()) {
+    attr_map[attr.name()] = attr;
+  }
 
-    CheckerContext ctx;
-    LexicalScopeContext lex_ctx;
-    try {
-      check_function(*function_proto, ctx, lex_ctx);
-    } catch (ValidationError& ex) {
-      return Common::Status(
-          Common::CHECKER, Common::INVALID_PROTOBUF, ex.what());
-    }
-
-    auto& func_name = function_proto->name();
-    // Check no op version conflicts.
-    auto range = function_set->equal_range(func_name);
-    for (auto i = range.first; i != range.second; ++i) {
-      auto version = i->second->since_version();
-      if (function_proto->since_version() == version) {
-        // There's already a function with same name/since_version registered.
-        return Common::Status(
-            Common::CHECKER,
-            Common::FAIL,
-            ONNX_NAMESPACE::MakeString(
-                "A function (",
-                func_name,
-                ") with version (",
-                version,
-                ") has already been registered."));
+  for (auto& function_node : func.node()) {
+    NodeProto* new_node = g.add_node();
+    new_node->CopyFrom(function_node);
+    new_node->clear_input();
+    new_node->clear_output();
+    new_node->clear_attribute();
+    for (auto& input : function_node.input()) {
+      if (input_names_map.count(input)) {
+        new_node->add_input(input_names_map[input]);
+      } else {
+        new_node->add_input(InteralTensorNameGenerator(node_name, input));
       }
     }
-    function_set->emplace(func_name, std::move(function_proto));
+    for (auto& output : function_node.output()) {
+      if (output_names_map.count(output)) {
+        new_node->add_output(output_names_map[output]);
+      } else {
+        new_node->add_output(InteralTensorNameGenerator(node_name, output));
+      }
+    }
+    for (auto& attr : function_node.attribute()) {
+      if (attr.has_ref_attr_name()) {
+        if (attr_map.count(attr.ref_attr_name())) {
+          AttributeProto* new_attr = new_node->add_attribute();
+          new_attr->CopyFrom(attr_map[attr.ref_attr_name()]);
+        }
+      } else {
+        AttributeProto* new_attr = new_node->add_attribute();
+        new_attr->CopyFrom(attr);
+      }
+    }
   }
-
-  return Common::Status::OK();
 }
 
-FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
-  static FunctionBuilderRegistry func_builder_registry;
-  return func_builder_registry;
+std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
+    const std::vector<NodeDef>& node_defs) {
+  std::vector<NodeProto> nodes(node_defs.size());
+
+  for (size_t i = 0; i < node_defs.size(); i++) {
+    const NodeDef& node = node_defs[i];
+    NodeProto& n = nodes[i];
+
+    n.set_op_type(node.op_type);
+    for (const auto& i : node.inputs) {
+      n.add_input(i);
+    }
+    for (const auto& o : node.outputs) {
+      n.add_output(o);
+    }
+    for (const auto& attr : node.attributes) {
+      *(n.add_attribute()) = attr.proto;
+    }
+  }
+
+  return nodes;
 }
 
 } // namespace ONNX_NAMESPACE

@@ -13,7 +13,7 @@ from . import expect
 class Add(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Add',
             inputs=['x', 'y'],
@@ -26,12 +26,11 @@ class Add(Base):
                name='test_add')
 
     @staticmethod
-    def export_add_broadcast():
+    def export_add_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Add',
             inputs=['x', 'y'],
             outputs=['sum'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)

@@ -13,7 +13,7 @@ from . import expect
 class Reshape(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         original_shape = [2, 3, 4]
         test_cases = {
             'reordered_dims': np.array([4, 2, 3], dtype=np.int64),

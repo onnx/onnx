@@ -13,7 +13,7 @@ from . import expect
 class Squeeze(Base):
 
     @staticmethod
-    def export_squeeze():
+    def export_squeeze():  # type: () -> None
         node = onnx.helper.make_node(
             'Squeeze',
             inputs=['x'],

@@ -3,13 +3,13 @@
 //
 
 
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 syntax = "proto2";
 
 package onnx;
-import "onnx-ml.proto";
+import "onnx/onnx-ml.proto";
 
 //
 // This file contains the proto definitions for OperatorSetProto and

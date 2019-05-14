@@ -14,7 +14,7 @@ from . import expect
 class Transpose(Base):
 
     @staticmethod
-    def export_default():
+    def export_default():  # type: () -> None
         shape = (2, 3, 4)
         data = np.random.random_sample(shape).astype(np.float32)
 
@@ -29,7 +29,7 @@ class Transpose(Base):
                name='test_transpose_default')
 
     @staticmethod
-    def export_all_permutations():
+    def export_all_permutations():  # type: () -> None
         shape = (2, 3, 4)
         data = np.random.random_sample(shape).astype(np.float32)
         permutations = list(itertools.permutations(np.arange(len(shape))))
