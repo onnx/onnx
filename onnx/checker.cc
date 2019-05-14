@@ -37,10 +37,13 @@ namespace checker {
     }                                         \
   } while (0)
 
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
+void check_value_info(
+    const ValueInfoProto& value_info,
+    const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
   // Relax constraint for subgraph input/output.
-  if (!ctx.is_main_graph()) return;
+  if (!ctx.is_main_graph())
+    return;
   enforce_has_field(value_info, type);
   const auto value_case = value_info.type().value_case();
   switch (value_case) {
@@ -61,12 +64,13 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
     } break;
     case TypeProto::kOpaqueType:
       break;
+#endif
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-#endif
+
     default:
       fail_check(
           "Unrecognized type value case (value_info name: ",
@@ -107,9 +111,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_data_field
 
   bool stored_externally = tensor.has_data_location() &&
-	                   tensor.data_location() == TensorProto::EXTERNAL;
-  if (stored_externally){
-    if (num_value_fields != 0){
+      tensor.data_location() == TensorProto::EXTERNAL;
+  if (stored_externally) {
+    if (num_value_fields != 0) {
       fail_check(
           "Data of TensorProto ( tensor name: ",
           tensor.name(),
@@ -118,10 +122,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     }
 
     bool has_location = false;
-    for (const StringStringEntryProto& entry : tensor.external_data()){
-      if (entry.has_key() && entry.has_value() && entry.key() == "location"){
+    for (const StringStringEntryProto& entry : tensor.external_data()) {
+      if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        if(!std::ifstream(ctx.get_model_dir() + entry.value())){
+        if (!std::ifstream(ctx.get_model_dir() + entry.value())) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -131,7 +135,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         }
       }
     }
-    if (!has_location){
+    if (!has_location) {
       fail_check(
           "TensorProto ( tensor name: ",
           tensor.name(),
@@ -221,6 +225,31 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_field
 }
 
+void check_sparse_tensor(
+    const SparseTensorProto& sparse,
+    const CheckerContext& ctx) {
+  int64_t nnz = 0;
+  if (sparse.has_values()) {
+    const TensorProto& values = sparse.values();
+    check_tensor(values, ctx);
+    // TBD: Should we generalize and permit tensors of rank > 1?
+    if (values.dims().size() != 1)
+      fail_check("Sparse tensor values must have rank 1.");
+    nnz = values.dims(0);
+  }
+  int64_t num_indices = 0;
+  if (sparse.has_indices()) {
+    const TensorProto& indices = sparse.indices();
+    check_tensor(indices, ctx);
+    // TBD: Should we generalize and permit tensors of rank > 1?
+    if (indices.dims().size() != 1)
+      fail_check("Sparse tensor indices must have rank 1.");
+    nnz = indices.dims(0);
+  }
+  if (nnz != num_indices)
+    fail_check("Number of values and indices must be same in a sparse tensor.");
+}
+
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(
@@ -258,11 +287,13 @@ void check_attribute(
   check_singular_field(s, AttributeProto::STRING);
   check_singular_field(t, AttributeProto::TENSOR);
   check_singular_field(g, AttributeProto::GRAPH);
+  check_singular_field(sparse_tensor, AttributeProto::SPARSE_TENSOR);
   check_repeated_field(floats, AttributeProto::FLOATS);
   check_repeated_field(ints, AttributeProto::INTS);
   check_repeated_field(strings, AttributeProto::STRINGS);
   check_repeated_field(tensors, AttributeProto::TENSORS);
   check_repeated_field(graphs, AttributeProto::GRAPHS);
+  check_repeated_field(sparse_tensors, AttributeProto::SPARSE_TENSORS);
 
 #undef check_type
 #undef check_singular_field
@@ -294,6 +325,10 @@ void check_attribute(
     check_tensor(attr.t(), ctx);
   }
 
+  if (attr.has_sparse_tensor()) {
+    check_sparse_tensor(attr.sparse_tensor(), ctx);
+  }
+
   if (attr.has_g()) {
     CheckerContext subgraph_ctx(ctx);
     subgraph_ctx.set_is_main_graph(false);
@@ -302,6 +337,9 @@ void check_attribute(
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
+  }
+  for (const auto& sparse_tensor : attr.sparse_tensors()) {
+    check_sparse_tensor(sparse_tensor, ctx);
   }
   if (attr.graphs().size() > 0) {
     CheckerContext subgraph_ctx(ctx);
@@ -328,14 +366,22 @@ void check_node(
   }
 
   // Put the removed experimental ops here
-  static std::set<std::string> experimental_ops = {"ATen", "Affine",
-    "ConstantFill", "Crop", "DynamicSlice", "GRUUnit", "GivenTensorFill",
-    "ImageScaler", "ParametricSoftplus", "Scale", "ScaledTanh"};
+  static std::set<std::string> experimental_ops = {"ATen",
+                                                   "Affine",
+                                                   "ConstantFill",
+                                                   "Crop",
+                                                   "DynamicSlice",
+                                                   "GRUUnit",
+                                                   "GivenTensorFill",
+                                                   "ImageScaler",
+                                                   "ParametricSoftplus",
+                                                   "Scale",
+                                                   "ScaledTanh"};
   if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
-      << " experimental ops. In the future, we may directly "
-      << "reject this operator. Please update your model as soon "
-      << "as possible.";
+              << " experimental ops. In the future, we may directly "
+              << "reject this operator. Please update your model as soon "
+              << "as possible.";
     return;
   }
 
@@ -369,7 +415,8 @@ void check_node(
     }
   } else if (schema->Deprecated()) {
     fail_check(
-        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
+        "Op registered for " + node.op_type() +
+        " is depracted in domain_version of " +
         ONNX_NAMESPACE::to_string(domain_version));
   } else {
     schema->Verify(node);
@@ -579,24 +626,26 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 void check_model(const std::string& model_path) {
   ModelProto model;
   std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if(!model_stream.good()){
-    fail_check("Unable to open model file:",
-               model_path,
-               ". Please check if it is a valid file.");
+  if (!model_stream.good()) {
+    fail_check(
+        "Unable to open model file:",
+        model_path,
+        ". Please check if it is a valid file.");
   }
-  std::string data {std::istreambuf_iterator<char>{model_stream},
-                    std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())){
-    fail_check("Unable to parse model from file:",
-               model_path,
-               ". Please check if it is a valid protobuf file of model.");
+  std::string data{std::istreambuf_iterator<char>{model_stream},
+                   std::istreambuf_iterator<char>{}};
+  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
+    fail_check(
+        "Unable to parse model from file:",
+        model_path,
+        ". Please check if it is a valid protobuf file of model.");
   }
 
   CheckerContext ctx;
   std::string model_dir;
   size_t pos = model_path.find_last_of("\\/");
-  if (pos != std::string::npos){
-    model_dir = model_path.substr(0, pos+1);
+  if (pos != std::string::npos) {
+    model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
   check_model(model, ctx);

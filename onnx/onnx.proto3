@@ -104,12 +104,14 @@ message AttributeProto {
     STRING = 3;
     TENSOR = 4;
     GRAPH = 5;
+    SPARSE_TENSOR = 11;
 
     FLOATS = 6;
     INTS = 7;
     STRINGS = 8;
     TENSORS = 9;
     GRAPHS = 10;
+    SPARSE_TENSORS = 12;
   }
 
   // The name field MUST be present for this version of the IR.
@@ -146,6 +148,9 @@ message AttributeProto {
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
+
+  SparseTensorProto sparse_tensor = 22;  // sparse tensor value
+  repeated SparseTensorProto sparse_tensors = 23; // list of sparse tensors
 }
 
 // Defines information on value, including the name, the type, and
@@ -443,6 +448,21 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
+// A serialized sparse-tensor value
+message SparseTensorProto {
+  // The sequence of non-default values are encoded as a tensor of shape [NNZ].
+  // The default-value is zero for numeric tensors, and empty-string for string tensors.
+  TensorProto values = 1;
+
+  // The indices of the non-default values are encoded as a tensor of shape [NNZ].
+  // Note that the indices are linearized-indices. Each linearized index can be
+  // converted into a tuple of indices using the shape provided below.
+  TensorProto indices = 2;
+
+  // The shape of the underlying dense-tensor.
+  repeated int64 dims = 3;
+}
+
 // Defines a tensor shape. A dimension can be either an integer value
 // or a symbolic variable. A symbolic variable represents an unknown
 // dimension.
@@ -479,6 +499,9 @@ message TypeProto {
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
+
+
+    SparseTensor sparse_tensor_type = 8;
 
   }
 
