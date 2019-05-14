@@ -270,37 +270,45 @@ message TrainingInfoProto {
   // In training phase, the optimization algorithm would be launch to minimizes
   // loss node's output value. "loss" can be an ONNX primitive operator or a
   // function defined in "ModelProto.function."
-  required NodeProto loss = 4;
-  
-  // Optimization algorithm used to minimize the loss function. It can be an
-  // ONNX primitive operator or a function defined in "ModelProto.function."
-  // This node can reference tensors in the "ModelProto.graph",
-  // "additional_inputs," "additional_initializer," and gradient tensor names
-  // defined below.
-  // To connect the optimizer's parameter, optimized tensors, optimized tensors'
-  // gradient, and optimizer correctly without breaking
-  // single-static-assignment, "optimizer" has some restruction on its input
-  // and output schema.
   //
-  // Restructions on schema:
-  //   1. Input list should be [gradient tensors, optimized tensors, 
-  //      optimizer states, other variables used in the optimizer]. For
-  //      example, to minimize the loss function w.r.t. to tensors X1 and X2,
-  //      the expected input list would be ["grad_X1", "grad_X2", "X1", "X2",
-  //      "accumulated_Grad_X1", "accumulated_Grad_X2", "learning_rate", ...]
-  //   2. The output list's format is [optimized tensors' new values, new
-  //      optimizer states]. Consider the "X1"-"X2" example above again. The
-  //      corresponding output list would be ["new_X1", "new_X2",
-  //      "new_accumulate_grad_X1", "new_accumulate_grad_X2"].
-  //   3. Optimized tensors and optimizer states must be defined in
-  //      "ModelProto.graph.initializer" or
-  //      "ModelProto.training_info.additional_initializer."
-  required NodeProto optimizer = 5;
+  // The field MUST be present.
+  optional NodeProto loss = 4;
 
   // Optimized tensors and their gradient tensor names. Each pair describes a
   // tensor's name (key) and its gradient's name (value). The gradient tensors
   // are only visible to the input list of "optimizer."
-  repeated StringStringEntryProto gradient_bindings = 6;
+  repeated StringStringEntryProto gradient_binding = 5;
+
+  // Optimization algorithm used to minimize the loss function. It can be an
+  // ONNX primitive operator or a function defined in "ModelProto.function."
+  // This node can reference tensors in the "ModelProto.graph",
+  // "additional_inputs," "additional_initializer," and gradient tensors
+  // defined by "gradient_bing" below. The field "optimizer"'s outputs are
+  // accessible only in "additional_training_output."
+  //
+  // The field MUST be present.
+  optional NodeProto optimizer = 6;
+
+  // Gradient-based training is usually an iterative procedure. In one gradient
+  // descent iteration, we apply
+  //
+  // x = x - r * g
+  //
+  // where "x" is the optimized tensor, "r" stands for learning rate, and "g" is
+  // gradient of "x" with respect to "loss" node's output value. To avoid the
+  // direct use of an assignment, user should explicitly specify the new
+  // tensor's name for each optimized tensor. For example, if the new value of
+  // "x" is "y," the field "update_binding" may contain a pair of "x" (key) and
+  // "y" (value).
+  //
+  // Similarly, optimizer's state tensors (e.g., accumulated squared gradient
+  // and momentum) should be handled by using the same strategy. 
+  //
+  // Each StringStringEntryProto binds an initizliaer defined in one of
+  // "ModelProto.graph.initializer" and "additional_training_initializer" to
+  // an element of "additional_training_output." An initializer can be bound
+  // to at most one training output.
+  repeated StringStringEntryProto update_binding = 7;
 }
 
 // Models
