@@ -284,6 +284,19 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
             opset_imports=[helper.make_opsetid("", 9)])
 
+    def test_upsample_raw_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('scales', TensorProto.FLOAT, (4,))],
+            [make_node("Upsample", ['x', 'scales'], ['y'])],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (4,),
+                                     vals=np.array([1.0, 1.1, 1.3, 1.9], dtype='<f4').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid("", 9)])
+
     def test_resize(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
@@ -822,6 +835,27 @@ class TestShapeInference(unittest.TestCase):
                               [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 2, 10)),
                                make_tensor_value_info('z', TensorProto.INT64, (3, 4, 2, 10))])
 
+    def test_topk_raw_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node('TopK', ['x', 'k'], ['y', 'z'], axis=2)],
+            [],
+            initializer=[make_tensor('k', TensorProto.INT64, (1,),
+                                      vals=np.array([3], dtype='<i8').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 3, 10)),
+                               make_tensor_value_info('z', TensorProto.INT64, (3, 4, 3, 10))])
+
+    def test_topk_missing_k_value_output_rank_check(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 10)),
+            ('k', TensorProto.INT64, (1,))],
+            [make_node('TopK', ['x', 'k'], ['y', 'z'], axis=2)],
+            [])
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None, None)),  # type: ignore
+                               make_tensor_value_info('z', TensorProto.INT64, (None, None, None, None))])  # type: ignore
+
     def test_gemm(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
@@ -1031,6 +1065,27 @@ class TestShapeInference(unittest.TestCase):
             [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))])
+
+    def test_maxpool_with_same_upper_padding_and_stride(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_UPPER", kernel_shape=[2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))])
+
+    def test_maxpool_with_same_upper_padding_and_stride_one(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_UPPER", kernel_shape=[2, 2], strides=[1, 1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 4, 4))])
+
+    def test_maxpool_with_same_lower_padding_and_stride(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 9, 9))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_LOWER", kernel_shape=[2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))])
 
     def test_averagepool(self):  # type: () -> None
         graph = self._make_graph(
@@ -1470,6 +1525,33 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, None),  # shape may change between iterations
              make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
+
+    def test_loop_no_state(self):    # type: () -> None
+        input_value_infos = [make_tensor_value_info('iter_num_in', TensorProto.INT64, (1,)),
+                             make_tensor_value_info('cond_in', TensorProto.UNDEFINED, None)]
+        output_value_infos = [make_tensor_value_info('cond_out', TensorProto.UNDEFINED, None),
+                              make_tensor_value_info('output', TensorProto.FLOAT, (3,))]
+
+        subgraph = helper.make_graph(
+            [make_node('Identity', ['cond_in'], ['cond_out']),
+             make_node('Identity', ['outer_scope_input'], ['output'])],
+            "subgraph",
+            input_value_infos,
+            output_value_infos
+        )
+
+        graph = self._make_graph(
+            [('max_trip_count', TensorProto.INT64, (1,)),
+             ('cond_orig', TensorProto.FLOAT, (1,)),
+             ('outer_scope_input', TensorProto.FLOAT, (3,))],
+            [make_node('Loop', ['max_trip_count', 'cond_orig'], ['loop_output'],
+                       body=subgraph)],
+            []
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
 
     def test_constantofshape_with_input_shape(self):  # type: () -> None
         graph = self._make_graph([],
