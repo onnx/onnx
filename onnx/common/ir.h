@@ -25,7 +25,7 @@
 
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete; \
-  void operator=(const TypeName&) = delete
+  TypeName& operator=(const TypeName&) = delete
 
 
 namespace ONNX_NAMESPACE {
@@ -87,7 +87,7 @@ enum class AttributeKind : uint8_t {
 
 static inline const char * toString(AttributeKind kind) {
   static constexpr const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs"};
-  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(AttributeKind));
+  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*));
   return names[int(kind)];
 }
 
