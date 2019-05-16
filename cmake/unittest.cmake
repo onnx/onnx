@@ -9,16 +9,32 @@ find_package(Threads)
 set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
 set(${ONNXIFI_TEST_DRIVER}_libs ${googletest_STATIC_LIBRARIES})
 
+if(ONNX_USE_LITE_PROTO)
+  if(TARGET protobuf::libprotobuf-lite)
+    set(PB_LIB protobuf::libprotobuf-lite)
+  else()
+    set(PB_LIB ${PROTOBUF_LITE_LIBRARIES})
+    set(PB_INC ${PROTOBUF_INCLUDE_DIRS})
+  endif()
+else()
+  if(TARGET protobuf::libprotobuf)
+    set(PB_LIB protobuf::libprotobuf)
+  else()
+    set(PB_LIB ${PROTOBUF_LIBRARIES})
+    set(PB_INC ${PROTOBUF_INCLUDE_DIRS})
+  endif()
+endif()
+
 list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
 list(APPEND ${UT_NAME}_libs onnxifi_loader)
 list(APPEND ${UT_NAME}_libs onnxifi)
-list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
+list(APPEND ${UT_NAME}_libs ${PB_LIB})
 
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx)
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx_proto)
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi_loader)
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${PROTOBUF_LIBRARIES})
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${PB_LIB})
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi)
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
@@ -36,22 +52,16 @@ function(AddTest)
   target_include_directories(${_UT_TARGET}
                              PUBLIC ${googletest_INCLUDE_DIRS}
                                     ${ONNX_INCLUDE_DIRS}
-                                    ${PROTOBUF_INCLUDE_DIRS}
+                                    ${PB_INC}
                                     ${ONNX_ROOT}
                                     ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-  if(TARGET protobuf::libprotobuf)
-    target_link_libraries(${_UT_TARGET} protobuf::libprotobuf)
-  else()
-    target_link_libraries(${_UT_TARGET} ${PROTOBUF_LIBRARIES})
-  endif()
 
-  if(WIN32)
+  if(MSVC)
     target_compile_options(${_UT_TARGET}
                            PRIVATE /EHsc # exception handling - C++ may throw,
                                          # extern "C" will not
                            )
-    add_msvc_runtime_flag(${_UT_TARGET})
   endif()
 
   if(MSVC)
