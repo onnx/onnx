@@ -38,12 +38,12 @@ before_build:
 - >
   IF "%_prefix%"=="C:\Miniconda37"
   (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy &&
+  conda install -y -c conda-forge libprotobuf=3.7.1 numpy &&
   set "PATH=%PATH%;%CONDA_PREFIX%\Library\bin"
   )
   ELSE
   (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy
+  conda install -y -c conda-forge libprotobuf=3.7.1 numpy
   )
 - cmd: pip install --quiet pytest nbval numpy
 

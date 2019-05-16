@@ -274,9 +274,9 @@ list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
-	"${ONNX_ROOT}/onnx/test/cpp/*.cc"
-	"${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-	"${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
+    "${ONNX_ROOT}/onnx/test/cpp/*.cc"
+    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
+    "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
@@ -411,8 +411,9 @@ if(BUILD_ONNX_PYTHON)
                                            # unsigned type, result still
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
+                                   /wd4244 # conversion from 'uint64' to 'uint32',
+                                           # possible loss of data
                                    ${EXTRA_FLAGS})
-    target_compile_options(onnx_cpp2py_export PRIVATE /MT)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
 endif()
@@ -458,6 +459,8 @@ if(MSVC)
                                          # unsigned type, result still unsigned:
                                          # include\google\protobuf\wire_format_l
                                          # ite.h
+                                 /wd4244 # conversion from 'uint64' to 'uint32',
+                                         # possible loss of data
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
@@ -469,6 +472,8 @@ if(MSVC)
                                          # exceeded, name was truncated
                                  /wd4146 # unary minus operator applied to
                                          # unsigned type, result still unsigned
+                                 /wd4244 # conversion from 'uint64' to 'uint32',
+                                         # possible loss of data
                                  ${EXTRA_FLAGS})
   set(onnx_static_library_flags
       -IGNORE:4221 # LNK4221: This object file does not define any previously

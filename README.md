@@ -67,7 +67,7 @@ way to get these dependencies is via
 
 ```
 # Use conda-forge protobuf, as default doesn't come with protoc
-conda install -c conda-forge protobuf numpy
+conda install -c conda-forge protobuf>=3.7.1 numpy
 ```
 
 You can then install ONNX from PyPi (Note: Set environment variable `ONNX_ML=1` for onnx-ml):
