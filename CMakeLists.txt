@@ -470,8 +470,6 @@ if(MSVC)
                                  /wd4146 # unary minus operator applied to
                                          # unsigned type, result still unsigned
                                  ${EXTRA_FLAGS})
-  add_msvc_runtime_flag(onnx_proto)
-  add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
       -IGNORE:4221 # LNK4221: This object file does not define any previously
                    # undefined public symbols, so it will not be used by any
@@ -512,9 +510,6 @@ set_target_properties(onnxifi_loader
                                  C_EXTENSIONS
                                  NO)
 target_link_libraries(onnxifi_loader PUBLIC onnxifi ${CMAKE_DL_LIBS})
-if(MSVC)
-  add_msvc_runtime_flag(onnxifi_loader)
-endif()
 
 if (NOT ANDROID AND NOT IOS)
   # ---[ ONNXIFI wrapper
@@ -556,9 +551,6 @@ target_include_directories(onnxifi_dummy PRIVATE
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
-if(MSVC)
-  add_msvc_runtime_flag(onnxifi_dummy)
-endif()
 
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION include
