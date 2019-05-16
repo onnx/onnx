@@ -1051,6 +1051,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))])
 
+    def test_maxpool_with_same_lower_with_stride_greater_than_kernel(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 21, 21))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_LOWER", kernel_shape=[3, 3], strides=[4, 4])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))])
+
     def test_averagepool(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
