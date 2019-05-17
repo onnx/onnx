@@ -70,6 +70,8 @@ unsigned int PredicateBasedPass::_runPassInternal(Graph& graph) {
       }
     }
   }
+  if(num_changes > 0) 
+    std::cout << "PASS " << getPassName() << " CHANGES " << num_changes << std::endl;
   return num_changes;
 }
 
