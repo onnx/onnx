@@ -9,10 +9,13 @@
 #include "onnx/optimizer/passes/eliminate_deadend.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_dropout.h"
+#include "onnx/optimizer/passes/eliminate_scaling.h"
+#include "onnx/optimizer/passes/eliminate_trailing_transpose.h"
 #include "onnx/optimizer/passes/eliminate_nop_monotone_argmax.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
+#include "onnx/optimizer/passes/eliminate_unused_input.h"
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
 #include "onnx/optimizer/passes/fuse_bn_into_conv.h"
@@ -44,11 +47,16 @@ struct GlobalPassRegistry {
     registerPass<NopEmptyPass>();
     registerPass<EliminateDeadEnd>();
     registerPass<EliminateNopDropout>();
+    registerPass<EliminateScaling>();
+    registerPass<EliminateActivations>();
+    registerPass<EliminateTrailingTranspose>();
+    registerPass<EliminateLeadingTranspose>();
     registerPass<EliminateIdentity>();
     registerPass<EliminateNopMonotoneArgmax>();
     registerPass<EliminateNopPad>();
     registerPass<EliminateNopTranspose>();
     registerPass<EliminateUnusedInitializer>();
+    registerPass<EliminateUnusedInputs>();
     registerPass<ExtractConstantToInitializer>();
     registerPass<FuseAddBiasIntoConv>();
     registerPass<FuseBNIntoConv>();

@@ -220,6 +220,12 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     value_by_name_of[""] = n->outputs()[0];
   }
 
+  for (int i = 0; i < gp.initializer_size(); i++) {
+    auto init = tensorProtoToTensor(gp.initializer(i));
+    auto v = g->addInitializerAndInput(init, init.name());
+    value_by_name_of[init.name()] = v;
+  }
+
   for (int i = 0; i < gp.input_size(); i++) {
     auto vip = gp.input(i);
     auto v = g->addInput();
@@ -273,7 +279,11 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
         value_by_name_of[input] = undef->outputs()[0];
       }
 
-      n->addInput(value_by_name_of.at(input));
+      if (value_by_name_of.count(input) > 0) {
+	      n->addInput(value_by_name_of.at(input));
+      } else
+	      std::cout << "INFO ---------------- Not found " << n->name() << " inp: " << input << std::endl;
+	      ONNX_ASSERT(false);
     }
   }
 
@@ -302,10 +312,12 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
   }
 
+  /*
   for (int i = 0; i < gp.initializer_size(); i++) {
     auto init = tensorProtoToTensor(gp.initializer(i));
     g->addInitializer(init, init.name());
   }
+  */
 
   return g;
 }

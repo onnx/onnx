@@ -24,13 +24,13 @@ from typing import Text, Any, Callable, Optional, Dict
 
 
 OP_STYLE = {
-    'shape': 'box',
+#    'shape': 'box',
     'color': '#0F9D58',
-    'style': 'filled',
-    'fontcolor': '#FFFFFF'
+    'style': 'bold',
+#    'fontcolor': '#FFFFFF'
 }
 
-BLOB_STYLE = {'shape': 'octagon'}
+BLOB_STYLE = {'shape': 'octagon', 'color': 'blue', 'style': 'bold'}
 
 _NodeProducer = Callable[[NodeProto, int], pydot.Node]
 
