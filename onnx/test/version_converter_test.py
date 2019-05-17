@@ -1034,6 +1034,7 @@ class TestVersionConverter(unittest.TestCase):
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
+        assert converted_model.graph.node[0].op_type == "Cast"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type_to
         assert converted_model.opset_import[0].version == to_opset
 
