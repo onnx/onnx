@@ -45,10 +45,12 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
     // check if bias is Const or in graph's initializers
     if (orig_bias->node()->kind() != kConstant &&
         orig_bias->node()->kind() != kParam) {
+      std::cout << "FMMB 1" << std::endl;
       return false;
     }
     // check if MatMul is only used by Add
     if (orig_matmul->uses().size() > 1) {
+      std::cout << "FMMB 2" << std::endl;
       return false;
     }
     auto x_shape = orig_matmul->node()->inputs()[0]->sizes();
@@ -56,15 +58,18 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
     int64_t z_N = -1;
     int64_t z_M = -1;
     // try to get feature N from x_shape
+    std::cout << "FMMB 3  - " << x_shape.size() << std::endl;
     if (static_cast<int64_t>(x_shape.size()) == 2 && x_shape[0].is_int) {
       z_N = x_shape[0].dim;
     } else {
+      //std::cout << "FMMB 3b - " << (x_shape[0].is_int) << std::endl;
       return false;
     }
     // try to get feature M from y_shape
     if (static_cast<int64_t>(y_shape.size()) == 2 && y_shape[1].is_int) {
       z_M = y_shape[1].dim;
     } else {
+      std::cout << "FMMB 4" << std::endl;
       return false;
     }
     // check if bias_shape is compatible
@@ -79,10 +84,12 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
       bias_N = bias_shape[0].dim;
       bias_M = bias_shape[1].dim;
     } else {
+      std::cout << "FMMB 5" << std::endl;
       return false;
     }
     if ((bias_N != z_N && bias_N != 1) || bias_M != z_M) {
-        return false;
+      std::cout << "FMMB 6" << std::endl;
+      return false;
     }
     // proceed to fuse MatMul and Add into Gemm
     Node* gemm = graph.create(kGemm,
