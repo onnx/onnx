@@ -111,9 +111,7 @@ void convPoolShapeInference(
             residual -= strides[i];
           }
         }
-        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i]
-                                          : kernel_shape[i] + residual;
-
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i] + residual;
         int64_t half_pad_small = total_pad / 2;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
