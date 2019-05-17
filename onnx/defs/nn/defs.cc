@@ -95,6 +95,11 @@ void convPoolShapeInference(
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
     }
+    for (const auto& pad : pads) {
+      if (pad < 0) {
+        fail_shape_inference("Attribute pads has negative values");
+      }
+    }
   } else {
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
@@ -104,9 +109,7 @@ void convPoolShapeInference(
         if (!input_shape.dim(2 + i).has_dim_value()) {
           continue;
         }
-        int64_t dim_value = input_shape.dim(2 + i).dim_value();
-        int64_t legacy_target_size = (dim_value + strides[i] - 1) / strides[i];
-        int64_t total_pad = (legacy_target_size - 1) * strides[i] + kernel_shape[i] - dim_value;
+        int64_t total_pad = kernel_shape[i] - 1;
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
@@ -119,7 +122,7 @@ void convPoolShapeInference(
       }
     }
   }
-    
+
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -1264,15 +1267,16 @@ void convTransposeShapeInference(InferenceContext& ctx) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
             continue;
           }
-          residual =  input_shape.dim(2 + i).dim_value();
+          residual = input_shape.dim(2 + i).dim_value();
           while (residual > 0) {
             residual -= strides[i];
           }
         }
-        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i] + residual;
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i]
+                                          : kernel_shape[i] + residual;
         if (total_pad < 0) {
           fail_shape_inference("Stride is bigger than Kernel shape");
-        }          
+        }
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
@@ -1285,7 +1289,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       }
     }
   }
-    
+
   std::vector<int64_t> output_shape;
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
