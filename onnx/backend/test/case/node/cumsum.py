@@ -74,7 +74,7 @@ class CumSum(Base):
             inputs=['x', 'axis'],
             outputs=['y'],
         )
-        x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+        x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64)
         axis = np.array([0]).astype(np.int32)
         y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64)
         expect(node, inputs=[x, axis], outputs=[y],
