@@ -4,8 +4,8 @@
 #pragma once
 
 // Before:
-//   P = Pad(X, Pads, [Value])
-//   Z = Conv(P, Y)
+//   P = Pad(X) - opset 10 and below (or) Pad(X, Pads, [Value]) - opset 11 and
+//   above Z = Conv(P, Y)
 // After:
 //   Z = Conv(X, Y) with "pads" attribute set
 //
@@ -19,6 +19,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
+
 struct FusePadIntoConv final : public PredicateBasedPass {
   explicit FusePadIntoConv()
       : PredicateBasedPass(
@@ -36,27 +37,39 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     destroy_current = NodeDestroyType::DestroyZero;
 
     // check if Pad is only used by Conv
-    if (n->inputs()[0]->uses().size() > 1)
+    if (n->inputs()[0]->uses().size() > 1) {
       return false;
+    }
 
     Node* conv = n;
     Node* pad = n->inputs()[0]->node();
 
-    // first check if 'pad' node has 'pads' input initialized
-    const auto pads_name = pad->inputs()[1]->uniqueName();
-    const auto pads_initializer = graph.getInitializer(pads_name);
-    // 'pad' node has the 'pads' input which has not been initialized -
-    // can't proceed with fusing
-    if (pads_initializer == graph.initializers().end())
-      return false;
+    // Process 'pads' data
+    std::vector<int64_t> pads;
+    if (pad->hasAttribute(kpads)) {
+      // opset 10 and below
+      pads = pad->is(kpads);
+    } else {
+      // opset 11 and above - first check if 'pad' node has 'pads' input
+      // initialized
+      const auto pads_name = pad->inputs()[1]->uniqueName();
+      const auto pads_initializer = graph.getInitializer(pads_name);
+      // 'pad' node has the 'pads' input which has not been initialized -
+      // can't proceed with fusing
+      if (pads_initializer == graph.initializers().end()) {
+        return false;
+      }
 
-    // make sure the type of 'pads' is INT64
-    if (pads_initializer->elem_type() != TensorProto::INT64)
-      return false;
+      // make sure the type of 'pads' is INT64
+      if (pads_initializer->elem_type() != TensorProto::INT64) {
+        return false;
+      }
 
-    // parse 'pads' data from the initialized input
-    const auto& pads = ParseData<int64_t>(&*pads_initializer);
+      // parse 'pads' data from the initialized input
+      pads = ParseData<int64_t>(&*pads_initializer);
+    }
 
+    // Process 'mode'
     std::string pad_mode;
     if (pad->hasAttribute(kmode)) {
       pad_mode = pad->s(kmode);
@@ -65,13 +78,18 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     }
 
     // cannot fuse if the pad mode is not "Constant"
-    if (pad_mode != "constant")
+    if (pad_mode != "constant") {
       return false;
+    }
 
+    // Process 'value'
     double value = 0.0;
-    // check if the 'pad' node has the optional 'value' input
-    if (pad->inputs().size() == 3) {
-      // check if it has data initialized
+    if (pad->hasAttribute(kvalue)) {
+      // opset 10 and below
+      value = static_cast<double>(pad->f(kvalue));
+    } else if (pad->inputs().size() == 3) {
+      // opset 11 and above - check if the 'pad' node has the optional 'value'
+      // input check if it has data initialized
       const auto value_name = pad->inputs()[2]->uniqueName();
       const auto value_initializer = graph.getInitializer(value_name);
 

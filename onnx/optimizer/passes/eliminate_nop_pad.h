@@ -19,32 +19,42 @@ struct EliminateNopPad final : public PredicateBasedPass {
   std::string getPassName() const override {
     return "eliminate_nop_pad";
   }
-  static bool is_nop_pad(Node* node, Graph& graph) {
-    const auto pads_name = node->inputs()[1]->uniqueName();
-    const auto pads_initializer = graph.getInitializer(pads_name);
-    // 'pad' node has the 'pads' input which has not been initialized -
-    // can't proceed with elimination
-    if (pads_initializer == graph.initializers().end())
-      return false;
 
-    // validate values within 'pads'
-    if (pads_initializer->elem_type() == TensorProto::INT64) {
-      const auto& pads = ParseData<int64_t>(&*pads_initializer);
-      for (const auto& val : pads) {
-        if (val > 0)
+  static bool is_nop_pad(Node* node, Graph& graph) {
+    if (node->hasAttribute(kpads)) {
+      // opset 10 and below
+      const auto& pads = node->is(kpads);
+      for (size_t i = 0; i < pads.size(); i++)
+        if (pads[i] > 0)
           return false;
-      }
       return true;
+    } else {
+      // opset 11 and above
+      const auto pads_name = node->inputs()[1]->uniqueName();
+      const auto pads_initializer = graph.getInitializer(pads_name);
+      // 'pad' node has the 'pads' input which has not been initialized -
+      // can't proceed with elimination
+      if (pads_initializer == graph.initializers().end())
+        return false;
+
+      // validate values within 'pads'
+      if (pads_initializer->elem_type() == TensorProto::INT64) {
+        const auto& pads = ParseData<int64_t>(&*pads_initializer);
+        for (const auto& val : pads) {
+          if (val > 0)
+            return false;
+        }
+        return true;
+      }
     }
 
-    // not relevant data type for this input -
-    // can't proceed with elimination
     return false;
   }
 
   bool patternMatchPredicate(Node* node) override {
     return node->kind() == kPad;
   }
+
   bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
       override {
     if (!is_nop_pad(node, graph))
