@@ -411,7 +411,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver1_doc = R"DOC(
+static const char* Loop_ver11_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -529,9 +529,9 @@ point-wise operators (e.g. dropout, residual connections, linear layer).
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    1,
+    11,
     OpSchema()
-        .SetDoc(Loop_ver1_doc)
+        .SetDoc(Loop_ver11_doc)
         .Input(
             0,
             "M",
@@ -552,7 +552,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "change across loop iterations)",
             "V",
             OpSchema::Variadic,
-            false)
+            false,
+            0)
         .Output(
             0,
             "v_final_and_scan_outputs",
@@ -775,7 +776,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
 
-static const char* Momentum_ver10_doc = R"DOC(
+static const char* Momentum_ver11_doc = R"DOC(
     Compute one iteration of stochastic gradient update with momentum.
     This operator can conduct the optimization of multiple tensor variables.
 
@@ -827,9 +828,9 @@ static const char* Momentum_ver10_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Momentum,
-    10,
+    11,
     OpSchema()
-        .SetDoc(Momentum_ver10_doc)
+        .SetDoc(Momentum_ver11_doc)
         .Input(0, "R", "The learning rate.", "T1")
         .Input(1, "Alpha", "The decay factor of momentum. It should be a scalar.", "T2")
         .Input(2, "Beta", "The coefficient of gradient in computing new momentum. It should be a scalar.", "T2")

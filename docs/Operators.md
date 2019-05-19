@@ -107,6 +107,8 @@
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
   * <a href="#Resize">Resize</a>
+  * <a href="#ReverseSequence">ReverseSequence</a>
+  * <a href="#RoiAlign">RoiAlign</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -6140,7 +6142,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Loop-1">Loop-1</a>
 
 #### Attributes
 
@@ -6149,7 +6153,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
 </dl>
 
-#### Inputs (3 - &#8734;)
+#### Inputs (2 - &#8734;)
 
 <dl>
 <dt><tt>M</tt> (optional) : I</dt>
@@ -7474,7 +7478,7 @@ This version of the operator has been available since version 10 of the default 
 #### Examples
 
 <details>
-<summary>float_mixed_sign</summary>
+<summary>mod_broadcast</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -7483,18 +7487,27 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
-y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
-z = np.mod(x, y)  # expected output [2., -3.,  5., -2.,  3.,  3.]
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
+z
+#   array([[[0, 1, 2, 3, 4],
+#     [5, 6, 0, 1, 2]],
+
+#    [[3, 4, 5, 6, 0],
+#     [1, 2, 3, 4, 5]],
+
+#    [[6, 0, 1, 2, 3],
+#     [4, 5, 6, 0, 1]]], dtype=int32)
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_mod_float_mixed_sign_example')
+       name='test_mod_broadcast')
 ```
 
 </details>
 
 
 <details>
-<summary>fmod_mixed_sign</summary>
+<summary>mod_int64_fmod</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -7504,18 +7517,121 @@ node = onnx.helper.make_node(
     fmod=1
 )
 
-x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0])
-y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0])
-z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.fmod(x, y)  # expected output [ 0,  1,  5,  0, -1,  3]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_mod_fmod_mixed_sign_example')
+       name='test_mod_int64_fmod')
 ```
 
 </details>
 
 
 <details>
-<summary>int64_mixed_sign</summary>
+<summary>mod_mixed_sign_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.fmod(x, y)  # expected output [-0.10156, 0.3984 , 5. , 0.10156, -0.3984 ,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float16')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.fmod(x, y)  # expected output [-0.10000038, 0.39999962, 5. , 0.10000038, -0.39999962, 3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float32')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float64')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int16)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int16)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int16')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int32)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int32)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int32')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int64</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -7528,14 +7644,14 @@ x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
 y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
 z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_mod_int64_mixed_sign_example')
+       name='test_mod_mixed_sign_int64')
 ```
 
 </details>
 
 
 <details>
-<summary>mul_broadcast</summary>
+<summary>mod_mixed_sign_int8</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -7544,11 +7660,91 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.arange(0, 30).reshape([3, 2, 5])
-y = np.array([7])
-z = np.mod(x, y)
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int8)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int8)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_mod_bcast')
+       name='test_mod_mixed_sign_int8')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint16)
+y = np.array([2, 3, 8]).astype(np.uint16)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint32)
+y = np.array([2, 3, 8]).astype(np.uint32)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint64)
+y = np.array([2, 3, 8]).astype(np.uint64)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint8)
+y = np.array([2, 3, 8]).astype(np.uint8)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint8')
 ```
 
 </details>
@@ -7606,7 +7802,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
 #### Inputs (5 - &#8734;)
 
@@ -11302,6 +11498,387 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_nearest')
+```
+
+</details>
+
+
+### <a name="ReverseSequence"></a><a name="reversesequence">**ReverseSequence**</a>
+
+  Reverse batch of sequences having different lengths specified by `sequence_lens`.
+  
+  For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+  and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+  sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+  
+  Example 1:
+    input = [[0.0, 4.0, 8.0,  12.0],
+             [1.0, 5.0, 9.0,  13.0],
+             [2.0, 6.0, 10.0, 14.0],
+             [3.0, 7.0, 11.0, 15.0]]
+    sequence_lens = [4, 3, 2, 1]
+    time_axis = 0
+    batch_axis = 1
+  
+    output = [[3.0, 6.0, 9.0,  12.0],
+              [2.0, 5.0, 8.0,  13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]]
+  
+  Example 2:
+    input = [[0.0,  1.0,  2.0,  3.0 ],
+             [4.0,  5.0,  6.0,  7.0 ],
+             [8.0,  9.0,  10.0, 11.0],
+             [12.0, 13.0, 14.0, 15.0]]
+    sequence_lens = [1, 2, 3, 4]
+    time_axis = 1
+    batch_axis = 0
+  
+    output = [[0.0,  1.0,  2.0,  3.0 ],
+              [5.0,  4.0,  6.0,  7.0 ],
+              [10.0, 9.0,  8.0,  11.0],
+              [15.0, 14.0, 13.0, 12.0]]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_axis</tt> : int (default is 1)</dt>
+<dd>(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.</dd>
+<dt><tt>time_axis</tt> : int (default is 0)</dt>
+<dd>(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 2.</dd>
+<dt><tt>sequence_lens</tt> : tensor(int64)</dt>
+<dd>Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape of input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>reversesequence_batch</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=1,
+    batch_axis=0,
+)
+x = np.array([[0.0, 1.0, 2.0, 3.0],
+              [4.0, 5.0, 6.0, 7.0],
+              [8.0, 9.0, 10.0, 11.0],
+              [12.0, 13.0, 14.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+
+y = np.array([[0.0, 1.0, 2.0, 3.0],
+              [5.0, 4.0, 6.0, 7.0],
+              [10.0, 9.0, 8.0, 11.0],
+              [15.0, 14.0, 13.0, 12.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_batch')
+```
+
+</details>
+
+
+<details>
+<summary>reversesequence_time</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=0,
+    batch_axis=1,
+)
+x = np.array([[0.0, 4.0, 8.0, 12.0],
+              [1.0, 5.0, 9.0, 13.0],
+              [2.0, 6.0, 10.0, 14.0],
+              [3.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([4, 3, 2, 1], dtype=np.int64)
+
+y = np.array([[3.0, 6.0, 9.0, 12.0],
+              [2.0, 5.0, 8.0, 13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_time')
+```
+
+</details>
+
+
+### <a name="RoiAlign"></a><a name="roialign">**RoiAlign**</a>
+
+  Region of Interest (RoI) align operation described in the
+  [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
+  RoiAlign consumes an input tensor X and region of interests (rois)
+  to apply pooling across each RoI; it produces a 4-D tensor of shape
+  (num_rois, C, output_height, output_width).
+  
+  RoiAlign is proposed to avoid the misalignment by removing
+  quantizations while converting from original image into feature
+  map and from feature map into RoI feature; in each ROI bin,
+  the value of the sampled locations are computed directly
+  through bilinear interpolation.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is avg)</dt>
+<dd>The pooling method. Two modes are supported: 'avg' and 'max'. Default is 'avg'.</dd>
+<dt><tt>output_height</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's height.</dd>
+<dt><tt>output_width</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's width.</dd>
+<dt><tt>sampling_ratio</tt> : int (default is 0)</dt>
+<dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / output_width), and likewise for height). Default is 0.</dd>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T1</dt>
+<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[x1, y1, x2, y2], ...]. The RoIs' coordinates are in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
+<dt><tt>batch_indices</tt> : T2</dt>
+<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, output_height, output_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain types to int tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>roialign</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RoiAlign",
+    inputs=["X", "rois", "batch_indices"],
+    outputs=["Y"],
+    spatial_scale=1.0,
+    output_height=5,
+    output_width=5,
+    sampling_ratio=2,
+)
+
+X = np.array(
+    [
+        [
+            [
+                [
+                    0.2764,
+                    0.7150,
+                    0.1958,
+                    0.3416,
+                    0.4638,
+                    0.0259,
+                    0.2963,
+                    0.6518,
+                    0.4856,
+                    0.7250,
+                ],
+                [
+                    0.9637,
+                    0.0895,
+                    0.2919,
+                    0.6753,
+                    0.0234,
+                    0.6132,
+                    0.8085,
+                    0.5324,
+                    0.8992,
+                    0.4467,
+                ],
+                [
+                    0.3265,
+                    0.8479,
+                    0.9698,
+                    0.2471,
+                    0.9336,
+                    0.1878,
+                    0.4766,
+                    0.4308,
+                    0.3400,
+                    0.2162,
+                ],
+                [
+                    0.0206,
+                    0.1720,
+                    0.2155,
+                    0.4394,
+                    0.0653,
+                    0.3406,
+                    0.7724,
+                    0.3921,
+                    0.2541,
+                    0.5799,
+                ],
+                [
+                    0.4062,
+                    0.2194,
+                    0.4473,
+                    0.4687,
+                    0.7109,
+                    0.9327,
+                    0.9815,
+                    0.6320,
+                    0.1728,
+                    0.6119,
+                ],
+                [
+                    0.3097,
+                    0.1283,
+                    0.4984,
+                    0.5068,
+                    0.4279,
+                    0.0173,
+                    0.4388,
+                    0.0430,
+                    0.4671,
+                    0.7119,
+                ],
+                [
+                    0.1011,
+                    0.8477,
+                    0.4726,
+                    0.1777,
+                    0.9923,
+                    0.4042,
+                    0.1869,
+                    0.7795,
+                    0.9946,
+                    0.9689,
+                ],
+                [
+                    0.1366,
+                    0.3671,
+                    0.7011,
+                    0.6234,
+                    0.9867,
+                    0.5585,
+                    0.6985,
+                    0.5609,
+                    0.8788,
+                    0.9928,
+                ],
+                [
+                    0.5697,
+                    0.8511,
+                    0.6711,
+                    0.9406,
+                    0.8751,
+                    0.7496,
+                    0.1650,
+                    0.1049,
+                    0.1559,
+                    0.2514,
+                ],
+                [
+                    0.7012,
+                    0.4056,
+                    0.7879,
+                    0.3461,
+                    0.0415,
+                    0.2998,
+                    0.5094,
+                    0.3727,
+                    0.5482,
+                    0.0502,
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0, 0, 9, 9], [0, 5, 4, 9], [5, 5, 9, 9]], dtype=np.float32)
+# (num_rois, C, output_height, output_width)
+Y = np.array(
+    [
+        [
+            [
+                [0.4664, 0.4466, 0.3405, 0.5688, 0.6068],
+                [0.3714, 0.4296, 0.3835, 0.5562, 0.3510],
+                [0.2768, 0.4883, 0.5222, 0.5528, 0.4171],
+                [0.4713, 0.4844, 0.6904, 0.4920, 0.8774],
+                [0.6239, 0.7125, 0.6289, 0.3355, 0.3495],
+            ]
+        ],
+        [
+            [
+                [0.3022, 0.4305, 0.4696, 0.3978, 0.5423],
+                [0.3656, 0.7050, 0.5165, 0.3172, 0.7015],
+                [0.2912, 0.5059, 0.6476, 0.6235, 0.8299],
+                [0.5916, 0.7389, 0.7048, 0.8372, 0.8893],
+                [0.6227, 0.6153, 0.7097, 0.6154, 0.4585],
+            ]
+        ],
+        [
+            [
+                [0.2384, 0.3379, 0.3717, 0.6100, 0.7601],
+                [0.3767, 0.3785, 0.7147, 0.9243, 0.9727],
+                [0.5749, 0.5826, 0.5709, 0.7619, 0.8770],
+                [0.5355, 0.2566, 0.2141, 0.2796, 0.3600],
+                [0.4365, 0.3504, 0.2887, 0.3661, 0.2349],
+            ]
+        ],
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
 ```
 
 </details>
