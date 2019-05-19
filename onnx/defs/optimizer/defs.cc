@@ -4,7 +4,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Adagrad_ver10_doc = R"DOC(
+static const char* Adagrad_ver11_doc = R"DOC(
     Compute one iteration of ADAGRAD, a stochastic gradient based optimization
     algorithm. This operator can conduct the optimization of multiple tensor variables.
 
@@ -58,9 +58,9 @@ static const char* Adagrad_ver10_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Adagrad,
-    10,
+    11,
     OpSchema()
-        .SetDoc(Adagrad_ver10_doc)
+        .SetDoc(Adagrad_ver11_doc)
         .Input(0, "R", "The initial learning rate.", "T1")
         .Input(1, "T", "The update count of \"X\". It should be a scalar.", "T2")
         .Input(
