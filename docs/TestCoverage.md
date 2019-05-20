@@ -7295,7 +7295,23 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### StringConcat
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
+<details>
+<summary>stringconcat_2d</summary>
+
+```python
+input = np.array([[u'a', u'b', u'c'], [u'd', u'e', u'f']]).astype(np.object)
+output = np.array([[u'a b c'], [u'd e f']]).astype(np.object)
+
+node = onnx.helper.make_node(
+    'StringConcat',
+    inputs=['input'],
+    outputs=['output'],
+)
+expect(node, inputs=[input], outputs=[output], name='test_stringconcat_2d')
+```
+
+</details>
 <details>
 <summary>stringconcat_default_separator</summary>
 

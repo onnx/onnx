@@ -2176,21 +2176,23 @@ static const char* StringConcat_ver11_doc = R"DOC(
 Concatenates strings in the input tensor to form a larger string. 
 A separator can be specified to separate entries in the resulting string. 
 One single space is used as the default.
-The input tensor can be of rank 1 or 2.
-The resulting tensor will be of rank 0 or 1.
+The input tensor can have the shape [C] (rank 1) or [N,C] (rank 2).
+The resulting tensor will have either the shape [1] or [N,1] accordingly.
 
 Example 1:
-  input = [['a', 'b', 'c'],
-           ['d', 'e', 'f']]
-
-  output = [['a b c', 'd e f']]
-
+```
+input = [['a', 'b', 'c'],
+          ['d', 'e', 'f']]  # shape: [2,3]
+output = [['a b c'], ['d e f']]  # shape: [2,1]
+```
 Example 2:
-  input = [['a', 'b', 'c'],
-           ['d', 'e', 'f']]
-  separator = '-'
+```
+input = [['a', 'b', 'c'],
+          ['d', 'e', 'f']]  # shape: [2,3]
+separator = '-'
 
-  output = [['a-b-c', 'd-e-f']]
+output = [['a-b-c'], ['d-e-f']]  # shape: [2,1]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

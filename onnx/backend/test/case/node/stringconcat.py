@@ -37,3 +37,15 @@ class StringConcat(Base):
             separator=':'
         )
         expect(node, inputs=[input], outputs=[output], name='test_stringconcat_with_separator')
+
+    @staticmethod
+    def export_stringconcat_2d():    # type: () -> None
+        input = np.array([[u'a', u'b', u'c'], [u'd', u'e', u'f']]).astype(np.object)
+        output = np.array([[u'a b c'], [u'd e f']]).astype(np.object)
+
+        node = onnx.helper.make_node(
+            'StringConcat',
+            inputs=['input'],
+            outputs=['output'],
+        )
+        expect(node, inputs=[input], outputs=[output], name='test_stringconcat_2d')
