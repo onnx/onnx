@@ -324,7 +324,8 @@ if (MSVC)
     set(ONNX_IMPORT "__declspec(dllimport)")
   else()
     target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=")
-    set(ONNX_IMPORT "")
+    # Setting ONNX_IMPORT to "" actually unsets it, so ONNX_IMPORT is set to " " here.
+    set(ONNX_IMPORT " ")
   endif()
 else()
   # On non-Windows, hide all symbols we don't need
