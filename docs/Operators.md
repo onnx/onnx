@@ -126,6 +126,7 @@
   * <a href="#Split">Split</a>
   * <a href="#Sqrt">Sqrt</a>
   * <a href="#Squeeze">Squeeze</a>
+  * <a href="#StringConcat">StringConcat</a>
   * <a href="#StringNormalizer">StringNormalizer</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
@@ -13522,6 +13523,120 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+
+
+### <a name="StringConcat"></a><a name="stringconcat">**StringConcat**</a>
+
+  Concatenates strings in the input tensor to form a larger string. 
+  A separator can be specified to separate entries in the resulting string. 
+  One single space is used as the default.
+  The input tensor can have the shape [C] (rank 1) or [N,C] (rank 2).
+  The resulting tensor will have either the shape [1] or [N,1] accordingly.
+  
+  Example 1:
+  ```
+  input = [['a', 'b', 'c'],
+            ['d', 'e', 'f']]  # shape: [2,3]
+  output = [['a b c'], ['d e f']]  # shape: [2,1]
+  ```
+  Example 2:
+  ```
+  input = [['a', 'b', 'c'],
+            ['d', 'e', 'f']]  # shape: [2,3]
+  separator = '-'
+  
+  output = [['a-b-c'], ['d-e-f']]  # shape: [2,1]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>separator</tt> : string (default is  )</dt>
+<dd>(Optional) Specifies the string to be used when joining entries (default = single space)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank 1 or 2</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank 0 or 1</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Input and output types can onlyt be of string tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>stringconcat_2d</summary>
+
+```python
+input = np.array([[u'a', u'b', u'c'], [u'd', u'e', u'f']]).astype(np.object)
+output = np.array([[u'a b c'], [u'd e f']]).astype(np.object)
+
+node = onnx.helper.make_node(
+    'StringConcat',
+    inputs=['input'],
+    outputs=['output'],
+)
+expect(node, inputs=[input], outputs=[output], name='test_stringconcat_2d')
+```
+
+</details>
+
+
+<details>
+<summary>stringconcat_default_separator</summary>
+
+```python
+input = np.array([u'a', u'b', u'c']).astype(np.object)
+output = np.array([u'a b c']).astype(np.object)
+
+# No stopwords. This is a NOOP
+node = onnx.helper.make_node(
+    'StringConcat',
+    inputs=['input'],
+    outputs=['output'],
+)
+expect(node, inputs=[input], outputs=[output], name='test_stringconcat_default_separator')
+```
+
+</details>
+
+
+<details>
+<summary>stringconcat_with_separator</summary>
+
+```python
+input = np.array([u'a', u'b', u'c']).astype(np.object)
+output = np.array([u'a:b:c']).astype(np.object)
+
+node = onnx.helper.make_node(
+    'StringConcat',
+    inputs=['input'],
+    outputs=['output'],
+    separator=':'
+)
+expect(node, inputs=[input], outputs=[output], name='test_stringconcat_with_separator')
 ```
 
 </details>
