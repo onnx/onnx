@@ -1,0 +1,10 @@
+// Copyright (c) ONNX Project Contributors.
+// Licensed under the MIT license.
+
+#ifndef ONNX_MACROS_H
+#define ONNX_MACROS_H
+
+#cmakedefine ONNX_IMPORT @ONNX_IMPORT@
+#define ONNX_API ONNX_IMPORT
+
+#endif // ! ONNX_MACROS_H

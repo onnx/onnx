@@ -297,10 +297,8 @@ target_include_directories(onnx_proto PUBLIC
 # building the generated pb.h/pb.cc or not, resolves to 
 # either export or import.
 # 
-# In pb.h/pb.cc, ONNX_API is set by CMake. In other files, 
-# it is set in onnx/macros.h and included by onnx/onnx_pb.h,
-# so that the macro in installed/distributed files
-# (e.g., we installed onnx by `make install`) work correctly. 
+# For pb.h/pb.cc, ONNX_API is set by CMake. For other files, 
+# it is set in onnx/macros.h and included by onnx/onnx_pb.h.
 #
 # More details on Windows dllimport / dllexport can be found at
 # https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
@@ -322,18 +320,18 @@ if (MSVC)
     set(EXTRA_FLAGS "")
   endif()
   if (BUILD_SHARED_LIBS)
-    # ONNX_API is set here for compiling onnx_proto itself
-    target_compile_definitions(onnx_proto INTERFACE "-DONNX_API=__declspec(dllimport)")
     target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=__declspec(dllexport)")
+    set(ONNX_IMPORT "__declspec(dllimport)")
   else()
-    target_compile_definitions(onnx_proto PUBLIC "-DONNX_API=")
+    target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=")
+    set(ONNX_IMPORT "")
   endif()
 else()
   # On non-Windows, hide all symbols we don't need
   set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
   set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
-  # ONNX_API is set here for compiling onnx_proto itself
-  target_compile_definitions(onnx_proto PUBLIC "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
+  target_compile_definitions(onnx_proto PRIVATE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
+  set(ONNX_IMPORT "__attribute__\(\(__visibility__\(\"default\"\)\)\)")
 endif()
 
 if(ONNX_USE_LITE_PROTO)
@@ -579,6 +577,11 @@ target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
 if(MSVC)
   add_msvc_runtime_flag(onnxifi_dummy)
 endif()
+
+configure_file(
+    ${ONNX_ROOT}/onnx/macros.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/onnx/macros.h
+    @ONLY)
 
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION include

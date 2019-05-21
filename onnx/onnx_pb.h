@@ -4,6 +4,9 @@
 #ifndef ONNX_ONNX_PB_H
 #define ONNX_ONNX_PB_H
 
+// onnx/macros.h is generated from onnx/macros.h.in
+#include "onnx/macros.h"
+
 #ifdef ONNX_ML
 #include "onnx/onnx-ml.pb.h"
 #else
