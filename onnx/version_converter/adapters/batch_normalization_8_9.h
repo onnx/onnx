@@ -7,12 +7,12 @@
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct BatchNormalization_8_9 final : public Adapter {
-  explicit BatchNormalization_8_9() 
+  explicit BatchNormalization_8_9()
     : Adapter("BatchNormalization", OpSetID(8), OpSetID(9)) {
     }
-    
+
   void adapt_batch_normalization_8_9(std::shared_ptr<Graph>, Node* node) const {
-    
+
     Symbol spatial = Symbol("spatial");
       if (node->hasAttribute(spatial)) {
         if (node->i(spatial) == 1) {
