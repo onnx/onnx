@@ -11,7 +11,7 @@ struct Scan_8_9 final : public Adapter {
     }
 
   void adapt_scan_8_9(std::shared_ptr<Graph>, Node* node) const {
-    
+
     const std::vector<Value*> inputs(node->inputs().vec());
     const std::vector<Value*> outputs(node->outputs().vec());
 
@@ -31,7 +31,7 @@ struct Scan_8_9 final : public Adapter {
     if (inputs[0]->uniqueName() != "") {
           ONNX_ASSERT("Unsupported conversion to opset 9");
     }
-    
+
     for (Value* input : inputs) {
       if (!input->sizes().empty()) {
         std::vector<Dimension> new_sizes(input->sizes().begin()+1, input->sizes().end());
@@ -45,7 +45,7 @@ struct Scan_8_9 final : public Adapter {
         std::vector<Dimension> new_sizes(output->sizes().begin()+1, output->sizes().end());
         output->setSizes(new_sizes);
       }
-    }            
+    }
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
