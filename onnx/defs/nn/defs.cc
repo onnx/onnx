@@ -1280,7 +1280,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
         }
         int64_t total_pad = residual == 0 ? kernel_shape[i] - stride : kernel_shape[i] - residual;
         if (total_pad < 0)
-          total_pad = 0;         
+          total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
