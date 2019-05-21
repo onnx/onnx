@@ -2228,7 +2228,7 @@ This version of the operator has been available since version 9 of the default O
 <summary>float_ones</summary>
 
 ```python
-x = np.array([4, 3, 2])
+x = np.array([4, 3, 2]).astype(np.int64)
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
                                        [1], [1])
 node = onnx.helper.make_node(
@@ -2250,7 +2250,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>int32_zeros</summary>
 
 ```python
-x = np.array([10, 6])
+x = np.array([10, 6]).astype(np.int64)
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
                                        [1], [0])
 node = onnx.helper.make_node(
@@ -6141,7 +6141,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Loop-1">Loop-1</a>
 
 #### Attributes
 
@@ -6150,7 +6152,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
 </dl>
 
-#### Inputs (3 - &#8734;)
+#### Inputs (2 - &#8734;)
 
 <dl>
 <dt><tt>M</tt> (optional) : I</dt>
