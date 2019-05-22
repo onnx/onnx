@@ -1195,7 +1195,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
 
             auto* output_shape = getOutputShape(ctx, 0);
-            for (size_t i = 0; i < static_cast<size_t>(max_dimension_count); ++i) {
+            for (size_t i = 0; i < max_dimension_count; ++i) {
               output_shape->add_dim();
             }
 
@@ -1215,7 +1215,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               int64_t val_2 = 1;
               if (!is_input_2_scalar && input_2_axis_iter >= 0)
-                val_2 = shape_data[input_2_axis_iter];
+                val_2 = shape_data[static_cast<size_t>(input_2_axis_iter)];
 
               // Two corresponding dimension must have the same value, or one of
               // them should be equal to 1 (according to spec)
