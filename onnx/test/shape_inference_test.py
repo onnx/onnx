@@ -549,6 +549,22 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 6, 6, 6))])
 
+    def test_conv_auto_pad(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 7, 6, 4)),
+             ('y', TensorProto.FLOAT, (50, 4, 4, 3, 2))],
+            [make_node('Conv', ['x', 'y'], 'z', auto_pad='SAME_UPPER')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 7, 6, 4))])
+
+    def test_conv_auto_pad_dilation(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 65, 64, 63)),
+             ('y', TensorProto.FLOAT, (50, 4, 4, 3, 2))],
+            [make_node('Conv', ['x', 'y'], 'z', auto_pad='SAME_UPPER', dilations=[2, 3, 4])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 65, 64, 63))])
+
     def test_conv_group(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (30, 4, 8, 8, 8)),
@@ -1037,6 +1053,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))])
 
+    def test_maxpool_with_same_upper_padding_and_stride_and_dilation(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_UPPER", kernel_shape=[2, 2], strides=[2, 2], dilations=[2, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))])
+
     def test_maxpool_with_same_upper_padding_and_stride_one(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
@@ -1048,6 +1071,13 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 9, 9))],
             [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_LOWER", kernel_shape=[2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))])
+
+    def test_maxpool_with_same_lower_padding_and_stride_and_dilation(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 9, 9))],
+            [make_node("MaxPool", ["X"], ["Y"], auto_pad="SAME_LOWER", kernel_shape=[2, 2], strides=[2, 2], dilations=[2, 3])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))])
 
