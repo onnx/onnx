@@ -115,10 +115,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("Max",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
         OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<CompatibleAdapter>("Min",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
         OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<CompatibleAdapter>("Mean",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mean",
         OpSetID(8), OpSetID(7)));      
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
