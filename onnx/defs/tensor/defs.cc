@@ -1809,9 +1809,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "'pads' input must be a 1D (shape: [input_rank]) "
                   "or 2D tensor (shape: [1, input_rank]) of type int64");
 
-            // make a copy of the returned const vector - may have to resize
-            // this in next step
-            std::vector<int64_t> pads_data = ParseData<int64_t>(pads_initializer);
+
+            const auto& pads_data = ParseData<int64_t>(pads_initializer);
 
             // fill with zeros if needed to reach appropriate size
             if (pads_data.size() != static_cast<size_t>(2 * input_rank))
