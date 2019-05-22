@@ -102,19 +102,19 @@ void convPoolShapeInference(
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
         int64_t residual = 0;
-        if (strides[i] > 1) {
+        int64_t stride = strides[i];
+        if (stride > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
             continue;
           }
-          residual =  input_shape.dim(2 + i).dim_value();
-          while (residual > 0) {
-            residual -= strides[i];
+          residual = input_shape.dim(2 + i).dim_value();
+          while (residual >= stride) {
+            residual -= stride;
           }
         }
-        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i] + residual;
-        if (total_pad < 0) {
-          fail_shape_inference("Stride is bigger than Kernel shape");
-        }
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - stride : kernel_shape[i] - residual;
+        if (total_pad < 0)
+          total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
@@ -1268,19 +1268,19 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
         int64_t residual = 0;
-        if (strides[i] > 1) {
+        int64_t stride = strides[i];
+        if (stride > 1) {
           if (!input_shape.dim(2 + i).has_dim_value()) {
             continue;
           }
-          residual =  input_shape.dim(2 + i).dim_value();
-          while (residual > 0) {
-            residual -= strides[i];
+          residual = input_shape.dim(2 + i).dim_value();
+          while (residual >= stride) {
+            residual -= stride;
           }
         }
-        int64_t total_pad = residual == 0 ? kernel_shape[i] - strides[i] : kernel_shape[i] + residual;
-        if (total_pad < 0) {
-          fail_shape_inference("Stride is bigger than Kernel shape");
-        }          
+        int64_t total_pad = residual == 0 ? kernel_shape[i] - stride : kernel_shape[i] - residual;
+        if (total_pad < 0)
+          total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
