@@ -1206,7 +1206,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               int64_t val_1 = 1;
               if (!is_input_1_scalar && input_1_axis_iter >= 0) {
-                const auto& dim = input_shape.dim((int)input_1_axis_iter);
+                const auto& dim = input_shape.dim(static_cast<int>(input_1_axis_iter));
                 // cannot process this dimension
                 if (!dim.has_dim_value())
                   continue;
