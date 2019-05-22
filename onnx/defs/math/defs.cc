@@ -1195,7 +1195,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
 
             auto* output_shape = getOutputShape(ctx, 0);
-            for (size_t i = 0; i < max_dimension_count; ++i) {
+            for (size_t i = 0; i < static_cast<size_t>(max_dimension_count); ++i) {
               output_shape->add_dim();
             }
 
