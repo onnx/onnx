@@ -1158,7 +1158,78 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensors."));
+            "Constrain input and output types to all tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          // For shape inference (and rank inference), we need both input shape
+          // and values in 'shape' tensor
+          const auto* shape_initializer = ctx.getInputData(1);
+          if (hasNInputShapes(ctx, 1) && nullptr != shape_initializer) {
+            const auto& shape_initializer_shape =
+                ctx.getInputType(1)->tensor_type().shape();
+            if (shape_initializer_shape.dim_size() != 1 ||
+                shape_initializer->data_type() != TensorProto::INT64)
+              fail_shape_inference(
+                  "'shape' input must be 1D tensor of type INT64");
+
+            const auto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const auto& shape_data = ParseData<int64_t>(shape_initializer);
+
+            size_t max_dimension_count = std::max(
+                static_cast<size_t>(input_shape.dim_size()), shape_data.size());
+
+            int64_t output_axis_iter = max_dimension_count;
+
+            bool is_input_1_scalar = input_shape.dim_size() == 0 ? true : false;
+            int64_t input_1_axis_iter = input_shape.dim_size();
+
+            bool is_input_2_scalar = shape_data.size() == 0 ? true : false;
+            int64_t input_2_axis_iter = shape_data.size();
+
+            // shape inference is a no-op if both have scalar shapes
+            if (is_input_1_scalar && is_input_2_scalar)
+              return;
+
+            auto* output_shape = getOutputShape(ctx, 0);
+            for (size_t i = 0; i < max_dimension_count; ++i) {
+              output_shape->add_dim();
+            }
+
+            while (output_axis_iter >= 1) {
+              --output_axis_iter;
+              --input_1_axis_iter;
+              --input_2_axis_iter;
+
+              int64_t val_1 = 1;
+              if (!is_input_1_scalar && input_1_axis_iter >= 0) {
+                const auto& dim = input_shape.dim((int)input_1_axis_iter);
+                // cannot process this dimension
+                if (!dim.has_dim_value())
+                  continue;
+                val_1 = dim.dim_value();
+              }
+
+              int64_t val_2 = 1;
+              if (!is_input_2_scalar && input_2_axis_iter >= 0)
+                val_2 = shape_data[input_2_axis_iter];
+
+              // Two corresponding dimension must have the same value, or one of
+              // them should be equal to 1 (according to spec)
+              if (val_1 != val_2 && val_1 != 1 && val_2 != 1)
+                fail_shape_inference(
+                    "Two corresponding dimension must have the same value, or one of them should be equal to 1");
+
+              output_shape->mutable_dim(static_cast<int>(output_axis_iter))
+                  ->set_dim_value(std::max(val_1, val_2));
+            }
+          }
+
+          return;
+        }));
 
 static const char* Sinh_ver9_doc = R"DOC(
 Calculates the hyperbolic sine of the given input tensor element-wise.
