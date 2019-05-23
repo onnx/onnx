@@ -16,13 +16,12 @@ def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # ty
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Update squared accumulated gradient.
-    h_new = h + g * g
+    h_new = h + g_regularized * g_regularized
     # Compute ADAGRAD's gradient scaling factors
     h_sqrt = np.sqrt(h_new) + epsilon
     # Apply ADAGRAD update rule.
     x_new = x - r_ * g_regularized / h_sqrt
     return (x_new, h_new)
-
 
 class Adagrad(Base):
 
