@@ -884,6 +884,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24, 1, 1))])
 
+    def test_reduce_op_default_axes_keep_dims_false(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceMax', 'x', 'y', keepdims=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
+
     def test_argmax_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
