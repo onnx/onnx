@@ -1450,7 +1450,7 @@ In case of halfs, the rule is to round them to the nearest even integer
 
 Examples:
 ```
-round([0.9) = [1.0]
+round([0.9]) = [1.0]
 round([2.5]) = [2.0]
 round([2.3]) = [2.0]
 round([1.5]) = [2.0]
@@ -1467,7 +1467,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 

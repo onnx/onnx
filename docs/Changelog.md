@@ -10447,7 +10447,7 @@ This version of the operator has been available since version 11 of the default 
   
   Examples:
   ```
-  round([0.9) = [1.0]
+  round([0.9]) = [1.0]
   round([2.5]) = [2.0]
   round([2.3]) = [2.0]
   round([1.5]) = [2.0]
@@ -10475,7 +10475,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
