@@ -23,6 +23,7 @@ def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # ty
     x_new = x - r_ * g_regularized / h_sqrt
     return (x_new, h_new)
 
+
 class Adagrad(Base):
 
     @staticmethod
