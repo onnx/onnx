@@ -315,6 +315,25 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 6
 
+    # Test Sum Adapter: 7 -> 8
+    def test_sum_7_8(self):  # type: () -> None
+        nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
+            "data_3", "data_4"], ["sum"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data_0", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_2", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_3", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_4", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 7), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Sum"
+        assert converted_model.opset_import[0].version == 8
+
     # Test Sum Adapter: 5 -> 8
     def test_sum_5_8(self):  # type: () -> None
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
@@ -408,6 +427,81 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Dropout"
         assert converted_model.opset_import[0].version == 1
+
+    # Test Max Adapter: 7 -> 8
+    def test_max_7_8(self):  # type: () -> None
+        from_opset = 7
+        to_opset = 8
+        data_type = TensorProto.FLOAT
+        data_shape = (2, 3, 4)
+
+        nodes = [onnx.helper.make_node(
+            "Max",
+            inputs=["X"],
+            outputs=["Y"]
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_max",
+            [onnx.helper.make_tensor_value_info("X", data_type, data_shape)],
+            [onnx.helper.make_tensor_value_info("Y", data_type, data_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "Max"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Min Adapter: 7 -> 8
+    def test_min_7_8(self):  # type: () -> None
+        from_opset = 7
+        to_opset = 8
+        data_type = TensorProto.FLOAT
+        data_shape = (2, 3, 4)
+
+        nodes = [onnx.helper.make_node(
+            "Min",
+            inputs=["X"],
+            outputs=["Y"]
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_min",
+            [onnx.helper.make_tensor_value_info("X", data_type, data_shape)],
+            [onnx.helper.make_tensor_value_info("Y", data_type, data_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "Min"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
+
+    # Test Mean Adapter: 7 -> 8
+    def test_mean_7_8(self):  # type: () -> None
+        from_opset = 7
+        to_opset = 8
+        data_type = TensorProto.FLOAT
+        data_shape = (3,)
+
+        nodes = [onnx.helper.make_node(
+            "Mean",
+            inputs=["X"],
+            outputs=["Y"]
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_mean",
+            [onnx.helper.make_tensor_value_info("X", data_type, data_shape)],
+            [onnx.helper.make_tensor_value_info("Y", data_type, data_shape)])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "Mean"
+        assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
+        assert converted_model.opset_import[0].version == to_opset
 
     # Test MaxPool Adapter: 1 -> 8
     def test_maxpool_up(self):  # type: () -> None
