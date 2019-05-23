@@ -10285,10 +10285,10 @@ This version of the operator has been deprecated since version 10 of the default
 ## Version 11 of the default ONNX operator set
 ### <a name="CumSum-11"></a>**CumSum-11**</a>
 
-  Peforms cumulative sum of the input elements along the given axis.
-  By default it will do the sum inclusively meaning the first element is copied as is.
+  Performs cumulative sum of the input elements along the given axis.
+  By default, it will do the sum inclusively meaning the first element is copied as is.
   Through an `exclusive` attribute, this behavior can change to exclude the first element.
-  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attrtibute to 1.
+  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
   
   Example:
   ```
@@ -10323,7 +10323,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>x</tt> : T</dt>
-<dd>A 1-D input tensor that is to be processed.</dd>
+<dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : tensor(int32)</dt>
 <dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
 </dl>
@@ -10332,13 +10332,13 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>y</tt> : T</dt>
-<dd>A 1-D tensor of the same type as 'x' with cumulative sums of the input</dd>
+<dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
 <dd>Input can be of any tensor type.</dd>
 </dl>
 

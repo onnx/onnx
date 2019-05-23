@@ -1443,10 +1443,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           matmulShapeInference(ctx, 0, 1);
         }));
 static const char* CumSum_ver11_doc = R"DOC(
-Peforms cumulative sum of the input elements along the given axis.
-By default it will do the sum inclusively meaning the first element is copied as is.
+Performs cumulative sum of the input elements along the given axis.
+By default, it will do the sum inclusively meaning the first element is copied as is.
 Through an `exclusive` attribute, this behavior can change to exclude the first element.
-It can also perform summation in the opposite direction of the axis. For that, set `reverse` attrtibute to 1.
+It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
 
 Example:
 ```
@@ -1479,12 +1479,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           "If set to 1 will perform the sums in reverse direction.",
           AttributeProto::INT,
           static_cast<int64_t>(0))
-      .Input(0, "x", "A 1-D input tensor that is to be processed.", "T")
+      .Input(0, "x", "An input tensor that is to be processed.", "T")
       .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))", "tensor(int32)")
       .Output(0, "y",
-              "A 1-D tensor of the same type as 'x' with cumulative sums of the input",
+              "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
               "T")
-      .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
+      .TypeConstraint("T",  {
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float)",
+        "tensor(double)"}, "Input can be of any tensor type.")
       .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
         // Type inference
         ONNX_NAMESPACE::propagateElemTypeFromInputToOutput(ctx, 0, 0);
