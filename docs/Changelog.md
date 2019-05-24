@@ -9335,55 +9335,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="BitShift-10"></a>**BitShift-10**</a>
-
-  Bitwise shift operator performs element-wise operation. For each input element, if the
-   attribute "direction" is "RIGHT", this operator moves its binary representation toward
-   the right side so that the input value is effectively decreased. If the attribute "direction"
-   is "LEFT", bits of binary representation moves toward the left side, which results the
-   increase of its actual value. The input X is the tensor to be shifted and another input
-   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
-   
-   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-   not necessarily identical.
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
-#### Version
-
-This version of the operator has been available since version 10 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>direction</tt> : string (required)</dt>
-<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>First operand, input to be shifted.</dd>
-<dt><tt>Y</tt> : T</dt>
-<dd>Second operand, amounts of shift.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Z</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
-<dd>Constrain input and output types to integer tensors.</dd>
-</dl>
-
 ### <a name="ConvInteger-10"></a>**ConvInteger-10**</a>
 
   The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
@@ -9522,6 +9473,46 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
+### <a name="IsInf-10"></a>**IsInf-10**</a>
+
+  Map infinity to true and other values to false.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>detect_negative</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map negative infinity to true. Default to 1 so that negative infinity induces true. Set this attribute to 0 if negative infinity should be mapped to false.</dd>
+<dt><tt>detect_positive</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map positive infinity to true. Default to 1 so that positive infinity induces true. Set this attribute to 0 if positive infinity should be mapped to false.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
 ### <a name="MatMulInteger-10"></a>**MatMulInteger-10**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
@@ -9641,6 +9632,103 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
+
+### <a name="Mod-10"></a>**Mod-10**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+      The sign of the remainder is the same as that of the Divisor.
+    
+      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+      If the input type is floating point, then `fmod` attribute must be set to 1.
+    
+      In case of dividend being zero, the results will be platform dependent.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+### <a name="NonMaxSuppression-10"></a>**NonMaxSuppression-10**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+  Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0.0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box cornersand the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models.1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
 
 ### <a name="QLinearConv-10"></a>**QLinearConv-10**</a>
 
@@ -9843,6 +9931,138 @@ This version of the operator has been available since version 10 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+</dl>
+
+### <a name="ReverseSequence-10"></a>**ReverseSequence-10**</a>
+
+  Reverse batch of sequences having different lengths specified by `sequence_lens`.
+  
+  For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+  and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+  sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+  
+  Example 1:
+    input = [[0.0, 4.0, 8.0,  12.0],
+             [1.0, 5.0, 9.0,  13.0],
+             [2.0, 6.0, 10.0, 14.0],
+             [3.0, 7.0, 11.0, 15.0]]
+    sequence_lens = [4, 3, 2, 1]
+    time_axis = 0
+    batch_axis = 1
+  
+    output = [[3.0, 6.0, 9.0,  12.0],
+              [2.0, 5.0, 8.0,  13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]]
+  
+  Example 2:
+    input = [[0.0,  1.0,  2.0,  3.0 ],
+             [4.0,  5.0,  6.0,  7.0 ],
+             [8.0,  9.0,  10.0, 11.0],
+             [12.0, 13.0, 14.0, 15.0]]
+    sequence_lens = [1, 2, 3, 4]
+    time_axis = 1
+    batch_axis = 0
+  
+    output = [[0.0,  1.0,  2.0,  3.0 ],
+              [5.0,  4.0,  6.0,  7.0 ],
+              [10.0, 9.0,  8.0,  11.0],
+              [15.0, 14.0, 13.0, 12.0]]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_axis</tt> : int (default is 1)</dt>
+<dd>(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.</dd>
+<dt><tt>time_axis</tt> : int (default is 0)</dt>
+<dd>(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 2.</dd>
+<dt><tt>sequence_lens</tt> : tensor(int64)</dt>
+<dd>Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape of input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+### <a name="RoiAlign-10"></a>**RoiAlign-10**</a>
+
+  Region of Interest (RoI) align operation described in the
+  [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
+  RoiAlign consumes an input tensor X and region of interests (rois)
+  to apply pooling across each RoI; it produces a 4-D tensor of shape
+  (num_rois, C, output_height, output_width).
+  
+  RoiAlign is proposed to avoid the misalignment by removing
+  quantizations while converting from original image into feature
+  map and from feature map into RoI feature; in each ROI bin,
+  the value of the sampled locations are computed directly
+  through bilinear interpolation.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is avg)</dt>
+<dd>The pooling method. Two modes are supported: 'avg' and 'max'. Default is 'avg'.</dd>
+<dt><tt>output_height</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's height.</dd>
+<dt><tt>output_width</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's width.</dd>
+<dt><tt>sampling_ratio</tt> : int (default is 0)</dt>
+<dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / output_width), and likewise for height). Default is 0.</dd>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T1</dt>
+<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[x1, y1, x2, y2], ...]. The RoIs' coordinates are in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
+<dt><tt>batch_indices</tt> : T2</dt>
+<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, output_height, output_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain types to int tensors.</dd>
 </dl>
 
 ### <a name="Slice-10"></a>**Slice-10**</a>
@@ -10061,4 +10281,210 @@ This version of the operator has been available since version 10 of the default 
 #### Version
 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
+
+## Version 11 of the default ONNX operator set
+### <a name="BitShift-11"></a>**BitShift-11**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+   attribute "direction" is "RIGHT", this operator moves its binary representation toward
+   the right side so that the input value is effectively decreased. If the attribute "direction"
+   is "LEFT", bits of binary representation moves toward the left side, which results the
+   increase of its actual value. The input X is the tensor to be shifted and another input
+   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+   
+   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+   not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
+### <a name="Loop-11"></a>**Loop-11**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+  
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first iteration and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+  
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+  
+      Operator inputs defined as (max_trip_count, condition_var).
+  
+      input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+  
+      input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+  
+      input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+  
+  
+  *Sample usage - cond as well as trip count*
+  
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+  
+      graph body-net (
+        %i[INT32, scalar]
+        %keepgoing[BOOL, scalar]
+        %b[INT32, scalar]
+      ) {
+        %my_local = Add(%a, %b)
+        %b_out = Sub(%a, %b)
+        %keepgoing_out = Greater(%my_local, %b_out)
+        %user_defined_vals = Add(%b, %b)
+        return %keepgoing_out, %b_out, %user_defined_vals
+      }
+  
+  *Sample equivalent C code*
+  
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+  
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        for (int i=0; i < max_trip_count && keepgoing; ++i) {
+          /* User-defined code (loop body) */
+          int my_local = a + b; // Reading values in the enclosing scope is fine
+          b = a - b; // writes fine if we specify b as a loop-carried dependency
+          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
+          user_defined_vals[i] = b + b;
+          /* End user-defined code */
+        }
+        // my_local = 123; // Can't do this. my_local was defined in the the body
+  
+        // These below values are live-out from the loop and therefore accessible
+        b_out; user_defined_vals; keepgoing_out;
+      }
+  
+  There are several things of note in this code snippet:
+  
+  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any variables which you wish to make available in the enclosing scope (i.e.
+     the variables b and keepgoing) must be declared as either loop-carried
+     dependencies (both at the op inputs and output and at the body net input and
+     output) or scan_outputs.
+  3) Values created in the body cannot be accessed in the enclosing scope.
+  
+  Note that the semantics of this op support "diagonal" or "wavefront" execution.
+  (See Step 3 here for an example:
+  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
+  Frontends should emit multi-layer RNNs as a series of While operators (with
+  time being the inner looping dimension), with each successive layer consuming
+  the scan_outputs from the previous layer, possibly going through several
+  point-wise operators (e.g. dropout, residual connections, linear layer).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
+</dl>
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
+<dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
+<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final N loop carried dependency values then K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
+</dl>
 

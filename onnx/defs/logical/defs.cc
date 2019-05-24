@@ -138,7 +138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrains input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
-static const char* BitShift_ver10_doc = R"DOC(
+static const char* BitShift_ver11_doc = R"DOC(
 Bitwise shift operator performs element-wise operation. For each input element, if the
  attribute "direction" is "RIGHT", this operator moves its binary representation toward
  the right side so that the input value is effectively decreased. If the attribute "direction"
@@ -154,9 +154,9 @@ Bitwise shift operator performs element-wise operation. For each input element, 
 
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
-    10,
+    11,
     OpSchema()
-        .SetDoc(std::string(BitShift_ver10_doc) + GenerateBroadcastingDocMul())
+        .SetDoc(std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul())
         .Input(0, "X", "First operand, input to be shifted.", "T")
         .Input(1, "Y", "Second operand, amounts of shift.", "T")
         .Output(0, "Z", "Output tensor", "T")

@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -94,6 +95,48 @@ ONNX_OPERATOR_SET_SCHEMA(
     Sub,
     7,
     OpSchema().FillUsing(MathDocGenerator("subtraction")));
+
+static const char* Mod_doc = R"DOC(
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+    The sign of the remainder is the same as that of the Divisor.
+  
+    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+    This attribute is set to 0 by default causing the behavior to be like integer mod. 
+    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+
+    If the input type is floating point, then `fmod` attribute must be set to 1.
+  
+    In case of dividend being zero, the results will be platform dependent.
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mod,
+    10,
+    OpSchema()
+        .SetDoc(Mod_doc)
+        .Attr(
+            "fmod",
+            "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "A", "Dividend tensor", "T")
+        .Input(1, "B", "Divisor tensor", "T")
+        .Output(0, "C", "Remainder tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
@@ -751,7 +794,7 @@ void matmulShapeInference(
     ONNX_NAMESPACE::InferenceContext& ctx,
     int input1Idx,
     int input2Idx) {
-  if (!hasInputShape(ctx, input1Idx) && !hasInputShape(ctx, input2Idx)) {
+  if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
   }
 
@@ -901,7 +944,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference:
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           updateOutputElemType(ctx, 1, TensorProto::INT64);
-
           // Shape inference:
           if (!hasInputShape(ctx, 0))
             return;
@@ -912,29 +954,49 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += rank;
           if (axis < 0 || axis >= rank)
             fail_shape_inference("Invalid value for attribute axis");
-          // TODO: unclear what results should be if axis has less than k
-          // elements.
-          // Infer output shape if 'K' is available
+
+          const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto* k = ctx.getInputData(1);
-          if (nullptr != k) {
-            if (k->dims_size() != 1 || k->int64_data_size() != 1 ||
-                k->data_type() != TensorProto::INT64)
+
+          // Infer output shape if:
+          // (1) 'K' is available
+          // (2) axis_dim has dim value
+          // Othewise cannot reliably compute output shape as axis dim value is
+          // unknown and hence cannot determine if axis dim value >= k (which
+          // should be enforced)
+          if (nullptr != k && axis_dim.has_dim_value()) {
+            int64_t k_value = 0;
+            if (k->dims_size() != 1 || k->dims(0) != 1)
               fail_shape_inference(
-                  "K input must be a one-dimensional tensor of size 1 and of type int64.");
+                  "K input must be a one-dimensional tensor of size 1.");
+            if (k->data_type() == TensorProto::INT64) {
+              const auto& data = ParseData<int64_t>(k);
+              k_value = data[0];
+            } else
+              fail_shape_inference("K input must be of type int64.");
+
+            if (axis_dim.dim_value() < k_value)
+              fail_shape_inference(
+                  "Axis has less than the requested k elements.");
+
             TensorShapeProto result_shape = input_shape;
             result_shape.mutable_dim(static_cast<int>(axis))
-                ->set_dim_value(k->int64_data(0));
+                ->set_dim_value(k_value);
+
             updateOutputShape(ctx, 0, result_shape);
             updateOutputShape(ctx, 1, result_shape);
-          } else {
-            // Infer output shapes' rank in any case
-            auto* output_shape_0 = getOutputShape(ctx, 0);
-            auto* output_shape_1 = getOutputShape(ctx, 1);
-            for (int i = 0; i < input_shape.dim_size(); ++i) {
-              output_shape_0->add_dim();
-              output_shape_1->add_dim();
-            }
+
+            return;
           }
+
+          // Infer output shapes' rank in any case
+          auto* output_shape_0 = getOutputShape(ctx, 0);
+          auto* output_shape_1 = getOutputShape(ctx, 1);
+          for (int i = 0; i < input_shape.dim_size(); ++i) {
+            output_shape_0->add_dim();
+            output_shape_1->add_dim();
+          }
+
           return;
         }));
 
@@ -1294,24 +1356,29 @@ ONNX_OPERATOR_SET_SCHEMA(
                                               ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(3);
-          auto y_type = ctx.getOutputType(0);
-          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+          if (nullptr == a_type || nullptr == b_type ||
               a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
               b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
-            fail_type_inference(
-                "inputs are expected to have tensor type and output type should not be null.");
+            fail_type_inference("inputs are expected to have tensor type.");
           }
 
-          if (ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  a_type->tensor_type().elem_type() &&
-              ONNX_NAMESPACE::TensorProto::UINT8 ==
-                  b_type->tensor_type().elem_type()) {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::UINT8);
-          } else {
-            y_type->mutable_tensor_type()->set_elem_type(
-                ONNX_NAMESPACE::TensorProto::INT8);
+          auto a_zero_point_type = ctx.getInputType(2);
+          if (nullptr == a_zero_point_type ||
+              a_zero_point_type->tensor_type().elem_type() !=
+                  a_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "input and zero_point pair is expected to have be same type.");
           }
+
+          auto b_zero_point_type = ctx.getInputType(5);
+          if (nullptr == b_zero_point_type ||
+              b_zero_point_type->tensor_type().elem_type() !=
+                  b_type->tensor_type().elem_type()) {
+            fail_type_inference(
+                "input and zero_point pair is expected to have same type.");
+          }
+
+          propagateElemTypeFromInputToOutput(ctx, 7, 0);
 
           matmulShapeInference(ctx, 0, 3);
         }));
