@@ -1179,55 +1179,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ctx.getInputType(0)->tensor_type().shape();
             const auto& shape_data = ParseData<int64_t>(shape_initializer);
 
-            size_t max_dimension_count = std::max(
-                static_cast<size_t>(input_shape.dim_size()), shape_data.size());
-
-            int64_t output_axis_iter = max_dimension_count;
-
-            bool is_input_1_scalar = input_shape.dim_size() == 0 ? true : false;
-            int64_t input_1_axis_iter = input_shape.dim_size();
-
-            bool is_input_2_scalar = shape_data.size() == 0 ? true : false;
-            int64_t input_2_axis_iter = shape_data.size();
-
-            // shape inference is a no-op if both have scalar shapes
-            if (is_input_1_scalar && is_input_2_scalar)
-              return;
-
-            auto* output_shape = getOutputShape(ctx, 0);
-            for (size_t i = 0; i < max_dimension_count; ++i) {
-              output_shape->add_dim();
+            TensorShapeProto second_shape;
+            for (const auto& e : shape_data) {
+              auto* dim = second_shape.add_dim();
+              dim->set_dim_value(e);
             }
 
-            while (output_axis_iter >= 1) {
-              --output_axis_iter;
-              --input_1_axis_iter;
-              --input_2_axis_iter;
-
-              int64_t val_1 = 1;
-              if (!is_input_1_scalar && input_1_axis_iter >= 0) {
-                const auto& dim = input_shape.dim(static_cast<int>(input_1_axis_iter));
-                // cannot process this dimension
-                if (!dim.has_dim_value())
-                  continue;
-                val_1 = dim.dim_value();
-              }
-
-              int64_t val_2 = 1;
-              if (!is_input_2_scalar && input_2_axis_iter >= 0)
-                val_2 = shape_data[static_cast<size_t>(input_2_axis_iter)];
-
-              // Two corresponding dimension must have the same value, or one of
-              // them should be equal to 1 (according to spec)
-              if (val_1 != val_2 && val_1 != 1 && val_2 != 1)
-                fail_shape_inference(
-                    "Two corresponding dimension must have the same value, or one of them should be equal to 1");
-
-              output_shape->mutable_dim(static_cast<int>(output_axis_iter))
-                  ->set_dim_value(std::max(val_1, val_2));
-            }
+            bidirectionalBroadcastShapeInference(
+                input_shape, second_shape, *getOutputShape(ctx, 0));
           }
-
           return;
         }));
 
