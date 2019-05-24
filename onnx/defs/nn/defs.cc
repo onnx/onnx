@@ -90,6 +90,13 @@ void convPoolShapeInference(
     }
   }
 
+  std::vector<int64_t> effective_kernel_shape = kernel_shape;
+  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+    // accounting for dilation, how big is the kernel in this dimension
+    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+  }
+
+
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
@@ -112,7 +119,7 @@ void convPoolShapeInference(
             residual -= stride;
           }
         }
-        int64_t total_pad = residual == 0 ? kernel_shape[i] - stride : kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -155,10 +162,6 @@ void convPoolShapeInference(
     effective_input_size += pads[i];
     effective_input_size += pads[i + kernel_shape_size];
 
-    int64_t effective_kernel_size = kernel_shape[i];
-    // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
-
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
@@ -168,10 +171,10 @@ void convPoolShapeInference(
 
     if (ceil_mode == 1)
       strided_kernel_positions = (int64_t)(std::ceil(
-          (effective_input_size - effective_kernel_size) / float(strides[i])));
+          (effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
     else
       strided_kernel_positions =
-          (effective_input_size - effective_kernel_size) / strides[i];
+          (effective_input_size - effective_kernel_shape[i]) / strides[i];
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
