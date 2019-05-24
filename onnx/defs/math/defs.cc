@@ -1158,7 +1158,38 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensors."));
+            "Constrain input and output types to all tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          // For shape inference (and rank inference), we need both input shape
+          // and values in 'shape' tensor
+          const auto* shape_initializer = ctx.getInputData(1);
+          if (hasNInputShapes(ctx, 1) && nullptr != shape_initializer) {
+            const auto& shape_initializer_shape =
+                ctx.getInputType(1)->tensor_type().shape();
+            if (shape_initializer_shape.dim_size() != 1 ||
+                shape_initializer->data_type() != TensorProto::INT64)
+              fail_shape_inference(
+                  "'shape' input must be 1D tensor of type INT64");
+
+            const auto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const auto& shape_data = ParseData<int64_t>(shape_initializer);
+
+            TensorShapeProto second_shape;
+            for (const auto& e : shape_data) {
+              auto* dim = second_shape.add_dim();
+              dim->set_dim_value(e);
+            }
+
+            bidirectionalBroadcastShapeInference(
+                input_shape, second_shape, *getOutputShape(ctx, 0));
+          }
+          return;
+        }));
 
 static const char* Sinh_ver9_doc = R"DOC(
 Calculates the hyperbolic sine of the given input tensor element-wise.
