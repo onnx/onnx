@@ -261,6 +261,40 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
             opset_imports=[helper.make_opsetid("", 9)])
 
+    def test_expand(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 1)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (3,), (2, 1, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 3, 6))])
+
+    def test_expand_scalar_input(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, ()),
+             ('shape', TensorProto.INT64, (2,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2,), (4, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (4, 8))])
+
+    def test_expand_raw_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 1)),
+             ('shape', TensorProto.INT64, (2,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2,),
+                                     vals=np.array([3, 4], dtype='<i8').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
+
     def test_resize(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
