@@ -2504,7 +2504,7 @@ This version of the operator has been available since version 10 of the default 
 ```python
 
 x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
-x_zero_point = np.array([1]).astype(np.uint8)
+x_zero_point = np.uint8(1)
 w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
 
 y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
@@ -3157,8 +3157,8 @@ node = onnx.helper.make_node('DequantizeLinear',
 
 # scalar zero point and scale
 x = np.array([0, 3, 128, 255]).astype(np.uint8)
-x_scale = np.array([2], dtype=np.float32)
-x_zero_point = np.array([128], dtype=np.uint8)
+x_scale = np.float32(2)
+x_zero_point = np.uint8(128)
 y = np.array([-256, -250, 0, 254], dtype=np.float32)
 
 expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
@@ -8984,8 +8984,8 @@ x = np.array([[255, 174, 162, 25, 203, 168, 58],
     [127, 230, 21, 83, 41, 40, 134],
     [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
 
-x_scale = np.array([0.00369204697], dtype=np.float32)
-x_zero_point = np.array([132], dtype=np.uint8)
+x_scale = np.float32(0.00369204697)
+x_zero_point = np.uint8(132)
 
 w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
 
@@ -9184,8 +9184,8 @@ node = onnx.helper.make_node('QuantizeLinear',
     outputs=['y'],)
 
 x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
-y_scale = np.array([2], dtype=np.float32)
-y_zero_point = np.array([128], dtype=np.uint8)
+y_scale = np.float32(2)
+y_zero_point = np.uint8(128)
 y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
 
 expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],

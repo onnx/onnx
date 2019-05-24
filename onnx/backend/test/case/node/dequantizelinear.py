@@ -19,8 +19,8 @@ class DequantizeLinear(Base):
 
         # scalar zero point and scale
         x = np.array([0, 3, 128, 255]).astype(np.uint8)
-        x_scale = np.array([2], dtype=np.float32)
-        x_zero_point = np.array([128], dtype=np.uint8)
+        x_scale = np.float32(2)
+        x_zero_point = np.uint8(128)
         y = np.array([-256, -250, 0, 254], dtype=np.float32)
 
         expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
