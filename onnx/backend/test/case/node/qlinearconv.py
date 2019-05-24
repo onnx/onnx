@@ -25,8 +25,8 @@ class QLinearConv(Base):
             [127, 230, 21, 83, 41, 40, 134],
             [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
 
-        x_scale = np.array([0.00369204697], dtype=np.float32)
-        x_zero_point = np.array([132], dtype=np.uint8)
+        x_scale = np.float32(0.00369204697)
+        x_zero_point = np.uint8(132)
 
         w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
 
