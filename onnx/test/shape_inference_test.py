@@ -154,8 +154,8 @@ class TestShapeInference(unittest.TestCase):
         self._make_matmul_test_allow_unknown((4, 2), (2, "a"), (4, "a"))
         self._make_matmul_test_allow_unknown((4, None), (2, "a"), (4, "a"))
         self._make_matmul_test_allow_unknown((4, None), (None, "a"), (4, "a"))
-        self._make_matmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), ("a", 4, 5))
-        self._make_matmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5))
+        self._make_matmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), (None, 4, 5))
+        self._make_matmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, None, 4, 5))
         self._make_matmul_test_allow_unknown((3,), None, None)
         self._make_matmul_test_allow_unknown(None, None, None)
 
@@ -635,7 +635,7 @@ class TestShapeInference(unittest.TestCase):
              ('z', TensorProto.FLOAT, (4, "b"))],
             [make_node('Sum', ['x', 'y', 'z'], ['out'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (None, 4, None))])
 
     def test_sum_broadcasting_param(self):  # type: () -> None
         graph = self._make_graph(
@@ -1776,8 +1776,8 @@ class TestShapeInference(unittest.TestCase):
         self._make_qlinearmatmul_test_allow_unknown((4, 2), (2, "a"), (4, "a"))
         self._make_qlinearmatmul_test_allow_unknown((4, None), (2, "a"), (4, "a"))
         self._make_qlinearmatmul_test_allow_unknown((4, None), (None, "a"), (4, "a"))
-        self._make_qlinearmatmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), ("a", 4, 5))
-        self._make_qlinearmatmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5))
+        self._make_qlinearmatmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), (None, 4, 5))
+        self._make_qlinearmatmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, None, 4, 5))
         self._make_qlinearmatmul_test_allow_unknown(None, ("a", 2, 5), None)
         self._make_qlinearmatmul_test_allow_unknown(None, None, None)
 

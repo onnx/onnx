@@ -443,10 +443,15 @@ inline void multidirectionalBroadcastShapeInference(
     }
   }
 
+  // all input shapes are scalar shapes - return at this point
+  if (result_shape_size == 0)
+    return;
+
   for (int i = 0; i < result_shape_size; ++i) {
     int64_t dim_value = 1;
     TensorShapeProto_Dimension symbolic_dim;
     int num_symbolic_dims = 0;
+    bool dim_vaue_seen = false;
     for (size_t j = 0; j < shapes.size(); ++j) {
       if (i < result_shape_size - shapes[j]->dim_size()) {
         // Shape j will be filled with 1 at dimension i;
@@ -456,6 +461,7 @@ inline void multidirectionalBroadcastShapeInference(
       auto dim_i_j =
           shapes[j]->dim(i - result_shape_size + shapes[j]->dim_size());
       if (dim_i_j.has_dim_value()) {
+        dim_vaue_seen = true;
         if (dim_i_j.dim_value() != 1) {
           if (dim_value != dim_i_j.dim_value() && dim_value != 1) {
             fail_shape_inference("Incompatible dimensions");
@@ -473,12 +479,18 @@ inline void multidirectionalBroadcastShapeInference(
       }
     }
 
-    if (dim_value != 1 || num_symbolic_dims == 0) {
-      resultShape.add_dim()->set_dim_value(dim_value);
+    // only rank increment possible for this output index if:
+    // (1) a mixture of dim values and symbolic dims (dim params) have been seen
+    // (2) multiple symbolic dims have been seen
+    if ((dim_vaue_seen && num_symbolic_dims > 0) || num_symbolic_dims > 1) {
+      resultShape.add_dim();
     } else if (num_symbolic_dims == 1) {
+      // only one symbolic dim has been seen, so safe to propogate that to the
+      // output index
       *resultShape.add_dim() = symbolic_dim;
     } else {
-      resultShape.add_dim();
+      // output index's dim value has been computed
+      resultShape.add_dim()->set_dim_value(dim_value);
     }
   }
 }
