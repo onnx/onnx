@@ -1355,9 +1355,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "mode",
-            "Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)",
+            "Three interpolation modes: nearest (default), linear and cubic."
+            "The \"linear\" mode includes linear interpolation for 1D tensor and N-D linear interpolation for N-D tensor (For example, trilinear interpolation for 2D tensor)."
+            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (For example, tricubic interpolation for 2D tensor)."
+            ,
             AttributeProto::STRING,
             std::string("nearest"))
+        .Attr("align_corners",
+            "If set to 0 (default), the input and output tensors are aligned by the"
+            "center points of their corner pixels. If set to 1, the input and"
+            "output tensors are aligned by the corner points of their corner"
+            "pixels, and the interpolation uses edge value padding for out-of-boundary values."
+            "For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension,"
+            "if align_corners is 0,"
+            "x_original = min(length_original - 1, max(0, (x_resized + 0.5) / scale - 0.5)),"
+            "if align_corners is 1,"
+            "x_original = x_resized * (length_original - 1) / (length_resized - 1).", 
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(0, "X", "N-D tensor", "T")
         .Input(
             1,
