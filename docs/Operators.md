@@ -17,6 +17,7 @@
   * <a href="#Atanh">Atanh</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
+  * <a href="#BitShift">BitShift</a>
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
@@ -1631,6 +1632,226 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
 </details>
 
 
+### <a name="BitShift"></a><a name="bitshift">**BitShift**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+   attribute "direction" is "RIGHT", this operator moves its binary representation toward
+   the right side so that the input value is effectively decreased. If the attribute "direction"
+   is "LEFT", bits of binary representation moves toward the left side, which results the
+   increase of its actual value. The input X is the tensor to be shifted and another input
+   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+   
+   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+   not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>left_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint8')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint8')
+```
+
+</details>
+
+
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -2229,7 +2450,7 @@ This version of the operator has been available since version 9 of the default O
 <summary>float_ones</summary>
 
 ```python
-x = np.array([4, 3, 2])
+x = np.array([4, 3, 2]).astype(np.int64)
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
                                        [1], [1])
 node = onnx.helper.make_node(
@@ -2251,7 +2472,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>int32_zeros</summary>
 
 ```python
-x = np.array([10, 6])
+x = np.array([10, 6]).astype(np.int64)
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
                                        [1], [0])
 node = onnx.helper.make_node(
@@ -2505,7 +2726,7 @@ This version of the operator has been available since version 10 of the default 
 ```python
 
 x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
-x_zero_point = np.array([1]).astype(np.uint8)
+x_zero_point = np.uint8(1)
 w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
 
 y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
@@ -3158,8 +3379,8 @@ node = onnx.helper.make_node('DequantizeLinear',
 
 # scalar zero point and scale
 x = np.array([0, 3, 128, 255]).astype(np.uint8)
-x_scale = np.array([2], dtype=np.float32)
-x_zero_point = np.array([128], dtype=np.uint8)
+x_scale = np.float32(2)
+x_zero_point = np.uint8(128)
 y = np.array([-256, -250, 0, 254], dtype=np.float32)
 
 expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
@@ -9071,8 +9292,8 @@ x = np.array([[255, 174, 162, 25, 203, 168, 58],
     [127, 230, 21, 83, 41, 40, 134],
     [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
 
-x_scale = np.array([0.00369204697], dtype=np.float32)
-x_zero_point = np.array([132], dtype=np.uint8)
+x_scale = np.float32(0.00369204697)
+x_zero_point = np.uint8(132)
 
 w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
 
@@ -9271,8 +9492,8 @@ node = onnx.helper.make_node('QuantizeLinear',
     outputs=['y'],)
 
 x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
-y_scale = np.array([2], dtype=np.float32)
-y_zero_point = np.array([128], dtype=np.uint8)
+y_scale = np.float32(2)
+y_zero_point = np.uint8(128)
 y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
 
 expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],

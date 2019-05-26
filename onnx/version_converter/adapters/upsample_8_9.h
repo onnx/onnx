@@ -10,7 +10,7 @@ struct Upsample_8_9 final: public Adapter {
   explicit Upsample_8_9() : Adapter("Upsample", OpSetID(8), OpSetID(9)) {}
 
   void adapt_upsample_8_9(std::shared_ptr<Graph> graph, Node* node) const {
-    
+
     Symbol input_dirs = Symbol("scales");
     int dim = (int)(node->fs(kscales).size());
     Tensor t;
@@ -22,7 +22,7 @@ struct Upsample_8_9 final: public Adapter {
       for(double scale : node->fs(kscales)) {
         data.emplace_back((float)scale);
       }
-      
+
       Value* v = graph->addInitializerAndInput(t, "scales");
       std::vector<Dimension> new_sizes {Dimension(dim)};
       v->setSizes(new_sizes);
