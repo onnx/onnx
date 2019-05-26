@@ -784,46 +784,59 @@ static const char* Momentum_ver11_doc = R"DOC(
     several parameters:
      
      - The learning-rate "R".
-     - The decay coefficient of previous accumulated gradient (i.e., momentum) "Alpha".
-     - The scaling coefficient of current gradient when computing momentum "Beta".
-     - A Frobenius norm regularization coefficient "Lambda".
+     - The update count "T". That is, the number of conducted training iterations. It should
+       be zero in the first training iteration.
+     - A L2-norm regularization coefficient "norm_coefficient".
+     - A decay coefficient of previous accumulated gradient (i.e., momentum) "Alpha".
+     - The scaling coefficient of current gradient "Beta".
+     - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
+       be used.
 
-    Below we explain the computation rule of this operator. For the sake of simplicity, 
-    we assume that there is only one tensor (called "X") to be optimized. Other necessary
-    variables include "X"'s gradient (called "G"), and "X"'s momentum (called "V"). Moreover,
-    there will be only two output tensors, the new value of "X" (called "X_new") and its new
-    momentum (called "V_new"). Depending on the mode attribute, this operator uses either
-    standard momentum or Nestrove's momentum. Setting the mode attribute to "Nestrove" activates
-    the second case. Otherwise, standard momentum may be used. Computation is detailed below.
+    For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
+    Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
+    Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
+    momentum (called "V_new").
+    
+    This operator supports two different momentum algorithms. Set the attribute "mode" to
+    "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
+    "standard" to use standard momentum. Computation details are described subsequently.
 
     Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
 
-    Pseudo code for SG with Standard Momentum:
+    Pseudo code for SG with standard momentum:
 
-      // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
-      G_regularized = Lambda * X + G;
+      // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+      // values of all elements in X.
+      G_regularized = norm_coefficient * X + G
+
+      // In the first training iteration, Beta should always be 1.
+      Beta_adjusted = T > 0 ? Beta : 1
 
       // Compute the current momentum based on previous momentum and the current gradient.
-      V_new = Alpha * V + Beta * G;
+      V_new = Alpha * V + Beta_adjusted * G_regularized
 
       // Update X.
       X_new = X - R * V_new
 
-    Pseudo code for SG with Nestrove's Momentum:
+    Pseudo code for SG with Nesterov's momentum:
 
-      // Add gradient of 0.5 * Lambda * ||X||_F^2, where ||X||_F is the Frobenius norm.
-      G_regularized = Lambda * X + G;
+      // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+      // values of all elements in X.
+      G_regularized = norm_coefficient * X + G;
+
+      // In the first training iteration, Beta should always be 1.
+      Beta_adjusted = T > 0 ? Beta : 1
 
       // Compute the current momentum based on previous momentum and the current gradient.
-      V_new = Alpha * V + Beta * G;
+      V_new = Alpha * V + Beta_adjusted * G_regularized;
 
       // Compute final update direction and then update X.
-      X_new = X - R * (G + Alpha * V_new)
+      X_new = X - R * (G_regularized + Alpha * V_new)
 
     If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
     pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
     concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-    be concatenated too) and then our pseudo code becomes applicable naturally.
+    be concatenated too) and then our pseudo code becomes applicable.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -832,37 +845,77 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Momentum_ver11_doc)
         .Input(0, "R", "The learning rate.", "T1")
-        .Input(1, "Alpha", "The decay factor of momentum. It should be a scalar.", "T2")
-        .Input(2, "Beta", "The coefficient of gradient in computing new momentum. It should be a scalar.", "T2")
-        .Input(3, "Lambda", "Regularization coefficient of 0.5 * Lambda * ||X||_F^2.", "T2")
+        .Input(1, "T", "Update count of \"X\". It should be a scalar.", "T2")
         .Input(
-            4,
+            2,
             "inputs",
             "It sequentially contains the current values of optimized tensors and then their "
-            "momentum tensors. For example, if two tensor \"X_1\" and \"X_2\" are optimized, The "
+            "momentum tensors. For example, if two tensors \"X_1\" and \"X_2\" are optimized, The "
 			"expected input list would be [\"X_1\", \"X_2\", momentum of \"X_1\", momentum of \"X_2\"].",
-            "T2",
+            "T3",
             OpSchema::Variadic,
             false)
         .Output(
             0,
             "outputs",
             "It sequentially contains the new values of optimized tensors and then the new "
-            "values of their momentum tensors. For example, if two tensor \"X_1\" and \"X_2\" are "
+            "values of their momentum tensors. For example, if two tensors \"X_1\" and \"X_2\" are "
             "optimized, the output list would be [new value of \"X_1,\" new value of \"X_2\" "
             "new momentum of \"X_1\", new momentum of \"X_2\"].",
-            "T2",
+            "T3",
             OpSchema::Variadic,
             false)
+        .Attr(
+            "Alpha",
+            "The decay factor of momentum. It should be a scalar.",
+            AttributeProto::FLOAT)
+        .Attr(
+            "Beta",
+            "The coefficient of gradient in computing new momentum. It should be a scalar.",
+            AttributeProto::FLOAT)
+        .Attr(
+            "norm_coefficient",
+            "Coefficient of 0.5 * norm_coefficient * ||X||^2.",
+            AttributeProto::FLOAT)
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)"},
             "Constrain input types to float scalars.")
         .TypeConstraint(
             "T2",
+            {"tensor(int64)"},
+            "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint(
+            "T3",
             {"tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // TODO: Update shape inference function.
+            // Assume that the input list is [R, T, X1, X2, V1, V2] and
+            // output list is [X1_new, X2_new, V1_new, V2_new] for
+            // explaining the code below in a simpler way.
+
+            // The count of input tensors excluding "R" and "T".
+            auto num_adjustable_tensors = ctx.getNumInputs() - 2;
+
+            if (num_adjustable_tensors % 2 != 0)
+              fail_shape_inference(
+                  "The sum of optimized tensor count and momentum tensor count ",
+                  "should be a multiple of 2 in the input list of Momentum operator");
+
+            // The count of "X1" and "X2".
+            auto num_optimized_tensors = num_adjustable_tensors / 2;
+            for (size_t i = 0; i < num_optimized_tensors; ++i){
+              // Pass X1's/X2's shapes to X1_new/X2_new.
+              size_t i_in = 2 + i;
+              size_t i_out = i;
+              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+              propagateShapeFromInputToOutput(ctx, i_in, i_out);
+
+              // Pass V1's/V2's shapes to V1_new/V2_new.
+              i_in = 2 + 2 * num_optimized_tensors + i;
+              i_out = i + num_optimized_tensors;
+              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+              propagateShapeFromInputToOutput(ctx, i_in, i_out);
+            }
         }));
 } // namespace ONNX_NAMESPACE
