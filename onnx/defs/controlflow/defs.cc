@@ -877,6 +877,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "norm_coefficient",
             "Coefficient of 0.5 * norm_coefficient * ||X||^2.",
             AttributeProto::FLOAT)
+        .Attr(
+            "mode",
+            "Its value should be either \"nesterov\" or \"standard\". The value \"nesterov\" leads "
+            "to the use of Nesterov's momentum while \"standard\" invokes stochastic gradient method "
+            "using standard momentum",
+            AttributeProto::STRING)
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)"},
@@ -896,7 +902,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // The count of input tensors excluding "R" and "T".
             auto num_adjustable_tensors = ctx.getNumInputs() - 2;
-
+            
             if (num_adjustable_tensors % 2 != 0)
               fail_shape_inference(
                   "The sum of optimized tensor count and momentum tensor count ",

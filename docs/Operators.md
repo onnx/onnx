@@ -8045,6 +8045,8 @@ This version of the operator has been available since version 11 of the default 
 <dd>The decay factor of momentum. It should be a scalar.</dd>
 <dt><tt>beta</tt> : float (required)</dt>
 <dd>The coefficient of gradient in computing new momentum. It should be a scalar.</dd>
+<dt><tt>mode</tt> : string (required)</dt>
+<dd>Its value should be either "nesterov" or "standard". The value "nesterov" leads to the use of Nesterov's momentum while "standard" invokes stochastic gradient method using standard momentum</dd>
 <dt><tt>norm_coefficient</tt> : float (required)</dt>
 <dd>Coefficient of 0.5 * norm_coefficient * ||X||^2.</dd>
 </dl>
@@ -8135,7 +8137,8 @@ node = onnx.helper.make_node('Momentum',
                                       'V1_new', 'V2_new'],
                              norm_coefficient=norm_coefficient,
                              alpha=alpha,
-                             beta=beta
+                             beta=beta,
+                             mode='standard'
                              )
 
 # Define operator inputs.

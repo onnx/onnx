@@ -114,7 +114,8 @@ class Momentum(Base):
                                               'V1_new', 'V2_new'],
                                      norm_coefficient=norm_coefficient,
                                      alpha=alpha,
-                                     beta=beta
+                                     beta=beta,
+                                     mode='standard'
                                      )
 
         # Define operator inputs.
