@@ -787,8 +787,8 @@ static const char* Momentum_ver11_doc = R"DOC(
      - The update count "T". That is, the number of conducted training iterations. It should
        be zero in the first training iteration.
      - A L2-norm regularization coefficient "norm_coefficient".
-     - A decay coefficient of previous accumulated gradient (i.e., momentum) "Alpha".
-     - The scaling coefficient of current gradient "Beta".
+     - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
+     - The scaling coefficient of current gradient "beta".
      - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
        be used.
 
@@ -809,11 +809,11 @@ static const char* Momentum_ver11_doc = R"DOC(
       // values of all elements in X.
       G_regularized = norm_coefficient * X + G
 
-      // In the first training iteration, Beta should always be 1.
-      Beta_adjusted = T > 0 ? Beta : 1
+      // In the first training iteration, beta should always be 1.
+      beta_adjusted = T > 0 ? beta : 1
 
       // Compute the current momentum based on previous momentum and the current gradient.
-      V_new = Alpha * V + Beta_adjusted * G_regularized
+      V_new = alpha * V + beta_adjusted * G_regularized
 
       // Update X.
       X_new = X - R * V_new
@@ -824,14 +824,14 @@ static const char* Momentum_ver11_doc = R"DOC(
       // values of all elements in X.
       G_regularized = norm_coefficient * X + G;
 
-      // In the first training iteration, Beta should always be 1.
-      Beta_adjusted = T > 0 ? Beta : 1
+      // In the first training iteration, beta should always be 1.
+      beta_adjusted = T > 0 ? beta : 1
 
       // Compute the current momentum based on previous momentum and the current gradient.
-      V_new = Alpha * V + Beta_adjusted * G_regularized;
+      V_new = alpha * V + beta_adjusted * G_regularized;
 
       // Compute final update direction and then update X.
-      X_new = X - R * (G_regularized + Alpha * V_new)
+      X_new = X - R * (G_regularized + alpha * V_new)
 
     If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
     pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
@@ -866,11 +866,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Variadic,
             false)
         .Attr(
-            "Alpha",
+            "alpha",
             "The decay factor of momentum. It should be a scalar.",
             AttributeProto::FLOAT)
         .Attr(
-            "Beta",
+            "beta",
             "The coefficient of gradient in computing new momentum. It should be a scalar.",
             AttributeProto::FLOAT)
         .Attr(
