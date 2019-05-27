@@ -1887,14 +1887,6 @@ class TestShapeInference(unittest.TestCase):
 
     def test_momentum(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (4, 5, 6)),
-             ('sequence_lens', TensorProto.INT64, (5,))],
-            [make_node('ReverseSequence', ['x', 'sequence_lens'], ['y'])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
-
-    def test_momentum(self):  # type: () -> None
-        graph = self._make_graph(
             [('R', TensorProto.FLOAT, ()),  # scalar's shape is ()
              ('T', TensorProto.INT64, ()),  # scalar's shape is ()
              ('X', TensorProto.FLOAT, (1, 2)),
