@@ -1900,7 +1900,7 @@ class TestShapeInference(unittest.TestCase):
              ('X', TensorProto.FLOAT, (1, 2)),
              ('G', TensorProto.FLOAT, (1, 2)),
              ('V', TensorProto.FLOAT, (1, 2))],
-            [make_node('Adagrad', ['R', 'T', 'X', 'G', 'H'], ['X_new', 'V_new'])],
+            [make_node('Momentum', ['R', 'T', 'X', 'G', 'H'], ['X_new', 'V_new'])],
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
@@ -1916,7 +1916,7 @@ class TestShapeInference(unittest.TestCase):
              ('G2', TensorProto.FLOAT, (3, 4)),
              ('V1', TensorProto.FLOAT, (1, 2)),
              ('V2', TensorProto.FLOAT, (3, 4))],
-            [make_node('Adagrad', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'H1', 'H2'],
+            [make_node('Momentum', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'H1', 'H2'],
                 ['X1_new', 'X2_new', 'V1_new', 'V2_new'])],
             [])
         self._assert_inferred(graph,
