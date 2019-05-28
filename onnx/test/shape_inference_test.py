@@ -1892,7 +1892,8 @@ class TestShapeInference(unittest.TestCase):
              ('X', TensorProto.FLOAT, (1, 2)),
              ('G', TensorProto.FLOAT, (1, 2)),
              ('V', TensorProto.FLOAT, (1, 2))],
-            [make_node('Momentum', ['R', 'T', 'X', 'G', 'H'], ['X_new', 'V_new'])],
+            [make_node('Momentum', ['R', 'T', 'X', 'G', 'V'], ['X_new', 'V_new'],
+             alpha=0.9, beta=1.0, norm_coefficient=0.02, mode='standard')],
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
@@ -1909,7 +1910,8 @@ class TestShapeInference(unittest.TestCase):
              ('V1', TensorProto.FLOAT, (1, 2)),
              ('V2', TensorProto.FLOAT, (3, 4))],
             [make_node('Momentum', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'V1', 'V2'],
-                ['X1_new', 'X2_new', 'V1_new', 'V2_new'])],
+             ['X1_new', 'X2_new', 'V1_new', 'V2_new'],
+             alpha=0.9, beta=1.0, norm_coefficient=0.02, mode='nesterov')],
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('X1_new', TensorProto.FLOAT, (1, 2)),
