@@ -849,9 +849,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "inputs",
-            "It sequentially contains the current values of optimized tensors and then their "
-            "momentum tensors. For example, if two tensors \"X_1\" and \"X_2\" are optimized, The "
-			"expected input list would be [\"X_1\", \"X_2\", momentum of \"X_1\", momentum of \"X_2\"].",
+            "It sequentially contains the current values of optimized tensors, then their "
+            "gradient tensors, and finally their momentum tensors. For example, if two tensors "
+            "\"X_1\" and \"X_2\" are optimized, The expected input list would be "
+            "[\"X_1\", \"X_2\", gradient of \"X_1\", gradient of \"X_2\", momentum of \"X_1\", momentum of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
             false)
@@ -896,20 +897,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            // Assume that the input list is [R, T, X1, X2, V1, V2] and
-            // output list is [X1_new, X2_new, V1_new, V2_new] for
-            // explaining the code below in a simpler way.
+            // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and
+            // output list is [X1_new, X2_new, V1_new, V2_new] for explaining
+            // the code below in a simpler way.
 
             // The count of input tensors excluding "R" and "T".
             auto num_adjustable_tensors = ctx.getNumInputs() - 2;
-            
-            if (num_adjustable_tensors % 2 != 0)
+
+            // Check number of (optimized tensor, gradient, momentum) tuples.
+            if (num_adjustable_tensors % 3 != 0)
               fail_shape_inference(
                   "The sum of optimized tensor count and momentum tensor count ",
                   "should be a multiple of 2 in the input list of Momentum operator");
 
             // The count of "X1" and "X2".
-            auto num_optimized_tensors = num_adjustable_tensors / 2;
+            auto num_optimized_tensors = num_adjustable_tensors / 3;
             for (size_t i = 0; i < num_optimized_tensors; ++i){
               // Pass X1's/X2's shapes to X1_new/X2_new.
               size_t i_in = 2 + i;

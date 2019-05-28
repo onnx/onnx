@@ -4388,7 +4388,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
 # Define operator attributes.
 norm_coefficient = 0.01
 alpha = 0.95
-beta = 1
+beta = 1.0
 
 # Create operator.
 node = onnx.helper.make_node('Momentum',

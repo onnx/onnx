@@ -1896,7 +1896,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
-             make_tensor_value_info('H_new', TensorProto.FLOAT, (1, 2))])
+             make_tensor_value_info('V_new', TensorProto.FLOAT, (1, 2))])
 
     def test_momentum_multiple(self):  # type: () -> None
         graph = self._make_graph(
@@ -1908,7 +1908,7 @@ class TestShapeInference(unittest.TestCase):
              ('G2', TensorProto.FLOAT, (3, 4)),
              ('V1', TensorProto.FLOAT, (1, 2)),
              ('V2', TensorProto.FLOAT, (3, 4))],
-            [make_node('Momentum', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'H1', 'H2'],
+            [make_node('Momentum', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'V1', 'V2'],
                 ['X1_new', 'X2_new', 'V1_new', 'V2_new'])],
             [])
         self._assert_inferred(graph,

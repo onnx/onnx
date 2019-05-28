@@ -8059,7 +8059,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : T2</dt>
 <dd>Update count of "X". It should be a scalar.</dd>
 <dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the current values of optimized tensors and then their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, The expected input list would be ["X_1", "X_2", momentum of "X_1", momentum of "X_2"].</dd>
+<dd>It sequentially contains the current values of optimized tensors, then their gradient tensors, and finally their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, The expected input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", momentum of "X_1", momentum of "X_2"].</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -8174,7 +8174,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
 # Define operator attributes.
 norm_coefficient = 0.01
 alpha = 0.95
-beta = 1
+beta = 1.0
 
 # Create operator.
 node = onnx.helper.make_node('Momentum',
