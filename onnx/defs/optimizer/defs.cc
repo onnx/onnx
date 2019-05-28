@@ -126,5 +126,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T3",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors."));
+            "Constrain input types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext &ctx) {
+        }}));
 } // namespace ONNX_NAMESPACE
