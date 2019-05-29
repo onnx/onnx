@@ -8,7 +8,7 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-During development, it's convenient to install ONNX in development mode (for ONNX-ML, set environment variable `ONNX_ML=1`):
+During development, it's convenient to install ONNX in development mode (to disable ONNX-ML, set environment variable `ONNX_ML=0`):
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
@@ -38,15 +38,9 @@ python onnx/defs/gen_doc.py
 
 ## Adding a new operator
 
-For implementors in the ONNX community to be able to effectively implement any new operators proposed, pull requests should include:
-
-- Operator description - just 1 to 2 sentences describing the operation (e.g. “The new Expand operator broadcasts an input tensor to an output shape using a shape tensor”). A more complete description will be found in the actual PR, but readers should be able to get a summary up front without reading through the diff.
-- Justification of usefulness - what's the motivation and value in adding this operator into ONNX? (e.g. “This is supported by XYZ frameworks already and is seeing broad usage across the community of speech analysis.”)
-- Links to existing examples and usage, where possible:
-  - Example model/algorithm that uses the operation? (e.g. WaveNet, Detectron, etc.)
-  - What frameworks already have this operation? (e.g. CNTK, Tensorflow, etc.)
-  - Which research papers describe or reference it? (e.g. arxiv paper)
-- Sample operator implementation in Python, with minimal dependencies except numpy.
+ONNX is an open standard, and we encourage developers to contribute high
+quality operators to ONNX specification.
+Before proposing a new operator, please read [the tutorial](AddNewOp.md).
 
 # Testing
 

@@ -23,6 +23,15 @@ option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
+option(ONNXIFI_ENABLE_EXT "Enable onnxifi extensions." OFF)
+if(NOT DEFINED ONNX_ML)
+  if(DEFINED ENV{ONNX_ML})
+    set(DEFAULT_ONNX_ML $ENV{ONNX_ML})
+  else()
+    set(DEFAULT_ONNX_ML ON)
+  endif()
+  option(ONNX_ML "Enable traditional ML API." ${DEFAULT_ONNX_ML})
+endif()
 option(ONNXIFI_DUMMY_BACKEND "Use dummy backend in onnxifi test driver." OFF)
 
 # Set C++11 as standard for the whole project
@@ -276,7 +285,7 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
-  ${PROTOBUF_INCLUDE_DIRS})
+  $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
 
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -300,7 +309,10 @@ if (MSVC)
     set(ONNX_API_DEFINE "-DONNX_API=")
   endif()
 else()
-  set(ONNX_API_DEFINE "-DONNX_API=")
+  # On non-Windows, hide all symbols we don't need
+  set(ONNX_API_DEFINE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
+  set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
@@ -427,7 +439,7 @@ if(ONNX_BUILD_BENCHMARKS)
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
-    ${PROTOBUF_INCLUDE_DIRS})
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
@@ -539,6 +551,11 @@ endif()
 
 # ---[ ONNXIFI dummy backend
 add_library(onnxifi_dummy SHARED onnx/onnxifi_dummy.c)
+
+if(ONNXIFI_ENABLE_EXT)
+  add_definitions(-DONNXIFI_ENABLE_EXT=ON)
+endif()
+
 target_include_directories(onnxifi_dummy PRIVATE
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<INSTALL_INTERFACE:include>)
@@ -580,9 +597,11 @@ if(NOT ANDROID AND NOT IOS)
   install(TARGETS onnxifi_wrapper
     EXPORT ONNXTargets DESTINATION lib)
 endif()
+
 if(ONNXIFI_DUMMY_BACKEND)
   add_definitions(-DONNXIFI_DUMMY_BACKEND=1)
 endif()
+
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()

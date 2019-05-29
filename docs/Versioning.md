@@ -61,8 +61,6 @@ For example, the `ModelProto.ir_version` property MUST be present in every model
 
 Because onnx.proto is expected to be consumed by multiple independent developers, changes to onnx.oroto SHOULD NOT break code that depends on generated language bindings (e.g., changing the type of an existing field).
 
-ISSUE: define type compatibility rules either here or under model versioning - probably here
-
 ## Operator versioning
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
@@ -108,8 +106,6 @@ Model versioning is ultimately the domain of a given organization. Therefore, th
 
 Model authors and applications/systems MAY elect to ignore the model versioning mechanism and policy rules. For models that will be shared across developers, teams, or organizations, model authors and applications/systems SHOULD adhere to the following version policies:
 
-ISSUE: the following is a strawman. I'm confident some of it is right and some is wrong. Either way, we need to make some calls and document it.  Also note that A LOT of this will likely apply to operators, as both operators and graphs have signatures AND can be versioned.
-
 ### Signature Changes
 
 1. Breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MAJOR version of `ModelProto.model_version`. Breaking changes include:
@@ -127,10 +123,6 @@ ISSUE: the following is a strawman. I'm confident some of it is right and some i
     possible in prior versions of the graph (typically by the presence of a new input
     or allowing a previously invalid input value).
 
-### IR version/Operator version dependency changes
-
-ISSUE: what's our policy when a model takes a dependency on new `IR_VERSION` change and/or new operator change?
-
 
 ### Accuracy or performance changes
 
@@ -145,3 +137,5 @@ ONNX version|File format version|Operator set version ai.onnx|Operator set versi
 1.1.2|3|6|1
 1.2|3|7|1
 1.3|3|8|1
+1.4.1|4|9|1
+1.5.0|5|10|1

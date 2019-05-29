@@ -45,9 +45,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly(
           "type_constraints", &OpSchema::typeConstraintParams)
-      .def_static("is_infinite", [](int v) {
-        return v == std::numeric_limits<int>::max();
-      });
+      .def_static(
+          "is_infinite",
+          [](int v) { return v == std::numeric_limits<int>::max(); })
+      .def_property_readonly("has_function", &OpSchema::HasFunction)
+      .def_property_readonly("_function_body", [](OpSchema* op) -> py::bytes {
+        std::string bytes = "";
+        if (op->HasFunction())
+          op->GetFunction()->SerializeToString(&bytes);
+        return py::bytes(bytes);});
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -151,34 +157,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     return OpSchemaRegistry::get_all_schemas_with_history();
   });
 
-  defs.def(
-      "get_all_functions",
-      [](const std::string& domain)
-          -> std::unordered_map<std::string, std::vector<py::bytes>> {
-        std::multimap<std::string, const FunctionProto*> temp_ptr_map;
-        std::unordered_map<std::string, std::vector<py::bytes>> temp_map;
-        FunctionBuilderRegistry& function_registry =
-            FunctionBuilderRegistry::OnnxInstance();
-
-        Common::Status status =
-            function_registry.GetFunctions(domain, &temp_ptr_map);
-        if (!status.IsOK()) {
-          throw std::runtime_error(
-              "Failed to retrieve function list for domain '" + domain + "'!");
-        }
-        for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
-             ++iter) {
-          std::string bytes;
-          if (!iter->second->SerializeToString(&bytes)) {
-            throw std::runtime_error(
-                "Failed to serialize registered function for '" + iter->first +
-                "'!");
-          }
-          temp_map[iter->first].emplace_back(py::bytes(bytes));
-        }
-        return temp_map;
-      });
-
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
   checker.doc() = "Checker submodule";
@@ -245,6 +223,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_model(proto);
   });
 
+  checker.def(
+      "check_model_path",
+      (void (*)(const std::string&)) & checker::check_model);
+
   // Submodule `optimizer`
   auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
   optimizer.doc() = "Optimizer submodule";
@@ -279,12 +261,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   version_converter.doc() = "VersionConverter submodule";
 
   version_converter.def(
-      "convert_version", [](const py::bytes& bytes, const py::int_ target) {
+      "convert_version", [](const py::bytes& bytes, py::int_ target) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         shape_inference::InferShapes(proto);
-        auto const result =
-            version_conversion::ConvertVersion(std::move(proto), target);
+        auto result = version_conversion::ConvertVersion(proto, target);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);

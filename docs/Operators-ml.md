@@ -335,53 +335,74 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 ### <a name="ai.onnx.ml.LabelEncoder"></a><a name="ai.onnx.ml.labelencoder">**ai.onnx.ml.LabelEncoder**</a>
 
-  Converts strings to integers and vice versa.<br>
-      If the string default value is set, it will convert integers to strings.
-      If the int default value is set, it will convert strings to integers.<br>
-      Each operator converts either integers to strings or strings to integers, depending 
-      on which default value attribute is provided. Only one default value attribute
-      should be defined.<br>
-      When converting from integers to strings, the string is fetched from the
-      'classes_strings' list, by simple indexing.<br>
-      When converting from strings to integers, the string is looked up in the list
-      and the index at which it is found is used as the converted value.
+  Maps each element in the input tensor to another value.<br>
+      The mapping is determined by the two parallel attributes, 'keys_*' and
+      'values_*' attribute. The i-th value in the specified 'keys_*' attribute
+      would be mapped to the i-th value in the specified 'values_*' attribute. It
+      implies that input's element type and the element type of the specified
+      'keys_*' should be identical while the output type is identical to the
+      specified 'values_*' attribute. If an input element can not be found in the
+      specified 'keys_*' attribute, the 'default_*' that matches the specified
+      'values_*' attribute may be used as its output value.<br>
+      Let's consider an example which maps a string tensor to an integer tensor.
+      Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
+      and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
+      "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
+      Since this operator is an one-to-one mapping, its input and output shapes
+      are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+      For key look-up, bit-wise comparison is used so even a float NaN can be
+      mapped to a value in 'values_*' attribute.<br>
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
+
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">ai.onnx.ml.LabelEncoder-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>classes_strings</tt> : list of strings</dt>
-<dd>A list of labels.</dd>
+<dt><tt>default_float</tt> : float (default is -0.0)</dt>
+<dd>A float.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
-<dd>An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
+<dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
-<dd>A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
+<dd>A string.</dd>
+<dt><tt>keys_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>keys_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>keys_strings</tt> : list of strings</dt>
+<dd>A list of strings. One and only one of 'keys_*'s should be set.</dd>
+<dt><tt>values_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>values_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>values_strings</tt> : list of strings</dt>
+<dd>A list of strings. One and only one of 'value_*'s should be set.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T1</dt>
-<dd>Input data.</dd>
+<dd>Input data. It can be either tensor or scalar.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T2</dt>
-<dd>Output data. If strings are input, the output values are integers, and vice versa.</dd>
+<dd>Output data.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
-<dd>The input type must be a tensor of integers or strings, of any shape.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers, and will have the same shape as the input.</dd>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dd>The input type is a tensor of any shape.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
 
 
@@ -538,7 +559,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       For example, if we pass a tensor with a single value of 4, and a category count of 8, 
       the output will be a tensor with ``[0,0,0,0,1,0,0,0]``.<br>
       This operator assumes every input feature is from the same set of categories.<br>
-  	If the input is a tensor of float, int32, or double, the data will be cast
+      If the input is a tensor of float, int32, or double, the data will be cast
       to integers and the cats_int64s category list will be used for the lookups.
 
 #### Version

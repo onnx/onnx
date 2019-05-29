@@ -40,6 +40,7 @@ namespace ONNX_NAMESPACE {
   _(Squeeze)                      \
   _(Undefined)                    \
   _(FusionGroup)                  \
+  _(MatMul)                       \
   _(Gemm)                         \
   _(Tile)                         \
   _(SubConstant)                  \
@@ -79,6 +80,7 @@ namespace ONNX_NAMESPACE {
   _(ratio)                        \
   _(size)                         \
   _(dim)                          \
+  _(keepdims)                     \
   _(perm)                         \
   _(shape)                        \
   _(axes)                         \
@@ -135,6 +137,7 @@ namespace ONNX_NAMESPACE {
   _(zeros)                        \
   _(exponent)                     \
   _(device)                       \
+  _(mode)                         \
   _(Identity)                     \
   _(Loop)                         \
   _(If)                           \
@@ -145,8 +148,25 @@ namespace ONNX_NAMESPACE {
   _(__control_inputs)             \
   _(count_include_pad)            \
   _(storage_order)                \
-  _(Unsqueeze)
-
+  _(Unsqueeze)                    \
+  _(ReduceL1)                     \
+  _(ReduceL2)                     \
+  _(ReduceLogSum)                 \
+  _(ReduceLogSumExp)              \
+  _(ReduceMax)                    \
+  _(ReduceMean)                   \
+  _(ReduceMin)                    \
+  _(ReduceProd)                   \
+  _(ReduceSum)                    \
+  _(ReduceSumSquare)              \
+  _(Cast)                         \
+  _(to)                           \
+  _(PRelu)                        \
+  _(Greater)                      \
+  _(Less)                         \
+  _(scales)                       \
+  _(Upsample)
+ 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)

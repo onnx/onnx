@@ -4,7 +4,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 ModelProto ConvertVersion(
     const ModelProto& mp_in,
-    const int target_version) {
+    int target_version) {
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
@@ -77,6 +77,13 @@ ModelProto DefaultVersionConverter::convert_version(
     for (Node* op : nodes) {
       debug(std::string("Finding schema for ") + std::string(op->kind().toString()));
       const std::string op_name = op->kind().toString();
+      if (op_name == "ConstantFill")
+      {
+        std::cerr << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
+        "Please be advised the converted model may not be working properly if target runtime does not support this "
+        "experimental op." << std::endl;
+        continue;
+      }
       if (op_name != "Undefined") {
         auto& op_domain_map = all_schemas.at(op_name);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {

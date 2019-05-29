@@ -143,7 +143,7 @@ def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[in
 
 def make_tensor(
         name,  # type: Text
-        data_type,  # type: TensorProto.DataType
+        data_type,  # type: int
         dims,  # type: Sequence[int]
         vals,  # type: Any
         raw=False  # type: bool
@@ -182,14 +182,14 @@ def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     The criteria for conversion is as follows and should be python 2 and 3
     compatible:
     - If val is py2 str or py3 bytes: return bytes
-    - If val is py2 unicode or py3 str: return val.decode('ascii')
+    - If val is py2 unicode or py3 str: return val.decode('utf-8')
     - Otherwise, return False
     """
     if isinstance(val, bytes):
         return val
     else:
         try:
-            return val.encode('ascii')
+            return val.encode('utf-8')
         except AttributeError:
             return False
 
@@ -289,8 +289,8 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 
 def make_tensor_value_info(
         name,  # type: Text
-        elem_type,  # type: TensorProto.DataType
-        shape,  # type: Optional[Sequence[int]]
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
@@ -344,7 +344,7 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     if isinstance(s, text_type):
         sanitized = s
     elif isinstance(s, binary_type):
-        sanitized = s.decode('ascii', errors='ignore')
+        sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)
     if len(sanitized) < 64:

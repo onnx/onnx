@@ -7,8 +7,8 @@
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_deadend.h"
-#include "onnx/optimizer/passes/eliminate_nop_dropout.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
+#include "onnx/optimizer/passes/eliminate_nop_dropout.h"
 #include "onnx/optimizer/passes/eliminate_nop_monotone_argmax.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
@@ -18,8 +18,11 @@
 #include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/optimizer/passes/fuse_consecutive_concats.h"
 #include "onnx/optimizer/passes/fuse_consecutive_log_softmax.h"
+#include "onnx/optimizer/passes/fuse_consecutive_reduce_unsqueeze.h"
 #include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
+#include "onnx/optimizer/passes/fuse_matmul_add_bias_into_gemm.h"
+#include "onnx/optimizer/passes/fuse_pad_into_conv.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
@@ -51,8 +54,11 @@ struct GlobalPassRegistry {
     registerPass<FuseBNIntoConv>();
     registerPass<FuseConsecutiveConcats>();
     registerPass<FuseConsecutiveLogSoftmax>();
+    registerPass<FuseConsecutiveReduceUnsqueeze>();
     registerPass<FuseConsecutiveSqueezes>();
     registerPass<FuseConsecutiveTransposes>();
+    registerPass<FuseMatMulAddBiasIntoGemm>();
+    registerPass<FusePadIntoConv>();
     registerPass<FuseTransposeIntoGemm>();
     registerPass<LiftLexicalReferences>();
     registerPass<SplitInit>();

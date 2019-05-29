@@ -8,6 +8,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
+from onnx import helper
 
 
 class Upsample(Base):
@@ -36,4 +37,4 @@ class Upsample(Base):
         ]]], dtype=np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
-               name='test_upsample_nearest')
+               name='test_upsample_nearest', opset_imports=[helper.make_opsetid("", 9)])
