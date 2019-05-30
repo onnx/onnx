@@ -1343,7 +1343,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Resize_ver10_doc = R"DOC(
+static const char* Resize_ver11_doc = R"DOC(
 Resize the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
@@ -1351,7 +1351,7 @@ Each dimension value of the output tensor is:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    10,
+    11,
     OpSchema()
         .Attr(
             "mode",
@@ -1386,7 +1386,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Resize_ver10_doc)
+        .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasNInputShapes(ctx, 1)) {
             return;
