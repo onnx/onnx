@@ -1368,7 +1368,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "pixels, and the interpolation uses edge value padding for out-of-boundary values. "
             "For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, "
             "if align_corners is 0, "
-            "x_original = min(length_original - 1, max(0, (x_resized + 0.5) / scale - 0.5)), "
+            "x_original = (x_resized + 0.5) / scale - 0.5, "
             "if align_corners is 1, "
             "x_original = x_resized * (length_original - 1) / (length_resized - 1).", 
             AttributeProto::INT,
