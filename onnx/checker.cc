@@ -228,26 +228,63 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 void check_sparse_tensor(
     const SparseTensorProto& sparse,
     const CheckerContext& ctx) {
-  int64_t nnz = 0;
-  if (sparse.has_values()) {
-    const TensorProto& values = sparse.values();
-    check_tensor(values, ctx);
-    // TBD: Should we generalize and permit tensors of rank > 1?
-    if (values.dims().size() != 1)
-      fail_check("Sparse tensor values must have rank 1.");
-    nnz = values.dims(0);
+  if (!sparse.has_values()) {
+    // Sparse tensor has no separate name than the one inside "values", so
+    // cannot report name in error message.
+    // TODO: Should we add a name to sparse-tensor?
+    fail_check("Sparse tensor must have values.");
   }
+
+  // values must be a tensor of shape [NNZ]
+  const TensorProto& values = sparse.values();
+  check_tensor(values, ctx);
+  // Currently we restrict the value associated with a particular index-tuple
+  // to be a single value. In the future, if there is a requirement,
+  // we may extend this to permit the value to be a "sub-tensor", in which
+  // case values will have dimension > 1.
+  if (values.dims().size() != 1)
+    fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
+  int64_t nnz = values.dims(0);
+
+  int dense_rank = sparse.dims_size();
+  if (dense_rank == 0) {
+    fail_check("Sparse tensor must have a rank > 0");
+  }
+
   int64_t num_indices = 0;
   if (sparse.has_indices()) {
+    // We keep the representation simple for now.
+    // indices must be a tensor of shape [NNZ, dense_rank].
+    // Each index value is a tuple (i_1, i_2, ..., i_r).
+    // An alternative would be to represent each index value as single
+    // integer value (the linearized index), the value the index would
+    // have if the tensor is reshaped to be 1-dimensional. This is more
+    // compact. We may add support for this later if required.
     const TensorProto& indices = sparse.indices();
     check_tensor(indices, ctx);
-    // TBD: Should we generalize and permit tensors of rank > 1?
-    if (indices.dims().size() != 1)
-      fail_check("Sparse tensor indices must have rank 1.");
+    if (indices.dims().size() != 2)
+      fail_check(
+          "Sparse tensor indices (", indices.name(), ") must have rank 2.");
     nnz = indices.dims(0);
+    if (indices.dims(1) != dense_rank)
+      fail_check(
+          "Sparse tensor indices (",
+          indices.name(),
+          ") second dimension size does not match rank of tensor.");
+    // TODO: check type of indices is int
+    // TODO: check if indices appear in ascending order, and if they have valid
+    // values.
   }
-  if (nnz != num_indices)
-    fail_check("Number of values and indices must be same in a sparse tensor.");
+  if (nnz != num_indices) {
+    auto& values_name = sparse.values().name();
+    auto& indices_name = sparse.indices().name();
+    fail_check(
+        "Number of elements in values (",
+        values_name,
+        ") and indices (",
+        indices_name,
+        ") are not same.");
+  }
 }
 
 // NB: This is a generic "attribute well-formedness" check, it doesn't
