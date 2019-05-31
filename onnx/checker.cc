@@ -226,64 +226,71 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 }
 
 void check_sparse_tensor(
-    const SparseTensorProto& sparse,
+    const SparseTensorProto& sparse_tensor_proto,
     const CheckerContext& ctx) {
-  if (!sparse.has_values()) {
-    // Sparse tensor has no separate name than the one inside "values", so
-    // cannot report name in error message.
-    // TODO: Should we add a name to sparse-tensor?
-    fail_check("Sparse tensor must have values.");
-  }
+  enforce_has_field(sparse_tensor_proto, values);
+
+  const TensorProto& values = sparse_tensor_proto.values();
+  check_tensor(values, ctx);
 
   // values must be a tensor of shape [NNZ]
-  const TensorProto& values = sparse.values();
-  check_tensor(values, ctx);
   // Currently we restrict the value associated with a particular index-tuple
   // to be a single value. In the future, if there is a requirement,
   // we may extend this to permit the value to be a "sub-tensor", in which
   // case values will have dimension > 1.
-  if (values.dims().size() != 1)
+  if (values.dims_size() != 1)
     fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
   int64_t nnz = values.dims(0);
 
-  int dense_rank = sparse.dims_size();
+  int dense_rank = sparse_tensor_proto.dims_size();
   if (dense_rank == 0) {
+    // TODO: Should we add a name field for a sparse-tensor-proto?
+    // Currently, values has a name.
     fail_check("Sparse tensor must have a rank > 0");
   }
 
-  int64_t num_indices = 0;
-  if (sparse.has_indices()) {
-    // We keep the representation simple for now.
-    // indices must be a tensor of shape [NNZ, dense_rank].
-    // Each index value is a tuple (i_1, i_2, ..., i_r).
-    // An alternative would be to represent each index value as single
-    // integer value (the linearized index), the value the index would
-    // have if the tensor is reshaped to be 1-dimensional. This is more
-    // compact. We may add support for this later if required.
-    const TensorProto& indices = sparse.indices();
-    check_tensor(indices, ctx);
-    if (indices.dims().size() != 2)
-      fail_check(
-          "Sparse tensor indices (", indices.name(), ") must have rank 2.");
-    nnz = indices.dims(0);
-    if (indices.dims(1) != dense_rank)
-      fail_check(
-          "Sparse tensor indices (",
-          indices.name(),
-          ") second dimension size does not match rank of tensor.");
-    // TODO: check type of indices is int
-    // TODO: check if indices appear in ascending order, and if they have valid
-    // values.
-  }
-  if (nnz != num_indices) {
-    auto& values_name = sparse.values().name();
-    auto& indices_name = sparse.indices().name();
+  int64_t num_indices = nnz * dense_rank;
+
+  // We keep the representation simple for now.
+  // indices must have NNZ * dense_rank values
+  // Each index value is a tuple (i_1, i_2, ..., i_r).
+  // An alternative would be to represent each index value as single
+  // integer value (the linearized index), the value the index would
+  // have if the tensor is reshaped to be 1-dimensional. This is more
+  // compact. We may add support for this later if required.
+
+  if (sparse_tensor_proto.indices_size() != num_indices)
     fail_check(
-        "Number of elements in values (",
-        values_name,
-        ") and indices (",
-        indices_name,
-        ") are not same.");
+        "Sparse tensor indices for (",
+        values.name(),
+        ") has incorrect number of entries.");
+
+  // Check if indices appear in ascending order, and if they have valid
+  // values.
+  auto& dims = sparse_tensor_proto.dims();
+  auto& indices = sparse_tensor_proto.indices();
+  int64_t curr_index = 0, prev_index = -1;
+  for (int i = 0, axis = 0; i < num_indices; ++i) {
+    if ((indices[i] < 0) || (indices[i] >= dims[axis]))
+      fail_check(
+          "Sparse tensor (",
+          values.name(),
+          ") index value at position ",
+          i,
+          " out of range.");
+    curr_index = curr_index * dims[axis] + indices[i];
+    axis++;
+    if (axis == dense_rank) {
+      axis = 0;
+      if (curr_index <= prev_index) {
+        fail_check(
+            "Sparse tensor indices for (",
+            values.name(),
+            ") do not appear in sorted order.");
+      }
+      prev_index = curr_index;
+      curr_index = 0;
+    }
   }
 }
 

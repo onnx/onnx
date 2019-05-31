@@ -454,12 +454,17 @@ message SparseTensorProto {
   // The default-value is zero for numeric tensors, and empty-string for string tensors.
   optional TensorProto values = 1;
 
-  // The indices of the non-default values are encoded as a tensor of shape [NNZ].
-  // Note that the indices are linearized-indices. Each linearized index can be
-  // converted into a tuple of indices using the shape provided below.
-  optional TensorProto indices = 2;
+  // The indices of the non-default values. There must be NNZ*rank values appearing
+  // in the order [index_1_1, index_1_2, ... index_1_rank, index_2_1, ...]
+  // where index_i_j indicates the j-th index of the i-th non-default.
+  // Design note: The indices are in the COO format, for simplicity. If
+  // and when there is a requirement for a more compact representation, this
+  // can be extended to support indices in a linearized format (with each
+  // index tuple (index_i_1, ..., index_i_rank) converted into a single int64,
+  // with an extra format flag).
+  repeated int64 indices = 2;
 
-  // The shape of the underlying dense-tensor.
+  // The shape of the underlying dense-tensor: [dim_1, dim_2, ... dim_rank]
   repeated int64 dims = 3;
 }
 
