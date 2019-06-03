@@ -1815,7 +1815,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (pads_data.size() != static_cast<size_t>(2 * input_rank))
               fail_shape_inference("Pads has incorrect number of values");
 
-            const auto& output_shape =
+           auto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (size_t i = 0; (int64_t)i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
