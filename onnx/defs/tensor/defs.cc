@@ -1812,7 +1812,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
 
-            // fill with zeros if needed to reach appropriate size
             if (pads_data.size() != static_cast<size_t>(2 * input_rank))
               fail_shape_inference("Pads has incorrect number of values");
 
