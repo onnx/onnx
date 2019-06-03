@@ -515,9 +515,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("NONE"))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           std::vector<std::string> label_strs;
-          auto result =
+          std::vector<int64_t> label_ints;
+
+          auto labels_strings_present =
               getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
-          bool using_strings = (result && !label_strs.empty());
+          bool using_strings = (labels_strings_present && !label_strs.empty());
+
+          if (!using_strings) {
+            auto labels_ints_present =
+                getRepeatedAttribute(ctx, "classlabels_ints", label_ints);
+          }
 
           // Type inference
           auto* output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
@@ -531,22 +538,51 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(1)->mutable_tensor_type()->set_elem_type(
               TensorProto::FLOAT);
 
-          // Shape inference
-          if (hasNInputShapes(ctx, 1)) {
-            // needs atleast first input shape to proceed with shape inference
-            return;
-          } else {
-             // Rank inference
+          // Shape/Rank inference begins
 
+          // establish the number of classes
+          std::vector<float> intercepts;
+          auto intercepts_present =
+              getRepeatedAttribute(ctx, "intercepts", intercepts);
+          int class_count = static_cast<int>(intercepts.size());
+          if (intercepts.size() == 1 &&
+              ((using_strings && label_strs.size() == 2) ||
+               (!using_strings && label_ints.size() == 2))) {
+            class_count = 2;
           }
-          
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          const auto input_rank = input_shape.dim_size();
 
-          const auto* output_shape =
+          auto* output_shape_0 =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          // output_0 is of rank 1
+          output_shape_0->add_dim();
 
-          if (input_rank)
+          auto* output_shape_1 =
+              ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+
+          // output_1 is of rank 2
+          output_shape_1->add_dim();
+
+          // the second dimension of output_1 is the number of classes
+          auto* output_dim = output_shape_1->add_dim();
+          output_dim->set_dim_value(class_count);
+
+          // only proceed further if input shape is known
+          if (hasNInputShapes(ctx, 1)) {
+            const auto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const auto input_rank = input_shape.dim_size();
+
+            if (input_rank == 1) {
+              // if input_rank is 1, batch_size is interpreted to be 1
+              output_shape_0->mutable_dim((int)0)->set_dim_value(1);
+              output_shape_1->mutable_dim((int)0)->set_dim_value(1);
+            } else if (input_rank == 2) {
+              *output_shape_0->mutable_dim((int)0) = input_shape.dim((int)0);
+              *output_shape_1->mutable_dim((int)0) = input_shape.dim((int)0);
+            } else {
+              fail_shape_inference("Input's shape should be 1D or 2D");
+            }
+          }
         }));
 
 static const char* LinearRegressor_ver1_doc = R"DOC(
