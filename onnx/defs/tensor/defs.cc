@@ -1286,7 +1286,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto* repeats_inputs = ctx.getInputData(1);
 
-          const auto& output_shape =
+          auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           if (nullptr != repeats_inputs) {
