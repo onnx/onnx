@@ -287,11 +287,11 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  subset of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing. The output spatial shape will be following:
  ```
- output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
  or
  ```
- output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
  if ceil_mode is enabled
 
@@ -301,18 +301,23 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
- VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+ VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
  ```
  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
  ```
- pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
  ```
  {additionalDescription}
  )DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{opName}", opName);
     ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+    ReplaceAll(
+        doc,
+        "{kernelSpatialShape}",
+        use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
+                     : "kernel_spatial_shape[i]");
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
@@ -1229,10 +1234,11 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    for (auto i : dilations) {
-      if (i != 1)
-        return; // we don't handle dialations not 1.
+    if (dilations.size() != n_input_dims) {
+      return;
     }
+  } else {
+    dilations.assign(n_input_dims, 1);
   }
 
   std::vector<int64_t> strides;
@@ -1259,6 +1265,13 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     }
   }
 
+  std::vector<int64_t> effective_kernel_shape = kernel_shape;
+  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+    // accounting for dilation, how big is the kernel in this dimension
+    effective_kernel_shape[i] =
+        (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+  }
+
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
@@ -1281,7 +1294,9 @@ void convTransposeShapeInference(InferenceContext& ctx) {
             residual -= stride;
           }
         }
-        int64_t total_pad = residual == 0 ? kernel_shape[i] - stride : kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0
+            ? effective_kernel_shape[i] - stride
+            : effective_kernel_shape[i] - residual;
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -1345,7 +1360,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       if (input_shape.dim(i + 2).has_dim_value()) {
         int64_t output_shape_dim =
             strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
-            output_padding[i] + kernel_shape[i] - pads[i] -
+            output_padding[i] + effective_kernel_shape[i] - pads[i] -
             pads[i + n_input_dims];
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
@@ -1366,11 +1381,11 @@ and computes the output.
 
 If the pads parameter is provided the shape of the output is calculated via the following equation:
 
-  output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
+  output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
 
 output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
 
-  total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
+  total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
   If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
