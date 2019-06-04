@@ -1895,7 +1895,8 @@ class TestShapeInference(unittest.TestCase):
 
     def test_linearclassifier_1D_input(self):  # type: () -> None
         onnx_ml = os.environ.get('ONNX_ML')
-        if(onnx_ml is not None and int(onnx_ml) != 0):
+        # No environment variable set (None) indicates ONNX_ML=1
+        if(onnx_ml is not None or int(onnx_ml) != 0):
             graph = self._make_graph(
                 [('x', TensorProto.FLOAT, (5,))],
                 [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.0008, -0.0008], intercepts=[2.0, 2.0], classlabels_ints=[1, 2])],
@@ -1906,7 +1907,8 @@ class TestShapeInference(unittest.TestCase):
 
     def test_linearclassifier_2D_input(self):  # type: () -> None
         onnx_ml = os.environ.get('ONNX_ML')
-        if(onnx_ml is not None and int(onnx_ml) != 0):
+        # No environment variable set (None) indicates ONNX_ML=1
+        if(onnx_ml is not None or int(onnx_ml) != 0):
             graph = self._make_graph(
                 [('x', TensorProto.FLOAT, (4, 5))],
                 [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6], intercepts=[2.0, 2.0, 3.0], classlabels_ints=[1, 2, 3])],
