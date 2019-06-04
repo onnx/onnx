@@ -545,20 +545,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto get_initializer_data =
               [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
-            if (initializer->has_raw_data() &&
-                initializer->data_type() == TensorProto::INT64) {
-              const auto& data = ParseRawData<int64_t>(initializer);
-              vec.insert(vec.end(), data.begin(), data.end());
-            } else if (
-                initializer->has_raw_data() &&
-                initializer->data_type() == TensorProto::INT32) {
-              const auto& data = ParseRawData<int32_t>(initializer);
-              vec.insert(vec.end(), data.begin(), data.end());
-            } else if (initializer->data_type() == TensorProto::INT64) {
-              const auto& data = initializer->int64_data();
+            if (initializer->data_type() == TensorProto::INT64) {
+              const auto& data = ParseData<int64_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else if (initializer->data_type() == TensorProto::INT32) {
-              const auto& data = initializer->int32_data();
+              const auto& data = ParseData<int32_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else {
               // unaccepted data type
@@ -1327,17 +1318,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto scales = ctx.getInputData(1);
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == input_shape.dim_size()) {
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                float dim_value =
-                    static_cast<float>(input_shape.dim(i).dim_value());
-                output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-                    std::floor(dim_value * scales->float_data(i))));
+            if (scales->data_type() == TensorProto::FLOAT) {
+              const auto& data = ParseData<float>(scales);
+              if (static_cast<int>(data.size()) == input_shape.dim_size()) {
+                for (int i = 0; i < input_shape.dim_size(); ++i) {
+                  float dim_value =
+                      static_cast<float>(input_shape.dim(i).dim_value());
+                  output_shape->add_dim()->set_dim_value(
+                      static_cast<int64_t>(std::floor(dim_value * data[i])));
+                }
+              } else {
+                fail_shape_inference(
+                    "Number of elements of input 'scales' must be same as rank of input 'X'.");
               }
             } else {
               fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
+                  "Input scales's element type must be float.");
             }
           } else {
             // Infer output shape's rank in any case.

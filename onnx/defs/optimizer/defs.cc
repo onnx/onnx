@@ -13,7 +13,7 @@ static const char* Adam_ver11_doc = R"DOC(
      
      - The initial learning-rate "R".
      - The update count "T". That is, the number of training iterations conducted.
-     - A L2-norm regularization coefficient "lambda".
+     - A L2-norm regularization coefficient "norm_coefficient".
      - A small constant "epsilon" to avoid dividing-by-zero. 
      - Two coefficients, alpha and beta. 
 
@@ -40,8 +40,8 @@ static const char* Adam_ver11_doc = R"DOC(
     Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
     numpy-style broadcasting support. The pseudo code to compute those outputs is:
 
-      // Add gradient of 0.5 * lambda * ||X||_2^2, where ||X||_2 is the 2-norm.
-      G_regularized = lambda * X + G;
+      // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+      G_regularized = norm_coefficient * X + G;
 
       // Update exponentially-averaged historical gradient.
       V_new = alpha * V + (1 - alpha) * G_regularized;
@@ -104,8 +104,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             0.999f)
         .Attr(
-            "lambda",
-            "Regularization coefficient of 0.5 * lambda * ||X||_2^2. Default to 0, "
+            "norm_coefficient",
+            "Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, "
             "which means no regularization.",
             AttributeProto::FLOAT,
             0.0f)

@@ -14,6 +14,7 @@
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
+#include "onnx/version_converter/adapters/batch_normalization_8_9.h"
 #include "onnx/version_converter/adapters/set_is_test.h"
 #include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
@@ -24,7 +25,9 @@
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
+#include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
@@ -112,10 +115,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("Max",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
         OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<CompatibleAdapter>("Min",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
         OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<CompatibleAdapter>("Mean",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mean",
         OpSetID(8), OpSetID(7)));      
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
@@ -136,23 +145,41 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<SetIsTest>("BatchNormalization",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<Upsample_8_9>());
       registerAdapter(make_unique<Cast_9_8>());
+      registerAdapter(make_unique<CompatibleAdapter>("Flatten",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Flatten",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Constant",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Constant",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("MatMul",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("MatMul",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Gemm",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("PRelu",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Greater",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Greater",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Less",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Less",
         OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<Upsample_8_9>());
       registerAdapter(make_unique<Upsample_9_8>());
       registerAdapter(make_unique<Scan_9_8>());
+      registerAdapter(make_unique<Scan_8_9>());
+      registerAdapter(make_unique<BatchNormalization_8_9>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
@@ -190,6 +217,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<MaxPool_8_7>());
+      registerAdapter(make_unique<CompatibleAdapter>("Cast",
+        OpSetID(8), OpSetID(9)));
     }
 
     ModelProto convert_version(
