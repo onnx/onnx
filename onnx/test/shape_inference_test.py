@@ -1896,7 +1896,6 @@ class TestShapeInference(unittest.TestCase):
     def test_linearclassifier_1D_input(self):  # type: () -> None
         onnx_ml = os.environ.get('ONNX_ML')
         if(onnx_ml is not None and int(onnx_ml) != 0):
-            print('Not skipping test')
             graph = self._make_graph(
                 [('x', TensorProto.FLOAT, (5,))],
                 [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.0008, -0.0008], intercepts=[2.0, 2.0], classlabels_ints=[1, 2])],
