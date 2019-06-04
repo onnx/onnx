@@ -522,8 +522,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           bool using_strings = (labels_strings_present && !label_strs.empty());
 
           if (!using_strings) {
-            auto labels_ints_present =
-                getRepeatedAttribute(ctx, "classlabels_ints", label_ints);
+            getRepeatedAttribute(ctx, "classlabels_ints", label_ints);
           }
 
           // Type inference
@@ -542,8 +541,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           // establish the number of classes
           std::vector<float> intercepts;
-          auto intercepts_present =
-              getRepeatedAttribute(ctx, "intercepts", intercepts);
+          getRepeatedAttribute(ctx, "intercepts", intercepts);
           int class_count = static_cast<int>(intercepts.size());
           if (intercepts.size() == 1 &&
               ((using_strings && label_strs.size() == 2) ||
