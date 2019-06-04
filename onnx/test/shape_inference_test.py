@@ -1894,7 +1894,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
 
     def test_linearclassifier_1D_input(self):  # type: () -> None
-        onnx_ml = os.environ.get('ONNX_ML')
+        onnx_ml = os.environ.get('ONNX_ML')  # type: ignore
         # No environment variable set (None) indicates ONNX_ML=1
         if(onnx_ml is None or int(onnx_ml) != 0):
             graph = self._make_graph(
@@ -1906,7 +1906,7 @@ class TestShapeInference(unittest.TestCase):
                                           opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
     def test_linearclassifier_2D_input(self):  # type: () -> None
-        onnx_ml = os.environ.get('ONNX_ML')
+        onnx_ml = os.environ.get('ONNX_ML')  # type: ignore
         # No environment variable set (None) indicates ONNX_ML=1
         if(onnx_ml is None or int(onnx_ml) != 0):
             graph = self._make_graph(
