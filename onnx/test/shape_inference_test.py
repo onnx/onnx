@@ -8,7 +8,7 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_emp
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
-
+import os
 import numpy as np  # type: ignore
 
 
@@ -1886,22 +1886,27 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
 
     def test_linearclassifier_1D_input(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (5,))],
-            [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.0008, -0.0008], intercepts=[2.0, 2.0], classlabels_ints=[1, 2])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,)),
-                                      make_tensor_value_info('z', TensorProto.FLOAT, (1, 2))],
-                                      opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
+        onnx_ml = os.environ.get('ONNX_ML')
+        if(onnx_ml is not None and int(onnx_ml) != 0):
+            print('Not skipping test')
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (5,))],
+                [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.0008, -0.0008], intercepts=[2.0, 2.0], classlabels_ints=[1, 2])],
+                [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,)),
+                                          make_tensor_value_info('z', TensorProto.FLOAT, (1, 2))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
     def test_linearclassifier_2D_input(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (4, 5))],
-            [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6], intercepts=[2.0, 2.0, 3.0], classlabels_ints=[1, 2, 3])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (4,)),
-                                      make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
-                                      opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
+        onnx_ml = os.environ.get('ONNX_ML')
+        if(onnx_ml is not None and int(onnx_ml) != 0):
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (4, 5))],
+                [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6], intercepts=[2.0, 2.0, 3.0], classlabels_ints=[1, 2, 3])],
+                [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (4,)),
+                                          make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
 
 if __name__ == '__main__':
