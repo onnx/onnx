@@ -245,38 +245,53 @@ void check_sparse_tensor(
   int dense_rank = sparse_tensor_proto.dims_size();
   if (dense_rank == 0) {
     // TODO: Should we add a name field for a sparse-tensor-proto?
-    // Currently, values has a name.
-    fail_check("Sparse tensor must have a rank > 0");
+    // Currently, values has a name, but message may be a bit confusing.
+    fail_check(
+        "Sparse tensor (", values.name(), ") must have a dense-rank > 0");
   }
 
-  int64_t num_indices = nnz * dense_rank;
+  if (sparse_tensor_proto.has_indices()) {
+    // We keep the representation simple for now.
+    // indices must be a tensor of shape [NNZ, dense_rank].
+    // Each index value is a tuple (i_1, i_2, ..., i_r).
+    // An alternative would be to represent each index value as single
+    // integer value (the linearized index), the value the index would
+    // have if the tensor is reshaped to be 1-dimensional. This is more
+    // compact. We may add support for this later if required.
+    const TensorProto& indices = sparse_tensor_proto.indices();
+    check_tensor(indices, ctx);
+    if (indices.data_type() != TensorProto::INT64)
+      fail_check(
+          "Sparse tensor indices (", indices.name(), ") must have INT64 type.");
+    if (indices.dims().size() != 2)
+      fail_check(
+          "Sparse tensor indices (", indices.name(), ") must have rank 2.");
+    if (indices.dims(0) != nnz)
+      fail_check(
+          "Sparse tensor indices (",
+          indices.name(),
+          ") first dimension size does not equal NNZ.");
+    if (indices.dims(1) != dense_rank)
+      fail_check(
+          "Sparse tensor indices (",
+          indices.name(),
+          ") second dimension size does not match rank of tensor.");
 
-  // We keep the representation simple for now.
-  // indices must have NNZ * dense_rank values
-  // Each index value is a tuple (i_1, i_2, ..., i_r).
-  // An alternative would be to represent each index value as single
-  // integer value (the linearized index), the value the index would
-  // have if the tensor is reshaped to be 1-dimensional. This is more
-  // compact. We may add support for this later if required.
-
-  if (sparse_tensor_proto.indices_size() != num_indices)
-    fail_check(
-        "Sparse tensor indices for (",
-        values.name(),
-        ") has incorrect number of entries.");
-
-  // Check if indices appear in ascending order, and if they have valid
-  // values.
-  auto& dims = sparse_tensor_proto.dims();
-  auto& indices = sparse_tensor_proto.indices();
-  int64_t curr_index = 0, prev_index = -1;
-  for (int i = 0, axis = 0; i < num_indices; ++i) {
+    // Check if indices appear in ascending order, and if they have valid
+    // values.
+    /*
+auto& dims = sparse_tensor_proto.dims();
+auto& indices = sparse_tensor_proto.indices();
+int64_t curr_index = 0, prev_index = -1;
+for (int i = 0; i < nnz; ++i) {
+  for (axis = 0; axis < dense_rank; ++axis) {
     if ((indices[i] < 0) || (indices[i] >= dims[axis]))
       fail_check(
           "Sparse tensor (",
-          values.name(),
-          ") index value at position ",
+          indices.name(),
+          ") index value at position [",
           i,
+          axis,
           " out of range.");
     curr_index = curr_index * dims[axis] + indices[i];
     axis++;
@@ -293,7 +308,9 @@ void check_sparse_tensor(
     }
   }
 }
-
+    */
+  }
+}
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(
@@ -344,8 +361,8 @@ void check_attribute(
 #undef check_repeated_field
 
   // Normally, used_fields is expected to be 1.
-  // In proto3, when the value to be set is type default value (say 0 for int),
-  // used_fields may be 0.
+  // In proto3, when the value to be set is type default value (say 0 for
+  // int), used_fields may be 0.
   if (used_fields > 1) {
     fail_check(
         "Attribute (name: ",
@@ -455,7 +472,8 @@ void check_node(
       // TODO: expose the registration of the op schemas appropriately in
       // python, so we can load and register operators in other domains
       //
-      // before we complete the above todo, let's skip the schema check for now
+      // before we complete the above todo, let's skip the schema check for
+      // now
     }
   } else if (schema->Deprecated()) {
     fail_check(
@@ -482,8 +500,8 @@ void check_graph(
 
   std::unordered_set<std::string> output_names{};
   // Inherit values avaiailable in outer scope
-  // Note that we do not allow shadowing, so the presence of an already-defined
-  // name is always an error.
+  // Note that we do not allow shadowing, so the presence of an
+  // already-defined name is always an error.
   for (const auto& value_info : graph.input()) {
     if (output_names.count(value_info.name())) {
       fail_check(
@@ -525,9 +543,9 @@ void check_graph(
             "\n is not output of any previous nodes.");
       }
     }
-    // This needs to happen before SSA check since we don't want to recurse and
-    // find that outputs from control flow ops are colliding with names in the
-    // inner block
+    // This needs to happen before SSA check since we don't want to recurse
+    // and find that outputs from control flow ops are colliding with names in
+    // the inner block
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
     try {
