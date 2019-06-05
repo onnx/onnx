@@ -8,28 +8,30 @@ static const char* Adam_ver11_doc = R"DOC(
     Compute one iteration of Adam, a stochastic gradient based optimization
     algorithm. This operator can conduct the optimization of multiple tensor variables.
 
-    Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
+    Let's define the behavior of this operator. First of all, Adam requires
     some parameters:
      
-     - The initial learning-rate "R".
+     - The learning-rate "R".
      - The update count "T". That is, the number of training iterations conducted.
      - A L2-norm regularization coefficient "norm_coefficient".
      - A small constant "epsilon" to avoid dividing-by-zero. 
-     - Two coefficients, alpha and beta. 
+     - Two coefficients, "alpha" and "beta".
 
     At each Adam iteration, the optimized tensors are moved along a direction
     computed based on their exponentially-averaged historical gradient and
-    exponentially-averaged historical squared gradient. Assume that only a single
-    tensor "X" is being optimized. We need
+    exponentially-averaged historical squared gradient. Assume that only a tensor
+    "X" is being optimized. The rest of required information is
     
-     - the value of "X", 
+     - the value of "X",
      - "X"'s gradient (denoted by "G"),
      - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
      - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
 
-    Consequently, this operator's input tensor list is ["R," "T," "X," "G," "V," "H"].
-    Other parameters are given as attributes because they are usually constants.
-    Moreover, the corresponding output tensors are 
+    Some of those parameters are passed into this operator as input tensors and others
+    are stored as this operator's attributes. Specifically, this operator's input tensor
+    list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
+    the second input, and so on. Other parameters are given as attributes because they
+    are constants. Moreover, the corresponding output tensors are 
     
      - the new value of "X" (called "X_new"),
      - the new exponentially-averaged historical gradient (denoted by "V_new"), and
@@ -49,13 +51,14 @@ static const char* Adam_ver11_doc = R"DOC(
       // Update exponentially-averaged historical squared gradient.
       H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
 
-      // The gradient will be element-wisely divided by the following tensor.
+      // Compute the element-wise square root of H_new. V_new will be element-wisely
+      // divided by H_sqrt for a better update direction.
       H_sqrt = Sqrt(H_new) + epsilon;
 
-      // Compute learning-rate. Note that "alpha^T"/"beta^T" is alpha's/beta's T-th power.
-      R_adjusted = R * Sqrt(1 - beta^T) / (1 - alpha^T);
+      // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
+      R_adjusted = R * Sqrt(1 - beta**T) / (1 - alpha**T);
 
-      // Compute new value of "X."
+      // Compute new value of "X".
       X_new = X - R_adjusted * V_new / H_sqrt
 
     If there are multiple inputs to be optimized, the pseudo code will be applied
