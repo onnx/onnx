@@ -8,14 +8,15 @@ if [ -z $python_exist ]; then
   exit 1
 fi
 
-if [ -f "onnx/defs/gen_doc.py" ]; then
+if [ ! -f "onnx/defs/gen_doc.py" ]; then
   echo "Please run this script in the ONNX root folder."
+  exit 1
 fi
 
 set -e
 
 echo -e "===> recompile onnx"
-python setup.py develop
+python setup.py develop --user
 
 echo -e "\n===> regenerate test data from node test"
 python onnx/backend/test/cmd_tools.py generate-data
