@@ -29,6 +29,8 @@
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
+#include "onnx/version_converter/adapters/constant_9_8.h"
+
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -153,8 +155,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(9), OpSetID(8)));
       registerAdapter(make_unique<CompatibleAdapter>("Constant",
         OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("Constant",
-        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<Constant_9_8>());
       registerAdapter(make_unique<CompatibleAdapter>("MatMul",
         OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<ExtendSupportedTypes>("MatMul",
