@@ -12598,7 +12598,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>bias</tt> : float (default is 0.0)</dt>
 <dd>The bias value added to output. Default is 0.</dd>
 <dt><tt>lambd</tt> : float (default is 0.5)</dt>
-<dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
+<dd>The non-negative lambd value for the Shrink formulation. Default is 0.5.</dd>
 </dl>
 
 #### Inputs
