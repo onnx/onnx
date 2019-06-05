@@ -95,7 +95,7 @@ class Adam(Base):
         x2 = np.array([1.0, 2.0], dtype=np.float32)
         g2 = np.array([-1.0, -3.0], dtype=np.float32)
         v2 = np.array([4.0, 1.0], dtype=np.float32)
-        h2 = np.array([1.0], dtype=np.float32)
+        h2 = np.array([1.0, 10.0], dtype=np.float32)
 
         # Compute expected outputs of Adam.
         x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
