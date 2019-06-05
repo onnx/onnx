@@ -1893,6 +1893,33 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
 
+    def test_tile(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('repeats', TensorProto.INT64, (3,))],
+            [make_node('Tile', ['x', 'repeats'], ['y'])],
+            [],
+            initializer=[make_tensor('repeats', TensorProto.INT64, (3,), (1, 2, 3))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 10, 18))])
+
+    def test_tile_raw_input_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('repeats', TensorProto.INT64, (3,))],
+            [make_node('Tile', ['x', 'repeats'], ['y'])],
+            [],
+            initializer=[make_tensor('repeats', TensorProto.INT64, (3,),
+                                     vals=np.array([1, 2, 3], dtype='<i8').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 10, 18))])
+
+    def test_tile_rank_inference(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('repeats', TensorProto.INT64, (3,))],
+            [make_node('Tile', ['x', 'repeats'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None))])  # type: ignore
+
     def test_linearclassifier_1D_input(self):  # type: () -> None
         onnx_ml = os.environ.get('ONNX_ML')  # type: ignore
         # No environment variable set (None) indicates ONNX_ML=1

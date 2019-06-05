@@ -549,38 +549,25 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             class_count = 2;
           }
 
-          auto* output_shape_0 =
-              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          // output_0 is of rank 1
-          output_shape_0->add_dim();
+          TensorShapeProto_Dimension batch_size_dim, class_count_dim;
+          class_count_dim.set_dim_value(class_count);
 
-          auto* output_shape_1 =
-              ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
-
-          // output_1 is of rank 2
-          output_shape_1->add_dim();
-
-          // the second dimension of output_1 is the number of classes
-          auto* output_dim = output_shape_1->add_dim();
-          output_dim->set_dim_value(class_count);
-
-          // only proceed further if input shape is known
           if (hasNInputShapes(ctx, 1)) {
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
             const auto input_rank = input_shape.dim_size();
-
             if (input_rank == 1) {
               // if input_rank is 1, batch_size is interpreted to be 1
-              output_shape_0->mutable_dim((int)0)->set_dim_value(1);
-              output_shape_1->mutable_dim((int)0)->set_dim_value(1);
+              batch_size_dim.set_dim_value(1);
             } else if (input_rank == 2) {
-              *output_shape_0->mutable_dim((int)0) = input_shape.dim((int)0);
-              *output_shape_1->mutable_dim((int)0) = input_shape.dim((int)0);
+              batch_size_dim = input_shape.dim((int)0);
             } else {
               fail_shape_inference("Input's shape should be 1D or 2D");
             }
           }
+
+          updateOutputShape(ctx, 0, {batch_size_dim});
+          updateOutputShape(ctx, 1, {batch_size_dim, class_count_dim});
         }));
 
 static const char* LinearRegressor_ver1_doc = R"DOC(
