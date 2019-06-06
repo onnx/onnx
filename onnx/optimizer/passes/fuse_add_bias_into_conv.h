@@ -9,6 +9,12 @@
 // After:
 //   B = Conv(X, Y, A)
 //
+// Before:
+//   Z = ConvTranspose(X, Y)
+//   B = Z + A
+// After:
+//   B = ConvTranspose(X, Y, A)
+//
 // the pass can handle the following cases:
 //   case 1: A is 1D tensor and A.dim[0] == Z.dim[1]
 //   case 2: A is 1-element 1D tensor (broadcasting bias)
@@ -32,8 +38,10 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
     return "fuse_add_bias_into_conv";
   }
   bool patternMatchPredicate(Node* node) override {
-    return node->kind() == kAdd && node->inputs()[0]->node()->kind() == kConv &&
-        node->inputs()[0]->node()->inputs().size() == 2;
+    return (node->kind() == kAdd &&
+	    (node->inputs()[0]->node()->kind() == kConv ||
+	     node->inputs()[0]->node()->kind() == kConvTranspose) &&
+            node->inputs()[0]->node()->inputs().size() == 2);
   }
   bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
       override {
