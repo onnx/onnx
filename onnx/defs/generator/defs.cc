@@ -600,8 +600,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               } 
 
               int output_dim_value = -1; 
-              // Support only common numeric types for shape inference
-              // TODO: Support all numeric types
+
               if (start_initializer->data_type() == TensorProto::FLOAT) {
                 output_dim_value = compute_output_dim<float>(
                    start_initializer, limit_initializer, delta_initializer);              
@@ -615,7 +614,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 output_dim_value = compute_output_dim<double>(
                     start_initializer, limit_initializer, delta_initializer);
               } else {
-                // return after just rank inference
+                // 'float16' has no native CPU type -
+                // stop with rank inference
                 return;
               }
 
