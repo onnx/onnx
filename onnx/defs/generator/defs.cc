@@ -534,7 +534,7 @@ inline int compute_output_dim_for_range (
 const TensorProto* start, const TensorProto* limit, const TensorProto* delta) { 
    const auto& start_data = ParseData<T>(start);
    const auto& limit_data = ParseData<T>(limit);
-   const auto& delta_data = ParseData<T>(delta);
+   const auto& delta_data = delta != nullptr ? ParseData<T>(delta) : std::vector<T>(1, 1);
 
    if (start_data.size() != 1 ||
        limit_data.size() != 1 ||
@@ -571,30 +571,34 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::Optional)
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated sequence.", "T")
-        .TypeConstraint("T", {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)" }, 
+        .TypeConstraint("T", {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"}, 
                         "Constrain input types to common numeric type tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             // Type inference
             propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
             // Shape inference
+            auto num_inputs = ctx.getNumInputs();
+
             const auto* start_initializer = ctx.getInputData(0);
             const auto* limit_initializer = ctx.getInputData(1);
-            const auto* delta_initializer = ctx.getInputData(2);
+            const auto* delta_initializer = num_inputs == 3 ? ctx.getInputData(2) : nullptr;
             
             // Output is always 1-D
             auto* output_dim =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
 
-            // all three inputs need to be availlabe to infer output dim value
+            // all three inputs (if num_inputs == 3) (or) 
+            // all two inputs (if num_inputs == 2)
+            // need to be availlabe to infer output dim value
             if (start_initializer != nullptr &&
                 limit_initializer != nullptr &&
-                delta_initializer != nullptr) {
+                (num_inputs == 2 || delta_initializer != nullptr)) {
 
             if (start_initializer->data_type() !=
                       limit_initializer->data_type() ||
-                  start_initializer->data_type() !=
-                      delta_initializer->data_type()) {
+                  (delta_initializer != nullptr && start_initializer->data_type() !=
+                      delta_initializer->data_type())) {
                 fail_shape_inference(
                     "All inputs to 'Range' op must be of the same type");
               } 
