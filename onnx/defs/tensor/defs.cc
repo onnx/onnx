@@ -1278,6 +1278,69 @@ ONNX_OPERATOR_SET_SCHEMA(
           // interface to get values of constant inputs.
         }));
 
+void resizeShapeInference(InferenceContext& ctx) {
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  auto& input_shape = getInputShape(ctx, 0);
+  auto* output_shape = getOutputShape(ctx, 0);
+  auto scales = ctx.getInputData(1);
+
+  if (output_shape->dim_size() > 0) {
+    if (output_shape->dim_size() != input_shape.dim_size()) {
+      fail_shape_inference(
+        "Ranks inferred (",
+        input_shape.dim_size(),
+        ") is not equal to the existing rank value (",
+        output_shape->dim_size(),
+        ").");
+    }
+  } else { // Infer the rank of output
+    for (int i = 0; i < input_shape.dim_size(); ++i) {
+      auto* dim = output_shape->add_dim();
+    }
+  }
+  if (nullptr != scales) {
+    // Infer output shape's dimension value if 'scales' is known.
+    if (scales->data_type() == TensorProto::FLOAT) {
+      const auto& scales_data = ParseData<float>(scales);
+      if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
+        fail_shape_inference(
+          "Number of elements of input 'scales' must be same as rank of input 'X'");
+      }
+      for (int i = 0; i < input_shape.dim_size(); ++i) {
+        auto* dim = output_shape->mutable_dim(i);
+        // If input_shape has dim_value, we caculate the scaled result
+        // If input_shape doesn's have one, we leave it here
+        if (input_shape.dim(i).has_dim_value()) {
+          int64_t dim_value = static_cast<int64_t>(std::floor(
+            static_cast<float>(input_shape.dim(i).dim_value()) *
+            scales_data[i]));
+          // If output_shape has dim_value, we validate the caculated result
+          // If output_shape doesn's have one, we set it to the scaled result
+          if (dim->has_dim_value()) {
+            if (static_cast<int64_t>(dim->dim_value()) != dim_value) {
+              fail_shape_inference(
+                "Dimension value inferred (",
+                dim_value,
+                ") is not equal to the existing dim value (",
+                dim->dim_value(),
+                ").");
+            }
+          }
+          else {
+            dim->set_dim_value(static_cast<int64_t>(dim_value));
+          } // dim->has_dim_value()
+        } // input_shape.dim(i).has_dim_value()
+      } // empty_rank
+    } else {
+      fail_shape_inference(
+        "Input 'scales' must have float element type.");
+    } // nullptr != scales
+  }
+}
+
 static const char* Upsample_ver10_doc = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
@@ -1308,40 +1371,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto& input_shape = getInputShape(ctx, 0);
-          auto* output_shape = getOutputShape(ctx, 0);
-          output_shape->clear_dim();
-          auto scales = ctx.getInputData(1);
-          if (nullptr != scales) {
-            // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT) {
-              const auto& data = ParseData<float>(scales);
-              if (static_cast<int>(data.size()) == input_shape.dim_size()) {
-                for (int i = 0; i < input_shape.dim_size(); ++i) {
-                  float dim_value =
-                      static_cast<float>(input_shape.dim(i).dim_value());
-                  output_shape->add_dim()->set_dim_value(
-                      static_cast<int64_t>(std::floor(dim_value * data[i])));
-                }
-              } else {
-                fail_shape_inference(
-                    "Number of elements of input 'scales' must be same as rank of input 'X'.");
-              }
-            } else {
-              fail_shape_inference(
-                  "Input scales's element type must be float.");
-            }
-          } else {
-            // Infer output shape's rank in any case.
-            for (int i = 0; i < input_shape.dim_size(); ++i) {
-              output_shape->add_dim();
-            }
-          }
-        }));
+          resizeShapeInference(ctx);
+        })
+);
 
 static const char* Resize_ver10_doc = R"DOC(
 Resize the input tensor.
@@ -1373,53 +1405,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto& input_shape = getInputShape(ctx, 0);
-          auto* output_shape = getOutputShape(ctx, 0);
-          // output_shape->clear_dim();
-          auto scales = ctx.getInputData(1);
-          if (nullptr != scales) {
-            // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == input_shape.dim_size()) {
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                int64_t dim_value = static_cast<int64_t>(std::floor(
-                    static_cast<float>(input_shape.dim(i).dim_value()) *
-                    scales->float_data(i)));
-                if (output_shape->dim_size() > i) {
-                  if (output_shape->dim(i).has_dim_value()) {
-                    if (output_shape->dim(i).dim_value() != dim_value) {
-                      fail_shape_inference(
-                          "Dimension value inferred (",
-                          dim_value,
-                          ") is not equal to the existing dim value (",
-                          output_shape->dim(i).dim_value(),
-                          ").");
-                    }
-                  } else {
-                    output_shape->mutable_dim(i)->set_dim_value(dim_value);
-                  }
-                } else {
-                  output_shape->add_dim()->set_dim_value(
-                      static_cast<int64_t>(dim_value));
-                }
-              }
-            } else {
-              fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
-            }
-          } else {
-            if (0 == output_shape->dim_size()) {
-              // Infer output shape's rank in any case.
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                output_shape->add_dim();
-              }
-            }
-          }
-        }));
+           resizeShapeInference(ctx);
+        })
+);
+
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
