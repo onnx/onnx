@@ -35,6 +35,9 @@ ambiguity, adding the links to refs if necessary
 6. type constraints about input and output tensors
 7. shape inference function Example:
 https://github.com/onnx/onnx/blob/master/onnx/defs/nn/defs.cc#L1183
+All operators MUST implement a shape inference function before it is accepted into ONNX.
+In cases where shape inference is not possible, it must have logic to perform 
+rank inference at the very least (adding right amount of dimensions to the output shape)
 
 Usually, if we can find similar functions in Numpy, we will try to align with
 numpy.
