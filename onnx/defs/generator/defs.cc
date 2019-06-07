@@ -527,22 +527,22 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Range_ver11_doc = R"DOC(
 Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
-up to `end` (exclusive).)DOC";
+up to `limit` (exclusive).)DOC";
 
 template <typename T>
 inline int compute_output_dim (
-const TensorProto* start, const TensorProto* end, const TensorProto* delta) { 
+const TensorProto* start, const TensorProto* limit, const TensorProto* delta) { 
    const auto& start_data = ParseData<T>(start);
-   const auto& end_data = ParseData<T>(end);
+   const auto& limit_data = ParseData<T>(end);
    const auto& delta_data = ParseData<T>(delta);
 
    if (start_data.size() != 1 ||
-       end_data.size() != 1 ||
+       limit_data.size() != 1 ||
        delta_data.size() != 1) {
      fail_shape_inference("Input to 'Range' op should be scalars (Tensor with only one element)");
    }
 
-   int n = static_cast<int>(ceil((1.0 * (end_data[0] - start_data[0])) / delta_data[0]));
+   int n = static_cast<int>(ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
    if (n < 0)
      n = 0;
 
@@ -554,18 +554,32 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(Range_ver11_doc)
-        .Input(0, "start", "Scalar with start value.", "T")
-        .Input(1, "end", "Scalar with end value.", "T")
-        .Input(2, "delta", "Scalar with delta value.", "T")
+        .Input(
+            0,
+            "start",
+            "Tensor(scalar, or dims=[1]). First entry in the range.",
+            "T")
+        .Input(
+            1,
+            "limit",
+            "Tensor(scalar, or dims=[1]). Upper limit of sequence, exclusive.",
+            "T")
+        .Input(
+            2,
+            "delta",
+            "Tensor(scalar, or dims=[1]). Number that increments start. Defaults to 1.",
+            "T",
+            OpSchema::Optional)
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated sequence.", "T")
-        .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input types to numeric tensors.")
+        .TypeConstraint("T", {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)" }, 
+                        "Constrain input types to common numeric type tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             // Type inference
             propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
             // Shape inference
             const auto* start_initializer = ctx.getInputData(0);
-            const auto* end_initializer = ctx.getInputData(1);
+            const auto* limit_initializer = ctx.getInputData(1);
             const auto* delta_initializer = ctx.getInputData(2);
             
             // Output is always 1-D
@@ -574,11 +588,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // all three inputs need to be availlabe to infer output dim value
             if (start_initializer != nullptr &&
-                end_initializer != nullptr &&
+                limit_initializer != nullptr &&
                 delta_initializer != nullptr) {
 
             if (start_initializer->data_type() !=
-                      end_initializer->data_type() ||
+                      limit_initializer->data_type() ||
                   start_initializer->data_type() !=
                       delta_initializer->data_type()) {
                 fail_shape_inference(
@@ -590,16 +604,16 @@ ONNX_OPERATOR_SET_SCHEMA(
               // TODO: Support all numeric types
               if (start_initializer->data_type() == TensorProto::FLOAT) {
                 output_dim_value = compute_output_dim<float>(
-                   start_initializer, end_initializer, delta_initializer);              
+                   start_initializer, limit_initializer, delta_initializer);              
               } else if (start_initializer->data_type() == TensorProto::INT32) {
                 output_dim_value = compute_output_dim<int32_t>(
-                    start_initializer, end_initializer, delta_initializer);                  
+                    start_initializer, limit_initializer, delta_initializer);                  
               } else if (start_initializer->data_type() == TensorProto::INT64) {
                 output_dim_value = compute_output_dim<int64_t>(
-                    start_initializer, end_initializer, delta_initializer);
+                    start_initializer, limit_initializer, delta_initializer);
               } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
                 output_dim_value = compute_output_dim<double>(
-                    start_initializer, end_initializer, delta_initializer);
+                    start_initializer, limit_initializer, delta_initializer);
               } else {
                 // return after just rank inference
                 return;

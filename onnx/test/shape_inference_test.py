@@ -1896,24 +1896,24 @@ class TestShapeInference(unittest.TestCase):
     def test_range(self):  # type: () -> None
         graph = self._make_graph(
             [('start', TensorProto.FLOAT, ()),
-             ('end', TensorProto.FLOAT, ()),
+             ('limit', TensorProto.FLOAT, ()),
              ('delta', TensorProto.FLOAT, ())],
-            [make_node('Range', ['start', 'end', 'delta'], ['output'])],
+            [make_node('Range', ['start', 'limit', 'delta'], ['output'])],
             [],
             initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
-                         make_tensor('end', TensorProto.FLOAT, (), (5,)),
+                         make_tensor('limit', TensorProto.FLOAT, (), (5,)),
                          make_tensor('delta', TensorProto.FLOAT, (), (1,))])
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (4,))])
 
     def test_range_rank_inference(self):  # type: () -> None
         graph = self._make_graph(
             [('start', TensorProto.FLOAT, ()),
-             ('end', TensorProto.FLOAT, ()),
+             ('limit', TensorProto.FLOAT, ()),
              ('delta', TensorProto.FLOAT, ())],
-            [make_node('Range', ['start', 'end', 'delta'], ['output'])],
+            [make_node('Range', ['start', 'limit', 'delta'], ['output'])],
             [],
             initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
-                         make_tensor('end', TensorProto.FLOAT, (), (5,))])  # Missing 'delta' initializer
+                         make_tensor('limit', TensorProto.FLOAT, (), (5,))])  # Missing 'delta' initializer
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (None,))])  # type: ignore        
 
 
