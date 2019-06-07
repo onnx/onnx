@@ -63,10 +63,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain input types.")
+        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -94,26 +91,30 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
             // This is the case when exact shape input is not available.
-            // In this case, if the number of dimensions can be infered 
+            // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the output.
             if (ctx.getInputType(0)->tensor_type().has_shape()) {
-                auto& input_shape = getInputShape(ctx, 0);
-                auto input_shape_dim_size = input_shape.dim_size();
-                if(input_shape_dim_size > 1) {
-                    fail_shape_inference("Shape input must be a one-dimensional tensor.");
+              auto& input_shape = getInputShape(ctx, 0);
+              auto input_shape_dim_size = input_shape.dim_size();
+              if (input_shape_dim_size > 1) {
+                fail_shape_inference(
+                    "Shape input must be a one-dimensional tensor.");
+              }
+              if (input_shape.dim(0).has_dim_value()) {
+                const auto& input_shape_dim_value =
+                    input_shape.dim(0).dim_value();
+                if (input_shape_dim_value > 0) {
+                  auto final_output_shape = ctx.getOutputType(0)
+                                                ->mutable_tensor_type()
+                                                ->mutable_shape();
+                  for (int i = 0; i < input_shape_dim_value; ++i) {
+                    auto newdim = final_output_shape->add_dim();
+                    (void)(newdim); // To eliminate "unused variable" compiler
+                                    // warning.
+                  }
                 }
-                if (input_shape.dim(0).has_dim_value()) {
-                    const auto& input_shape_dim_value = input_shape.dim(0).dim_value();
-                    if (input_shape_dim_value > 0) {
-                      auto final_output_shape = 
-                          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-                        for (int i = 0; i < input_shape_dim_value; ++i) {
-                            auto newdim = final_output_shape->add_dim();
-                            (void)(newdim); // To eliminate "unused variable" compiler warning.
-                        }
-                    }
-                }
+              }
             }
             return;
           }
@@ -137,7 +138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto final_output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (const int64_t& targetShapeElem : targetShape) {
-            if(targetShapeElem > 0) {
+            if (targetShapeElem > 0) {
               auto* new_dim = final_output_shape->add_dim();
               new_dim->set_dim_value(targetShapeElem);
             } else {
@@ -530,23 +531,27 @@ Generate a tensor containing a sequence of numbers that begin at `start` and ext
 up to `limit` (exclusive).)DOC";
 
 template <typename T>
-inline int compute_output_dim_for_range (
-const TensorProto* start, const TensorProto* limit, const TensorProto* delta) { 
-   const auto& start_data = ParseData<T>(start);
-   const auto& limit_data = ParseData<T>(limit);
-   const auto& delta_data = delta != nullptr ? ParseData<T>(delta) : std::vector<T>(1, 1);
+inline int compute_output_dim_for_range(
+    const TensorProto* start,
+    const TensorProto* limit,
+    const TensorProto* delta) {
+  const auto& start_data = ParseData<T>(start);
+  const auto& limit_data = ParseData<T>(limit);
+  const auto& delta_data =
+      delta != nullptr ? ParseData<T>(delta) : std::vector<T>(1, 1);
 
-   if (start_data.size() != 1 ||
-       limit_data.size() != 1 ||
-       delta_data.size() != 1) {
-     fail_shape_inference("Input to 'Range' op should be scalars (Tensor with only one element)");
-   }
+  if (start_data.size() != 1 || limit_data.size() != 1 ||
+      delta_data.size() != 1) {
+    fail_shape_inference(
+        "Input to 'Range' op should be scalars (Tensor with only one element)");
+  }
 
-   int n = static_cast<int>(ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
-   if (n < 0)
-     n = 0;
+  int n = static_cast<int>(
+      ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
+  if (n < 0)
+    n = 0;
 
-   return n;
+  return n;
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -570,61 +575,73 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tensor(scalar, or dims=[1]). Number that increments start. Defaults to 1.",
             "T",
             OpSchema::Optional)
-        .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated sequence.", "T")
-        .TypeConstraint("T", {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"}, 
-                        "Constrain input types to common numeric type tensors.")
+        .Output(
+            0,
+            "output",
+            "A 1-D tensor with same type as the inputs containing generated sequence.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)",
+             "tensor(double)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input types to common numeric type tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            // Type inference
-            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-            // Shape inference
-            auto num_inputs = ctx.getNumInputs();
+          // Shape inference
+          auto num_inputs = ctx.getNumInputs();
 
-            const auto* start_initializer = ctx.getInputData(0);
-            const auto* limit_initializer = ctx.getInputData(1);
-            const auto* delta_initializer = num_inputs == 3 ? ctx.getInputData(2) : nullptr;
-            
-            // Output is always 1-D
-            auto* output_dim =
-                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+          const auto* start_initializer = ctx.getInputData(0);
+          const auto* limit_initializer = ctx.getInputData(1);
+          const auto* delta_initializer =
+              num_inputs == 3 ? ctx.getInputData(2) : nullptr;
 
-            // all three inputs (if num_inputs == 3) (or) 
-            // all two inputs (if num_inputs == 2)
-            // need to be availlabe to infer output dim value
-            if (start_initializer != nullptr &&
-                limit_initializer != nullptr &&
-                (num_inputs == 2 || delta_initializer != nullptr)) {
+          // Output is always 1-D
+          auto* output_dim = ctx.getOutputType(0)
+                                 ->mutable_tensor_type()
+                                 ->mutable_shape()
+                                 ->add_dim();
 
+          // all three inputs (if num_inputs == 3) (or)
+          // all two inputs (if num_inputs == 2)
+          // need to be availlabe to infer output dim value
+          if (start_initializer != nullptr && limit_initializer != nullptr &&
+              (num_inputs == 2 || delta_initializer != nullptr)) {
             if (start_initializer->data_type() !=
-                      limit_initializer->data_type() ||
-                  (delta_initializer != nullptr && start_initializer->data_type() !=
-                      delta_initializer->data_type())) {
-                fail_shape_inference(
-                    "All inputs to 'Range' op must be of the same type");
-              } 
-
-              int output_dim_value = -1; 
-
-              if (start_initializer->data_type() == TensorProto::FLOAT) {
-                output_dim_value = compute_output_dim_for_range<float>(
-                   start_initializer, limit_initializer, delta_initializer);              
-              } else if (start_initializer->data_type() == TensorProto::INT32) {
-                output_dim_value = compute_output_dim_for_range<int32_t>(
-                    start_initializer, limit_initializer, delta_initializer);                  
-              } else if (start_initializer->data_type() == TensorProto::INT64) {
-                output_dim_value = compute_output_dim_for_range<int64_t>(
-                    start_initializer, limit_initializer, delta_initializer);
-              } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
-                output_dim_value = compute_output_dim_for_range<double>(
-                    start_initializer, limit_initializer, delta_initializer);
-              } else {
-                // 'float16' has no native CPU type -
-                // stop with rank inference
-                return;
-              }
-
-              output_dim->set_dim_value(output_dim_value);
+                    limit_initializer->data_type() ||
+                (delta_initializer != nullptr &&
+                 start_initializer->data_type() !=
+                     delta_initializer->data_type())) {
+              fail_shape_inference(
+                  "All inputs to 'Range' op must be of the same type");
             }
+
+            int output_dim_value = -1;
+
+            if (start_initializer->data_type() == TensorProto::FLOAT) {
+              output_dim_value = compute_output_dim_for_range<float>(
+                  start_initializer, limit_initializer, delta_initializer);
+            } else if (start_initializer->data_type() == TensorProto::INT32) {
+              output_dim_value = compute_output_dim_for_range<int32_t>(
+                  start_initializer, limit_initializer, delta_initializer);
+            } else if (start_initializer->data_type() == TensorProto::INT64) {
+              output_dim_value = compute_output_dim_for_range<int64_t>(
+                  start_initializer, limit_initializer, delta_initializer);
+            } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
+              output_dim_value = compute_output_dim_for_range<double>(
+                  start_initializer, limit_initializer, delta_initializer);
+            } else {
+              // 'float16' has no native CPU type -
+              // stop with rank inference
+              return;
+            }
+
+            output_dim->set_dim_value(output_dim_value);
+          }
         }));
 
 } // namespace ONNX_NAMESPACE
