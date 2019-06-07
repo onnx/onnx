@@ -1941,7 +1941,7 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
                          make_tensor('limit', TensorProto.FLOAT, (), (5,))])
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (4,))])
-        
+
     def test_range_rank_inference(self):  # type: () -> None
         graph = self._make_graph(
             [('start', TensorProto.FLOAT, ()),
