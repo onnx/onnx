@@ -10488,6 +10488,40 @@ This version of the operator has been available since version 11 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
+### <a name="Range-11"></a>**Range-11**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  up to `limit` (exclusive).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Tensor(scalar, or dims=[1]). First entry in the range.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Tensor(scalar, or dims=[1]). Upper limit of sequence, exclusive.</dd>
+<dt><tt>delta</tt> (optional) : T</dt>
+<dd>Tensor(scalar, or dims=[1]). Number that increments start. Defaults to 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated sequence.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
 ### <a name="Round-11"></a>**Round-11**</a>
 
   Round takes one input Tensor and rounds the values, element-wise, meaning

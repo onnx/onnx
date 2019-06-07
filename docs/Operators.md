@@ -93,6 +93,7 @@
   * <a href="#RandomNormalLike">RandomNormalLike</a>
   * <a href="#RandomUniform">RandomUniform</a>
   * <a href="#RandomUniformLike">RandomUniformLike</a>
+  * <a href="#Range">Range</a>
   * <a href="#Reciprocal">Reciprocal</a>
   * <a href="#ReduceL1">ReduceL1</a>
   * <a href="#ReduceL2">ReduceL2</a>
@@ -9831,6 +9832,85 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
+
+
+### <a name="Range"></a><a name="range">**Range**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  up to `limit` (exclusive).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Tensor(scalar, or dims=[1]). First entry in the range.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Tensor(scalar, or dims=[1]). Upper limit of sequence, exclusive.</dd>
+<dt><tt>delta</tt> (optional) : T</dt>
+<dd>Tensor(scalar, or dims=[1]). Number that increments start. Defaults to 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated sequence.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>range_negative_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.array([10.0], dtype=np.float32)
+limit = np.array([6.0], dtype=np.float32)
+delta = np.array([-3.0], dtype=np.float32)        
+output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [10.0, 7.0]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_negative_delta')
+```
+
+</details>
+
+
+<details>
+<summary>range_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.array([1.0], dtype=np.float32)
+limit = np.array([5.0], dtype=np.float32)
+delta = np.array([2.0], dtype=np.float32)        
+output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [1.0, 3.0]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_positive_delta')
+```
+
+</details>
 
 
 ### <a name="Reciprocal"></a><a name="reciprocal">**Reciprocal**</a>
