@@ -1,6 +1,7 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
+#include <cmath>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -547,7 +548,7 @@ inline int compute_output_dim_for_range(
   }
 
   int n = static_cast<int>(
-      std::ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
+      ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
   if (n < 0)
     n = 0;
 
