@@ -533,7 +533,7 @@ template <typename T>
 inline int compute_output_dim (
 const TensorProto* start, const TensorProto* limit, const TensorProto* delta) { 
    const auto& start_data = ParseData<T>(start);
-   const auto& limit_data = ParseData<T>(end);
+   const auto& limit_data = ParseData<T>(limit);
    const auto& delta_data = ParseData<T>(delta);
 
    if (start_data.size() != 1 ||
