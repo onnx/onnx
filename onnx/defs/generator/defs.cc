@@ -547,7 +547,7 @@ inline int compute_output_dim_for_range(
   }
 
   int n = static_cast<int>(
-      ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
+      std::ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
   if (n < 0)
     n = 0;
 
