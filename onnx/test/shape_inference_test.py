@@ -1941,7 +1941,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
                          make_tensor('limit', TensorProto.FLOAT, (), (5,))])  # Missing 'delta' initializer
-        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (None,))])  # type: ignore    
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (None,))])  # type: ignore
 
 
 if __name__ == '__main__':
