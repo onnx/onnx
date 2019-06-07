@@ -573,6 +573,7 @@ class OpSet_Onnx_ver10 {
 };
 
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Range);
 
@@ -581,6 +582,7 @@ class OpSet_Onnx_ver11 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Range)>());
   }
