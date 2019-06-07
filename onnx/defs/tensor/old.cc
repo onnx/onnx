@@ -426,7 +426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 2)) {
+          if (!hasNInputShapes(ctx, 1)) {
             return;
           }
           propagateElemTypeFromInputToOutput(ctx, 0, 0);

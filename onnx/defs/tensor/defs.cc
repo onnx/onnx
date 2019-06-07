@@ -1326,7 +1326,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 void resizeShapeInference(InferenceContext& ctx) {
-  if (!hasNInputShapes(ctx, 2)) {
+  if (!hasNInputShapes(ctx, 1)) {
     return;
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
