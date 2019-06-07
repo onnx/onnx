@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 126/133 (94.74%, 5 generators excluded) common operators.
+Node tests have covered 127/134 (94.78%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -5188,6 +5188,48 @@ B = np.concatenate((W_B, R_B), axis=1)
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
+```
+
+</details>
+
+
+### Range
+There are 2 test cases, listed as following:
+<details>
+<summary>range_negative_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.array([10.0], dtype=np.float32)
+limit = np.array([6.0], dtype=np.float32)
+delta = np.array([-3.0], dtype=np.float32)        
+output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [10.0, 7.0]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_negative_delta')
+```
+
+</details>
+<details>
+<summary>range_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.array([1.0], dtype=np.float32)
+limit = np.array([5.0], dtype=np.float32)
+delta = np.array([2.0], dtype=np.float32)        
+output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [1.0, 3.0]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_positive_delta')
 ```
 
 </details>
