@@ -445,7 +445,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else {
             for (int i = 0; i < input_shape.dim_size(); ++i) {
-              auto* dim = output_shape->add_dim();
+              output_shape->add_dim();
             }
           }
           if (nullptr != scales) {

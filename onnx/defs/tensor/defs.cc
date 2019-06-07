@@ -1343,9 +1343,9 @@ void resizeShapeInference(InferenceContext& ctx) {
         output_shape->dim_size(),
         ").");
     }
-  } else { // Infer the rank of output
+  } else { // Infer the rank of output anyway
     for (int i = 0; i < input_shape.dim_size(); ++i) {
-      auto* dim = output_shape->add_dim();
+      output_shape->add_dim();
     }
   }
   if (nullptr != scales) {
