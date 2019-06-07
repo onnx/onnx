@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
+
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
 
@@ -521,6 +523,90 @@ ONNX_OPERATOR_SET_SCHEMA(
           } // else statically-unknown batch-size
           sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
           updateOutputShape(ctx, 0, {batch_size, sample_size});
+        }));
+
+static const char* Range_ver11_doc = R"DOC(
+Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+up to `end` (exclusive).)DOC";
+
+template <typename T>
+inline int compute_output_dim (
+const TensorProto* start, const TensorProto* end, const TensorProto* delta) { 
+   const auto& start_data = ParseData<T>(start);
+   const auto& end_data = ParseData<T>(end);
+   const auto& delta_data = ParseData<T>(delta);
+
+   if (start_data.size() != 1 ||
+       end_data.size() != 1 ||
+       delta_data.size() != 1) {
+     fail_shape_inference("Input to 'Range' op should be scalars (Tensor with only one element)");
+   }
+
+   int n = static_cast<int>(ceil((1.0 * (end_data[0] - start_data[0])) / delta_data[0]));
+   if (n < 0)
+     n = 0;
+
+   return n;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Range,
+    11,
+    OpSchema()
+        .SetDoc(Range_ver11_doc)
+        .Input(0, "start", "Scalar with start value.", "T")
+        .Input(1, "end", "Scalar with end value.", "T")
+        .Input(2, "delta", "Scalar with delta value.", "T")
+        .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated sequence.", "T")
+        .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input types to numeric tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            // Type inference
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+            // Shape inference
+            const auto* start_initializer = ctx.getInputData(0);
+            const auto* end_initializer = ctx.getInputData(1);
+            const auto* delta_initializer = ctx.getInputData(2);
+            
+            // Output is always 1-D
+            auto* output_dim =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+
+            // all three inputs need to be availlabe to infer output dim value
+            if (start_initializer != nullptr &&
+                end_initializer != nullptr &&
+                delta_initializer != nullptr) {
+
+            if (start_initializer->data_type() !=
+                      end_initializer->data_type() ||
+                  start_initializer->data_type() !=
+                      delta_initializer->data_type()) {
+                fail_shape_inference(
+                    "All inputs to 'Range' op must be of the same type");
+              } 
+
+              int output_dim_value = -1; 
+              // Support only common numeric types for shape inference
+              // TODO: Support all numeric types
+              if (start_initializer->data_type() == TensorProto::FLOAT) {
+                output_dim_value = compute_output_dim<float>(
+                   start_initializer, end_initializer, delta_initializer);              
+              } else if (start_initializer->data_type() == TensorProto::INT32) {
+                output_dim_value = compute_output_dim<int32_t>(
+                    start_initializer, end_initializer, delta_initializer);                  
+              } else if (start_initializer->data_type() == TensorProto::INT64) {
+                output_dim_value = compute_output_dim<int64_t>(
+                    start_initializer, end_initializer, delta_initializer);
+              } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
+                output_dim_value = compute_output_dim<double>(
+                    start_initializer, end_initializer, delta_initializer);
+              } else {
+                // return after just rank inference
+                return;
+              }
+
+              output_dim->set_dim_value(output_dim_value);
+            }
         }));
 
 } // namespace ONNX_NAMESPACE
