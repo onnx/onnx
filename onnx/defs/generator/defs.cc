@@ -530,7 +530,7 @@ Generate a tensor containing a sequence of numbers that begin at `start` and ext
 up to `limit` (exclusive).)DOC";
 
 template <typename T>
-inline int compute_output_dim (
+inline int compute_output_dim_for_range (
 const TensorProto* start, const TensorProto* limit, const TensorProto* delta) { 
    const auto& start_data = ParseData<T>(start);
    const auto& limit_data = ParseData<T>(limit);
@@ -602,16 +602,16 @@ ONNX_OPERATOR_SET_SCHEMA(
               int output_dim_value = -1; 
 
               if (start_initializer->data_type() == TensorProto::FLOAT) {
-                output_dim_value = compute_output_dim<float>(
+                output_dim_value = compute_output_dim_for_range<float>(
                    start_initializer, limit_initializer, delta_initializer);              
               } else if (start_initializer->data_type() == TensorProto::INT32) {
-                output_dim_value = compute_output_dim<int32_t>(
+                output_dim_value = compute_output_dim_for_range<int32_t>(
                     start_initializer, limit_initializer, delta_initializer);                  
               } else if (start_initializer->data_type() == TensorProto::INT64) {
-                output_dim_value = compute_output_dim<int64_t>(
+                output_dim_value = compute_output_dim_for_range<int64_t>(
                     start_initializer, limit_initializer, delta_initializer);
               } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
-                output_dim_value = compute_output_dim<double>(
+                output_dim_value = compute_output_dim_for_range<double>(
                     start_initializer, limit_initializer, delta_initializer);
               } else {
                 // 'float16' has no native CPU type -
