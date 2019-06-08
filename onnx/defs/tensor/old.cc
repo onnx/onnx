@@ -3,8 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include "onnx/defs/schema.h"
-#include "onnx/defs/tensor_proto_util.h"
+#include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver1_doc = R"DOC(
@@ -378,23 +377,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .SetDoc(Upsample_ver7_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto& input_shape = getInputShape(ctx, 0);
-          auto* output_shape = getOutputShape(ctx, 0);
-          auto* scale_attr = ctx.getAttribute("scales");
-          if (input_shape.dim_size() != scale_attr->floats_size()) {
-            fail_shape_inference(
-                "Upsample: Input dims != attribute 'scales' dims");
-          }
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
-            float dim_value =
-                static_cast<float>(input_shape.dim(i).dim_value());
-            output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-                std::floor(dim_value * scale_attr->floats(i))));
-          }
+          upsampleShapeInferenceV7(ctx);
         }));
 
 static const char* Upsample_ver9_doc = R"DOC(
@@ -426,61 +409,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto& input_shape = getInputShape(ctx, 0);
-          auto* output_shape = getOutputShape(ctx, 0);
-          auto scales = ctx.getInputData(1);
-
-          if (output_shape->dim_size() > 0) {
-            if (output_shape->dim_size() != input_shape.dim_size()) {
-              fail_shape_inference(
-                "Ranks inferred (",
-                input_shape.dim_size(),
-                ") is not equal to the existing rank value (",
-                output_shape->dim_size(),
-                ").");
-            }
-          } else {
-            for (int i = 0; i < input_shape.dim_size(); ++i) {
-              output_shape->add_dim();
-            }
-          }
-          if (nullptr != scales) {
-            // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT) {
-              const auto& scales_data = ParseData<float>(scales);
-              if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-                fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X'");
-              }
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                auto* dim = output_shape->mutable_dim(i);
-                if (input_shape.dim(i).has_dim_value()) {
-                  int64_t dim_value = static_cast<int64_t>(std::floor(
-                    static_cast<float>(input_shape.dim(i).dim_value()) *
-                    scales_data[i]));
-                  if (dim->has_dim_value()) {
-                    if (static_cast<int64_t>(dim->dim_value()) != dim_value) {
-                      fail_shape_inference(
-                        "Dimension value inferred (",
-                        dim_value,
-                        ") is not equal to the existing dim value (",
-                        dim->dim_value(),
-                        ").");
-                    }
-                  } else {
-                    dim->set_dim_value(static_cast<int64_t>(dim_value));
-                  } // dim->has_dim_value()
-                } // input_shape.dim(i).has_dim_value()
-              } // empty_rank
-            } else {
-              fail_shape_inference(
-                "Input 'scales' must have float element type.");
-            }
-          }
+          resizeShapeInference(ctx);
         }
 ));
 
