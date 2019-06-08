@@ -1,7 +1,6 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
-#pragma once
 #include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
