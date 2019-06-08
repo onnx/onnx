@@ -4312,7 +4312,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
-<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dd>Optional tensor specifying lengths of the sequences in a batch. Lengths must be in the range [0, `seq_length`]. If not specified - all sequences in the batch are assumed to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -4321,7 +4321,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. If a sequence with length less than `seq_length` is specified via sequence_lens, values past the end of that sequence will be set to zero. This tensor has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -4332,7 +4332,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
+<dd>Constrain sequence_lens to integer tensor.</dd>
 </dl>
 
 
@@ -5747,7 +5747,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
-<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dd>Optional tensor specifying lengths of the sequences in a batch. Lengths must be in the range [0, `seq_length`]. If not specified - all sequences in the batch are assumed to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>initial_c</tt> (optional) : T</dt>
@@ -5760,7 +5760,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. If a sequence with length less than `seq_length` is specified via sequence_lens, values past the end of that sequence will be set to zero. This tensor has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_c</tt> (optional) : T</dt>
@@ -5773,7 +5773,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
+<dd>Constrain sequence_lens to integer tensor.</dd>
 </dl>
 
 
@@ -9516,7 +9516,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
-<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dd>Optional tensor specifying lengths of the sequences in a batch. Lengths must be in the range [0, `seq_length`]. If not specified - all sequences in the batch are assumed to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -9525,7 +9525,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. If a sequence with length less than `seq_length` is specified via sequence_lens, values past the end of that sequence will be set to zero. This tensor has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -9536,7 +9536,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
+<dd>Constrain sequence_lens to integer tensor.</dd>
 </dl>
 
 
