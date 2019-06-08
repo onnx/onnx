@@ -95,7 +95,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         4,
         "sequence_lens",
         "Optional tensor specifying lengths of the sequences in a batch. "
-        "If not specified - assumed all sequences in the batch to have "
+        "Lengths must be in the range [0, `seq_length`]. "
+        "If not specified - all sequences in the batch are assumed to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
         OpSchema::Optional);
@@ -110,7 +111,9 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         0,
         "Y",
         "A tensor that concats all the intermediate output values of the hidden. "
-        "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
+        "If a sequence with length less than `seq_length` is specified via "
+        "sequence_lens, values past the end of that sequence will be set to zero. "
+        "This tensor has shape `[seq_length, num_directions, batch_size, hidden_size]`.",
         "T",
         OpSchema::Optional);
     schema.Output(
@@ -125,7 +128,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeConstraint(
-        "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+        "T1", {"tensor(int32)"}, "Constrain sequence_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
