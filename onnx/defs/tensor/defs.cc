@@ -1373,6 +1373,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "x_original = x_resized * (length_original - 1) / (length_resized - 1).", 
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr("cubic_coeff_a",
+            "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75
+            " (in PyTorch). Check out https://ieeexplore.ieee.org/document/1163711 for the details.")
+            AttributeProto::FLOAT,
+            static_cast<float>(-0.75))
+        .Attr("exclude_outside",
+            "If set to 1, the weight of sampling locations outside the tensor will be set to 0
+            " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(0, "X", "N-D tensor", "T")
         .Input(
             1,

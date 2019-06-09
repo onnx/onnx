@@ -486,3 +486,73 @@ class Resize(Base):
         expect(node, inputs=[data, sizes], outputs=[output],
                name='test_resize_downsample_sizes_cubic')
 
+    @staticmethod
+    def export_resize_upsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'scales'],
+            outputs=['Y'],
+            mode='cubic',
+            align_corners=False
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        # [[[[ 0.55882353  0.81494204  1.35698249  1.89705882  2.39705882
+        #      2.93713516  3.47917561  3.73529412]
+        #    [ 1.58329755  1.83941606  2.38145651  2.92153285  3.42153285
+        #      3.96160918  4.50364964  4.75976814]
+        #    [ 3.75145936  4.00757787  4.54961832  5.08969466  5.58969466
+        #      6.12977099  6.67181144  6.92792995]
+        #    [ 5.91176471  6.16788321  6.70992366  7.25        7.75
+        #      8.29007634  8.83211679  9.08823529]
+        #    [ 7.91176471  8.16788321  8.70992366  9.25        9.75
+        #     10.29007634 10.83211679 11.08823529]
+        #    [10.07207005 10.32818856 10.87022901 11.41030534 11.91030534
+        #     12.45038168 12.99242213 13.24854064]
+        #    [12.24023186 12.49635036 13.03839082 13.57846715 14.07846715
+        #     14.61854349 15.16058394 15.41670245]
+        #    [13.26470588 13.52082439 14.06286484 14.60294118 15.10294118
+        #     15.64301751 16.18505796 16.44117647]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), factors=scales, align_corners=False,
+                                exclude_outside=True)
+
+        expect(node, inputs=[data, scales], outputs=[output],
+               name='test_resize_upsample_sizes_cubic')
+
+    @staticmethod
+    def export_resize_downsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'scales'],
+            outputs=['Y'],
+            mode='cubic',
+            align_corners=False,
+            A=-0.5,
+            exclude_outside=True
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+        # [[[[ 1.36812675  2.6695014   4.0133367 ]
+        #    [ 6.57362535  7.875       9.2188353 ]
+        #    [11.94896657 13.25034122 14.59417652]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), factors=scales, align_corners=False,
+                                exclude_outside=True)
+
+        expect(node, inputs=[data, scales], outputs=[output],
+               name='test_resize_downsample_sizes_cubic')
