@@ -63,7 +63,7 @@ def cartesian(arrays, out=None):
     return out
 
 
-def interpolate_1d_with_x(data, factor, x, get_coeffs,
+def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
                           align_corners = False, exclude_outside=False):
     def get_neighbor(x, n, data):
         pad_width = np.ceil(n / 2).astype(np.int)
@@ -73,14 +73,14 @@ def interpolate_1d_with_x(data, factor, x, get_coeffs,
         return ret
 
     input_width = len(data)
-    output_width = factor * input_width
+    output_width = scale_factor * input_width
     if align_corners:
         if output_width == 1:
             x_ori = 0
         else:
             x_ori = x * (input_width - 1) / (output_width - 1)
     else:
-        x_ori = (x + 0.5) / factor - 0.5
+        x_ori = (x + 0.5) / scale_factor - 0.5
     x_ori_int = np.floor(x_ori).astype(np.int).item()
 
     ratio = x_ori - x_ori_int
@@ -98,27 +98,28 @@ def interpolate_1d_with_x(data, factor, x, get_coeffs,
     return np.dot(coeffs, points).item()
 
 
-def interpolate_nd_with_x(data, n, factors, x, get_coeffs, align_corners = False, exclude_outside=False):
+def interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, align_corners = False, exclude_outside=False):
     if n == 1:
-        return interpolate_1d_with_x(data, factors[0], x[0], get_coeffs, align_corners, exclude_outside)
+        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
     return interpolate_1d_with_x(
-        [interpolate_nd_with_x(data[i], n - 1, factors[1:], x[1:], get_coeffs, align_corners, exclude_outside)
-         for i in range(data.shape[0])], factors[0], x[0], get_coeffs, align_corners, exclude_outside)
+        [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs, align_corners, exclude_outside)
+         for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
 
 
-def interpolate_nd(data, get_coeffs, output_size=None, factors=None, align_corners = False, exclude_outside=False):
+def interpolate_nd(data, get_coeffs, output_size=None, scale_factors=None, align_corners = False,
+                   exclude_outside=False):
     def get_all_coords(data):
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
 
-    assert output_size is not None or factors is not None
+    assert output_size is not None or scale_factors is not None
     if output_size is not None:
-        factors = np.array(output_size) / np.array(data.shape)
+        scale_factors = np.array(output_size) / np.array(data.shape)
     else:
-        output_size = (factors * np.array(data.shape)).astype(np.int)
+        output_size = (scale_factors * np.array(data.shape)).astype(np.int)
 
     ret = np.zeros(output_size)
     for x in get_all_coords(ret):
-        ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), factors, x, get_coeffs, align_corners,
+        ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), scale_factors, x, get_coeffs, align_corners,
                                               exclude_outside)
     return ret
 
@@ -207,7 +208,7 @@ class Resize(Base):
         #    [1.5  1.75 2.25 2.5 ]
         #    [2.5  2.75 3.25 3.5 ]
         #    [3.   3.25 3.75 4.  ]]]]
-        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=False)
+        output = interpolate_nd(data, linear_coeffs, scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_linear')
@@ -233,7 +234,7 @@ class Resize(Base):
         #    [1.66666667 2.         2.33333333 2.66666667]
         #    [2.33333333 2.66666667 3.         3.33333333]
         #    [3.         3.33333333 3.66666667 4.        ]]]]
-        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=True)
+        output = interpolate_nd(data, linear_coeffs, scale_factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_linear_align_corners')
@@ -255,7 +256,7 @@ class Resize(Base):
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
         # [[[[2.6666665 4.3333331]]]]
-        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=False)
+        output = interpolate_nd(data, linear_coeffs, scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_linear')
@@ -278,7 +279,7 @@ class Resize(Base):
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
         # [[[[1.       3.142857]]]]
-        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=True)
+        output = interpolate_nd(data, linear_coeffs, scale_factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_linear_align_corners')
@@ -318,7 +319,7 @@ class Resize(Base):
         #     14.56640625 15.04296875 15.33984375]
         #    [13.31640625 13.61328125 14.08984375 14.71875    15.125
         #     15.75390625 16.23046875 16.52734375]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=False)
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic')
@@ -358,7 +359,7 @@ class Resize(Base):
         #     13.83527697 14.29446064 14.63556851]
         #    [13.         13.34110787 13.80029155 14.32944606 14.67055394
         #     15.19970845 15.65889213 16.        ]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=True)
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), scale_factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_align_corners')
@@ -385,7 +386,7 @@ class Resize(Base):
         # [[[[ 1.47119141  2.78125     4.08251953]
         #    [ 6.71142578  8.02148438  9.32275391]
         #    [11.91650391 13.2265625  14.52783203]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=False)
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic')
@@ -412,7 +413,7 @@ class Resize(Base):
         # [[[[ 1.          2.39519159  3.79038317]
         #    [ 6.58076634  7.97595793  9.37114951]
         #    [12.16153268 13.55672427 14.95191585]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=True)
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), scale_factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic_align_corners')
@@ -521,7 +522,7 @@ class Resize(Base):
         #     14.61854349 15.16058394 15.41670245]
         #    [13.26470588 13.52082439 14.06286484 14.60294118 15.10294118
         #     15.64301751 16.18505796 16.44117647]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), factors=scales, align_corners=False,
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales, align_corners=False,
                                 exclude_outside=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
@@ -551,7 +552,7 @@ class Resize(Base):
         # [[[[ 1.36812675  2.6695014   4.0133367 ]
         #    [ 6.57362535  7.875       9.2188353 ]
         #    [11.94896657 13.25034122 14.59417652]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), factors=scales, align_corners=False,
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales, align_corners=False,
                                 exclude_outside=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
