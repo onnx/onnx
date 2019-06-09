@@ -1379,8 +1379,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'.",
-            "tensor(float)")
+            " be the same as the rank of input 'X'. If not specified, the default value is a tensor with
+            " all ones.",
+            "tensor(float)",
+            OpSchema::Optional)
+        .Input(
+            2,
+            "sizes",
+            "The size of the output tensor. The number of elements of 'sizes' should be the same as the
+            " rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.",
+            "tensor(int64)",
+            OpSchema::Optional)
         .Output(0, "Y", "N-D tensor after resizing", "T")
         .TypeConstraint(
             "T",
