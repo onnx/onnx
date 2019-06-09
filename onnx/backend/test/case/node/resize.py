@@ -10,6 +10,131 @@ from ..base import Base
 from . import expect
 
 
+def cartesian(arrays, out=None):
+    """
+    From https://stackoverflow.com/a/1235363
+
+    Generate a cartesian product of input arrays.
+
+    Parameters
+    ----------
+    arrays : list of array-like
+        1-D arrays to form the cartesian product of.
+    out : ndarray
+        Array to place the cartesian product in.
+
+    Returns
+    -------
+    out : ndarray
+        2-D array of shape (M, len(arrays)) containing cartesian products
+        formed of input arrays.
+
+    Examples
+    --------
+    >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
+    array([[1, 4, 6],
+           [1, 4, 7],
+           [1, 5, 6],
+           [1, 5, 7],
+           [2, 4, 6],
+           [2, 4, 7],
+           [2, 5, 6],
+           [2, 5, 7],
+           [3, 4, 6],
+           [3, 4, 7],
+           [3, 5, 6],
+           [3, 5, 7]])
+
+    """
+
+    arrays = [np.asarray(x) for x in arrays]
+    dtype = arrays[0].dtype
+
+    n = np.prod([x.size for x in arrays])
+    if out is None:
+        out = np.zeros([n, len(arrays)], dtype=dtype)
+
+    m = n // arrays[0].size
+    out[:,0] = np.repeat(arrays[0], m)
+    if arrays[1:]:
+        cartesian(arrays[1:], out=out[0:m,1:])
+        for j in range(1, arrays[0].size):
+            out[j*m:(j+1)*m,1:] = out[0:m,1:]
+    return out
+
+
+def interpolate_1d_with_x(data, factor, x, get_coeffs,
+                          align_corners = False, exclude_outside=False):
+    def get_neighbor(x, n, data):
+        pad_width = np.ceil(n / 2).astype(np.int)
+        padded = np.pad(data, pad_width, mode='edge')
+        x += pad_width
+        ret = padded[int(x - ((n + 1) // 2 - 1)): int(x + (n // 2)) + 1]
+        return ret
+
+    input_width = len(data)
+    output_width = factor * input_width
+    if align_corners:
+        if output_width == 1:
+            x_ori = 0
+        else:
+            x_ori = x * (input_width - 1) / (output_width - 1)
+    else:
+        x_ori = (x + 0.5) / factor - 0.5
+    x_ori_int = np.floor(x_ori).astype(np.int).item()
+
+    ratio = x_ori - x_ori_int
+    coeffs = get_coeffs(ratio)
+    n = len(coeffs)
+    if exclude_outside:
+        left = (n + 1) // 2 - 1
+        for i in range(len(coeffs)):
+            if x_ori_int + i - left < 0 or x_ori_int + i - left >= input_width:
+                coeffs[i] = 0
+        coeffs /= sum(coeffs)
+
+    points = get_neighbor(x_ori, n, data)
+
+    return np.dot(coeffs, points).item()
+
+
+def interpolate_nd_with_x(data, n, factors, x, get_coeffs, align_corners = False, exclude_outside=False):
+    if n == 1:
+        return interpolate_1d_with_x(data, factors[0], x[0], get_coeffs, align_corners, exclude_outside)
+    return interpolate_1d_with_x(
+        [interpolate_nd_with_x(data[i], n - 1, factors[1:], x[1:], get_coeffs, align_corners, exclude_outside)
+         for i in range(data.shape[0])], factors[0], x[0], get_coeffs, align_corners, exclude_outside)
+
+
+def interpolate_nd(data, get_coeffs, output_size=None, factors=None, align_corners = False, exclude_outside=False):
+    def get_all_coords(data):
+        return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
+
+    assert output_size is not None or factors is not None
+    if output_size is not None:
+        factors = np.array(output_size) / np.array(data.shape)
+    else:
+        output_size = (factors * np.array(data.shape)).astype(np.int)
+
+    ret = np.zeros(output_size)
+    for x in get_all_coords(ret):
+        ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), factors, x, get_coeffs, align_corners,
+                                              exclude_outside)
+    return ret
+
+
+def cubic_coeffs(ratio, A=-0.75):
+    coeffs = [((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
+              ((A + 2) * ratio - (A + 3)) * ratio * ratio + 1,
+              ((A + 2) * (1 - ratio) - (A + 3)) * (1 - ratio) * (1 - ratio) + 1,
+              ((A * ((1 - ratio) + 1) - 5 * A) * ((1 - ratio) + 1) + 8 * A) * ((1 - ratio) + 1) - 4 * A]
+
+    return np.array(coeffs)
+
+
+def linear_coeffs(ratio):
+    return np.array([1 - ratio, ratio])
+
 class Resize(Base):
 
     @staticmethod
@@ -78,12 +203,11 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
-        output = np.array([[[
-            [1.00, 1.25, 1.75, 2.00],
-            [1.50, 1.75, 2.25, 2.50],
-            [2.50, 2.75, 3.25, 3.50],
-            [3.00, 3.25, 3.75, 4.00]
-        ]]], dtype=np.float32)
+        # [[[[1.   1.25 1.75 2.  ]
+        #    [1.5  1.75 2.25 2.5 ]
+        #    [2.5  2.75 3.25 3.5 ]
+        #    [3.   3.25 3.75 4.  ]]]]
+        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_linear')
@@ -105,12 +229,11 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
-        output = np.array([[[
-            [1.00000000, 1.33333333, 1.66666667, 2.00000000],
-            [1.66666667, 2.00000000, 2.33333333, 2.66666667],
-            [2.33333333, 2.66666667, 3.00000000, 3.33333333],
-            [3.00000000, 3.33333333, 3.66666667, 4.00000000]
-        ]]], dtype=np.float32)
+        # [[[[1.         1.33333333 1.66666667 2.        ]
+        #    [1.66666667 2.         2.33333333 2.66666667]
+        #    [2.33333333 2.66666667 3.         3.33333333]
+        #    [3.         3.33333333 3.66666667 4.        ]]]]
+        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_linear_align_corners')
@@ -131,9 +254,8 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-        output = np.array([[[
-            [1.5, 3.5]
-        ]]], dtype=np.float32)
+        # [[[[2.6666665 4.3333331]]]]
+        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_linear')
@@ -155,9 +277,8 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-        output = np.array([[[
-            [1, 4]
-        ]]], dtype=np.float32)
+        # [[[[1.       3.142857]]]]
+        output = interpolate_nd(data, linear_coeffs, factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_linear_align_corners')
@@ -181,24 +302,23 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
-        output = np.array([[[
-            [0.47265625, 0.76953125, 1.24609375, 1.87500000, 2.28125000,
-                2.91015625, 3.38671875, 3.68359375],
-            [1.66015625, 1.95703125, 2.43359375, 3.06250000, 3.46875000,
-                4.09765625, 4.57421875, 4.87109375],
-            [3.56640625, 3.86328125, 4.33984375, 4.96875000, 5.37500000,
-                6.00390625, 6.48046875, 6.77734375],
-            [6.08203125, 6.37890625, 6.85546875, 7.48437500, 7.89062500,
-                8.51953125, 8.99609375, 9.29296875],
-            [7.70703125, 8.00390625, 8.48046875, 9.10937500, 9.51562500,
-                10.14453125, 10.62109375, 10.91796875],
-            [10.22265625, 10.51953125, 10.99609375, 11.62500000, 12.03125000,
-                12.66015625, 13.13671875, 13.43359375],
-            [12.12890625, 12.42578125, 12.90234375, 13.53125000, 13.93750000,
-                14.56640625, 15.04296875, 15.33984375],
-            [13.31640625, 13.61328125, 14.08984375, 14.71875000, 15.12500000,
-                15.75390625, 16.23046875, 16.52734375]
-        ]]], dtype=np.float32)
+        # [[[[ 0.47265625  0.76953125  1.24609375  1.875       2.28125
+        #      2.91015625  3.38671875  3.68359375]
+        #    [ 1.66015625  1.95703125  2.43359375  3.0625      3.46875
+        #      4.09765625  4.57421875  4.87109375]
+        #    [ 3.56640625  3.86328125  4.33984375  4.96875     5.375
+        #      6.00390625  6.48046875  6.77734375]
+        #    [ 6.08203125  6.37890625  6.85546875  7.484375    7.890625
+        #      8.51953125  8.99609375  9.29296875]
+        #    [ 7.70703125  8.00390625  8.48046875  9.109375    9.515625
+        #     10.14453125 10.62109375 10.91796875]
+        #    [10.22265625 10.51953125 10.99609375 11.625      12.03125
+        #     12.66015625 13.13671875 13.43359375]
+        #    [12.12890625 12.42578125 12.90234375 13.53125    13.9375
+        #     14.56640625 15.04296875 15.33984375]
+        #    [13.31640625 13.61328125 14.08984375 14.71875    15.125
+        #     15.75390625 16.23046875 16.52734375]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_cubic')
@@ -222,24 +342,23 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
-        output = np.array([[[
-            [1.00000000, 1.34110796, 1.80029082, 2.32944798, 2.67055368,
-                3.19970822, 3.65889263, 4.00000000],
-            [2.36443138, 2.70553946, 3.16472220, 3.69388032, 4.03498554,
-                4.56413984, 5.02332497, 5.36443186],
-            [4.20116329, 4.54227161, 5.00145435, 5.53061295, 5.87171793,
-                6.40087080, 6.86005688, 7.20116329],
-            [6.31779146, 6.65890026, 7.11808157, 7.64724159, 7.98834610,
-                8.51749992, 8.97668552, 9.31779194],
-            [7.68221235, 8.02332115, 8.48250198, 9.01166344, 9.35276890,
-                9.88192177, 10.34110737, 10.68221474],
-            [9.79883289, 10.13994312, 10.59912300, 11.12828350, 11.46938896,
-                11.99853992, 12.45772648, 12.79883289],
-            [11.63557053, 11.97667980, 12.43585873, 12.96502209, 13.30612659,
-                13.83527756, 14.29446411, 14.63557053],
-            [13.00000000, 13.34110928, 13.80028820, 14.32945251, 14.67055702,
-                15.19970608, 15.65889359, 16.00000000]
-        ]]], dtype=np.float32)
+        # [[[[ 1.          1.34110787  1.80029155  2.32944606  2.67055394
+        #      3.19970845  3.65889213  4.        ]
+        #    [ 2.36443149  2.70553936  3.16472303  3.69387755  4.03498542
+        #      4.56413994  5.02332362  5.36443149]
+        #    [ 4.20116618  4.54227405  5.00145773  5.53061224  5.87172012
+        #      6.40087464  6.86005831  7.20116618]
+        #    [ 6.31778426  6.65889213  7.1180758   7.64723032  7.98833819
+        #      8.51749271  8.97667638  9.31778426]
+        #    [ 7.68221574  8.02332362  8.48250729  9.01166181  9.35276968
+        #      9.8819242  10.34110787 10.68221574]
+        #    [ 9.79883382 10.13994169 10.59912536 11.12827988 11.46938776
+        #     11.99854227 12.45772595 12.79883382]
+        #    [11.63556851 11.97667638 12.43586006 12.96501458 13.30612245
+        #     13.83527697 14.29446064 14.63556851]
+        #    [13.         13.34110787 13.80029155 14.32944606 14.67055394
+        #     15.19970845 15.65889213 16.        ]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_cubic_align_corners')
@@ -263,11 +382,10 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
-        output = np.array([[[
-            [1.63078713, 3.00462985, 4.37847328],
-            [7.12615871, 8.50000000, 9.87384510],
-            [12.62153149, 13.99537277, 15.36922169]
-        ]]], dtype=np.float32)
+        # [[[[ 1.47119141  2.78125     4.08251953]
+        #    [ 6.71142578  8.02148438  9.32275391]
+        #    [11.91650391 13.2265625  14.52783203]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_cubic')
@@ -289,13 +407,12 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
-        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+        scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
-        output = np.array([[[
-            [1.00000000, 2.50000000, 4.00000000],
-            [7.00000000, 8.50000000, 10.00000000],
-            [13.00000000, 14.50000000, 16.00000000]
-        ]]], dtype=np.float32)
+        # [[[[ 1.          2.39519159  3.79038317]
+        #    [ 6.58076634  7.97595793  9.37114951]
+        #    [12.16153268 13.55672427 14.95191585]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x), factors=scales, align_corners=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_cubic_align_corners')
