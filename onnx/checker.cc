@@ -366,7 +366,8 @@ void check_sparse_tensor(
             indices.name(),
             ") must have rank 1 or 2.");
     }
-  }
+  } else if (nnz != 0)
+    fail_check("Sparse tensor (", values.name(), ") has no index values.");
 }
 
 // NB: This is a generic "attribute well-formedness" check, it doesn't

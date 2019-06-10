@@ -139,6 +139,7 @@ message AttributeProto {
   optional bytes s = 4;               // UTF-8 string
   optional TensorProto t = 5;         // tensor value
   optional GraphProto g = 6;          // graph
+  optional SparseTensorProto sparse_tensor = 22;  // sparse tensor value
   // Do not use field below, it's deprecated.
   // optional ValueProto v = 12;         // value - subsumes everything but graph
 
@@ -147,8 +148,6 @@ message AttributeProto {
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
-
-  optional SparseTensorProto sparse_tensor = 22;  // sparse tensor value
   repeated SparseTensorProto sparse_tensors = 23; // list of sparse tensors
 }
 
@@ -460,6 +459,9 @@ message SparseTensorProto {
   // must be the linearized-index of the i-th value (in the values tensor).
   // The linearized-index can be converted into an index tuple (k_1,...,k_rank)
   // using the shape provided below.
+  // The indices must appear in ascending order without duplication.
+  // In the first format, the ordering is lexicographic-ordering:
+  // e.g., index-value [1,4] must appear before [2,1]
   optional TensorProto indices = 2;
 
   // The shape of the underlying dense-tensor: [dim_1, dim_2, ... dim_rank]
