@@ -1,5 +1,6 @@
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
@@ -225,6 +226,95 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_field
 }
 
+// Check that the index data stored in a SparseTensorProto is valid.
+// indices: a 1-dimensional tensor; indices[i] represents the
+// linearized index value for the i-th nonzero value.
+void check_sparse_tensor_indices_1(
+    const TensorProto& indices,
+    const google::protobuf::RepeatedField<int64_t> dims,
+    int64_t nnz) {
+  int dense_rank = dims.size();
+  int64_t dense_size = 1;
+  for (int i = 0; i < dense_rank; ++i)
+    dense_size *= dims[i];
+  if (indices.dims(0) != nnz)
+    fail_check(
+        "Sparse tensor indices (",
+        indices.name(),
+        ") does not have NNZ values.");
+
+  // Check if indices appear in ascending order, and if they have valid
+  // values.
+  const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
+
+  int64_t prev_index = -1;
+  for (int64_t i = 0; i < nnz; ++i) {
+    int64_t curr_index = index_data[i]; // linearized index of i-th value
+    if (curr_index < 0 || curr_index >= dense_size)
+      fail_check(
+          "Sparse tensor (",
+          indices.name(),
+          ") index value at position [",
+          i,
+          " out of range.");
+    if (curr_index <= prev_index) {
+      fail_check(
+          "Sparse tensor indices for (",
+          indices.name(),
+          ") do not appear in sorted order.");
+    }
+    prev_index = curr_index;
+  }
+}
+
+// Check that the index data stored in a SparseTensorProto is valid.
+// indices: a 2-dimensional tensor; indices[i,j] represents the j-th
+// index value for the i-th nonzero value.
+void check_sparse_tensor_indices_2(
+    const TensorProto& indices,
+    const google::protobuf::RepeatedField<int64_t> dims,
+    int64_t nnz) {
+  int dense_rank = dims.size();
+  if (indices.dims(0) != nnz)
+    fail_check(
+        "Sparse tensor indices (",
+        indices.name(),
+        ") first dimension size does not equal NNZ.");
+  if (indices.dims(1) != dense_rank)
+    fail_check(
+        "Sparse tensor indices (",
+        indices.name(),
+        ") second dimension size does not match rank of tensor.");
+
+  // Check if indices appear in ascending order, and if they have valid
+  // values.
+  const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
+
+  int64_t prev_index = -1;
+  for (int64_t i = 0; i < nnz; ++i) {
+    int64_t curr_index = 0; // linearized index of i-th value
+    for (int j = 0; j < dense_rank; ++j) {
+      auto index_ij = index_data[i * dense_rank + j];
+      if ((index_ij < 0) || (index_ij >= dims[j]))
+        fail_check(
+            "Sparse tensor (",
+            indices.name(),
+            ") index value at position [",
+            i,
+            j,
+            " out of range.");
+      curr_index = curr_index * dims[j] + index_ij;
+    }
+    if (curr_index <= prev_index) {
+      fail_check(
+          "Sparse tensor indices for (",
+          indices.name(),
+          ") do not appear in sorted order.");
+    }
+    prev_index = curr_index;
+  }
+}
+
 void check_sparse_tensor(
     const SparseTensorProto& sparse_tensor_proto,
     const CheckerContext& ctx) {
@@ -263,54 +353,22 @@ void check_sparse_tensor(
     if (indices.data_type() != TensorProto::INT64)
       fail_check(
           "Sparse tensor indices (", indices.name(), ") must have INT64 type.");
-    if (indices.dims().size() != 2)
-      fail_check(
-          "Sparse tensor indices (", indices.name(), ") must have rank 2.");
-    if (indices.dims(0) != nnz)
-      fail_check(
-          "Sparse tensor indices (",
-          indices.name(),
-          ") first dimension size does not equal NNZ.");
-    if (indices.dims(1) != dense_rank)
-      fail_check(
-          "Sparse tensor indices (",
-          indices.name(),
-          ") second dimension size does not match rank of tensor.");
-
-    // Check if indices appear in ascending order, and if they have valid
-    // values.
-    /*
-auto& dims = sparse_tensor_proto.dims();
-auto& indices = sparse_tensor_proto.indices();
-int64_t curr_index = 0, prev_index = -1;
-for (int i = 0; i < nnz; ++i) {
-  for (axis = 0; axis < dense_rank; ++axis) {
-    if ((indices[i] < 0) || (indices[i] >= dims[axis]))
-      fail_check(
-          "Sparse tensor (",
-          indices.name(),
-          ") index value at position [",
-          i,
-          axis,
-          " out of range.");
-    curr_index = curr_index * dims[axis] + indices[i];
-    axis++;
-    if (axis == dense_rank) {
-      axis = 0;
-      if (curr_index <= prev_index) {
+    switch (indices.dims().size()) {
+      case 1:
+        check_sparse_tensor_indices_1(indices, sparse_tensor_proto.dims(), nnz);
+        return;
+      case 2:
+        check_sparse_tensor_indices_2(indices, sparse_tensor_proto.dims(), nnz);
+        return;
+      default:
         fail_check(
-            "Sparse tensor indices for (",
-            values.name(),
-            ") do not appear in sorted order.");
-      }
-      prev_index = curr_index;
-      curr_index = 0;
+            "Sparse tensor indices (",
+            indices.name(),
+            ") must have rank 1 or 2.");
     }
   }
 }
-    */
-  }
-}
+
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(
