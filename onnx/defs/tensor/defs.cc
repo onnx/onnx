@@ -1430,7 +1430,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0, "X", "N-D tensor", "T")
+        .Input(0, "X", "N-D tensor", "T1")
         .Input(
             1,
             "scales",
@@ -1438,20 +1438,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
             " be the same as the rank of input 'X'. If not specified, the default value is a tensor with"
             " all ones.",
-            "tensor(float)",
+            "T2",
             OpSchema::Optional)
         .Input(
             2,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.",
-            "tensor(int64)",
+            "T3",
             OpSchema::Optional)
-        .Output(0, "Y", "N-D tensor after resizing", "T")
+        .Output(0, "Y", "N-D tensor after resizing", "T1")
         .TypeConstraint(
-            "T",
+            "T1",
             OpSchema::all_tensor_types(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float)"},
+            "Constrain scales type to float.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int64)"},
+            "Constrain sizes type to int64.")
         .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasNInputShapes(ctx, 1)) {
