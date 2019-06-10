@@ -4,10 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
 
+from typing import Sequence
 import numpy as np  # type: ignore
 
 from onnx import checker, helper
-from onnx import TensorProto, GraphProto
+from onnx import TensorProto, GraphProto, SparseTensorProto
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 
@@ -283,6 +284,49 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test',
                                   opset_imports=[onnx_id])
         checker.check_model(model)
+
+    def make_sparse(self,
+                    shape,  # type: Sequence[int]
+                    values,  # type: Sequence[int]
+                    indices_shape,  # type: Sequence[int]
+                    indices  # type: Sequence[int]
+    ):  # type: (...) -> SparseTensorProto
+        sparse = SparseTensorProto()
+        sparse.dims.extend(shape)
+        nnz = len(values)
+        sparse.values.CopyFrom(helper.make_tensor('spval', TensorProto.INT64, (nnz,), values))
+        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
+        return sparse
+
+    def test_check_sparse_tensor(self):  # type: () -> None
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81])
+        checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_invalid_index(self):  # type: () -> None
+        # index value 181 is out-of-range
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 181])
+        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+
+    def test_check_sparse_tensor_unordered(self):  # type: () -> None
+        # index values are not in sorted order
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [27, 9, 81])
+        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+
+    def test_check_sparse_tensor_coo_format(self):  # type: () -> None
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 2, 7, 8, 1])
+        checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_coo_format_invalid_index(self):  # type: () -> None
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 0, 27, 8, 1])
+        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+
+    def test_check_sparse_tensor_coo_format_invalid_shape(self):  # type: () -> None
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [2, 3], [0, 9, 2, 7, 8, 1])
+        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+
+    def test_check_sparse_tensor_coo_format_invalid_dim2(self):  # type: () -> None
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
+        checker.check_sparse_tensor(sparse)
 
 
 if __name__ == '__main__':

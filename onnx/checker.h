@@ -62,7 +62,7 @@ class CheckerContext final {
     return schema_registry_;
   }
 
-  void set_model_dir(const std::string& model_dir){
+  void set_model_dir(const std::string& model_dir) {
     model_dir_ = model_dir;
   }
 
@@ -87,6 +87,9 @@ struct LexicalScopeContext final {
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
 void check_tensor(const TensorProto& tensor, const CheckerContext&);
+void check_sparse_tensor(
+    const SparseTensorProto& sparse_tensor,
+    const CheckerContext&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,

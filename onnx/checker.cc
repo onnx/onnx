@@ -256,7 +256,7 @@ void check_sparse_tensor_indices_1(
           indices.name(),
           ") index value at position [",
           i,
-          " out of range.");
+          "] out of range.");
     if (curr_index <= prev_index) {
       fail_check(
           "Sparse tensor indices for (",
@@ -301,8 +301,9 @@ void check_sparse_tensor_indices_2(
             indices.name(),
             ") index value at position [",
             i,
+            ",",
             j,
-            " out of range.");
+            "] out of range.");
       curr_index = curr_index * dims[j] + index_ij;
     }
     if (curr_index <= prev_index) {
