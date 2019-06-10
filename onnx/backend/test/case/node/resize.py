@@ -65,13 +65,13 @@ def cartesian(arrays, out=None):
     return out
 
 
-def interpolate_1d_with_x(data,                 # type: np.ndarray
-                          scale_factor,         # type: float
-                          x,                    # type: float
-                          get_coeffs,           # type: Callable[[float], np.ndarray]
-                          align_corners=False,  # type: bool
-                          exclude_outside=False # type: bool
-                          ):                    # type: (...) -> np.ndarray
+def interpolate_1d_with_x(data,                  # type: np.ndarray
+                          scale_factor,          # type: float
+                          x,                     # type: float
+                          get_coeffs,            # type: Callable[[float], np.ndarray]
+                          align_corners=False,   # type: bool
+                          exclude_outside=False  # type: bool
+                          ):                     # type: (...) -> np.ndarray
     def get_neighbor_idxes(x, n, limit):  # type: (float, int, int) -> np.ndarray
         """
         Return the n nearest indexes, prefer the indexes smaller than x to be compatible with nearest interpolation.
@@ -142,14 +142,14 @@ def interpolate_1d_with_x(data,                 # type: np.ndarray
     return np.dot(coeffs, points).item()
 
 
-def interpolate_nd_with_x(data,                 # type: np.ndarray
-                          n,                    # type: int
-                          scale_factors,        # type: List[float]
-                          x,                    # type: List[float]
-                          get_coeffs,           # type: Callable[[float], np.ndarray]
-                          align_corners=False,  # type: bool
-                          exclude_outside=False # type: bool
-                          ):                    # type: (...) -> np.ndarray
+def interpolate_nd_with_x(data,                  # type: np.ndarray
+                          n,                     # type: int
+                          scale_factors,         # type: List[float]
+                          x,                     # type: List[float]
+                          get_coeffs,            # type: Callable[[float], np.ndarray]
+                          align_corners=False,   # type: bool
+                          exclude_outside=False  # type: bool
+                          ):                     # type: (...) -> np.ndarray
     if n == 1:
         return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
     return interpolate_1d_with_x(
@@ -157,13 +157,13 @@ def interpolate_nd_with_x(data,                 # type: np.ndarray
          for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
 
 
-def interpolate_nd(data,                 # type: np.ndarray
-                   get_coeffs,           # type: Callable[[float], np.ndarray]
-                   output_size=None,     # type: Optional[List[int]]
-                   scale_factors=None,   # type: Optional[List[float]]
-                   align_corners=False,  # type: bool
-                   exclude_outside=False # type: bool
-                   ):                    # type: (...) -> np.ndarray
+def interpolate_nd(data,                  # type: np.ndarray
+                   get_coeffs,            # type: Callable[[float], np.ndarray]
+                   output_size=None,      # type: Optional[List[int]]
+                   scale_factors=None,    # type: Optional[List[float]]
+                   align_corners=False,   # type: bool
+                   exclude_outside=False  # type: bool
+                   ):                     # type: (...) -> np.ndarray
     def get_all_coords(data):   # type: (np.ndarray) -> np.ndarray
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
 
