@@ -6312,7 +6312,7 @@ output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=s
                         exclude_outside=True).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_resize_downsample_scales_cubic_A=-0.5_exclude_outside')
+       name='test_resize_downsample_scales_cubic_A_n0p5_exclude_outside')
 ```
 
 </details>
@@ -6577,7 +6577,7 @@ output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=s
                         exclude_outside=True).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
-       name='test_resize_upsample_scales_cubic_A=-0.5_exclude_outside')
+       name='test_resize_upsample_scales_cubic_A_n0p5_exclude_outside')
 ```
 
 </details>
