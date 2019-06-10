@@ -22,15 +22,7 @@ struct EliminateIdentity final : public PredicateBasedPass {
   bool patternMatchPredicate(Node* node) override {
     return node->kind() == kIdentity;
   }
-  bool runTransform(Node* node, Graph& g, NodeDestroyType& destroy_current)
-      override {
-    for (auto output : g.outputs()) {
-      if(node->output() == output) {
-	std::cout << "FOUND OUTPUT IDENTITY" << std::endl;
-	return false;
-      }
-    }
-    
+  bool runTransform(Node* node, Graph& g, NodeDestroyType& destroy_current) override {
     node->output()->replaceAllUsesWith(node->input());
     destroy_current = NodeDestroyType::DestroyOne;
     return true;

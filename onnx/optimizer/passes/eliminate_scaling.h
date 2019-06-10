@@ -114,6 +114,8 @@ struct EliminateActivations final : public PredicateBasedPass {
     auto prev_node = node->inputs()[0]->node();
     return(prev_node->kind() == kConv
 	   || prev_node->kind() == kGemm
+	   || prev_node->kind() == kMatMul
+	   || prev_node->kind() == kAdd
 	   || prev_node->kind() == kConvTranspose);
   }
 
@@ -141,6 +143,8 @@ struct EliminateActivations final : public PredicateBasedPass {
       base_node->node()->s_(Symbol("__activation"), "relu");
     else if(node->kind() == lrelu_sym_)
       base_node->node()->s_(Symbol("__activation"), "leakyrelu");
+    else if(node->kind() == ksigmoid || node->kind() == kSigmoid)
+      base_node->node()->s_(Symbol("__activation"), "sigmoid");
     else
       base_node->node()->s_(Symbol("__activation"), "unknownactivation");
 

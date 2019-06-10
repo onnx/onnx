@@ -30,9 +30,15 @@ struct EliminateTrailingTranspose final : public PredicateBasedPass {
     auto prev_node = node->inputs()[0]->node();
     bool res = (prev_node->kind() == kConv
 		|| prev_node->kind() == kConvTranspose
+//		|| prev_node->kind() == kBatchNormalization    // shouldn't exist at this point
 		|| prev_node->kind() == ave_sym_
 		|| prev_node->kind() == crop_sym_
 		|| prev_node->kind() == mp_sym_);
+    if(prev_node->inputs().size() == 0)
+      return false;
+    auto prev_prev_node = prev_node->inputs()[0]->node();
+    if(prev_prev_node && prev_prev_node->kind() != kTranspose)
+      return false;
     std::cout << "FOUND " << res << " " << node->name() << " " << prev_node->name() << " " << prev_node->kind().toString() << std::endl;
     return res;
   }
@@ -54,6 +60,10 @@ struct EliminateTrailingTranspose final : public PredicateBasedPass {
 
     std::vector<int64_t> perm = node->is(kperm);
     base_node->node()->is_(Symbol("__perm"), std::move(perm));
+
+    for (int i = 0; i < static_cast<int64_t>(base_node->node()->outputs().size()); ++i) {
+      base_node->node()->outputs()[i]->copyMetadata(node->outputs()[i]);
+    }
 
     // Don't assume that theres only one output.
     for (size_t i = 0; i < node->outputs().size(); ++i) {
@@ -91,6 +101,7 @@ struct EliminateLeadingTranspose final : public PredicateBasedPass {
     auto next_node = node->output()->uses()[0].user;
     bool res = (next_node->kind() == kConv
 		|| next_node->kind() == kConvTranspose
+//		|| next_node->kind() == kBatchNormalization  // shouldn't exist at this point
 		|| next_node->kind() == ave_sym_
 		|| next_node->kind() == crop_sym_
 		|| next_node->kind() == mp_sym_);
