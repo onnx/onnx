@@ -65,30 +65,44 @@ def cartesian(arrays, out=None):
 
 def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
                           align_corners=False, exclude_outside=False):
+    def get_neighbor_idxes(x, n, limit):
+        """
+        Return the n nearest indexes, prefer the indexes smaller than x to be compatible with nearest interpolation.
+        As a result, the ratio must be in (0, 1]
+        Examples:
+        get_neighbor_idxes(4, 2, 10) == [3, 4]
+        get_neighbor_idxes(4, 3, 10) == [3, 4, 5]
+        get_neighbor_idxes(4.4, 3, 10) == [3, 4, 5]
+        get_neighbor_idxes(4.5, 3, 10) == [3, 4, 5]
+        get_neighbor_idxes(4.6, 3, 10) == [4, 5, 6]
+        get_neighbor_idxes(4.4, 1, 10) == [4]
+        get_neighbor_idxes(4.6, 1, 10) == [5]
+        :param x:
+        :param n: the number of the wanted indexes
+        :param limit: the maximum value of index
+        :return: An np.array containing n nearest indexes in ascending order
+        """
+        idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
+        idxes = sorted(idxes)
+        return np.array(idxes)
+
     def get_neighbor(x, n, data):
+        """
+        Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original
+        array
+        :param x:
+        :param n:  the number of the wanted elements
+        :param data: the array
+        :return: A tuple containing the indexes of neighbor elements (the index can be smaller than 0 or higher than
+        len(data)) and the value of these elements
+        """
         pad_width = np.ceil(n / 2).astype(np.int)
         padded = np.pad(data, pad_width, mode='edge')
         x += pad_width
 
-        def get_neighbor_idxes(x, n, limit):
-            # Return the n nearest indexes, prefer the indexes smaller than x to be compatible with
-            # nearest interpolation.
-            # As a result, the ratio must be in (0, 1]
-            #
-            # Examples:
-            # get_neighbor_idxes(4, 2, 10) == [3, 4]
-            # get_neighbor_idxes(4, 3, 10) == [3, 4, 5]
-            # get_neighbor_idxes(4.4, 3, 10) == [3, 4, 5]
-            # get_neighbor_idxes(4.5, 3, 10) == [3, 4, 5]
-            # get_neighbor_idxes(4.6, 3, 10) == [4, 5, 6]
-            # get_neighbor_idxes(4.4, 1, 10) == [4]
-            # get_neighbor_idxes(4.6, 1, 10) == [5]
-            idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
-            idxes = sorted(idxes)
-            return idxes
-
-        ret = padded[get_neighbor_idxes(x, n, len(padded))]
-        return ret
+        idxes = get_neighbor_idxes(x, n, len(padded))
+        ret = padded[idxes]
+        return idxes - pad_width, ret
 
     input_width = len(data)
     output_width = scale_factor * input_width
@@ -109,14 +123,14 @@ def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
 
     coeffs = get_coeffs(ratio)
     n = len(coeffs)
+
+    idxes, points = get_neighbor(x_ori, n, data)
+
     if exclude_outside:
-        left = (n + 1) // 2 - 1
-        for i in range(len(coeffs)):
-            if x_ori_int + i - left < 0 or x_ori_int + i - left >= input_width:
+        for i, idx in enumerate(idxes):
+            if idx < 0 or idx >= input_width:
                 coeffs[i] = 0
         coeffs /= sum(coeffs)
-
-    points = get_neighbor(x_ori, n, data)
 
     return np.dot(coeffs, points).item()
 
@@ -162,7 +176,6 @@ def linear_coeffs(ratio):
 
 def nearest_coeffs(ratio):
     return np.array([1])
-
 
 
 class Resize(Base):
