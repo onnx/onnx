@@ -1421,12 +1421,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("cubic_coeff_a",
-            "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75
-            " (in PyTorch). Check out https://ieeexplore.ieee.org/document/1163711 for the details.")
+            "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75"
+            " (in PyTorch). Check out https://ieeexplore.ieee.org/document/1163711 for the details.",
             AttributeProto::FLOAT,
             static_cast<float>(-0.75))
         .Attr("exclude_outside",
-            "If set to 1, the weight of sampling locations outside the tensor will be set to 0
+            "If set to 1, the weight of sampling locations outside the tensor will be set to 0"
             " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
@@ -1436,14 +1436,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. If not specified, the default value is a tensor with
+            " be the same as the rank of input 'X'. If not specified, the default value is a tensor with"
             " all ones.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(
             2,
             "sizes",
-            "The size of the output tensor. The number of elements of 'sizes' should be the same as the
+            "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.",
             "tensor(int64)",
             OpSchema::Optional)
