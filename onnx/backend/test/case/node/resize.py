@@ -199,7 +199,7 @@ class Resize(Base):
         # [[[[1. 1. 1. 2. 2. 2.]
         #    [1. 1. 1. 2. 2. 2.]
         #    [3. 3. 3. 4. 4. 4.]
-        #    [3. 3. 3. 4. 4. 4.]]]] 
+        #    [3. 3. 3. 4. 4. 4.]]]]
         output = interpolate_nd(data, nearest_coeffs, scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
