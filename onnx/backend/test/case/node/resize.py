@@ -55,21 +55,39 @@ def cartesian(arrays, out=None):
         out = np.zeros([n, len(arrays)], dtype=dtype)
 
     m = n // arrays[0].size
-    out[:,0] = np.repeat(arrays[0], m)
+    out[:, 0] = np.repeat(arrays[0], m)
     if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m,1:])
+        cartesian(arrays[1:], out=out[0:m, 1:])
         for j in range(1, arrays[0].size):
-            out[j*m:(j+1)*m,1:] = out[0:m,1:]
+            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
     return out
 
 
 def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
-                          align_corners = False, exclude_outside=False):
+                          align_corners=False, exclude_outside=False):
     def get_neighbor(x, n, data):
         pad_width = np.ceil(n / 2).astype(np.int)
         padded = np.pad(data, pad_width, mode='edge')
         x += pad_width
-        ret = padded[int(x - ((n + 1) // 2 - 1)): int(x + (n // 2)) + 1]
+
+        def get_neighbor_idxes(x, n, limit):
+            # Return the n nearest indexes, prefer the indexes smaller than x to be compatible with
+            # nearest interpolation.
+            # As a result, the ratio must be in (0, 1]
+            #
+            # Examples:
+            # get_neighbor_idxes(4, 2, 10) == [3, 4]
+            # get_neighbor_idxes(4, 3, 10) == [3, 4, 5]
+            # get_neighbor_idxes(4.4, 3, 10) == [3, 4, 5]
+            # get_neighbor_idxes(4.5, 3, 10) == [3, 4, 5]
+            # get_neighbor_idxes(4.6, 3, 10) == [4, 5, 6]
+            # get_neighbor_idxes(4.4, 1, 10) == [4]
+            # get_neighbor_idxes(4.6, 1, 10) == [5]
+            idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
+            idxes = sorted(idxes)
+            return idxes
+
+        ret = padded[get_neighbor_idxes(x, n, len(padded))]
         return ret
 
     input_width = len(data)
@@ -83,7 +101,12 @@ def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
         x_ori = (x + 0.5) / scale_factor - 0.5
     x_ori_int = np.floor(x_ori).astype(np.int).item()
 
-    ratio = x_ori - x_ori_int
+    # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori` (as required by nearest interpolation)
+    if x_ori.is_integer():
+        ratio = 1
+    else:
+        ratio = x_ori - x_ori_int
+
     coeffs = get_coeffs(ratio)
     n = len(coeffs)
     if exclude_outside:
@@ -98,7 +121,7 @@ def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
     return np.dot(coeffs, points).item()
 
 
-def interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, align_corners = False, exclude_outside=False):
+def interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, align_corners=False, exclude_outside=False):
     if n == 1:
         return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
     return interpolate_1d_with_x(
@@ -106,7 +129,7 @@ def interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, align_corners =
          for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
 
 
-def interpolate_nd(data, get_coeffs, output_size=None, scale_factors=None, align_corners = False,
+def interpolate_nd(data, get_coeffs, output_size=None, scale_factors=None, align_corners=False,
                    exclude_outside=False):
     def get_all_coords(data):
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
@@ -136,6 +159,12 @@ def cubic_coeffs(ratio, A=-0.75):
 def linear_coeffs(ratio):
     return np.array([1 - ratio, ratio])
 
+
+def nearest_coeffs(ratio):
+    return np.array([1])
+
+
+
 class Resize(Base):
 
     @staticmethod
@@ -154,12 +183,11 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
 
-        output = np.array([[[
-            [1, 1, 1, 2, 2, 2],
-            [1, 1, 1, 2, 2, 2],
-            [3, 3, 3, 4, 4, 4],
-            [3, 3, 3, 4, 4, 4],
-        ]]], dtype=np.float32)
+        # [[[[1. 1. 1. 2. 2. 2.]
+        #    [1. 1. 1. 2. 2. 2.]
+        #    [3. 3. 3. 4. 4. 4.]
+        #    [3. 3. 3. 4. 4. 4.]]]] 
+        output = interpolate_nd(data, nearest_coeffs, scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_nearest')
@@ -180,12 +208,61 @@ class Resize(Base):
 
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-        output = np.array([[[
-            [1, 3]
-        ]]], dtype=np.float32)
+        # [[[[1. 3.]]]]
+        output = interpolate_nd(data, nearest_coeffs, scale_factors=scales, align_corners=False)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_nearest')
+
+    @staticmethod
+    def export_resize_upsample_sizes_nearest():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'sizes'],
+            outputs=['Y'],
+            mode='nearest',
+        )
+
+        data = np.array([[[
+            [1, 2],
+            [3, 4],
+        ]]], dtype=np.float32)
+
+        sizes = np.array([1, 1, 7, 8], dtype=np.int)
+
+        # [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+        #    [1. 1. 1. 1. 2. 2. 2. 2.]
+        #    [1. 1. 1. 1. 2. 2. 2. 2.]
+        #    [1. 1. 1. 1. 2. 2. 2. 2.]
+        #    [3. 3. 3. 3. 4. 4. 4. 4.]
+        #    [3. 3. 3. 3. 4. 4. 4. 4.]
+        #    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+        output = interpolate_nd(data, nearest_coeffs, output_size=sizes, align_corners=False)
+
+        expect(node, inputs=[data, sizes], outputs=[output],
+               name='test_resize_upsample_sizes_nearest')
+
+    @staticmethod
+    def export_resize_downsample_sizes_nearest():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'sizes'],
+            outputs=['Y'],
+            mode='nearest',
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+        ]]], dtype=np.float32)
+
+        sizes = np.array([1, 1, 1, 3], dtype=np.int)
+
+        # [[[[1. 3.]]]]
+        output = interpolate_nd(data, nearest_coeffs, output_size=sizes, align_corners=False)
+
+        expect(node, inputs=[data, sizes], outputs=[output],
+               name='test_resize_downsample_sizes_nearest')
 
     @staticmethod
     def export_resize_upsample_scales_linear():  # type: () -> None
