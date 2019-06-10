@@ -41,9 +41,9 @@ void upsampleShapeInferenceV7(InferenceContext& ctx) {
     return;
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  auto& input_shape = getInputShape(ctx, 0);
+  const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  auto* scales = ctx.getAttribute("scales");
+  const auto* scales = ctx.getAttribute("scales");
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -87,9 +87,9 @@ void resizeShapeInference(InferenceContext& ctx) {
     return;
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  auto& input_shape = getInputShape(ctx, 0);
+  const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  auto scales = ctx.getInputData(1);
+  const auto scales = ctx.getInputData(1);
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
