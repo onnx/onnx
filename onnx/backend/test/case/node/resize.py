@@ -584,7 +584,9 @@ class Resize(Base):
             inputs=['X', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False
+            align_corners=False,
+            cubic_coeff_a=-0.5,
+            exclude_outside=True
         )
 
         data = np.array([[[
@@ -626,7 +628,7 @@ class Resize(Base):
             outputs=['Y'],
             mode='cubic',
             align_corners=False,
-            A=-0.5,
+            cubic_coeff_a=-0.5,
             exclude_outside=True
         )
 
