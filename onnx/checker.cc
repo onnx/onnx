@@ -369,7 +369,7 @@ void check_node(
     }
   } else if (schema->Deprecated()) {
     fail_check(
-        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
+        "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
         ONNX_NAMESPACE::to_string(domain_version));
   } else {
     schema->Verify(node);
