@@ -8,8 +8,10 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
+from typing import List, Callable, Union, Optional
 
 
+# type: (List[np.ndarray], np.ndarray) -> np.ndarray
 def cartesian(arrays, out=None):
     """
     From https://stackoverflow.com/a/1235363
@@ -63,9 +65,15 @@ def cartesian(arrays, out=None):
     return out
 
 
-def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
-                          align_corners=False, exclude_outside=False):
-    def get_neighbor_idxes(x, n, limit):
+def interpolate_1d_with_x(data,     # type: np.ndarray
+                          scale_factor,               # type: float
+                          x,                          # type: float
+                          # type: Callable[[float], np.ndarray]
+                          get_coeffs,
+                          align_corners=False,        # type: bool
+                          exclude_outside=False       # type: bool
+                          ):                          # type: (...) -> np.ndarray
+    def get_neighbor_idxes(x, n, limit):  # type: (float, int, int) -> np.ndarray
         """
         Return the n nearest indexes, prefer the indexes smaller than x to be compatible with nearest interpolation.
         As a result, the ratio must be in (0, 1]
@@ -86,7 +94,7 @@ def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
         idxes = sorted(idxes)
         return np.array(idxes)
 
-    def get_neighbor(x, n, data):
+    def get_neighbor(x, n, data):  # type: (float, int, np.ndarray) -> np.ndarray
         """
         Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original
         array
@@ -135,7 +143,15 @@ def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
     return np.dot(coeffs, points).item()
 
 
-def interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, align_corners=False, exclude_outside=False):
+def interpolate_nd_with_x(data,  # type: np.ndarray
+                          n,                      # type: int
+                          scale_factors,          # type: List[float]
+                          x,                      # type: List[float]
+                          # type: Callable[[float], np.ndarray]
+                          get_coeffs,
+                          align_corners=False,    # type: bool
+                          exclude_outside=False   # type: bool
+                          ):                      # type: (...) -> np.ndarray
     if n == 1:
         return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
     return interpolate_1d_with_x(
@@ -143,9 +159,14 @@ def interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, align_corners=F
          for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside)
 
 
-def interpolate_nd(data, get_coeffs, output_size=None, scale_factors=None, align_corners=False,
-                   exclude_outside=False):
-    def get_all_coords(data):
+def interpolate_nd(data,        # type: np.ndarray
+                   get_coeffs,             # type: Callable[[float], np.ndarray]
+                   output_size=None,       # type: Optional[List[int]]
+                   scale_factors=None,     # type: Optional[List[float]]
+                   align_corners=False,    # type: bool
+                   exclude_outside=False   # type: bool
+                   ):                      # type: (...) -> np.ndarray
+    def get_all_coords(data):   # type: (np.ndarray) -> np.ndarray
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
 
     assert output_size is not None or scale_factors is not None
@@ -153,6 +174,7 @@ def interpolate_nd(data, get_coeffs, output_size=None, scale_factors=None, align
         scale_factors = np.array(output_size) / np.array(data.shape)
     else:
         output_size = (scale_factors * np.array(data.shape)).astype(np.int)
+    assert scale_factors is not None
 
     ret = np.zeros(output_size)
     for x in get_all_coords(ret):
@@ -161,7 +183,7 @@ def interpolate_nd(data, get_coeffs, output_size=None, scale_factors=None, align
     return ret
 
 
-def cubic_coeffs(ratio, A=-0.75):
+def cubic_coeffs(ratio, A=-0.75):   # type: (float, float) -> np.ndarray
     coeffs = [((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
               ((A + 2) * ratio - (A + 3)) * ratio * ratio + 1,
               ((A + 2) * (1 - ratio) - (A + 3)) * (1 - ratio) * (1 - ratio) + 1,
@@ -170,11 +192,11 @@ def cubic_coeffs(ratio, A=-0.75):
     return np.array(coeffs)
 
 
-def linear_coeffs(ratio):
+def linear_coeffs(ratio):           # type: (float) -> np.ndarray
     return np.array([1 - ratio, ratio])
 
 
-def nearest_coeffs(ratio):
+def nearest_coeffs(ratio):          # type: (float) -> np.ndarray
     return np.array([1])
 
 
