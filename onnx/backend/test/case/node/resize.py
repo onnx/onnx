@@ -496,7 +496,7 @@ class Resize(Base):
                name='test_resize_downsample_scales_cubic_align_corners')
 
     @staticmethod
-    def export_resize_upsample_size_cubic():  # type: () -> None
+    def export_resize_upsample_sizes_cubic():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
             inputs=['X', 'sizes'],
@@ -538,7 +538,7 @@ class Resize(Base):
                name='test_resize_upsample_sizes_cubic')
 
     @staticmethod
-    def export_resize_downsample_size_cubic():  # type: () -> None
+    def export_resize_downsample_sizes_cubic():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
             inputs=['X', 'sizes'],
@@ -603,7 +603,7 @@ class Resize(Base):
                                 exclude_outside=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
-               name='test_resize_upsample_sizes_cubic')
+               name='test_resize_upsample_scales_cubic_A=-0.5_exclude_outside')
 
     @staticmethod
     def export_resize_downsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
@@ -633,4 +633,4 @@ class Resize(Base):
                                 exclude_outside=True)
 
         expect(node, inputs=[data, scales], outputs=[output],
-               name='test_resize_downsample_sizes_cubic')
+               name='test_resize_downsample_scales_cubic_A=-0.5_exclude_outside')
