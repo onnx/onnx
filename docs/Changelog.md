@@ -10514,26 +10514,30 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs (1 - 3)
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> : T1</dt>
 <dd>N-D tensor</dd>
-<dt><tt>scales</tt> (optional) : tensor(float)</dt>
+<dt><tt>scales</tt> (optional) : T2</dt>
 <dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. If not specified, the default value is a tensor with all ones.</dd>
-<dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
+<dt><tt>sizes</tt> (optional) : T3</dt>
 <dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> : T1</dt>
 <dd>N-D tensor after resizing</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float)</dt>
+<dd>Constrain scales type to float.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>Constrain sizes type to int64.</dd>
 </dl>
 
 ### <a name="Round-11"></a>**Round-11**</a>
