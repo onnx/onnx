@@ -94,7 +94,7 @@ def interpolate_1d_with_x(data, scale_factor, x, get_coeffs,
     output_width = scale_factor * input_width
     if align_corners:
         if output_width == 1:
-            x_ori = 0
+            x_ori = 0.
         else:
             x_ori = x * (input_width - 1) / (output_width - 1)
     else:
