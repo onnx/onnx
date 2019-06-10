@@ -654,7 +654,7 @@ class Resize(Base):
                                 exclude_outside=True).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
-               name='test_resize_upsample_scales_cubic_A=-0.5_exclude_outside')
+               name='test_resize_upsample_scales_cubic_A_n0p5_exclude_outside')
 
     @staticmethod
     def export_resize_downsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
@@ -684,4 +684,4 @@ class Resize(Base):
                                 exclude_outside=True).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
-               name='test_resize_downsample_scales_cubic_A=-0.5_exclude_outside')
+               name='test_resize_downsample_scales_cubic_A_n0p5_exclude_outside')
