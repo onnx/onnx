@@ -10,5 +10,10 @@
 
 namespace ONNX_NAMESPACE {
   void resizeShapeInference(InferenceContext& ctx);
-  void upsampleShapeInferenceV7(InferenceContext& ctx);
+  
+  void resizeShapeInferenceHelper(
+    const TensorShapeProto& input_shape,
+    const std::vector<float>& scales_data,
+    TensorShapeProto* output_shape
+  );
 }

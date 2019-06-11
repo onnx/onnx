@@ -377,7 +377,49 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .SetDoc(Upsample_ver7_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          upsampleShapeInferenceV7(ctx);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          const auto& input_shape = getInputShape(ctx, 0);
+          auto* output_shape = getOutputShape(ctx, 0);
+          const auto* scales = ctx.getAttribute("scales");
+
+          if (output_shape->dim_size() > 0) {
+            if (output_shape->dim_size() != input_shape.dim_size()) {
+              fail_shape_inference(
+                "Ranks inferred (",
+                input_shape.dim_size(),
+                ") is not equal to the existing rank value (",
+                output_shape->dim_size(),
+                ").");
+            }
+          } else { // Infer the rank of output anyway
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape->add_dim();
+            }
+          }
+
+          if (nullptr != scales) {
+            // Infer output shape's dimension value if 'scales' is known.
+            if (scales->type() == AttributeProto_AttributeType_FLOATS) {
+              const std::vector<float> scales_data(
+                scales->floats().begin(), 
+                scales->floats().end()
+              );
+              if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
+                fail_shape_inference(
+                  "Number of elements of attribute 'scales' must be same as rank of input 'X'");
+              }
+              resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
+            } else {
+              fail_shape_inference(
+                "Attribute 'scales' must have floats type.");
+            } // scales->type() == float
+          } else {
+            fail_shape_inference(
+              "Attribute 'scales' is required.");
+          } // nullptr != scales
         }));
 
 static const char* Upsample_ver9_doc = R"DOC(
