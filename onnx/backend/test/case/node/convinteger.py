@@ -15,7 +15,7 @@ class ConvInteger(Base):
     def export():  # type: () -> None
 
         x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
-        x_zero_point = np.array([1]).astype(np.uint8)
+        x_zero_point = np.uint8(1)
         w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
 
         y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
