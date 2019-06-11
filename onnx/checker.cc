@@ -231,12 +231,12 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 // linearized index value for the i-th nonzero value.
 void check_sparse_tensor_indices_1(
     const TensorProto& indices,
-    const google::protobuf::RepeatedField<int64_t> dims,
+    const SparseTensorProto& sparse_tensor_proto,
     int64_t nnz) {
-  int dense_rank = dims.size();
+  int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
-    dense_size *= dims[i];
+    dense_size *= sparse_tensor_proto.dims(i);
   if (indices.dims(0) != nnz)
     fail_check(
         "Sparse tensor indices (",
@@ -272,9 +272,9 @@ void check_sparse_tensor_indices_1(
 // index value for the i-th nonzero value.
 void check_sparse_tensor_indices_2(
     const TensorProto& indices,
-    const google::protobuf::RepeatedField<int64_t> dims,
+    const SparseTensorProto& sparse_tensor_proto,
     int64_t nnz) {
-  int dense_rank = dims.size();
+  int dense_rank = sparse_tensor_proto.dims_size();
   if (indices.dims(0) != nnz)
     fail_check(
         "Sparse tensor indices (",
@@ -295,7 +295,7 @@ void check_sparse_tensor_indices_2(
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
       auto index_ij = index_data[i * dense_rank + j];
-      if ((index_ij < 0) || (index_ij >= dims[j]))
+      if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j)))
         fail_check(
             "Sparse tensor (",
             indices.name(),
@@ -304,7 +304,7 @@ void check_sparse_tensor_indices_2(
             ",",
             j,
             "] out of range.");
-      curr_index = curr_index * dims[j] + index_ij;
+      curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
     }
     if (curr_index <= prev_index) {
       fail_check(
@@ -356,10 +356,10 @@ void check_sparse_tensor(
           "Sparse tensor indices (", indices.name(), ") must have INT64 type.");
     switch (indices.dims().size()) {
       case 1:
-        check_sparse_tensor_indices_1(indices, sparse_tensor_proto.dims(), nnz);
+        check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz);
         return;
       case 2:
-        check_sparse_tensor_indices_2(indices, sparse_tensor_proto.dims(), nnz);
+        check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz);
         return;
       default:
         fail_check(
