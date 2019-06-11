@@ -107,20 +107,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor."));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    Equal,
-    7,
-    OpSchema()
-        .FillUsing(BinaryLogicDocGenerator("equal"))
-        .TypeConstraint(
-            "T",
-            {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
-            "Constrains input to integral tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
-
 static const char* Not_ver1_doc = R"DOC(
 Returns the negation of the input tensor element-wise.
 )DOC";
@@ -178,4 +164,21 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
+static const char* Equal_ver11_doc = R"DOC(
+Returns the truth value of (x == y) element-wise. Supports numpy type of broadcasting: https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html.
+)DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    Equal,
+    11,
+    OpSchema()
+        .SetDoc(Equal_ver11_doc)
+        .FillUsing(BinaryLogicDocGenerator("equal"))
+        .TypeConstraint(
+            "T",
+            {"tensor(bool)", "tensor(int32)", "tensor(int64)", "tensor(string)"},
+            "Constrains input to integral tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor."));
 }  // namespace ONNX_NAMESPACE

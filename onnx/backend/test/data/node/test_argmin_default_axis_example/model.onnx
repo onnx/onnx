@@ -1,4 +1,4 @@
-backend-test:}
+backend-test:}
 '
 dataresult"ArgMin*
 keepdims  test_argmin_default_axis_exampleZ
@@ -9,4 +9,4 @@
 result
 
 
-B	
+B

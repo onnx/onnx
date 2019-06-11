@@ -184,6 +184,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor."));
 
-
-
+ONNX_OPERATOR_SET_SCHEMA(
+    Equal,
+    7,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator_opset7("equal"))
+        .TypeConstraint(
+            "T",
+            {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
+            "Constrains input to integral tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor."));
 } // namespace ONNX_NAMESPACE
