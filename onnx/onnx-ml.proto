@@ -503,6 +503,14 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
+  message SparseTensor { 
+    // This field MUST NOT have the value of UNDEFINED 
+    // This field MUST have a valid TensorProto.DataType value
+    // This field MUST be present for this version of the IR. 
+    optional int32 elem_type = 1;
+    optional TensorShapeProto shape = 2;
+  }
+  
 
   // repeated T
   message Sequence {
@@ -529,14 +537,6 @@ message TypeProto {
     // parameters that help defining the type
     // DEPRECATED do not use.
     // repeated TypeProto parameters = 3;
-  }
-
-  message SparseTensor { 
-    // This field MUST NOT have the value of UNDEFINED 
-    // This field MUST have a valid TensorProto.DataType value
-    // This field MUST be present for this version of the IR. 
-    optional int32 elem_type = 1;
-    optional TensorShapeProto shape = 2;
   }
 
 
