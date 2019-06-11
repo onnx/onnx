@@ -1335,10 +1335,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "values.",
             "I")
         .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeConstraint(
             "I",
             {"tensor(int64)"},
             "Constrain index tensor to int64")
@@ -1406,5 +1402,34 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           return;
         }));
+
+static const char* Clip_ver6_doc = R"DOC(
+Clip operator limits the given input within an interval. The interval is
+specified with arguments 'min' and 'max'. They default to
+numeric_limits::lowest() and numeric_limits::max() respectively.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Clip,
+    6,
+    OpSchema()
+        .SetDoc(Clip_ver6_doc)
+        .Attr(
+            "min",
+            "Minimum value, under which element is replaced by min",
+            AttributeProto::FLOAT,
+            std::numeric_limits<float>::lowest())
+        .Attr(
+            "max",
+            "Maximum value, above which element is replaced by max",
+            AttributeProto::FLOAT,
+            std::numeric_limits<float>::max())
+        .Input(0, "input", "Input tensor whose elements to be clipped", "T")
+        .Output(0, "output", "Output tensor with clipped input elements", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 } // namespace ONNX_NAMESPACE
