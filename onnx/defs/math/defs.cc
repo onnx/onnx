@@ -1530,4 +1530,33 @@ ONNX_OPERATOR_SET_SCHEMA(
         return;
       }));
 
+static const char* Round_ver11_doc = R"DOC(
+Round takes one input Tensor and rounds the values, element-wise, meaning
+it finds the nearest integer for each value.
+In case of halfs, the rule is to round them to the nearest even integer.
+The output tensor has the same shape and type as the input.
+
+Examples:
+```
+round([0.9]) = [1.0]
+round([2.5]) = [2.0]
+round([2.3]) = [2.0]
+round([1.5]) = [2.0]
+round([-4.5]) = [-4.0]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Round,
+    11,
+    OpSchema()
+        .SetDoc(Round_ver11_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 } // namespace ONNX_NAMESPACE
