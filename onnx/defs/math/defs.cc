@@ -1511,7 +1511,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           AttributeProto::INT,
           static_cast<int64_t>(0))
       .Input(0, "x", "An input tensor that is to be processed.", "T")
-      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))", "tensor(int32)")
+      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))", "T2")
       .Output(0, "y",
               "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
               "T")
@@ -1522,6 +1522,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         "tensor(int64)",
         "tensor(float)",
         "tensor(double)"}, "Input can be of any tensor type.")
+      .TypeConstraint("T2", {
+        "tensor(int32)",
+        "tensor(int64)"}, "axis tensor can be int32 or int64 only")
       .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
         // Type inference
         ONNX_NAMESPACE::propagateElemTypeFromInputToOutput(ctx, 0, 0);

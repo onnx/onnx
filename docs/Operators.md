@@ -3274,7 +3274,7 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>x</tt> : T</dt>
 <dd>An input tensor that is to be processed.</dd>
-<dt><tt>axis</tt> : tensor(int32)</dt>
+<dt><tt>axis</tt> : T2</dt>
 <dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
 </dl>
 
@@ -3290,6 +3290,8 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
 <dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
 
