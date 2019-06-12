@@ -237,7 +237,7 @@ void check_sparse_tensor_indices_1(
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
     dense_size *= sparse_tensor_proto.dims(i);
-  if (indices.dims(0) != nnz)
+  if (static_cast<size_t>(indices.dims(0)) != nnz)
     fail_check(
         "Sparse tensor indices (",
         indices.name(),
