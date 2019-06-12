@@ -84,18 +84,15 @@ class LexicalScopeContext final {
  public:
   LexicalScopeContext() = default;
 
-  LexicalScopeContext(std::unordered_set<std::string>& output_names)
-      : output_names_{&output_names} {}
-
   LexicalScopeContext(const LexicalScopeContext& parent_context)
       : parent_context_{&parent_context} {}
 
   void add(const std::string& name) {
-    output_names_->insert(name);
+    output_names.insert(name);
   }
 
   bool this_graph_has(const std::string& name) const {
-    return output_names_->find(name) != output_names_->cend();
+    return output_names.find(name) != output_names.cend();
   }
 
   bool this_or_parent_graph_has(const std::string& name) const {
@@ -103,9 +100,11 @@ class LexicalScopeContext final {
         (parent_context_ && parent_context_->this_or_parent_graph_has(name));
   }
 
+  // public for backwards compatibility. please prefer the public interface of
+  // this class over directly changing output_names
+  std::unordered_set<std::string> output_names;
+
  private:
-  std::unordered_set<std::string> local_output_name_storage_;
-  std::unordered_set<std::string>* output_names_{&local_output_name_storage_};
   const LexicalScopeContext* parent_context_{nullptr};
 };
 
