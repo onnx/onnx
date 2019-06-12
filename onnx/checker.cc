@@ -335,7 +335,7 @@ void check_sparse_tensor(
   // case values will have dimension > 1.
   if (values.dims_size() != 1)
     fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
-  int64_t nnz = values.dims(0);
+  size_t nnz = static_cast<size_t>(values.dims(0));
 
   int dense_rank = sparse_tensor_proto.dims_size();
   if (dense_rank == 0) {
