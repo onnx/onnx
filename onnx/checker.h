@@ -95,9 +95,9 @@ class LexicalScopeContext final {
     return output_names.find(name) != output_names.cend();
   }
 
-  bool this_or_parent_graph_has(const std::string& name) const {
+  bool this_or_ancestor_graph_has(const std::string& name) const {
     return this_graph_has(name) ||
-        (parent_context_ && parent_context_->this_or_parent_graph_has(name));
+        (parent_context_ && parent_context_->this_or_ancestor_graph_has(name));
   }
 
   // public for backwards compatibility. please prefer the public interface of

@@ -408,7 +408,7 @@ void check_graph(
 
   for (const auto& value_info : graph.input()) {
     // TODO: If shadowing isn't allowed, this should maybe use
-    // this_or_parent_graph_has
+    // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(value_info.name())) {
       fail_check(
           "Graph must be in single static assignment (SSA) form, however '",
@@ -439,7 +439,7 @@ void check_graph(
       if (input.empty()) {
         continue;
       }
-      if (!lex_ctx.this_or_parent_graph_has(input)) {
+      if (!lex_ctx.this_or_ancestor_graph_has(input)) {
         fail_check(
             "Nodes in a graph must be topologically sorted, however input '",
             input,
@@ -464,9 +464,7 @@ void check_graph(
         continue;
       }
 
-      // TODO: should this check parent graph/s as well?
-      // Doing so could break existing models though
-      if (lex_ctx.this_graph_has(output)) {
+      if (lex_ctx.this_or_ancestor_graph_has(output)) {
         fail_check(
             "Graph must be in single static assignment (SSA) form, however '",
             output,
@@ -488,7 +486,7 @@ void check_function(
 
   for (const auto& input : function.input()) {
     // TODO: If shadowing isn't allowed, this should maybe use
-    // this_or_parent_graph_has
+    // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(input)) {
       fail_check(
           "Graph must be in single static assignment (SSA) form, however '",
@@ -544,8 +542,7 @@ void check_function(
       if (output.empty()) {
         continue;
       }
-      // TODO: Should this use this_or_parent_graph_has?
-      if (lex_ctx.this_graph_has(output)) {
+      if (lex_ctx.this_or_ancestor_graph_has(output)) {
         fail_check(
             "Function must be in single static assignment (SSA) form, however '",
             output,
