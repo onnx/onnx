@@ -26,17 +26,10 @@ struct Constant_9_8 final : public Adapter {
     int const_type;
     Tensor val;
 
-    const std::unordered_set<int> &supported_version8_types = {
-        TensorProto_DataType::TensorProto_DataType_FLOAT,
-        TensorProto_DataType::TensorProto_DataType_FLOAT16,
-        TensorProto_DataType::TensorProto_DataType_DOUBLE,
-    };
-
-    const std::unordered_set<int> &unsupported_version9_types = { 
-        TensorProto_DataType::TensorProto_DataType_COMPLEX128,
-        TensorProto_DataType::TensorProto_DataType_COMPLEX64,
-        TensorProto_DataType::TensorProto_DataType_STRING,
-    };
+    if (output_type == TensorProto_DataType::TensorProto_DataType_FLOAT ||
+        output_type == TensorProto_DataType::TensorProto_DataType_FLOAT16 ||
+        output_type == TensorProto_DataType::TensorProto_DataType_DOUBLE)
+        return;
     
     const std::unordered_set<int> &cast_to_float_types = { 
         TensorProto_DataType::TensorProto_DataType_BOOL,
@@ -53,17 +46,15 @@ struct Constant_9_8 final : public Adapter {
         TensorProto_DataType::TensorProto_DataType_UINT64,
     };
 
-    ONNX_ASSERTM(unsupported_version9_types.find(output_type) == unsupported_version9_types.end(), "Unsupported Output Type");
-
     if (cast_to_float_types.find(output_type) == cast_to_float_types.end()) {
        const_type = TensorProto_DataType::TensorProto_DataType_DOUBLE;
-    } else {
+    } else if (cast_to_double_types.find(output_type) == cast_to_double_types.end()) {
        const_type = TensorProto_DataType::TensorProto_DataType_FLOAT;
+    } else {
+       ONNX_ASSERT("Unsupported Output Type");
     }
 
-    if (node->hasAttribute(kvalue) &&
-        supported_version8_types.find(output_type) ==
-            supported_version8_types.end()) {
+    if (node->hasAttribute(kvalue)) {
       Tensor t(node->t(kvalue));
       node->removeAttribute(kvalue);
       val.sizes() = t.sizes();
