@@ -11,6 +11,7 @@ import numpy as np  # type: ignore
 import struct
 
 import onnx.version_converter
+import onnx.utils
 import unittest
 
 
