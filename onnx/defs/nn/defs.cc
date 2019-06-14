@@ -5,7 +5,6 @@
 #include <cmath>
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 const char* pads_doc =
@@ -22,9 +21,6 @@ const char* auto_pad_doc =
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding.";
-} // namespace ONNX_NAMESPACE
-
-namespace ONNX_NAMESPACE {
 
 void convPoolShapeInference(
     InferenceContext& ctx,
@@ -272,7 +268,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
       convPoolShapeInference(ctx, false, true, 0, 1);
     });
   };
-} // namespace ONNX_NAMESPACE
+}
 
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
@@ -376,7 +372,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
       convPoolShapeInference(ctx, use_dilation, true, 0, 1);
     });
   };
-} // namespace ONNX_NAMESPACE
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
@@ -662,9 +658,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           maxUnpoolShapeInference(ctx);
         }));
-} // namespace ONNX_NAMESPACE
 
-namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
@@ -727,8 +721,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     2,
     OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
 
-} // namespace ONNX_NAMESPACE
-
 // For ROI pool operations.
 void roiPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -770,7 +762,6 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
   output_shape->add_dim()->set_dim_value(pooled_shape[1]);
 }
 
-namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
@@ -822,9 +813,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MaxRoiPool,
     1,
     OpSchema().FillUsing(RoiPoolOpSchemaGenerator("max")));
-} // namespace ONNX_NAMESPACE
 
-namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
@@ -1053,13 +1042,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "number of groups input channels and output channels are divided into. default is 1.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+        .TypeAndShapeInferenceFunction([](InferenceContext&
                                               ctx) {
           auto x_type = ctx.getInputType(0);
           auto w_type = ctx.getInputType(3);
           if (nullptr == x_type || nullptr == w_type ||
-              x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
-              w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+              x_type->value_case() != TypeProto::kTensorType ||
+              w_type->value_case() != TypeProto::kTensorType) {
             fail_type_inference("inputs are expected to have tensor type.");
           }
 
@@ -1193,26 +1182,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "number of groups input channels and output channels are divided into. default is 1.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+        .TypeAndShapeInferenceFunction([](InferenceContext&
                                               ctx) {
           auto x_type = ctx.getInputType(0);
           auto w_type = ctx.getInputType(1);
           auto y_type = ctx.getOutputType(0);
           if (nullptr == x_type || nullptr == w_type || nullptr == y_type ||
-              x_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
-              w_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+              x_type->value_case() != TypeProto::kTensorType ||
+              w_type->value_case() != TypeProto::kTensorType) {
             fail_type_inference(
                 "inputs are expected to have tensor type and output type should not be null.");
           }
 
           // Right now we only support int32
           y_type->mutable_tensor_type()->set_elem_type(
-              ONNX_NAMESPACE::TensorProto::INT32);
+              TensorProto::INT32);
 
           convPoolShapeInference(ctx, true, false, 0, 1);
         }));
-
-} // namespace ONNX_NAMESPACE
 
 void convTransposeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1371,7 +1358,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 }
 
-namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
     const char* filter_desc) {
   return [=](OpSchema& schema) {
@@ -1477,10 +1463,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-} // namespace ONNX_NAMESPACE
-
 // For GlobalPool operations.
-void gloablPoolTypeShapeInference(InferenceContext& ctx) {
+void globalPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // needs at least one input with shape.
@@ -1507,7 +1491,6 @@ void gloablPoolTypeShapeInference(InferenceContext& ctx) {
   }
 }
 
-namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op_type,
     const char* op) {
@@ -1541,7 +1524,7 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction(
-        [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
+        [](InferenceContext& ctx) { globalPoolTypeShapeInference(ctx); });
   };
 }
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1593,7 +1576,7 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         "Constrain input and output types to float tensors.");
     schema.SetDoc(doc);
     schema.TypeAndShapeInferenceFunction(
-        [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
+        [](InferenceContext& ctx) { globalPoolTypeShapeInference(ctx); });
   };
 }
 
