@@ -18,19 +18,30 @@ quantizations while converting from original image into feature
 map and from feature map into RoI feature; in each ROI bin,
 the value of the sampled locations are computed directly
 through bilinear interpolation.
+
+The operator [crop_and_resize](https://www.tensorflow.org/api_docs/python/tf/image/crop_and_resize)
+in tensorflow behaves similarly as RoiAlign, where
+the major difference is the coordinate location and the mode chosen to compute the output tensor.
+This RoiAlign supports both crop_and_resize and RoiAlign.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
-    10,
+    11,
     OpSchema()
       .SetDoc(RoiAlign_ver1_doc)
+      .Attr(
+          "method",
+          "Two methods are supported: 'roi_align' and 'crop_and_resize'. "
+          "Default is 'roi_align'.",
+          AttributeProto::STRING,
+          std::string("roi_align"))
       .Attr(
           "spatial_scale",
           "Multiplicative spatial scale factor to translate ROI coordinates "
           "from their input spatial scale to the scale used when pooling, "
           "i.e., spatial scale of the input feature map X relative to the "
-          "input image. E.g.; default is 1.0f. ",
+          "input image. E.g.; default is 1.0f. Only used in 'roi_align'.",
           AttributeProto::FLOAT,
           1.f)
       .Attr(
@@ -49,15 +60,23 @@ ONNX_OPERATOR_SET_SCHEMA(
           "the output value of each pooled output bin. If > 0, then exactly "
           "sampling_ratio x sampling_ratio grid points are used. If == 0, then "
           "an adaptive number of grid points are used (computed as "
-          "ceil(roi_width / output_width), and likewise for height). Default is 0.",
+          "ceil(roi_width / output_width), and likewise for height). Default is 0. "
+          "Only used in 'roi_align'.",
           AttributeProto::INT,
           static_cast<int64_t>(0))
       .Attr(
           "mode",
-          "The pooling method. Two modes are supported: 'avg' and 'max'. "
-          "Default is 'avg'.",
+          "The pooling method. Five modes are supported: 'default', 'avg', 'max', 'bilinear', "
+          "and 'nearest'. 'default' is 'avg' when 'method' is 'roi_align', and it is
+          "'bilinear' when 'method' is 'crop_and_resize'."
+          "Default is 'default'.",
           AttributeProto::STRING,
-          std::string("avg"))
+          std::string("default"))
+       .Attr(
+          "extrapolation_value",
+          "Value used for extrapolation, when applicable. Default is 0.0f. Only used in 'crop_and_resize'.",
+          AttributeProto::FLOAT,
+          0.f)
       .Input(
           0,
           "X",
