@@ -1286,6 +1286,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 30, 30))])
 
+    def test_conv_transpose_with_dilations(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2], pads=[1, 1, 2, 2], dilations=[3, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 34, 34))])
+
     def test_conv_transpose_with_group(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
@@ -1884,6 +1892,33 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ReverseSequence', ['x', 'sequence_lens'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
+
+    def test_tile(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('repeats', TensorProto.INT64, (3,))],
+            [make_node('Tile', ['x', 'repeats'], ['y'])],
+            [],
+            initializer=[make_tensor('repeats', TensorProto.INT64, (3,), (1, 2, 3))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 10, 18))])
+
+    def test_tile_raw_input_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('repeats', TensorProto.INT64, (3,))],
+            [make_node('Tile', ['x', 'repeats'], ['y'])],
+            [],
+            initializer=[make_tensor('repeats', TensorProto.INT64, (3,),
+                                     vals=np.array([1, 2, 3], dtype='<i8').tobytes(), raw=True)])  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 10, 18))])
+
+    def test_tile_rank_inference(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('repeats', TensorProto.INT64, (3,))],
+            [make_node('Tile', ['x', 'repeats'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None))])  # type: ignore
 
 
 if __name__ == '__main__':

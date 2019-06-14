@@ -799,7 +799,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * the macros defined such as ONNX_OPERATOR_SET_SCHEMA to register your
    * operator schema.
    *
-   * We wrap it inside a function to avoid the statia initialization order
+   * We wrap it inside a function to avoid the static initialization order
    * fiasco.
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
