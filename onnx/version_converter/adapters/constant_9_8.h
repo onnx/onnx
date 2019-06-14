@@ -46,10 +46,10 @@ struct Constant_9_8 final : public Adapter {
         TensorProto_DataType::TensorProto_DataType_UINT64,
     };
 
-    if (cast_to_float_types.find(output_type) == cast_to_float_types.end()) {
-       const_type = TensorProto_DataType::TensorProto_DataType_DOUBLE;
-    } else if (cast_to_double_types.find(output_type) == cast_to_double_types.end()) {
+    if (cast_to_float_types.find(output_type) != cast_to_float_types.end()) {
        const_type = TensorProto_DataType::TensorProto_DataType_FLOAT;
+    } else if (cast_to_double_types.find(output_type) != cast_to_double_types.end()) {
+       const_type = TensorProto_DataType::TensorProto_DataType_DOUBLE;
     } else {
        ONNX_ASSERT("Unsupported Output Type");
     }
