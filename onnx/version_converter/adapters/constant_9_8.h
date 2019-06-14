@@ -24,7 +24,6 @@ struct Constant_9_8 final : public Adapter {
     const std::string original_output_name = node->output()->uniqueName();
     const int output_type = outputs[0]->elemType();
     int const_type = TensorProto_DataType::TensorProto_DataType_FLOAT;
-    Tensor val;
 
     if (output_type == TensorProto_DataType::TensorProto_DataType_FLOAT ||
         output_type == TensorProto_DataType::TensorProto_DataType_FLOAT16 ||
@@ -56,9 +55,10 @@ struct Constant_9_8 final : public Adapter {
 
     if (node->hasAttribute(kvalue)) {
       Tensor t(node->t(kvalue));
-      node->removeAttribute(kvalue);
+      Tensor val;
       val.sizes() = t.sizes();
       val.elem_type() = const_type;
+      node->removeAttribute(kvalue);
       if (cast_to_double_types.find(output_type) == cast_to_double_types.end()) {
         cast_func<int32_t, float> (t.int32s(), val.floats());
       } else if (output_type == TensorProto_DataType::TensorProto_DataType_INT64) {
