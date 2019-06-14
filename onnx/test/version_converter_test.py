@@ -674,7 +674,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
         assert converted_model.opset_import[0].version == to_opset
-    
+
     # Test Flatten Adapter: 8 -> 9
     def test_flatten_8_9(self):  # type: () -> None
         from_opset = 8

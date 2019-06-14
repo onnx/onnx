@@ -23,7 +23,7 @@ struct Constant_9_8 final : public Adapter {
     const ArrayRef<Value*>& outputs = node->outputs();
     const std::string original_output_name = node->output()->uniqueName();
     const int output_type = outputs[0]->elemType();
-    int const_type;
+    int const_type = TensorProto_DataType::TensorProto_DataType_FLOAT;
     Tensor val;
 
     if (output_type == TensorProto_DataType::TensorProto_DataType_FLOAT ||
