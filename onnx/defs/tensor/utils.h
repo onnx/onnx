@@ -9,11 +9,10 @@
 #include <cmath>
 
 namespace ONNX_NAMESPACE {
-  void resizeShapeInference(InferenceContext& ctx);
-  
-  void resizeShapeInferenceHelper(
+void resizeShapeInference(InferenceContext& ctx);
+
+void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
-    TensorShapeProto* output_shape
-  );
-}
+    TensorShapeProto* output_shape);
+} // namespace ONNX_NAMESPACE
