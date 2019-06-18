@@ -1920,6 +1920,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None))])  # type: ignore
 
+    def test_gathernd(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('indices', TensorProto.INT64, (2,))],
+            [make_node('GatherND', ['x', 'indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
+
 
 if __name__ == '__main__':
     unittest.main()

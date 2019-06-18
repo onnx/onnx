@@ -1937,7 +1937,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
   if (last_indice_dimension > data_rank)
     fail_shape_inference(
-        "Last dimension of `indices` tensor must not be larger and rank of data tensor");
+        "Last dimension of `indices` tensor must not be larger than the rank of `data` tensor");
 
   for (int i = 0; i < indices_rank - 1; ++i) {
     *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
