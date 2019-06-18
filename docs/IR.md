@@ -55,7 +55,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator.
+Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator at that point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -115,7 +115,7 @@ Name|Type|Description
 magic|string|The value ‘ONNXOPSET’
 ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
-ir_build_metadata|string|The symbolic identifier of the operator to invoke.
+ir_build_metadata|string|TODO come up with wording here
 domain|string|The domain of the operator set. Must be unique among all sets.
 opset_version|int64|The version of the set of operators. 
 doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
@@ -251,7 +251,7 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
 f|float|A 32-bit floating-point value.
 i|int64|A 64-bit integer value.
-S|byte[]|UTF-8 string.
+s|byte[]|UTF-8 string.
 t|Tensor|A tensor value.
 g|Graph|A graph.
 floats|float[]|A list of 32-bit floating-point values.
@@ -299,7 +299,7 @@ Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for
 Unsigned Integer Types|uint8, uint16|Unsigned integers of 8 or 16 bits are supported.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
-Other|bool|Boolean value represent data with only two values, typically true and false.
+Other|bool|Boolean values represent data with only two values, typically true and false.
 
 ### Input / Output Data Types
 
@@ -351,7 +351,7 @@ Dimension variables are scoped to the declaration that they appear in. For graph
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
-The emptry string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
+The empty string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
 
 Shapes MAY be defined using a combination of integers and variables.
 
