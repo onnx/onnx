@@ -55,7 +55,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator at that point in time.
+Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator at a particular point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
