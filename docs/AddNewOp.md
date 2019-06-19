@@ -33,8 +33,13 @@ ambiguity, adding the links to refs if necessary
 4. outputs,
 5. attributes,
 6. type constraints about input and output tensors
-7. shape inference function Example:
-https://github.com/onnx/onnx/blob/master/onnx/defs/nn/defs.cc#L1183
+7. shape inference function 
+Please provide a shape inference function in cases where it is meaningful and applicable.
+In cases where shape inference is not possible, it must have logic to perform 
+rank inference at the very least (adding right amount of dimensions to the output shape)
+Shape inference functions must be accompanied by unit tests in the file `onnx\test\shape_inference_test.py`.
+You can refer to the shape inference function for the `TopK` operator while implementing your own function -
+https://github.com/onnx/onnx/blob/master/onnx/defs/math/defs.cc#L943
 
 Usually, if we can find similar functions in Numpy, we will try to align with
 numpy.
