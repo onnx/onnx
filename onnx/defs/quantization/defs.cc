@@ -25,7 +25,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "y_zero_point",
             "Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. "
-            "Default value is 0 if it's not specified.",
+            "Default value is uint8 typed 0 if it's not specified.",
             "T2",
             OpSchema::Optional)
         .Output(
