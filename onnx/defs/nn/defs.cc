@@ -966,7 +966,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             5,
             "w_zero_point",
-            "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
+            "Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
             "T2")
         .Input(
             6,
@@ -976,7 +976,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             7,
             "y_zero_point",
-            "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
+            "Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
             "T3")
         .Input(
             8,
