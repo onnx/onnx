@@ -4,6 +4,9 @@
 #include <cmath>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
+#include "onnx/defs/attr_proto_util.h"
+#include "onnx/defs/function.h"
+#include "onnx/common/ir_pb_converter.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
@@ -555,6 +558,60 @@ inline int compute_output_dim_for_range(
   return n;
 }
 
+const std::vector<onnx::NodeProto> build_nodes_range_op() {
+	// body for 'Loop node'
+	GraphProto loop_sub_graph;
+
+	// 'Loop' node 'body' attribute's graph inputs
+	auto* input_value_info_proto_0 = loop_sub_graph.add_input();
+    input_value_info_proto_0->set_name("i");
+
+    auto* input_value_info_proto_1 = loop_sub_graph.add_input();
+    input_value_info_proto_1->set_name("cond");
+
+    auto* input_value_info_proto_2 = loop_sub_graph.add_input();
+    input_value_info_proto_2->set_name("prev");
+
+	// 'Loop' node 'body' attribute's graph nodes
+	auto* node_proto_0 = loop_sub_graph.add_node();
+    node_proto_0->set_op_type("Identity");
+    node_proto_0->set_input(0, "cond");
+    node_proto_0->set_output(0, "cond_out");
+
+	auto* node_proto_1 = loop_sub_graph.add_node();
+    node_proto_1->set_op_type("Add");
+    node_proto_1->set_input(0, "prev");
+    node_proto_1->set_input(1, "delta");
+    node_proto_1->set_output(0, "current");
+
+	auto* node_proto_2 = loop_sub_graph.add_node();
+    node_proto_2->set_op_type("Identity");
+    node_proto_2->set_input(0, "prev");
+    node_proto_2->set_input(1, "output");
+
+    // 'Loop' node 'body' attribute's graph inputs
+    auto* output_value_info_proto_0 = loop_sub_graph.add_output();
+    output_value_info_proto_0->set_name("cond_out");
+
+    auto* output_value_info_proto_1 = loop_sub_graph.add_output();
+    output_value_info_proto_1->set_name("current");
+
+    auto* output_value_info_proto_2 = loop_sub_graph.add_output();
+    output_value_info_proto_2->set_name("output");
+
+	return FunctionBodyHelper::BuildNodes({
+      // nodes: {outputs, op, inputs, attributes}
+      {{"sub_result"}, "Sub", {"limit", "start"}},
+      {{"delta_cast"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
+      {{"div_result"}, "Div", {"sub_result", "delta_cast"}},
+      {{"ceil_result"}, "Ceil", {"div_result"}},
+      {{"ceil_cast"}, "Ceil", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
+	  // no need for "termination condition" input as "trip_count" input will be good enough
+      {{"ceil_cast", "", "start"}, "Loop", {"output"}, {MakeAttribute("body", {loop_sub_graph})}}
+  });
+
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
     11,
@@ -589,6 +646,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int32)",
              "tensor(int64)"},
             "Constrain input types to common numeric type tensors.")
+        .FunctionBody(build_nodes_range_op())
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -609,7 +667,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // all three inputs (if num_inputs == 3) (or)
           // all two inputs (if num_inputs == 2)
-          // need to be availlabe to infer output dim value
+          // need to be available to infer output dim value
           if (start_initializer != nullptr && limit_initializer != nullptr &&
               (num_inputs == 2 || delta_initializer != nullptr)) {
             if (start_initializer->data_type() !=
