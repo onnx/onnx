@@ -3,10 +3,7 @@
 
 #include <cmath>
 #include "onnx/defs/schema.h"
-#include "onnx/defs/tensor_proto_util.h"
-#include "onnx/defs/attr_proto_util.h"
 #include "onnx/defs/function.h"
-#include "onnx/common/ir_pb_converter.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
