@@ -561,6 +561,7 @@ inline int compute_output_dim_for_range(
 const std::vector<NodeProto> build_nodes_range_op() {
     // body for 'Loop node'
     GraphProto loop_sub_graph;
+    loop_sub_graph.set_name("loop body attribute");
 
     // 'Loop' node 'body' attribute's graph inputs
     auto* input_value_info_proto_0 = loop_sub_graph.add_input();
