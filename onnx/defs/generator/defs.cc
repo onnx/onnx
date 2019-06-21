@@ -587,7 +587,7 @@ const std::vector<onnx::NodeProto> build_nodes_range_op() {
 	auto* node_proto_2 = loop_sub_graph.add_node();
     node_proto_2->set_op_type("Identity");
     node_proto_2->set_input(0, "prev");
-    node_proto_2->set_input(1, "output");
+    node_proto_2->set_output(0, "range");
 
     // 'Loop' node 'body' attribute's graph inputs
     auto* output_value_info_proto_0 = loop_sub_graph.add_output();
@@ -597,7 +597,7 @@ const std::vector<onnx::NodeProto> build_nodes_range_op() {
     output_value_info_proto_1->set_name("current");
 
     auto* output_value_info_proto_2 = loop_sub_graph.add_output();
-    output_value_info_proto_2->set_name("output");
+    output_value_info_proto_2->set_name("range");
 
 	return FunctionBodyHelper::BuildNodes({
       // nodes: {outputs, op, inputs, attributes}
@@ -607,7 +607,7 @@ const std::vector<onnx::NodeProto> build_nodes_range_op() {
       {{"ceil_result"}, "Ceil", {"div_result"}},
       {{"ceil_cast"}, "Ceil", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
 	  // no need for "termination condition" input as "trip_count" input will be good enough
-      {{"ceil_cast", "", "start"}, "Loop", {"output"}, {MakeAttribute("body", {loop_sub_graph})}}
+      {{"cond", "output"}, "Loop", {"ceil_cast", "", "start"}, {MakeAttribute("body", {loop_sub_graph})}}
   });
 
 }
