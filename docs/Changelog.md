@@ -10522,6 +10522,10 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 ### <a name="Round-11"></a>**Round-11**</a>
 
   Round takes one input Tensor and rounds the values, element-wise, meaning

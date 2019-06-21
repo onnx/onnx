@@ -1,0 +1,50 @@
+backend-test:ç
+P
+limit
+start;Range_test_range_negative_delta_expanded_functionsub_result"Sub
+U
+delta;Range_test_range_negative_delta_expanded_functiondelta_cast"Cast*	
+to 
+¼
+;Range_test_range_negative_delta_expanded_functionsub_result
+;Range_test_range_negative_delta_expanded_functiondelta_cast;Range_test_range_negative_delta_expanded_functiondiv_result"Div
+
+;Range_test_range_negative_delta_expanded_functiondiv_result<Range_test_range_negative_delta_expanded_functionceil_result"Ceil
+‹
+<Range_test_range_negative_delta_expanded_functionceil_result:Range_test_range_negative_delta_expanded_functionceil_cast"Cast*	
+to 
+ñ
+:Range_test_range_negative_delta_expanded_functionceil_cast
+1Range_test_range_negative_delta_expanded_function
+start@Range_test_range_negative_delta_expanded_functionvariadic_outputoutput"Loop*¨
+body2œ
+
+condcond_out"Identity
+
+prev
+deltacurrent"Add
+
+prevrange"Identityloop body attributeZ
+iZ
+condZ
+prevb
+
+cond_outb	
+currentb
+range "test_range_negative_delta_expandedZ
+start
+
+
+Z
+limit
+
+
+Z
+delta
+
+
+b
+output
+
+
+B

@@ -93,7 +93,6 @@
   * <a href="#RandomNormalLike">RandomNormalLike</a>
   * <a href="#RandomUniform">RandomUniform</a>
   * <a href="#RandomUniformLike">RandomUniformLike</a>
-  * <a href="#Range">Range</a>
   * <a href="#Reciprocal">Reciprocal</a>
   * <a href="#ReduceL1">ReduceL1</a>
   * <a href="#ReduceL2">ReduceL2</a>
@@ -146,6 +145,7 @@
 
   **Operators with function registered:**
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
+  * <a href="#Range">Range</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -9868,6 +9868,10 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -9883,7 +9887,7 @@ node = onnx.helper.make_node(
 
 start = np.array([10.0], dtype=np.float32)
 limit = np.array([6.0], dtype=np.float32)
-delta = np.array([-3.0], dtype=np.float32)        
+delta = np.array([-3.0], dtype=np.float32)
 output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [10.0, 7.0]
 expect(node, inputs=[start, limit, delta], outputs=[output],
        name='test_range_negative_delta')
@@ -9904,7 +9908,7 @@ node = onnx.helper.make_node(
 
 start = np.array([1.0], dtype=np.float32)
 limit = np.array([5.0], dtype=np.float32)
-delta = np.array([2.0], dtype=np.float32)        
+delta = np.array([2.0], dtype=np.float32)
 output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [1.0, 3.0]
 expect(node, inputs=[start, limit, delta], outputs=[output],
        name='test_range_positive_delta')
