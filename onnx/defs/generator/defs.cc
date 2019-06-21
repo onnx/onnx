@@ -575,18 +575,25 @@ const std::vector<NodeProto> build_nodes_range_op() {
     // 'Loop' node 'body' attribute's graph nodes
     auto* node_proto_0 = loop_sub_graph.add_node();
     node_proto_0->set_op_type("Identity");
+    node_proto_0->add_input();
     node_proto_0->set_input(0, "cond");
+    node_proto_0->add_output();
     node_proto_0->set_output(0, "cond_out");
 
     auto* node_proto_1 = loop_sub_graph.add_node();
     node_proto_1->set_op_type("Add");
+    node_proto_1->add_input();
     node_proto_1->set_input(0, "prev");
+    node_proto_1->add_input();    
     node_proto_1->set_input(1, "delta");
+    node_proto_1->add_output();
     node_proto_1->set_output(0, "current");
 
     auto* node_proto_2 = loop_sub_graph.add_node();
     node_proto_2->set_op_type("Identity");
+    node_proto_2->add_input();
     node_proto_2->set_input(0, "prev");
+    node_proto_2->add_output();
     node_proto_2->set_output(0, "range");
 
     // 'Loop' node 'body' attribute's graph inputs
@@ -607,7 +614,7 @@ const std::vector<NodeProto> build_nodes_range_op() {
       {{"ceil_result"}, "Ceil", {"div_result"}},
       {{"ceil_cast"}, "Ceil", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
       // no need for "termination condition" input as "trip_count" input will be good enough
-      {{"cond", "output"}, "Loop", {"ceil_cast", "", "start"}, {MakeAttribute("body", {loop_sub_graph})}}
+      {{"variadic_output", "output"}, "Loop", {"ceil_cast", "", "start"}, {MakeAttribute("body", {loop_sub_graph})}}
   });
 
 }
