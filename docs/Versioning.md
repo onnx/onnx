@@ -27,7 +27,7 @@ Which versioning scheme is in use by a model is made clear by inspecting the mos
 
 For model and release versioning, ONNX builds on the principles and syntax defined by [SemVer 2.0.0](http://semver.org/spec/v2.0.0.html). Throughout this document, we use the terms *breaking change*, *non-breaking change*, and *patch* consistent with SemVer 2.0.0.
 
-Because ONNX models are serialized files (not APIs), it's worth making clear how the dependency between a serialized model and a piece of software that consumes that model relate. As a rough approximation, the serialized model plays the role of an API's *callee*, while the consumer of the serialized model plays the role of the API's *caller*.
+Because ONNX models are serialized files (not APIs), it's worth making clear the relationship between a serialized model and a piece of software that consumes that model. As a rough approximation, the serialized model plays the role of an API's *callee*, while the consumer of the serialized model plays the role of the API's *caller*.
 
 The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.org/wiki/Robustness_principle) – be conservative in what you do, be liberal in what you accept from others.
 
@@ -39,7 +39,7 @@ The operational rules specifying how the ONNX project is managed are documented 
 
 ### Serializing SemVer version numbers in protobuf
 
-For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 64-bit integer; the two most significant byte is the MAJOR component, the second two most significant byte is the MINOR component, the least significant four bytes are the PATCH component.
+For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 64-bit integer; the two most significant bytes are the MAJOR component, the next two most significant bytes are the MINOR component, and the least significant four bytes are the PATCH component.
 
 For example, *1.2.345* is represented as *0x0001000200000159*.
 
@@ -104,7 +104,7 @@ How ONNX implementations bind an operator declaration to specific implementation
 
 ### Operator Set and Operator Versioning Example
 
-This section is non-normative and informational only.
+This section is not normative and informational only.
 
 Given the following operator sets:
 
@@ -139,12 +139,12 @@ Model authors and applications/systems MAY elect to ignore the model versioning 
 
     * Breaking changes to the semantics of an input or output (e.g., changing the required contents of an input tensor from a color image to a black and white image).
     * Changing the declared type of an input or output to an incompatible type (e.g., `tensor(int)->tensor(string)`).
-    * Adding a new input for which there is no meaningful or specified default value. For graph inputs, those values are provided by a same-named value in GraphProto. initializer.
+    * Adding a new input for which there is no meaningful or specified default value.
     * Removing an existing output for which there is no meaningful or specified default value.
 
 2. Non-breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MINOR version of `ModelProto.model_version`. Non-breaking changes include:
 
-    * Changing the declared type of an input or output to an compatible/widening type (e.g., `tensor(int32)->tensor(int64)`, `tensor(float16)->tensor(float32)`.
+    * Changing the declared type of an input or output to a compatible/widening type (e.g., `tensor(int32)->tensor(int64)`, `tensor(float16)->tensor(float32)`).
     * Adding a new input for which there is a meaningful or specified default value.
     * Adding new behavior that is only triggered in the presence of inputs that were not
     possible in prior versions of the graph (typically by the presence of a new input
