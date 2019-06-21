@@ -612,7 +612,7 @@ const std::vector<NodeProto> build_nodes_range_op() {
       {{"delta_cast"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
       {{"div_result"}, "Div", {"sub_result", "delta_cast"}},
       {{"ceil_result"}, "Ceil", {"div_result"}},
-      {{"ceil_cast"}, "Ceil", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
+      {{"ceil_cast"}, "Cast", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
       // no need for "termination condition" input as "trip_count" input will be good enough
       {{"variadic_output", "output"}, "Loop", {"ceil_cast", "", "start"}, {MakeAttribute("body", {loop_sub_graph})}}
   });
