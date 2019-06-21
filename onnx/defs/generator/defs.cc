@@ -558,12 +558,12 @@ inline int compute_output_dim_for_range(
   return n;
 }
 
-const std::vector<onnx::NodeProto> build_nodes_range_op() {
-	// body for 'Loop node'
-	GraphProto loop_sub_graph;
+const std::vector<NodeProto> build_nodes_range_op() {
+    // body for 'Loop node'
+    GraphProto loop_sub_graph;
 
-	// 'Loop' node 'body' attribute's graph inputs
-	auto* input_value_info_proto_0 = loop_sub_graph.add_input();
+    // 'Loop' node 'body' attribute's graph inputs
+    auto* input_value_info_proto_0 = loop_sub_graph.add_input();
     input_value_info_proto_0->set_name("i");
 
     auto* input_value_info_proto_1 = loop_sub_graph.add_input();
@@ -572,19 +572,19 @@ const std::vector<onnx::NodeProto> build_nodes_range_op() {
     auto* input_value_info_proto_2 = loop_sub_graph.add_input();
     input_value_info_proto_2->set_name("prev");
 
-	// 'Loop' node 'body' attribute's graph nodes
-	auto* node_proto_0 = loop_sub_graph.add_node();
+    // 'Loop' node 'body' attribute's graph nodes
+    auto* node_proto_0 = loop_sub_graph.add_node();
     node_proto_0->set_op_type("Identity");
     node_proto_0->set_input(0, "cond");
     node_proto_0->set_output(0, "cond_out");
 
-	auto* node_proto_1 = loop_sub_graph.add_node();
+    auto* node_proto_1 = loop_sub_graph.add_node();
     node_proto_1->set_op_type("Add");
     node_proto_1->set_input(0, "prev");
     node_proto_1->set_input(1, "delta");
     node_proto_1->set_output(0, "current");
 
-	auto* node_proto_2 = loop_sub_graph.add_node();
+    auto* node_proto_2 = loop_sub_graph.add_node();
     node_proto_2->set_op_type("Identity");
     node_proto_2->set_input(0, "prev");
     node_proto_2->set_output(0, "range");
@@ -599,14 +599,14 @@ const std::vector<onnx::NodeProto> build_nodes_range_op() {
     auto* output_value_info_proto_2 = loop_sub_graph.add_output();
     output_value_info_proto_2->set_name("range");
 
-	return FunctionBodyHelper::BuildNodes({
+    return FunctionBodyHelper::BuildNodes({
       // nodes: {outputs, op, inputs, attributes}
       {{"sub_result"}, "Sub", {"limit", "start"}},
       {{"delta_cast"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
       {{"div_result"}, "Div", {"sub_result", "delta_cast"}},
       {{"ceil_result"}, "Ceil", {"div_result"}},
       {{"ceil_cast"}, "Ceil", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
-	  // no need for "termination condition" input as "trip_count" input will be good enough
+      // no need for "termination condition" input as "trip_count" input will be good enough
       {{"cond", "output"}, "Loop", {"ceil_cast", "", "start"}, {MakeAttribute("body", {loop_sub_graph})}}
   });
 
