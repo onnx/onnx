@@ -55,7 +55,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator at a particular point in time.
+Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators and their semantics at a particular point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -115,7 +115,7 @@ Name|Type|Description
 magic|string|The value ‘ONNXOPSET’
 ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
-ir_build_metadata|string|TODO come up with wording here
+ir_build_metadata|string|The build metadata of this version of the operator set.
 domain|string|The domain of the operator set. Must be unique among all sets.
 opset_version|int64|The version of the set of operators. 
 doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
