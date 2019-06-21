@@ -1437,7 +1437,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "b_zero_point",
-            "Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
+            "Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
             "which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number "
             "of elements should be equal to the number of columns of input 'B'.",
             "T2",
