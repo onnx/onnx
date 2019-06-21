@@ -1,4 +1,5 @@
-backend-test:ç
+backend-test:
+
 P
 limit
 start;Range_test_range_negative_delta_expanded_functionsub_result"Sub
@@ -10,12 +11,15 @@ U
 ;Range_test_range_negative_delta_expanded_functiondelta_cast;Range_test_range_negative_delta_expanded_functiondiv_result"Div
 
 ;Range_test_range_negative_delta_expanded_functiondiv_result<Range_test_range_negative_delta_expanded_functionceil_result"Ceil
-‹
-<Range_test_range_negative_delta_expanded_functionceil_result:Range_test_range_negative_delta_expanded_functionceil_cast"Cast*	
+
+<Range_test_range_negative_delta_expanded_functionceil_result>Range_test_range_negative_delta_expanded_functionceil_cast_int"Cast*	
 to 
-ñ
-:Range_test_range_negative_delta_expanded_functionceil_cast
-1Range_test_range_negative_delta_expanded_function
+
+<Range_test_range_negative_delta_expanded_functionceil_result?Range_test_range_negative_delta_expanded_functionceil_cast_bool"Cast*	
+to	 
+ƒ
+>Range_test_range_negative_delta_expanded_functionceil_cast_int
+?Range_test_range_negative_delta_expanded_functionceil_cast_bool
 start@Range_test_range_negative_delta_expanded_functionvariadic_outputoutput"Loop*¨
 body2œ
 
