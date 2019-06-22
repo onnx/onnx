@@ -4622,9 +4622,9 @@ node = onnx.helper.make_node(
     outputs=['output'],
 )
 
-data = np.array([[[0,1],[2,3]],[[4,5],[6,7]]], dtype=np.float32)
-indices = np.array([[[0,1]],[[1,0]]], dtype=np.int64)        
-output = np.array([[[2,3]],[[4,5]]], dtype=np.float32)
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
+output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example')
 ```
