@@ -1820,18 +1820,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     GatherND,
     11,
     OpSchema()
-	.SetDoc(GatherND_ver11_doc)
+    .SetDoc(GatherND_ver11_doc)
     .Input(0, "data", "Tensor of rank r >= 1.", "T")
-    .Input(1, "indices", "Tensor of rank q >= 1.", "Tind")
+    .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
     .Output(0, "output", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
     .TypeConstraint(
         "T",
         OpSchema::all_tensor_types(),
         "Constrain input and output types to any tensor type.")
-    .TypeConstraint(
-        "Tind",
-        {"tensor(int64)"},
-        "Constrain `indices` type to int64 type")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
   // Type inference
   propagateElemTypeFromInputToOutput(ctx, 0, 0);

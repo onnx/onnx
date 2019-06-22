@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 127/134 (94.78%, 5 generators excluded) common operators.
+Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2528,6 +2528,28 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+
+
+### GatherND
+There are 1 test cases, listed as following:
+<details>
+<summary>gathernd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0,1],[2,3]],[[4,5],[6,7]]], dtype=np.float32)
+indices = np.array([[[0,1]],[[1,0]]], dtype=np.int64)        
+output = np.array([[[2,3]],[[4,5]]], dtype=np.float32)
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example')
 ```
 
 </details>

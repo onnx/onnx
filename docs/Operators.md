@@ -44,6 +44,7 @@
   * <a href="#Floor">Floor</a>
   * <a href="#GRU">GRU</a>
   * <a href="#Gather">Gather</a>
+  * <a href="#GatherND">GatherND</a>
   * <a href="#Gemm">Gemm</a>
   * <a href="#GlobalAveragePool">GlobalAveragePool</a>
   * <a href="#GlobalLpPool">GlobalLpPool</a>
@@ -4555,6 +4556,77 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+
+
+### <a name="GatherND"></a><a name="gathernd">**GatherND**</a>
+
+  Given `data` tensor of rank r >= 1, and `indices` tensor of rank q >= 1, gathers
+  slices of `data` into an output tensor of rank q + r - indices_shape[-1] - 1.
+  Example 1:
+    data    = [[0,1],[2,3]]
+    indices = [[0,0],[1,1]]
+    output  = [0,3]
+  Example 2:
+    data    = [[0,1],[2,3]]
+    indices = [[1],[0]]
+    output  = [[2,3],[0,1]]
+  Example 3:
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]]
+    indices = [[0,1],[1,0]]
+    output  = [[2,3],[4,5]]
+  Example 4:
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]]
+    indices = [[[0,1]],[[1,0]]]
+    output  = [[[2,3]],[[4,5]]]
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : tensor(int64)</dt>
+<dd>Tensor of rank q >= 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gathernd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0,1],[2,3]],[[4,5],[6,7]]], dtype=np.float32)
+indices = np.array([[[0,1]],[[1,0]]], dtype=np.int64)        
+output = np.array([[[2,3]],[[4,5]]], dtype=np.float32)
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example')
 ```
 
 </details>
