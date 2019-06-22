@@ -2121,7 +2121,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Equal
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>equal</summary>
 
@@ -2155,6 +2155,42 @@ y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal_bcast')
+```
+
+</details>
+<details>
+<summary>string_equal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Equal',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+vfunc = np.vectorize(string_generator)
+x = vfunc(np.random.randint(0, 10, size=(3, 4, 5))).astype(np.object)
+y = shuffle_along_axis(x, -1).astype(np.object)  # increase collision probability
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_string_equal')
+```
+
+</details>
+<details>
+<summary>string_equal_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Equal',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+vfunc = np.vectorize(string_generator)
+x = vfunc(np.random.randint(0, 10, size=(3, 4, 5))).astype(np.object)
+y = np.random.choice(list(set(x.flatten())), 5).astype(np.object) # increase collision probability
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_string_equal_bcast')
 ```
 
 </details>
