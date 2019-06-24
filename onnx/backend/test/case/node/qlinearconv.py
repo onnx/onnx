@@ -33,8 +33,8 @@ class QLinearConv(Base):
         w_scale = np.array([0.00172794575], dtype=np.float32)
         w_zero_point = np.array([255], dtype=np.uint8)
 
-        y_scale = np.array([0.00162681262], dtype=np.float32)
-        y_zero_point = np.array([123], dtype=np.uint8)
+        y_scale = np.float32(0.00162681262)
+        y_zero_point = np.uint8(123)
 
         output = np.array([[0, 81, 93, 230, 52, 87, 197],
             [240, 196, 18, 160, 126, 255, 191],
