@@ -890,24 +890,27 @@ ONNX_OPERATOR_SET_SCHEMA(
           matmulShapeInference(ctx, 0, 1);
         }));
 
-static const char* TopK_ver10_doc = R"DOC(
-Retrieve the top-K elements along a specified axis. Given an input tensor of
+static const char* TopK_ver11_doc = R"DOC(
+Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
     which contains the values of the top k elements along the specified axis
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-   
-Given two equivalent values, this operator uses the indices along the axis  as
+
+If "largest" is 1 (the default value) then the k largest elements are returned.
+If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+
+Given two equivalent values, this operator uses the indices along the axis as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    10,
+    11,
     OpSchema()
-        .SetDoc(TopK_ver10_doc)
+        .SetDoc(TopK_ver11_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
         .Input(
             1,
@@ -940,6 +943,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Dimension on which to do the sort.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
+        .Attr(
+            "largest",
+            "Whether to return the top-K largest or smallest elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "sorted",
+            "Whether to return the elements in sorted order.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference:
           propagateElemTypeFromInputToOutput(ctx, 0, 0);

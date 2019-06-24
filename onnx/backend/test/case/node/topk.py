@@ -38,3 +38,35 @@ class TopK(Base):
 
         expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
                name='test_top_k')
+
+    @staticmethod
+    def export_top_k_smallest():  # type: () -> None
+        largest = 0
+        sorted = 1
+
+        node = onnx.helper.make_node(
+            'TopK',
+            inputs=['x', 'k'],
+            outputs=['values', 'indices'],
+            largest=largest,
+            sorted=sorted
+        )
+        X = np.array([
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [11, 10, 9, 8],
+        ], dtype=np.float32)
+        K = np.array([3], dtype=np.int64)
+        values_ref = np.array([
+            [0, 1, 2],
+            [4, 5, 6],
+            [8, 9, 10],
+        ], dtype=np.float32)
+        indices_ref = np.array([
+            [0, 1, 2],
+            [0, 1, 2],
+            [3, 2, 1],
+        ], dtype=np.int64)
+
+        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+               name='test_top_k_smallest')
