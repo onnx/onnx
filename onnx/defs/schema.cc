@@ -33,25 +33,29 @@ OpSchema::FormalParameter::FormalParameter(
     std::string type_str,
     std::string description,
     FormalParameterOption param_option,
-    bool is_homogeneous)
+    bool is_homogeneous,
+    int min_arity)
     : name_(std::move(name)),
       type_set_(std::move(allowed_type_set)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
       param_option_(param_option),
-      is_homogeneous_(is_homogeneous) {}
+      is_homogeneous_(is_homogeneous),
+      min_arity_(min_arity) {}
 
 OpSchema::FormalParameter::FormalParameter(
     std::string name,
     std::string description,
     std::string type_str,
     FormalParameterOption param_option,
-    bool is_homogeneous)
+    bool is_homogeneous,
+    int min_arity)
     : name_(std::move(name)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
       param_option_(param_option),
-      is_homogeneous_(is_homogeneous) {}
+      is_homogeneous_(is_homogeneous),
+      min_arity_(min_arity) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -79,6 +83,10 @@ OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
 
 bool OpSchema::FormalParameter::GetIsHomogeneous() const {
   return is_homogeneous_;
+}
+
+int OpSchema::FormalParameter::GetMinArity() const {
+  return min_arity_;
 }
 
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
@@ -509,7 +517,8 @@ OpSchema& OpSchema::Input(
     std::string description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
@@ -518,7 +527,8 @@ OpSchema& OpSchema::Input(
       std::move(description),
       std::move(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
   return *this;
 }
 
@@ -528,14 +538,16 @@ OpSchema& OpSchema::Input(
     const char* description,
     const char* type_str,
     FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   return Input(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
 }
 
 OpSchema& OpSchema::Output(
@@ -544,7 +556,8 @@ OpSchema& OpSchema::Output(
     std::string description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
@@ -553,7 +566,8 @@ OpSchema& OpSchema::Output(
       std::move(description),
       std::move(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
   return *this;
 }
 
@@ -563,14 +577,16 @@ OpSchema& OpSchema::Output(
     const char* description,
     const char* type_str,
     FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   return Output(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -631,7 +647,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
 }
 
 const FunctionProto* OpSchema::GetFunction() const {
-  return function_body_.node_size()>0 ? &function_body_ : nullptr;
+  return function_body_.node_size() > 0 ? &function_body_ : nullptr;
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
@@ -641,7 +657,7 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction(){
+void OpSchema::BuildFunction() {
   function_body_.set_name(this->name_);
   function_body_.set_doc_string(this->doc_);
   function_body_.set_since_version(this->since_version_);
@@ -685,7 +701,7 @@ void OpSchema::Finalize() {
       case OpSchema::Variadic:
         // Only last input formal parameter could be variadic.
         ENFORCE((inputs_.size() - 1) == i);
-        min_input_ = max_input_ + 1;
+        min_input_ = max_input_ + inputs_[i].GetMinArity();
         max_input_ = std::numeric_limits<int>::max();
         break;
     }
@@ -704,7 +720,7 @@ void OpSchema::Finalize() {
       case OpSchema::Variadic:
         // Only last output formal parameter could be variadic.
         ENFORCE((outputs_.size() - 1) == i);
-        min_output_ = max_output_ + 1;
+        min_output_ = max_output_ + outputs_[i].GetMinArity();
         max_output_ = std::numeric_limits<int>::max();
         break;
     }

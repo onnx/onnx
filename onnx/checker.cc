@@ -37,8 +37,10 @@ namespace checker {
     }                                         \
   } while (0)
 
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
+void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
+  // Relax constraint for subgraph input/output.
+  if (!ctx.is_main_graph()) return;
   enforce_has_field(value_info, type);
   const auto value_case = value_info.type().value_case();
   switch (value_case) {
@@ -293,14 +295,20 @@ void check_attribute(
   }
 
   if (attr.has_g()) {
-    check_graph(attr.g(), ctx, lex_ctx);
+    CheckerContext subgraph_ctx(ctx);
+    subgraph_ctx.set_is_main_graph(false);
+    check_graph(attr.g(), subgraph_ctx, lex_ctx);
   }
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
   }
-  for (const auto& graph : attr.graphs()) {
-    check_graph(graph, ctx, lex_ctx);
+  if (attr.graphs().size() > 0) {
+    CheckerContext subgraph_ctx(ctx);
+    subgraph_ctx.set_is_main_graph(false);
+    for (const auto& graph : attr.graphs()) {
+      check_graph(graph, subgraph_ctx, lex_ctx);
+    }
   }
 }
 
@@ -361,7 +369,7 @@ void check_node(
     }
   } else if (schema->Deprecated()) {
     fail_check(
-        "Op registered for " + node.op_type() + " is depracted in domain_version of " +
+        "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
         ONNX_NAMESPACE::to_string(domain_version));
   } else {
     schema->Verify(node);
