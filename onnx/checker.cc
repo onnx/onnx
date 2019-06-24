@@ -232,12 +232,12 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 void check_sparse_tensor_indices_1(
     const TensorProto& indices,
     const SparseTensorProto& sparse_tensor_proto,
-    int64_t nnz) {
+    size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
     dense_size *= sparse_tensor_proto.dims(i);
-  if (indices.dims(0) != nnz)
+  if (static_cast<size_t>(indices.dims(0)) != nnz)
     fail_check(
         "Sparse tensor indices (",
         indices.name(),
@@ -248,7 +248,7 @@ void check_sparse_tensor_indices_1(
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
 
   int64_t prev_index = -1;
-  for (int64_t i = 0; i < nnz; ++i) {
+  for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = index_data[i]; // linearized index of i-th value
     if (curr_index < 0 || curr_index >= dense_size)
       fail_check(
@@ -259,9 +259,11 @@ void check_sparse_tensor_indices_1(
           "] out of range.");
     if (curr_index <= prev_index) {
       fail_check(
-          "Sparse tensor indices for (",
+          "Sparse tensor (",
           indices.name(),
-          ") do not appear in sorted order.");
+          ") index value at position [",
+          i,
+          "] not in sorted order.");
     }
     prev_index = curr_index;
   }
@@ -273,9 +275,9 @@ void check_sparse_tensor_indices_1(
 void check_sparse_tensor_indices_2(
     const TensorProto& indices,
     const SparseTensorProto& sparse_tensor_proto,
-    int64_t nnz) {
+    size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
-  if (indices.dims(0) != nnz)
+  if (static_cast<size_t>(indices.dims(0)) != nnz)
     fail_check(
         "Sparse tensor indices (",
         indices.name(),
@@ -291,7 +293,7 @@ void check_sparse_tensor_indices_2(
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
 
   int64_t prev_index = -1;
-  for (int64_t i = 0; i < nnz; ++i) {
+  for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
       auto index_ij = index_data[i * dense_rank + j];
@@ -308,9 +310,11 @@ void check_sparse_tensor_indices_2(
     }
     if (curr_index <= prev_index) {
       fail_check(
-          "Sparse tensor indices for (",
+          "Sparse tensor (",
           indices.name(),
-          ") do not appear in sorted order.");
+          ") index value at position [",
+          i,
+          "] not in lexicographic sorted order.");
     }
     prev_index = curr_index;
   }
@@ -331,7 +335,7 @@ void check_sparse_tensor(
   // case values will have dimension > 1.
   if (values.dims_size() != 1)
     fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
-  int64_t nnz = values.dims(0);
+  size_t nnz = static_cast<size_t>(values.dims(0));
 
   int dense_rank = sparse_tensor_proto.dims_size();
   if (dense_rank == 0) {
