@@ -754,23 +754,37 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
 
+    def _logical_binary_op_with_broadcasting(self, op, input_type):  # type: (Text, TensorProto.DataType) -> None
+        graph = self._make_graph(
+            [('x', input_type, (1, 5)),
+             ('y', input_type, (30, 4, 5))],
+            [make_node(op, ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
+
     def test_logical_and(self):  # type: () -> None
         self._logical_binary_op('And', TensorProto.BOOL)
+        self._logical_binary_op_with_broadcasting('And', TensorProto.BOOL)
 
     def test_logical_or(self):  # type: () -> None
         self._logical_binary_op('Or', TensorProto.BOOL)
+        self._logical_binary_op_with_broadcasting('Or', TensorProto.BOOL)
 
     def test_logical_xor(self):  # type: () -> None
         self._logical_binary_op('Xor', TensorProto.BOOL)
+        self._logical_binary_op_with_broadcasting('Xor', TensorProto.BOOL)
 
     def test_greater(self):  # type: () -> None
-        self._logical_binary_op('Greater', TensorProto.FLOAT)
+        self._logical_binary_op('Greater', TensorProto.BOOL)
+        self._logical_binary_op_with_broadcasting('Greater', TensorProto.BOOL)
 
     def test_less(self):  # type: () -> None
-        self._logical_binary_op('Less', TensorProto.FLOAT)
+        self._logical_binary_op('Less', TensorProto.BOOL)
+        self._logical_binary_op_with_broadcasting('Less', TensorProto.BOOL)
 
     def test_equal(self):  # type: () -> None
-        self._logical_binary_op('Equal', TensorProto.FLOAT)
+        self._logical_binary_op('Equal', TensorProto.BOOL)
+        self._logical_binary_op_with_broadcasting('Equal', TensorProto.BOOL)
 
     def test_logical_not(self):  # type: () -> None
         graph = self._make_graph(

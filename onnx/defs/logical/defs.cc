@@ -6,7 +6,9 @@
 namespace ONNX_NAMESPACE {
 
 inline void unaryLogicalOpInference(InferenceContext& ctx) {
+    // Type inference
     updateOutputElemType(ctx, 0, TensorProto::BOOL);
+    // Shape inference
     if (hasInputShape(ctx, 0)) {
         propagateShapeFromInputToOutput(ctx, 0, 0);
     }
@@ -27,7 +29,9 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         schema.Input(1, "B", "Second input operand for the logical operator.", "T");
         schema.Output(0, "C", "Result tensor.", "T1");
         schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference 
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          // Shape inference
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
                 ctx.getInputType(0)->tensor_type().shape(),
@@ -170,7 +174,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "or \"LEFT\" (for left shift).",
             AttributeProto::STRING)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
                 ctx.getInputType(0)->tensor_type().shape(),
