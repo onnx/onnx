@@ -562,31 +562,33 @@ void check_graph(
     check_value_info(value_info, ctx);
   }
 
-  std::unordered_set<std::string> output_names{};
-  // Inherit values avaiailable in outer scope
-  // Note that we do not allow shadowing, so the presence of an
-  // already-defined name is always an error.
+  // Inherit values available in outer scope
+  // Note that we do not allow shadowing, so the presence of an already-defined
+  // name is always an error.
+  LexicalScopeContext lex_ctx{parent_lex};
+
   for (const auto& value_info : graph.input()) {
-    if (output_names.count(value_info.name())) {
+    // TODO: If shadowing isn't allowed, this should maybe use
+    // this_or_ancestor_graph_has
+    if (lex_ctx.this_graph_has(value_info.name())) {
       fail_check(
           "Graph must be in single static assignment (SSA) form, however '",
           value_info.name(),
           "' has been used as graph input names multiple times.");
     }
-    output_names.insert(value_info.name());
+    lex_ctx.add(value_info.name());
   }
-  output_names.insert(
-      parent_lex.output_names.begin(), parent_lex.output_names.end());
+
   for (const auto& init : graph.initializer()) {
     if (ctx.get_ir_version() <= 0x00000003) {
       // Initializers are a subset of graph inputs for IR_VERSION <= 3
-      if (!output_names.count(init.name())) {
+      if (!lex_ctx.this_graph_has(init.name())) {
         fail_check(init.name() + " in initializer but not in graph input");
       }
     } else {
       // An initializer is allowed to have the same name as an input,
       // but is not required to (for IR_VERSION >= 4)
-      output_names.insert(init.name());
+      lex_ctx.add(init.name());
     }
     check_tensor(init, ctx);
   }
@@ -598,7 +600,7 @@ void check_graph(
       if (input.empty()) {
         continue;
       }
-      if (!output_names.count(input)) {
+      if (!lex_ctx.this_or_ancestor_graph_has(input)) {
         fail_check(
             "Nodes in a graph must be topologically sorted, however input '",
             input,
@@ -607,11 +609,11 @@ void check_graph(
             "\n is not output of any previous nodes.");
       }
     }
-    // This needs to happen before SSA check since we don't want to recurse
-    // and find that outputs from control flow ops are colliding with names in
-    // the inner block
-    LexicalScopeContext lex_ctx;
-    lex_ctx.output_names = output_names;
+
+    // This needs to happen before SSA check since we don't want to recurse and
+    // find that outputs from control flow ops are colliding with names in the
+    // inner block
+
     try {
       check_node(node, ctx, lex_ctx);
     } catch (ValidationError& ex) {
@@ -624,13 +626,14 @@ void check_graph(
       if (output.empty()) {
         continue;
       }
-      if (output_names.count(output)) {
+
+      if (lex_ctx.this_or_ancestor_graph_has(output)) {
         fail_check(
             "Graph must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
       }
-      output_names.insert(output);
+      lex_ctx.add(output);
     }
   }
 }
@@ -638,20 +641,24 @@ void check_graph(
 void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
-    const LexicalScopeContext& /*parent_lex*/) {
+    const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
-  std::unordered_set<std::string> output_names;
+  LexicalScopeContext lex_ctx{parent_lex};
+
   for (const auto& input : function.input()) {
-    auto result = output_names.insert(input);
-    if (!result.second) {
+    // TODO: If shadowing isn't allowed, this should maybe use
+    // this_or_ancestor_graph_has
+    if (lex_ctx.this_graph_has(input)) {
       fail_check(
-          "function (",
-          function.name(),
-          ") should not have duplicate inputs specified.");
+          "Graph must be in single static assignment (SSA) form, however '",
+          input,
+          "' has been used multiple times.");
     }
+    lex_ctx.add(input);
   }
+
   std::unordered_set<std::string> outputs;
   for (const auto& output : function.output()) {
     auto result = outputs.insert(output);
@@ -680,7 +687,7 @@ void check_function(
       if (input.empty()) {
         continue;
       }
-      if (!output_names.count(input)) {
+      if (!lex_ctx.this_graph_has(input)) {
         fail_check(
             "Nodes in a function must be topologically sorted, however input '",
             input,
@@ -690,22 +697,21 @@ void check_function(
       }
     }
 
-    LexicalScopeContext lex_ctx;
-    lex_ctx.output_names = output_names;
     check_node(node, ctx, lex_ctx);
+
     // check for SSA form
     for (const auto& output : node.output()) {
       // optional output
       if (output.empty()) {
         continue;
       }
-      if (output_names.count(output)) {
+      if (lex_ctx.this_or_ancestor_graph_has(output)) {
         fail_check(
             "Function must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
       }
-      output_names.insert(output);
+      lex_ctx.add(output);
     }
   }
 }

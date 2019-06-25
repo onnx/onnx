@@ -4,11 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto
-from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info
+from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
-
+import os
 import numpy as np  # type: ignore
 
 
@@ -261,6 +261,16 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))],
             opset_imports=[helper.make_opsetid("", 9)])
 
+    def test_upsample_raw_data_v7(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (1, 3, 4, 5))],
+            [make_node("Upsample", ['x'], ['y'], scales=[2.0, 1.1, 2.3, 1.9])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 3, 9, 9))],
+            opset_imports=[helper.make_opsetid("", 7)])
+
     def test_expand(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (3, 1)),
@@ -305,6 +315,18 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
+
+    def test_resize_raw_data(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (1, 3, 4, 5)),
+             ('scales', TensorProto.FLOAT, (4,))],
+            [make_node("Resize", ['x', 'scales'], ['y'])],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (4,),
+                                     vals=np.array([2.0, 1.1, 2.3, 1.9], dtype='<f4').tobytes(), raw=True)])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 3, 9, 9))])
 
     def test_shape(self):  # type: () -> None
         graph = self._make_graph(
@@ -1919,6 +1941,30 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Tile', ['x', 'repeats'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None))])  # type: ignore
+
+    def test_linearclassifier_1D_input(self):  # type: () -> None
+        onnx_ml = os.environ.get('ONNX_ML')  # type: ignore
+        # No environment variable set (None) indicates ONNX_ML=1
+        if(onnx_ml is None or int(onnx_ml) != 0):
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (5,))],
+                [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.0008, -0.0008], intercepts=[2.0, 2.0], classlabels_ints=[1, 2])],
+                [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,)),
+                                          make_tensor_value_info('z', TensorProto.FLOAT, (1, 2))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
+
+    def test_linearclassifier_2D_input(self):  # type: () -> None
+        onnx_ml = os.environ.get('ONNX_ML')  # type: ignore
+        # No environment variable set (None) indicates ONNX_ML=1
+        if(onnx_ml is None or int(onnx_ml) != 0):
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (4, 5))],
+                [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6], intercepts=[2.0, 2.0, 3.0], classlabels_ints=[1, 2, 3])],
+                [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (4,)),
+                                          make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
 
 if __name__ == '__main__':
