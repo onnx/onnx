@@ -333,7 +333,7 @@ void check_node(
     "ImageScaler", "ParametricSoftplus", "Scale", "ScaledTanh"};
   if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
-      << " experimental ops. In the future, we may directly "
+      << "experimental ops. In the future, we may directly "
       << "reject this operator. Please update your model as soon "
       << "as possible." << std::endl;
     return;
