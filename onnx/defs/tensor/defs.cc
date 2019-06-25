@@ -117,17 +117,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
+          const auto& targetShape =
+              ParseData<int64_t>(targetShapeInitializer);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targertShape dimension is -1, we do not set the
@@ -164,10 +155,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               unresolvedZeros[i] = true;
               if (dataInputTensorType.has_shape()) {
                 if (i >= dataInputTensorType.shape().dim_size()) {
-                  fail_shape_inference("Invalid position of 0");
+                  fail_shape_inference("Value 0 in 'shape' input is outside of input shape's bounds");
                 }
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  const auto& dim_value =
+                  const auto dim_value =
                       dataInputTensorType.shape().dim(i).dim_value();
                   new_dim->set_dim_value(dim_value);
                   outputProduct *= dim_value;

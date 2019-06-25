@@ -236,6 +236,14 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('shape', TensorProto.INT64, (2,)),
             make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
 
+    def test_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'])],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('y', TensorProto.INT64, (3,))])
+
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
