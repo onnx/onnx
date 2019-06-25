@@ -335,7 +335,7 @@ void check_node(
     std::cerr << "Warning: " << node.op_type() << " was a removed "
       << " experimental ops. In the future, we may directly "
       << "reject this operator. Please update your model as soon "
-      << "as possible.";
+      << "as possible." << std::endl;
     return;
   }
 
