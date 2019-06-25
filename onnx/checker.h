@@ -84,6 +84,12 @@ class LexicalScopeContext final {
  public:
   LexicalScopeContext() = default;
 
+  // Construct an instance with the lexical scope from the parent graph to allow
+  // lookup of names from that scope via this_or_ancestor_graph_has.
+  // The caller must ensure parent_context remains valid for the entire lifetime
+  // of the new instance. Alternatively, if that cannot be guaranteed, create an
+  // instance with the default constructor and populate output_names with the
+  // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context)
       : parent_context_{&parent_context} {}
 
