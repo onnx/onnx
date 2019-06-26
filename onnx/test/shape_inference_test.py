@@ -853,7 +853,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (2, 'N', 10, 10))],
             [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, None, 100, 100))])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, None, 100, 100))])  # type: ignore
 
     def test_where(self):  # type: () -> None
         graph = self._make_graph(
