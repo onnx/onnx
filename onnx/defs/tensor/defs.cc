@@ -246,13 +246,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                                  ->mutable_shape()
                                  ->add_dim();
 
-          // Stop at this point if input shape is missing
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
+          // Fill the dim value if input shape is present
+          if (hasNInputShapes(ctx, 1)) {
+            output_dim->set_dim_value(
+                ctx.getInputType(0)->tensor_type().shape().dim_size());
           }
-
-          output_dim->set_dim_value(
-              ctx.getInputType(0)->tensor_type().shape().dim_size());
         }));
 
 static const char* Size_ver1_doc = R"DOC(
