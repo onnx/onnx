@@ -255,6 +255,7 @@ def make_attribute(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
 
+
 def get_attribute_value(attr):  # type: (AttributeProto) -> Any
     if attr.type is AttributeProto.FLOAT:
         return attr.f
