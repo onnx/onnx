@@ -1540,7 +1540,102 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains to boolean tensors."));
+            "Constrains to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference  
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          const auto& input_shape = getInputShape(ctx, 0);
+          const auto input_rank = input_shape.dim_size();
+
+          if (input_rank < 1) {
+            fail_shape_inference(
+                "Input to the 'Compress' op should be of rank >= 1");
+          }
+
+          // determine rank of the output
+          // if 'axis' attribute is present, it is the same as input rank
+          // else output rank is of of rank 1
+          auto* output_shape = getOutputShape(ctx, 0);
+          output_shape->clear_dim();
+
+          auto* axis_attr = ctx.getAttribute("axis");
+          bool has_axis = false;
+          if (!axis_attr) {
+            output_shape->add_dim();
+          } else {
+            has_axis = true;
+            int axis_val = static_cast<int>(axis_attr->i());
+            if (axis_val >= input_rank ||
+                axis_val < -input_rank) {
+              fail_shape_inference(
+                  "'Axis' attribute should be within the range [-input_rank, input_rank - 1]");
+            }
+            if (axis_val < 0) {
+              axis_val += input_rank;
+            }
+            for (int i = 0; i < input_rank; ++i) {
+              auto* dim = output_shape->add_dim();
+              // copy over all other dim values except the axis dimension
+              if (i != axis_val) {
+                *dim = input_shape.dim(i);
+              }
+            }
+          }
+
+          // if 'condition' input is available as an initializer we can further
+          // determine actual output shape
+          const auto* condition_input = ctx.getInputData(1);
+          if (condition_input) {
+            if (condition_input->data_type() != TensorProto::BOOL || condition_input->dims_size() != 1) {
+              fail_shape_inference("'condition' input should be 1D tensor of type BOOL");
+            }
+
+            const auto& condition_data = ParseData<int32_t>(condition_input);
+            const auto condition_length = static_cast<int>(condition_data.size());
+
+            int input_tensor_element_size = 1;
+            if (has_axis) {
+              if (!input_shape.dim(static_cast<int>(axis_attr->i())).has_dim_value()) {
+                // the dim value in the 'axis' of interest must be known to
+                // proceed
+                return;
+              }
+            } else {
+              // the dim values in all axes must be known to proceed
+              for (int i = 0; i < input_rank; ++i) {
+                if (!input_shape.dim(i).has_dim_value()) {
+                  return;
+                }
+                input_tensor_element_size *= static_cast<int>(input_shape.dim(i).dim_value());
+              }
+            }
+
+            int compress_input_length = has_axis ? static_cast<int>(input_shape.dim(static_cast<int>(axis_attr->i())).dim_value()) : input_tensor_element_size;
+            int valid_condition_length = compress_input_length < condition_length ? compress_input_length: condition_length;
+
+            int positive_condition_count = 0;
+            for (int i = 0; i < valid_condition_length; ++i) {
+              if (condition_data[i]) {
+                ++positive_condition_count;
+              }
+            }
+
+            if (has_axis) {
+              getOutputShape(ctx, 0)
+                  ->mutable_dim(static_cast<int>(axis_attr->i()))
+                  ->set_dim_value(positive_condition_count);
+            } else {
+              getOutputShape(ctx, 0)
+                  ->mutable_dim(0)->set_dim_value(positive_condition_count);
+            }
+          }
+        }));
 
 static const char* OneHot_ver9_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
@@ -1893,10 +1988,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // validate second input shape (if present)
           if (hasInputShape(ctx, 1)) {
-              auto& seq_len_input_shape = getInputShape(ctx, 1);
-              if (seq_len_input_shape.dim_size() != 1) {
-                fail_shape_inference("'sequence_lens' must have rank of 1");
-              }
+            auto& seq_len_input_shape = getInputShape(ctx, 1);
+            if (seq_len_input_shape.dim_size() != 1) {
+              fail_shape_inference("'sequence_lens' must have rank of 1");
+            }
           }
 
           // propogate first input's shape to output

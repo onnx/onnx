@@ -854,8 +854,33 @@ class TestShapeInference(unittest.TestCase):
             [('X', TensorProto.INT64, (2, 2))],
             [make_node('NonZero', ['X'], ['output'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT64, (None, None))])  # type: ignore       
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT64, (None, None))])  # type: ignore
         
+    def test_compress_no_axis_rank_check(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.INT64, (2, 2)),
+            ('condition', TensorProto.BOOL, (2,))],
+            [make_node('Compress', ['X', 'condition'], ['output'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT64, (None,))])  # type: ignore
+
+    def test_compress_axis_rank_check(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.INT64, (2, 2)),
+            ('condition', TensorProto.BOOL, (2,))],
+            [make_node('Compress', ['X', 'condition'], ['output'], axis = 1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT64, (2, None))])  # type: ignore
+        
+    def test_compress_with_condition_init(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.INT64, (2, 2)),
+            ('condition', TensorProto.BOOL, (2,))],
+            [make_node('Compress', ['X', 'condition'], ['output'], axis = 1)],
+            [],
+            initializer = [make_tensor('condition', TensorProto.BOOL, (2,), (0, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT64, (2, 1))])
+
     def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
