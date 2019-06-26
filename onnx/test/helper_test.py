@@ -77,7 +77,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         # empty str
         attr = helper.make_attribute("str", "")
         self.assertEqual(attr.name, "str")
+<<<<<<< HEAD
         self.assertEqual(helper.get_attribute_value(attr), b"")
+=======
+        self.assertEqual(helper.get_attribute_value(attr), "")
+>>>>>>> 9cfdb72c7d57cb7d8c70edc260b4f5220cf52b81
         checker.check_attribute(attr)
 
     def test_attr_repeated_float(self):  # type: () -> None
