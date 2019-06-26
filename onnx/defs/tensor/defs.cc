@@ -236,19 +236,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int64)"},
             "Constrain output to int64 tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
 
+          // Rank inference - output is always 1D
+          auto* output_dim = ctx.getOutputType(0)
+                                 ->mutable_tensor_type()
+                                 ->mutable_shape()
+                                 ->add_dim();
+
+          // Stop at this point if input shape is missing
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
 
-          ctx.getOutputType(0)
-              ->mutable_tensor_type()
-              ->mutable_shape()
-              ->add_dim()
-              ->set_dim_value(
-                  ctx.getInputType(0)->tensor_type().shape().dim_size());
+          output_dim->set_dim_value(
+              ctx.getInputType(0)->tensor_type().shape().dim_size());
         }));
 
 static const char* Size_ver1_doc = R"DOC(
