@@ -1376,8 +1376,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference(ctx);
-        })
-);
+        }));
 
 static const char* Resize_ver10_doc = R"DOC(
 Resize the input tensor.
@@ -1409,10 +1408,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-           resizeShapeInference(ctx);
-        })
-);
-
+          resizeShapeInference(ctx);
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -1470,7 +1467,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-          // Shape inference  
+          // Shape inference
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
@@ -1496,8 +1493,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             has_axis = true;
             int axis_val = static_cast<int>(axis_attr->i());
-            if (axis_val >= input_rank ||
-                axis_val < -input_rank) {
+            if (axis_val >= input_rank || axis_val < -input_rank) {
               fail_shape_inference(
                   "'Axis' attribute should be within the range [-input_rank, input_rank - 1]");
             }
@@ -1517,16 +1513,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           // determine actual output shape
           const auto* condition_input = ctx.getInputData(1);
           if (condition_input) {
-            if (condition_input->data_type() != TensorProto::BOOL || condition_input->dims_size() != 1) {
-              fail_shape_inference("'condition' input should be 1D tensor of type BOOL");
+            if (condition_input->data_type() != TensorProto::BOOL ||
+                condition_input->dims_size() != 1) {
+              fail_shape_inference(
+                  "'condition' input should be 1D tensor of type BOOL");
             }
 
             const auto& condition_data = ParseData<int32_t>(condition_input);
-            const auto condition_length = static_cast<int>(condition_data.size());
+            const auto condition_length =
+                static_cast<int>(condition_data.size());
 
             int input_tensor_element_size = 1;
             if (has_axis) {
-              if (!input_shape.dim(static_cast<int>(axis_attr->i())).has_dim_value()) {
+              if (!input_shape.dim(static_cast<int>(axis_attr->i()))
+                       .has_dim_value()) {
                 // the dim value in the 'axis' of interest must be known to
                 // proceed
                 return;
@@ -1537,12 +1537,19 @@ ONNX_OPERATOR_SET_SCHEMA(
                 if (!input_shape.dim(i).has_dim_value()) {
                   return;
                 }
-                input_tensor_element_size *= static_cast<int>(input_shape.dim(i).dim_value());
+                input_tensor_element_size *=
+                    static_cast<int>(input_shape.dim(i).dim_value());
               }
             }
 
-            int compress_input_length = has_axis ? static_cast<int>(input_shape.dim(static_cast<int>(axis_attr->i())).dim_value()) : input_tensor_element_size;
-            int valid_condition_length = compress_input_length < condition_length ? compress_input_length: condition_length;
+            int compress_input_length = has_axis
+                ? static_cast<int>(
+                      input_shape.dim(static_cast<int>(axis_attr->i()))
+                          .dim_value())
+                : input_tensor_element_size;
+            int valid_condition_length =
+                compress_input_length < condition_length ? compress_input_length
+                                                         : condition_length;
 
             int positive_condition_count = 0;
             for (int i = 0; i < valid_condition_length; ++i) {
@@ -1556,8 +1563,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ->mutable_dim(static_cast<int>(axis_attr->i()))
                   ->set_dim_value(positive_condition_count);
             } else {
-              getOutputShape(ctx, 0)
-                  ->mutable_dim(0)->set_dim_value(positive_condition_count);
+              getOutputShape(ctx, 0)->mutable_dim(0)->set_dim_value(
+                  positive_condition_count);
             }
           }
         }));
