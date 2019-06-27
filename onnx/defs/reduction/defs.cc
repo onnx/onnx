@@ -11,7 +11,7 @@ std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
 tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-the resulted tensor have the reduced dimension(s) pruned.
+the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
