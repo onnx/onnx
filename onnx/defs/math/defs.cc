@@ -932,8 +932,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "I")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors.")
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
