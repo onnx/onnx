@@ -1656,7 +1656,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.INT64, (3,))])  # type: ignore
-             
+
     def test_constantofshape_with_input_shape(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
@@ -1697,7 +1697,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.INT8, (2, 4))])
- 
+
     def test_randomnormal(self):  # type: () -> None
         graph = self._make_graph(
             [],
@@ -1705,7 +1705,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (2, 4))])
- 
+
     def test_randomuniformlike(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4))],
@@ -1713,7 +1713,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.INT8, (2, 4))])
- 
+
     def test_randomnormallike(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4))],
@@ -1721,7 +1721,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (2, 4))])
- 
+
     def test_multinomial(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 2))],
@@ -1729,7 +1729,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4))])
-            
+
     def test_convinteger(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (3, 4, 5, 6, 7)),
