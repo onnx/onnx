@@ -735,7 +735,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Scatter_ver9_doc = R"DOC(
+static const char* Scatter_ver11_doc = R"DOC(
+This operator is deprecated and renamed ScatterElements. 
 Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
 into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
 For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
@@ -773,9 +774,84 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scatter,
-    9,
+    11,
     OpSchema()
-        .SetDoc(Scatter_ver9_doc)
+        .Deprecate()
+        .SetDoc(Scatter_ver11_doc)
+        .Attr(
+            "axis",
+            "Which axis to scatter on. Negative value means "
+            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input).",
+            "Tind")
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
+            "T")
+        .Output(0, "output", "Tensor of rank r >= 1 (same rank as input).", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input and output types can be of any tensor type.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* ScatterElements_ver11_doc = R"DOC(
+Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
+into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
+For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
+for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
+data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
+where i and j are loop counters from 0 up to the respective size in `updates` - 1.
+This operator is the inverse of GatherElements. 
+Example 1:
+  data = [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+  ]
+  indices = [
+      [1, 0, 2],
+      [0, 2, 1],
+  ]
+  updates = [
+      [1.0, 1.1, 1.2],
+      [2.0, 2.1, 2.2],
+  ]
+  output = [
+      [2.0, 1.1, 0.0]
+      [1.0, 0.0, 2.2]
+      [0.0, 2.1, 1.2]
+  ]
+
+Example 2:
+  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+  indices = [[1, 3]]
+  updates = [[1.1, 2.1]]
+  axis = 1
+  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterElements,
+    11,
+    OpSchema()
+        .SetDoc(ScatterElements_ver11_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -913,6 +989,81 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
+        }));
+
+static const char* GatherElements_ver11_doc = R"DOC(
+Given `data` tensor and `indices` tensor of the same rank r >= 1, gather
+entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`.
+For instance, for a 3-D tensor the output is specified by:
+...
+  out[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
+  out[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
+  out[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
+...
+This operator is the inverse of ScatterElements.
+Example 1:
+  data = [
+      [1, 2],
+      [3, 4],
+  ]
+  indices = [
+      [0, 0],
+      [1, 0],
+  ]
+  axis = 1
+  output = [
+      [
+        [1, 1],
+        [4, 3],
+      ],
+  ]
+Example 2:
+  data = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+  ]
+  indices = [
+      [1, 2, 0],
+      [2, 0, 0],
+  ]
+  axis = 0
+  output = [
+      [
+        [4, 8, 3],
+        [7, 2, 3],
+      ],
+  ]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GatherElements,
+    11,
+    OpSchema()
+        .SetDoc(GatherElements_ver11_doc)
+        .Attr(
+            "axis",
+            "Which axis to gather on. Negative value means "
+            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, with the same rank r as the input.",
+            "Tind")
+        .Output(0, "output", "Tensor of indice shape.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to any tensor type.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
         }));
 
 static const char* Squeeze_ver1_doc = R"DOC(
