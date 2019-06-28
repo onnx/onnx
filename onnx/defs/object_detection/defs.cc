@@ -283,19 +283,30 @@ ONNX_OPERATOR_SET_SCHEMA(
           fail_shape_inference("crop_size shape input tensor has wrong dimension");
         }
 
+        auto* output_shape = getOutputShape(ctx, 0);
         output_shape->clear_dim();
-        for (auto i = 0; i < 2; i++) {
-          if （rois_shape.dim(i).has_dim_value()) {
-            output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-              rois_shape.dim(i).dim_value()));
-          }
-          else if (rois_shape.dim(i).has_dim_param()) {
-            output_shape->add_dim()->set_dim_param(rois_shape.dim(i).dim_param());
-          }
-          else {
-            output_shape->add_dim();
-          }
+        if (rois_shape.dim(0).has_dim_value()) {
+          output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+            rois_shape.dim(0).dim_value()));
         }
+        else if (rois_shape.dim(0).has_dim_param()) {
+          output_shape->add_dim()->set_dim_param(rois_shape.dim(0).dim_param());
+        }
+        else {
+          output_shape->add_dim();
+        }
+
+        if (input_shape.dim(1).has_dim_value()) {
+          output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+            input_shape.dim(1).dim_value()));
+        }
+        else if (input_shape.dim(1).has_dim_param()) {
+          output_shape->add_dim()->set_dim_param(input_shape.dim(1).dim_param());
+        }
+        else {
+          output_shape->add_dim();
+        }
+
 
         output_shape->add_dim();
         output_shape->add_dim();

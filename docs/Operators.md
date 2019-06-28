@@ -30,6 +30,7 @@
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
   * <a href="#Cosh">Cosh</a>
+  * <a href="#CropAndResize">CropAndResize</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#DequantizeLinear">DequantizeLinear</a>
   * <a href="#Div">Div</a>
@@ -3227,6 +3228,146 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cosh')
+```
+
+</details>
+
+
+### <a name="CropAndResize"></a><a name="cropandresize">**CropAndResize**</a>
+
+  Extracts crops from the input image tensor and resizes them using bilinear sampling or nearest neighbor sampling
+  (possibly with aspect ratio change) to a common output size specified by crop_height and crop_width.
+  Returns a tensor with crops from the input image at positions defined at the bounding box locations in boxes.
+  The cropped boxes are all resized (with bilinear or nearest neighbor interpolation) to
+  a fixed size = [crop_height, crop_width]. The result is a 4-D tensor [num_boxes, crop_height, crop_width, depth].
+  The resizing is corner aligned.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
+<dd>Value used for extrapolation, when applicable. Default is 0.0f. </dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>The pooling method. Two modes are supported: 'bilinear' and 'nearest'. Default is 'bilinear'.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T1</dt>
+<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[y1, x1, y2, x2], ...]. The RoIs' coordinates are normalized in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
+<dt><tt>batch_indices</tt> : T2</dt>
+<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
+<dt><tt>crop_size</tt> : T2</dt>
+<dd>1-D tensor of 2 elements: [crop_height, crop_width]. All cropped image patches are resized to this size. Both crop_height and crop_width need to be positive.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, crop_height, crop_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32)</dt>
+<dd>Constrain types to int tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>crop_and_resize</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=0,
+)
+
+X = np.array(
+    [
+        [
+            [
+                [
+                    1.1,
+                    2.2,
+                ],
+                [
+                    3.3,
+                    4.4,
+
+                ],
+            ],
+            [
+                [
+                    5.5,
+                    6.6,
+                ],
+                [
+                    7.7,
+                    8.8,
+
+                ],
+            ],
+        ],
+    ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+# (num_rois, C, output_height, output_width)
+Y = np.array(
+    [
+        [
+            [
+                [1.1, 2.2],
+                [3.3, 4.4],
+            ],
+            [
+                [5.5, 6.6],
+                [7.7, 8.8],
+            ],
+        ],
+        [
+            [
+                [1.1, 1.65],
+                [2.2, 2.75],
+            ],
+            [
+                [5.5, 6.05],
+                [6.6, 7.15],
+            ],
+        ],
+        [
+            [
+                [1.1, 2.2],
+                [2.2, 3.3],
+            ],
+            [
+                [5.5, 6.6],
+                [6.6, 7.7],
+            ],
+        ],
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_crop_and_resize")
 ```
 
 </details>

@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 127/134 (94.78%, 5 generators excluded) common operators.
+Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1906,6 +1906,94 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cosh')
+```
+
+</details>
+
+
+### CropAndResize
+There are 1 test cases, listed as following:
+<details>
+<summary>crop_and_resize</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=0,
+)
+
+X = np.array(
+    [
+        [
+            [
+                [
+                    1.1,
+                    2.2,
+                ],
+                [
+                    3.3,
+                    4.4,
+
+                ],
+            ],
+            [
+                [
+                    5.5,
+                    6.6,
+                ],
+                [
+                    7.7,
+                    8.8,
+
+                ],
+            ],
+        ],
+    ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+# (num_rois, C, output_height, output_width)
+Y = np.array(
+    [
+        [
+            [
+                [1.1, 2.2],
+                [3.3, 4.4],
+            ],
+            [
+                [5.5, 6.6],
+                [7.7, 8.8],
+            ],
+        ],
+        [
+            [
+                [1.1, 1.65],
+                [2.2, 2.75],
+            ],
+            [
+                [5.5, 6.05],
+                [6.6, 7.15],
+            ],
+        ],
+        [
+            [
+                [1.1, 2.2],
+                [2.2, 3.3],
+            ],
+            [
+                [5.5, 6.6],
+                [6.6, 7.7],
+            ],
+        ],
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_crop_and_resize")
 ```
 
 </details>
