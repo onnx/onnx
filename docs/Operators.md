@@ -109,6 +109,7 @@
   * <a href="#Resize">Resize</a>
   * <a href="#ReverseSequence">ReverseSequence</a>
   * <a href="#RoiAlign">RoiAlign</a>
+  * <a href="#Round">Round</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -9214,8 +9215,8 @@ w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
 w_scale = np.array([0.00172794575], dtype=np.float32)
 w_zero_point = np.array([255], dtype=np.uint8)
 
-y_scale = np.array([0.00162681262], dtype=np.float32)
-y_zero_point = np.array([123], dtype=np.uint8)
+y_scale = np.float32(0.00162681262)
+y_zero_point = np.uint8(123)
 
 output = np.array([[0, 81, 93, 230, 52, 87, 197],
     [240, 196, 18, 160, 126, 255, 191],
@@ -12014,6 +12015,73 @@ Y = np.array(
 )
 
 expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### <a name="Round"></a><a name="round">**Round**</a>
+
+  Round takes one input Tensor and rounds the values, element-wise, meaning
+  it finds the nearest integer for each value.
+  In case of halfs, the rule is to round them to the nearest even integer.
+  The output tensor has the same shape and type as the input.
+  
+  Examples:
+  ```
+  round([0.9]) = [1.0]
+  round([2.5]) = [2.0]
+  round([2.3]) = [2.0]
+  round([1.5]) = [2.0]
+  round([-4.5]) = [-4.0]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>round</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Round',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([0.1, 0.5, 0.9, 1.2, 1.5,
+            1.8, 2.3, 2.5, 2.7, -1.1,
+            -1.5, -1.9, -2.2, -2.5, -2.8]).astype(np.float32)
+y = np.array([0., 0., 1., 1., 2.,
+            2., 2., 2., 3., -1.,
+            -2., -2., -2., -2., -3.]).astype(np.float32)  # expected output
+expect(node, inputs=[x], outputs=[y],
+       name='test_round')
 ```
 
 </details>
@@ -14865,7 +14933,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>x</tt> : T</dt>
-<dd>A 1-D input tensor that is to be processed.</dd>
+<dd>A N-D input tensor that is to be processed.</dd>
 </dl>
 
 #### Outputs
@@ -14874,7 +14942,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>y</tt> : T</dt>
 <dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order that they occur in the input 'x'</dd>
 <dt><tt>idx</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
+<dd>A N-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
 <dt><tt>counts</tt> : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing the the count of each element of 'uniques' in the input 'x'</dd>
 </dl>

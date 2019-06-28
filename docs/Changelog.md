@@ -10488,6 +10488,47 @@ This version of the operator has been available since version 11 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
+### <a name="Round-11"></a>**Round-11**</a>
+
+  Round takes one input Tensor and rounds the values, element-wise, meaning
+  it finds the nearest integer for each value.
+  In case of halfs, the rule is to round them to the nearest even integer.
+  The output tensor has the same shape and type as the input.
+  
+  Examples:
+  ```
+  round([0.9]) = [1.0]
+  round([2.5]) = [2.0]
+  round([2.3]) = [2.0]
+  round([1.5]) = [2.0]
+  round([-4.5]) = [-4.0]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Unique-11"></a>**Unique-11**</a>
 
   Finds all the unique values (deduped list) present in the given input tensor. This operator returns 3 outputs. 
@@ -10509,7 +10550,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>x</tt> : T</dt>
-<dd>A 1-D input tensor that is to be processed.</dd>
+<dd>A N-D input tensor that is to be processed.</dd>
 </dl>
 
 #### Outputs
@@ -10518,7 +10559,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>y</tt> : T</dt>
 <dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order that they occur in the input 'x'</dd>
 <dt><tt>idx</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
+<dd>A N-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
 <dt><tt>counts</tt> : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing the the count of each element of 'uniques' in the input 'x'</dd>
 </dl>

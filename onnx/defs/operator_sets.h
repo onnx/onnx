@@ -574,6 +574,7 @@ class OpSet_Onnx_ver10 {
 
 // Forward declarations for ai.onnx version 11
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Unique);
 
@@ -585,6 +586,9 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Unique)>());
 
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 11, BitShift)>());
   }
 };
 
