@@ -1921,7 +1921,7 @@ node = onnx.helper.make_node(
     "CropAndResize",
     inputs=["X", "rois", "batch_indices", "crop_size"],
     outputs=["Y"],
-    extrapolation_value=0,
+    extrapolation_value=0.0,
 )
 
 X = np.array(
