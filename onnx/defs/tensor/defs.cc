@@ -1053,7 +1053,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indices",
             "Tensor of int32/int64 indices, with the same rank r as the input.",
             "Tind")
-        .Output(0, "output", "Tensor of indice shape.", "T")
+        .Output(0, "output", "Tensor of the same shape as indices.", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1063,7 +1063,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int32)", "tensor(int64)"},
             "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 1, 0);
         }));
 
 static const char* Squeeze_ver1_doc = R"DOC(

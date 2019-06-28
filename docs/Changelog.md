@@ -10401,7 +10401,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Tensor of indice shape.</dd>
+<dd>Tensor of the same shape as indices.</dd>
 </dl>
 
 #### Type Constraints
