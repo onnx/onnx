@@ -405,7 +405,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (3, 3)),
              ('i', TensorProto.INT64, (2, 3)),
              ('u', TensorProto.FLOAT, (2, 3))],
-            [make_node("Scatter", ['x', 'i', 'u'], ['y'])],
+            [make_node("ScatterElements", ['x', 'i', 'u'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))])  # type: ignore
 
@@ -414,7 +414,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (1, 5)),
              ('i', TensorProto.INT64, (1, 2)),
              ('u', TensorProto.FLOAT, (1, 2))],
-            [make_node("Scatter", ['x', 'i', 'u'], ['y'], axis=1)],
+            [make_node("ScatterElements", ['x', 'i', 'u'], ['y'], axis=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 5))])  # type: ignore
 
