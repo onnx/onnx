@@ -15,7 +15,7 @@ class ScatterElements(Base):
     @staticmethod
     def export_scatter_elements_without_axis():  # type: () -> None
         node = onnx.helper.make_node(
-            'Scatter',
+            'ScatterElements',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
@@ -35,7 +35,7 @@ class ScatterElements(Base):
     @staticmethod
     def export_scatter_elements_with_axis():  # type: () -> None
         node = onnx.helper.make_node(
-            'Scatter',
+            'ScatterElements',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
             axis=1,
