@@ -1971,7 +1971,7 @@ class TestShapeInference(unittest.TestCase):
              ],
             [make_node('CropAndResize', ['X', 'rois', 'batch_indices', 'crop_size'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6, 3, None, None))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6, 3, None, None))])  # type: ignore
 
 
 if __name__ == '__main__':
