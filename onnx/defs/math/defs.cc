@@ -1488,10 +1488,10 @@ exclusive=1
 output = [0, 1, 3]
 exclusive=0
 reverse=1
-output = [6, 3, 1]
+output = [6, 5, 3]
 exclusive=1
 reverse=1
-output = [3, 1, 0]
+output = [5, 3, 0]
 ```
  )DOC";
 
@@ -1502,7 +1502,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             .SetDoc(CumSum_ver11_doc)
       .Attr(
           "exclusive",
-          "If set to 1 will return exclusive sum in which the top element is not included.",
+          "If set to 1 will return exclusive sum in which the top element is not included."
+          " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
+          " Otherwise, it would be the sum of the first j elements.",
           AttributeProto::INT,
           static_cast<int64_t>(0))
       .Attr(

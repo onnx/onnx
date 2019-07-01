@@ -10348,10 +10348,10 @@ This version of the operator has been available since version 11 of the default 
   output = [0, 1, 3]
   exclusive=0
   reverse=1
-  output = [6, 3, 1]
+  output = [6, 5, 3]
   exclusive=1
   reverse=1
-  output = [3, 1, 0]
+  output = [5, 3, 0]
   ```
    
 
@@ -10363,7 +10363,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>exclusive</tt> : int (default is 0)</dt>
-<dd>If set to 1 will return exclusive sum in which the top element is not included.</dd>
+<dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
 <dt><tt>reverse</tt> : int (default is 0)</dt>
 <dd>If set to 1 will perform the sums in reverse direction.</dd>
 </dl>
