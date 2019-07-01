@@ -6809,7 +6809,7 @@ updates = np.array([[1.1, 2.1]], dtype=np.float32)
 y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='test_scatter_with_axis')
+       name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
 ```
 
 </details>
@@ -6833,7 +6833,7 @@ y = np.array([
 ], dtype=np.float32)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='test_scatter_without_axis')
+       name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
 ```
 
 </details>
@@ -6846,7 +6846,7 @@ There are 2 test cases, listed as following:
 
 ```python
 node = onnx.helper.make_node(
-    'Scatter',
+    'ScatterElements',
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
     axis=1,
@@ -6867,7 +6867,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 ```python
 node = onnx.helper.make_node(
-    'Scatter',
+    'ScatterElements',
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
 )
