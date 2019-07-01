@@ -14915,33 +14915,51 @@ expect(node, inputs=[data], outputs=[transposed],
 ### <a name="Unique"></a><a name="unique">**Unique**</a>
 
   Finds all the unique values (deduped list) present in the given input tensor. This operator returns 3 outputs. 
-  The first output tensor 'uniques' contains all of the unique elements of the input, sorted in the same order that they occur in the input.
+  The first output tensor 'uniques' contains all of the unique elements of the input, 
+  optionally sorted in ascending or the same order that they occur in the input. 
   The second output tensor 'idx' is the same size as the input and it contains the index of each value of the input in 'uniques'.
   The third output tensor 'counts' contains the count of each element of 'uniques' in the input.
   
-  Example:
+  Example 1:
     input_x = [2, 1, 1, 3, 4, 3]
     output_uniques = [2, 1, 3, 4]
     output_idx = [0, 1, 1, 2, 3, 2]
+    output_counts = [1, 2, 2, 1]
+  
+  Example 2:
+    input_x = [[1, 3], [2, 3]]
+    output_uniques = [1, 2, 3]
+    output_idx = [[0, 2], [1, 2]]
     output_counts = [1, 2, 2, 1]
 
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) The dimension to apply unique. If None, the unique of the flattened input is returned.</dd>
+<dt><tt>sorted</tt> : int (default is 0)</dt>
+<dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
+</dl>
+
 #### Inputs
 
 <dl>
-<dt><tt>x</tt> : T</dt>
+<dt><tt>X</tt> : T</dt>
 <dd>A N-D input tensor that is to be processed.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T</dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order that they occur in the input 'x'</dd>
-<dt><tt>idx</tt> : tensor(int64)</dt>
+<dt><tt>indices</tt> : tensor(int64)</dt>
+<dd>A N-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
+<dt><tt>inverse_indices</tt> : tensor(int64)</dt>
 <dd>A N-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
 <dt><tt>counts</tt> : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing the the count of each element of 'uniques' in the input 'x'</dd>

@@ -1797,14 +1797,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Unique_ver11_doc = R"DOC(
 Finds all the unique values (deduped list) present in the given input tensor. This operator returns 3 outputs. 
-The first output tensor 'uniques' contains all of the unique elements of the input, sorted in the same order that they occur in the input.
+The first output tensor 'uniques' contains all of the unique elements of the input, 
+optionally sorted in ascending or the same order that they occur in the input. 
 The second output tensor 'idx' is the same size as the input and it contains the index of each value of the input in 'uniques'.
 The third output tensor 'counts' contains the count of each element of 'uniques' in the input.
 
-Example:
+Example 1:
   input_x = [2, 1, 1, 3, 4, 3]
   output_uniques = [2, 1, 3, 4]
   output_idx = [0, 1, 1, 2, 3, 2]
+  output_counts = [1, 2, 2, 1]
+
+Example 2:
+  input_x = [[1, 3], [2, 3]]
+  output_uniques = [1, 2, 3]
+  output_idx = [[0, 2], [1, 2]]
   output_counts = [1, 2, 2, 1]
 )DOC";
 
@@ -1813,46 +1820,92 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(Unique_ver11_doc)
-        .Input(0, "x", "A N-D input tensor that is to be processed.", "T")
-        .Output(0, "y", "A 1-D tensor of the same type as 'x' " 
+        .Attr(
+            "sorted",
+            "(Optional) Whether to sort the unique elements in ascending order before returning as output. "
+            "Must be one of 0, or 1 (default).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "axis",
+            "(Optional) The dimension to apply unique. If None, the unique of the flattened input is returned.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
+        .Output(0, "Y", "A 1-D tensor of the same type as 'x' " 
                         "containing all the unique values in 'x' sorted " 
                         "in the same order that they occur in the input 'x'", "T")
-        .Output(1, "idx", "A N-D INT64 tensor of the same size as 'x' " 
+        .Output(1, "indices", "A N-D INT64 tensor of the same size as 'x' " 
                           "containing the indices for each value in 'x' "
                           "in the output 'uniques'", "tensor(int64)")
-        .Output(2, "counts", "A 1-D INT64 tensor containing the " 
+        .Output(2, "inverse_indices", "A N-D INT64 tensor of the same size as 'x' " 
+                          "containing the indices for each value in 'x' "
+                          "in the output 'uniques'", "tensor(int64)")
+        .Output(3, "counts", "A 1-D INT64 tensor containing the " 
                              "the count of each element "
                              "of 'uniques' in the input 'x'", "tensor(int64)")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {       
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { 
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          updateOutputElemType(ctx, 1, TensorProto::INT64);
-          updateOutputElemType(ctx, 2, TensorProto::INT64);
-
-          // Shape inference
-
-          // shape of output 'uniques' and 'counts' 
-          // depends on actual input data, but the rank is always 1
-          ctx.getOutputType(0)
-              ->mutable_tensor_type()
-              ->mutable_shape()
-              ->add_dim();
-
-          ctx.getOutputType(2)
-              ->mutable_tensor_type()
-              ->mutable_shape()
-              ->add_dim();
-
-          // if the input shape doesn't exist, further shape inference is not possible
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
+          const TypeProto* xTensorProto = ctx.getInputType(0);
+          TypeProto* yTensorProto = ctx.getOutputType(0);
+          TypeProto* indicesTensorProto = nullptr;
+          TypeProto* inverseIndicesTensorProto = nullptr;
+          TypeProto* countsTensorProto = nullptr;
+          
+          auto num_outputs = ctx.getNumOutputs();
+          if (num_outputs >= 2) {
+            indicesTensorProto = ctx.getOutputType(1);
+            updateOutputElemType(ctx, 1, TensorProto::INT64);
           }
 
-          // 'idx' output has same shape as input
-          propagateShapeFromInputToOutput(ctx, 0, 1);
+          if (num_outputs >= 3) {
+            inverseIndicesTensorProto = ctx.getOutputType(2);
+            updateOutputElemType(ctx, 2, TensorProto::INT64);
+          }
 
-          return;
-        }));
+          if (num_outputs >= 4) {
+            countsTensorProto = ctx.getOutputType(3);
+            updateOutputElemType(ctx, 3, TensorProto::INT64);
+          }
+
+          auto axisAttr = ctx.getAttribute("axis");
+          if (!axisAttr) {
+            // Flatten case.
+            // 'Y', 'indices', and 'counts' are 1-D tensors of unknown dimension.
+            yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            if (indicesTensorProto)
+              indicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            if (countsTensorProto)
+              countsTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+
+            // 'inverse_indices' has the same shape as 'X'.
+            if (inverseIndicesTensorProto)
+              propagateShapeFromInputToOutput(ctx, 0, 2);
+          }
+          else 
+          {
+            // Axis is provided.
+            int axis = static_cast<int>(axisAttr->i());
+
+            // 'Y' has the same dimensions as 'X' except the dimension 'axis' which is unknown.
+            const TensorShapeProto& input_shape = xTensorProto->tensor_type().shape();
+
+            for (int i = 0; i < input_shape.dim_size(); i++) {
+              auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+              if (i != axis)
+                dim->set_dim_value(input_shape.dim(i).dim_value());
+            }
+
+            // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of unknown dimension.
+            if (indicesTensorProto)
+              indicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            if (inverseIndicesTensorProto)
+              inverseIndicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            if (countsTensorProto)
+              countsTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+      }));
 
 } // namespace ONNX_NAMESPACE
