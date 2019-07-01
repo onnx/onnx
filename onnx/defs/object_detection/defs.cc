@@ -134,16 +134,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Validate 'batch_indices' shape/rank if present
             // Also validate 'batch_indices' shape relative to 'rois_shape'
             if (hasInputShape(ctx, 2)) {
-              const auto& batch_index_shape = getInputShape(ctx, 2);
-              if (batch_index_shape.dim_size() != 1) {
+              const auto& batch_indices_shape = getInputShape(ctx, 2);
+              if (batch_indices_shape.dim_size() != 1) {
                 fail_shape_inference(
                     "'batch_indices' shape input tensor has wrong dimension");
               }
 
               if (rois_shape.dim(0).has_dim_value() &&
-                  batch_index_shape.dim(0).has_dim_value() &&
+                  batch_indices_shape.dim(0).has_dim_value() &&
                   rois_shape.dim(0).dim_value() !=
-                      batch_index_shape.dim(0).dim_value()) {
+                      batch_indices_shape.dim(0).dim_value()) {
                 fail_shape_inference(
                     "'rois' input tensor's shape value in the first dimension should match "
                     " the 'batch_indices' input tensor's shape value in the first dimension");
