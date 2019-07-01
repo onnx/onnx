@@ -1956,7 +1956,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None))])  # type: ignore
 
-    def test_roialign(self):  # type: () -> None
+    def test_roialign_three_input_shapes(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 3, 6, 6)),
              ('rois', TensorProto.FLOAT, (1, 4)),
@@ -1964,6 +1964,15 @@ class TestShapeInference(unittest.TestCase):
             [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 1, 1))])
+
+    def test_roialign_two_input_shapes(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, "a", 6, 6)),
+             ('rois', TensorProto.FLOAT, (1, 4)),
+             'batch_indices'],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, "a", 1, 1))])
 
     def test_nonmaxsuppression(self):  # type: () -> None
         graph = self._make_graph(

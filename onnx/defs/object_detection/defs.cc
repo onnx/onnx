@@ -104,10 +104,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape = getOutputShape(ctx, 0);
           output_shape->clear_dim();
 
-          if (hasNInputShapes(ctx, 3)) {
+          // Needs only 2 input shapes to do shape inferencing
+          // The third shape is not explicitly needed to do shape
+          // inference. In this implementation the third shape is
+          // validated if present
+          if (hasNInputShapes(ctx, 2)) {
             const auto& input_shape = getInputShape(ctx, 0);
             const auto& rois_shape = getInputShape(ctx, 1);
-            const auto& batch_index_shape = getInputShape(ctx, 2);
 
             // Validate 'X' shape/rank
             if (input_shape.dim_size() != 4) {
@@ -121,31 +124,52 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "'rois' input tensor has wrong rank - needs to be of rank 2");
             }
 
-            if (rois_shape.dim(1).has_dim_value() && rois_shape.dim(1).dim_value() != 4) {
+            if (rois_shape.dim(1).has_dim_value() &&
+                rois_shape.dim(1).dim_value() != 4) {
               fail_shape_inference(
-                  "'rois' input tensor has incorrect value in the second dimension - needs to be 4 but instead got " + 
-                  std::to_string(rois_shape.dim(1).dim_value()));              
+                  "'rois' input tensor has incorrect value in the second dimension - needs to be 4 but instead got " +
+                  std::to_string(rois_shape.dim(1).dim_value()));
             }
 
-            // Validate 'batch_indices' shape/rank
-            if (batch_index_shape.dim_size() != 1) {
-              fail_shape_inference(
-                  "'batch_indices' shape input tensor has wrong dimension");
+            // Validate 'batch_indices' shape/rank if present
+            // Also validate 'batch_indices' shape relative to 'rois_shape'
+            if (hasInputShape(ctx, 2)) {
+              const auto& batch_index_shape = getInputShape(ctx, 2);
+              if (batch_index_shape.dim_size() != 1) {
+                fail_shape_inference(
+                    "'batch_indices' shape input tensor has wrong dimension");
+              }
+
+              if (rois_shape.dim(0).has_dim_value() &&
+                  batch_index_shape.dim(0).has_dim_value() &&
+                  rois_shape.dim(0).dim_value() !=
+                      batch_index_shape.dim(0).dim_value()) {
+                fail_shape_inference(
+                    "'rois' input tensor's shape value in the first dimension should match "
+                    " the 'batch_indices' input tensor's shape value in the first dimension");
+              }
             }
-            
-            if (rois_shape.dim(0).has_dim_value() && batch_index_shape.dim(0).has_dim_value() &&
-                rois_shape.dim(0).dim_value() != batch_index_shape.dim(0).dim_value()) {
-              fail_shape_inference(
-                  "'rois' input tensor's shape value in the first dimension should match "
-                  " the 'batch_indices' input tensor's shape value in the first dimension");
+
+            auto* first_dim = output_shape->add_dim();
+            if (rois_shape.dim(0).has_dim_param()) {
+              first_dim->set_dim_param(rois_shape.dim(0).dim_param());
+            } else if (rois_shape.dim(0).has_dim_value()) {
+              first_dim->set_dim_value(
+                  static_cast<int64_t>(rois_shape.dim(0).dim_value()));
+            }
+
+            auto* second_dim = output_shape->add_dim();
+            if (input_shape.dim(1).has_dim_param()) {
+              second_dim->set_dim_param(input_shape.dim(1).dim_param());
+            } else if (input_shape.dim(1).has_dim_value()) {
+              second_dim->set_dim_value(
+                  static_cast<int64_t>(input_shape.dim(1).dim_value()));
             }
 
             output_shape->add_dim()->set_dim_value(
-                static_cast<int64_t>(rois_shape.dim(0).dim_value()));
+                getAttribute(ctx, "output_height", 1));
             output_shape->add_dim()->set_dim_value(
-                static_cast<int64_t>(input_shape.dim(1).dim_value()));
-            output_shape->add_dim()->set_dim_value(getAttribute(ctx, "output_height", 1));
-            output_shape->add_dim()->set_dim_value(getAttribute(ctx, "output_width", 1));
+                getAttribute(ctx, "output_width", 1));
           } else {
             // Rank inference
             // Output is always 4-D
@@ -213,14 +237,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-         // Type inference - Output is always of type INT64
+          // Type inference - Output is always of type INT64
           auto* selected_indices_type =
               ctx.getOutputType(0)->mutable_tensor_type();
-          selected_indices_type->set_elem_type(TensorProto_DataType::TensorProto_DataType_INT64);
+          selected_indices_type->set_elem_type(
+              TensorProto_DataType::TensorProto_DataType_INT64);
 
           // Shape inference
-          // The exact shape cannot be determined as it depends on the input and other input configurations for the op
-          // But part of the shape can be established
+          // The exact shape cannot be determined as it depends on the input and
+          // other input configurations for the op But part of the shape can be
+          // established
 
           auto* selected_indices_shape = getOutputShape(ctx, 0);
           selected_indices_shape->clear_dim();
@@ -231,9 +257,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           selected_indices_shape->add_dim();
 
           // The value of the second dim is 3
-          auto* second_dim = selected_indices_shape->add_dim();
-          second_dim->set_dim_value(3);
-
+          selected_indices_shape->add_dim()->set_dim_value(3);
         }));
 
 } // namespace ONNX_NAMESPACE
