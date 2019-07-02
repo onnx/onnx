@@ -215,6 +215,7 @@ model = onnx.load('path/to/the/model.onnx')
 polished_model = onnx.utils.polish_model(model)
 ```
 
+## Tools
 ### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
 to the provided values in the parameter. You could provide both static and dynamic dimension size,
