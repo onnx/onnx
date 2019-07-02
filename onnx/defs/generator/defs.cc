@@ -571,13 +571,6 @@ const std::vector<NodeProto> build_nodes_range_op() {
     input_value_info_proto_2->set_name("prev");
 
     // 'Loop' node 'body' attribute's graph nodes
-    auto* node_proto_0 = loop_sub_graph.add_node();
-    node_proto_0->set_op_type("Identity");
-    node_proto_0->add_input();
-    node_proto_0->set_input(0, "cond");
-    node_proto_0->add_output();
-    node_proto_0->set_output(0, "cond_out");
-
     auto* node_proto_1 = loop_sub_graph.add_node();
     node_proto_1->set_op_type("Add");
     node_proto_1->add_input();
@@ -585,24 +578,17 @@ const std::vector<NodeProto> build_nodes_range_op() {
     node_proto_1->add_input();    
     node_proto_1->set_input(1, "delta");
     node_proto_1->add_output();
-    node_proto_1->set_output(0, "current");
-
-    auto* node_proto_2 = loop_sub_graph.add_node();
-    node_proto_2->set_op_type("Identity");
-    node_proto_2->add_input();
-    node_proto_2->set_input(0, "prev");
-    node_proto_2->add_output();
-    node_proto_2->set_output(0, "range");
+    node_proto_1->set_output(0, "prev");
 
     // 'Loop' node 'body' attribute's graph inputs
     auto* output_value_info_proto_0 = loop_sub_graph.add_output();
-    output_value_info_proto_0->set_name("cond_out");
+    output_value_info_proto_0->set_name("cond");
 
     auto* output_value_info_proto_1 = loop_sub_graph.add_output();
-    output_value_info_proto_1->set_name("current");
+    output_value_info_proto_1->set_name("prev");
 
     auto* output_value_info_proto_2 = loop_sub_graph.add_output();
-    output_value_info_proto_2->set_name("range");
+    output_value_info_proto_2->set_name("prev");
 
     return FunctionBodyHelper::BuildNodes({
       // nodes: {outputs, op, inputs, attributes}
