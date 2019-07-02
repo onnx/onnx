@@ -34,7 +34,7 @@ class Unique(Base):
         # https://github.com/numpy/numpy/issues/8621
         # so going with hand-crafted test case
         y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
-        indices = np.array([0, 1, 3, 4], dtype=np.float32)
+        indices = np.array([0, 1, 3, 4], dtype=np.int64)
         inverse_indices = np.array([0, 1, 1, 2, 3, 2], dtype=np.int64)
         counts = np.array([1, 2, 2, 1], dtype=np.int64)
         expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')

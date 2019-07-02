@@ -1922,7 +1922,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (None,)),  # type: ignore
                                       make_tensor_value_info('indices', TensorProto.INT64, (None,)),
-                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (2, 4, 2)),
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),
                                       make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
     def test_unique_with_axis(self):  # type: () -> None
