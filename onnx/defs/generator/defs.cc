@@ -611,7 +611,9 @@ const std::vector<NodeProto> build_nodes_range_op() {
       {{"div_result"}, "Div", {"sub_result", "delta_cast"}},
       {{"ceil_result"}, "Ceil", {"div_result"}},
       {{"ceil_cast_int"}, "Cast", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
-      {{"ceil_cast_bool"}, "Cast", {"ceil_cast_int"}, {{"to", static_cast<int64_t>(9)}}},
+      // we want max(0, ceil_cast_int) as negative values would evaluate to bool true in next step
+      {{"ceil_cast_int_relu"}, "Relu", {"ceil_cast_int"}},
+      {{"ceil_cast_bool"}, "Cast", {"ceil_cast_int_relu"}, {{"to", static_cast<int64_t>(9)}}},
       {{"variadic_output", "output"}, "Loop", {"ceil_cast_int", "ceil_cast_bool", "start"}, {MakeAttribute("body", loop_sub_graph)}}
   });
 
