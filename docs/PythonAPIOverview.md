@@ -218,7 +218,7 @@ polished_model = onnx.utils.polish_model(model)
 ### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
 to the provided values in the parameter. You could provide both static and dynamic dimension size,
-by using dim_param. For more information on static dimension and denoted dimension, checkout [Dimension Denotation](DimensionDenotation.md).
+by using dim_param. For more information on static and dynamic dimension size, checkout [Tensor Shapes](IR.md#tensor-shapes).
 
 The function runs model checker after the input/output sizes are updated.
 ```python
