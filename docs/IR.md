@@ -351,8 +351,6 @@ Dimension variables are scoped to the declaration that they appear in. For graph
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
-The empty string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
-
 Shapes MAY be defined using a combination of integers and variables.
 
 ### Attribute Types
