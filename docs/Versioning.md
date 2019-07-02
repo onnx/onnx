@@ -91,6 +91,8 @@ operator id MUST be greater than any extant `op_version` for the
 > 2. Copy the old operator schema to an `old.cc` file, and
 > 3. Update the `SinceVersion` signifier to the new max version from
 >    step (1).
+> 4. Register the new operator in the corresponding `operator_sets`
+>    header file.
 
 ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
 
