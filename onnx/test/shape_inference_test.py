@@ -1921,8 +1921,8 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Unique', ['X'], ['Y', 'indices', 'inverse_indices', 'counts'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (None,)),  # type: ignore
-                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),
-                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),
+                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
                                       make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
     def test_unique_with_axis(self):  # type: () -> None
@@ -1931,8 +1931,8 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Unique', ['X'], ['Y', 'indices', 'inverse_indices', 'counts'], axis=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, None, 2)),  # type: ignore
-                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),
-                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),
+                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
                                       make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
     def test_tile(self):  # type: () -> None
