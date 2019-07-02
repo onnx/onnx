@@ -10531,23 +10531,45 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Unique-11"></a>**Unique-11**</a>
 
-  Finds all the unique values (deduped list) present in the given input tensor. This operator returns 3 outputs. 
-  The first output tensor 'uniques' contains all of the unique elements of the input, 
-  optionally sorted in ascending or the same order that they occur in the input. 
-  The second output tensor 'idx' is the same size as the input and it contains the index of each value of the input in 'uniques'.
-  The third output tensor 'counts' contains the count of each element of 'uniques' in the input.
+  Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors along the 'axis' are returned. 
+  Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
+  
+  This operator returns the unique elements of the input tensor and three optional outputs. 
+  The first output tensor 'Y' contains all unique values or subtensors of the input. 
+  The second optional output tensor 'indices' contains indices of the the unique elements in input. 
+  The third optional output tensor 'inverse_indices' contains indices of input elements in 'Y'. 
+  The forth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+  
+  Outputs are either sorted in ascending order or optionally in the order they occur in the input. 
+  
+  https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
   
   Example 1:
-    input_x = [2, 1, 1, 3, 4, 3]
-    output_uniques = [2, 1, 3, 4]
-    output_idx = [0, 1, 1, 2, 3, 2]
+    input_X = [2, 1, 1, 3, 4, 3]
+    attribute_sorted = 0
+    attribute_axis = None
+    output_Y = [2, 1, 3, 4]
+    output_indices = [0, 1, 3, 4]
+    output_inverse_indices = [0, 1, 1, 2, 3, 2]
     output_counts = [1, 2, 2, 1]
   
   Example 2:
-    input_x = [[1, 3], [2, 3]]
-    output_uniques = [1, 2, 3]
-    output_idx = [[0, 2], [1, 2]]
-    output_counts = [1, 2, 2, 1]
+    input_X = [[1, 3], [2, 3]]
+    attribute_sorted = 1
+    attribute_axis = None
+    output_Y = [1, 2, 3]
+    output_indices = [0, 2, 1]
+    output_inverse_indices = [0, 2, 1, 2]
+    output_counts = [1, 1, 2]
+  
+  Example 3:
+    input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+    attribute_sorted = 1
+    attribute_axis = 0
+    output_Y = [[1, 0, 0], [2, 3, 4]]
+    output_indices = [0, 2]
+    output_inverse_indices = [0, 0, 1]
+    output_counts = [2, 1]
 
 #### Version
 
@@ -10557,8 +10579,8 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Optional) The dimension to apply unique. If None, the unique of the flattened input is returned.</dd>
-<dt><tt>sorted</tt> : int (default is 0)</dt>
+<dd>(Optional) The dimension to apply unique. If None, the unique elements of the flattened input are returned.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
 <dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
 </dl>
 
@@ -10573,13 +10595,13 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A 1-D tensor of the same type as 'x' containing all the unique values in 'x' sorted in the same order that they occur in the input 'x'</dd>
+<dd>A 1-D tensor of the same type as 'X' containing all the unique values in 'X', either sorted or maintained in the same order they occur in the input 'X'</dd>
 <dt><tt>indices</tt> : tensor(int64)</dt>
-<dd>A N-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
+<dd>A 1-D INT64 tensor containing indices of 'X' for each unique element in 'Y'</dd>
 <dt><tt>inverse_indices</tt> : tensor(int64)</dt>
-<dd>A N-D INT64 tensor of the same size as 'x' containing the indices for each value in 'x' in the output 'uniques'</dd>
+<dd>A 1-D INT64 tensor containing indices of 'Y' for each input element in 'X'</dd>
 <dt><tt>counts</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing the the count of each element of 'uniques' in the input 'x'</dd>
+<dd>A 1-D INT64 tensor containing the the count of each element of 'Y' in the input 'X'</dd>
 </dl>
 
 #### Type Constraints

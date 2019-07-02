@@ -8111,27 +8111,44 @@ expect(node, inputs=[data], outputs=[transposed],
 
 
 ### Unique
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>with_axis</summary>
+
+```python
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
+
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=0
+)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
+```
+
+</details>
 <details>
 <summary>without_axis</summary>
 
 ```python
 x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
 
-node_not_sorted = onnx.helper.make_node(
-    'Unique',
-    inputs=['X'],
-    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
-    sorted=[0]
-)
-y, indices, inverse_indices, counts = np.unique(x, True, True, True)
-inverse_indices = inverse_indices.reshape(x.shape)
-expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
-
 node_sorted = onnx.helper.make_node(
     'Unique',
     inputs=['X'],
     outputs=['Y', 'indices', 'inverse_indices', 'counts']
+)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
+
+node_not_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=0
 )
 # numpy unique does not retain original order (it sorts the output unique values)
 # https://github.com/numpy/numpy/issues/8621
@@ -8140,7 +8157,7 @@ y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
 indices = np.array([0, 1, 3, 4], dtype=np.float32)
 inverse_indices = np.array([0, 1, 1, 2, 3, 2], dtype=np.int64)
 counts = np.array([1, 2, 2, 1], dtype=np.int64)
-expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
+expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
 ```
 
 </details>
