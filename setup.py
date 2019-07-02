@@ -286,7 +286,7 @@ install_requires.extend([
     'protobuf',
     'numpy',
     'six',
-    'typing>=3.6.4',
+    'typing>=3.6.4 ; python_version<"3.5"',
     'typing-extensions>=3.6.2.1',
 ])
 
@@ -298,7 +298,7 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
-tests_require.append('typing')
+tests_require.append('typing ; python_version<"3.5"')
 tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
