@@ -3,9 +3,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from six import string_types
+from typing import Any, List, Text
+from onnx import ModelProto, TensorProto
+
 import onnx.checker
 
-def update_inputs_outputs_dims(model, input_dims, output_dims):
+
+def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelProto, List[List[Any]], List[List[Any]]) -> ModelProto
     """
         This function updates the dimension sizes of the model's inputs and outputs to the values
         provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
@@ -30,14 +35,14 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):
                 updated_model = update_inputs_outputs_dims(model, input_dims, output_dims)
                 onnx.save(updated_model, 'model.onnx')
     """
-    def update_dim(tensor, dim, i, j, dim_param_prefix):
+    def update_dim(tensor, dim, i, j, dim_param_prefix):  # type: (TensorProto, Any, int, int, Text) -> None
         dim_proto = tensor.type.tensor_type.shape.dim[j]
         if isinstance(dim, int):
             if dim >= 0:
                 dim_proto.dim_value = dim
             else:
                 dim_proto.dim_param = dim_param_prefix + str(i) + '_' + str(j)
-        elif isinstance(dim, str):
+        elif isinstance(dim, string_types):
             dim_proto.dim_param = dim
         else:
             raise ValueError('Only int or str is accepted as dimension value, incorrect type: {}'.format(type(dim)))

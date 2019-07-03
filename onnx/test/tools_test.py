@@ -8,6 +8,7 @@ import onnx
 from onnx.tools import update_model_dims
 from onnx import helper, TensorProto
 
+
 class TestToolsFunctions(unittest.TestCase):
     def test_update_inputs_outputs_dim(self):  # type: () -> None
         node_def = helper.make_node(
@@ -32,6 +33,7 @@ class TestToolsFunctions(unittest.TestCase):
         self.assertEqual(updated_def.graph.input[0].type.tensor_type.shape.dim[3].dim_param, 'in_0_3')
         self.assertEqual(updated_def.graph.output[0].type.tensor_type.shape.dim[2].dim_param, 'out_0_2')
         self.assertEqual(updated_def.graph.output[0].type.tensor_type.shape.dim[3].dim_param, 'out_0_3')
+
 
 if __name__ == '__main__':
     unittest.main()
