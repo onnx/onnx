@@ -10368,11 +10368,6 @@ This version of the operator has been available since version 11 of the default 
 <dd>If set to 1 will perform the sums in reverse direction.</dd>
 </dl>
 
-#### Inputs
-
-<dl>
-<dt><tt>x</tt> : T</dt>
-<dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : T2</dt>
 <dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
 </dl>
@@ -10382,20 +10377,20 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>y</tt> : T</dt>
 <dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
+
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Bias tensor of shape (C).</dd>
 </dl>
 
-#### Type Constraints
+#### Outputs (1 - 3)
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Input can be of any tensor type.</dd>
-<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
-<dd>axis tensor can be int32 or int64 only</dd>
-</dl>
-
-### <a name="Equal-11"></a>**Equal-11**</a>
-
-  Returns the tensor resulted from performing the `equal` logical operation
+<dt><tt>Y</tt> : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>mean</tt> (optional) : T</dt>
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -10428,6 +10423,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
+
 
 ### <a name="Loop-11"></a>**Loop-11**</a>
 
