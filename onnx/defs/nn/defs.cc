@@ -1664,7 +1664,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
             "where N is the batch size, C is the number of channels. "
             "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
-            "For image data, input dimensions become (N x C x H x W).",
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
             "T")
         .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
         .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
@@ -1679,6 +1680,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FunctionBody(FunctionBodyHelper::BuildNodes(
         {
           FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+          FunctionBodyHelper::Const<float>("EPS", 0.001f),
+          FunctionBodyHelper::Const<int64_t>("G", {2}),
           FunctionBodyHelper::Const<int64_t>("N_Start", 0),
           FunctionBodyHelper::Const<int64_t>("N_End", 1),
           FunctionBodyHelper::Const<int64_t>("C_Start", 1),
@@ -1703,11 +1706,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H_W"}, {{"axis", (int64_t)0}}},
           {{"X_Reshape"}, "Reshape", {"input", "X_NewShape"}},
 
+
           //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
-          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
+          {{"Mean"}, "Mean", {"X_Reshape"}},
           {{"EX_squared"}, "Pow", {"Mean", "Exponent"}},
           {{"X_squared"}, "Pow", {"X_Reshape", "Exponent"}},
-          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
+          {{"E_Xsquared"}, "ReduceMean",{"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
           {{"Var"}, "Sub", {"E_Xsquared", "EX_squared"}},
 
           //x = (x−mean) / tf.sqrt(var + eps)

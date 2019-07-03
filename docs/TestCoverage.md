@@ -3390,7 +3390,11 @@ x = np.array([[[[4., 5.], [0., 6.]],
                [[1., 1.], [6., 1.]]]]).astype(np.float32)
 
 b = np.array([1.0, 1.5, -1.0, 1.5]).astype(np.float32)
+<<<<<<< HEAD
 s = np.array([0, 1, 0, 1]).astype(np.float32)
+=======
+s = np.array([[0, 1, 0, 1]]).astype(np.float32)
+>>>>>>> Definition of group normalization
 
 num_groups = 2
 eps = 1e-05
