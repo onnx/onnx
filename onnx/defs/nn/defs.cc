@@ -1757,6 +1757,109 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
+
+
+static const char* GroupNormalization_ver11_doc = R"DOC(
+Carries out instance normalization as described in the paper
+https://arxiv.org/abs/1803.08494.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GroupNormalization,
+    11,
+    OpSchema()
+        .NumOutputs({1, 5})
+        .SetDoc(GroupNormalization_ver11_doc + GenerateOptionalArgumentsDoc())
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero.",
+            AttributeProto::FLOAT,
+            1e-5f)
+        .Attr(
+            "num_groups",
+            "The  value to use to avoid division by zero.",
+            AttributeProto::FLOAT,
+            1e-5f)
+
+        .Input(
+            0,
+            "X",
+           "Input data tensor from the previous operator; "
+            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
+            "where N is the batch size, C is the number of channels. "
+            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
+            "T")
+        .Input(1, "scale", "Scale tensor of shape (C).", "T")
+        .Input(2, "B", "Bias tensor of shape (C).", "T")
+        .Output(0, "Y", "The output tensor of the same shape as X", "T")
+        .Output(
+            1,
+            "mean",
+            "The running mean after the GroupNormalization operator.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "var",
+            "The running variance after the GroupNormalization operator.",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+        })
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+        {
+          FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+          FunctionBodyHelper::Const<float>("EPS", 0.001f),
+          FunctionBodyHelper::Const<float>("G", 2.0f),
+          FunctionBodyHelper::Const<int>("N_Start", 0),
+          FunctionBodyHelper::Const<int>("N_End", 1),
+          FunctionBodyHelper::Const<int>("C_Start", 1),
+          FunctionBodyHelper::Const<int>("C_End", 2),
+          FunctionBodyHelper::Const<int>("H_W_Start", 2),
+          FunctionBodyHelper::Const<int>("H_W_End", 4),
+
+
+          //N, C, H, W = x.shape
+          {{"X_Shape"}, "Shape", {"X"}},
+          {{"N"}, "Slice", {"X_Shape", "N_Start", "N_End"}},
+          {{"C"}, "Slice", {"X_Shape", "C_Start", "C_End"}},
+          {{"H_W"}, "Slice", {"X_Shape", "H_W_Start", "H_W_End"}},
+          
+
+          //x = tf.reshape(x, [N, G, C // G, H, W])
+          {{"C/G"}, "Div", {"C", "G"}},
+          {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H_W"}, {{"axis", (int64_t)1}}},
+          {{"X_Reshape"}, "Reshape", {"X", "X_NewShape"}},
+
+
+          //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
+          {{"Mean"}, "Mean", {"X_Reshape"}},
+          {{"EX_squared"}, "Pow", {"Mean", "Exponent"}},
+          {{"X_squared"}, "Pow", {"X_Reshape", "Exponent"}},
+          {{"E_Xsquared"}, "ReduceMean",{"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
+          {{"Var"}, "Sub", {"E_Xsquared", "EX_squared"}},
+
+
+          //x = (x−mean) / tf.sqrt(var + eps)
+          {{"Var+Eps"}, "Add", {"Var", "EPS"}},
+          {{"Sqrt(Var+Eps)"}, "Sqrt", {"Var+Eps"}},
+          {{"X-Mean"}, "Sub", {"X_Reshape", "Mean"}},
+          {{"X'"}, "Div", {"X-Mean", "Sqrt(Var+Eps)"}},
+
+          // y = x * gamma + beta
+          {{"X*Gamma"}, "Mul", {"X'", "scale"}},
+          {{"Y"}, "Add", {"X*Gamma", "B"}}
+
+        }
+        )));
+
 static const char* Dropout_ver10_doc = R"DOC(
 Dropout takes one input floating tensor and produces two tensor outputs,
 output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
