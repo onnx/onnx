@@ -159,7 +159,11 @@
   * <a href="#Xor">Xor</a>
 
   **Operators with function registered:**
+<<<<<<< HEAD
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
+=======
+  * <a href="#GroupNormalization">GroupNormalization</a>
+>>>>>>> Initial definition of group-norm
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#Range">Range</a>
 
