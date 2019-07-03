@@ -18,7 +18,7 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 
-from onnx.onnx_pb import NodeProto, AttributeProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TensorProto
 from onnx.onnx_operators_pb import FunctionProto
 
 
@@ -58,8 +58,39 @@ def function_expand_helper(node,  # type: NodeProto
         for attr in internal_node.attribute:
             if attr.HasField("ref_attr_name"):
                 if attr.ref_attr_name in attribute_map:
+
+                    parent_attr = attribute_map[attr.ref_attr_name]    
+
                     new_attr = AttributeProto()
-                    new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                    new_attr.CopyFrom(parent_attr)  # type: ignore
+
+                    # Set the name of the attribute
+                    # It may be different from the name in the parent function
+                    new_attr.name = attr.name
+
+                    # Convert the type of the attributes if is is appropriate
+                    if (attr.type != new_attr.type):
+
+                        if (attr.type == AttributeProto.TENSOR and parent_attr.type == AttributeProto.FLOAT):
+                            # FLOAT -> TENSOR<FLOAT>
+                            new_attr.type = AttributeProto.TENSOR 
+                            new_attr.t.data_type = TensorProto.FLOAT
+                            new_attr.t.dims.append(1)
+                            new_attr.t.float_data.append(parent_attr.f)
+                            new_attr.ClearField('f')
+                        elif (attr.type == AttributeProto.TENSOR and parent_attr.type == AttributeProto.INT):
+                            # INT -> TENSOR<INT64>
+                            new_attr.type = AttributeProto.TENSOR 
+                            # todo : Should we set the type based of the size of the attributes?
+                            new_attr.t.data_type = TensorProto.INT64
+                            new_attr.t.dims.append(1)
+                            new_attr.t.int64_data.append(parent_attr.i)
+                            new_attr.ClearField('i')
+                        else:
+                            # todo : improve error message
+                            raise Exception("Unsupported conversion of reference attribute")
+
+
                     new_node.attribute.extend([new_attr])
             else:
                 new_attr = AttributeProto()

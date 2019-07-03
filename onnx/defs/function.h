@@ -90,6 +90,14 @@ class FunctionBodyHelper {
   }
 
   template <typename T>
+  static NodeDef ConstOfShape(const std::string& name, const std::vector<int64_t> shape, const std::vector<T>& values) {
+    auto tensorProto = ToTensor<T>(values);
+    for(auto dim : shape)
+      tensorProto.add_dims(dim);
+    return NodeDef{{name}, "Constant", {}, {{"value", tensorProto}}};
+  }
+
+  template <typename T>
   static NodeDef Const(const std::string& name, const std::vector<T>& values) {
     return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(values)}}};
   }
