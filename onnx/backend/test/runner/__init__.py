@@ -226,7 +226,6 @@ class Runner(object):
                   test_name,  # type: Text
                   test_func,  # type: Callable[..., Any]
                   report_item,  # type: List[Optional[Union[ModelProto, NodeProto]]]
-                  #devices=('CPU', 'CUDA'),  # type: Iterable[Text]
                   ):  # type: (...) -> None
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith('test_'):

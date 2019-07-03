@@ -22,5 +22,4 @@ AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_Att
 
 // Create a attribute which references an attribute in the parent function with a different name
 AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_AttributeType type,  const std::string& ref_attr_name);
-
 } // namespace ONNX_NAMESPACE
