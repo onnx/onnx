@@ -472,13 +472,13 @@ C-style code:
 
     graph body-net (
       %i[INT32, scalar]
-      %keepgoing[BOOL, scalar]
-      %b[INT32, scalar]
+      %keepgoing_in[BOOL, scalar]
+      %b_in[INT32, scalar]
     ) {
       %my_local = Add(%a, %b)
-      %b_out = Sub(%a, %b)
+      %b_out = Sub(%a, %b_in)
       %keepgoing_out = Greater(%my_local, %b_out)
-      %user_defined_vals = Add(%b, %b)
+      %user_defined_vals = Add(%b_in, %b_in)
       return %keepgoing_out, %b_out, %user_defined_vals
     }
 
@@ -494,18 +494,25 @@ C-style code:
       const int max_trip_count = 10; // Analogous to input M
       int user_defined_vals[]; // Imagine this is resizable
       /* End implicitly-defined code */
+      int b_out = b;
+      bool keepgoing_out = keepgoing;
       for (int i=0; i < max_trip_count && keepgoing; ++i) {
         /* User-defined code (loop body) */
         int my_local = a + b; // Reading values in the enclosing scope is fine
-        b = a - b; // writes fine if we specify b as a loop-carried dependency
-        keepgoing = my_local > b; // keepgoing is a loop-carried dependency
+        b_out = a - b; // writes fine if we specify b as a loop-carried dependency
+        keepgoing_out = my_local > b_out; // keepgoing is a loop-carried dependency
         user_defined_vals[i] = b + b;
         /* End user-defined code */
+
+	// loop-carried definitions are passed as inputs to next iteration.
+        b = b_out;
+        keepgoing = keepgoing_out;
       }
       // my_local = 123; // Can't do this. my_local was defined in the the body
 
       // These below values are live-out from the loop and therefore accessible
-      b_out; user_defined_vals; keepgoing_out;
+      // b_out; keepgoing_out; user_defined_vals; 
+      // and user_defined_vals are concated output
     }
 
 There are several things of note in this code snippet:
