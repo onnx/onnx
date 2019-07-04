@@ -68,7 +68,7 @@ void resizeShapeInference(InferenceContext& ctx) {
       resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
     } else {
       fail_shape_inference("Input 'scales' must have float element type.");
-    } // nullptr != scales
-  }
+    }
+  } // nullptr != scales
 }
 } // namespace ONNX_NAMESPACE
