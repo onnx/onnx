@@ -54,7 +54,6 @@ void resizeShapeInference(InferenceContext& ctx) {
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
   const auto scales = ctx.getInputData(1);
-  const auto sizes = ctx.getInputData(2);
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -71,16 +70,19 @@ void resizeShapeInference(InferenceContext& ctx) {
     }
   }
 
-  if (nullptr != sizes) {
-    if (sizes->data_type() == TensorProto::INT64) {
-      const auto sizes_data = ParseData<int64_t>(sizes);
-      if (sizes_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-        fail_shape_inference(
-            "Number of elements of input 'sizes' must be same as rank of input 'X'");
+  if (ctx.getNumInputs() == 3) {
+    const auto sizes = ctx.getInputData(2);
+    if (nullptr != sizes) {
+      if (sizes->data_type() == TensorProto::INT64) {
+        const auto sizes_data = ParseData<int64_t>(sizes);
+        if (sizes_data.size() != static_cast<size_t>(input_shape.dim_size())) {
+          fail_shape_inference(
+              "Number of elements of input 'sizes' must be same as rank of input 'X'");
+        }
+        resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
+      } else {
+        fail_shape_inference("Input 'sizes' must have int64 element type.");
       }
-      resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
-    } else {
-      fail_shape_inference("Input 'sizes' must have int64 element type.");
     }
   } else if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.

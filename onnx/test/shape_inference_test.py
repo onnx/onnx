@@ -308,8 +308,9 @@ class TestShapeInference(unittest.TestCase):
     def test_resize_size(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('scales', TensorProto.FLOAT, (4,)),
              ('sizes', TensorProto.INT64, (4,))],
-            [make_node("Resize", ['x', 'sizes'], ['y'])],
+            [make_node("Resize", ['x', 'scales', 'sizes'], ['y'])],
             [],
             initializer=[make_tensor('sizes', TensorProto.INT64, (4,), (3, 5, 6, 7))])
         self._assert_inferred(
