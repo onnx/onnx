@@ -10511,13 +10511,13 @@ This version of the operator has been available since version 11 of the default 
 <dd>Three interpolation modes: nearest (default), linear and cubic. The "linear" mode includes linear interpolation for 1D tensor and N-D linear interpolation for N-D tensor (For example, trilinear interpolation for 2D tensor). The "cubic" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (For example, tricubic interpolation for 2D tensor).</dd>
 </dl>
 
-#### Inputs (1 - 3)
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>X</tt> : T1</dt>
 <dd>N-D tensor</dd>
-<dt><tt>scales</tt> (optional) : T2</dt>
-<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. If not specified, the default value is a tensor with all ones.</dd>
+<dt><tt>scales</tt> : T2</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. It will be ignored if 'sizes' is specified.</dd>
 <dt><tt>sizes</tt> (optional) : T3</dt>
 <dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.</dd>
 </dl>
