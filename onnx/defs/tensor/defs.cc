@@ -1404,10 +1404,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. If not specified, the default value is a tensor with"
-            " all ones.",
-            "T2",
-            OpSchema::Optional)
+            " be the same as the rank of input 'X'. It will be ignored if 'sizes' is specified.",
+            "T2")
         .Input(
             2,
             "sizes",
