@@ -14747,7 +14747,7 @@ expect(node,
      contains the indices of the top k elements (original indices from the input
      tensor).
   
-  If "largest" is 1 (the default value) then the k largest elements are returned.
+  If "mode" is 1 (the default value) then the k largest elements are returned.
   If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
   
   Given two equivalent values, this operator uses the indices along the axis as
@@ -14764,7 +14764,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a hr
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>Dimension on which to do the sort.</dd>
-<dt><tt>largest</tt> : int (default is 1)</dt>
+<dt><tt>mode</tt> : int (default is 1)</dt>
 <dd>Whether to return the top-K largest or smallest elements.</dd>
 <dt><tt>sorted</tt> : int (default is 1)</dt>
 <dd>Whether to return the elements in sorted order.</dd>

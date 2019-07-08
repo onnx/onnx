@@ -899,7 +899,7 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
    contains the indices of the top k elements (original indices from the input
    tensor).
 
-If "largest" is 1 (the default value) then the k largest elements are returned.
+If "mode" is 1 (the default value) then the k largest elements are returned.
 If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
 
 Given two equivalent values, this operator uses the indices along the axis as
@@ -944,7 +944,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Attr(
-            "largest",
+            "mode",
             "Whether to return the top-K largest or smallest elements.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
