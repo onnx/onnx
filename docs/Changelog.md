@@ -10332,6 +10332,67 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
+### <a name="CumSum-11"></a>**CumSum-11**</a>
+
+  Performs cumulative sum of the input elements along the given axis.
+  By default, it will do the sum inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+  
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 3, 6]
+  exclusive=1
+  output = [0, 1, 3]
+  exclusive=0
+  reverse=1
+  output = [6, 5, 3]
+  exclusive=1
+  reverse=1
+  output = [5, 3, 0]
+  ```
+   
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the sums in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> : T2</dt>
+<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
 ### <a name="Loop-11"></a>**Loop-11**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
@@ -10536,8 +10597,8 @@ This version of the operator has been available since version 11 of the default 
   
   This operator returns the unique elements of the input tensor and three optional outputs. 
   The first output tensor 'Y' contains all unique values or subtensors of the input. 
-  The second optional output tensor 'indices' contains indices of the the unique elements in input. 
-  The third optional output tensor 'inverse_indices' contains indices of input elements in 'Y'. 
+  The second optional output tensor 'indices': indices[j] contains the index of the first occurrence of Y[j] in input X. 
+  The third optional output tensor 'inverse_indices': inverted_indices[j] contains the index of the occurrence of X[j] in the output Y. 
   The forth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
   
   Outputs are either sorted in ascending order or optionally in the order they occur in the input. 
@@ -10597,9 +10658,9 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>Y</tt> : T</dt>
 <dd>A 1-D tensor of the same type as 'X' containing all the unique values in 'X', either sorted or maintained in the same order they occur in the input 'X'</dd>
 <dt><tt>indices</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing indices of 'X' for each unique element in 'Y'</dd>
+<dd>A 1-D INT64 tensor containing corresponding input tensor indices for elements in 'Y'</dd>
 <dt><tt>inverse_indices</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing indices of 'Y' for each input element in 'X'</dd>
+<dd>A 1-D INT64 tensor containing corresponding output indices for elements in 'X'</dd>
 <dt><tt>counts</tt> : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing the the count of each element of 'Y' in the input 'X'</dd>
 </dl>
