@@ -1801,8 +1801,8 @@ Otherwise the input tensor is flattened and unique values of the flattened tenso
 
 This operator returns the unique elements of the input tensor and three optional outputs. 
 The first output tensor 'Y' contains all unique values or subtensors of the input. 
-The second optional output tensor 'indices' contains indices of the the unique elements in input. 
-The third optional output tensor 'inverse_indices' contains indices of input elements in 'Y'. 
+The second optional output tensor 'indices': indices[j] contains the index of the first occurrence of Y[j] in input X. 
+The third optional output tensor 'inverse_indices': inverted_indices[j] contains the index of the occurrence of X[j] in the output Y. 
 The forth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
 
 Outputs are either sorted in ascending order or optionally in the order they occur in the input. 
@@ -1854,14 +1854,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
-        .Output(0, "Y", "A 1-D tensor of the same type as 'X' " 
-                        "containing all the unique values in 'X', either sorted " 
+        .Output(0, "Y", "A 1-D tensor of the same type as 'X' "
+                        "containing all the unique values in 'X', either sorted "
                         "or maintained in the same order they occur in the input 'X'", "T")
         .Output(1, "indices", "A 1-D INT64 tensor " 
-                          "containing indices of 'X' for each unique element in 'Y'",
+                          "containing corresponding input tensor indices for elements in 'Y'",
                           "tensor(int64)")
         .Output(2, "inverse_indices", "A 1-D INT64 tensor "
-                          "containing indices of 'Y' for each input element in 'X'",
+                          "containing corresponding output indices for elements in 'X'",
                           "tensor(int64)")
         .Output(3, "counts", "A 1-D INT64 tensor containing the "
                              "the count of each element "
