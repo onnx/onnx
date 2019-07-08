@@ -17,6 +17,7 @@
   * <a href="#Atanh">Atanh</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
+  * <a href="#BitShift">BitShift</a>
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
@@ -29,6 +30,7 @@
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
   * <a href="#Cosh">Cosh</a>
+  * <a href="#CumSum">CumSum</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#DequantizeLinear">DequantizeLinear</a>
   * <a href="#Div">Div</a>
@@ -108,6 +110,7 @@
   * <a href="#Resize">Resize</a>
   * <a href="#ReverseSequence">ReverseSequence</a>
   * <a href="#RoiAlign">RoiAlign</a>
+  * <a href="#Round">Round</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
@@ -1043,7 +1046,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
@@ -1051,9 +1054,9 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -1625,6 +1628,226 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_epsilon')
+```
+
+</details>
+
+
+### <a name="BitShift"></a><a name="bitshift">**BitShift**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+   attribute "direction" is "RIGHT", this operator moves its binary representation toward
+   the right side so that the input value is effectively decreased. If the attribute "direction"
+   is "LEFT", bits of binary representation moves toward the left side, which results the
+   increase of its actual value. The input X is the tensor to be shifted and another input
+   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+   
+   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+   not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>left_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint8')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint8')
 ```
 
 </details>
@@ -2280,17 +2503,17 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each spatial axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -2451,17 +2674,17 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into. default is 1.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input 'w'.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs (2 - 4)
@@ -2504,7 +2727,7 @@ This version of the operator has been available since version 10 of the default 
 ```python
 
 x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
-x_zero_point = np.array([1]).astype(np.uint8)
+x_zero_point = np.uint8(1)
 w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
 
 y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
@@ -2539,11 +2762,11 @@ expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_wi
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
-    output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
+    output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
   
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
   
-    total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
+    total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
@@ -2557,9 +2780,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each spatial axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
@@ -2569,9 +2792,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -3010,6 +3233,187 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="CumSum"></a><a name="cumsum">**CumSum**</a>
+
+  Performs cumulative sum of the input elements along the given axis.
+  By default, it will do the sum inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+  
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 3, 6]
+  exclusive=1
+  output = [0, 1, 3]
+  exclusive=0
+  reverse=1
+  output = [6, 5, 3]
+  exclusive=1
+  reverse=1
+  output = [5, 3, 0]
+  ```
+   
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the sums in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> : T2</dt>
+<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cumsum_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y']
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 3., 6., 10., 15.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_1d_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    exclusive=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([0., 1., 3., 6., 10.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_exclusive')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_1d_reverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([15., 14., 12., 9., 5.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_1d_reverse_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([14., 12., 9., 5., 0.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse_exclusive')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_0')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_1')
+```
+
+</details>
+
+
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
 
   DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
@@ -3157,8 +3561,8 @@ node = onnx.helper.make_node('DequantizeLinear',
 
 # scalar zero point and scale
 x = np.array([0, 3, 128, 255]).astype(np.uint8)
-x_scale = np.array([2], dtype=np.float32)
-x_zero_point = np.array([128], dtype=np.uint8)
+x_scale = np.float32(2)
+x_zero_point = np.uint8(128)
 y = np.array([-256, -250, 0, 254], dtype=np.float32)
 
 expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
@@ -4467,7 +4871,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -4552,7 +4956,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -4584,7 +4988,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -6239,15 +6643,15 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
 <dd>p value of the Lp norm used to pool over the input data.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -6500,11 +6904,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
   
@@ -6514,12 +6918,12 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
    The output of each pooling window is maximum number of elements exclude pad.
    
@@ -6534,19 +6938,19 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>Dilation value along each axis of filter.</dd>
+<dd>Dilation value along each spatial axis of filter.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
 <dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -7111,9 +7515,9 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -8909,17 +9313,17 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into. default is 1.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input 'w'.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs (8 - 9)
@@ -8984,16 +9388,16 @@ x = np.array([[255, 174, 162, 25, 203, 168, 58],
     [127, 230, 21, 83, 41, 40, 134],
     [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
 
-x_scale = np.array([0.00369204697], dtype=np.float32)
-x_zero_point = np.array([132], dtype=np.uint8)
+x_scale = np.float32(0.00369204697)
+x_zero_point = np.uint8(132)
 
 w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
 
 w_scale = np.array([0.00172794575], dtype=np.float32)
 w_zero_point = np.array([255], dtype=np.uint8)
 
-y_scale = np.array([0.00162681262], dtype=np.float32)
-y_zero_point = np.array([123], dtype=np.uint8)
+y_scale = np.float32(0.00162681262)
+y_zero_point = np.uint8(123)
 
 output = np.array([[0, 81, 93, 230, 52, 87, 197],
     [240, 196, 18, 160, 126, 255, 191],
@@ -9184,8 +9588,8 @@ node = onnx.helper.make_node('QuantizeLinear',
     outputs=['y'],)
 
 x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
-y_scale = np.array([2], dtype=np.float32)
-y_zero_point = np.array([128], dtype=np.uint8)
+y_scale = np.float32(2)
+y_zero_point = np.uint8(128)
 y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
 
 expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
@@ -11792,6 +12196,73 @@ Y = np.array(
 )
 
 expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### <a name="Round"></a><a name="round">**Round**</a>
+
+  Round takes one input Tensor and rounds the values, element-wise, meaning
+  it finds the nearest integer for each value.
+  In case of halfs, the rule is to round them to the nearest even integer.
+  The output tensor has the same shape and type as the input.
+  
+  Examples:
+  ```
+  round([0.9]) = [1.0]
+  round([2.5]) = [2.0]
+  round([2.3]) = [2.0]
+  round([1.5]) = [2.0]
+  round([-4.5]) = [-4.0]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>round</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Round',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([0.1, 0.5, 0.9, 1.2, 1.5,
+            1.8, 2.3, 2.5, 2.7, -1.1,
+            -1.5, -1.9, -2.2, -2.5, -2.8]).astype(np.float32)
+y = np.array([0., 0., 1., 1., 2.,
+            2., 2., 2., 3., -1.,
+            -2., -2., -2., -2., -3.]).astype(np.float32)  # expected output
+expect(node, inputs=[x], outputs=[y],
+       name='test_round')
 ```
 
 </details>
