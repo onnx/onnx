@@ -4871,7 +4871,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -4956,7 +4956,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -4988,7 +4988,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
