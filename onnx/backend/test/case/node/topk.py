@@ -41,14 +41,14 @@ class TopK(Base):
 
     @staticmethod
     def export_top_k_smallest():  # type: () -> None
-        largest = 0
+        mode = 0
         sorted = 1
 
         node = onnx.helper.make_node(
             'TopK',
             inputs=['x', 'k'],
             outputs=['values', 'indices'],
-            largest=largest,
+            mode=mode,
             sorted=sorted
         )
         X = np.array([

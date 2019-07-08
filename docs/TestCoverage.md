@@ -8068,14 +8068,14 @@ expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
 <summary>top_k_smallest</summary>
 
 ```python
-largest = 0
+mode = 0
 sorted = 1
 
 node = onnx.helper.make_node(
     'TopK',
     inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    largest=largest,
+    mode=mode,
     sorted=sorted
 )
 X = np.array([
