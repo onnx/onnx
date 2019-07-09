@@ -18,6 +18,7 @@ class DeviceType(object):
     _Type = NewType('_Type', int)
     CPU = _Type(0)  # type: _Type
     CUDA = _Type(1)  # type: _Type
+    IPU = _Type(2)  # type: _Type
 
 
 class Device(object):
