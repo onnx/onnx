@@ -1692,8 +1692,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "epsilon")}},
           {{"G"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "num_groups")}},          
 
-          // Comments taken from https://arxiv.org/abs/1803.08494. 
-
           //N, C, H, W = x.shape
           {{"X_Shape"}, "Shape", {"input"}},
           {{"N"}, "Slice", {"X_Shape", "N_Start", "N_End"}},
