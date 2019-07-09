@@ -1794,18 +1794,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(1, "scale", "Scale tensor of shape (C).", "T")
         .Input(2, "B", "Bias tensor of shape (C).", "T")
         .Output(0, "Y", "The output tensor of the same shape as X", "T")
-        .Output(
-            1,
-            "mean",
-            "The running mean after the GroupNormalization operator.",
-            "T",
-            OpSchema::Optional)
-        .Output(
-            2,
-            "var",
-            "The running variance after the GroupNormalization operator.",
-            "T",
-            OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1817,21 +1805,19 @@ ONNX_OPERATOR_SET_SCHEMA(
         {
           FunctionBodyHelper::Const<float>("Exponent", 2.0f),
           FunctionBodyHelper::Const<float>("EPS", 0.001f),
-          FunctionBodyHelper::Const<float>("G", 2.0f),
-          FunctionBodyHelper::Const<int>("N_Start", 0),
-          FunctionBodyHelper::Const<int>("N_End", 1),
-          FunctionBodyHelper::Const<int>("C_Start", 1),
-          FunctionBodyHelper::Const<int>("C_End", 2),
-          FunctionBodyHelper::Const<int>("H_W_Start", 2),
-          FunctionBodyHelper::Const<int>("H_W_End", 4),
-
+          FunctionBodyHelper::Const<int64_t>("G", {2}),
+          FunctionBodyHelper::Const<int64_t>("N_Start", 0),
+          FunctionBodyHelper::Const<int64_t>("N_End", 1),
+          FunctionBodyHelper::Const<int64_t>("C_Start", 1),
+          FunctionBodyHelper::Const<int64_t>("C_End", 2),
+          FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
+          FunctionBodyHelper::Const<int64_t>("H_W_End", 4),
 
           //N, C, H, W = x.shape
           {{"X_Shape"}, "Shape", {"X"}},
           {{"N"}, "Slice", {"X_Shape", "N_Start", "N_End"}},
           {{"C"}, "Slice", {"X_Shape", "C_Start", "C_End"}},
           {{"H_W"}, "Slice", {"X_Shape", "H_W_Start", "H_W_End"}},
-          
 
           //x = tf.reshape(x, [N, G, C // G, H, W])
           {{"C/G"}, "Div", {"C", "G"}},
