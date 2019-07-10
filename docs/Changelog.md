@@ -5,37 +5,6 @@
 
 # ai.onnx (default)
 ## Version 1 of the default ONNX operator set
-### <a name="ATen-1"></a>**ATen-1**</a>
-
-  Experimental allowing ATen operations to be accessed directly from Caffe2
-  to allow for quick prototyping when ONNX is missing standard versions of
-  and op
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>input</tt> (variadic) : T</dt>
-<dd>Arbitrary input</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>output</tt> (variadic) : T</dt>
-<dd>Arbitrary output</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
 ### <a name="Abs-1"></a>**Abs-1**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
@@ -126,46 +95,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>C</tt> : T</dt>
 <dd>Result, has same dimensions and type as A</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Affine-1"></a>**Affine-1**</a>
-
-  Affine takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the affine function, y = alpha * x + beta,
-  is applied to the tensor elementwise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float (default is 0.0)</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -337,13 +266,13 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -449,7 +378,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>to</tt> : string (required)</dt>
-<dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
 #### Inputs
@@ -623,69 +552,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ConstantFill-1"></a>**ConstantFill-1**</a>
-
-  The operator fills the elements of the output tensor with a constant value
-  specified by the 'value' attribute.
-  
-  The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message. If the 'dtype' attribute is not provided, the data type of
-  'value' is used.
-  
-  The output tensor shape is specified by the 'shape' attribute. If the number of
-  input is 1, the shape will be identical to that of the input at run time with
-  optional additional dimensions appended at the end as specified by 'extra_shape'
-  attribute. In that case the 'shape' attribute should not be set.
-  
-  If input_as_shape is set to true, then the input should be a 1D tensor
-  containing the desired output shape (the dimensions specified in extra_shape
-  will also be appended)
-  
-  NOTE: Currently, it supports data type of float, int32, int64, and bool.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>dtype</tt> : int (default is 1)</dt>
-<dd>The data type for the elements of the output tensor.Strictly must be one of the types from DataType enum in TensorProto.</dd>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd>The additional dimensions appended at the end of the shape indicatedby the input blob.Cannot set the extra_shape argument when there is no input blob.</dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>The value for the elements of the output tensor.</dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>input</tt> (optional) : T1</dt>
-<dd>Input tensor (optional) to provide shape information.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T2</dt>
-<dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain input types to float, int32, int64, bool tensors.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain output types to float, int32, int64, bool tensors.</dd>
-</dl>
-
 ### <a name="Conv-1"></a>**Conv-1**</a>
 
   The convolution operator consumes an input tensor and a filter, and
@@ -699,17 +565,17 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each spatial axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -740,15 +606,15 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ConvTranspose-1"></a>**ConvTranspose-1**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output. 
+  and computes the output.
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
-    output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
+    output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
   
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
   
-    total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
+    total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
@@ -762,9 +628,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each spatial axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
 <dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
@@ -774,9 +640,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -795,46 +661,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, pad lengths and group count. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Crop-1"></a>**Crop-1**</a>
-
-  Crop and image to the specified spatial dimensions. If scale is given,
-  then optionally start the crop offset by the left/top border amounts.
-  If scale is not provided, crop the borders as provided.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>border</tt> : list of ints</dt>
-<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
-<dt><tt>scale</tt> : list of ints</dt>
-<dd>A 1-D values of (height, width).</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
 </dl>
 
 #### Type Constraints
@@ -1323,53 +1149,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="GRUUnit-1"></a>**GRUUnit-1**</a>
-
-  GRUUnit computes the activations of a standard GRU,
-  in a sequence-length aware fashion.
-  Concretely, given the (fused) inputs X (TxNxD), the previous hidden
-  state (NxD), and the sequence lengths (N), computes the GRU
-  activations, avoiding computation if the input is invalid (as in, the
-  value at X[t][n] >= seqLengths[n].
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>drop_states</tt> : int</dt>
-<dd>Bool to determine if hidden state is zeroes or passed along for timesteps past the given sequence_length.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>hidden_prev</tt> : T</dt>
-<dd>The previous GRU hidden state.</dd>
-<dt><tt>gates</tt> : T</dt>
-<dd>Unactivated gate outputs from forget, update, and output gates, pre-activation.</dd>
-<dt><tt>seq_lengths</tt> : T</dt>
-<dd>Array of sequence lengths.  len(seq_lengths) should equal batch size N.</dd>
-<dt><tt>t</tt> : T</dt>
-<dd>The timestep for this operation.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>hidden</tt> : T</dt>
-<dd>The new GRU hidden state calculated by this op.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Gather-1"></a>**Gather-1**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
@@ -1504,46 +1283,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GivenTensorFill-1"></a>**GivenTensorFill-1**</a>
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd></dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>values</tt> : list of floats</dt>
-<dd></dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>shape</tt> (optional) : T</dt>
-<dd>The shape of filled tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>The filled tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="GlobalAveragePool-1"></a>**GlobalAveragePool-1**</a>
 
   GlobalAveragePool consumes an input tensor X and applies average pooling across
@@ -1565,7 +1304,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -1634,7 +1373,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -1850,45 +1589,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
-</dl>
-
-### <a name="ImageScaler-1"></a>**ImageScaler-1**</a>
-
-  Scale and bias the input image. Bias values are stored in
-  the same ordering as the image pixel format.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>bias</tt> : list of floats</dt>
-<dd>Bias applied to each channel, same size as C.</dd>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="InstanceNormalization-1"></a>**InstanceNormalization-1**</a>
@@ -2441,10 +2141,10 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs (3 - &#8734;)
 
 <dl>
-<dt><tt>M</tt> : I</dt>
-<dd>A maximum trip-count for the loop specified at runtime. Optional. pass empty string to skip.</dd>
-<dt><tt>cond</tt> : B</dt>
-<dd>A boolean termination condition. Pass empty string to skip.</dd>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
 <dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
 <dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
 </dl>
@@ -2461,10 +2161,10 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
-<dt><tt>I</tt> : int64</dt>
-<dd>Only int64</dd>
-<dt><tt>B</tt> : bool</dt>
-<dd>Only bool</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
 ### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
@@ -2654,13 +2354,13 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -3074,46 +2774,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ParametricSoftplus-1"></a>**ParametricSoftplus-1**</a>
-
-  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
-  the tensor elementwise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Pow-1"></a>**Pow-1**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
@@ -3344,11 +3004,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomNormalLike-1"></a>**RandomNormalLike-1**</a>
 
-  Generate a tensor with random values drawn from a normal distribution. 
-  The shape of the output tensor is copied from the shape of the input tensor, 
+  Generate a tensor with random values drawn from a normal distribution.
+  The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the normal distribution are specified by `mean` and `scale`.
   
-  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message, and be valid as an output type.
 
@@ -3439,11 +3099,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomUniformLike-1"></a>**RandomUniformLike-1**</a>
 
-  Generate a tensor with random values drawn from a uniform distribution. 
-  The shape of the output tensor is copied from the shape of the input tensor, 
+  Generate a tensor with random values drawn from a uniform distribution.
+  The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the uniform distribution are specified by `low` and `high`.
   
-  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
 
@@ -4036,83 +3696,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Scale-1"></a>**Scale-1**</a>
-
-  Scale takes one input data (Tensor<float>) and produces one output data
-  (Tensor<float>) whose value is the input data tensor scaled element-wise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input data to be scaled</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output data after scaling</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="ScaledTanh-1"></a>**ScaledTanh-1**</a>
-
-  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x).
-      
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Scaling value</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Scaling value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Selu-1"></a>**Selu-1**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
@@ -4570,7 +4153,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>List of positive integers, indicate the dimensions to squeeze.</dd>
+<dd>List of non-negative integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
 #### Inputs
@@ -4728,44 +4311,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ThresholdedRelu-1"></a>**ThresholdedRelu-1**</a>
-
-  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
-  is applied to the tensor elementwise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Threshold value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Tile-1"></a>**Tile-1**</a>
 
   Repeat the elements of a tensor along an axis.
@@ -4810,7 +4355,6 @@ This version of the operator has been available since version 1 of the default O
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
@@ -4906,7 +4450,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of positive integers, indicate the dimensions to be inserted</dd>
+<dd>List of non-negative integers, indicate the dimensions to be inserted</dd>
 </dl>
 
 #### Inputs
@@ -4955,8 +4499,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -5065,7 +4608,7 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -5091,15 +4634,15 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
 <dd>p value of the Lp norm used to pool over the input data.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -5598,7 +5141,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>to</tt> : int (required)</dt>
-<dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
 #### Inputs
@@ -6826,15 +6369,15 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
 <dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -6861,12 +6404,12 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="BatchNormalization-7"></a>**BatchNormalization-7**</a>
 
   Carries out batch normalization as described in the paper
-  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  there are multiple cases for the number of outputs, which we list below:
-  
-  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode)
-      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+      https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+      there are multiple cases for the number of outputs, which we list below:
+      
+      Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+      Output case #2: Y (test mode)
+          This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
@@ -8042,15 +7585,15 @@ This version of the operator has been available since version 8 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
 <dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -8427,6 +7970,125 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="BatchNormalization-9"></a>**BatchNormalization-9**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  there are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+  Output case #2: Y (test mode)
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Bias tensor of shape (C).</dd>
+<dt><tt>mean</tt> : T</dt>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
+<dt><tt>var</tt> : T</dt>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>mean</tt> (optional) : T</dt>
+<dd>The running mean after the BatchNormalization operator.</dd>
+<dt><tt>var</tt> (optional) : T</dt>
+<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
+<dt><tt>saved_var</tt> (optional) : T</dt>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Cast-9"></a>**Cast-9**</a>
+
+  The operator casts the elements of a given input tensor to a data type
+  specified by the 'to' argument and returns an output tensor of the same size in
+  the converted type. The 'to' argument must be one of the data types specified
+  in the 'DataType' enum field in the TensorProto message.
+  
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+  result 100. There are some string literals reserved for special floating-point values;
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+  Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+  this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+  to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+  
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to be cast.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
 ### <a name="Compress-9"></a>**Compress-9**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
@@ -8502,17 +8164,9 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="ConstantLike-9"></a>**ConstantLike-9**</a>
+### <a name="ConstantOfShape-9"></a>**ConstantOfShape-9**</a>
 
-  Generate a tensor with specific constant value. The value can be specified by the 'value' 
-  attribute. The shape of the output tensor is the same as the input tensor, if the input 
-  tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
-  the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
-  argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
-  tensor is also not specified, then the type defaults to 'float'.
-  
-  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message and be valid as an output type.
+  Generate a tensor with given value and shape.
 
 #### Version
 
@@ -8521,35 +8175,31 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also not specified, then output tensor type defaults to 'float'.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>(Optional) The shape of the output tensor. If input tensor T1 is provided, then 'shape' attribute is ignored and the output follows the shape of the input. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>(Optional) The value for the elements of the output tensor.</dd>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
 </dl>
 
-#### Inputs (0 - 1)
+#### Inputs
 
 <dl>
-<dt><tt>input</tt> (optional) : T1</dt>
-<dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T2</dt>
-<dd>Output tensor, same shape as input tensor T1.</dd>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain output types. Strings and complex are not supported.</dd>
+<dd>Constrain output types to be numerics.</dd>
 </dl>
 
 ### <a name="Cosh-9"></a>**Cosh-9**</a>
@@ -8579,73 +8229,6 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="DynamicSlice-9"></a>**DynamicSlice-9**</a>
-
-  Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `axes`, `starts` and `ends` inputs to specify the start and end
-  dimension for each axis in the list of axes, it uses this information to
-  slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
-  dimension. If the value passed to start or end is larger than the `n` (the
-  number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
-  Example 1:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    axes = [0, 1]
-    starts = [1, 0]
-    ends = [2, 3]
-    result = [
-        [5, 6, 7],
-    ]
-  Example 2:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    starts = [0, 1]
-    ends = [-1, 1000]
-    result = [
-        [2, 3, 4],
-    ]
-
-#### Version
-
-This version of the operator has been available since version 9 of the default ONNX operator set.
-
-#### Inputs (3 - 4)
-
-<dl>
-<dt><tt>data</tt> : T</dt>
-<dd>Tensor of data to extract slices from.</dd>
-<dt><tt>starts</tt> : Tind</dt>
-<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
-<dt><tt>ends</tt> : Tind</dt>
-<dd>1-D tensor of ending indices (exclusive) of corresponding axis in axes</dd>
-<dt><tt>axes</tt> (optional) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Sliced data tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
 </dl>
 
 ### <a name="Erf-9"></a>**Erf-9**</a>
@@ -8679,12 +8262,11 @@ This version of the operator has been available since version 9 of the default O
 
 ### <a name="EyeLike-9"></a>**EyeLike-9**</a>
 
-  Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D 
-  tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the 
-  same as the input tensor. The data type can be specified by the 'dtype' argument. If 
-  'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal 
+  Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
+  tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
+  same as the input tensor. The data type can be specified by the 'dtype' argument. If
+  'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal
   is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
-  
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
 
@@ -8850,7 +8432,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -8917,7 +8499,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -8984,9 +8566,9 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -9014,6 +8596,79 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
+</dl>
+
+### <a name="MeanVarianceNormalization-9"></a>**MeanVarianceNormalization-9**</a>
+
+  A MeanVarianceNormalization Function: Perform mean variance normalization
+        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+### <a name="NonZero-9"></a>**NonZero-9**</a>
+
+  Returns the indices of the elements that are non-zero
+      (in row-major order - by dimension).
+      NonZero behaves similar to numpy.nonzero:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>output (always 2D tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
 </dl>
 
 ### <a name="OneHot-9"></a>**OneHot-9**</a>
@@ -9128,6 +8783,9 @@ This version of the operator has been available since version 9 of the default O
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
   
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+  
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
   
@@ -9142,10 +8800,15 @@ This version of the operator has been available since version 9 of the default O
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
   
-  The optional attribute axes specifies the axis to be scanned for each scan_input.
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+  
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
   
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -9157,7 +8820,7 @@ This version of the operator has been available since version 9 of the default O
       Scan <
           num_scan_inputs = m,
           body = loop-body,
-          axes = [axis_1, ..., axis_m]
+          scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
   
   is equivalent to the following pseudo-code:
@@ -9228,14 +8891,16 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>scan_input_directions</tt> : list of ints</dt>
 <dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output.</dd>
 <dt><tt>scan_output_directions</tt> : list of ints</dt>
 <dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>
@@ -9337,6 +9002,47 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain indices to integer types</dd>
 </dl>
 
+### <a name="Shrink-9"></a>**Shrink-9**</a>
+
+  Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+  having same datatype and shape with input. It has two attributes, lambd and
+  bias. The formula of this operator is: If x < -lambd, y = x + bias;
+  If x > lambd, y = x - bias; Otherwise, y = 0.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bias</tt> : float (default is 0.0)</dt>
+<dd>The bias value added to output. Default is 0.</dd>
+<dt><tt>lambd</tt> : float (default is 0.5)</dt>
+<dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+</dl>
+
 ### <a name="Sign-9"></a>**Sign-9**</a>
 
   Calculate the sign of the given input tensor element-wise.
@@ -9396,6 +9102,86 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="TfIdfVectorizer-9"></a>**TfIdfVectorizer-9**</a>
+
+  This transform extracts n-grams from the input sequence and save them as a vector. Input can
+  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
+  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
+  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
+  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
+  
+  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
+  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
+  If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
+  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2.
+  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
+  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
+  indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
+  
+  The output vector (denoted by Y) stores the count of each n-gram;
+  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
+  between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
+  ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
+  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
+  Note that we may consider all skips up to S when generating the n-grams.
+  
+  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
+  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
+  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
+  
+  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
+  If pool_strings is set, the input must be a string tensor.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>max_gram_length</tt> : int (required)</dt>
+<dd>Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.</dd>
+<dt><tt>max_skip_count</tt> : int (required)</dt>
+<dd>Maximum number of items (integers/strings) to be skipped when constructing an n-gram from X. If max_skip_count=1, min_gram_length=2, max_gram_length=3, this operator may generate 2-grams with skip_count=0 and skip_count=1, and 3-grams with skip_count=0 and skip_count=1</dd>
+<dt><tt>min_gram_length</tt> : int (required)</dt>
+<dd>Minimum n-gram length. If this value is 2 and max_gram_length is 3, output may contain counts of 2-grams and 3-grams.</dd>
+<dt><tt>mode</tt> : string (required)</dt>
+<dd>The weighting criteria. It can be one of "TF" (term frequency), "IDF" (inverse document frequency), and "TFIDF" (the combination of TF and IDF)</dd>
+<dt><tt>ngram_counts</tt> : list of ints (required)</dt>
+<dd>The starting indexes of 1-grams, 2-grams, and so on in pool. It is useful when determining the boundary between two consecutive collections of n-grams. For example, if ngram_counts is [0, 17, 36], the first index (zero-based) of 1-gram/2-gram/3-gram in pool are 0/17/36. This format is essentially identical to CSR (or CSC) sparse matrix format, and we choose to use this due to its popularity.</dd>
+<dt><tt>ngram_indexes</tt> : list of ints (required)</dt>
+<dd>list of int64s (type: AttributeProto::INTS). This list is parallel to the specified 'pool_*' attribute. The i-th element in ngram_indexes indicate the coordinate of the i-th n-gram in the output tensor.</dd>
+<dt><tt>pool_int64s</tt> : list of ints</dt>
+<dd>List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
+<dt><tt>pool_strings</tt> : list of strings</dt>
+<dd>List of strings n-grams learned from the training set. Either this or pool_int64s attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
+<dt><tt>weights</tt> : list of floats</dt>
+<dd>list of floats. This attribute stores the weight of each n-gram in pool. The i-th element in weights is the weight of the i-th n-gram in pool. Its length equals to the size of ngram_indexes. By default, weights is an all-one tensor.This attribute is used when mode is "IDF" or "TFIDF" to scale the associated word counts.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input for n-gram extraction</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Ngram results</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
+<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>1-D tensor of floats</dd>
+</dl>
+
 ### <a name="Upsample-9"></a>**Upsample-9**</a>
 
   Upsample the input tensor.
@@ -9434,5 +9220,1373 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+</dl>
+
+### <a name="Where-9"></a>**Where-9**</a>
+
+  Return elements, either from X or Y, depending on condition
+      (with Numpy-style broadcasting support).
+      Where behaves like numpy.where with three parameters:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>condition</tt> : B</dt>
+<dd>When True (nonzero), yield X, otherwise yield Y</dd>
+<dt><tt>X</tt> : T</dt>
+<dd>values selected at indices where condition is True</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>values selected at indices where condition is False</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of shape equal to the broadcasted shape of condition, X, and Y.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain to boolean tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+## Version 10 of the default ONNX operator set
+### <a name="AveragePool-10"></a>**AveragePool-10**</a>
+
+  AveragePool consumes an input tensor X and applies average pooling across
+   the tensor according to kernel sizes, stride sizes, and pad lengths.
+   average pooling consisting of computing the average on all values of a
+   subset of the input tensor according to the kernel size and downsampling the
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
+  
+   ```
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
+   
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>count_include_pad</tt> : int (default is 0)</dt>
+<dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="ConvInteger-10"></a>**ConvInteger-10**</a>
+
+  The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
+  and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>number of groups input channels and output channels are divided into. default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input 'w'.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each axis.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>w</tt> : T2</dt>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
+<dt><tt>x_zero_point</tt> (optional) : T1</dt>
+<dd>Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>w_zero_point</tt> (optional) : T2</dt>
+<dd>Scale tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input x and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input w and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int32)</dt>
+<dd>Constrain output y data type to 32-bit integer tensor.</dd>
+</dl>
+
+### <a name="DequantizeLinear-10"></a>**DequantizeLinear-10**</a>
+
+  The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
+  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+  'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
+  there's no zero point (zero point is supposed to be 0).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>N-D quantized input tensor to be de-quantized.</dd>
+<dt><tt>x_scale</tt> : tensor(float)</dt>
+<dd>Scale for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>x_zero_point</tt> (optional) : T</dt>
+<dd>Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization. It's optional. 0 is the default value when it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : tensor(float)</dt>
+<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32)</dt>
+<dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
+</dl>
+
+### <a name="Dropout-10"></a>**Dropout-10**</a>
+
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
+  copy of the input. Note that our implementation of Dropout does scaling in
+  the training phase, so during testing nothing needs to be done.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>ratio</tt> : float (default is 0.5)</dt>
+<dd>The ratio of random dropout</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+<dt><tt>mask</tt> (optional) : T1</dt>
+<dd>The output mask.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output mask types to boolean tensors.</dd>
+</dl>
+
+### <a name="IsInf-10"></a>**IsInf-10**</a>
+
+  Map infinity to true and other values to false.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>detect_negative</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map negative infinity to true. Default to 1 so that negative infinity induces true. Set this attribute to 0 if negative infinity should be mapped to false.</dd>
+<dt><tt>detect_positive</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map positive infinity to true. Default to 1 so that positive infinity induces true. Set this attribute to 0 if positive infinity should be mapped to false.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
+### <a name="MatMulInteger-10"></a>**MatMulInteger-10**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>A</tt> : T1</dt>
+<dd>N-dimensional matrix A</dd>
+<dt><tt>B</tt> : T2</dt>
+<dd>N-dimensional matrix B</dd>
+<dt><tt>a_zero_point</tt> (optional) : T1</dt>
+<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
+<dt><tt>b_zero_point</tt> (optional) : T2</dt>
+<dd>Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T3</dt>
+<dd>Matrix multiply results from A * B</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input A data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input B data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int32)</dt>
+<dd>Constrain output Y data type as 32-bit integer tensor.</dd>
+</dl>
+
+### <a name="MaxPool-10"></a>**MaxPool-10**</a>
+
+  MaxPool consumes an input tensor X and applies max pooling across
+   the tensor according to kernel sizes, stride sizes, and pad lengths.
+   max pooling consisting of computing the max on all values of a
+   subset of the input tensor according to the kernel size and downsampling the
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
+  
+   ```
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+   ```
+   The output of each pooling window is maximum number of elements exclude pad.
+   
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of filter.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>storage_order</tt> : int (default is 0)</dt>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+<dt><tt>Indices</tt> (optional) : I</dt>
+<dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+### <a name="Mod-10"></a>**Mod-10**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+      The sign of the remainder is the same as that of the Divisor.
+    
+      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+      If the input type is floating point, then `fmod` attribute must be set to 1.
+    
+      In case of dividend being zero, the results will be platform dependent.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+### <a name="NonMaxSuppression-10"></a>**NonMaxSuppression-10**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+  Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0.0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box cornersand the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models.1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
+
+### <a name="QLinearConv-10"></a>**QLinearConv-10**</a>
+
+  The convolution operator consumes a quantized input tensor, its scale and zero point,
+  a quantized filter, its scale and zero point, and output's scale and zero point,
+  and computes the quantized output. Each scale and zero-point pair must have same shape.
+  It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
+  Each input or output and its related zero point must have same type.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>number of groups input channels and output channels are divided into. default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input 'w'.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs (8 - 9)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>x_scale</tt> : tensor(float)</dt>
+<dd>Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>x_zero_point</tt> : T1</dt>
+<dd>Zero point tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>w</tt> : T2</dt>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
+<dt><tt>w_scale</tt> : tensor(float)</dt>
+<dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
+<dt><tt>w_zero_point</tt> : T2</dt>
+<dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> : T3</dt>
+<dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>B</tt> (optional) : T4</dt>
+<dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain filter type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain output type to 8-bit integer tensor.</dd>
+<dt><tt>T4</tt> : tensor(int32)</dt>
+<dd>Constrain bias type to 32-bit integer tensor.</dd>
+</dl>
+
+### <a name="QLinearMatMul-10"></a>**QLinearMatMul-10**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
+  The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
+  Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
+  They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
+  the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
+  and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+  Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>a</tt> : T1</dt>
+<dd>N-dimensional quantized matrix a</dd>
+<dt><tt>a_scale</tt> : tensor(float)</dt>
+<dd>scale of quantized input a</dd>
+<dt><tt>a_zero_point</tt> : T1</dt>
+<dd>zero point of quantized input a</dd>
+<dt><tt>b</tt> : T2</dt>
+<dd>N-dimensional quantized matrix b</dd>
+<dt><tt>b_scale</tt> : tensor(float)</dt>
+<dd>scale of quantized input b</dd>
+<dt><tt>b_zero_point</tt> : T2</dt>
+<dd>zero point of quantized input b</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>scale of quantized output y</dd>
+<dt><tt>y_zero_point</tt> : T3</dt>
+<dd>zero point of quantized output y</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>Quantized matrix multiply results from a * b</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
+</dl>
+
+### <a name="QuantizeLinear-10"></a>**QuantizeLinear-10**</a>
+
+  The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
+  The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+  For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>N-D full precision Input tensor to be quantized.</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> (optional) : T2</dt>
+<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is 0 if it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
+<dd>Constrain 'x' to float or int32 tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
+</dl>
+
+### <a name="Resize-10"></a>**Resize-10**</a>
+
+  Resize the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is nearest)</dt>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>N-D tensor</dd>
+<dt><tt>scales</tt> : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+</dl>
+
+### <a name="ReverseSequence-10"></a>**ReverseSequence-10**</a>
+
+  Reverse batch of sequences having different lengths specified by `sequence_lens`.
+  
+  For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+  and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+  sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+  
+  Example 1:
+    input = [[0.0, 4.0, 8.0,  12.0],
+             [1.0, 5.0, 9.0,  13.0],
+             [2.0, 6.0, 10.0, 14.0],
+             [3.0, 7.0, 11.0, 15.0]]
+    sequence_lens = [4, 3, 2, 1]
+    time_axis = 0
+    batch_axis = 1
+  
+    output = [[3.0, 6.0, 9.0,  12.0],
+              [2.0, 5.0, 8.0,  13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]]
+  
+  Example 2:
+    input = [[0.0,  1.0,  2.0,  3.0 ],
+             [4.0,  5.0,  6.0,  7.0 ],
+             [8.0,  9.0,  10.0, 11.0],
+             [12.0, 13.0, 14.0, 15.0]]
+    sequence_lens = [1, 2, 3, 4]
+    time_axis = 1
+    batch_axis = 0
+  
+    output = [[0.0,  1.0,  2.0,  3.0 ],
+              [5.0,  4.0,  6.0,  7.0 ],
+              [10.0, 9.0,  8.0,  11.0],
+              [15.0, 14.0, 13.0, 12.0]]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_axis</tt> : int (default is 1)</dt>
+<dd>(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.</dd>
+<dt><tt>time_axis</tt> : int (default is 0)</dt>
+<dd>(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 2.</dd>
+<dt><tt>sequence_lens</tt> : tensor(int64)</dt>
+<dd>Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape of input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+### <a name="RoiAlign-10"></a>**RoiAlign-10**</a>
+
+  Region of Interest (RoI) align operation described in the
+  [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
+  RoiAlign consumes an input tensor X and region of interests (rois)
+  to apply pooling across each RoI; it produces a 4-D tensor of shape
+  (num_rois, C, output_height, output_width).
+  
+  RoiAlign is proposed to avoid the misalignment by removing
+  quantizations while converting from original image into feature
+  map and from feature map into RoI feature; in each ROI bin,
+  the value of the sampled locations are computed directly
+  through bilinear interpolation.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is avg)</dt>
+<dd>The pooling method. Two modes are supported: 'avg' and 'max'. Default is 'avg'.</dd>
+<dt><tt>output_height</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's height.</dd>
+<dt><tt>output_width</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's width.</dd>
+<dt><tt>sampling_ratio</tt> : int (default is 0)</dt>
+<dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / output_width), and likewise for height). Default is 0.</dd>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T1</dt>
+<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[x1, y1, x2, y2], ...]. The RoIs' coordinates are in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
+<dt><tt>batch_indices</tt> : T2</dt>
+<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, output_height, output_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain types to int tensors.</dd>
+</dl>
+
+### <a name="Slice-10"></a>**Slice-10**</a>
+
+  Produces a slice of the input tensor along multiple axes. Similar to numpy:
+  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+  Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+  dimension and step for each axis in the list of axes, it uses this information to
+  slice the input `data` tensor. If a negative value is passed for any of the
+  start or end indices, it represent number of elements before the end of that
+  dimension. If the value passed to start or end is larger than the `n` (the
+  number of elements in this dimension), it represents `n`. For slicing to the
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If a negative value is passed for step, it represents slicing backward.
+  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
+  Example 1:
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    axes = [0, 1]
+    starts = [1, 0]
+    ends = [2, 3]
+    steps = [1, 2]
+    result = [
+        [5, 7],
+    ]
+  Example 2:
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    starts = [0, 1]
+    ends = [-1, 1000]
+    result = [
+        [2, 3, 4],
+    ]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
+<dt><tt>axes</tt> (optional) : Tind</dt>
+<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
+<dt><tt>steps</tt> (optional) : Tind</dt>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Sliced data tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="StringNormalizer-10"></a>**StringNormalizer-10**</a>
+
+  StringNormalization performs string operations for basic cleaning.
+  This operator has only one input (denoted by X) and only one output
+  (denoted by Y). This operator first examines the elements in the X,
+  and removes elements specified in "stopwords" attribute.
+  After removing stop words, the intermediate result can be further lowercased,
+  uppercased, or just returned depending the "case_change_action" attribute.
+  This operator only accepts [C]- and [1, C]-tensor.
+  If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+  if input shape is [C] and shape [1, 1] if input shape is [1, C].
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>case_change_action</tt> : string (default is NONE)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE". Default is "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (default is 0)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive. Default is false</dd>
+<dt><tt>locale</tt> : string</dt>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
+<dt><tt>stopwords</tt> : list of strings</dt>
+<dd>List of stop words. If not set, no word would be removed from X.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to normalize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Normalized strings</dd>
+</dl>
+
+#### Type Constraints
+
+
+### <a name="ThresholdedRelu-10"></a>**ThresholdedRelu-10**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="TopK-10"></a>**TopK-10**</a>
+
+  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+     
+  Given two equivalent values, this operator uses the indices along the axis  as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Dimension on which to do the sort.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : I</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+### <a name="Upsample-10"></a>**Upsample-10** (deprecated)</a>
+
+  Upsample the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been deprecated since version 10 of the default ONNX operator set.
+
+## Version 11 of the default ONNX operator set
+### <a name="BitShift-11"></a>**BitShift-11**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+   attribute "direction" is "RIGHT", this operator moves its binary representation toward
+   the right side so that the input value is effectively decreased. If the attribute "direction"
+   is "LEFT", bits of binary representation moves toward the left side, which results the
+   increase of its actual value. The input X is the tensor to be shifted and another input
+   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+   
+   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+   not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
+### <a name="CumSum-11"></a>**CumSum-11**</a>
+
+  Performs cumulative sum of the input elements along the given axis.
+  By default, it will do the sum inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+  
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 3, 6]
+  exclusive=1
+  output = [0, 1, 3]
+  exclusive=0
+  reverse=1
+  output = [6, 5, 3]
+  exclusive=1
+  reverse=1
+  output = [5, 3, 0]
+  ```
+   
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the sums in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> : T2</dt>
+<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+### <a name="Loop-11"></a>**Loop-11**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+  
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first iteration and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+  
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+  
+      Operator inputs defined as (max_trip_count, condition_var).
+  
+      input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+  
+      input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+  
+      input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+  
+  
+  *Sample usage - cond as well as trip count*
+  
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+  
+      graph body-net (
+        %i[INT32, scalar]
+        %keepgoing[BOOL, scalar]
+        %b[INT32, scalar]
+      ) {
+        %my_local = Add(%a, %b)
+        %b_out = Sub(%a, %b)
+        %keepgoing_out = Greater(%my_local, %b_out)
+        %user_defined_vals = Add(%b, %b)
+        return %keepgoing_out, %b_out, %user_defined_vals
+      }
+  
+  *Sample equivalent C code*
+  
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+  
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        for (int i=0; i < max_trip_count && keepgoing; ++i) {
+          /* User-defined code (loop body) */
+          int my_local = a + b; // Reading values in the enclosing scope is fine
+          b = a - b; // writes fine if we specify b as a loop-carried dependency
+          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
+          user_defined_vals[i] = b + b;
+          /* End user-defined code */
+        }
+        // my_local = 123; // Can't do this. my_local was defined in the the body
+  
+        // These below values are live-out from the loop and therefore accessible
+        b_out; user_defined_vals; keepgoing_out;
+      }
+  
+  There are several things of note in this code snippet:
+  
+  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any variables which you wish to make available in the enclosing scope (i.e.
+     the variables b and keepgoing) must be declared as either loop-carried
+     dependencies (both at the op inputs and output and at the body net input and
+     output) or scan_outputs.
+  3) Values created in the body cannot be accessed in the enclosing scope.
+  
+  Note that the semantics of this op support "diagonal" or "wavefront" execution.
+  (See Step 3 here for an example:
+  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
+  Frontends should emit multi-layer RNNs as a series of While operators (with
+  time being the inner looping dimension), with each successive layer consuming
+  the scan_outputs from the previous layer, possibly going through several
+  point-wise operators (e.g. dropout, residual connections, linear layer).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
+</dl>
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
+<dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
+<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final N loop carried dependency values then K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
+</dl>
+
+### <a name="Round-11"></a>**Round-11**</a>
+
+  Round takes one input Tensor and rounds the values, element-wise, meaning
+  it finds the nearest integer for each value.
+  In case of halfs, the rule is to round them to the nearest even integer.
+  The output tensor has the same shape and type as the input.
+  
+  Examples:
+  ```
+  round([0.9]) = [1.0]
+  round([2.5]) = [2.0]
+  round([2.3]) = [2.0]
+  round([1.5]) = [2.0]
+  round([-4.5]) = [-4.0]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 

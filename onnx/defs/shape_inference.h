@@ -223,6 +223,38 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
+inline void propagateElemTypeFromDtypeToOutput(
+    InferenceContext& ctx,
+    const int& data_type,
+    size_t outputIndex) {
+  auto attribute_tensor_datatype = data_type;
+  auto output_type = ctx.getOutputType(outputIndex);
+  if (output_type->value_case() == TypeProto::kTensorType ||
+      output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    output_type->mutable_tensor_type()->set_elem_type(
+        attribute_tensor_datatype);
+  } else {
+    // This is not expected to happen
+    fail_type_inference(
+        "Output ", outputIndex, " expected to have tensor type");
+  }
+}
+
+inline void propagateElemTypeFromDtypeToOutput(
+    InferenceContext& ctx,
+    const AttributeProto* attr,
+    size_t outputIndex) {
+  if (attr->type() != AttributeProto::TENSOR) {
+    fail_type_inference("Attribute expected to have tensor type");
+  }
+  if (attr->t().dims().size() != 1) {
+    fail_type_inference("Attribute expected to have a one-dim tensor");
+  }
+  auto attribute_tensor_datatype = attr->t().data_type();
+  propagateElemTypeFromDtypeToOutput(
+      ctx, attribute_tensor_datatype, outputIndex);
+}
+
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
@@ -505,51 +537,64 @@ inline void mergeInDimensionInfo(
 }
 
 /*
+Merge shape information from a source shape into a target shape.
+* merges each TensorShapeProto_Dimension separately.
+* prefer values over params.
+* If both have values, values must match.
+* prefer target param over source param if mismatched.
+* Fail if there are mismatches in number of dimensions or dimension values.
+*/
+inline void mergeInShapeInfo(
+    const TensorShapeProto& source,
+    TensorShapeProto& target) {
+  auto num_source_dims = source.dim_size();
+  auto num_target_dims = target.dim_size();
+  if (num_source_dims != num_target_dims) {
+    fail_shape_inference(
+        "Mismatch between number of source and target dimensions. Source=",
+        num_source_dims,
+        " Target=",
+        num_target_dims);
+  }
+
+  auto& source_dims = source.dim();
+  auto* target_dims = target.mutable_dim();
+
+  for (int i = 0, end = source_dims.size(); i < end; ++i) {
+    auto& source_dim = source_dims.Get(i);
+    auto& target_dim = *target_dims->Mutable(i);
+    mergeInDimensionInfo(source_dim, target_dim, i);
+  }
+}
+
+inline void mergeInShapeInfo(
+    const TensorShapeProto& source_shape,
+    TypeProto_Tensor& target_type) {
+  if (target_type.has_shape()) {
+    // merge with existing info.
+    mergeInShapeInfo(source_shape, *target_type.mutable_shape());
+  } else {
+    // copy to target
+    (*target_type.mutable_shape()) = source_shape;
+  }
+}
+
+/*
 Merge the shape information from two TypeProto_Tensor instances.
 Values are merged into target from source.
 If target has no shape information, copy from source.
 If source has no shape information, ignore source.
 If both have shape information:
- - merge each TensorShapeProto_Dimension separately.
- - Prefer values over params. If both have values, values must match.
- - Prefer target param over source param if mismatched.
+- merge each TensorShapeProto_Dimension separately.
+- Prefer values over params. If both have values, values must match.
+- Prefer target param over source param if mismatched.
 Fail if there are mismatches in number of dimensions or dimension values.
 */
 inline void mergeInShapeInfo(
     const TypeProto_Tensor& source,
     TypeProto_Tensor& target) {
-  bool source_has_shape = source.has_shape();
-  bool target_has_shape = target.has_shape();
-
-  if (target_has_shape) {
-    if (source_has_shape) {
-      // merge with existing info.
-      const auto& source_shape = source.shape();
-      auto* mutable_target_shape = target.mutable_shape();
-      auto num_source_dims = source_shape.dim_size();
-      auto num_target_dims = mutable_target_shape->dim_size();
-
-      if (num_source_dims != num_target_dims) {
-        fail_shape_inference(
-            "Mismatch between number of source and target dimensions. Source=",
-            num_source_dims,
-            " Target=",
-            num_target_dims);
-      }
-
-      auto& source_dims = source_shape.dim();
-      auto* target_dims = mutable_target_shape->mutable_dim();
-
-      for (int i = 0, end = source_dims.size(); i < end; ++i) {
-        auto& source_dim = source_dims.Get(i);
-        auto& target_dim = *target_dims->Mutable(i);
-        mergeInDimensionInfo(source_dim, target_dim, i);
-      }
-    }
-  } else if (source_has_shape) {
-    // copy to target
-    (*target.mutable_shape()) = source.shape();
-  }
+  if (source.has_shape())
+    mergeInShapeInfo(source.shape(), target);
 }
 
 // Return a copy of a type, with a specified dimension removed from its shape.

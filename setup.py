@@ -41,7 +41,7 @@ extras_require = {}
 # Global variables for controlling the build variant
 ################################################################################
 
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 
@@ -148,6 +148,7 @@ class cmake_build(setuptools.Command):
             os.makedirs(CMAKE_BUILD_DIR)
 
         with cd(CMAKE_BUILD_DIR):
+            build_type = 'Release'
             # configure
             cmake_args = [
                 CMAKE,
@@ -163,7 +164,8 @@ class cmake_build(setuptools.Command):
             if COVERAGE or DEBUG:
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
-                cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
+                build_type = 'Debug'
+            cmake_args.append('-DCMAKE_BUILD_TYPE=%s' % build_type)
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
@@ -191,6 +193,7 @@ class cmake_build(setuptools.Command):
 
             build_args = [CMAKE, '--build', os.curdir]
             if WINDOWS:
+                build_args.extend(['--config', build_type])
                 build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
             else:
                 build_args.extend(['--', '-j', str(self.jobs)])

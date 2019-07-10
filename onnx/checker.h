@@ -62,12 +62,12 @@ class CheckerContext final {
     return schema_registry_;
   }
 
-  void set_func_registry(const IFunctionBuilderRegistry* func_registry) {
-    func_registry_ = func_registry;
+  void set_model_dir(const std::string& model_dir) {
+    model_dir_ = model_dir;
   }
 
-  const IFunctionBuilderRegistry* get_func_registry() const {
-    return func_registry_;
+  std::string get_model_dir() const {
+    return model_dir_;
   }
 
   explicit CheckerContext() : ir_version_(-1) {}
@@ -77,12 +77,41 @@ class CheckerContext final {
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
-  const IFunctionBuilderRegistry* func_registry_ =
-      &FunctionBuilderRegistry::OnnxInstance();
+  std::string model_dir_;
 };
 
-struct LexicalScopeContext final {
+class LexicalScopeContext final {
+ public:
+  LexicalScopeContext() = default;
+
+  // Construct an instance with the lexical scope from the parent graph to allow
+  // lookup of names from that scope via this_or_ancestor_graph_has.
+  // The caller must ensure parent_context remains valid for the entire lifetime
+  // of the new instance. Alternatively, if that cannot be guaranteed, create an
+  // instance with the default constructor and populate output_names with the
+  // values from the parent scope so the values are copied instead.
+  LexicalScopeContext(const LexicalScopeContext& parent_context)
+      : parent_context_{&parent_context} {}
+
+  void add(const std::string& name) {
+    output_names.insert(name);
+  }
+
+  bool this_graph_has(const std::string& name) const {
+    return output_names.find(name) != output_names.cend();
+  }
+
+  bool this_or_ancestor_graph_has(const std::string& name) const {
+    return this_graph_has(name) ||
+        (parent_context_ && parent_context_->this_or_ancestor_graph_has(name));
+  }
+
+  // public for backwards compatibility. please prefer the public interface of
+  // this class over directly changing output_names
   std::unordered_set<std::string> output_names;
+
+ private:
+  const LexicalScopeContext* parent_context_{nullptr};
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
@@ -106,12 +135,7 @@ void check_function(
     const LexicalScopeContext&);
 
 void check_model(const ModelProto& model);
-
-void VerifyFunctionNode(
-    const NodeProto&,
-    const FunctionProto&,
-    const CheckerContext&,
-    const LexicalScopeContext&);
+void check_model(const std::string& model_path);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

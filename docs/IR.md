@@ -39,7 +39,7 @@ Nothing in this specification should be construed as advocating one implementati
 
 ## ONNX Versioning
 
-Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
+Versioning features in several places in ONNX -- the IR (Intermediate Representation) specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
 Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
@@ -156,7 +156,7 @@ Graphs have the following properties:
 |---|---|---|
 name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
-initializer|Tensor[]|A list of named tensor values, used to specify default values for some of the inputs of the graph. Each initializer value is associated with an input by name matching.
+initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value.
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
@@ -180,7 +180,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 All names MUST adhere to C identifier syntax rules.
 
-Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. 
+Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
 The namespaces are:
 
@@ -212,11 +212,17 @@ domain|string|The domain of the operator set that contains the operator named by
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
+A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, or a graph initializer, or as a node output is said to be a definition (site) and the occurrence of a name as a node input or as a graph output is said to be a use (site).
+
+A value name used in a graph must have a unique definition site, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
+
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
+ 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
+The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name MUST be distinct from the names from the outer scopes that are visible in the nested subgraph.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 

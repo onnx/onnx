@@ -61,8 +61,6 @@ For example, the `ModelProto.ir_version` property MUST be present in every model
 
 Because onnx.proto is expected to be consumed by multiple independent developers, changes to onnx.oroto SHOULD NOT break code that depends on generated language bindings (e.g., changing the type of an existing field).
 
-ISSUE: define type compatibility rules either here or under model versioning - probably here
-
 ## Operator versioning
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
@@ -93,6 +91,8 @@ operator id MUST be greater than any extant `op_version` for the
 > 2. Copy the old operator schema to an `old.cc` file, and
 > 3. Update the `SinceVersion` signifier to the new max version from
 >    step (1).
+> 4. Register the new operator in the corresponding `operator_sets`
+>    header file.
 
 ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
 
@@ -107,8 +107,6 @@ How ONNX implementations bind an operator declaration to specific implementation
 Model versioning is ultimately the domain of a given organization. Therefore, this section of the specification is not normative. It simply outlines a set of recommended practices.
 
 Model authors and applications/systems MAY elect to ignore the model versioning mechanism and policy rules. For models that will be shared across developers, teams, or organizations, model authors and applications/systems SHOULD adhere to the following version policies:
-
-ISSUE: the following is a strawman. I'm confident some of it is right and some is wrong. Either way, we need to make some calls and document it.  Also note that A LOT of this will likely apply to operators, as both operators and graphs have signatures AND can be versioned.
 
 ### Signature Changes
 
@@ -127,10 +125,6 @@ ISSUE: the following is a strawman. I'm confident some of it is right and some i
     possible in prior versions of the graph (typically by the presence of a new input
     or allowing a previously invalid input value).
 
-### IR version/Operator version dependency changes
-
-ISSUE: what's our policy when a model takes a dependency on new `IR_VERSION` change and/or new operator change?
-
 
 ### Accuracy or performance changes
 
@@ -145,3 +139,5 @@ ONNX version|File format version|Operator set version ai.onnx|Operator set versi
 1.1.2|3|6|1
 1.2|3|7|1
 1.3|3|8|1
+1.4.1|4|9|1
+1.5.0|5|10|1

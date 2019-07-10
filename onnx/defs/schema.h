@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #pragma once
@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <set>
 #include <string>
@@ -18,8 +19,10 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/common/common.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
+#include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -79,14 +82,15 @@ class OpSchema final {
  public:
   // Formal parameter options.
   enum FormalParameterOption : uint8_t {
-    // The input formal parameter is single and not optional.
-    // Number of this input is 1.
+    // The formal parameter is single and not optional.
+    // Number of supplied actual parameters must be 1.
     Single = 0,
-    // The input formal parameter is single and optional.
-    // Number of this input is 0 or 1.
+    // The formal parameter is single and optional.
+    // Number of supplied actual parameters may be 0 or 1.
     Optional = 1,
-    // The input formal parameter is variadic.
-    // Number of this input is [1, n].
+    // The formal parameter is variadic.
+    // Number of supplied actual parameters must be N or more, where
+    // the minimum value N is indicated separately (default value 1).
     Variadic = 2,
   };
 
@@ -103,14 +107,16 @@ class OpSchema final {
         std::string type_str,
         std::string description,
         FormalParameterOption param_option = Single,
-        bool is_homogeneous = true);
+        bool is_homogeneous = true,
+        int min_arity = 1);
 
     explicit FormalParameter(
         std::string name,
         std::string description,
         std::string type_str,
         FormalParameterOption param_option = Single,
-        bool is_homogeneous = true);
+        bool is_homogeneous = true,
+        int min_arity = 1);
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -129,6 +135,9 @@ class OpSchema final {
 
     // Get whether a variadic parameter requires all to be of same type
     bool GetIsHomogeneous() const;
+
+    // Get minimum arity. Applicable only in the Variadic case.
+    int GetMinArity() const;
 
    private:
     friend class OpSchema;
@@ -156,6 +165,9 @@ class OpSchema final {
     // For variadic parameters, a flag indicating if all parameters must be of
     // same type
     bool is_homogeneous_;
+
+    // Minimum number of parameters expected. Applicable only for Variadic.
+    int min_arity_;
   };
 
   enum class SupportType : uint8_t {
@@ -263,7 +275,7 @@ class OpSchema final {
 #ifndef __ONNX_NO_DOC_STRINGS
     SetDoc(std::string(doc));
 #else
-    doc;
+    ONNX_UNUSED_PARAMETER(doc);
 #endif
 
     return *this;
@@ -407,7 +419,8 @@ class OpSchema final {
       std::string description,
       std::string type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -416,7 +429,8 @@ class OpSchema final {
       const char* description,
       const char* type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   OpSchema& Output(
       int n,
@@ -424,7 +438,8 @@ class OpSchema final {
       std::string description,
       std::string type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -433,7 +448,8 @@ class OpSchema final {
       const char* description,
       const char* type_str,
       FormalParameterOption param_option = Single,
-      bool is_homogeneous = true);
+      bool is_homogeneous = true,
+      int min_arity = 1);
 
   OpSchema& TypeConstraint(
       std::string type_str,
@@ -558,6 +574,14 @@ class OpSchema final {
     return tensor_inference_function_ ? true : false;
   }
 
+  bool HasFunction() const {
+    return function_body_.node_size() > 0;
+  }
+
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+
+  const FunctionProto* GetFunction() const;
+
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
@@ -567,6 +591,9 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+
+  // Build function with information stored in opschema
+  void BuildFunction();
 
   std::string name_;
   std::string file_;
@@ -591,6 +618,7 @@ class OpSchema final {
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
+  FunctionProto function_body_;
 };
 
 // Map type to store operator schemas. The format is,
@@ -621,7 +649,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 9);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 11);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 
@@ -692,7 +720,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it its version is not"
+              << op_schema.line() << ", but it its version is not "
               << "in the inclusive range [" << lower_bound_incl << ", "
               << upper_bound_incl << "] (usually, this means you "
               << "bumped the operator version but "
@@ -700,7 +728,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << "in onnx/defs/schema.h)." << std::endl;
           fail_schema(err.str());
         }
-        m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
+
+        m[op_name][op_domain].insert(
+            std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {
         std::cerr << "Schema error: " << e.what() << std::endl;
@@ -769,7 +799,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * the macros defined such as ONNX_OPERATOR_SET_SCHEMA to register your
    * operator schema.
    *
-   * We wrap it inside a function to avoid the statia initialization order
+   * We wrap it inside a function to avoid the static initialization order
    * fiasco.
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
@@ -778,9 +808,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
-    for (auto x : map()) {
-      for (auto y : x.second) {
-        for (auto z : y.second) {
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
+        for (auto& z : y.second) {
           r.emplace_back(z.second);
         }
       }
@@ -790,8 +820,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static const std::vector<OpSchema> get_all_schemas() {
     std::vector<OpSchema> r;
-    for (auto x : map()) {
-      for (auto y : x.second) {
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
         auto& version2schema = y.second;
         r.emplace_back(version2schema.rbegin()->second);
       }
