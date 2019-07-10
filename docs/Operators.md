@@ -4946,8 +4946,8 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
 
-  Carries out instance normalization as described in the paper
-  https://arxiv.org/abs/1803.08494.
+  Carries out group normalization as described in the paper
+  https://arxiv.org/abs/1803.08494. 
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -4960,25 +4960,25 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>num_groups</tt> : int (required)</dt>
-<dd>The  value to use to avoid division by zero.</dd>
+<dd>The number of groups. It should be greater than 0 and less than or equal to C</dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>input</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W).</dd>
 <dt><tt>scale</tt> : T</dt>
-<dd>Scale tensor of shape (C).</dd>
+<dd>The input 1-dimensional scale tensor of size C.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Bias tensor of shape (C).</dd>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X</dd>
+<dt><tt>output</tt> : T</dt>
+<dd>The output tensor of the same shape as input</dd>
 </dl>
 
 #### Type Constraints
@@ -5015,18 +5015,6 @@ s = np.array([0, 1, 0, 1]).astype(np.float32)
 num_groups = 2
 eps = 1e-05
 
-#y = x * s + b
-'''
-y = np.array([[[[-0.5241, -0.1048], [-2.2014,  0.3145]],
-               [[ 1.4717,  1.4717], [ 3.3586,  1.4717]],
-               [[ 0.2236, -0.2236], [-1.1180,  1.5652]],
-               [[ 2.6770,  2.6770], [-0.0062, -0.6770]]],
-              [[[-0.2041, -0.2041], [ 0.6124,  0.2041]],
-               [[ 4.3680, -0.5309], [ 0.0814, -0.5309]],
-               [[-1.5416,  0.4316], [-0.5550,  0.4316]],
-               [[-0.3874, -0.3874], [ 3.3123, -0.3874]]]]).astype(np.float32)
-'''
-
 y = np.array([[[[ 1.0000,  1.0000], [ 1.0000,  1.0000]],
                [[ 1.8145,  1.8145],[ 3.0724,  1.8145]],
                [[-1.0000, -1.0000],[-1.0000, -1.0000]],
@@ -5037,52 +5025,7 @@ y = np.array([[[[ 1.0000,  1.0000], [ 1.0000,  1.0000]],
                [[ 0.5751,  0.5751],[ 3.0416,  0.5751]]]]).astype(np.float32)
 
 node = onnx.helper.make_node('GroupNormalization', inputs=['x', 's', 'b'], outputs=['y'], num_groups=num_groups, epsilon=eps)        
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_example')
-
-'''
-def _groupnorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
-
-    #dims_x = len(x.shape)
-    #dim_ones = (1,) * (dims_x - 2)
-    #s = s.reshape(-1, *dim_ones)
-    #var = var.reshape(-1, *dim_ones)
-    #return s * (x - mean) / np.sqrt(var + epsilon) + bias
-    return x
-
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-y = _groupnorm_test_mode(x, s, bias).astype(np.float32)
-
-node = onnx.helper.make_node(
-    'GroupNormalization',
-    inputs=['x', 's', 'bias'],
-    outputs=['y'],
-)
-
-# output size: (1, 2, 1, 3)
-expect(node, inputs=[x, s, bias], outputs=[y],
-       name='test_groupnorm_example')
-
-# input size: (2, 3, 4, 5)
-x = np.random.randn(2, 3, 4, 5).astype(np.float32)
-s = np.random.randn(3).astype(np.float32)
-bias = np.random.randn(3).astype(np.float32)
-epsilon = 1e-2
-y = _groupnorm_test_mode(x, s, bias, epsilon).astype(np.float32)
-
-node = onnx.helper.make_node(
-    'GroupNormalization',
-    inputs=['x', 's', 'bias'],
-    outputs=['y'],
-    epsilon=epsilon,
-)
-
-# output size: (2, 3, 4, 5)
-expect(node, inputs=[x, s, bias], outputs=[y],
-       name='test_groupnorm_epsilon')
-'''
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
 ```
 
 </details>

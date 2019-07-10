@@ -1760,8 +1760,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 
 static const char* GroupNormalization_ver11_doc = R"DOC(
-Carries out instance normalization as described in the paper
-https://arxiv.org/abs/1803.08494.
+Carries out group normalization as described in the paper
+https://arxiv.org/abs/1803.08494. 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1776,20 +1776,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             1e-5f)
         .Attr(
             "num_groups",
-            "The  value to use to avoid division by zero.",
+            "The number of groups. It should be greater than 0 and less than or equal to C",
             AttributeProto::INT)
         .Input(
             0,
-            "X",
+            "input",
            "Input data tensor from the previous operator; "
             "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
             "where N is the batch size, C is the number of channels. "
             "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
             "For image data, input dimensions become (N x C x H x W).",
             "T")
-        .Input(1, "scale", "Scale tensor of shape (C).", "T")
-        .Input(2, "B", "Bias tensor of shape (C).", "T")
-        .Output(0, "Y", "The output tensor of the same shape as X", "T")
+        .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
+        .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
+        .Output(0, "output", "The output tensor of the same shape as input", "T")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1805,15 +1805,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           FunctionBodyHelper::Const<int64_t>("C_Start", 1),
           FunctionBodyHelper::Const<int64_t>("C_End", 2),
           FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
-          FunctionBodyHelper::Const<int64_t>("H_W_End", 4), // TODO @ Could be INT_MAX to deal with > 4 dim
+          FunctionBodyHelper::Const<int64_t>("H_W_End", INT_MAX),
           FunctionBodyHelper::ConstOfShape<int64_t>("One", {1}, {1}),
+          
+          {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "epsilon")}},
+          {{"G"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "num_groups")}},          
 
-          {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", "epsilon", AttributeProto::TENSOR)}},
-          {{"G"}, "Constant", {}, {MakeRefAttribute("value", "num_groups", AttributeProto::TENSOR)}},          
+          // Comments taken from https://arxiv.org/abs/1803.08494. 
 
           //N, C, H, W = x.shape
-          // Need to turn this into a slice
-          {{"X_Shape"}, "Shape", {"X"}},
+          {{"X_Shape"}, "Shape", {"input"}},
           {{"N"}, "Slice", {"X_Shape", "N_Start", "N_End"}},
           {{"C"}, "Slice", {"X_Shape", "C_Start", "C_End"}},
           {{"H_W"}, "Slice", {"X_Shape", "H_W_Start", "H_W_End"}},
@@ -1821,7 +1822,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           //x = tf.reshape(x, [N, G, C // G, H, W])
           {{"C/G"}, "Div", {"C", "G"}},
           {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H_W"}, {{"axis", (int64_t)0}}},
-          {{"X_Reshape"}, "Reshape", {"X", "X_NewShape"}},
+          {{"X_Reshape"}, "Reshape", {"input", "X_NewShape"}},
 
           //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
           {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
@@ -1846,7 +1847,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           //y = x * gamma + beta
           {{"X*Gamma"}, "Mul", {"X'_Reshape", "Gamma"}},
-          {{"Y"}, "Add", {"X*Gamma", "Beta"}}
+          {{"output"}, "Add", {"X*Gamma", "Beta"}}
         }
         )));
 
