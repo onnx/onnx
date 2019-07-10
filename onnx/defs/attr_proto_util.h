@@ -18,5 +18,6 @@ AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<Ten
 AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<GraphProto>& values);
 
 AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_AttributeType type);
+AttributeProto MakeRefAttribute(const std::string& attr_name, const std::string& ref_attr_name, AttributeProto_AttributeType type);
 
 } // namespace ONNX_NAMESPACE

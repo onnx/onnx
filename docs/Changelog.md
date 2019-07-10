@@ -10385,7 +10385,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Bias tensor of shape (C).</dd>
 </dl>
 
-#### Outputs (1 - 3)
+#### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
