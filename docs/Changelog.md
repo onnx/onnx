@@ -10382,7 +10382,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
 <dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Bias tensor of shape (C).</dd>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
 #### Outputs
@@ -10394,7 +10394,6 @@ This version of the operator has been available since version 11 of the default 
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -10409,10 +10408,6 @@ This version of the operator has been available since version 11 of the default 
 </dl>
 
 #### Outputs
-
-<dl>
-<dt><tt>C</tt> : T1</dt>
-<dd>Result tensor.</dd>
 </dl>
 
 #### Type Constraints
