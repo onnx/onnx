@@ -10334,8 +10334,8 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="GroupNormalization-11"></a>**GroupNormalization-11**</a>
 
-  Carries out instance normalization as described in the paper
-  https://arxiv.org/abs/1803.08494.
+  Carries out group normalization as described in the paper
+  https://arxiv.org/abs/1803.08494. 
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -10348,25 +10348,25 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>num_groups</tt> : int (required)</dt>
-<dd>The  value to use to avoid division by zero.</dd>
+<dd>The number of groups. It should be greater than 0 and less than or equal to C</dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>input</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W).</dd>
 <dt><tt>scale</tt> : T</dt>
-<dd>Scale tensor of shape (C).</dd>
+<dd>The input 1-dimensional scale tensor of size C.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Bias tensor of shape (C).</dd>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X</dd>
+<dt><tt>output</tt> : T</dt>
+<dd>The output tensor of the same shape as input</dd>
 </dl>
 
 #### Type Constraints

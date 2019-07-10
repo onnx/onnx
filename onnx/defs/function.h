@@ -95,7 +95,6 @@ class FunctionBodyHelper {
     //AttributeProtoWrapper valueProto = refAttributeProto;
     //valueProto.proto.set_name("value");
 
-    std::cout << "(3)function.h Const " << name << " name:" << refAttributeProto.name() << " ref_name:" << refAttributeProto.ref_attr_name() << std::endl;
     refAttributeProto.set_type(AttributeProto_AttributeType_TENSOR);
 
 
