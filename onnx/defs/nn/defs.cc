@@ -1768,7 +1768,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
     11,
     OpSchema()
-        .SetDoc(GroupNormalization_ver11_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GroupNormalization_ver11_doc)
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",

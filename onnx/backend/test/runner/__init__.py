@@ -51,11 +51,12 @@ def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callab
 
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None):  # type: (Type[Backend], Optional[str]) -> None
+    def __init__(self, backend, parent_module=None, devices=('CPU', 'CUDA')):  # type: (Type[Backend], Optional[str]) -> None
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
         self._exclude_patterns = set()  # type: Set[Pattern[Text]]
+        self.devices = devices
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -226,7 +227,6 @@ class Runner(object):
                   test_func,  # type: Callable[..., Any]
                   report_item,  # type: List[Optional[Union[ModelProto, NodeProto]]]
                   #devices=('CPU', 'CUDA'),  # type: Iterable[Text]
-                  devices=['IPU'],  # type: Iterable[Text]
                   ):  # type: (...) -> None
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith('test_'):
@@ -256,7 +256,7 @@ class Runner(object):
             self._test_items[category][device_test_name] = TestItem(
                 device_test_func, report_item)
 
-        for device in devices:
+        for device in self.devices:
             add_device_test(device)
 
     def _add_model_test(self, model_test, kind):  # type: (TestCase, Text) -> None
