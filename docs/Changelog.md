@@ -10347,7 +10347,7 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>num_groups</tt> : float (default is 1e-05)</dt>
+<dt><tt>num_groups</tt> : int (required)</dt>
 <dd>The  value to use to avoid division by zero.</dd>
 </dl>
 
@@ -10362,15 +10362,11 @@ This version of the operator has been available since version 11 of the default 
 <dd>Bias tensor of shape (C).</dd>
 </dl>
 
-#### Outputs (1 - 3)
+#### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the GroupNormalization operator.</dd>
-<dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the GroupNormalization operator.</dd>
 </dl>
 
 #### Type Constraints

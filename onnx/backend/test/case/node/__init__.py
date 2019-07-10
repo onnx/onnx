@@ -18,7 +18,7 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 
-from onnx.onnx_pb import NodeProto, AttributeProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TensorProto
 from onnx.onnx_operators_pb import FunctionProto
 
 
@@ -26,6 +26,8 @@ def function_expand_helper(node,  # type: NodeProto
                            function_proto,  # type: FunctionProto
                            op_prefix  # type:  Text
                            ):  # type:  (...) -> List[NodeProto]
+
+    print("*** function_expand_helper ***")
     node_list = []
     input_names_map = dict()
     output_names_map = dict()
@@ -60,6 +62,34 @@ def function_expand_helper(node,  # type: NodeProto
                 if attr.ref_attr_name in attribute_map:
                     new_attr = AttributeProto()
                     new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+
+                    print("Before *** attr {}/{} {}/{} ***".format(attr.name, attr.ref_attr_name, attr.type, new_attr.type))
+
+                    new_attr.name = attr.name # Set the name of the attribute
+
+                    if (attr.type == AttributeProto.TENSOR):
+                       
+
+
+                       if (new_attr.type == AttributeProto.FLOAT):
+                        new_attr.type = AttributeProto.TENSOR 
+                        print("*** f {}".format(new_attr.f))
+                        new_attr.t.data_type = TensorProto.FLOAT
+                        new_attr.t.float_data.append(new_attr.f)
+                        new_attr.ClearField('f')
+                       elif (new_attr.type == AttributeProto.INT):
+                        new_attr.type = AttributeProto.TENSOR 
+                        print("*** i {}".format(new_attr.i))
+                        # Should we set the type based of the size of the attributes?
+                        new_attr.t.data_type = TensorProto.INT64
+                        new_attr.t.dims.append(1)
+                        new_attr.t.int64_data.append(new_attr.i)
+                        new_attr.ClearField('i')
+
+
+                    print("After *** attr {}/{} {} ***".format(new_attr.name, new_attr.ref_attr_name, new_attr.type))
+
+
                     new_node.attribute.extend([new_attr])
             else:
                 new_attr = AttributeProto()
