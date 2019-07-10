@@ -26,7 +26,7 @@ class Unsqueeze(Base):
             y = np.expand_dims(x, axis=i)
 
             expect(node, inputs=[x], outputs=[y],
-                   name='test_unsqueeze_' + str(i))
+                   name='test_unsqueeze_axis_' + str(i))
 
     @staticmethod
     def export_unsqueeze_two_axes():  # type: () -> None
@@ -43,3 +43,20 @@ class Unsqueeze(Base):
 
         expect(node, inputs=[x], outputs=[y],
                 name='test_unsqueeze_two_axes')
+
+    @staticmethod
+    def export_unsqueeze_three_axes():  # type: () -> None
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[2, 4, 5],
+        )
+        y = np.expand_dims(x, axis=2)
+        y = np.expand_dims(y, axis=4)
+        y = np.expand_dims(y, axis=5)
+
+        expect(node, inputs=[x], outputs=[y],
+                name='test_unsqueeze_three_axes')

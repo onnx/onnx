@@ -8220,7 +8220,7 @@ expect(node, inputs=[data], outputs=[transposed],
 
 
 ### Unsqueeze
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>unsqueeze_one_axis</summary>
 
@@ -8237,7 +8237,28 @@ for i in range(len(x) + 1):
     y = np.expand_dims(x, axis=i)
 
     expect(node, inputs=[x], outputs=[y],
-           name='test_unsqueeze_' + str(i))
+           name='test_unsqueeze_axis_' + str(i))
+```
+
+</details>
+<details>
+<summary>unsqueeze_three_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[2, 4, 5],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_three_axes')
 ```
 
 </details>
@@ -8251,7 +8272,7 @@ node = onnx.helper.make_node(
     'Unsqueeze',
     inputs=['x'],
     outputs=['y'],
-    axes=[1,4],
+    axes=[1, 4],
 )
 y = np.expand_dims(x, axis=1)
 y = np.expand_dims(y, axis=4)
