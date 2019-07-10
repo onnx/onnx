@@ -17,6 +17,9 @@ void FunctionExpandHelper(
     const FunctionProto& func,
     GraphProto& g,
     const std::string& node_prefix) {
+
+  std::cout << "FunctionExpandHelper" << std::endl;
+
   // Create a temporary unique node prefix for tensor names
   std::string uniq_prefix = node_prefix;
   if (uniq_prefix.empty()) {
@@ -75,6 +78,10 @@ void FunctionExpandHelper(
         if (attr_map.count(attr.ref_attr_name())) {
           AttributeProto* new_attr = new_node->add_attribute();
           new_attr->CopyFrom(attr_map[attr.ref_attr_name()]);
+
+          // Set the name of the attribute to be the name required by the subgraph
+          std::cout << "Setting name from " << new_attr->name() << " to " << attr.name() << std::endl;
+          new_attr->set_name(attr.name());
         }
       } else {
         AttributeProto* new_attr = new_node->add_attribute();
