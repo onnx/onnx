@@ -76,9 +76,6 @@ void FunctionExpandHelper(
         if (attr_map.count(attr.ref_attr_name())) {
           AttributeProto* new_attr = new_node->add_attribute();
           new_attr->CopyFrom(attr_map[attr.ref_attr_name()]);
-
-          // Set the name of the attribute to be the name required by the subgraph
-          new_attr->set_name(attr.name());
         }
       } else {
         AttributeProto* new_attr = new_node->add_attribute();
