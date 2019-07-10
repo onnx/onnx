@@ -27,7 +27,6 @@ def function_expand_helper(node,  # type: NodeProto
                            op_prefix  # type:  Text
                            ):  # type:  (...) -> List[NodeProto]
 
-    print("*** function_expand_helper ***")
     node_list = []
     input_names_map = dict()
     output_names_map = dict()
@@ -60,34 +59,37 @@ def function_expand_helper(node,  # type: NodeProto
         for attr in internal_node.attribute:
             if attr.HasField("ref_attr_name"):
                 if attr.ref_attr_name in attribute_map:
+
+                    parent_attr = attribute_map[attr.ref_attr_name]    
+
                     new_attr = AttributeProto()
-                    new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                    new_attr.CopyFrom(parent_attr)  # type: ignore
 
-                    print("Before *** attr {}/{} {}/{} ***".format(attr.name, attr.ref_attr_name, attr.type, new_attr.type))
+                    # Set the name of the attribute
+                    # It may be different from the name in the parent function
+                    new_attr.name = attr.name
 
-                    new_attr.name = attr.name # Set the name of the attribute
+                    # Convert the type of the attributes if is is appropriate
+                    if (attr.type != new_attr.type):
 
-                    if (attr.type == AttributeProto.TENSOR):
-                       
-
-
-                       if (new_attr.type == AttributeProto.FLOAT):
-                        new_attr.type = AttributeProto.TENSOR 
-                        print("*** f {}".format(new_attr.f))
-                        new_attr.t.data_type = TensorProto.FLOAT
-                        new_attr.t.float_data.append(new_attr.f)
-                        new_attr.ClearField('f')
-                       elif (new_attr.type == AttributeProto.INT):
-                        new_attr.type = AttributeProto.TENSOR 
-                        print("*** i {}".format(new_attr.i))
-                        # Should we set the type based of the size of the attributes?
-                        new_attr.t.data_type = TensorProto.INT64
-                        new_attr.t.dims.append(1)
-                        new_attr.t.int64_data.append(new_attr.i)
-                        new_attr.ClearField('i')
-
-
-                    print("After *** attr {}/{} {} ***".format(new_attr.name, new_attr.ref_attr_name, new_attr.type))
+                        if (attr.type == AttributeProto.TENSOR and parent_attr.type == AttributeProto.FLOAT):
+                            # FLOAT -> TENSOR<FLOAT>
+                            new_attr.type = AttributeProto.TENSOR 
+                            new_attr.t.data_type = TensorProto.FLOAT
+                            new_attr.t.dims.append(1)
+                            new_attr.t.float_data.append(parent_attr.f)
+                            new_attr.ClearField('f')
+                        elif (attr.type == AttributeProto.TENSOR and parent_attr.type == AttributeProto.INT):
+                            # INT -> TENSOR<INT64>
+                            new_attr.type = AttributeProto.TENSOR 
+                            # todo : Should we set the type based of the size of the attributes?
+                            new_attr.t.data_type = TensorProto.INT64
+                            new_attr.t.dims.append(1)
+                            new_attr.t.int64_data.append(parent_attr.i)
+                            new_attr.ClearField('i')
+                        else:
+                            # todo : improve error message
+                            raise Exception("Unsupported conversion of reference attribute")
 
 
                     new_node.attribute.extend([new_attr])

@@ -5788,6 +5788,7 @@ num_groups = 2
 eps = 1e-05
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 <details>
 <summary>default_vector_bias</summary>
 
@@ -5817,6 +5818,8 @@ y = np.array([[[[-0.5241, -0.1048], [-2.2014,  0.3145]],
                [[-0.3874, -0.3874], [ 3.3123, -0.3874]]]]).astype(np.float32)
 '''
 
+=======
+>>>>>>> Updating after code review
 y = np.array([[[[ 1.0000,  1.0000], [ 1.0000,  1.0000]],
                [[ 1.8145,  1.8145],[ 3.0724,  1.8145]],
                [[-1.0000, -1.0000],[-1.0000, -1.0000]],
@@ -5827,6 +5830,7 @@ y = np.array([[[[ 1.0000,  1.0000], [ 1.0000,  1.0000]],
                [[ 0.5751,  0.5751],[ 3.0416,  0.5751]]]]).astype(np.float32)
 
 node = onnx.helper.make_node('GroupNormalization', inputs=['x', 's', 'b'], outputs=['y'], num_groups=num_groups, epsilon=eps)        
+<<<<<<< HEAD
 expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_example')
 >>>>>>> Working exapnded groupnorm
 
@@ -5869,6 +5873,9 @@ c = np.zeros([1, 4]).astype(np.float32)
 y = gemm_reference_implementation(a, b, c, transA=1)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_transposeA')
+=======
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
+>>>>>>> Updating after code review
 ```
 
 </details>

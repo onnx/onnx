@@ -269,11 +269,9 @@ void OpSchema::Verify(const NodeProto& node) const {
   };
 
   // Check attributes
-  std::cout << "Verifying op " << node.op_type() << std::endl;
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr_proto : node.attribute()) {
     const auto& name = attr_proto.name();
-    std::cout << "Verifying op attribute " << name << " ref:" << attr_proto.ref_attr_name() << std::endl;
 
     if (!seen_attr_names.insert(name).second) {
       fail_check("Attribute '", name, "' appeared multiple times.");

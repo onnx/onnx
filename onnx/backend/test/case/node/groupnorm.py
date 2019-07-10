@@ -30,18 +30,6 @@ class GroupNormalization(Base):
         num_groups = 2
         eps = 1e-05
         
-        #y = x * s + b
-        '''
-        y = np.array([[[[-0.5241, -0.1048], [-2.2014,  0.3145]],
-                       [[ 1.4717,  1.4717], [ 3.3586,  1.4717]],
-                       [[ 0.2236, -0.2236], [-1.1180,  1.5652]],
-                       [[ 2.6770,  2.6770], [-0.0062, -0.6770]]],
-                      [[[-0.2041, -0.2041], [ 0.6124,  0.2041]],
-                       [[ 4.3680, -0.5309], [ 0.0814, -0.5309]],
-                       [[-1.5416,  0.4316], [-0.5550,  0.4316]],
-                       [[-0.3874, -0.3874], [ 3.3123, -0.3874]]]]).astype(np.float32)
-        '''
-        
         y = np.array([[[[ 1.0000,  1.0000], [ 1.0000,  1.0000]],
                        [[ 1.8145,  1.8145],[ 3.0724,  1.8145]],
                        [[-1.0000, -1.0000],[-1.0000, -1.0000]],
@@ -52,5 +40,5 @@ class GroupNormalization(Base):
                        [[ 0.5751,  0.5751],[ 3.0416,  0.5751]]]]).astype(np.float32)
 
         node = onnx.helper.make_node('GroupNormalization', inputs=['x', 's', 'b'], outputs=['y'], num_groups=num_groups, epsilon=eps)        
-        expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_example')
+        expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
 
