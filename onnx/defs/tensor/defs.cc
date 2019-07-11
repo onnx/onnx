@@ -1204,8 +1204,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "mode",
             "DCR (default) for depth-column-row order. CRD for column-row-depth order.",
             AttributeProto::STRING,
-            std::string("constant")
-        .SetDoc(DepthToSpace_ver1_doc)
+            std::string("constant"))
+        .SetDoc(DepthToSpace_ver11_doc)
         .Input(
             0,
             "input",

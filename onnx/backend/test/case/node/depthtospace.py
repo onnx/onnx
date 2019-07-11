@@ -15,7 +15,7 @@ class DepthToSpace(Base):
     @staticmethod
     def export():  # type: () -> None
         b, c, h, w = shape = (2, 8, 3, 3)
-        mode_dcr = "DCR"
+        mode_dcr = 'DCR'
         blocksize = 2
         node = onnx.helper.make_node(
             'DepthToSpace',
@@ -31,7 +31,7 @@ class DepthToSpace(Base):
         expect(node, inputs=[x], outputs=[y],
                name='test_depthtospace')
 
-        mode_crd = "CRD"
+        mode_crd = 'CRD'
         node = onnx.helper.make_node(
             'DepthToSpace',
             inputs=['x'],
@@ -56,8 +56,8 @@ class DepthToSpace(Base):
         )
 
         # (1, 8, 2, 3) input tensor
-        x = np.array([[[[0.,  1.,  2.],
-                        [3.,  4.,  5.]],
+        x = np.array([[[[0., 1., 2.],
+                        [3., 4., 5.]],
                        [[9., 10., 11.],
                         [12., 13., 14.]],
                        [[18., 19., 20.],
@@ -74,9 +74,9 @@ class DepthToSpace(Base):
                         [66., 67., 68.]]]]).astype(np.float32)
 
         # (1, 2, 4, 6) output tensor
-        y = np.array([[[[0., 18.,  1., 19.,  2., 20.],
+        y = np.array([[[[0., 18., 1., 19., 2., 20.],
                         [36., 54., 37., 55., 38., 56.],
-                        [3., 21.,  4., 22.,  5., 23.],
+                        [3., 21., 4., 22., 5., 23.],
                         [39., 57., 40., 58., 41., 59.]],
                        [[9., 27., 10., 28., 11., 29.],
                         [45., 63., 46., 64., 47., 65.],
