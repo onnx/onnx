@@ -59,7 +59,7 @@ def function_expand_helper(node,  # type: NodeProto
             if attr.HasField("ref_attr_name"):
                 if attr.ref_attr_name in attribute_map:
 
-                    parent_attr = attribute_map[attr.ref_attr_name]    
+                    parent_attr = attribute_map[attr.ref_attr_name]
 
                     new_attr = AttributeProto()
                     new_attr.CopyFrom(parent_attr)  # type: ignore
@@ -73,14 +73,14 @@ def function_expand_helper(node,  # type: NodeProto
 
                         if (attr.type == AttributeProto.TENSOR and parent_attr.type == AttributeProto.FLOAT):
                             # FLOAT -> TENSOR<FLOAT>
-                            new_attr.type = AttributeProto.TENSOR 
+                            new_attr.type = AttributeProto.TENSOR
                             new_attr.t.data_type = TensorProto.FLOAT
                             new_attr.t.dims.append(1)
                             new_attr.t.float_data.append(parent_attr.f)
                             new_attr.ClearField('f')
                         elif (attr.type == AttributeProto.TENSOR and parent_attr.type == AttributeProto.INT):
                             # INT -> TENSOR<INT64>
-                            new_attr.type = AttributeProto.TENSOR 
+                            new_attr.type = AttributeProto.TENSOR
                             # todo : Should we set the type based of the size of the attributes?
                             new_attr.t.data_type = TensorProto.INT64
                             new_attr.t.dims.append(1)
@@ -89,7 +89,6 @@ def function_expand_helper(node,  # type: NodeProto
                         else:
                             # todo : improve error message
                             raise Exception("Unsupported conversion of reference attribute")
-
 
                     new_node.attribute.extend([new_attr])
             else:
