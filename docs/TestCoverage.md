@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
+Node tests have covered 129/136 (94.85%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1911,75 +1911,6 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### CropAndResize
-There are 1 test cases, listed as following:
-<details>
-<summary>crop_and_resize</summary>
-
-```python
-node = onnx.helper.make_node(
-    "CropAndResize",
-    inputs=["X", "rois", "batch_indices", "crop_size"],
-    outputs=["Y"],
-    extrapolation_value=0.0,
-)
-
-X = np.array(
-    [
-        [
-            [
-                [1.1, 2.2],
-                [3.3, 4.4],
-            ],
-            [
-                [5.5, 6.6],
-                [7.7, 8.8],
-            ],
-        ],
-    ],
-    dtype=np.float32,
-)
-batch_indices = np.array([0, 0, 0], dtype=np.int64)
-rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
-crop_size = np.array([2, 2], dtype=np.int64)
-# (num_rois, C, output_height, output_width)
-Y = np.array(
-    [
-        [
-            [
-                [1.1, 2.2],
-                [3.3, 4.4],
-            ],
-            [
-                [5.5, 6.6],
-                [7.7, 8.8],
-            ],
-        ],
-        [
-            [
-                [1.1, 1.65],
-                [2.2, 2.75],
-            ],
-            [
-                [5.5, 6.05],
-                [6.6, 7.15],
-            ],
-        ],
-        [
-            [
-                [1.1, 2.2],
-                [2.2, 3.3],
-            ],
-            [
-                [5.5, 6.6],
-                [6.6, 7.7],
-            ],
-        ],
-    ],
-    dtype=np.float32,
-)
-
-expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_crop_and_resize")
 ### CumSum
 There are 6 test cases, listed as following:
 <details>
@@ -6784,6 +6715,110 @@ Y = np.array(
 )
 
 expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### RoiCropAndResize
+There are 4 test cases, listed as following:
+<details>
+<summary>roi_crop_and_resize_0</summary>
+
+```python
+extrapolation_value = 0.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+mode = 'bilinear'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_0")
+```
+
+</details>
+<details>
+<summary>roi_crop_and_resize_crop_size</summary>
+
+```python
+extrapolation_value = 0.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([1, 2], dtype=np.int64)
+mode = 'nearest'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_crop_size")
+```
+
+</details>
+<details>
+<summary>roi_crop_and_resize_extrapolation_value</summary>
+
+```python
+extrapolation_value = 1.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 3.0, 3.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+mode = 'bilinear'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_extrapolation_value")
+```
+
+</details>
+<details>
+<summary>roi_crop_and_resize_nearest</summary>
+
+```python
+extrapolation_value = 0.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+mode = 'nearest'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_nearest")
 ```
 
 </details>

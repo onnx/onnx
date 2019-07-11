@@ -30,7 +30,6 @@
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
   * <a href="#Cosh">Cosh</a>
-  * <a href="#CropAndResize">CropAndResize</a>
   * <a href="#CumSum">CumSum</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#DequantizeLinear">DequantizeLinear</a>
@@ -111,6 +110,7 @@
   * <a href="#Resize">Resize</a>
   * <a href="#ReverseSequence">ReverseSequence</a>
   * <a href="#RoiAlign">RoiAlign</a>
+  * <a href="#RoiCropAndResize">RoiCropAndResize</a>
   * <a href="#Round">Round</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
@@ -3234,14 +3234,6 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="CropAndResize"></a><a name="cropandresize">**CropAndResize**</a>
-
-  Extracts crops from the input image tensor and resizes them using bilinear sampling or nearest neighbor sampling
-  (possibly with aspect ratio change) to a common output size specified by crop_height and crop_width.
-  Returns a tensor with crops from the input image at positions defined at the bounding box locations in boxes.
-  The cropped boxes are all resized (with bilinear or nearest neighbor interpolation) to
-  a fixed size = [crop_height, crop_width]. The result is a 4-D tensor [num_boxes, crop_height, crop_width, depth].
-  The resizing is corner aligned.
 ### <a name="CumSum"></a><a name="cumsum">**CumSum**</a>
 
   Performs cumulative sum of the input elements along the given axis.
@@ -3272,10 +3264,6 @@ This version of the operator has been available since version 11 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
-<dd>Value used for extrapolation, when applicable. Default is 0.0f. </dd>
-<dt><tt>mode</tt> : string (default is bilinear)</dt>
-<dd>The pooling method. Two modes are supported: 'bilinear' and 'nearest'. Default is 'bilinear'.</dd>
 <dt><tt>exclusive</tt> : int (default is 0)</dt>
 <dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
 <dt><tt>reverse</tt> : int (default is 0)</dt>
@@ -3285,14 +3273,6 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
-<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
-<dt><tt>rois</tt> : T1</dt>
-<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[y1, x1, y2, x2], ...]. The RoIs' coordinates are normalized in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
-<dt><tt>batch_indices</tt> : T2</dt>
-<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
-<dt><tt>crop_size</tt> : T2</dt>
-<dd>1-D tensor of 2 elements: [crop_height, crop_width]. All cropped image patches are resized to this size. Both crop_height and crop_width need to be positive.</dd>
 <dt><tt>x</tt> : T</dt>
 <dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : T2</dt>
@@ -3302,8 +3282,6 @@ This version of the operator has been available since version 11 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T1</dt>
-<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, crop_height, crop_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
 <dt><tt>y</tt> : T</dt>
 <dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
 </dl>
@@ -3311,10 +3289,6 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int32)</dt>
-<dd>Constrain types to int tensors.</dd>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
 <dd>Input can be of any tensor type.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
@@ -3325,72 +3299,6 @@ This version of the operator has been available since version 11 of the default 
 #### Examples
 
 <details>
-<summary>crop_and_resize</summary>
-
-```python
-node = onnx.helper.make_node(
-    "CropAndResize",
-    inputs=["X", "rois", "batch_indices", "crop_size"],
-    outputs=["Y"],
-    extrapolation_value=0.0,
-)
-
-X = np.array(
-    [
-        [
-            [
-                [1.1, 2.2],
-                [3.3, 4.4],
-            ],
-            [
-                [5.5, 6.6],
-                [7.7, 8.8],
-            ],
-        ],
-    ],
-    dtype=np.float32,
-)
-batch_indices = np.array([0, 0, 0], dtype=np.int64)
-rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
-crop_size = np.array([2, 2], dtype=np.int64)
-# (num_rois, C, output_height, output_width)
-Y = np.array(
-    [
-        [
-            [
-                [1.1, 2.2],
-                [3.3, 4.4],
-            ],
-            [
-                [5.5, 6.6],
-                [7.7, 8.8],
-            ],
-        ],
-        [
-            [
-                [1.1, 1.65],
-                [2.2, 2.75],
-            ],
-            [
-                [5.5, 6.05],
-                [6.6, 7.15],
-            ],
-        ],
-        [
-            [
-                [1.1, 2.2],
-                [2.2, 3.3],
-            ],
-            [
-                [5.5, 6.6],
-                [6.6, 7.7],
-            ],
-        ],
-    ],
-    dtype=np.float32,
-)
-
-expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_crop_and_resize")
 <summary>cumsum_1d</summary>
 
 ```python
@@ -12289,6 +12197,173 @@ Y = np.array(
 )
 
 expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### <a name="RoiCropAndResize"></a><a name="roicropandresize">**RoiCropAndResize**</a>
+
+  Extracts crops from the input image tensor and resizes them using bilinear sampling or nearest neighbor sampling
+  (possibly with aspect ratio change) to a common output size specified by crop_height and crop_width.
+  Returns a tensor with crops from the input image at positions defined at the bounding box locations in boxes.
+  The cropped boxes are all resized (with bilinear or nearest neighbor interpolation) to
+  a fixed size = [crop_height, crop_width]. The result is a 4-D tensor [num_boxes, crop_height, crop_width, depth].
+  The resizing is corner aligned. Suppose the input tensor X of shape (N, C, H, W), and the input rois tensor R of shape (M, 4),
+  and the batch indices tensor B of shape (M, ). The shape of output tensor Y is (M, C, CH, CW) where CH and CW is the crop_height
+  and crop_width. For each element Y[m, c, ch, cw], the image coordinate in the original X, (ch_x, cw_x),
+  is calculated at first, based on ch, cw, R[m, :], and B[m]. Then Y[m, c, ch, cw] = mode(X[B[m], c, ch_x, cw_x], extrapolation_value)
+  where mode is bilinear or nearest.
+  The equivalent TensorFlow version can be find [here](https://www.tensorflow.org/api_docs/python/tf/image/crop_and_resize).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
+<dd>Value used for extrapolation, when applicable. Default is 0.0f. </dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>The pooling method. Two modes are supported: 'bilinear' and 'nearest'. Default is 'bilinear'.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T1</dt>
+<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[y1, x1, y2, x2], ...]. The RoIs' coordinates are normalized in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
+<dt><tt>batch_indices</tt> : T2</dt>
+<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
+<dt><tt>crop_size</tt> : T2</dt>
+<dd>1-D tensor of 2 elements: [crop_height, crop_width]. All cropped image patches are resized to this size. Both crop_height and crop_width need to be positive.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, crop_height, crop_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32)</dt>
+<dd>Constrain types to int tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>roi_crop_and_resize_0</summary>
+
+```python
+extrapolation_value = 0.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+mode = 'bilinear'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_0")
+```
+
+</details>
+
+
+<details>
+<summary>roi_crop_and_resize_crop_size</summary>
+
+```python
+extrapolation_value = 0.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([1, 2], dtype=np.int64)
+mode = 'nearest'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_crop_size")
+```
+
+</details>
+
+
+<details>
+<summary>roi_crop_and_resize_extrapolation_value</summary>
+
+```python
+extrapolation_value = 1.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 3.0, 3.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+mode = 'bilinear'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_extrapolation_value")
+```
+
+</details>
+
+
+<details>
+<summary>roi_crop_and_resize_nearest</summary>
+
+```python
+extrapolation_value = 0.0
+node = onnx.helper.make_node(
+    "RoiCropAndResize",
+    inputs=["X", "rois", "batch_indices", "crop_size"],
+    outputs=["Y"],
+    extrapolation_value=extrapolation_value,
+)
+
+X = np.array(
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
+crop_size = np.array([2, 2], dtype=np.int64)
+mode = 'nearest'
+Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_nearest")
 ```
 
 </details>
