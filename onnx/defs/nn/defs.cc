@@ -1801,8 +1801,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FunctionBody(FunctionBodyHelper::BuildNodes(
         {
           FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-          FunctionBodyHelper::Const<float>("EPS", 0.001f),
-          FunctionBodyHelper::Const<int64_t>("G", {2}),
           FunctionBodyHelper::Const<int64_t>("N_Start", 0),
           FunctionBodyHelper::Const<int64_t>("N_End", 1),
           FunctionBodyHelper::Const<int64_t>("C_Start", 1),
@@ -1827,12 +1825,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H_W"}, {{"axis", (int64_t)0}}},
           {{"X_Reshape"}, "Reshape", {"input", "X_NewShape"}},
 
-
           //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
-          {{"Mean"}, "Mean", {"X_Reshape"}},
+          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
           {{"EX_squared"}, "Pow", {"Mean", "Exponent"}},
           {{"X_squared"}, "Pow", {"X_Reshape", "Exponent"}},
-          {{"E_Xsquared"}, "ReduceMean",{"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
+          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
           {{"Var"}, "Sub", {"E_Xsquared", "EX_squared"}},
 
           //x = (x−mean) / tf.sqrt(var + eps)
