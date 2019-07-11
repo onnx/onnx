@@ -22,6 +22,8 @@ def compute_roi_crop_and_resize(x, rois, batch_indices, crop_size, mode, extrapo
         y2 = rois[roi_][2]
         height_scale = (y2 - y1) * (height - 1) / (crop_size[0] - 1) if crop_size[0] > 1 else 0
         width_scale = (x2 - x1) * (width - 1) / (crop_size[1] - 1) if crop_size[1] > 1 else 0
+        batch_idx = np.round(batch_indices[roi_])
+
         for ch_ in range(crop_size[0]):
             in_y = y1 * (height - 1) + ch_ * height_scale if crop_size[0] > 1 else 0.5 * (y1 + y2) * (height - 1)
             if ch_ == crop_size[0] - 1:
@@ -47,7 +49,6 @@ def compute_roi_crop_and_resize(x, rois, batch_indices, crop_size, mode, extrapo
                     left_x = np.floor(in_x).astype(np.int32)
                     right_x = np.ceil(in_x).astype(np.int32)
                     x_lerp = in_x - left_x
-                    batch_idx = np.round(batch_indices[roi_])
                     for c_ in range(channels):
                         top_left = x[batch_idx][c_][top_y][left_x]
                         top_right = x[batch_idx][c_][top_y][right_x]
@@ -57,8 +58,8 @@ def compute_roi_crop_and_resize(x, rois, batch_indices, crop_size, mode, extrapo
                         bottom = bottom_left + (bottom_right - bottom_left) * x_lerp
                         y[roi_][c_][ch_][cw_] = top + (bottom - top) * y_lerp
                 else:
-                    closest_y = np.round(in_y)
-                    closest_x = np.round(in_x)
+                    closest_y = np.round(in_y).astype(np.int32)
+                    closest_x = np.round(in_x).astype(np.int32)
                     for c_ in range(channels):
                         y[roi_][c_][ch_][cw_] = x[batch_idx][c_][closest_y][closest_x]
     return y
@@ -83,7 +84,7 @@ class RoiCropAndResize(Base):
         rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
         crop_size = np.array([2, 2], dtype=np.int64)
         mode = 'bilinear'
-        Y = compute_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+        Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
         expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_0")
 
     @staticmethod
@@ -104,7 +105,7 @@ class RoiCropAndResize(Base):
         rois = np.array([[0.0, 0.0, 3.0, 3.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
         crop_size = np.array([2, 2], dtype=np.int64)
         mode = 'bilinear'
-        Y = compute_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+        Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
         expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_extrapolation_value")
 
     @staticmethod
@@ -125,7 +126,7 @@ class RoiCropAndResize(Base):
         rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
         crop_size = np.array([2, 2], dtype=np.int64)
         mode = 'nearest'
-        Y = compute_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+        Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
         expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_nearest")
 
     @staticmethod
@@ -146,7 +147,7 @@ class RoiCropAndResize(Base):
         rois = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5], [0.0, 0.0, 0.5, 1.0]], dtype=np.float32)
         crop_size = np.array([1, 2], dtype=np.int64)
         mode = 'nearest'
-        Y = compute_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
+        Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
         expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_crop_size")
 
 if __name__ == '__main__':

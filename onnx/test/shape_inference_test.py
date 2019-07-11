@@ -1964,14 +1964,34 @@ class TestShapeInference(unittest.TestCase):
 
     def test_roicropandresize(self):  # type: () -> None
         graph = self._make_graph(
-            [('X', TensorProto.FLOAT, (5, 3, 7, 8)),
+            [('X', TensorProto.FLOAT, (5, "a", 7, 8)),
              ('rois', TensorProto.FLOAT, (6, 4)),
              ('batch_indices', TensorProto.INT32, (6,)),
-             ('crop_size', TensorProto.INT32, (2,)),
-             ],
+             ('crop_size', TensorProto.INT32, (2,))],
+            [make_node('RoiCropAndResize', ['X', 'rois', 'batch_indices', 'crop_size'], ['y'])],
+            [],
+            initializer=[make_tensor('crop_size', TensorProto.INT32, (2,), (3, 3))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6, "a", 3, 3))])
+
+    def test_roicropandresize_width_height_rank_inference(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (5, "a", 7, 8)),
+             ('rois', TensorProto.FLOAT, (6, 4)),
+             'batch_indices',
+             'crop_size'],
             [make_node('RoiCropAndResize', ['X', 'rois', 'batch_indices', 'crop_size'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6, 3, None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6, "a", None, None))])  # type: ignore
+
+    def test_roicropandresize_rank_inference(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (5, "a", 7, 8)),
+             'rois',
+             'batch_indices',
+             'crop_size'],
+            [make_node('RoiCropAndResize', ['X', 'rois', 'batch_indices', 'crop_size'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None, None))])  # type: ignore
 
 
 if __name__ == '__main__':

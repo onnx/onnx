@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
+
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
@@ -24,109 +26,110 @@ ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     10,
     OpSchema()
-      .SetDoc(RoiAlign_ver1_doc)
-      .Attr(
-          "spatial_scale",
-          "Multiplicative spatial scale factor to translate ROI coordinates "
-          "from their input spatial scale to the scale used when pooling, "
-          "i.e., spatial scale of the input feature map X relative to the "
-          "input image. E.g.; default is 1.0f. ",
-          AttributeProto::FLOAT,
-          1.f)
-      .Attr(
-          "output_height",
-          "default 1; Pooled output Y's height.",
-          AttributeProto::INT,
-          static_cast<int64_t>(1))
-      .Attr(
-          "output_width",
-          "default 1; Pooled output Y's width.",
-          AttributeProto::INT,
-          static_cast<int64_t>(1))
-      .Attr(
-          "sampling_ratio",
-          "Number of sampling points in the interpolation grid used to compute "
-          "the output value of each pooled output bin. If > 0, then exactly "
-          "sampling_ratio x sampling_ratio grid points are used. If == 0, then "
-          "an adaptive number of grid points are used (computed as "
-          "ceil(roi_width / output_width), and likewise for height). Default is 0.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Attr(
-          "mode",
-          "The pooling method. Two modes are supported: 'avg' and 'max'. "
-          "Default is 'avg'.",
-          AttributeProto::STRING,
-          std::string("avg"))
-      .Input(
-          0,
-          "X",
-          "Input data tensor from the previous operator; "
-          "4-D feature map of shape (N, C, H, W), "
-          "where N is the batch size, C is the number of channels, "
-          "and H and W are the height and the width of the data.",
-          "T1")
-      .Input(
-          1,
-          "rois",
-          "RoIs (Regions of Interest) to pool over; rois is "
-          "2-D input of shape (num_rois, 4) given as "
-          "[[x1, y1, x2, y2], ...]. "
-          "The RoIs' coordinates are in the coordinate system of the input image. "
-          "Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.",
-          "T1")
-      .Input(
-          2,
-          "batch_indices",
-          "1-D tensor of shape (num_rois,) with each element denoting "
-          "the index of the corresponding image in the batch.",
-          "T2")
-      .Output(
-          0,
-          "Y",
-          "RoI pooled output, 4-D tensor of shape "
-          "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
-          "is a pooled feature map corresponding to the r-th RoI X[r-1].",
-          "T1")
-      .TypeConstraint(
-          "T1",
-          {"tensor(float16)", "tensor(float)", "tensor(double)"},
-          "Constrain types to float tensors.")
-      .TypeConstraint(
-          "T2",
-          {"tensor(int64)"},
-          "Constrain types to int tensors.")
-      .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        if (!hasNInputShapes(ctx, 3)) {
-          return;
-        }
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        .SetDoc(RoiAlign_ver1_doc)
+        .Attr(
+            "spatial_scale",
+            "Multiplicative spatial scale factor to translate ROI coordinates "
+            "from their input spatial scale to the scale used when pooling, "
+            "i.e., spatial scale of the input feature map X relative to the "
+            "input image. E.g.; default is 1.0f. ",
+            AttributeProto::FLOAT,
+            1.f)
+        .Attr(
+            "output_height",
+            "default 1; Pooled output Y's height.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "output_width",
+            "default 1; Pooled output Y's width.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "sampling_ratio",
+            "Number of sampling points in the interpolation grid used to compute "
+            "the output value of each pooled output bin. If > 0, then exactly "
+            "sampling_ratio x sampling_ratio grid points are used. If == 0, then "
+            "an adaptive number of grid points are used (computed as "
+            "ceil(roi_width / output_width), and likewise for height). Default is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "mode",
+            "The pooling method. Two modes are supported: 'avg' and 'max'. "
+            "Default is 'avg'.",
+            AttributeProto::STRING,
+            std::string("avg"))
+        .Input(
+            0,
+            "X",
+            "Input data tensor from the previous operator; "
+            "4-D feature map of shape (N, C, H, W), "
+            "where N is the batch size, C is the number of channels, "
+            "and H and W are the height and the width of the data.",
+            "T1")
+        .Input(
+            1,
+            "rois",
+            "RoIs (Regions of Interest) to pool over; rois is "
+            "2-D input of shape (num_rois, 4) given as "
+            "[[x1, y1, x2, y2], ...]. "
+            "The RoIs' coordinates are in the coordinate system of the input image. "
+            "Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.",
+            "T1")
+        .Input(
+            2,
+            "batch_indices",
+            "1-D tensor of shape (num_rois,) with each element denoting "
+            "the index of the corresponding image in the batch.",
+            "T2")
+        .Output(
+            0,
+            "Y",
+            "RoI pooled output, 4-D tensor of shape "
+            "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
+            "is a pooled feature map corresponding to the r-th RoI X[r-1].",
+            "T1")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int64)"},
+            "Constrain types to int tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasNInputShapes(ctx, 3)) {
+            return;
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-        auto& input_shape = getInputShape(ctx, 0);
-        auto& rois_shape = getInputShape(ctx, 1);
-        auto& batch_index_shape = getInputShape(ctx, 2);
-        auto* output_shape = getOutputShape(ctx, 0);
+          auto& input_shape = getInputShape(ctx, 0);
+          auto& rois_shape = getInputShape(ctx, 1);
+          auto& batch_index_shape = getInputShape(ctx, 2);
+          auto* output_shape = getOutputShape(ctx, 0);
 
-        if (input_shape.dim_size() != 4) {
-          fail_shape_inference("first input tensor has wrong dimension");
-        }
-        if (rois_shape.dim_size() != 2) {
-          fail_shape_inference("rois input tensor has wrong dimension");
-        }
-        if (batch_index_shape.dim_size() != 1) {
-          fail_shape_inference("batch_indices shape input tensor has wrong dimension");
-        }
+          if (input_shape.dim_size() != 4) {
+            fail_shape_inference("first input tensor has wrong dimension");
+          }
+          if (rois_shape.dim_size() != 2) {
+            fail_shape_inference("rois input tensor has wrong dimension");
+          }
+          if (batch_index_shape.dim_size() != 1) {
+            fail_shape_inference(
+                "batch_indices shape input tensor has wrong dimension");
+          }
 
-        output_shape->clear_dim();
-        output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-          rois_shape.dim(0).dim_value()));
-        output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-          input_shape.dim(1).dim_value()));
-        output_shape->add_dim()->set_dim_value(
-          ctx.getAttribute("output_height")->i());
-        output_shape->add_dim()->set_dim_value(
-          ctx.getAttribute("output_width")->i());
-      }));
+          output_shape->clear_dim();
+          output_shape->add_dim()->set_dim_value(
+              static_cast<int64_t>(rois_shape.dim(0).dim_value()));
+          output_shape->add_dim()->set_dim_value(
+              static_cast<int64_t>(input_shape.dim(1).dim_value()));
+          output_shape->add_dim()->set_dim_value(
+              ctx.getAttribute("output_height")->i());
+          output_shape->add_dim()->set_dim_value(
+              ctx.getAttribute("output_width")->i());
+        }));
 
 static const char* NonMaxSuppression_doc = R"DOC(
 Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
@@ -186,8 +189,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
-            selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
+          auto selected_indices_type =
+              ctx.getOutputType(0)->mutable_tensor_type();
+          selected_indices_type->set_elem_type(
+              ::ONNX_NAMESPACE::TensorProto_DataType::
+                  TensorProto_DataType_INT64);
         }));
 
 static const char* RoiCropAndResize_doc = R"DOC(
@@ -207,114 +213,158 @@ ONNX_OPERATOR_SET_SCHEMA(
     RoiCropAndResize,
     11,
     OpSchema()
-      .Attr(
-          "mode",
-          "The pooling method. Two modes are supported: 'bilinear' and 'nearest'. "
-          "Default is 'bilinear'.",
-          AttributeProto::STRING,
-          std::string("bilinear"))
-      .Attr(
-          "extrapolation_value",
-          "Value used for extrapolation, when applicable. "
-          "Default is 0.0f. ",
-          AttributeProto::FLOAT,
-          0.f)
-      .Input(
-          0,
-          "X",
-          "Input data tensor from the previous operator; "
-          "4-D feature map of shape (N, C, H, W), "
-          "where N is the batch size, C is the number of channels, "
-          "and H and W are the height and the width of the data.",
-          "T1")
-      .Input(
-          1,
-          "rois",
-          "RoIs (Regions of Interest) to pool over; rois is "
-          "2-D input of shape (num_rois, 4) given as "
-          "[[y1, x1, y2, x2], ...]. "
-          "The RoIs' coordinates are normalized in the coordinate system of the input image. "
-          "Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.",
-          "T1")
-      .Input(
-          2,
-          "batch_indices",
-          "1-D tensor of shape (num_rois,) with each element denoting "
-          "the index of the corresponding image in the batch.",
-          "T2")
-      .Input(
-          3,
-          "crop_size",
-          "1-D tensor of 2 elements: [crop_height, crop_width]. "
-          "All cropped image patches are resized to this size. Both crop_height and crop_width need to be positive.",
-          "T2")
-      .Output(
-          0,
-          "Y",
-          "RoI pooled output, 4-D tensor of shape "
-          "(num_rois, C, crop_height, crop_width). The r-th batch element Y[r-1] "
-          "is a pooled feature map corresponding to the r-th RoI X[r-1].",
-          "T1")
-      .TypeConstraint(
-          "T1",
-          {"tensor(float16)", "tensor(float)", "tensor(double)"},
-          "Constrain types to float tensors.")
-      .TypeConstraint(
-          "T2",
-          {"tensor(int32)"},
-          "Constrain types to int tensors.")
-      .SetDoc(RoiCropAndResize_doc)
-      .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        if (!hasNInputShapes(ctx, 4)) {
-          return;
-        }
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        .Attr(
+            "mode",
+            "The pooling method. Two modes are supported: 'bilinear' and 'nearest'. "
+            "Default is 'bilinear'.",
+            AttributeProto::STRING,
+            std::string("bilinear"))
+        .Attr(
+            "extrapolation_value",
+            "Value used for extrapolation, when applicable. "
+            "Default is 0.0f. ",
+            AttributeProto::FLOAT,
+            0.f)
+        .Input(
+            0,
+            "X",
+            "Input data tensor from the previous operator; "
+            "4-D feature map of shape (N, C, H, W), "
+            "where N is the batch size, C is the number of channels, "
+            "and H and W are the height and the width of the data.",
+            "T1")
+        .Input(
+            1,
+            "rois",
+            "RoIs (Regions of Interest) to pool over; rois is "
+            "2-D input of shape (num_rois, 4) given as "
+            "[[y1, x1, y2, x2], ...]. "
+            "The RoIs' coordinates are normalized in the coordinate system of the input image. "
+            "Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.",
+            "T1")
+        .Input(
+            2,
+            "batch_indices",
+            "1-D tensor of shape (num_rois,) with each element denoting "
+            "the index of the corresponding image in the batch.",
+            "T2")
+        .Input(
+            3,
+            "crop_size",
+            "1-D tensor of 2 elements: [crop_height, crop_width]. "
+            "All cropped image patches are resized to this size. Both crop_height and crop_width need to be positive.",
+            "T2")
+        .Output(
+            0,
+            "Y",
+            "RoI pooled output, 4-D tensor of shape "
+            "(num_rois, C, crop_height, crop_width). The r-th batch element Y[r-1] "
+            "is a pooled feature map corresponding to the r-th RoI X[r-1].",
+            "T1")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int32)"},
+            "Constrain types to int tensors.")
+        .SetDoc(RoiCropAndResize_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-        auto& input_shape = getInputShape(ctx, 0);
-        auto& rois_shape = getInputShape(ctx, 1);
-        auto& batch_index_shape = getInputShape(ctx, 2);
-        auto& crop_size_shape = getInputShape(ctx, 3);
+          // Shape inference
+          auto* output_shape = getOutputShape(ctx, 0);
+          output_shape->clear_dim();
 
-        if (input_shape.dim_size() != 4) {
-          fail_shape_inference("first input tensor has wrong dimension");
-        }
-        if (rois_shape.dim_size() != 2) {
-          fail_shape_inference("rois input tensor has wrong dimension");
-        }
-        if (batch_index_shape.dim_size() != 1) {
-          fail_shape_inference("batch_indices shape input tensor has wrong dimension");
-        }
-        if (crop_size_shape.dim_size() != 1) {
-          fail_shape_inference("crop_size shape input tensor has wrong dimension");
-        }
+          // Needs only 2 input shapes to do shape inferencing
+          // The third fourth shapes are not explicitly needed to do shape
+          // inference. In this implementation the third and fourth shapes are
+          // validated if present
+          if (hasNInputShapes(ctx, 2)) {
+            const auto& input_shape = getInputShape(ctx, 0);
+            const auto& rois_shape = getInputShape(ctx, 1);
 
-        auto* output_shape = getOutputShape(ctx, 0);
-        output_shape->clear_dim();
-        if (rois_shape.dim(0).has_dim_value()) {
-          output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-            rois_shape.dim(0).dim_value()));
-        }
-        else if (rois_shape.dim(0).has_dim_param()) {
-          output_shape->add_dim()->set_dim_param(rois_shape.dim(0).dim_param());
-        }
-        else {
-          output_shape->add_dim();
-        }
+            // Validate 'X' shape/rank
+            if (input_shape.dim_size() != 4) {
+              fail_shape_inference(
+                  "first input tensor 'X' has wrong rank - needs to be of rank 4");
+            }
 
-        if (input_shape.dim(1).has_dim_value()) {
-          output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
-            input_shape.dim(1).dim_value()));
-        }
-        else if (input_shape.dim(1).has_dim_param()) {
-          output_shape->add_dim()->set_dim_param(input_shape.dim(1).dim_param());
-        }
-        else {
-          output_shape->add_dim();
-        }
+            // Validate 'rois' shape/rank
+            if (rois_shape.dim_size() != 2) {
+              fail_shape_inference(
+                  "'rois' input tensor has wrong rank - needs to be of rank 2");
+            }
 
+            if (rois_shape.dim(1).has_dim_value() &&
+                rois_shape.dim(1).dim_value() != 4) {
+              fail_shape_inference(
+                  "'rois' input tensor has incorrect value in the second dimension - needs to be 4 but instead got " +
+                  std::to_string(rois_shape.dim(1).dim_value()));
+            }
 
-        output_shape->add_dim();
-        output_shape->add_dim();
-      }));
+            // Validate 'batch_indices' shape/rank if present
+            // Also validate 'batch_indices' shape relative to 'rois_shape'
+            if (hasInputShape(ctx, 2)) {
+              const auto& batch_indices_shape = getInputShape(ctx, 2);
+              if (batch_indices_shape.dim_size() != 1) {
+                fail_shape_inference(
+                    "'batch_indices' shape input tensor has wrong dimension");
+              }
+
+              if (rois_shape.dim(0).has_dim_value() &&
+                  batch_indices_shape.dim(0).has_dim_value() &&
+                  rois_shape.dim(0).dim_value() !=
+                      batch_indices_shape.dim(0).dim_value()) {
+                fail_shape_inference(
+                    "'rois' input tensor's shape value in the first dimension should match "
+                    " the 'batch_indices' input tensor's shape value in the first dimension");
+              }
+            }
+
+            auto* first_dim = output_shape->add_dim();
+            if (rois_shape.dim(0).has_dim_param()) {
+              first_dim->set_dim_param(rois_shape.dim(0).dim_param());
+            } else if (rois_shape.dim(0).has_dim_value()) {
+              first_dim->set_dim_value(
+                  static_cast<int64_t>(rois_shape.dim(0).dim_value()));
+            }
+
+            auto* second_dim = output_shape->add_dim();
+            if (input_shape.dim(1).has_dim_param()) {
+              second_dim->set_dim_param(input_shape.dim(1).dim_param());
+            } else if (input_shape.dim(1).has_dim_value()) {
+              second_dim->set_dim_value(
+                  static_cast<int64_t>(input_shape.dim(1).dim_value()));
+            }
+
+            auto* third_dim = output_shape->add_dim();
+            auto* fourth_dim = output_shape->add_dim();
+
+            // the third and fourth dim can be filled if 'crop_size' input
+            // is available as an initializer
+            const auto* crop_size = ctx.getInputData(3);
+            if (crop_size != nullptr) {
+              if (crop_size->dims_size() != 1 || crop_size->dims(0) != 2 ||
+                  crop_size->data_type() != TensorProto::INT32) {
+                fail_shape_inference(
+                    "'crop_size' input must 1D tensor of size 2 of type INT32");
+              }
+              const auto& crop_size_data = ParseData<int32_t>(crop_size);
+              // output height
+              third_dim->set_dim_value(static_cast<int>(crop_size_data[0]));
+              // output width
+              fourth_dim->set_dim_value(static_cast<int>(crop_size_data[1]));
+            }
+          } else {
+            // Rank inference
+            // Output is always 4-D
+            for (int i = 0; i < 4; ++i) {
+              output_shape->add_dim();
+            }
+          }
+        }));
 
 } // namespace ONNX_NAMESPACE
