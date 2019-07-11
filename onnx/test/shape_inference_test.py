@@ -1962,14 +1962,14 @@ class TestShapeInference(unittest.TestCase):
                                           make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
                                           opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
-    def test_cropandresize(self):  # type: () -> None
+    def test_roicropandresize(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (5, 3, 7, 8)),
              ('rois', TensorProto.FLOAT, (6, 4)),
              ('batch_indices', TensorProto.INT32, (6,)),
              ('crop_size', TensorProto.INT32, (2,)),
              ],
-            [make_node('CropAndResize', ['X', 'rois', 'batch_indices', 'crop_size'], ['y'])],
+            [make_node('RoiCropAndResize', ['X', 'rois', 'batch_indices', 'crop_size'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6, 3, None, None))])  # type: ignore
 

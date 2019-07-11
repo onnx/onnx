@@ -190,16 +190,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
         }));
 
-static const char* CropAndResize_doc = R"DOC(
+static const char* RoiCropAndResize_doc = R"DOC(
 Extracts crops from the input image tensor and resizes them using bilinear sampling or nearest neighbor sampling
 (possibly with aspect ratio change) to a common output size specified by crop_height and crop_width.
 Returns a tensor with crops from the input image at positions defined at the bounding box locations in boxes.
 The cropped boxes are all resized (with bilinear or nearest neighbor interpolation) to
 a fixed size = [crop_height, crop_width]. The result is a 4-D tensor [num_boxes, crop_height, crop_width, depth].
-The resizing is corner aligned.)DOC";
+The resizing is corner aligned. Suppose the input tensor X of shape (N, C, H, W), and the input rois tensor R of shape (M, 4),
+and the batch indices tensor B of shape (M, ). The shape of output tensor Y is (M, C, CH, CW) where CH and CW is the crop_height
+and crop_width. For each element Y[m, c, ch, cw], the image coordinate in the original X, (ch_x, cw_x),
+is calculated at first, based on ch, cw, R[m, :], and B[m]. Then Y[m, c, ch, cw] = mode(X[B[m], c, ch_x, cw_x], extrapolation_value)
+where mode is bilinear or nearest.
+The equivalent TensorFlow version can be find [here](https://www.tensorflow.org/api_docs/python/tf/image/crop_and_resize).)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    CropAndResize,
+    RoiCropAndResize,
     11,
     OpSchema()
       .Attr(
@@ -258,7 +263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           "T2",
           {"tensor(int32)"},
           "Constrain types to int tensors.")
-      .SetDoc(CropAndResize_doc)
+      .SetDoc(RoiCropAndResize_doc)
       .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         if (!hasNInputShapes(ctx, 4)) {
           return;
