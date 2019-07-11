@@ -2021,28 +2021,13 @@ expect(node, inputs=[x, axis], outputs=[y],
 
 
 ### DepthToSpace
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
-<summary>depthtospace</summary>
+<summary>crd_mode</summary>
 
 ```python
 b, c, h, w = shape = (2, 8, 3, 3)
-mode_dcr = 'DCR'
 blocksize = 2
-node = onnx.helper.make_node(
-    'DepthToSpace',
-    inputs=['x'],
-    outputs=['y'],
-    blocksize=blocksize,
-    mode=mode_dcr
-)
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace')
-
 mode_crd = 'CRD'
 node = onnx.helper.make_node(
     'DepthToSpace',
@@ -2051,56 +2036,19 @@ node = onnx.helper.make_node(
     blocksize=blocksize,
     mode=mode_crd
 )
+x = np.random.random_sample(shape).astype(np.float32)
 tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
 tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
 y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
 expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace')
+       name='test_depthtospace_crd_mode')
 ```
 
 </details>
 <details>
-<summary>example</summary>
+<summary>crd_mode_example</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'DepthToSpace',
-    inputs=['x'],
-    outputs=['y'],
-    blocksize=2,
-    mode='DCR'
-)
-
-# (1, 8, 2, 3) input tensor
-x = np.array([[[[0.,  1.,  2.],
-                [3.,  4.,  5.]],
-               [[9., 10., 11.],
-                [12., 13., 14.]],
-               [[18., 19., 20.],
-                [21., 22., 23.]],
-               [[27., 28., 29.],
-                [30., 31., 32.]],
-               [[36., 37., 38.],
-                [39., 40., 41.]],
-               [[45., 46., 47.],
-                [48., 49., 50.]],
-               [[54., 55., 56.],
-                [57., 58., 59.]],
-               [[63., 64., 65.],
-                [66., 67., 68.]]]]).astype(np.float32)
-
-# (1, 2, 4, 6) output tensor
-y = np.array([[[[0., 18.,  1., 19.,  2., 20.],
-                [36., 54., 37., 55., 38., 56.],
-                [3., 21.,  4., 22.,  5., 23.],
-                [39., 57., 40., 58., 41., 59.]],
-               [[9., 27., 10., 28., 11., 29.],
-                [45., 63., 46., 64., 47., 65.],
-                [12., 30., 13., 31., 14., 32.],
-                [48., 66., 49., 67., 50., 68.]]]]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace_example')
-
 node = onnx.helper.make_node(
     'DepthToSpace',
     inputs=['x'],
@@ -2135,6 +2083,73 @@ y = np.array([[[[0., 9., 1., 10., 2., 11.],
                 [54., 63., 55., 64., 56., 65.],
                 [39., 48., 40., 49., 41., 50.],
                 [57., 66., 58., 67., 59., 68.]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace_crd_mode_example')
+```
+
+</details>
+<details>
+<summary>depthtospace</summary>
+
+```python
+b, c, h, w = shape = (2, 8, 3, 3)
+mode_dcr = 'DCR'
+blocksize = 2
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=blocksize,
+    mode=mode_dcr
+)
+x = np.random.random_sample(shape).astype(np.float32)
+tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace_dcr_mode')
+```
+
+</details>
+<details>
+<summary>example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+    mode='DCR'
+)
+
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
+
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 18., 1., 19., 2., 20.],
+                [36., 54., 37., 55., 38., 56.],
+                [3., 21., 4., 22., 5., 23.],
+                [39., 57., 40., 58., 41., 59.]],
+               [[9., 27., 10., 28., 11., 29.],
+                [45., 63., 46., 64., 47., 65.],
+                [12., 30., 13., 31., 14., 32.],
+                [48., 66., 49., 67., 50., 68.]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_depthtospace_example')
 ```

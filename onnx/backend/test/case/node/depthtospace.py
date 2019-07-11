@@ -29,8 +29,12 @@ class DepthToSpace(Base):
         tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
         y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
         expect(node, inputs=[x], outputs=[y],
-               name='test_depthtospace')
+               name='test_depthtospace_dcr_mode')
 
+    @staticmethod
+    def export_crd_mode():  # type: () -> None
+        b, c, h, w = shape = (2, 8, 3, 3)
+        blocksize = 2
         mode_crd = 'CRD'
         node = onnx.helper.make_node(
             'DepthToSpace',
@@ -39,11 +43,12 @@ class DepthToSpace(Base):
             blocksize=blocksize,
             mode=mode_crd
         )
+        x = np.random.random_sample(shape).astype(np.float32)
         tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
         tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
         y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
         expect(node, inputs=[x], outputs=[y],
-               name='test_depthtospace')
+               name='test_depthtospace_crd_mode')
 
     @staticmethod
     def export_example():  # type: () -> None
@@ -85,6 +90,8 @@ class DepthToSpace(Base):
         expect(node, inputs=[x], outputs=[y],
                name='test_depthtospace_example')
 
+    @staticmethod
+    def export_crd_mode_example():  # type: () -> None
         node = onnx.helper.make_node(
             'DepthToSpace',
             inputs=['x'],
@@ -120,4 +127,4 @@ class DepthToSpace(Base):
                         [39., 48., 40., 49., 41., 50.],
                         [57., 66., 58., 67., 59., 68.]]]]).astype(np.float32)
         expect(node, inputs=[x], outputs=[y],
-               name='test_depthtospace_example')
+               name='test_depthtospace_crd_mode_example')

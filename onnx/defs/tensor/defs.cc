@@ -1202,7 +1202,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT)
         .Attr(
             "mode",
-            "DCR (default) for depth-column-row order. CRD for column-row-depth order.",
+            "DCR (default) for depth-column-row order re-arrangement. In this case, values from the depth dimension are"
+            "moved in the following order: depth, column, and row dimension. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("constant"))
         .SetDoc(DepthToSpace_ver11_doc)
