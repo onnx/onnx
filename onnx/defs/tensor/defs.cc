@@ -1185,7 +1185,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DepthToSpace_ver1_doc =
+static const char* DepthToSpace_ver11_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
@@ -1194,12 +1194,17 @@ and width dimensions.
 
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
-    1,
+    11,
     OpSchema()
         .Attr(
             "blocksize",
             "Blocks of [blocksize, blocksize] are moved.",
             AttributeProto::INT)
+        .Attr(
+            "mode",
+            "DCR (default) for depth-column-row order. CRD for column-row-depth order.",
+            AttributeProto::STRING,
+            std::string("constant")
         .SetDoc(DepthToSpace_ver1_doc)
         .Input(
             0,
