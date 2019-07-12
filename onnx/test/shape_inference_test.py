@@ -1967,10 +1967,18 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
              ('rois', TensorProto.FLOAT, ('num_rois', 4)),
              ('batch_indices', TensorProto.INT64, ('num_rois',))],
-            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'], output_height=1, output_width=1)],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'], output_height=10, output_width=5)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ('num_rois', 'C', 10, 5))])  # type: ignore
+
+    def test_roialign_symbolic_defaults(self):   # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('rois', TensorProto.FLOAT, ('num_rois', 4)),
+             ('batch_indices', TensorProto.INT64, ('num_rois',))],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ('num_rois', 'C', 1, 1))])  # type: ignore
-
 
 if __name__ == '__main__':
     unittest.main()

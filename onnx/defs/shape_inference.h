@@ -6,6 +6,8 @@
 
 namespace ONNX_NAMESPACE {
 
+using Dim = TensorShapeProto_Dimension;
+
 class GraphInferencer {
  public:
   // Perform inferencing on the graph contained in GraphInferencer.
@@ -270,6 +272,12 @@ inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
   return true;
 }
 
+inline const TypeProto_Tensor& getInputTensorType(
+    InferenceContext& ctx,
+    size_t n) {
+  auto* type_proto = ctx.getInputType(n);
+}
+
 inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getInputType(n)->tensor_type().shape();
 }
@@ -501,7 +509,9 @@ If source has no dimension information, ignore source.
 If both have dimension information:
  - Prefer values over params. If both have values, values must match.
  - Prefer target param over source param if mismatched.
-Fail if there are mismatches in number of dimensions or dimension values.
+Fail if there are mismatches in dimension values.
+Currently, there is no way to refine/update dimension information for the
+source from information available in the target.
 */
 inline void mergeInDimensionInfo(
     const TensorShapeProto_Dimension& source_dim,
@@ -639,6 +649,58 @@ inline TypeProto RemoveDimensionsFromShape(
 template <class T, class U>
 static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
+}
+
+inline void checkInputRank(
+    InferenceContext& ctx,
+    size_t input_index,
+    size_t expected_rank) {
+  // We check the rank only if a rank is known for the input:
+  if (hasInputShape(ctx, input_index)) {
+    auto rank = getInputShape(ctx, input_index).dim_size();
+    if (rank != expected_rank)
+      fail_shape_inference(
+          "Input ",
+          input_index,
+          " expected to have rank ",
+          expected_rank,
+          " but has rank ",
+          rank);
+  }
+}
+
+inline void
+unifyDim(InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
+  // We unify the dimensions only if it is available for specified input:
+  if (hasInputShape(ctx, input_index)) {
+    auto& input_shape = getInputShape(ctx, input_index);
+    // This shape is expected to have rank > dim_index:
+    if (input_shape.dim_size() <= dim_index)
+      fail_shape_inference(
+          "Input ",
+          input_index,
+          " expected to have rank >",
+          dim_index,
+          " but has rank ",
+          input_shape.dim_size());
+    const Dim& input_dim = input_shape.dim(dim_index);
+    // Now, unify dim and input_dim:
+    mergeInDimensionInfo(input_dim, dim, dim_index);
+  }
+}
+
+// unifyDim: unifies a dimension with a constant value. If the dimension
+// already has a value, we check for equality of new value with old value.
+inline void unifyDim(Dim& dim, int64_t value) {
+  if (dim.has_dim_value()) {
+    if (dim.dim_value() != value)
+      fail_shape_inference(
+          "Dimension mismatch in unification between ",
+          value,
+          " and ",
+          dim.dim_value());
+  } else
+    dim.set_dim_value(value);
 }
 
 } // namespace ONNX_NAMESPACE
