@@ -1962,6 +1962,15 @@ class TestShapeInference(unittest.TestCase):
                                           make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
                                           opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
+    def test_roialign_symbolic(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('rois', TensorProto.INT64, ('num_rois', 4)),
+             ('batch_indices', TensorProto.FLOAT, ('num_rois',))],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ('num_rois', 'C', 1, 1))])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()
