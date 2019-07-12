@@ -13,7 +13,7 @@ from . import expect
 class DepthToSpace(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export_default_mode():  # type: () -> None
         b, c, h, w = shape = (2, 8, 3, 3)
         mode_dcr = 'DCR'
         blocksize = 2
@@ -51,7 +51,7 @@ class DepthToSpace(Base):
                name='test_depthtospace_crd_mode')
 
     @staticmethod
-    def export_example():  # type: () -> None
+    def export_default_mode_example():  # type: () -> None
         node = onnx.helper.make_node(
             'DepthToSpace',
             inputs=['x'],

@@ -2089,7 +2089,7 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
-<summary>depthtospace</summary>
+<summary>default_mode</summary>
 
 ```python
 b, c, h, w = shape = (2, 8, 3, 3)
@@ -2112,7 +2112,7 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
-<summary>example</summary>
+<summary>default_mode_example</summary>
 
 ```python
 node = onnx.helper.make_node(
