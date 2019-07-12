@@ -1304,7 +1304,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -1373,7 +1373,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -4608,7 +4608,7 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -10332,50 +10332,28 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
-### <a name="GatherElements-11"></a>**GatherElements-11**</a>
+### <a name="CumSum-11"></a>**CumSum-11**</a>
 
-  Given `data` tensor and `indices` tensor of the same rank r >= 1, gather
-  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`.
-  For instance, for a 3-D tensor the output is specified by:
-  ...
-    out[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
-    out[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
-    out[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
-  ...
-  This operator is the inverse of ScatterElements.
-  Example 1:
-    data = [
-        [1, 2],
-        [3, 4],
-    ]
-    indices = [
-        [0, 0],
-        [1, 0],
-    ]
-    axis = 1
-    output = [
-        [
-          [1, 1],
-          [4, 3],
-        ],
-    ]
-  Example 2:
-    data = [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-    ]
-    indices = [
-        [1, 2, 0],
-        [2, 0, 0],
-    ]
-    axis = 0
-    output = [
-        [
-          [4, 8, 3],
-          [7, 2, 3],
-        ],
-    ]
+  Performs cumulative sum of the input elements along the given axis.
+  By default, it will do the sum inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+  
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 3, 6]
+  exclusive=1
+  output = [0, 1, 3]
+  exclusive=0
+  reverse=1
+  output = [6, 5, 3]
+  exclusive=1
+  reverse=1
+  output = [5, 3, 0]
+  ```
+   
 
 #### Version
 
@@ -10384,33 +10362,35 @@ This version of the operator has been available since version 11 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the sums in reverse direction.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
-<dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, with the same rank r as the input.</dd>
+<dt><tt>x</tt> : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> : T2</dt>
+<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor of indice shape.</dd>
+<dt><tt>y</tt> : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
 ### <a name="Loop-11"></a>**Loop-11**</a>
