@@ -10,7 +10,13 @@ from ..base import Base
 from . import expect
 
 
-def compute_roi_crop_and_resize(x, rois, batch_indices, crop_size, mode, extrapolation_value):
+def compute_roi_crop_and_resize(x, # type: np.ndarray
+                                rois, # type: np.ndarray
+                                batch_indices, # type: np.ndarray
+                                crop_size, # type: np.ndarray
+                                mode, # type: string
+                                extrapolation_value # type: float
+                                ): # type: (...) -> np.ndarray
     num_rois = rois.shape[0]
     channels = x.shape[1]
     height = x.shape[2]
