@@ -25,8 +25,7 @@ class GatherElements(Base):
                          [3, 4]], dtype=np.float32)
         indices = np.array([[0, 0],
                             [1, 0]], dtype=np.int64)
-        # The below GatherElements' numpy implementation is from
-        # https://stackoverflow.com/questions/46868056/how-to-gather-elements-of-specific-indices-in-numpy/51529812#51529812
+        # The below GatherElements' numpy implementation is from https://stackoverflow.com/a/51529812/11767360
         data_swaped = np.swapaxes(data, 0, axis)
         index_swaped = np.swapaxes(indices, 0, axis)
         gathered = np.choose(index_swaped, data_swaped)
