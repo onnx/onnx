@@ -1980,5 +1980,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ('num_rois', 'C', 1, 1))])  # type: ignore
 
+    def test_roialign_num_rois(self):   # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('rois', TensorProto.FLOAT, ('num_rois', 4)),
+             ('batch_indices', TensorProto.INT64, (15,))],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (15, 'C', 1, 1))])  # type: ignore
+
 if __name__ == '__main__':
     unittest.main()

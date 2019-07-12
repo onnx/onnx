@@ -272,12 +272,6 @@ inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
   return true;
 }
 
-inline const TypeProto_Tensor& getInputTensorType(
-    InferenceContext& ctx,
-    size_t n) {
-  auto* type_proto = ctx.getInputType(n);
-}
-
 inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getInputType(n)->tensor_type().shape();
 }
