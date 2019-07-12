@@ -151,8 +151,3 @@ class RoiCropAndResize(Base):
         mode = 'nearest'
         Y = compute_roi_crop_and_resize(X, rois, batch_indices, crop_size, mode, extrapolation_value)
         expect(node, inputs=[X, rois, batch_indices, crop_size], outputs=[Y], name="test_roi_crop_and_resize_crop_size")
-
-
-if __name__ == '__main__':
-    acgan = CropAndResize()
-    acgan.export_crop_and_resize_0()
