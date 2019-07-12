@@ -1189,7 +1189,59 @@ static const char* DepthToSpace_ver11_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
-and width dimensions.
+and width dimensions. By default, `mode` = `DCR`. So elements along the depth dimension from the input tensor are
+rearranged in the following order: depth, column, and then row in the output.
+
+Example:
+  input = [[
+            [[ 0.,  1.], [ 2.,  3.]],
+            [[ 4.,  5.], [ 6.,  7.]],
+            [[ 8.,  9.], [10., 11.]],
+            [[12., 13.], [14., 15.]],
+            [[16., 17.], [18., 19.]],
+            [[20., 21.], [22., 23.]],
+            [[24., 25.], [26., 27.]],
+            [[28., 29.], [30., 31.]]
+          ]]
+
+  output =
+      [[
+        [[ 0.,  8.,  1.,  9.],
+         [16., 24., 17., 25.],
+         [ 2., 10.,  3., 11.],
+         [18., 26., 19., 27.]],
+        [[ 4., 12.,  5., 13.],
+         [20., 28., 21., 29.],
+         [ 6., 14.,  7., 15.],
+         [22., 30., 23., 31.]]
+      ]]
+
+Using `CRD`, the elements are rearranged in the following order: column, row, and then depth.
+
+Example:
+  input = [[
+            [[ 0.,  1.], [ 2.,  3.]],
+            [[ 4.,  5.], [ 6.,  7.]],
+            [[ 8.,  9.], [10., 11.]],
+            [[12., 13.], [14., 15.]],
+            [[16., 17.], [18., 19.]],
+            [[20., 21.], [22., 23.]],
+            [[24., 25.], [26., 27.]],
+            [[28., 29.], [30., 31.]]
+          ]]
+
+  output =
+      [[
+        [[ 0.,  4.,  1.,  5.],
+         [ 8., 12.,  9., 13.],
+         [ 2.,  6.,  3.,  7.],
+         [10., 14., 11., 15.]],
+        [[16., 20., 17., 21.],
+         [24., 28., 25., 29.],
+         [18., 22., 19., 23.],
+         [26., 30., 27., 31.]]
+      ]]
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1202,8 +1254,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT)
         .Attr(
             "mode",
-            "DCR (default) for depth-column-row order re-arrangement. In this case, values from the depth dimension are"
-            "moved in the following order: depth, column, and row dimension. Use CRD for column-row-depth order.",
+            "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("constant"))
         .SetDoc(DepthToSpace_ver11_doc)
