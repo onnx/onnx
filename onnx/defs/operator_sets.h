@@ -577,7 +577,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, CumSum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift);
 
-// Iterate over schema from ai.onnx version 10
+// Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver11 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
@@ -586,6 +586,16 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 11, BitShift)>());
+  }
+};
+
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Gradient);
+
+// Iterate over schema from ai.onnx version 12
+class OpSet_Onnx_ver12 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Gradient)>());
   }
 };
 
@@ -601,6 +611,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver9>();
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
   RegisterOpSetSchema<OpSet_Onnx_ver11>();
+  RegisterOpSetSchema<OpSet_Onnx_ver12>();
 }
 
 } // namespace ONNX_NAMESPACE
