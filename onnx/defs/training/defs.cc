@@ -12,6 +12,7 @@ Gradient operator computes the derivatives of some tensors with respect to
 a specified tensor. This operator is widely used in gradient-based training
 algorithms. For a concrete example, let's consider a computation graph,
 
+```
 X -----.
        |
        v
@@ -19,25 +20,28 @@ W --> Conv --> H --> Gemm --> Y
                       ^
                       |
                       Z
+```
 
 , where W and Z are trainable tensors. Note that operators' attributes are
 omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
 Y with respect to W (Z). The user can compute gradient by inserting Gradient
 operator to form
 
+```
 W --> Conv --> H --> Gemm --> Y
 |      ^              ^
 |      |              |
 |      X              Z
 |      |              |
 |      |   .----------'
-|      |   |
+|      |   |  (X/W/Z is the 1st/2nd/3rd input of Gradient as shown in "xs")
 |      v   v
 '---> Gradient(xs=["X", "W", "Z"], y=["Y"]) ---> dY/dX (1st output of Gradient)
        |   |
        |   '-----------------------------------> dY/dW (2nd output of Gradient)
        |
        '---------------------------------------> dY/dZ (3rd output of Gradient)
+```
 
 , where the content inside the braces of Gradient are attributes. The attribute
 "xs" specifies the necessary inputs to compute the variable specified by
@@ -50,34 +54,39 @@ assigning an empty string to the 1st output name of that Gradient. In other
 words, all Gradient's outputs are optional. Note that the concept of optional
 outputs can also be found in ONNX's RNN, GRU, and LSTM.
 
-Gradient operator can compute derivative against intermediate tensors. The
-figure below demonstrates a way to compute dY/dH.
+Gradient operator can compute derivative against intermediate tensors. For
+example, the gradient of Y with respect to W can be done in
 
+```
 W --> Conv --> H --> Gemm --> Y
        ^       |      ^
        |       |      |
        X       |      Z
        .-------'      |
        |   .----------'
-       |   | (H/Z is the 1st/2nd input of Gradient.)
+       |   | (H/Z is the 1st/2nd input of Gradient as shown in "xs")
        v   v
       Gradient(xs=["H", "Z"], y=["Y"])
        |   |
        |   '-----------------------------------> dY/dH (1st output of Gradient)
        |
        '---------------------------------------> dY/dZ (2nd output of Gradient)
+```
 
 It is possible to represent high-order differentiation using Gradient operator.
 An example for linear model is
 
-W --> Gemm --> Y --> Loss --> Y
+```
+W --> Gemm --> Y --> Loss --> O
        ^              ^
        |              |
        X              L
+```
 
 To compute the 2nd order derivative of O with respect to W (denoted by
 d^2O/dW^2), one can do
 
+```
 W --> Gemm --> Y --> Loss --> O
 |      ^              ^
 |      |              |
@@ -88,17 +97,19 @@ W --> Gemm --> Y --> Loss --> O
 |      |      |
 |      |      '---> dO/dW (2nd output of Gradient)
 |      v
-'---> Gradient(xs=["X", "W"], y=["dO/dW"]) ---> d(dO/dX)dX (1st output of
+'---> Gradient(xs=["X", "W"], y=["dO/dW"]) ---> d(dO/dW)dX (1st output of
        |                                          Gradient)
        |
        |
        '---> d^2O/dW^2 (2nd output of Gradient)
+```
 
 As mentioned above, the attributes "xs" and "y" are used to identify a graph,
-which implies that we can feed different tensors to the identified graph. For,
+and we can feed different tensors to the identified graph. For,
 example, one can compute the gradient of Y with respect to H by substituting
-Y_1 into Y and H_1 into H in the computation graph below.
+Y_1 into Y and H_1 into H.
 
+```
 W --> Conv --> H --> Gemm --> Y
        ^              ^
        |              |
@@ -112,9 +123,10 @@ W_1 --> Gradient(xs=["H", "Z"], y=["Y"]) ---> dY/dX when Y = Y_1
          |   '-----------------------------------> dY/dW (2nd output of Gradient)
          |
          '---------------------------------------> dY/dZ (3rd output of Gradient)
+```
 
 This graph also implies that one can identify a gradient graph once and reuse
-it with different input values.
+it multiple times with different input values.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -153,8 +165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The differentiated tensor. It is viewed as a function of "
             "the attribute \"xs\".",
             AttributeProto::STRING)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        }));
+        );
 
 
 } // namespace ONNX_NAMESPACE
