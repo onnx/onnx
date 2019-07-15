@@ -14,7 +14,7 @@ def compute_roi_crop_and_resize(x, # type: np.ndarray
                                 rois, # type: np.ndarray
                                 batch_indices, # type: np.ndarray
                                 crop_size, # type: np.ndarray
-                                mode, # type: str
+                                mode, # type: Text
                                 extrapolation_value # type: float
                                 ): # type: (...) -> np.ndarray
     num_rois = rois.shape[0]
