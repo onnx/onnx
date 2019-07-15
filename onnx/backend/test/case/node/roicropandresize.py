@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from typing import Text
 import numpy as np  # type: ignore
 
 import onnx
@@ -10,13 +11,13 @@ from ..base import Base
 from . import expect
 
 
-def compute_roi_crop_and_resize(x, # type: np.ndarray
-                                rois, # type: np.ndarray
-                                batch_indices, # type: np.ndarray
-                                crop_size, # type: np.ndarray
-                                mode, # type: Text
-                                extrapolation_value # type: float
-                                ): # type: (...) -> np.ndarray
+def compute_roi_crop_and_resize(x,  # type: np.ndarray
+                                rois,  # type: np.ndarray
+                                batch_indices,  # type: np.ndarray
+                                crop_size,  # type: np.ndarray
+                                mode,  # type: Text
+                                extrapolation_value  # type: float
+                                ):  # type: (...) -> np.ndarray
     num_rois = rois.shape[0]
     channels = x.shape[1]
     height = x.shape[2]
