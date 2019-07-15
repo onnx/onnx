@@ -6735,7 +6735,7 @@ node = onnx.helper.make_node(
 )
 
 X = np.array(
-    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
     dtype=np.float32,
 )
 batch_indices = np.array([0, 0, 0], dtype=np.int64)
@@ -6760,7 +6760,7 @@ node = onnx.helper.make_node(
 )
 
 X = np.array(
-    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
     dtype=np.float32,
 )
 batch_indices = np.array([0, 0, 0], dtype=np.int64)
@@ -6785,7 +6785,7 @@ node = onnx.helper.make_node(
 )
 
 X = np.array(
-    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
     dtype=np.float32,
 )
 batch_indices = np.array([0, 0, 0], dtype=np.int64)
@@ -6810,7 +6810,7 @@ node = onnx.helper.make_node(
 )
 
 X = np.array(
-    [[[[1.1, 2.2], [3.3, 4.4],], [[5.5, 6.6], [7.7, 8.8],],],],
+    [[[[1.1, 2.2], [3.3, 4.4], ], [[5.5, 6.6], [7.7, 8.8], ], ], ],
     dtype=np.float32,
 )
 batch_indices = np.array([0, 0, 0], dtype=np.int64)
