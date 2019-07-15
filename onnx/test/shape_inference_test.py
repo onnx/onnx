@@ -1989,5 +1989,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (15, 'C', 1, 1))])  # type: ignore
 
+
 if __name__ == '__main__':
     unittest.main()

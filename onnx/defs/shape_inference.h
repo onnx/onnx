@@ -645,10 +645,8 @@ static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 
-inline void checkInputRank(
-    InferenceContext& ctx,
-    size_t input_index,
-    size_t expected_rank) {
+inline void
+checkInputRank(InferenceContext& ctx, size_t input_index, int expected_rank) {
   // We check the rank only if a rank is known for the input:
   if (hasInputShape(ctx, input_index)) {
     auto rank = getInputShape(ctx, input_index).dim_size();
