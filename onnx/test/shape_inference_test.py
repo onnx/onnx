@@ -827,7 +827,7 @@ class TestShapeInference(unittest.TestCase):
         b = 10
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 300, 10, 10))],
-            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
+            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b, mode='DCR')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
