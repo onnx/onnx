@@ -1993,9 +1993,9 @@ node = onnx.helper.make_node(
     inputs=['x', 'axis'],
     outputs=['y'],
 )
-x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
 axis = np.array([0]).astype(np.int32)
-y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64)
+y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_axis_0')
 ```
