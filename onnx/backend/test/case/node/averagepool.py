@@ -360,4 +360,4 @@ class AveragePool(Base):
             [6, 7.5],
             [12, 13.5]]]]).astype(np.float32)
 
-        expect(node, inputs=[x], outputs=[y], name='export_averagepool_2d_ceil')
+        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_ceil')

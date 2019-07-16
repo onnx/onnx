@@ -39,7 +39,7 @@ Nothing in this specification should be construed as advocating one implementati
 
 ## ONNX Versioning
 
-Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
+Versioning features in several places in ONNX -- the IR (Intermediate Representation) specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
 Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
@@ -156,7 +156,7 @@ Graphs have the following properties:
 |---|---|---|
 name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
-initializer|Tensor[]|A list of named tensor values, used to specify default values for some of the inputs of the graph. Each initializer value is associated with an input by name matching.
+initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value.
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.

@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #pragma once
@@ -13,5 +13,7 @@ TensorProto ToTensor(const T& value);
 template <typename T>
 TensorProto ToTensor(const std::vector<T>& values);
 
+template <typename T>
+const std::vector<T> ParseData(const TensorProto* tensor_proto);
 
 } // namespace ONNX_NAMESPACE
