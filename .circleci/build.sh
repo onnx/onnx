@@ -19,6 +19,8 @@ if hash sccache 2>/dev/null; then
 fi
 
 # setup virtualenv
+pip install virtualenv==15.2.0 --user
+pip install ninja --user
 VENV_DIR=/tmp/venv
 PYTHON="$(which python)"
 if [[ "${CIRCLE_JOB}" =~ py((2|3)\\.?[0-9]?\\.?[0-9]?) ]]; then
