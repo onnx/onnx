@@ -2,14 +2,17 @@
 
 Operators are the basic building blocks that define ONNX model. With a rich set of operators, ONNX can describe most DNN and ML models from various frameworks. Improving the process of accepting and adding a new operator to ONNX is crucial for ONNX standard future and its viability.
 
-In this document, we describe the process of accepting a new proposed operator and how to properly submit a new operator as part of ONNX standard. The goal is to improve on what we currently have based on our experience, learning and feedbacks we gathered from the community. 
+In this document, we describe the process of accepting a new proposed operator and how to properly submit a new operator as part of ONNX standard. The goal is to improve on what we currently have based on our experience, learning and feedbacks we gathered from the community.
 
-Adding new operator to ONNX is vital to keep up with latest model architectures and to keep ONNX standard relevant.
+The ONNX specification includes a core set of operators that enable many models. It is a non-goal to add all possible operators, however more operators are added as needed to cover evolving needs.
 
-# Accepting new operator
-The goal of ONNX standard isn't to implement every possible existing operator from all available frameworks. The goal is to cover most models and keep evolving ONNX to cover future models.
+# 4 steps to add an operator
+1. Decide whether to add an operator or function
+2. Submit PR to propose an operator/function
+3. Review of PR by Operators SIG
+4. Merging of PR and inclusion in next ONNX release
 
-## Proposing a new operator
+# Proposing a new operator
 In order to propose a new operator, the following is needed:
 1. If the operator can be composed by other ONNX operators, then it should be a function and not an operator (we have a function in ONNX : MeanVarianceNormalization).
 2. If the operators can be split to new primitives, propose those primitives instead and make the operator a function.
@@ -20,7 +23,7 @@ In order to propose a new operator, the following is needed:
     2. If the operator is available in more than one frameworks, make sure that your design is general and cover those frameworks.
 6. Prefer attributes over inputs.
 
-## Submitting new operator
+# Submitting new operator
 Once the criteria of proposing new operator has been satisfied, you will need to submit a PR for the new operator. Here the expectation of what the PR should include. The reviewer is expected to verify the completeness of the PR before signoff.
 1. Description:
     1. Write a detailed description about the operator, and its expected behavior. Pretty much, the description should be clear enough to avoid confusion between implementors.
@@ -44,8 +47,8 @@ rank inference at the very least (adding right amount of dimensions to the outpu
     3. Shape inference functions must be accompanied by unit tests (https://github.com/onnx/onnx/blob/master/onnx/test/shape_inference_test.py).
     4. You can refer to the shape inference function for the `TopK` operator while implementing your own function (https://github.com/onnx/onnx/blob/master/onnx/defs/math/defs.cc#L943)
 
-### Example to Follow
+## Example to Follow
 [PR 1959](https://github.com/onnx/onnx/pull/1959) is a good example to follow.
 
-### Sign-off
+## Sign-off
 At least two sign-off from the operator contributor group.
