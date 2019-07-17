@@ -13,44 +13,6 @@ from . import expect
 class DepthToSpace(Base):
 
     @staticmethod
-    def export_default_mode():  # type: () -> None
-        b, c, h, w = shape = (2, 8, 3, 3)
-        mode_dcr = 'DCR'
-        blocksize = 2
-        node = onnx.helper.make_node(
-            'DepthToSpace',
-            inputs=['x'],
-            outputs=['y'],
-            blocksize=blocksize,
-            mode=mode_dcr
-        )
-        x = np.random.random_sample(shape).astype(np.float32)
-        tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-        tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-        y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-        expect(node, inputs=[x], outputs=[y],
-               name='test_depthtospace_dcr_mode')
-
-    @staticmethod
-    def export_crd_mode():  # type: () -> None
-        b, c, h, w = shape = (2, 8, 3, 3)
-        blocksize = 2
-        mode_crd = 'CRD'
-        node = onnx.helper.make_node(
-            'DepthToSpace',
-            inputs=['x'],
-            outputs=['y'],
-            blocksize=blocksize,
-            mode=mode_crd
-        )
-        x = np.random.random_sample(shape).astype(np.float32)
-        tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-        tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-        y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-        expect(node, inputs=[x], outputs=[y],
-               name='test_depthtospace_crd_mode')
-
-    @staticmethod
     def export_default_mode_example():  # type: () -> None
         node = onnx.helper.make_node(
             'DepthToSpace',

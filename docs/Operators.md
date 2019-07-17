@@ -3476,31 +3476,6 @@ Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSp
 #### Examples
 
 <details>
-<summary>crd_mode</summary>
-
-```python
-b, c, h, w = shape = (2, 8, 3, 3)
-blocksize = 2
-mode_crd = 'CRD'
-node = onnx.helper.make_node(
-    'DepthToSpace',
-    inputs=['x'],
-    outputs=['y'],
-    blocksize=blocksize,
-    mode=mode_crd
-)
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace_crd_mode')
-```
-
-</details>
-
-
-<details>
 <summary>crd_mode_example</summary>
 
 ```python
@@ -3540,31 +3515,6 @@ y = np.array([[[[0., 9., 1., 10., 2., 11.],
                 [57., 66., 58., 67., 59., 68.]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_depthtospace_crd_mode_example')
-```
-
-</details>
-
-
-<details>
-<summary>default_mode</summary>
-
-```python
-b, c, h, w = shape = (2, 8, 3, 3)
-mode_dcr = 'DCR'
-blocksize = 2
-node = onnx.helper.make_node(
-    'DepthToSpace',
-    inputs=['x'],
-    outputs=['y'],
-    blocksize=blocksize,
-    mode=mode_dcr
-)
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace_dcr_mode')
 ```
 
 </details>
