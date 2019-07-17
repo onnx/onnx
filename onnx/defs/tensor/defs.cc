@@ -1189,95 +1189,22 @@ static const char* DepthToSpace_ver11_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
-and width dimensions. By default, `mode` = `DCR`. So elements along the depth dimension from the input tensor are
-rearranged in the following order: depth, column, and then row in the output.
+and width dimensions. By default, `mode` = `DCR`.
+In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+following order: depth, column, and then row. The output y is computed from the input x as below:
 
-
-Example:
-
-blocksize = 2
-b, c, h, w = shape = (1, 8, 2, 3)
-input = np.random.random_sample(shape).astype(np.float32)
-
-  input =
-      [[
-        [[0.17321628, 0.29915494, 0.47141773],
-         [0.667863  , 0.21260506, 0.75754184]],
-
-        [[0.7020949 , 0.8787649 , 0.11429739],
-         [0.83835477, 0.47585657, 0.14364398]],
-
-        [[0.9363006 , 0.6279316 , 0.651671  ],
-         [0.7960047 , 0.21720831, 0.10179403]],
-
-        [[0.45850915, 0.6728313 , 0.07581678],
-         [0.9362782 , 0.23562472, 0.19779144]],
-
-        [[0.12390452, 0.5401458 , 0.19154972],
-         [0.8429907 , 0.5265121 , 0.17158678]],
-
-        [[0.24618836, 0.45956853, 0.35246798],
-         [0.7472364 , 0.09598356, 0.34669644]],
-
-        [[0.60404646, 0.29786107, 0.98925465],
-         [0.26063868, 0.47321805, 0.6464447 ]],
-
-        [[0.70233124, 0.62018204, 0.73603475],
-         [0.1543572 , 0.36633593, 0.1516207 ]]
-      ]]
-
-tmp = np.reshape(input, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+b, c, h, w = x.shape
+tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
 tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-output = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
 
-  output =
-      [[
-        [[0.17321628, 0.9363006 , 0.29915494, 0.6279316 , 0.47141773,
-          0.651671  ],
-         [0.12390452, 0.60404646, 0.5401458 , 0.29786107, 0.19154972,
-          0.98925465],
-         [0.667863  , 0.7960047 , 0.21260506, 0.21720831, 0.75754184,
-          0.10179403],
-         [0.8429907 , 0.26063868, 0.5265121 , 0.47321805, 0.17158678,
-          0.6464447 ]],
+In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+following order: column, row, and the depth. The output y is computed from the input x as below:
 
-        [[0.7020949 , 0.45850915, 0.8787649 , 0.6728313 , 0.11429739,
-          0.07581678],
-         [0.24618836, 0.70233124, 0.45956853, 0.62018204, 0.35246798,
-          0.73603475],
-         [0.83835477, 0.9362782 , 0.47585657, 0.23562472, 0.14364398,
-          0.19779144],
-         [0.7472364 , 0.1543572 , 0.09598356, 0.36633593, 0.34669644,
-          0.1516207 ]]
-      ]]
-
-Using `CRD`, the elements are rearranged in the following order: column, row, and then depth.
-
-tmp = np.reshape(input, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+b, c, h, w = x.shape
+tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
 tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-output = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-
-  output =
-      [[
-        [[0.17321628, 0.7020949 , 0.29915494, 0.8787649 , 0.47141773,
-          0.11429739],
-         [0.9363006 , 0.45850915, 0.6279316 , 0.6728313 , 0.651671  ,
-          0.07581678],
-         [0.667863  , 0.83835477, 0.21260506, 0.47585657, 0.75754184,
-          0.14364398],
-         [0.7960047 , 0.9362782 , 0.21720831, 0.23562472, 0.10179403,
-          0.19779144]],
-
-        [[0.12390452, 0.24618836, 0.5401458 , 0.45956853, 0.19154972,
-          0.35246798],
-         [0.60404646, 0.70233124, 0.29786107, 0.62018204, 0.98925465,
-          0.73603475],
-         [0.8429907 , 0.7472364 , 0.5265121 , 0.09598356, 0.17158678,
-          0.34669644],
-         [0.26063868, 0.1543572 , 0.47321805, 0.36633593, 0.6464447 ,
-          0.1516207 ]]
-      ]]
-
+y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

@@ -3419,17 +3419,36 @@ expect(node, inputs=[x, axis], outputs=[y],
   DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
   This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
   the input tensor where values from the depth dimension are moved in spatial blocks to the height
-  and width dimensions.
+  and width dimensions. By default, `mode` = `DCR`.
+  In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: depth, column, and then row. The output y is computed from the input x as below:
+  
+  b, c, h, w = x.shape
+  tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+  tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+  y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+  
+  In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: column, row, and the depth. The output y is computed from the input x as below:
+  
+  b, c, h, w = x.shape
+  tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+  tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+  y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSpace-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. CRD for column-row-depth order.</dd>
 </dl>
 
 #### Inputs
