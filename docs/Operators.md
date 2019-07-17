@@ -9725,6 +9725,67 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 #### Examples
 
 <details>
+<summary>bidirectional</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+direction = 'bidirectional'
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y'],
+    hidden_size=hidden_size,
+    direction=direction
+)
+
+W = weight_scale * np.ones((2, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((2, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+       name='test_simple_rnn_bidirectional')
+```
+
+</details>
+
+
+<details>
+<summary>both_outputs</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+       name='test_simple_rnn_both_outputs')
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -9744,7 +9805,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R)
+rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
 _, Y_h = rnn.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_defaults')
 ```
@@ -9778,10 +9839,102 @@ W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
 R_B = np.zeros((1, hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNN_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
 _, Y_h = rnn.step()
 expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)],
        name='test_simple_rnn_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>initial_h</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+batch_size = 3
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R', '', '', 'initial_h'],
+    outputs=['', 'Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R, initial_h], outputs=[Y_h.astype(np.float32)],
+       name='test_simple_rnn_with_initial_h')
+```
+
+</details>
+
+
+<details>
+<summary>intermediate_h</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', ''],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, _ = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32)],
+       name='test_simple_rnn_intermediate_h')
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+direction = 'reverse'
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y'],
+    hidden_size=hidden_size,
+    direction=direction
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+       name='test_simple_rnn_reverse')
 ```
 
 </details>
@@ -9812,7 +9965,7 @@ W_B = np.random.randn(1, hidden_size).astype(np.float32)
 R_B = np.random.randn(1, hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNN_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
 _, Y_h = rnn.step()
 expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
 ```

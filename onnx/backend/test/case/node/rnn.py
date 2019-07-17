@@ -24,42 +24,63 @@ class RNN_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        self.num_directions = params[str(W)].shape[0]
+        # RNN Attr Names
+        ACTS = str('activations')
+        CLIP = str('clip')
+        DIR = str('direction')
+        H_SIZE = str('hidden_size')
 
-        if self.num_directions == 1:
-            for k in params.keys():
-                if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+        required_attr = [H_SIZE]
 
-            hidden_size = params[R].shape[-1]
-            batch_size = params[X].shape[1]
+        for i in required_attr:
+            assert i in params, "Missing attribute: {0}".format(i)
+        self.hidden_size = params[H_SIZE]
+        self.direction = params[DIR] if DIR in params else 'forward'
+        self.num_directions = 2 if self.direction == 'bidirectional' else 1
 
-            b = params[B] if B in params else np.zeros(2 * hidden_size, dtype=np.float32)
-            h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
+        activation_lookup = {'Relu': lambda x: max(x, 0), 'Tanh': np.tanh, 'Sigmoid': lambda x: 1 / (1 + np.exp(-x))}
+        activations = params[ACTS] if ACTS in params else ['Tanh'] * self.num_directions
+        self.f = [activation_lookup[act] for act in activations if act in activation_lookup]
 
-            self.X = params[X]
-            self.W = params[W]
-            self.R = params[R]
-            self.B = b
-            self.H_0 = h_0
-        else:
-            raise NotImplementedError()
+        self.clip = params[CLIP] if CLIP in params else np.inf
 
-    def f(self, x):  # type: (np.ndarray) -> np.ndarray
-        return np.tanh(x)
+        self.B = params[B] if B in params else np.zeros((self.num_directions, 2 * self.hidden_size), dtype=np.float32)
+
+        self.batch_size = params[X].shape[1]
+        h_0 = params[H_0] if H_0 in params else np.zeros((self.num_directions, self.batch_size, self.hidden_size), dtype=np.float32)
+        self.H_0 = h_0
+
+        self.X = params[X]
+        self.W = params[W]
+        self.R = params[R]
 
     def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
-        h_list = []
-        H_t = self.H_0
-        for x in np.split(self.X, self.X.shape[0], axis=0):
-            H = self.f(np.dot(x, np.transpose(self.W)) + np.dot(H_t, np.transpose(self.R)) + np.add(
-                *np.split(self.B, 2)))
-            h_list.append(H)
-            H_t = H
-        concatenated = np.concatenate(h_list)
-        if self.num_directions == 1:
-            output = np.expand_dims(concatenated, 1)
-        return output, h_list[-1]
+        seq_length = self.X.shape[0]
+        Y = np.empty([seq_length, self.num_directions, self.batch_size, self.hidden_size])
+
+        xs = np.split(self.X, self.X.shape[0], axis=0)
+
+        dirs = {'forward', 'reverse'} if self.direction == 'bidirectional' else {self.direction}
+        for i, direction in enumerate(dirs):
+            h_list = []
+            H_t = self.H_0[i]
+
+            if direction == 'reverse':
+                xs = xs[::-1]
+
+            for x in xs:
+                H = self.f[i](np.dot(x, np.transpose(self.W[i])) + np.dot(H_t, np.transpose(self.R[i])) + np.add(
+                    *np.split(self.B[i], 2)))
+                h_list.append(H)
+                H_t = H
+
+            if direction == 'reverse':
+                h_list = h_list[::-1]
+
+            concatenated = np.concatenate(h_list)
+            Y[:, i] = concatenated
+
+        return Y, Y[-1]
 
 
 class RNN(Base):
@@ -82,7 +103,7 @@ class RNN(Base):
         W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = RNN_Helper(X=input, W=W, R=R)
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
         _, Y_h = rnn.step()
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_defaults')
 
@@ -110,7 +131,7 @@ class RNN(Base):
         R_B = np.zeros((1, hidden_size)).astype(np.float32)
         B = np.concatenate((W_B, R_B), axis=1)
 
-        rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+        rnn = RNN_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
         _, Y_h = rnn.step()
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)],
                name='test_simple_rnn_with_initial_bias')
@@ -138,6 +159,129 @@ class RNN(Base):
         R_B = np.random.randn(1, hidden_size).astype(np.float32)
         B = np.concatenate((W_B, R_B), axis=1)
 
-        rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+        rnn = RNN_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
         _, Y_h = rnn.step()
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
+
+    @staticmethod
+    def export_initial_h():  # type: () -> None
+        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        batch_size = 3
+        hidden_size = 4
+        weight_scale = 0.1
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R', '', '', 'initial_h'],
+            outputs=['', 'Y'],
+            hidden_size=hidden_size
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+        initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R, initial_h], outputs=[Y_h.astype(np.float32)],
+               name='test_simple_rnn_with_initial_h')
+
+    @staticmethod
+    def export_intermediate_h():  # type: () -> None
+        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                          [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+        input_size = 3
+        hidden_size = 4
+        weight_scale = 0.1
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', ''],
+            hidden_size=hidden_size
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+        Y, _ = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32)],
+               name='test_simple_rnn_intermediate_h')
+
+    @staticmethod
+    def export_both_outputs():  # type: () -> None
+        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                          [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+        input_size = 3
+        hidden_size = 4
+        weight_scale = 0.1
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', 'Y_h'],
+            hidden_size=hidden_size
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+        Y, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+               name='test_simple_rnn_both_outputs')
+
+    @staticmethod
+    def export_reverse():  # type: () -> None
+        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 4
+        weight_scale = 0.1
+        direction = 'reverse'
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y'],
+            hidden_size=hidden_size,
+            direction=direction
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+               name='test_simple_rnn_reverse')
+
+    @staticmethod
+    def export_bidirectional():  # type: () -> None
+        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 4
+        weight_scale = 0.1
+        direction = 'bidirectional'
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y'],
+            hidden_size=hidden_size,
+            direction=direction
+        )
+
+        W = weight_scale * np.ones((2, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((2, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+               name='test_simple_rnn_bidirectional')
