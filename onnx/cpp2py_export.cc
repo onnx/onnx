@@ -19,6 +19,14 @@ using namespace pybind11::literals;
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   onnx_cpp2py_export.doc() = "Python interface to onnx";
 
+  onnx_cpp2py_export.attr("ONNX_ML") = py::bool_(
+#ifdef ONNX_ML
+      true
+#else // ONNX_ML
+      false
+#endif // ONNX_ML
+  );
+
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
   defs.doc() = "Schema submodule";
