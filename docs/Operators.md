@@ -3424,17 +3424,25 @@ expect(node, inputs=[x, axis], outputs=[y],
   following order: depth, column, and then row. The output y is computed from the input x as below:
   
   b, c, h, w = x.shape
+  
   tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+  
   tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+  
   y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+  
   
   In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: column, row, and the depth. The output y is computed from the input x as below:
   
   b, c, h, w = x.shape
+  
   tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+  
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+  
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+  
 
 #### Version
 
@@ -3448,7 +3456,7 @@ Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSp
 <dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
 <dt><tt>mode</tt> : string (default is DCR)</dt>
-<dd>DCR (default) for depth-column-row order re-arrangement. CRD for column-row-depth order.</dd>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
 </dl>
 
 #### Inputs

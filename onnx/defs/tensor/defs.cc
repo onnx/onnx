@@ -1194,17 +1194,25 @@ In the DCR mode, elements along the depth dimension from the input tensor are re
 following order: depth, column, and then row. The output y is computed from the input x as below:
 
 b, c, h, w = x.shape
+
 tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+
 tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+
 y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+
 
 In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
 following order: column, row, and the depth. The output y is computed from the input x as below:
 
 b, c, h, w = x.shape
+
 tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+
 tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+
 y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1217,7 +1225,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT)
         .Attr(
             "mode",
-            "DCR (default) for depth-column-row order re-arrangement. CRD for column-row-depth order.",
+            "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
         .SetDoc(DepthToSpace_ver11_doc)

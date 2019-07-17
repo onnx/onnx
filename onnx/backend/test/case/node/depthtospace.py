@@ -62,6 +62,7 @@ class DepthToSpace(Base):
             mode='CRD'
         )
 
+        # (1, 8, 2, 3) input tensor
         x = np.array([[[[0., 1., 2.],
                         [3., 4., 5.]],
                        [[9., 10., 11.],
