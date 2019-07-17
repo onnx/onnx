@@ -559,7 +559,7 @@ message TypeProto {
     Opaque opaque_type = 7;
 
     SparseTensor sparse_tensor_type = 8;
-
+    
   }
 
   // An optional denotation can be used to denote the whole 

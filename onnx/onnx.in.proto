@@ -557,10 +557,10 @@ message TypeProto {
     Map map_type = 5;
 
     Opaque opaque_type = 7;
-// #endif
 
     SparseTensor sparse_tensor_type = 8;
-
+    
+// #endif
   }
 
   // An optional denotation can be used to denote the whole 

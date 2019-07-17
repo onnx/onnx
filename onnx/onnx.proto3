@@ -514,9 +514,6 @@ message TypeProto {
     // The type of a tensor.
     Tensor tensor_type = 1;
 
-
-    SparseTensor sparse_tensor_type = 8;
-
   }
 
   // An optional denotation can be used to denote the whole 
