@@ -661,8 +661,52 @@ checkInputRank(InferenceContext& ctx, size_t input_index, int expected_rank) {
   }
 }
 
-inline void
-unifyDim(InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
+// Unification (between dimensions and/or shapes) is at the heart of
+// shape-inference. The current inference algorithm can check input
+// shapes/dimensions of a node and update the output shapes/dimensions. It
+// cannot currently update input shapes and dimensions (even though in some
+// contexts this inference is possible). Hence, we have the variants below to
+// support "const" and "mutable" dimensions/shapes in unification.
+
+inline void checkDimEquality(int64_t value1, int64_t value2) {
+  if (value1 != value2)
+    fail_shape_inference(
+        "Dimension mismatch in unification between ", value1, " and ", value2);
+}
+
+inline void unifyDim(const Dim& dim1, const Dim& dim2) {
+  if (dim1.has_dim_value() && dim2.has_dim_value())
+    checkDimEquality(dim1.dim_value(), dim2.dim_value());
+}
+
+// TODO: The functionality of unifyDim is similar to that of
+// mergeInDimensionInfo. However, the error messages are different. Leaving this
+// duplication in-place to preserve error message content.
+inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
+  if (source_dim.has_dim_value()) {
+    auto source_value = source_dim.dim_value();
+    if (target_dim.has_dim_value()) {
+      auto target_value = target_dim.dim_value();
+      checkDimEquality(source_value, target_value);
+    } else {
+      target_dim.set_dim_value(source_value);
+    }
+  } else if (target_dim.has_dim_value()) {
+    // if target has a value we preserve it.
+    // we cannot set source dim value.
+  } else if (target_dim.has_dim_param()) {
+    // prefer target param over source
+    // we cannot currently unify the dim_params
+  } else if (source_dim.has_dim_param()) {
+    target_dim.set_dim_param(source_dim.dim_param());
+  }
+}
+
+inline void unifyInputDim(
+    InferenceContext& ctx,
+    size_t input_index,
+    int dim_index,
+    Dim& dim) {
   // We unify the dimensions only if it is available for specified input:
   if (hasInputShape(ctx, input_index)) {
     auto& input_shape = getInputShape(ctx, input_index);
@@ -677,7 +721,7 @@ unifyDim(InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
           input_shape.dim_size());
     const Dim& input_dim = input_shape.dim(dim_index);
     // Now, unify dim and input_dim:
-    mergeInDimensionInfo(input_dim, dim, dim_index);
+    unifyDim(input_dim, dim);
   }
 }
 
@@ -685,12 +729,7 @@ unifyDim(InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
 // already has a value, we check for equality of new value with old value.
 inline void unifyDim(Dim& dim, int64_t value) {
   if (dim.has_dim_value()) {
-    if (dim.dim_value() != value)
-      fail_shape_inference(
-          "Dimension mismatch in unification between ",
-          value,
-          " and ",
-          dim.dim_value());
+    checkDimEquality(dim.dim_value(), value);
   } else
     dim.set_dim_value(value);
 }

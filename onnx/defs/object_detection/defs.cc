@@ -109,12 +109,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           Dim num_rois, C, ht, width;
 
           // Get value of C from dim 1 of input_param, if available
-          unifyDim(ctx, input_param, 1, C);
+          unifyInputDim(ctx, input_param, 1, C);
 
           // Get value of num_rois from dim 0 of rois_param, if available
-          unifyDim(ctx, rois_param, 0, num_rois);
+          unifyInputDim(ctx, rois_param, 0, num_rois);
           // ... or from dim 0 of batch_index_param, if available
-          unifyDim(ctx, batch_index_param, 0, num_rois);
+          unifyInputDim(ctx, batch_index_param, 0, num_rois);
 
           // Get height from attribute, using default-value of 1
           unifyDim(ht, getAttribute(ctx, "output_height", 1));
