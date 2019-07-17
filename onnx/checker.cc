@@ -65,12 +65,12 @@ void check_value_info(
     } break;
     case TypeProto::kOpaqueType:
       break;
-#endif
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
+#endif
 
     default:
       fail_check(
@@ -506,9 +506,9 @@ void check_node(
                                                    "ScaledTanh"};
   if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
-      << "experimental ops. In the future, we may directly "
-      << "reject this operator. Please update your model as soon "
-      << "as possible." << std::endl;
+              << "experimental ops. In the future, we may directly "
+              << "reject this operator. Please update your model as soon "
+              << "as possible." << std::endl;
     return;
   }
 
