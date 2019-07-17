@@ -109,13 +109,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
-    7,
+    11,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("equal"))
         .TypeConstraint(
             "T",
-            {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
-            "Constrains input to integral tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
