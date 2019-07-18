@@ -51,7 +51,7 @@ def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callab
 
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None, devices=('CPU', 'CUDA')):  # type: (Type[Backend], Optional[str]) -> None
+    def __init__(self, backend, parent_module=None, devices=('CPU', 'CUDA')):  # type: (Type[Backend], Optional[str], Iterable[Text]) -> None
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
@@ -226,7 +226,6 @@ class Runner(object):
                   test_name,  # type: Text
                   test_func,  # type: Callable[..., Any]
                   report_item,  # type: List[Optional[Union[ModelProto, NodeProto]]]
-                  #devices=('CPU', 'CUDA'),  # type: Iterable[Text]
                   ):  # type: (...) -> None
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith('test_'):
