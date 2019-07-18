@@ -19,16 +19,12 @@ INVENV=$(python -c 'import sys; print ("1" if hasattr(sys, "real_prefix") else "
 set -e
 
 echo -e "===> recompile onnx"
-<<<<<<< HEAD
 
 if [[ $INVENV -eq 1 ]]; then
   python setup.py develop
 else
   python setup.py develop --user
 fi
-=======
-python setup.py develop
->>>>>>> Continuing with group norm
 
 echo -e "\n===> regenerate test data from node test"
 python onnx/backend/test/cmd_tools.py generate-data
