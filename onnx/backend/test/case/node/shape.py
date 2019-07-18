@@ -36,3 +36,9 @@ class Shape(Base):
 
         expect(node, inputs=[x], outputs=[y],
                name='test_shape')
+
+        x = np.array([1, 2, 3, 4]).astype(np.float32)
+        y = np.array([4]).astype(np.int64)
+
+        expect(node, inputs=[x], outputs=[y],
+               name='test_shape_1d')               
