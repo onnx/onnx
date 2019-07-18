@@ -55,7 +55,7 @@ words, all Gradient's outputs are optional. Note that the concept of optional
 outputs can also be found in ONNX's RNN, GRU, and LSTM.
 
 Gradient operator can compute derivative against intermediate tensors. For
-example, the gradient of Y with respect to W can be done in
+example, the gradient of Y with respect to H can be done in
 
 ```
 W --> Conv --> H --> Gemm --> Y
