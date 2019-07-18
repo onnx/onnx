@@ -1808,6 +1808,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
           FunctionBodyHelper::Const<int64_t>("H_W_End", INT_MAX),
           FunctionBodyHelper::ConstOfShape<int64_t>("One", {1}, {1}),
+          FunctionBodyHelper::ConstOfShape<int64_t>("Four", {4}, {1}),
           
           {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "epsilon")}},
           {{"G"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "num_groups")}},          
@@ -1826,10 +1827,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           {{"X_Reshape"}, "Reshape", {"input", "X_NewShape"}},
 
           //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
-          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
+          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{0, 1}}, {"exclude_axes", (int64_t)1}}},
           {{"EX_squared"}, "Pow", {"Mean", "Exponent"}},
           {{"X_squared"}, "Pow", {"X_Reshape", "Exponent"}},
-          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
+          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{0, 1}}, {"exclude_axes", (int64_t)1}}},
           {{"Var"}, "Sub", {"E_Xsquared", "EX_squared"}},
 
           //x = (x−mean) / tf.sqrt(var + eps)
@@ -1842,7 +1843,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           {{"X'_Reshape"}, "Reshape", {"X'", "X_Shape"}},
 
           //gamma beta : scale and offset with shape [1, C, 1, 1]
-          {{"C_Shape"}, "Concat", {"One", "C", "One", "One"}, {{"axis", (int64_t)0}}},
+          {{"OnesOfHW"}, "ConstantOfShape", {"H_W"}, {{"value", ToTensor<int64_t>({1})}}},
+          {{"C_Shape"}, "Concat", {"One", "C", "OnesOfHW"}, {{"axis", (int64_t)0}}},
           {{"Gamma"}, "Reshape", {"scale", "C_Shape"}},
           {{"Beta"}, "Reshape", {"B", "C_Shape"}},
 

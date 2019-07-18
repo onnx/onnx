@@ -5177,6 +5177,33 @@ The Function can be represented as a function.
 #### Examples
 
 <details>
+<summary>6_dimensions</summary>
+
+```python
+
+# A 4 dimension 
+x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
+
+b = np.array([0, 0, 0, 0]).astype(np.float32)
+s = np.array([1, 1, 1, 1]).astype(np.float32)
+
+num_groups = 2
+eps = 1e-05
+
+y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=eps)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')        
+```
+
+</details>
+
+
+<details>
 <summary>groupnormalization</summary>
 
 ```python
@@ -5190,27 +5217,71 @@ x = np.array([[[[4., 5.], [0., 6.]],
                [[6., 2.], [4., 2.]],
                [[1., 1.], [6., 1.]]]]).astype(np.float32)
 
-b = np.array([1.0, 1.5, -1.0, 1.5]).astype(np.float32)
-s = np.array([0, 1, 0, 1]).astype(np.float32)
+b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
+s = np.array([1, 1, 0, 1]).astype(np.float32)
 
 num_groups = 2
 eps = 1e-05
 
-y = np.array([[[[1.0000, 1.0000], [1.0000, 1.0000]],
-               [[1.8145, 1.8145], [3.0724, 1.8145]],
-               [[-1.0000, -1.0000], [-1.0000, -1.0000]],
-               [[2.6180, 2.6180], [0.8292, 0.3820]]],
-              [[[1.0000, 1.0000], [1.0000, 1.0000]],
-               [[3.7454, 0.4794], [0.8876, 0.4794]],
-               [[-1.0000, -1.0000], [-1.0000, -1.0000]],
-               [[0.5751, 0.5751], [3.0416, 0.5751]]]]).astype(np.float32)
 
 node = onnx.helper.make_node('GroupNormalization',
                              inputs=['x', 's', 'b'],
                              outputs=['y'],
                              num_groups=num_groups,
                              epsilon=eps)
+
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
 expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
+```
+
+</details>
+
+
+<details>
+<summary>large_eps</summary>
+
+```python
+
+x = np.random.rand(2, 4, 10, 12).astype(np.float32)
+
+b = np.array([0, 0, 0, 0]).astype(np.float32)
+s = np.array([1, 1, 1, 1]).astype(np.float32)
+
+num_groups = 2
+eps = 10.0
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=eps)
+
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
+```
+
+</details>
+
+
+<details>
+<summary>large_num_groups</summary>
+
+```python
+
+x = np.random.rand(2, 18, 10, 12).astype(np.float32)
+
+b = np.zeros([18]).astype(np.float32)
+s = np.ones([18]).astype(np.float32)
+
+num_groups = 9
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups)
+
+y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')        
 ```
 
 </details>
@@ -10911,13 +10982,17 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dt><tt>exclude_axes</tt> : int (default is 0)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -12917,6 +12992,12 @@ y = np.array(x.shape).astype(np.int64)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_shape')
+
+x = np.array([1, 2, 3, 4]).astype(np.float32)
+y = np.array([4]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_shape_1d')               
 ```
 
 </details>
