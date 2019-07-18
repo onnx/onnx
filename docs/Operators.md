@@ -4521,6 +4521,131 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 #### Examples
 
 <details>
+<summary>activations</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+activations = ["Relu"]
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    activations=activations
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_activations')
+```
+
+</details>
+
+
+<details>
+<summary>bidirectional</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+direction = 'bidirectional'
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    direction=direction
+)
+
+W = weight_scale * np.ones((2, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((2, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+       name='test_gru_bidirectional')
+```
+
+</details>
+
+
+<details>
+<summary>both_outputs</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+       name='test_gru_both_outputs')
+```
+
+</details>
+
+
+<details>
+<summary>clip</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+clip = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    clip=clip
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_clip')
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -4534,14 +4659,14 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R)
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
 _, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_defaults')
 ```
@@ -4564,7 +4689,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -4576,9 +4701,104 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float3
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRU_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
 _, Y_h = gru.step()
 expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>initial_h</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+batch_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R', '', '', 'initial_h'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R, initial_h], outputs=[Y_h.astype(np.float32)],
+       name='test_gru_with_initial_h')
+```
+
+</details>
+
+
+<details>
+<summary>intermediate_h</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', ''],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, _ = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32)],
+       name='test_gru_intermediate_h')
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+direction = 'reverse'
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    direction=direction
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+       name='test_gru_reverse')
 ```
 
 </details>
@@ -4598,7 +4818,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -4610,7 +4830,7 @@ W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRU_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
 _, Y_h = gru.step()
 expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_seq_length')
 ```
