@@ -2860,7 +2860,6 @@ s = np.array([1, 1, 0, 1]).astype(np.float32)
 num_groups = 2
 eps = 1e-05
 
-
 node = onnx.helper.make_node('GroupNormalization',
                              inputs=['x', 's', 'b'],
                              outputs=['y'],

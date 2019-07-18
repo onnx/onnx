@@ -3,3 +3,964 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
+# ai.onnx.ml
+## Version 1 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.ArrayFeatureExtractor-1"></a>**ai.onnx.ml.ArrayFeatureExtractor-1**</a>
+
+  Select elements of the input tensor based on the indices passed.<br>
+      The indices are applied to the last axes of the tensor.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be selected</dd>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>The indices, based on 0 as the first index of any dimension.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Selected output data as an array</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
+<dd>The input must be a tensor of a numeric type or string. The output will be of the same tensor type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.Binarizer-1"></a>**ai.onnx.ml.Binarizer-1**</a>
+
+  Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>threshold</tt> : float (default is 0.0)</dt>
+<dd>Values greater than this are mapped to 1, others to 0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be binarized</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Binarized output data</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input must be a tensor of a numeric type. The output will be of the same tensor type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.CastMap-1"></a>**ai.onnx.ml.CastMap-1**</a>
+
+  Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered
+      in ascending order based on this key.<br>The operator supports dense packing or sparse packing.
+      If using sparse packing, the key cannot exceed the max_map-1 value.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>cast_to</tt> : string (default is TO_FLOAT)</dt>
+<dd>A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'.</dd>
+<dt><tt>map_form</tt> : string (default is DENSE)</dt>
+<dd>Indicates whether to only output as many values as are in the input (dense), or position the input based on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE'.</dd>
+<dt><tt>max_map</tt> : int (default is 1)</dt>
+<dd>If the value of map_form is 'SPARSE,' this attribute indicates the total length of the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>The input map that is to be cast to a tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>A tensor representing the same data as the input map, ordered by their keys</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : map(int64, string), map(int64, float)</dt>
+<dd>The input must be an integer map to either string or float.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(float), tensor(int64)</dt>
+<dd>The output is a 1-D tensor of string, float, or integer.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.CategoryMapper-1"></a>**ai.onnx.ml.CategoryMapper-1**</a>
+
+  Converts strings to integers and vice versa.<br>
+      Two sequences of equal length are used to map between integers and strings,
+      with strings and integers at the same index detailing the mapping.<br>
+      Each operator converts either integers to strings or strings to integers, depending 
+      on which default value attribute is provided. Only one default value attribute
+      should be defined.<br>
+      If the string default value is set, it will convert integers to strings.
+      If the int default value is set, it will convert strings to integers.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>cats_int64s</tt> : list of ints</dt>
+<dd>The integers of the map. This sequence must be the same length as the 'cats_strings' sequence.</dd>
+<dt><tt>cats_strings</tt> : list of strings</dt>
+<dd>The strings of the map. This sequence must be the same length as the 'cats_int64s' sequence</dd>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
+<dd>An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
+<dd>A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output data. If strings are input, the output values are integers, and vice versa.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
+<dd>The input must be a tensor of strings or integers, either [N,C] or [C].</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dd>The output is a tensor of strings or integers. Its shape will be the same as the input shape.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.DictVectorizer-1"></a>**ai.onnx.ml.DictVectorizer-1**</a>
+
+  Uses an index mapping to convert a dictionary to an array.<br>
+      Given a dictionary, each key is looked up in the vocabulary attribute corresponding to
+      the key type. The index into the vocabulary array at which the key is found is then
+      used to index the output 1-D tensor 'Y' and insert into it the value found in the dictionary 'X'.<br>
+      The key type of the input map must correspond to the element type of the defined vocabulary attribute.
+      Therefore, the output array will be equal in length to the index mapping vector parameter.
+      All keys in the input dictionary must be present in the index mapping vector.
+      For each item in the input dictionary, insert its value in the output array.
+      Any keys not present in the input dictionary, will be zero in the output array.<br>
+      For example: if the ``string_vocabulary`` parameter is set to ``["a", "c", "b", "z"]``,
+      then an input of ``{"a": 4, "c": 8}`` will produce an output of ``[4, 8, 0, 0]``.
+      
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>int64_vocabulary</tt> : list of ints</dt>
+<dd>An integer vocabulary array.<br>One and only one of the vocabularies must be defined.</dd>
+<dt><tt>string_vocabulary</tt> : list of strings</dt>
+<dd>A string vocabulary array.<br>One and only one of the vocabularies must be defined.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>A dictionary.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>A 1-D tensor holding values from the input dictionary.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
+<dd>The input must be a map from strings or integers to either strings or a numeric type. The key and value types cannot be the same.</dd>
+<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
+<dd>The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the length of the input dictionary.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
+
+  Concatenates input tensors into one continuous output.<br>
+      All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
+      Inputs are copied to the output maintaining the order of the input arguments.<br>
+      All inputs must be integers or floats, while the output will be all floating point values.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>inputdimensions</tt> : list of ints</dt>
+<dd>The size of each input in the input list</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>X</tt> (variadic) : T1</dt>
+<dd>An ordered collection of tensors, all with the same element type.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>The output array, elements ordered as the inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.Imputer-1"></a>**ai.onnx.ml.Imputer-1**</a>
+
+  Replaces inputs that equal one value with another, leaving all other elements alone.<br>
+      This operator is typically used to replace missing values in situations where they have a canonical
+      representation, such as -1, 0, NaN, or some extreme value.<br>
+      One and only one of imputed_value_floats or imputed_value_int64s should be defined -- floats if the input tensor
+      holds floats, integers if the input tensor holds integers. The imputed values must all fit within the
+      width of the tensor element type. One and only one of the replaced_value_float or replaced_value_int64 should be defined,
+      which one depends on whether floats or integers are being processed.<br>
+      The imputed_value attribute length can be 1 element, or it can have one element per input feature.<br>In other words, if the input tensor has the shape [*,F], then the length of the attribute array may be 1 or F. If it is 1, then it is broadcast along the last dimension and applied to each feature.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>imputed_value_floats</tt> : list of floats</dt>
+<dd>Value(s) to change to</dd>
+<dt><tt>imputed_value_int64s</tt> : list of ints</dt>
+<dd>Value(s) to change to.</dd>
+<dt><tt>replaced_value_float</tt> : float (default is 0.0)</dt>
+<dd>A value that needs replacing.</dd>
+<dt><tt>replaced_value_int64</tt> : int (default is 0)</dt>
+<dd>A value that needs replacing.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be processed.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Imputed output data</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the same tensor type and shape.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.LabelEncoder-1"></a>**ai.onnx.ml.LabelEncoder-1**</a>
+
+  Converts strings to integers and vice versa.<br>
+      If the string default value is set, it will convert integers to strings.
+      If the int default value is set, it will convert strings to integers.<br>
+      Each operator converts either integers to strings or strings to integers, depending 
+      on which default value attribute is provided. Only one default value attribute
+      should be defined.<br>
+      When converting from integers to strings, the string is fetched from the
+      'classes_strings' list, by simple indexing.<br>
+      When converting from strings to integers, the string is looked up in the list
+      and the index at which it is found is used as the converted value.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>classes_strings</tt> : list of strings</dt>
+<dd>A list of labels.</dd>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
+<dd>An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
+<dd>A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output data. If strings are input, the output values are integers, and vice versa.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
+<dd>The input type must be a tensor of integers or strings, of any shape.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dd>The output type will be a tensor of strings or integers, and will have the same shape as the input.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.LinearClassifier-1"></a>**ai.onnx.ml.LinearClassifier-1**</a>
+
+  Linear classifier
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>classlabels_ints</tt> : list of ints</dt>
+<dd>Class labels when using integer labels. One and only one 'classlabels' attribute must be defined.</dd>
+<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dd>Class labels when using string labels. One and only one 'classlabels' attribute must be defined.</dd>
+<dt><tt>coefficients</tt> : list of floats (required)</dt>
+<dd>A collection of weights of the model(s).</dd>
+<dt><tt>intercepts</tt> : list of floats</dt>
+<dd>A collection of intercepts.</dd>
+<dt><tt>multi_class</tt> : int (default is 0)</dt>
+<dd>Indicates whether to do OvR or multinomial (0=OvR is the default).</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the scores vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Data to be classified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Classification outputs (one class per example).</dd>
+<dt><tt>Z</tt> : tensor(float)</dt>
+<dd>Classification scores ([N,E] - one score for each class and example</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input must be a tensor of a numeric type, and of of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dd>The output will be a tensor of strings or integers.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.LinearRegressor-1"></a>**ai.onnx.ml.LinearRegressor-1**</a>
+
+  Generalized linear regression evaluation.<br>
+      If targets is set to 1 (default) then univariate regression is performed.<br>
+      If targets is set to M then M sets of coefficients must be passed in as a sequence
+      and M results will be output for each input n in N.<br>
+      The coefficients array is of length n, and the coefficients for each target are contiguous.
+      Intercepts are optional but if provided must match the number of targets.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>coefficients</tt> : list of floats</dt>
+<dd>Weights of the model(s).</dd>
+<dt><tt>intercepts</tt> : list of floats</dt>
+<dd>Weights of the intercepts, if used.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the regression output vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
+<dt><tt>targets</tt> : int (default is 1)</dt>
+<dd>The total number of regression targets, 1 if not defined.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be regressed.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>Regression outputs (one per target, per example).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.Normalizer-1"></a>**ai.onnx.ml.Normalizer-1**</a>
+
+  Normalize the input.  There are three normalization modes, which have the corresponding formulas,
+      defined using element-wise infix operators '/' and '^' and tensor-wide functions 'max' and 'sum':<br>
+  <br>
+      Max: Y = X / max(X)<br>
+      L1:  Y = X / sum(X)<br>
+      L2:  Y = sqrt(X^2 / sum(X^2)}<br>
+      In all modes, if the divisor is zero, Y == X.
+  <br>
+      For batches, that is, [N,C] tensors, normalization is done along the C axis. In other words, each row
+      of the batch is normalized independently.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>norm</tt> : string (default is MAX)</dt>
+<dd>One of 'MAX,' 'L1,' 'L2'</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be encoded, a tensor of shape [N,C] or [C]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>Encoded output data</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.OneHotEncoder-1"></a>**ai.onnx.ml.OneHotEncoder-1**</a>
+
+  Replace each input element with an array of ones and zeros, where a single
+      one is placed at the index of the category that was passed in. The total category count 
+      will determine the size of the extra dimension of the output array Y.<br>
+      For example, if we pass a tensor with a single value of 4, and a category count of 8, 
+      the output will be a tensor with ``[0,0,0,0,1,0,0,0]``.<br>
+      This operator assumes every input feature is from the same set of categories.<br>
+      If the input is a tensor of float, int32, or double, the data will be cast
+      to integers and the cats_int64s category list will be used for the lookups.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>cats_int64s</tt> : list of ints</dt>
+<dd>List of categories, ints.<br>One and only one of the 'cats_*' attributes must be defined.</dd>
+<dt><tt>cats_strings</tt> : list of strings</dt>
+<dd>List of categories, strings.<br>One and only one of the 'cats_*' attributes must be defined.</dd>
+<dt><tt>zeros</tt> : int (default is 1)</dt>
+<dd>If true and category is not present, will return all zeros; if false and a category if not found, the operator will fail.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be encoded.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>Encoded output data, having one more dimension than X.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string), tensor(int64), tensor(int32), tensor(float), tensor(double)</dt>
+<dd>The input must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.SVMClassifier-1"></a>**ai.onnx.ml.SVMClassifier-1**</a>
+
+  Support Vector Machine classifier
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>classlabels_ints</tt> : list of ints</dt>
+<dd>Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dd>Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>coefficients</tt> : list of floats</dt>
+<dd></dd>
+<dt><tt>kernel_params</tt> : list of floats</dt>
+<dd>List of 3 elements containing gamma, coef0, and degree, in that order. Zero if unused for the kernel.</dd>
+<dt><tt>kernel_type</tt> : string (default is LINEAR)</dt>
+<dd>The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
+<dt><tt>prob_a</tt> : list of floats</dt>
+<dd>First set of probability coefficients.</dd>
+<dt><tt>prob_b</tt> : list of floats</dt>
+<dd>Second set of probability coefficients. This array must be same size as prob_a.<br>If these are provided then output Z are probability estimates, otherwise they are raw scores.</dd>
+<dt><tt>rho</tt> : list of floats</dt>
+<dd></dd>
+<dt><tt>support_vectors</tt> : list of floats</dt>
+<dd></dd>
+<dt><tt>vectors_per_class</tt> : list of ints</dt>
+<dd></dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Data to be classified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Classification outputs (one class per example).</dd>
+<dt><tt>Z</tt> : tensor(float)</dt>
+<dd>Class scores (one per class per example), if prob_a and prob_b are provided they are probabilities for each class, otherwise they are raw scores.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input must be a tensor of a numeric type, either [C] or [N,C].</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used. Its size will match the bactch size of the input.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.SVMRegressor-1"></a>**ai.onnx.ml.SVMRegressor-1**</a>
+
+  Support Vector Machine regression prediction and one-class SVM anomaly detection.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>coefficients</tt> : list of floats</dt>
+<dd>Support vector coefficients.</dd>
+<dt><tt>kernel_params</tt> : list of floats</dt>
+<dd>List of 3 elements containing gamma, coef0, and degree, in that order. Zero if unused for the kernel.</dd>
+<dt><tt>kernel_type</tt> : string (default is LINEAR)</dt>
+<dd>The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.</dd>
+<dt><tt>n_supports</tt> : int (default is 0)</dt>
+<dd>The number of support vectors.</dd>
+<dt><tt>one_class</tt> : int (default is 0)</dt>
+<dd>Flag indicating whether the regression is a one-class SVM or not.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
+<dt><tt>rho</tt> : list of floats</dt>
+<dd></dd>
+<dt><tt>support_vectors</tt> : list of floats</dt>
+<dd>Chosen support vectors</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be regressed.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>Regression outputs (one score per target per example).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input type must be a tensor of a numeric type, either [C] or [N,C].</dd>
+</dl>
+
+### <a name="ai.onnx.ml.Scaler-1"></a>**ai.onnx.ml.Scaler-1**</a>
+
+  Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>offset</tt> : list of floats</dt>
+<dd>First, offset by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.</dd>
+<dt><tt>scale</tt> : list of floats</dt>
+<dd>Second, multiply by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.<br>Must be same length as 'offset'</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Data to be scaled.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>Scaled output data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-1"></a>**ai.onnx.ml.TreeEnsembleClassifier-1**</a>
+
+  Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
+      The attributes named 'nodes_X' form a sequence of tuples, associated by 
+      index into the sequences, which must all be of equal length. These tuples
+      define the nodes.<br>
+      Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated class_weights index.<br>
+      One and only one of classlabels_strings or classlabels_int64s
+      will be defined. The class_ids are indices into this list.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>base_values</tt> : list of floats</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>class_ids</tt> : list of ints</dt>
+<dd>The index of the class list that each weight is for.</dd>
+<dt><tt>class_nodeids</tt> : list of ints</dt>
+<dd>node id that this weight is for.</dd>
+<dt><tt>class_treeids</tt> : list of ints</dt>
+<dd>The id of the tree that this node is in.</dd>
+<dt><tt>class_weights</tt> : list of floats</dt>
+<dd>The weight for the class in class_id.</dd>
+<dt><tt>classlabels_int64s</tt> : list of ints</dt>
+<dd>Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dd>Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is false.</dd>
+<dt><tt>nodes_featureids</tt> : list of ints</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : list of strings</dt>
+<dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
+<dt><tt>nodes_nodeids</tt> : list of ints</dt>
+<dd>Node id for each node. Ids may restart at zero for each tree, but it not required to.</dd>
+<dt><tt>nodes_treeids</tt> : list of ints</dt>
+<dd>Tree id for each node.</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is true.</dd>
+<dt><tt>nodes_values</tt> : list of floats</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input of shape [N,F]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>N, Top class for each point</dd>
+<dt><tt>Z</tt> : tensor(float)</dt>
+<dd>The class score for each class, for each point, a tensor of shape [N,E].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-1"></a>**ai.onnx.ml.TreeEnsembleRegressor-1**</a>
+
+  Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
+      All args with nodes_ are fields of a tuple of tree nodes, and
+      it is assumed they are the same length, and an index i will decode the
+      tuple across these inputs.  Each node id can appear only once
+      for each tree id.<br>
+      All fields prefixed with target_ are tuples of votes at the leaves.<br>
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated target_weights index.<br>
+      All trees must have their node ids start at 0 and increment by 1.<br>
+      Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>aggregate_function</tt> : string (default is SUM)</dt>
+<dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
+<dt><tt>base_values</tt> : list of floats</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>n_targets</tt> : int</dt>
+<dd>The total number of targets.</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is false</dd>
+<dt><tt>nodes_featureids</tt> : list of ints</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : list of strings</dt>
+<dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
+<dt><tt>nodes_nodeids</tt> : list of ints</dt>
+<dd>Node id for each node. Node ids must restart at zero for each tree and increase sequentially.</dd>
+<dt><tt>nodes_treeids</tt> : list of ints</dt>
+<dd>Tree id for each node.</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is true</dd>
+<dt><tt>nodes_values</tt> : list of floats</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
+<dt><tt>target_ids</tt> : list of ints</dt>
+<dd>The index of the target that each weight is for</dd>
+<dt><tt>target_nodeids</tt> : list of ints</dt>
+<dd>The node id of each weight</dd>
+<dt><tt>target_treeids</tt> : list of ints</dt>
+<dd>The id of the tree that each node is in.</dd>
+<dt><tt>target_weights</tt> : list of floats</dt>
+<dd>The weight for each target</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input of shape [N,F]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>N classes</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.ZipMap-1"></a>**ai.onnx.ml.ZipMap-1**</a>
+
+  Creates a map from the input and the attributes.<br>
+      The values are provided by the input tensor, while the keys are specified by the attributes.
+      Must provide keys in either classlabels_strings or classlabels_int64s (but not both).<br>
+      The columns of the tensor correspond one-by-one to the keys specified by the attributes. There must be as many columns as keys.<br>
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>classlabels_int64s</tt> : list of ints</dt>
+<dd>The keys when using int keys.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dd>The keys when using string keys.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(float)</dt>
+<dd>The input values</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>The output map</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : seq(map(string, float)), seq(map(int64, float))</dt>
+<dd>The output will be a sequence of string or integer maps to float.</dd>
+</dl>
+
+## Version 2 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.LabelEncoder-2"></a>**ai.onnx.ml.LabelEncoder-2**</a>
+
+  Maps each element in the input tensor to another value.<br>
+      The mapping is determined by the two parallel attributes, 'keys_*' and
+      'values_*' attribute. The i-th value in the specified 'keys_*' attribute
+      would be mapped to the i-th value in the specified 'values_*' attribute. It
+      implies that input's element type and the element type of the specified
+      'keys_*' should be identical while the output type is identical to the
+      specified 'values_*' attribute. If an input element can not be found in the
+      specified 'keys_*' attribute, the 'default_*' that matches the specified
+      'values_*' attribute may be used as its output value.<br>
+      Let's consider an example which maps a string tensor to an integer tensor.
+      Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
+      and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
+      "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
+      Since this operator is an one-to-one mapping, its input and output shapes
+      are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+      For key look-up, bit-wise comparison is used so even a float NaN can be
+      mapped to a value in 'values_*' attribute.<br>
+
+#### Version
+
+This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>default_float</tt> : float (default is -0.0)</dt>
+<dd>A float.</dd>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
+<dd>An integer.</dd>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
+<dd>A string.</dd>
+<dt><tt>keys_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>keys_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>keys_strings</tt> : list of strings</dt>
+<dd>A list of strings. One and only one of 'keys_*'s should be set.</dd>
+<dt><tt>values_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>values_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>values_strings</tt> : list of strings</dt>
+<dd>A list of strings. One and only one of 'value_*'s should be set.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data. It can be either tensor or scalar.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dd>The input type is a tensor of any shape.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dd>Output type is determined by the specified 'values_*' attribute.</dd>
+</dl>
+
