@@ -13,10 +13,18 @@ if [ ! -f "onnx/defs/gen_doc.py" ]; then
   exit 1
 fi
 
+# Determine if running in a virtual environment
+INVENV=$(python -c 'import sys; print ("1" if hasattr(sys, "real_prefix") else "0")')
+
 set -e
 
 echo -e "===> recompile onnx"
-python setup.py develop --user
+
+if [[ $INVENV -eq 1 ]]; then
+  python setup.py develop
+else
+  python setup.py develop --user
+fi
 
 echo -e "\n===> regenerate test data from node test"
 python onnx/backend/test/cmd_tools.py generate-data
