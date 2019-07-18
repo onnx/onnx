@@ -1687,6 +1687,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
           FunctionBodyHelper::Const<int64_t>("H_W_End", INT_MAX),
           FunctionBodyHelper::ConstOfShape<int64_t>("One", {1}, {1}),
+          FunctionBodyHelper::ConstOfShape<int64_t>("Four", {4}, {1}),
           
           {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "epsilon")}},
           {{"G"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "num_groups")}},          
