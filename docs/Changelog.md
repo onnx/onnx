@@ -10341,6 +10341,11 @@ This version of the operator has been available since version 11 of the default 
 <dd>The number of groups. It should be greater than 0 and less than or equal to C</dd>
 </dl>
 
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : T2</dt>
 <dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
 </dl>
@@ -10350,23 +10355,24 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>y</tt> : T</dt>
 <dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
-
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dd>Scale tensor of shape (C).</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
-#### Outputs
+#### Type Constraints
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional) : T</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+### <a name="Equal-11"></a>**Equal-11**</a>
+
+  Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -10390,8 +10396,13 @@ This version of the operator has been available since version 11 of the default 
 #### Outputs
 
 <dl>
+<<<<<<< HEAD
 <dt><tt>reduced</tt> : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
+=======
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+>>>>>>> Rebasing to master
 </dl>
 
 #### Type Constraints
@@ -10400,6 +10411,8 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
+
+### <a name="GroupNormalization-11"></a>**GroupNormalization-11**</a>
 
   Carries out group normalization as described in the paper
   https://arxiv.org/abs/1803.08494. 
@@ -10437,9 +10450,128 @@ This version of the operator has been available since version 11 of the default 
 
 #### Type Constraints
 
+<<<<<<< HEAD
   Computes the mean of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
+=======
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+### <a name="Loop-11"></a>**Loop-11**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+  
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first iteration and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+  
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+  
+      Operator inputs defined as (max_trip_count, condition_var).
+  
+      input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+  
+      input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+  
+      input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+  
+  
+  *Sample usage - cond as well as trip count*
+  
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+  
+      graph body-net (
+        %i[INT32, scalar]
+        %keepgoing[BOOL, scalar]
+        %b[INT32, scalar]
+      ) {
+        %my_local = Add(%a, %b)
+        %b_out = Sub(%a, %b)
+        %keepgoing_out = Greater(%my_local, %b_out)
+        %user_defined_vals = Add(%b, %b)
+        return %keepgoing_out, %b_out, %user_defined_vals
+      }
+  
+  *Sample equivalent C code*
+  
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+  
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        for (int i=0; i < max_trip_count && keepgoing; ++i) {
+          /* User-defined code (loop body) */
+          int my_local = a + b; // Reading values in the enclosing scope is fine
+          b = a - b; // writes fine if we specify b as a loop-carried dependency
+          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
+          user_defined_vals[i] = b + b;
+          /* End user-defined code */
+        }
+        // my_local = 123; // Can't do this. my_local was defined in the the body
+  
+        // These below values are live-out from the loop and therefore accessible
+        b_out; user_defined_vals; keepgoing_out;
+      }
+  
+  There are several things of note in this code snippet:
+  
+  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any variables which you wish to make available in the enclosing scope (i.e.
+     the variables b and keepgoing) must be declared as either loop-carried
+     dependencies (both at the op inputs and output and at the body net input and
+     output) or scan_outputs.
+  3) Values created in the body cannot be accessed in the enclosing scope.
+>>>>>>> Rebasing to master
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
