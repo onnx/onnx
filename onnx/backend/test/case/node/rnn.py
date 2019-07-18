@@ -34,11 +34,12 @@ class RNN_Helper():
 
         for i in required_attr:
             assert i in params, "Missing attribute: {0}".format(i)
+
         self.hidden_size = params[H_SIZE]
         self.direction = params[DIR] if DIR in params else 'forward'
         self.num_directions = 2 if self.direction == 'bidirectional' else 1
 
-        activation_lookup = {'Relu': lambda x: max(x, 0), 'Tanh': np.tanh, 'Sigmoid': lambda x: 1 / (1 + np.exp(-x))}
+        activation_lookup = {'Relu': lambda x: np.maximum(x, 0), 'Tanh': np.tanh, 'Sigmoid': lambda x: 1 / (1 + np.exp(-x))}
         activations = params[ACTS] if ACTS in params else ['Tanh'] * self.num_directions
         self.f = [activation_lookup[act] for act in activations if act in activation_lookup]
 
@@ -69,8 +70,8 @@ class RNN_Helper():
                 xs = xs[::-1]
 
             for x in xs:
-                H = self.f[i](np.dot(x, np.transpose(self.W[i])) + np.dot(H_t, np.transpose(self.R[i])) + np.add(
-                    *np.split(self.B[i], 2)))
+                H = self.f[i](np.clip(np.dot(x, np.transpose(self.W[i])) + np.dot(H_t, np.transpose(self.R[i])) + np.add(
+                    *np.split(self.B[i], 2)), -self.clip, self.clip))
                 h_list.append(H)
                 H_t = H
 
@@ -96,7 +97,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -119,7 +120,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -147,7 +148,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -161,7 +162,7 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
         _, Y_h = rnn.step()
-        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
+        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_seq_length')
 
     @staticmethod
     def export_initial_h():  # type: () -> None
@@ -175,7 +176,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', '', '', 'initial_h'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -248,7 +249,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size,
             direction=direction
         )
@@ -273,7 +274,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size,
             direction=direction
         )
@@ -285,3 +286,51 @@ class RNN(Base):
         _, Y_h = rnn.step()
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
                name='test_simple_rnn_bidirectional')
+
+    @staticmethod
+    def export_clip():  # type: () -> None
+        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 4
+        weight_scale = 0.1
+        clip = 0.6
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size,
+            clip=clip
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_clip')
+
+    @staticmethod
+    def export_activations():  # type: () -> None
+        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 4
+        weight_scale = 0.1
+        activations = ["Relu"]
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size,
+            activations=activations
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_activations')
