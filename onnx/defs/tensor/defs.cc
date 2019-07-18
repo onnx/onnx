@@ -20,8 +20,8 @@ result 100. There are some string literals reserved for special floating-point v
 "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
 Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
 this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
-to string tensors, plain floating-point representation (such as "314.15926") would be used.
-Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
+to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
 of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
 
 Conversion from a numerical type to any numerical type is always allowed.
@@ -741,8 +741,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Scatter_ver9_doc = R"DOC(
-Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates`
-into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`.
+Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
+into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
 For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
 for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
 data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
