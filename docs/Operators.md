@@ -4529,7 +4529,7 @@ input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 input_size = 2
 hidden_size = 4
 weight_scale = 0.1
-activations = ["Relu"]
+activations = ["Relu", "Relu"]
 number_of_gates = 3
 
 node = onnx.helper.make_node(
@@ -4543,8 +4543,8 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
-_, Y_h = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
+_, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_activations')
 ```
 
@@ -4574,8 +4574,8 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((2, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((2, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
-_, Y_h = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
        name='test_gru_bidirectional')
 ```
@@ -4605,8 +4605,8 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
-Y, Y_h = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
        name='test_gru_both_outputs')
 ```
@@ -4637,8 +4637,8 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
-_, Y_h = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
+_, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_clip')
 ```
 
@@ -4732,8 +4732,8 @@ W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astyp
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
-_, Y_h = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
+_, Y_h = gru.step()
 expect(node, inputs=[input, W, R, initial_h], outputs=[Y_h.astype(np.float32)],
        name='test_gru_with_initial_h')
 ```
@@ -4763,8 +4763,8 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
-Y, _ = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, _ = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32)],
        name='test_gru_intermediate_h')
 ```
@@ -4795,8 +4795,8 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
-_, Y_h = rnn.step()
+gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
        name='test_gru_reverse')
 ```
@@ -6182,6 +6182,161 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 #### Examples
 
 <details>
+<summary>activations</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+activations = ["Relu", "Relu", "Relu"]
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    activations=activations
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_activations')
+```
+
+</details>
+
+
+<details>
+<summary>all_outputs</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h', 'Y_c'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, Y_h, Y_c = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32),
+       Y_c.astype(np.float32)], name='test_lstm_all_outputs')
+```
+
+</details>
+
+
+<details>
+<summary>all_y_c</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y_h', '', 'Y_c'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y_h, _, Y_c = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)], name='test_lstm_y_c')
+```
+
+</details>
+
+
+<details>
+<summary>bidirectional</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+direction = 'bidirectional'
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    direction=direction
+)
+
+W = weight_scale * np.ones((2, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((2, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+       name='test_lstm_bidirectional')
+```
+
+</details>
+
+
+<details>
+<summary>clip</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+clip = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    clip=clip
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_clip')
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -6195,15 +6350,15 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R)
-_, Y_h = lstm.step()
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
 expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_defaults')
 ```
 
@@ -6225,7 +6380,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -6237,9 +6392,137 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float3
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
-_, Y_h = lstm.step()
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
 expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_lstm_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>initial_c</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+batch_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', '', '', '', 'initial_c'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+initial_c = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, initial_c=initial_c, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R, initial_c], outputs=[Y_h.astype(np.float32)],
+       name='test_lstm_with_initial_c')
+```
+
+</details>
+
+
+<details>
+<summary>initial_h</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+batch_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', '', '', 'initial_h'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R, initial_h], outputs=[Y_h.astype(np.float32)],
+       name='test_lstm_with_initial_h')
+```
+
+</details>
+
+
+<details>
+<summary>initial_h_and_c</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+batch_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', '', '', 'initial_h', 'initial_c'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+initial_c = np.ones((1, batch_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, initial_h=initial_h, initial_c=initial_c, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R, initial_h, initial_c], outputs=[Y_h.astype(np.float32)],
+       name='test_lstm_with_initial_h_and_c')
+```
+
+</details>
+
+
+<details>
+<summary>intermediate_h</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+Y, _, _ = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32)],
+       name='test_lstm_intermediate_h')
 ```
 
 </details>
@@ -6260,7 +6543,7 @@ number_of_peepholes = 3
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -6273,10 +6556,76 @@ init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
-_, Y_h = lstm.step()
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
 expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
        name='test_lstm_with_peepholes')
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+direction = 'reverse'
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size,
+    direction=direction
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
+       name='test_lstm_reverse')
+```
+
+</details>
+
+
+<details>
+<summary>seq_length</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 5
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['', 'Y_h'],
+    hidden_size=hidden_size
+)
+
+W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(np.float32)
+R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(np.float32)
+
+# Adding custom bias
+W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
+R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B, hidden_size=hidden_size)
+_, Y_h, _ = lstm.step()
+expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_lstm_seq_length')
 ```
 
 </details>

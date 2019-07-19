@@ -30,9 +30,9 @@ class RNN_Helper():
         DIR = str('direction')
         H_SIZE = str('hidden_size')
 
-        required_attr = [H_SIZE]
+        required_attrs = [H_SIZE]
 
-        for i in required_attr:
+        for i in required_attrs:
             assert i in params, "Missing attribute: {0}".format(i)
 
         self.hidden_size = params[H_SIZE]

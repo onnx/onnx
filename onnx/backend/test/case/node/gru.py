@@ -24,16 +24,16 @@ class GRU_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        # RNN Attr Names
+        # GRU Attr Names
         ACTS = str('activations')
         CLIP = str('clip')
         DIR = str('direction')
         H_SIZE = str('hidden_size')
         LBR = str('linear_before_reset')
 
-        required_attr = [H_SIZE]
+        required_attrs = [H_SIZE]
 
-        for i in required_attr:
+        for i in required_attrs:
             assert i in params, "Missing attribute: {0}".format(i)
 
         number_of_gates = 3
@@ -42,19 +42,19 @@ class GRU_Helper():
         self.num_directions = 2 if self.direction == 'bidirectional' else 1
 
         activation_lookup = {'Relu': lambda x: np.maximum(x, 0), 'Tanh': np.tanh, 'Sigmoid': lambda x: 1 / (1 + np.exp(-x))}
-        f_activations = params[ACTS] if ACTS in params else ['Sigmoid'] * self.num_directions
+        f_activations = params[ACTS][:self.num_directions] if ACTS in params else ['Sigmoid'] * self.num_directions
         self.f = [activation_lookup[act] for act in f_activations if act in activation_lookup]
-        g_activations = params[ACTS] if ACTS in params else ['Tanh'] * self.num_directions
+        g_activations = params[ACTS][self.num_directions:] if ACTS in params else ['Tanh'] * self.num_directions
         self.g = [activation_lookup[act] for act in g_activations if act in activation_lookup]
 
         self.B = params[B] if B in params else np.zeros((self.num_directions, 2 * number_of_gates * self.hidden_size), dtype=np.float32)
 
         self.clip = params[CLIP] if CLIP in params else np.inf
+        self.LBR = params[LBR] if LBR in params else 0
 
         self.batch_size = params[X].shape[1]
         h_0 = params[H_0] if H_0 in params else np.zeros((self.num_directions, self.batch_size, self.hidden_size), dtype=np.float32)
         self.H_0 = h_0
-        self.LBR = params[LBR] if LBR in params else 0
 
         self.X = params[X]
         self.W = params[W]
@@ -206,8 +206,8 @@ class GRU(Base):
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
         initial_h = np.ones((1, batch_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
-        _, Y_h = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, initial_h=initial_h, hidden_size=hidden_size)
+        _, Y_h = gru.step()
         expect(node, inputs=[input, W, R, initial_h], outputs=[Y_h.astype(np.float32)],
                name='test_gru_with_initial_h')
 
@@ -231,8 +231,8 @@ class GRU(Base):
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
-        Y, _ = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+        Y, _ = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32)],
                name='test_gru_intermediate_h')
 
@@ -256,8 +256,8 @@ class GRU(Base):
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
-        Y, Y_h = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size)
+        Y, Y_h = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
                name='test_gru_both_outputs')
 
@@ -282,8 +282,8 @@ class GRU(Base):
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
-        _, Y_h = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+        _, Y_h = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
                name='test_gru_reverse')
 
@@ -308,8 +308,8 @@ class GRU(Base):
         W = weight_scale * np.ones((2, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((2, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
-        _, Y_h = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, direction=direction)
+        _, Y_h = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)],
                name='test_gru_bidirectional')
 
@@ -334,8 +334,8 @@ class GRU(Base):
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
-        _, Y_h = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, clip=clip)
+        _, Y_h = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_clip')
 
     @staticmethod
@@ -345,7 +345,7 @@ class GRU(Base):
         input_size = 2
         hidden_size = 4
         weight_scale = 0.1
-        activations = ["Relu"]
+        activations = ["Relu", "Relu"]
         number_of_gates = 3
 
         node = onnx.helper.make_node(
@@ -359,6 +359,6 @@ class GRU(Base):
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
-        _, Y_h = rnn.step()
+        gru = GRU_Helper(X=input, W=W, R=R, hidden_size=hidden_size, activations=activations)
+        _, Y_h = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_activations')
