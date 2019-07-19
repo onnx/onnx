@@ -14929,8 +14929,9 @@ expect(node,
      contains the indices of the top k elements (original indices from the input
      tensor).
   
-  If "mode" is 1 (the default value) then the k largest elements are returned.
+  If "largest" is 1 (the default value) then the k largest elements are returned.
   If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
   
   Given two equivalent values, this operator uses the indices along the axis as
    a tiebreaker. That is, the element with the lower index will appear first.
@@ -14946,7 +14947,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a hr
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>Dimension on which to do the sort.</dd>
-<dt><tt>mode</tt> : int (default is 1)</dt>
+<dt><tt>largest</tt> : int (default is 1)</dt>
 <dd>Whether to return the top-K largest or smallest elements.</dd>
 <dt><tt>sorted</tt> : int (default is 1)</dt>
 <dd>Whether to return the elements in sorted order.</dd>
@@ -14986,27 +14987,32 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a hr
 <summary>top_k</summary>
 
 ```python
+axis = 1
+largest = 1
+
+k = 3
 node = onnx.helper.make_node(
     'TopK',
     inputs=['x', 'k'],
     outputs=['values', 'indices'],
+    axis=axis
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
-K = np.array([3], dtype=np.int64)
-values_ref = np.array([
-    [3, 2, 1],
-    [7, 6, 5],
-    [11, 10, 9],
-], dtype=np.float32)
-indices_ref = np.array([
-    [3, 2, 1],
-    [3, 2, 1],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+#print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
 
 expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
@@ -15019,32 +15025,36 @@ expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
 <summary>top_k_smallest</summary>
 
 ```python
-mode = 0
+axis = 1
+largest = 0
 sorted = 1
+k = 3
 
 node = onnx.helper.make_node(
     'TopK',
     inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    mode=mode,
+    axis=axis,
+    largest=largest,
     sorted=sorted
 )
+
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [11, 10, 9, 8],
 ], dtype=np.float32)
-K = np.array([3], dtype=np.int64)
-values_ref = np.array([
-    [0, 1, 2],
-    [4, 5, 6],
-    [8, 9, 10],
-], dtype=np.float32)
-indices_ref = np.array([
-    [0, 1, 2],
-    [0, 1, 2],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 0.  1.  2.]
+# [ 4.  5.  6.]
+# [ 8.  9. 10.]]
+#print(indices_ref)
+#[[0 1 2]
+# [0 1 2]
+# [3 2 1]]
 
 expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k_smallest')
