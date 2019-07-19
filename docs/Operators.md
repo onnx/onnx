@@ -5181,7 +5181,7 @@ The Function can be represented as a function.
 
 ```python
 
-# A 4 dimension 
+# A 4 dimension
 x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
 
 b = np.array([0, 0, 0, 0]).astype(np.float32)
@@ -5197,7 +5197,7 @@ node = onnx.helper.make_node('GroupNormalization',
                              outputs=['y'],
                              num_groups=num_groups,
                              epsilon=eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')        
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
 ```
 
 </details>
@@ -5280,7 +5280,7 @@ node = onnx.helper.make_node('GroupNormalization',
                              num_groups=num_groups)
 
 y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')        
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
 ```
 
 </details>
@@ -12996,7 +12996,7 @@ x = np.array([1, 2, 3, 4]).astype(np.float32)
 y = np.array([4]).astype(np.int64)
 
 expect(node, inputs=[x], outputs=[y],
-       name='test_shape_1d')               
+       name='test_shape_1d')
 ```
 
 </details>
