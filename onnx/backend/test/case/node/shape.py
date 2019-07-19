@@ -41,4 +41,4 @@ class Shape(Base):
         y = np.array([4]).astype(np.int64)
 
         expect(node, inputs=[x], outputs=[y],
-               name='test_shape_1d')               
+               name='test_shape_1d')
