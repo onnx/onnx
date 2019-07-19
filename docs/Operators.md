@@ -4814,7 +4814,7 @@ Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 

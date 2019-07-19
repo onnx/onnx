@@ -44,6 +44,10 @@ void VerifyTypeConstraint(
     }
   }
 
+  /*
+   DISABLING check as it is not valid if the input of the function is not
+   used as the input to an operations in the function body. 
+
   for (auto& node : function_proto->node()) {
     std::string op_type = node.op_type();
     const OpSchema* schema = OpSchemaRegistry::Schema(
@@ -68,7 +72,7 @@ void VerifyTypeConstraint(
       for (auto& type : tensor_name_tc.second) {
         if (allowed_types.find(type) == allowed_types.end()) {
           fail_check(
-              "Input type " + type + " defined in " + schema->Name() +
+              "Input type " + type + " defined in " + function_proto->name() +
               "'s function body is not allowed in node " + op_type);
         }
       }
@@ -98,6 +102,7 @@ void VerifyTypeConstraint(
       }
     }
   }
+  */
 
   ++counter;
 }
@@ -144,6 +149,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
   for (const auto s : schemas) {
     if (!s.HasFunction()) continue;
     try{
+      std::cerr << "Testing " << s.Name() << std::endl;
       ++function_counter;
       auto function_body = s.GetFunction();
       VerifyFunction(s, function_body, verified_counter);
