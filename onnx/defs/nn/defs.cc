@@ -1793,7 +1793,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "The output tensor of the same shape as input", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)"},
+            // "tensor(double)" - Can not hve tensor(double) because that is not supported by ConstOfShape
+            // But the VerifyTypeConstraint test assumes that the input type is used on the op, which is incorrect
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
@@ -1808,7 +1810,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
           FunctionBodyHelper::Const<int64_t>("H_W_End", INT_MAX),
           FunctionBodyHelper::ConstOfShape<int64_t>("One", {1}, {1}),
-          FunctionBodyHelper::ConstOfShape<int64_t>("Four", {4}, {1}),
           
           {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "epsilon")}},
           {{"G"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "num_groups")}},          

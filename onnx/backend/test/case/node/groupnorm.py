@@ -9,7 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
-def GroupNorm4d(x, gamma, beta, G, eps=1e-05):
+def GroupNorm4d(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
         N, C, H, W = x.shape
         x = x.reshape((N, G, C//G, H, W))
         mean = np.mean(x, axis=(2, 3, 4), keepdims=True)
@@ -18,7 +18,7 @@ def GroupNorm4d(x, gamma, beta, G, eps=1e-05):
         x = x.reshape((N, C, H, W))
         return x * gamma + beta
 
-def GroupNormNd(x, gamma, beta, G, eps=1e-05):
+def GroupNormNd(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
         originalShape = x.shape
         N = x.shape[0]
         C = x.shape[1]
