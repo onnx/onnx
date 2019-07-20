@@ -8,9 +8,9 @@
 
 namespace ONNX_NAMESPACE {
 static const char* Gradient_ver12_doc = R"DOC(
-Gradient operator computes the derivatives of some tensors with respect to
-a specified tensor. This operator is widely used in gradient-based training
-algorithms. For a concrete example, let's consider a computation graph,
+Gradient operator computes the partial derivatives of a specific tensor to
+some other tensors. This operator is widely used in gradient-based training
+algorithms. To illustrate its use, let's consider a computation graph,
 
 ```
 X -----.
@@ -36,7 +36,7 @@ W --> Conv --> H --> Gemm --> Y
 |      |   .----------'
 |      |   |  (X/W/Z is the 1st/2nd/3rd input of Gradient as shown in "xs")
 |      v   v
-'---> Gradient(xs=["X", "W", "Z"], y=["Y"]) ---> dY/dX (1st output of Gradient)
+'---> Gradient(xs=["X", "W", "Z"], y="Y") ---> dY/dX (1st output of Gradient)
        |   |
        |   '-----------------------------------> dY/dW (2nd output of Gradient)
        |
@@ -66,7 +66,7 @@ W --> Conv --> H --> Gemm --> Y
        |   .----------'
        |   | (H/Z is the 1st/2nd input of Gradient as shown in "xs")
        v   v
-      Gradient(xs=["H", "Z"], y=["Y"])
+      Gradient(xs=["H", "Z"], y="Y")
        |   |
        |   '-----------------------------------> dY/dH (1st output of Gradient)
        |
@@ -93,21 +93,23 @@ W --> Gemm --> Y --> Loss --> O
 |      X              L
 |      |
 |      |
-+------+--> Gradient(xs=["X", "W"], y=["Y"]) ---> dO/dX (1st output of Gradient)
++------+--> Gradient(xs=["X", "W"], y="Y") ---> dO/dX (1st output of Gradient)
 |      |      |
 |      |      '---> dO/dW (2nd output of Gradient)
 |      v
-'---> Gradient(xs=["X", "W"], y=["dO/dW"]) ---> d(dO/dW)dX (1st output of
+'---> Gradient(xs=["X", "W"], y="dO/dW") ---> d(dO/dW)dX (1st output of
        |                                          Gradient)
        |
        |
        '---> d^2O/dW^2 (2nd output of Gradient)
 ```
 
-As mentioned above, the attributes "xs" and "y" are used to identify a graph,
-and we can feed different tensors to the identified graph. For,
-example, one can compute the gradient of Y with respect to H by substituting
-Y_1 into Y and H_1 into H.
+When the inputs of Gradient are the tensors named in "xs", the computation
+can be optimized. More specifically, a forward pass can be reused if the
+gradient is computed via reverse-mode auto-differentiation.
+We can feed different tensors to the identified graph. For example, one
+can compute the gradient of Y with respect to H by substituting Y_1 into Y
+and H_1 into H.
 
 ```
 W --> Conv --> H --> Gemm --> Y
@@ -118,15 +120,12 @@ W --> Conv --> H --> Gemm --> Y
            Z_1 (the 2nd input of Gradient)
            |
            v
-W_1 --> Gradient(xs=["H", "Z"], y=["Y"]) ---> dY/dX when Y = Y_1
+W_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dX when Y = Y_1
          |   |
          |   '-----------------------------------> dY/dW (2nd output of Gradient)
          |
          '---------------------------------------> dY/dZ (3rd output of Gradient)
 ```
-
-This graph also implies that one can identify a gradient graph once and reuse
-it multiple times with different input values.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -163,7 +162,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "y",
             "The differentiated tensor. It is viewed as a function of "
-            "the attribute \"xs\".",
+            "the tensors named in \"xs\".",
             AttributeProto::STRING)
         );
 
