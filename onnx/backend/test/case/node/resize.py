@@ -616,6 +616,7 @@ class Resize(Base):
         expect(node, inputs=[data, sizes], outputs=[output],
                name='test_resize_downsample_sizes_cubic')
 
+    # TensorFlow v1 bicubic with half_pixel_centers=True
     @staticmethod
     def export_resize_upsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
         node = onnx.helper.make_node(
@@ -688,3 +689,46 @@ class Resize(Base):
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic_A_n0p5_exclude_outside')
+
+    # TensorFlow v1 bicubic with half_pixel_centers=False
+    @staticmethod
+    def export_resize_upsample_scales_cubic_tf_legacy():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'scales'],
+            outputs=['Y'],
+            mode='cubic',
+            align_corners=False,
+            tf_legacy_scalar=True
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        # [[[[ 1.       1.40625  2.       2.5      3.       3.59375  4.
+        #      4.09375]
+        #    [ 2.625    3.03125  3.625    4.125    4.625    5.21875  5.625
+        #      5.71875]
+        #    [ 5.       5.40625  6.       6.5      7.       7.59375  8.
+        #      8.09375]
+        #    [ 7.       7.40625  8.       8.5      9.       9.59375 10.
+        #     10.09375]
+        #    [ 9.       9.40625 10.      10.5     11.      11.59375 12.
+        #     12.09375]
+        #    [11.375   11.78125 12.375   12.875   13.375   13.96875 14.375
+        #     14.46875]
+        #    [13.      13.40625 14.      14.5     15.      15.59375 16.
+        #     16.09375]
+        #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
+        #     16.46875]]]]
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales, align_corners=False,
+                                tf_legacy_scalar=True).astype(np.float32)
+
+        expect(node, inputs=[data, scales], outputs=[output],
+               name='test_resize_upsample_scales_cubic_tf_legacy')

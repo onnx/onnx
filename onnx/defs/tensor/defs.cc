@@ -1398,6 +1398,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr("tf_legacy_scalar",
+            "If set to 1, the incorrect legacy scalar of TensorFlow (https://github.com/tensorflow/tensorflow/blob/v1.14.0/tensorflow/core/kernels/image_resizer_state.h#L58) is used. The default value is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(0, "X", "N-D tensor", "T1")
         .Input(
             1,
