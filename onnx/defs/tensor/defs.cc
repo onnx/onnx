@@ -1361,7 +1361,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Resize_ver11_doc = R"DOC(
 Resize the input tensor.
 Each dimension value of the output tensor is:
-  output_dimension = floor(input_dimension * scale).
+  output_dimension = floor(input_dimension * scale) if input \"sizes\" is not specified.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1371,8 +1371,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "mode",
             "Three interpolation modes: nearest (default), linear and cubic. "
-            "The \"linear\" mode includes linear interpolation for 1D tensor and N-D linear interpolation for N-D tensor (For example, trilinear interpolation for 2D tensor). "
-            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (For example, tricubic interpolation for 2D tensor)."
+            "The \"linear\" mode includes linear interpolation for 1D tensor and N-D linear interpolation for N-D tensor (For example, bilinear interpolation for 2D tensor). "
+            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (For example, bicubic interpolation for 2D tensor)."
             ,
             AttributeProto::STRING,
             std::string("nearest"))
