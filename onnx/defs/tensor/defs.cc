@@ -1392,11 +1392,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "if scaler is \"half_pixel\", "
             "x_original = (x_resized + 0.5) / scale - 0.5, "
             "if scaler is \"align_corners\", "
-            "x_original = x_resized * (length_original - 1) / (length_resized - 1). "
+            "x_original = x_resized * (length_original - 1) / (length_resized - 1), "
             "if scaler is \"tf_legacy\", "
-            "x_original = x_resized / scale "
+            "x_original = x_resized / scale, "
             "if scaler is \"tf_crop_and_resize\", "
-            "x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1)",
+            "x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).",
             AttributeProto::STRING,
             std::string("half_pixel"))
         .Attr("extrapolation_value",
