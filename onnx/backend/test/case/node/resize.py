@@ -65,14 +65,16 @@ def cartesian(arrays, out=None):
     return out
 
 
-def interpolate_1d_with_x(data,                   # type: np.ndarray
-                          scale_factor,           # type: float
-                          x,                      # type: float
-                          get_coeffs,             # type: Callable[[float], np.ndarray]
-                          align_corners=False,    # type: bool
-                          exclude_outside=False,  # type: bool
-                          tf_legacy_scalar=False  # type: bool
-                          ):                      # type: (...) -> np.ndarray
+def interpolate_1d_with_x(data,                      # type: np.ndarray
+                          scale_factor,              # type: float
+                          x,                         # type: float
+                          # type: Callable[[float], np.ndarray]
+                          get_coeffs,
+                          roi=None,                  # type: np.ndarray
+                          extrapolation_value=None,  # type: float
+                          scaler='half_pixel',       # type: str
+                          exclude_outside=False,     # type: bool
+                          ):                         # type: (...) -> np.ndarray
     def get_neighbor_idxes(x, n, limit):  # type: (float, int, int) -> np.ndarray
         """
         Return the n nearest indexes, prefer the indexes smaller than x to be compatible with nearest interpolation.
@@ -112,16 +114,26 @@ def interpolate_1d_with_x(data,                   # type: np.ndarray
         ret = padded[idxes]
         return idxes - pad_width, ret
 
-    input_width = len(data)
+    input_width = len(data) if roi is None else (roi[1] - roi[0])
     output_width = scale_factor * input_width
-    if align_corners:
+    if scaler == 'align_corners':
         if output_width == 1:
             x_ori = 0.
         else:
             x_ori = x * (input_width - 1) / (output_width - 1)
-    elif tf_legacy_scalar:
+    elif scaler == 'tf_legacy':
         x_ori = x / scale_factor
-    else:
+    elif scaler == 'tf_crop_and_resize':
+        if output_width == 1:
+            x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
+        else:
+            x_ori = x * (roi[1] - roi[0]) * \
+                (input_width - 1) / (output_width - 1)
+        x_ori += (roi[0] * (input_width - 1))
+        # Return extrapolation_value directly as what TF CropAndResize does
+        if x_ori < 0 or x_ori > input_width - 1:
+            return extrapolation_value
+    else:  # scaler == 'half_pixel'
         x_ori = (x + 0.5) / scale_factor - 0.5
     x_ori_int = np.floor(x_ori).astype(np.int).item()
 
@@ -145,30 +157,34 @@ def interpolate_1d_with_x(data,                   # type: np.ndarray
     return np.dot(coeffs, points).item()
 
 
-def interpolate_nd_with_x(data,                   # type: np.ndarray
-                          n,                      # type: int
-                          scale_factors,          # type: List[float]
-                          x,                      # type: List[float]
-                          get_coeffs,             # type: Callable[[float], np.ndarray]
-                          align_corners=False,    # type: bool
-                          exclude_outside=False,  # type: bool
-                          tf_legacy_scalar=False  # type: bool
-                          ):                      # type: (...) -> np.ndarray
+def interpolate_nd_with_x(data,                      # type: np.ndarray
+                          n,                         # type: int
+                          scale_factors,             # type: List[float]
+                          x,                         # type: List[float]
+                          # type: Callable[[float], np.ndarray]
+                          get_coeffs,
+                          roi=None,                  # type: np.ndarray
+                          extrapolation_value=None,  # type: float
+                          scaler='half_pixel',       # type: str
+                          exclude_outside=False,     # type: bool
+                          ):                         # type: (...) -> np.ndarray
     if n == 1:
-        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside, tf_legacy_scalar)
+        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi, extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
     return interpolate_1d_with_x(
-        [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs, align_corners, exclude_outside, tf_legacy_scalar)
-         for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, align_corners, exclude_outside, tf_legacy_scalar)
+        [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs, roi=roi, extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
+         for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, roi=roi, extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
 
 
-def interpolate_nd(data,                   # type: np.ndarray
-                   get_coeffs,             # type: Callable[[float], np.ndarray]
-                   output_size=None,       # type: Optional[List[int]]
-                   scale_factors=None,     # type: Optional[List[float]]
-                   align_corners=False,    # type: bool
-                   exclude_outside=False,  # type: bool
-                   tf_legacy_scalar=False  # type: bool
-                   ):                      # type: (...) -> np.ndarray
+def interpolate_nd(data,                      # type: np.ndarray
+                   # type: Callable[[float], np.ndarray]
+                   get_coeffs,
+                   output_size=None,          # type: Optional[List[int]]
+                   scale_factors=None,        # type: Optional[List[float]]
+                   roi=None,                  # type: np.ndarray
+                   extrapolation_value=None,  # type: float
+                   scaler='half_pixel',       # type: str
+                   exclude_outside=False,     # type: bool
+                   ):                         # type: (...) -> np.ndarray
     def get_all_coords(data):   # type: (np.ndarray) -> np.ndarray
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
 
@@ -181,8 +197,8 @@ def interpolate_nd(data,                   # type: np.ndarray
 
     ret = np.zeros(output_size)
     for x in get_all_coords(ret):
-        ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), scale_factors, x, get_coeffs, align_corners,
-                                              exclude_outside, tf_legacy_scalar)
+        ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), scale_factors, x, get_coeffs, roi=roi,
+                                              extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
     return ret
 
 

@@ -1376,18 +1376,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             ,
             AttributeProto::STRING,
             std::string("nearest"))
-        .Attr("align_corners",
-            "If set to 0 (default), the input and output tensors are aligned by the "
-            "center points of their corner pixels. If set to 1, the input and "
-            "output tensors are aligned by the corner points of their corner "
-            "pixels, and the interpolation uses edge value padding for out-of-boundary values. "
-            "For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, "
-            "if align_corners is 0, "
-            "x_original = (x_resized + 0.5) / scale - 0.5, "
-            "if align_corners is 1, "
-            "x_original = x_resized * (length_original - 1) / (length_resized - 1).", 
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
         .Attr("cubic_coeff_a",
             "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75"
             " (in PyTorch). Check out https://ieeexplore.ieee.org/document/1163711 for the details.",
@@ -1398,24 +1386,42 @@ ONNX_OPERATOR_SET_SCHEMA(
             " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("tf_legacy_scalar",
-            "If set to 1, the incorrect legacy scalar of TensorFlow (https://github.com/tensorflow/tensorflow/blob/v1.14.0/tensorflow/core/kernels/image_resizer_state.h#L58) is used. The default value is 0.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
+        .Attr("scaler",
+            "The scaler used in interpolation. "
+            "For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input \"roi\", scale = length_resized / length_original"
+            "if scaler is \"half_pixel\", "
+            "x_original = (x_resized + 0.5) / scale - 0.5, "
+            "if scaler is \"align_corners\", "
+            "x_original = x_resized * (length_original - 1) / (length_resized - 1). "
+            "if scaler is \"tf_legacy\", "
+            "x_original = x_resized / scale "
+            "if scaler is \"tf_crop_and_resize\", "
+            "x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1)",
+            AttributeProto::STRING,
+            std::string("half_pixel"))
+        .Attr("extrapolation_value",
+            "When scaler is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
+            AttributeProto::FLOAT,
+            static_cast<float>(0))
         .Input(0, "X", "N-D tensor", "T1")
         .Input(
             1,
+            "roi",
+            "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when scaler is \"tf_crop_and_resize\"",
+            "T2")
+        .Input(
+            2,
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
             " be the same as the rank of input 'X'. It will be ignored if 'sizes' is specified.",
-            "T2")
+            "T3")
         .Input(
-            2,
+            3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.",
-            "T3",
+            "T4",
             OpSchema::Optional)
         .Output(0, "Y", "N-D tensor after resizing", "T1")
         .TypeConstraint(
@@ -1424,10 +1430,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .TypeConstraint(
             "T2",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain roi type to float or double.")
+        .TypeConstraint(
+            "T3",
             {"tensor(float)"},
             "Constrain scales type to float.")
         .TypeConstraint(
-            "T3",
+            "T4",
             {"tensor(int64)"},
             "Constrain sizes type to int64.")
         .SetDoc(Resize_ver11_doc)
