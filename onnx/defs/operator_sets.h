@@ -579,6 +579,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GatherElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScatterElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Scatter);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Equal);
 
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver11 {
@@ -595,6 +596,7 @@ class OpSet_Onnx_ver11 {
            Onnx, 11, ScatterElements)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 11, Scatter)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Equal)>());
   }
 };
 
