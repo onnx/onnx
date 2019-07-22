@@ -766,3 +766,68 @@ class Resize(Base):
 
         expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_tf_legacy')
+
+
+    @staticmethod
+    def export_resize_tf_crop_and_resize():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='linear',
+            scaler='tf_crop_and_resize'
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        # Note: for some rois, the result may be different with that of TF for inaccurate floating point
+        roi = np.array([0, 0, 0.4, 0.6, 1, 1, 0.6, 0.8], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+        # [[[[ 7.6000004  7.9        8.2      ]
+        #    [ 8.8        9.1        9.400001 ]
+        #    [10.        10.3       10.6      ]]]]
+        output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+                                scaler='tf_crop_and_resize').astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_tf_crop_and_resize')
+
+
+    @staticmethod
+    def export_resize_tf_crop_and_resize_extrapolation_value():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='linear',
+            scaler='tf_crop_and_resize',
+            extrapolation_value=10.0
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        # Note: for some rois, the result may be different with that of TF for inaccurate floating point
+        roi = np.array([0, 0, 0.4, 0.6, 1, 1, 1.2, 1.7], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+        # [[[[ 7.6000004 10.        10.       ]
+        #    [12.400001  10.        10.       ]
+        #    [10.        10.        10.       ]]]]
+        output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+                                scaler='tf_crop_and_resize').astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_tf_crop_and_resize')
