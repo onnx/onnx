@@ -222,7 +222,7 @@ class Resize(Base):
     def export_resize_upsample_scales_nearest():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='nearest',
         )
@@ -232,6 +232,7 @@ class Resize(Base):
             [3, 4],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
 
         # [[[[1. 1. 1. 2. 2. 2.]
@@ -241,14 +242,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, nearest_coeffs, scale_factors=scales).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_nearest')
 
     @staticmethod
     def export_resize_downsample_scales_nearest():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='nearest',
         )
@@ -258,20 +259,21 @@ class Resize(Base):
             [5, 6, 7, 8],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
         # [[[[1. 3.]]]]
         output = interpolate_nd(
             data, nearest_coeffs, scale_factors=scales).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_nearest')
 
     @staticmethod
     def export_resize_upsample_sizes_nearest():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales', 'sizes'],
+            inputs=['X', 'roi', 'scales', 'sizes'],
             outputs=['Y'],
             mode='nearest',
         )
@@ -281,6 +283,7 @@ class Resize(Base):
             [3, 4],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([], dtype=np.float32)
         sizes = np.array([1, 1, 7, 8], dtype=np.int64)
 
@@ -294,14 +297,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, nearest_coeffs, output_size=sizes).astype(np.float32)
 
-        expect(node, inputs=[data, scales, sizes], outputs=[output],
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_upsample_sizes_nearest')
 
     @staticmethod
     def export_resize_downsample_sizes_nearest():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales', 'sizes'],
+            inputs=['X', 'roi', 'scales', 'sizes'],
             outputs=['Y'],
             mode='nearest',
         )
@@ -311,6 +314,7 @@ class Resize(Base):
             [5, 6, 7, 8],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([], dtype=np.float32)
         sizes = np.array([1, 1, 1, 3], dtype=np.int64)
 
@@ -318,14 +322,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, nearest_coeffs, output_size=sizes).astype(np.float32)
 
-        expect(node, inputs=[data, scales, sizes], outputs=[output],
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_downsample_sizes_nearest')
 
     @staticmethod
     def export_resize_upsample_scales_linear():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
             align_corners=False
@@ -336,6 +340,7 @@ class Resize(Base):
             [3, 4],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         # [[[[1.   1.25 1.75 2.  ]
@@ -345,14 +350,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, linear_coeffs, scale_factors=scales).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_linear')
 
     @staticmethod
     def export_resize_upsample_scales_linear_align_corners():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
             align_corners=1
@@ -363,6 +368,7 @@ class Resize(Base):
             [3, 4],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         # [[[[1.         1.33333333 1.66666667 2.        ]
@@ -372,14 +378,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_linear_align_corners')
 
     @staticmethod
     def export_resize_downsample_scales_linear():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
         )
@@ -389,20 +395,21 @@ class Resize(Base):
             [5, 6, 7, 8],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
         # [[[[2.6666665 4.3333331]]]]
         output = interpolate_nd(
             data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_linear')
 
     @staticmethod
     def export_resize_downsample_scales_linear_align_corners():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
             align_corners=1
@@ -413,20 +420,21 @@ class Resize(Base):
             [5, 6, 7, 8],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
         # [[[[1.       3.142857]]]]
         output = interpolate_nd(
             data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_linear_align_corners')
 
     @staticmethod
     def export_resize_upsample_scales_cubic():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False
@@ -439,6 +447,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         # [[[[ 0.47265625  0.76953125  1.24609375  1.875       2.28125
@@ -460,14 +469,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, cubic_coeffs, scale_factors=scales).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic')
 
     @staticmethod
     def export_resize_upsample_scales_cubic_align_corners():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=True
@@ -480,6 +489,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         # [[[[ 1.          1.34110787  1.80029155  2.32944606  2.67055394
@@ -501,14 +511,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, cubic_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_align_corners')
 
     @staticmethod
     def export_resize_downsample_scales_cubic():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False
@@ -521,6 +531,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
         # [[[[ 1.47119141  2.78125     4.08251953]
@@ -529,14 +540,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, cubic_coeffs, scale_factors=scales).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic')
 
     @staticmethod
     def export_resize_downsample_scales_cubic_align_corners():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=True
@@ -549,6 +560,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
         # [[[[ 1.          2.39519159  3.79038317]
@@ -557,14 +569,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, cubic_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic_align_corners')
 
     @staticmethod
     def export_resize_upsample_sizes_cubic():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales', 'sizes'],
+            inputs=['X', 'roi', 'scales', 'sizes'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False
@@ -577,6 +589,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([], dtype=np.float32)
         sizes = np.array([1, 1, 9, 10], dtype=np.int64)
 
@@ -601,14 +614,14 @@ class Resize(Base):
         output = interpolate_nd(
             data, cubic_coeffs, output_size=sizes).astype(np.float32)
 
-        expect(node, inputs=[data, scales, sizes], outputs=[output],
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_upsample_sizes_cubic')
 
     @staticmethod
     def export_resize_downsample_sizes_cubic():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales', 'sizes'],
+            inputs=['X', 'roi', 'scales', 'sizes'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False
@@ -621,6 +634,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([], dtype=np.float32)
         sizes = np.array([1, 1, 3, 3], dtype=np.int64)
 
@@ -630,7 +644,7 @@ class Resize(Base):
         output = interpolate_nd(
             data, cubic_coeffs, output_size=sizes).astype(np.float32)
 
-        expect(node, inputs=[data, scales, sizes], outputs=[output],
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_downsample_sizes_cubic')
 
     # TensorFlow v1 bicubic with half_pixel_centers=True
@@ -638,7 +652,7 @@ class Resize(Base):
     def export_resize_upsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False,
@@ -653,6 +667,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         # [[[[ 0.55882353  0.81494204  1.35698249  1.89705882  2.39705882
@@ -674,14 +689,14 @@ class Resize(Base):
         output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
                                 exclude_outside=True).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_A_n0p5_exclude_outside')
 
     @staticmethod
     def export_resize_downsample_scales_cubic_A_n0p5_exclude_outside():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False,
@@ -696,6 +711,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
         # [[[[ 1.36812675  2.6695014   4.0133367 ]
@@ -704,7 +720,7 @@ class Resize(Base):
         output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
                                 exclude_outside=True).astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic_A_n0p5_exclude_outside')
 
     # TensorFlow v1 bicubic with half_pixel_centers=False
@@ -712,7 +728,7 @@ class Resize(Base):
     def export_resize_upsample_scales_cubic_tf_legacy():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
-            inputs=['X', 'scales'],
+            inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
             align_corners=False,
@@ -726,6 +742,7 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
+        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 
         # [[[[ 1.       1.40625  2.       2.5      3.       3.59375  4.
@@ -747,5 +764,5 @@ class Resize(Base):
         output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales, 
                                 scaler='tf_legacy').astype(np.float32)
 
-        expect(node, inputs=[data, scales], outputs=[output],
+        expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_tf_legacy')
