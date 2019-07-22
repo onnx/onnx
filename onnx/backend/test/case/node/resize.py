@@ -70,7 +70,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
                           x,                         # type: float
                           get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
-                          extrapolation_value=None,  # type: float
+                          extrapolation_value=0.0,   # type: float
                           scaler='half_pixel',       # type: str
                           exclude_outside=False,     # type: bool
                           ):                         # type: (...) -> np.ndarray
@@ -113,7 +113,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
         ret = padded[idxes]
         return idxes - pad_width, ret
 
-    input_width = len(data) if roi is None else (roi[1] - roi[0])
+    input_width = len(data)
     output_width = scale_factor * input_width
     if scaler == 'align_corners':
         if output_width == 1:
@@ -162,15 +162,22 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
                           x,                         # type: List[float]
                           get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
-                          extrapolation_value=None,  # type: float
+                          extrapolation_value=0.0,   # type: float
                           scaler='half_pixel',       # type: str
                           exclude_outside=False,     # type: bool
                           ):                         # type: (...) -> np.ndarray
     if n == 1:
-        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi, extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
+        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi, 
+                extrapolation_value=extrapolation_value, scaler=scaler, 
+                exclude_outside=exclude_outside)
     return interpolate_1d_with_x(
-        [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs, roi=roi, extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
-         for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs, roi=roi, extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
+            [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs,
+                                   roi=None if roi is None else np.concatenate([roi[1:n], roi[n+1:]]),
+                                   extrapolation_value=extrapolation_value, scaler=scaler,
+                                   exclude_outside=exclude_outside)
+         for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs,
+        roi=None if roi is None else [roi[0], roi[n]], extrapolation_value=extrapolation_value, scaler=scaler,
+        exclude_outside=exclude_outside)
 
 
 def interpolate_nd(data,                      # type: np.ndarray
@@ -178,7 +185,7 @@ def interpolate_nd(data,                      # type: np.ndarray
                    output_size=None,          # type: Optional[List[int]]
                    scale_factors=None,        # type: Optional[List[float]]
                    roi=None,                  # type: np.ndarray
-                   extrapolation_value=None,  # type: float
+                   extrapolation_value=0.0,   # type: float
                    scaler='half_pixel',       # type: str
                    exclude_outside=False,     # type: bool
                    ):                         # type: (...) -> np.ndarray
@@ -195,7 +202,8 @@ def interpolate_nd(data,                      # type: np.ndarray
     ret = np.zeros(output_size)
     for x in get_all_coords(ret):
         ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), scale_factors, x, get_coeffs, roi=roi,
-                                              extrapolation_value=extrapolation_value, scaler=scaler, exclude_outside=exclude_outside)
+                                              extrapolation_value=extrapolation_value, scaler=scaler,
+                                              exclude_outside=exclude_outside)
     return ret
 
 
@@ -734,8 +742,8 @@ class Resize(Base):
             [13, 14, 15, 16],
         ]]], dtype=np.float32)
 
-        roi = np.array([], dtype=np.float32)
         scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+        roi = np.array([], dtype=np.float32)
 
         # [[[[ 1.       1.40625  2.       2.5      3.       3.59375  4.
         #      4.09375]
