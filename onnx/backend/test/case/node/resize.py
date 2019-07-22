@@ -332,7 +332,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
-            align_corners=False
         )
 
         data = np.array([[[
@@ -360,7 +359,7 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
-            align_corners=1
+            scaler='align_corners'
         )
 
         data = np.array([[[
@@ -412,7 +411,7 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='linear',
-            align_corners=1
+            scaler='align_corners'
         )
 
         data = np.array([[[
@@ -437,7 +436,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False
         )
 
         data = np.array([[[
@@ -479,7 +477,7 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=True
+            scaler='align_corners'
         )
 
         data = np.array([[[
@@ -521,7 +519,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False
         )
 
         data = np.array([[[
@@ -550,7 +547,7 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=True
+            scaler='align_corners'
         )
 
         data = np.array([[[
@@ -579,7 +576,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales', 'sizes'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False
         )
 
         data = np.array([[[
@@ -624,7 +620,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales', 'sizes'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False
         )
 
         data = np.array([[[
@@ -655,7 +650,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False,
             cubic_coeff_a=-0.5,
             exclude_outside=True
         )
@@ -699,7 +693,6 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False,
             cubic_coeff_a=-0.5,
             exclude_outside=True
         )
@@ -731,8 +724,7 @@ class Resize(Base):
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            align_corners=False,
-            tf_legacy_scalar=True
+            scaler='tf_legacy'
         )
 
         data = np.array([[[
