@@ -4842,7 +4842,7 @@ node = onnx.helper.make_node(
 data = np.array([[1, 2],
                  [3, 4]], dtype=np.float32)
 indices = np.array([[0, 0],
-                    [1, 0]], dtype=np.int64)
+                    [1, 0]], dtype=np.int32)
 # The below GatherElements' numpy implementation is from https://stackoverflow.com/a/51529812/11767360
 data_swaped = np.swapaxes(data, 0, axis)
 index_swaped = np.swapaxes(indices, 0, axis)
@@ -4871,7 +4871,7 @@ data = np.array([[1, 2, 3],
                  [4, 5, 6],
                  [7, 8, 9]], dtype=np.float32)
 indices = np.array([[1, 2, 0],
-                    [2, 0, 0]], dtype=np.int64)
+                    [2, 0, 0]], dtype=np.int32)
 data_swaped = np.swapaxes(data, 0, axis)
 index_swaped = np.swapaxes(indices, 0, axis)
 gathered = np.choose(index_swaped, data_swaped)
