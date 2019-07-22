@@ -68,8 +68,7 @@ def cartesian(arrays, out=None):
 def interpolate_1d_with_x(data,                      # type: np.ndarray
                           scale_factor,              # type: float
                           x,                         # type: float
-                          # type: Callable[[float], np.ndarray]
-                          get_coeffs,
+                          get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
                           extrapolation_value=None,  # type: float
                           scaler='half_pixel',       # type: str
@@ -161,8 +160,7 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
                           n,                         # type: int
                           scale_factors,             # type: List[float]
                           x,                         # type: List[float]
-                          # type: Callable[[float], np.ndarray]
-                          get_coeffs,
+                          get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
                           extrapolation_value=None,  # type: float
                           scaler='half_pixel',       # type: str
@@ -176,8 +174,7 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
 
 
 def interpolate_nd(data,                      # type: np.ndarray
-                   # type: Callable[[float], np.ndarray]
-                   get_coeffs,
+                   get_coeffs,                # type: Callable[[float], np.ndarray]
                    output_size=None,          # type: Optional[List[int]]
                    scale_factors=None,        # type: Optional[List[float]]
                    roi=None,                  # type: np.ndarray
@@ -242,7 +239,7 @@ class Resize(Base):
         #    [3. 3. 3. 4. 4. 4.]
         #    [3. 3. 3. 4. 4. 4.]]]]
         output = interpolate_nd(
-            data, nearest_coeffs, scale_factors=scales, align_corners=False).astype(np.float32)
+            data, nearest_coeffs, scale_factors=scales).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_nearest')
@@ -265,7 +262,7 @@ class Resize(Base):
 
         # [[[[1. 3.]]]]
         output = interpolate_nd(
-            data, nearest_coeffs, scale_factors=scales, align_corners=False).astype(np.float32)
+            data, nearest_coeffs, scale_factors=scales).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_nearest')
@@ -294,7 +291,7 @@ class Resize(Base):
         #    [3. 3. 3. 3. 4. 4. 4. 4.]
         #    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
         output = interpolate_nd(
-            data, nearest_coeffs, output_size=sizes, align_corners=False).astype(np.float32)
+            data, nearest_coeffs, output_size=sizes).astype(np.float32)
 
         expect(node, inputs=[data, sizes], outputs=[output],
                name='test_resize_upsample_sizes_nearest')
@@ -317,7 +314,7 @@ class Resize(Base):
 
         # [[[[1. 3.]]]]
         output = interpolate_nd(
-            data, nearest_coeffs, output_size=sizes, align_corners=False).astype(np.float32)
+            data, nearest_coeffs, output_size=sizes).astype(np.float32)
 
         expect(node, inputs=[data, sizes], outputs=[output],
                name='test_resize_downsample_sizes_nearest')
@@ -344,7 +341,7 @@ class Resize(Base):
         #    [2.5  2.75 3.25 3.5 ]
         #    [3.   3.25 3.75 4.  ]]]]
         output = interpolate_nd(
-            data, linear_coeffs, scale_factors=scales, align_corners=False).astype(np.float32)
+            data, linear_coeffs, scale_factors=scales).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_linear')
@@ -371,7 +368,7 @@ class Resize(Base):
         #    [2.33333333 2.66666667 3.         3.33333333]
         #    [3.         3.33333333 3.66666667 4.        ]]]]
         output = interpolate_nd(
-            data, linear_coeffs, scale_factors=scales, align_corners=True).astype(np.float32)
+            data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_linear_align_corners')
@@ -394,7 +391,7 @@ class Resize(Base):
 
         # [[[[2.6666665 4.3333331]]]]
         output = interpolate_nd(
-            data, linear_coeffs, scale_factors=scales, align_corners=False).astype(np.float32)
+            data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_linear')
@@ -418,7 +415,7 @@ class Resize(Base):
 
         # [[[[1.       3.142857]]]]
         output = interpolate_nd(
-            data, linear_coeffs, scale_factors=scales, align_corners=True).astype(np.float32)
+            data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_linear_align_corners')
@@ -459,7 +456,7 @@ class Resize(Base):
         #    [13.31640625 13.61328125 14.08984375 14.71875    15.125
         #     15.75390625 16.23046875 16.52734375]]]]
         output = interpolate_nd(
-            data, cubic_coeffs, scale_factors=scales, align_corners=False).astype(np.float32)
+            data, cubic_coeffs, scale_factors=scales).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic')
@@ -500,7 +497,7 @@ class Resize(Base):
         #    [13.         13.34110787 13.80029155 14.32944606 14.67055394
         #     15.19970845 15.65889213 16.        ]]]]
         output = interpolate_nd(
-            data, cubic_coeffs, scale_factors=scales, align_corners=True).astype(np.float32)
+            data, cubic_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_align_corners')
@@ -528,7 +525,7 @@ class Resize(Base):
         #    [ 6.71142578  8.02148438  9.32275391]
         #    [11.91650391 13.2265625  14.52783203]]]]
         output = interpolate_nd(
-            data, cubic_coeffs, scale_factors=scales, align_corners=False).astype(np.float32)
+            data, cubic_coeffs, scale_factors=scales).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic')
@@ -556,7 +553,7 @@ class Resize(Base):
         #    [ 6.58076634  7.97595793  9.37114951]
         #    [12.16153268 13.55672427 14.95191585]]]]
         output = interpolate_nd(
-            data, cubic_coeffs, scale_factors=scales, align_corners=True).astype(np.float32)
+            data, cubic_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_downsample_scales_cubic_align_corners')
@@ -599,7 +596,7 @@ class Resize(Base):
         #    [13.32442078 13.50992078 13.84092078 14.29192078 14.77667078
         #     15.09267078 15.57742078 16.02842078 16.35942078 16.54492078]]]]
         output = interpolate_nd(
-            data, cubic_coeffs, output_size=sizes, align_corners=False).astype(np.float32)
+            data, cubic_coeffs, output_size=sizes).astype(np.float32)
 
         expect(node, inputs=[data, sizes], outputs=[output],
                name='test_resize_upsample_sizes_cubic')
@@ -627,7 +624,7 @@ class Resize(Base):
         #    [ 7.12615741  8.5         9.87384259]
         #    [12.62152778 13.99537037 15.36921296]]]]
         output = interpolate_nd(
-            data, cubic_coeffs, output_size=sizes, align_corners=False).astype(np.float32)
+            data, cubic_coeffs, output_size=sizes).astype(np.float32)
 
         expect(node, inputs=[data, sizes], outputs=[output],
                name='test_resize_downsample_sizes_cubic')
@@ -670,7 +667,7 @@ class Resize(Base):
         #     14.61854349 15.16058394 15.41670245]
         #    [13.26470588 13.52082439 14.06286484 14.60294118 15.10294118
         #     15.64301751 16.18505796 16.44117647]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales, align_corners=False,
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
                                 exclude_outside=True).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
@@ -700,7 +697,7 @@ class Resize(Base):
         # [[[[ 1.36812675  2.6695014   4.0133367 ]
         #    [ 6.57362535  7.875       9.2188353 ]
         #    [11.94896657 13.25034122 14.59417652]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales, align_corners=False,
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
                                 exclude_outside=True).astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
@@ -743,8 +740,8 @@ class Resize(Base):
         #     16.09375]
         #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
         #     16.46875]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales, align_corners=False,
-                                tf_legacy_scalar=True).astype(np.float32)
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales, 
+                                scaler='tf_legacy').astype(np.float32)
 
         expect(node, inputs=[data, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_tf_legacy')
