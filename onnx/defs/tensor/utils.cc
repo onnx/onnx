@@ -46,14 +46,14 @@ void resizeShapeInferenceHelper(
   }
 }
 
-void resizeShapeInference(InferenceContext& ctx) {
+void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  const auto scales = ctx.getInputData(1);
+  const auto scales = ctx.getInputData(is_resize_op ? 2 : 1);
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -70,8 +70,8 @@ void resizeShapeInference(InferenceContext& ctx) {
     }
   }
 
-  if (ctx.getNumInputs() == 3) {
-    const auto sizes = ctx.getInputData(2);
+  if (is_resize_op && ctx.getNumInputs() == 4) {
+    const auto sizes = ctx.getInputData(3);
     if (nullptr != sizes) {
       if (sizes->data_type() == TensorProto::INT64) {
         const auto sizes_data = ParseData<int64_t>(sizes);

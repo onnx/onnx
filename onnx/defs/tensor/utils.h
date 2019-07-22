@@ -9,7 +9,7 @@
 #include <cmath>
 
 namespace ONNX_NAMESPACE {
-void resizeShapeInference(InferenceContext& ctx);
+void resizeShapeInference(InferenceContext& ctx, bool is_resize_op);
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,

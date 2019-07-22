@@ -1354,7 +1354,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx);
+          resizeShapeInference(ctx, false);
         })
 );
 
@@ -1442,7 +1442,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain sizes type to int64.")
         .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-           resizeShapeInference(ctx);
+           resizeShapeInference(ctx, true);
         })
 );
 
