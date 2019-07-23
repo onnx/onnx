@@ -394,9 +394,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (ctx.getNumOutputs() != 1)
             fail_shape_inference("Label encoder has only one output.");
 
-          // Input and output shapes are the same.
-          propagateShapeFromInputToOutput(ctx, 0, 0);
-
           // Load all key_* attributes.
           std::vector<std::string> keys_strings;
           bool keys_strings_result =
@@ -455,6 +452,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             output_elem_type->set_elem_type(TensorProto::INT64);
           if (values_floats_result)
             output_elem_type->set_elem_type(TensorProto::FLOAT);
+
+          // Input and output shapes are the same.
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
         }));
 
 static const char* LinearClassifier_ver1_doc = R"DOC(
