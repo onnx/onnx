@@ -5,15 +5,15 @@
 [![Build status](https://img.shields.io/appveyor/ci/onnx/onnx/master.svg?label=Windows)](https://ci.appveyor.com/project/onnx/onnx)
 [![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
 
-[Open Neural Network Exchange (ONNX)](http://onnx.ai) is an open ecosystem that empowers AI developers
+[Open Neural Network Exchange (ONNX)](httpss://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
 data types. Currently we focus on the capabilities needed for inferencing (scoring).
 
-ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production will increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
+ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production helps increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
 
 # Use ONNX
-* [Supported Frameworks, Tools, and Hardware](http://onnx.ai/supported-tools)
-* [Tutorials for creating ONNX models from](https://github.com/onnx/tutorials).
+* [Tutorials for creating ONNX models](https://github.com/onnx/tutorials).
+* [Pre-trained ONNX models](https://github.com/onnx/models)
 
 # Learn about the ONNX spec
 * [Overview](docs/Overview.md)
@@ -28,8 +28,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Opset Version Conversion](docs/VersionConverter.md)
 
 # Contribute
-ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
-You can join [one of the working groups](https://github.com/onnx/onnx/wiki/%5BAnnouncement%5D-ONNX-working-groups-established) and help shape the future of ONNX.
+ONNX is a [community project](https://github.com/onnx/community). We encourage you to join the effort and contribute feedback, ideas, and code. 
 
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
 
@@ -132,4 +131,4 @@ Check out [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONT
 
 # Code of Conduct
 
-[ONNX Open Source Code of Conduct](http://onnx.ai/codeofconduct.html)
+[ONNX Open Source Code of Conduct](https://onnx.ai/codeofconduct.html)
