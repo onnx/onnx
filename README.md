@@ -5,7 +5,7 @@
 [![Build status](https://img.shields.io/appveyor/ci/onnx/onnx/master.svg?label=Windows)](https://ci.appveyor.com/project/onnx/onnx)
 [![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
 
-[Open Neural Network Exchange (ONNX)](httpss://onnx.ai) is an open ecosystem that empowers AI developers
+[Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
 data types. Currently we focus on the capabilities needed for inferencing (scoring).
 
