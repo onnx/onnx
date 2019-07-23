@@ -102,39 +102,40 @@ ONNX_OPERATOR_SET_SCHEMA(
               updateOutputShape(ctx, 0, input_shape);
             }));
 
-static const char* FusedQuantizeLinear_ver11_doc = R"DOC(
+static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
 A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    FusedQuantizeLinear,
+    DynamicQuantizeLinear,
     11,
     OpSchema()
-        .SetDoc(FusedQuantizeLinear_ver11_doc)
-        .Input(0, "X", "Input tensor", "T1")
-        .Output(0, "Y", "Quantized output tensor", "T2")
-        .Output(1, "Y_Scale", "Output Scale. It's a scalar or a 1D tensor with size 1.", "tensor(float)")
-        .Output(2, "Y_Zero_Point", "Output Zero point. It's a scalar or a 1D tensor of size 1.", "T2")
+        .SetDoc(DynamicQuantizeLinear_ver11_doc)
+        .Input(0, "x", "Input tensor", "T1")
+        .Output(0, "y", "Quantized output tensor", "T2")
+        .Output(1, "y_scale", "Output Scale. It's a scalar or a 1D tensor with size 1.", "tensor(float)")
+        .Output(2, "y_zero_point", "Output Zero point. It's a scalar or a 1D tensor of size 1.", "T2")
         .Attr(
           "to",
-          "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto",
+          "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto."
+          "Currently this is not used since we only allow uint8 as output data type.",
           AttributeProto::INT,
           static_cast<int64_t>(2))
         .TypeConstraint(
           "T1",
           {"tensor(float)"},
-          "Constrain 'X' to float tensor.")
+          "Constrain 'x' to float tensor.")
       .TypeConstraint(
           "T2",
           {"tensor(uint8)"},
-          "Constrain 'Y_Zero_Point' and 'Y' to 8-bit unsigned integer tensor.")
+          "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
       .FunctionBody(FunctionBodyHelper::BuildNodes(
           {// nodes: {outputs, op, inputs, attributes}
            FunctionBodyHelper::Const<float>("Q_Min", 0.0f),
            FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-           {{"X_Min"}, "ReduceMin", {"X"}},
+           {{"X_Min"}, "ReduceMin", {"x"}},
            {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-           {{"X_Max"}, "ReduceMax", {"X"}},
+           {{"X_Max"}, "ReduceMax", {"x"}},
            {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
            {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
            {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
@@ -143,8 +144,8 @@ ONNX_OPERATOR_SET_SCHEMA(
            {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP"}, {MakeAttribute("min", 0.f), MakeAttribute("max", 255.f)}},
            {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
            {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeRefAttribute("to", AttributeProto::INT)}},
-           {{"Y_Scale"}, "Identity", {"Scale"}},
-           {{"Y_Zero_Point"}, "Identity", {"Zeropoint"}},
-           {{"Y"}, "QuantizeLinear", {"X", "Scale", "Zeropoint"}}})));
+           {{"y_scale"}, "Identity", {"Scale"}},
+           {{"y_zero_point"}, "Identity", {"Zeropoint"}},
+           {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}})));
 
 } // namespace ONNX_NAMESPACE

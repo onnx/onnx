@@ -1,1 +1,0 @@
-BY_Zero_PointJ™

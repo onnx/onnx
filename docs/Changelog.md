@@ -10393,6 +10393,53 @@ This version of the operator has been available since version 11 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
+### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (default is 2)</dt>
+<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto.Currently this is not used since we only allow uint8 as output data type.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>Quantized output tensor</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Output Scale. It's a scalar or a 1D tensor with size 1.</dd>
+<dt><tt>y_zero_point</tt> : T2</dt>
+<dd>Output Zero point. It's a scalar or a 1D tensor of size 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain 'x' to float tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
 ### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
@@ -10428,53 +10475,6 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
-
-### <a name="FusedQuantizeLinear-11"></a>**FusedQuantizeLinear-11**</a>
-
-  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
-  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input
-
-#### Version
-
-This version of the operator has been available since version 11 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>to</tt> : int (default is 2)</dt>
-<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T1</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T2</dt>
-<dd>Quantized output tensor</dd>
-<dt><tt>Y_Scale</tt> : tensor(float)</dt>
-<dd>Output Scale. It's a scalar or a 1D tensor with size 1.</dd>
-<dt><tt>Y_Zero_Point</tt> : T2</dt>
-<dd>Output Zero point. It's a scalar or a 1D tensor of size 1.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float)</dt>
-<dd>Constrain 'X' to float tensor.</dd>
-<dt><tt>T2</tt> : tensor(uint8)</dt>
-<dd>Constrain 'Y_Zero_Point' and 'Y' to 8-bit unsigned integer tensor.</dd>
-</dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 ### <a name="Loop-11"></a>**Loop-11**</a>
 

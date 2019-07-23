@@ -145,7 +145,7 @@
   * <a href="#Xor">Xor</a>
 
   **Operators with function registered:**
-  * <a href="#FusedQuantizeLinear">FusedQuantizeLinear</a>
+  * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
 
 ## ai.onnx (default)
@@ -3746,6 +3746,93 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="DynamicQuantizeLinear"></a><a name="dynamicquantizelinear">**DynamicQuantizeLinear**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (default is 2)</dt>
+<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto.Currently this is not used since we only allow uint8 as output data type.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>Quantized output tensor</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Output Scale. It's a scalar or a 1D tensor with size 1.</dd>
+<dt><tt>y_zero_point</tt> : T2</dt>
+<dd>Output Zero point. It's a scalar or a 1D tensor of size 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain 'x' to float tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+
+#### Examples
+
+<details>
+<summary>dynamicquantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DynamicQuantizeLinear',
+    inputs=['x'],
+    outputs=['y', 'y_scale', 'y_zero_point'],
+    to=np.int64(2))
+
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
+Y = np.array([153, 255, 0, 26, 221, 179]).astype(np.uint8)
+Y_Scale = np.array([0.0196078438]).astype(np.float32)
+Y_ZeroPoint = np.array([153]).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear')
+
+X = np.array([0, 2.5, 3.2, 4.6, 4.8, 5]).astype(np.float32)
+Y = np.array([0, 127, 163, 235, 245, 255]).astype(np.uint8)
+Y_Scale = np.array([0.0196]).astype(np.float32)
+Y_ZeroPoint = np.array([0]).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear_zeropoint_0')
+
+X = np.array([1, 2.5, 3.2, 4.6, 4.8, 5]).astype(np.float32)
+Y = np.array([51, 127, 163, 235, 245, 255]).astype(np.uint8)
+Y_Scale = np.array([0.0196]).astype(np.float32)
+Y_ZeroPoint = np.array([0]).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear_min_adjusted')
+```
+
+</details>
+
+
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
@@ -4377,93 +4464,6 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.floor(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_floor')
-```
-
-</details>
-
-
-### <a name="FusedQuantizeLinear"></a><a name="fusedquantizelinear">**FusedQuantizeLinear**</a>
-
-  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
-  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input
-
-#### Version
-
-This version of the operator has been available since version 11 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>to</tt> : int (default is 2)</dt>
-<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T1</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T2</dt>
-<dd>Quantized output tensor</dd>
-<dt><tt>Y_Scale</tt> : tensor(float)</dt>
-<dd>Output Scale. It's a scalar or a 1D tensor with size 1.</dd>
-<dt><tt>Y_Zero_Point</tt> : T2</dt>
-<dd>Output Zero point. It's a scalar or a 1D tensor of size 1.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float)</dt>
-<dd>Constrain 'X' to float tensor.</dd>
-<dt><tt>T2</tt> : tensor(uint8)</dt>
-<dd>Constrain 'Y_Zero_Point' and 'Y' to 8-bit unsigned integer tensor.</dd>
-</dl>
-
-#### Function
-
-The Function can be represented as a function.
-
-
-#### Examples
-
-<details>
-<summary>fusedquantizelinear</summary>
-
-```python
-node = onnx.helper.make_node('FusedQuantizeLinear',
-    inputs=['X'],
-    outputs=['Y', 'Y_Scale', 'Y_Zero_Point'],
-    to=np.int64(2))
-
-X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
-Y = np.array([153, 255, 0, 26, 221, 179]).astype(np.uint8)
-Y_Scale = np.array([0.0196078438]).astype(np.float32)
-Y_ZeroPoint = np.array([153]).astype(np.uint8)
-
-expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
-       name='test_fusedquantizelinear')
-
-X = np.array([0, 2.5, 3.2, 4.6, 4.8, 5]).astype(np.float32)
-Y = np.array([0, 127, 163, 235, 245, 255]).astype(np.uint8)
-Y_Scale = np.array([0.0196]).astype(np.float32)
-Y_ZeroPoint = np.array([0]).astype(np.uint8)
-
-expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
-       name='test_fusedquantizelinear_zeropoint_0')
-
-X = np.array([1, 2.5, 3.2, 4.6, 4.8, 5]).astype(np.float32)
-Y = np.array([51, 127, 163, 235, 245, 255]).astype(np.uint8)
-Y_Scale = np.array([0.0196]).astype(np.float32)
-Y_ZeroPoint = np.array([0]).astype(np.uint8)
-
-expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
-       name='test_fusedquantizelinear_min_adjusted')
 ```
 
 </details>
