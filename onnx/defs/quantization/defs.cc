@@ -117,8 +117,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(2, "y_zero_point", "Output Zero point. It's a scalar or a 1D tensor of size 1.", "T2")
         .Attr(
           "to",
-          "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto."
-          "Currently this is not used since we only allow uint8 as output data type.",
+          "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto. "
+          "Currently this is required to be uint8 .i.e. value 2.",
           AttributeProto::INT,
           static_cast<int64_t>(2))
         .TypeConstraint(
