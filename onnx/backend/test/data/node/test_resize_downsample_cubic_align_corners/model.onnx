@@ -1,22 +1,0 @@
-backend-test:¼
->
-X
-scalesY"Resize*
-align_corners *
-mode"cubic *test_resize_downsample_cubic_align_cornersZ
-X
-
-
-
-
-Z
-scales
-
-
-b
-Y
-
-
-
-
-B
