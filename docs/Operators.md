@@ -4409,18 +4409,18 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T2</dt>
-<dd>Output tensor</dd>
-<dt><tt>Y_Scale</tt> : T1</dt>
-<dd>Output tensor</dd>
+<dd>Quantized output tensor</dd>
+<dt><tt>Y_Scale</tt> : tensor(float)</dt>
+<dd>Output Scale. It's a scalar or a 1D tensor with size 1.</dd>
 <dt><tt>Y_Zero_Point</tt> : T2</dt>
-<dd>Output tensor</dd>
+<dd>Output Zero point. It's a scalar or a 1D tensor of size 1.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
-<dd>Constrain 'X' to float or int32 tensor.</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain 'X' to float tensor.</dd>
 <dt><tt>T2</tt> : tensor(uint8)</dt>
 <dd>Constrain 'Y_Zero_Point' and 'Y' to 8-bit unsigned integer tensor.</dd>
 </dl>

@@ -112,9 +112,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(FusedQuantizeLinear_ver11_doc)
         .Input(0, "X", "Input tensor", "T1")
-        .Output(0, "Y", "Output tensor", "T2")
-        .Output(1, "Y_Scale", "Output tensor", "T1")
-        .Output(2, "Y_Zero_Point", "Output tensor", "T2")
+        .Output(0, "Y", "Quantized output tensor", "T2")
+        .Output(1, "Y_Scale", "Output Scale. It's a scalar or a 1D tensor with size 1.", "tensor(float)")
+        .Output(2, "Y_Zero_Point", "Output Zero point. It's a scalar or a 1D tensor of size 1.", "T2")
         .Attr(
           "to",
           "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto",
@@ -122,8 +122,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           static_cast<int64_t>(2))
         .TypeConstraint(
           "T1",
-          {"tensor(float)", "tensor(int32)"},
-          "Constrain 'X' to float or int32 tensor.")
+          {"tensor(float)"},
+          "Constrain 'X' to float tensor.")
       .TypeConstraint(
           "T2",
           {"tensor(uint8)"},
