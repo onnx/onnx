@@ -6852,7 +6852,7 @@ roi = np.array([], dtype=np.float32)
 #     16.09375]
 #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
 #     16.46875]]]]
-output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales, 
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
                         scaler='tf_legacy').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales], outputs=[output],
