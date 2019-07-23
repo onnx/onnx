@@ -139,7 +139,7 @@ Model authors and applications/systems MAY elect to ignore the model versioning 
 
     * Breaking changes to the semantics of an input or output (e.g., changing the required contents of an input tensor from a color image to a black and white image).
     * Changing the declared type of an input or output to an incompatible type (e.g., `tensor(int)->tensor(string)`).
-    * Adding a new input for which there is no meaningful or specified default value.
+    * Adding a new input for which there is no meaningful or specified default value. Recall that default values for inputs are specified in the initializer list.
     * Removing an existing output for which there is no meaningful or specified default value.
 
 2. Non-breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MINOR version of `ModelProto.model_version`. Non-breaking changes include:
