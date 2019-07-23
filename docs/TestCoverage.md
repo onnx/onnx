@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
+Node tests have covered 129/136 (94.85%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2499,6 +2499,45 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.floor(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_floor')
+```
+
+</details>
+
+
+### FusedQuantizeLinear
+There are 1 test cases, listed as following:
+<details>
+<summary>fusedquantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('FusedQuantizeLinear',
+    inputs=['X'],
+    outputs=['Y', 'Y_Scale', 'Y_Zero_Point'],
+    to=np.int64(2))
+
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
+Y = np.array([153, 255, 0, 26, 221, 179]).astype(np.uint8)
+Y_Scale = np.array([0.0196078438]).astype(np.float32)
+Y_ZeroPoint = np.array([153]).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_fusedquantizelinear')
+
+X = np.array([0, 2.5, 3.2, 4.6, 4.8, 5]).astype(np.float32)
+Y = np.array([0, 127, 163, 235, 245, 255]).astype(np.uint8)
+Y_Scale = np.array([0.0196]).astype(np.float32)
+Y_ZeroPoint = np.array([0]).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_fusedquantizelinear_zeropoint_0')
+
+X = np.array([1, 2.5, 3.2, 4.6, 4.8, 5]).astype(np.float32)
+Y = np.array([51, 127, 163, 235, 245, 255]).astype(np.uint8)
+Y_Scale = np.array([0.0196]).astype(np.float32)
+Y_ZeroPoint = np.array([0]).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_fusedquantizelinear_min_adjusted')
 ```
 
 </details>

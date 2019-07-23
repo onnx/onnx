@@ -10429,6 +10429,53 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
 
+### <a name="FusedQuantizeLinear-11"></a>**FusedQuantizeLinear-11**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (default is 2)</dt>
+<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output tensor</dd>
+<dt><tt>Y_Scale</tt> : T1</dt>
+<dd>Output tensor</dd>
+<dt><tt>Y_Zero_Point</tt> : T2</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
+<dd>Constrain 'X' to float or int32 tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain 'Y_Zero_Point' and 'Y' to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
 ### <a name="Loop-11"></a>**Loop-11**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
