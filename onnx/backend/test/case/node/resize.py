@@ -8,7 +8,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import List, Callable, Union, Optional
+from typing import List, Callable, Union, Optional, Text
 
 
 def cartesian(arrays, out=None):
@@ -71,7 +71,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
                           get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
                           extrapolation_value=0.0,   # type: float
-                          scaler='half_pixel',       # type: str
+                          scaler='half_pixel',       # type: Text
                           exclude_outside=False,     # type: bool
                           ):                         # type: (...) -> np.ndarray
     def get_neighbor_idxes(x, n, limit):  # type: (float, int, int) -> np.ndarray
@@ -163,7 +163,7 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
                           get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
                           extrapolation_value=0.0,   # type: float
-                          scaler='half_pixel',       # type: str
+                          scaler='half_pixel',       # type: Text
                           exclude_outside=False,     # type: bool
                           ):                         # type: (...) -> np.ndarray
     if n == 1:
@@ -186,7 +186,7 @@ def interpolate_nd(data,                      # type: np.ndarray
                    scale_factors=None,        # type: Optional[List[float]]
                    roi=None,                  # type: np.ndarray
                    extrapolation_value=0.0,   # type: float
-                   scaler='half_pixel',       # type: str
+                   scaler='half_pixel',       # type: Text
                    exclude_outside=False,     # type: bool
                    ):                         # type: (...) -> np.ndarray
     def get_all_coords(data):   # type: (np.ndarray) -> np.ndarray
