@@ -313,11 +313,11 @@ ONNX-ML|map|Maps represent associative tables, defined by a key type and a value
 
 ONNX currently does not define a sparse tensor type.
 
-#### Tensor shapes
+#### Static tensor shapes
 
-In addition to element type, tensors have shape. A tensor shape is a list of records that define whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
+In addition to element type, tensor types have a **static** shape. The static shape of a tensor variable is related to, but different from, the runtime (dynamic) shape of a tensor value. A static tensor shape is a list of records that indicates whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
 
-The shape record is defined by 'TensorShapeProto':
+The static shape is defined by 'TensorShapeProto':
 
 ```
 message TensorShapeProto {
@@ -341,17 +341,22 @@ Which is referenced by the Tensor type message:
 
 The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
 
-Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
+Each size in the list MAY be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. A dimension MAY have neither dim_value nor dim_param set. Such a dimension represents an unknown dimension unrelated to other unknown dimensions.
 
 For example, a NxM matrix would have the shape list [N,M].
 
 The name of each dimension variable MUST adhere to C identifier syntax.
 
-Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. Dimension variables appearing in a graph's 'value_info' record are scoped to each value, allowing each value to have its shape defined independently. 
+Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
 Shapes MAY be defined using a combination of integers and variables.
+
+_Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
+* The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set. 
+* The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
+* ONNXML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
 
 ### Attribute Types
 
