@@ -167,14 +167,15 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
                           exclude_outside=False,     # type: bool
                           ):                         # type: (...) -> np.ndarray
     if n == 1:
-        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi, 
-                extrapolation_value=extrapolation_value, scaler=scaler, 
-                exclude_outside=exclude_outside)
+        return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi,
+                                     extrapolation_value=extrapolation_value, scaler=scaler,
+                                     exclude_outside=exclude_outside)
     return interpolate_1d_with_x(
-            [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs,
-                                   roi=None if roi is None else np.concatenate([roi[1:n], roi[n+1:]]),
-                                   extrapolation_value=extrapolation_value, scaler=scaler,
-                                   exclude_outside=exclude_outside)
+        [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs,
+                               roi=None if roi is None else np.concatenate(
+                                   [roi[1:n], roi[n + 1:]]),
+                               extrapolation_value=extrapolation_value, scaler=scaler,
+                               exclude_outside=exclude_outside)
          for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs,
         roi=None if roi is None else [roi[0], roi[n]], extrapolation_value=extrapolation_value, scaler=scaler,
         exclude_outside=exclude_outside)
@@ -761,12 +762,11 @@ class Resize(Base):
         #     16.09375]
         #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
         #     16.46875]]]]
-        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales, 
+        output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
                                 scaler='tf_legacy').astype(np.float32)
 
         expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_upsample_scales_cubic_tf_legacy')
-
 
     @staticmethod
     def export_resize_tf_crop_and_resize():  # type: () -> None
@@ -798,7 +798,6 @@ class Resize(Base):
 
         expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_tf_crop_and_resize')
-
 
     @staticmethod
     def export_resize_tf_crop_and_resize_extrapolation_value():  # type: () -> None
