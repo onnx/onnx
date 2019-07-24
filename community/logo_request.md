@@ -2,7 +2,7 @@
 
 Member Companies as defined [here](https://github.com/onnx/onnx/tree/prasanthpul-patch-3/community#community-roles) can request their logo be displayed on https://onnx.ai and other materials.
 
-To have your logo displayed, submit a PR to https://github.com/onnx/steering-committee with the following:
+To have your logo displayed, submit a PR to https://github.com/onnx/onnx.github.io with the following:
 1. Text of the PR must include written permission indicating the logo can be used on the onnx.ai website as well as in presentations showing ONNX Member Companies
 2. A high quality logo file with transparent background needs to be committed in the "logos" directory
 
