@@ -8,7 +8,7 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import TensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
@@ -174,6 +174,18 @@ def make_tensor(
 
     tensor.dims.extend(dims)
     return tensor
+
+
+def make_sparse_tensor(
+    values,   # type: TensorProto
+    indices,   # type: TensorProto
+    dims   # type: Sequence[int]
+):  # type: (...) -> SparseTensorProto
+    sparse = SparseTensorProto()
+    sparse.values.CopyFrom(values)
+    sparse.indices.CopyFrom(indices)
+    sparse.dims.extend(dims)
+    return sparse
 
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
