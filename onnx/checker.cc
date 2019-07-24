@@ -192,7 +192,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
       case TensorProto::INT32:
       case TensorProto::UINT8:
+      case TensorProto::INT8:
       case TensorProto::UINT16:
+      case TensorProto::INT16:
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
@@ -344,9 +346,9 @@ void check_node(
                                                    "ScaledTanh"};
   if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
-              << " experimental ops. In the future, we may directly "
-              << "reject this operator. Please update your model as soon "
-              << "as possible.";
+      << "experimental ops. In the future, we may directly "
+      << "reject this operator. Please update your model as soon "
+      << "as possible." << std::endl;
     return;
   }
 

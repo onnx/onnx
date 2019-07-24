@@ -38,7 +38,7 @@ print('TensorProto:\n{}'.format(tensor))
 
 # Convert the TensorProto to a Numpy array
 new_array = numpy_helper.to_array(tensor)
-print('After round trip, Numpy array:\n{}\n'.format(numpy_array))
+print('After round trip, Numpy array:\n{}\n'.format(new_array))
 
 # Save the TensorProto
 with open('tensor.pb', 'wb') as f:
