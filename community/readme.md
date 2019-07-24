@@ -42,9 +42,9 @@ Approvers need to be active Contributors for at least 3 months and be sponsored 
 * Have done media or PR activities to promote ONNX
 * Have a product that supports ONNX  
 
-Member Companies can request their logo to be displayed on the website and other materials by following these [instructions](logo_request.md).  
 Member Companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations. Being a Member Company does not by itself confer any compliance or certification to the Member Company's products.
 
+Member Companies can request their logo be displayed on the website and other materials by following these [instructions](logo_request.md).
 
 ## Organizational Structure
 
