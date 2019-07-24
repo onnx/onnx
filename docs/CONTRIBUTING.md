@@ -94,11 +94,13 @@ python setup.py typecheck
 
 [ONNX Open Source Code of Conduct](http://onnx.ai/codeofconduct.html)
 
-# Instructions for handling Corporate Contributor License Agreements (CCLAs)
-  * Step 1: Download the CCLA from [here]() 
+# Contribution License Agreement (CLA)
+
+Pull requests require a signed CLA before consideration for merging. All repositories under the ONNX organization use a common [individual CLA](https://cla-assistant.io/onnx/) that is automatically checked by the PR process.
+
+If your employer prohibits you from signing an individual CLArequires a corporate CLA (CCLA), then please follow these instructions:
+  * Step 1: Download the CCLA from [here](https://github.com/onnx/steering-committee/blob/master/CCLAs/ccla_template.md) 
   * Step 2: Complete the form
-  * Step 3: Open a PR in the https://github.com/onnx/steering-committee/tree/master/CCLAs repo with the completed CCLA attached in the [CCLA directory](https://github.com/onnx/onnx/tree/master/community/CCLAs)
-  * Step 4: The steering committee members will be auto tagged for review including: @jspisak, @prasanthpul, @ciphr, @harryskim and Dilip Sequeira
-  
-  The doc will be reviewed by the, currently forming, legal steering committee made of counsel from each of the steering committer members. 
+  * Step 3: Open a PR in the https://github.com/onnx/steering-committee/tree/master/CCLAs repo with the completed CCLA attached in the [CCLA directory](https://github.com/onnx/onnx/tree/master/community/CCLAs). 
+  * Step 4: The steering committee members will be auto tagged to review and add the provided github aliases to the CLA whitelist.
 
