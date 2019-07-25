@@ -131,11 +131,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
       .FunctionBody(FunctionBodyHelper::BuildNodes(
           {// nodes: {outputs, op, inputs, attributes}
-           FunctionBodyHelper::Const<float>("Q_Min", 0.0f),
+           FunctionBodyHelper::Const<float>("Q_Min", 0.f),
            FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-           {{"X_Min"}, "ReduceMin", {"x"}},
+           {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
            {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-           {{"X_Max"}, "ReduceMax", {"x"}},
+           {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
            {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
            {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
            {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
