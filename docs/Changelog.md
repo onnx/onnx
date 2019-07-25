@@ -1155,6 +1155,7 @@ This version of the operator has been available since version 1 of the default O
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
   Example 1:
+  ```
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
@@ -1174,7 +1175,9 @@ This version of the operator has been available since version 1 of the default O
             [4.5, 5.7],
         ],
     ]
+  ```
   Example 2:
+  ```
     data = [
         [1.0, 1.2, 1.9],
         [2.3, 3.4, 3.9],
@@ -1191,6 +1194,7 @@ This version of the operator has been available since version 1 of the default O
             [4.5, 5.9],
         ],
     ]
+  ```
 
 #### Version
 
@@ -10450,6 +10454,7 @@ This version of the operator has been available since version 11 of the default 
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
   
   Example 1:
+  ```
     data = [
         [1, 2],
         [3, 4],
@@ -10465,7 +10470,9 @@ This version of the operator has been available since version 11 of the default 
           [4, 3],
         ],
     ]
+  ```
   Example 2:
+  ```
     data = [
         [1, 2, 3],
         [4, 5, 6],
@@ -10482,6 +10489,7 @@ This version of the operator has been available since version 11 of the default 
           [7, 2, 3],
         ],
     ]
+  ```
 
 #### Version
 
@@ -10728,6 +10736,7 @@ This version of the operator has been available since version 11 of the default 
   where i and j are loop counters from 0 up to the respective size in `updates` - 1.
   
   Example 1:
+  ```
     data = [
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
@@ -10746,13 +10755,15 @@ This version of the operator has been available since version 11 of the default 
         [1.0, 0.0, 2.2]
         [0.0, 2.1, 1.2]
     ]
-  
+  ```
   Example 2:
+  ```
     data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
     indices = [[1, 3]]
     updates = [[1.1, 2.1]]
     axis = 1
     output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
 
 #### Version
 
@@ -10783,6 +10794,7 @@ This version of the operator has been deprecated since version 11 of the default
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
   
   Example 1:
+  ```
     data = [
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
@@ -10801,13 +10813,15 @@ This version of the operator has been deprecated since version 11 of the default
         [1.0, 0.0, 2.2]
         [0.0, 2.1, 1.2]
     ]
-  
+  ```
   Example 2:
+  ```
     data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
     indices = [[1, 3]]
     updates = [[1.1, 2.1]]
     axis = 1
     output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
 
 #### Version
 

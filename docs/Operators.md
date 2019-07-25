@@ -4626,6 +4626,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
   Example 1:
+  ```
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
@@ -4645,7 +4646,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.7],
         ],
     ]
+  ```
   Example 2:
+  ```
     data = [
         [1.0, 1.2, 1.9],
         [2.3, 3.4, 3.9],
@@ -4662,6 +4665,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.9],
         ],
     ]
+  ```
 
 #### Version
 
@@ -4765,6 +4769,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
   
   Example 1:
+  ```
     data = [
         [1, 2],
         [3, 4],
@@ -4780,7 +4785,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
           [4, 3],
         ],
     ]
+  ```
   Example 2:
+  ```
     data = [
         [1, 2, 3],
         [4, 5, 6],
@@ -4797,6 +4804,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
           [7, 2, 3],
         ],
     ]
+  ```
 
 #### Version
 
@@ -12709,6 +12717,7 @@ expect(node, inputs=[initial, x], outputs=[y, z],
   where i and j are loop counters from 0 up to the respective size in `updates` - 1.
   
   Example 1:
+  ```
     data = [
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
@@ -12727,13 +12736,15 @@ expect(node, inputs=[initial, x], outputs=[y, z],
         [1.0, 0.0, 2.2]
         [0.0, 2.1, 1.2]
     ]
-  
+  ```
   Example 2:
+  ```
     data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
     indices = [[1, 3]]
     updates = [[1.1, 2.1]]
     axis = 1
     output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
 
 #### Version
 
@@ -12818,6 +12829,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
   
   Example 1:
+  ```
     data = [
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
@@ -12836,13 +12848,15 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
         [1.0, 0.0, 2.2]
         [0.0, 2.1, 1.2]
     ]
-  
+  ```
   Example 2:
+  ```
     data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
     indices = [[1, 3]]
     updates = [[1.1, 2.1]]
     axis = 1
     output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
 
 #### Version
 

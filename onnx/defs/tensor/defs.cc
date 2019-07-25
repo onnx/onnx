@@ -746,6 +746,7 @@ data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = 
 where i and j are loop counters from 0 up to the respective size in `updates` - 1.
 
 Example 1:
+```
   data = [
       [0.0, 0.0, 0.0],
       [0.0, 0.0, 0.0],
@@ -764,13 +765,15 @@ Example 1:
       [1.0, 0.0, 2.2]
       [0.0, 2.1, 1.2]
   ]
-
+```
 Example 2:
+```
   data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
   indices = [[1, 3]]
   updates = [[1.1, 2.1]]
   axis = 1
   output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -836,6 +839,7 @@ is performed as below:
 This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
 
 Example 1:
+```
   data = [
       [0.0, 0.0, 0.0],
       [0.0, 0.0, 0.0],
@@ -854,13 +858,15 @@ Example 1:
       [1.0, 0.0, 2.2]
       [0.0, 2.1, 1.2]
   ]
-
+```
 Example 2:
+```
   data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
   indices = [[1, 3]]
   updates = [[1.1, 2.1]]
   axis = 1
   output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -906,6 +912,7 @@ Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
 Example 1:
+```
   data = [
       [1.0, 1.2],
       [2.3, 3.4],
@@ -925,7 +932,9 @@ Example 1:
           [4.5, 5.7],
       ],
   ]
+```
 Example 2:
+```
   data = [
       [1.0, 1.2, 1.9],
       [2.3, 3.4, 3.9],
@@ -942,6 +951,7 @@ Example 2:
           [4.5, 5.9],
       ],
   ]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1028,6 +1038,7 @@ by the following equations:
 This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
 
 Example 1:
+```
   data = [
       [1, 2],
       [3, 4],
@@ -1043,7 +1054,9 @@ Example 1:
         [4, 3],
       ],
   ]
+```
 Example 2:
+```
   data = [
       [1, 2, 3],
       [4, 5, 6],
@@ -1060,6 +1073,7 @@ Example 2:
         [7, 2, 3],
       ],
   ]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
