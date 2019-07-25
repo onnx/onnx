@@ -10,6 +10,15 @@ from ..base import Base
 from . import expect
 
 
+# The below GatherElements' numpy implementation is from https://stackoverflow.com/a/46204790/11767360
+def gather_elements(data, indices, axis=0):
+    data_swaped = np.swapaxes(data, 0, axis)
+    index_swaped = np.swapaxes(indices, 0, axis)
+    gathered = np.choose(index_swaped, data_swaped)
+    y = np.swapaxes(gathered, 0, axis)
+    return y
+
+
 class GatherElements(Base):
 
     @staticmethod
@@ -25,11 +34,7 @@ class GatherElements(Base):
                          [3, 4]], dtype=np.float32)
         indices = np.array([[0, 0],
                             [1, 0]], dtype=np.int32)
-        # The below GatherElements' numpy implementation is from https://stackoverflow.com/a/51529812/11767360
-        data_swaped = np.swapaxes(data, 0, axis)
-        index_swaped = np.swapaxes(indices, 0, axis)
-        gathered = np.choose(index_swaped, data_swaped)
-        y = np.swapaxes(gathered, 0, axis)
+        y = gather_elements(data, indices, axis)
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_elements_0')
@@ -48,10 +53,7 @@ class GatherElements(Base):
                          [7, 8, 9]], dtype=np.float32)
         indices = np.array([[1, 2, 0],
                             [2, 0, 0]], dtype=np.int32)
-        data_swaped = np.swapaxes(data, 0, axis)
-        index_swaped = np.swapaxes(indices, 0, axis)
-        gathered = np.choose(index_swaped, data_swaped)
-        y = np.swapaxes(gathered, 0, axis)
+        y = gather_elements(data, indices, axis)
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_elements_1')

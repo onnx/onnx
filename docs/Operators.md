@@ -4860,11 +4860,7 @@ data = np.array([[1, 2],
                  [3, 4]], dtype=np.float32)
 indices = np.array([[0, 0],
                     [1, 0]], dtype=np.int32)
-# The below GatherElements' numpy implementation is from https://stackoverflow.com/a/51529812/11767360
-data_swaped = np.swapaxes(data, 0, axis)
-index_swaped = np.swapaxes(indices, 0, axis)
-gathered = np.choose(index_swaped, data_swaped)
-y = np.swapaxes(gathered, 0, axis)
+y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_0')
@@ -4889,10 +4885,7 @@ data = np.array([[1, 2, 3],
                  [7, 8, 9]], dtype=np.float32)
 indices = np.array([[1, 2, 0],
                     [2, 0, 0]], dtype=np.int32)
-data_swaped = np.swapaxes(data, 0, axis)
-index_swaped = np.swapaxes(indices, 0, axis)
-gathered = np.choose(index_swaped, data_swaped)
-y = np.swapaxes(gathered, 0, axis)
+y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_1')
@@ -12774,17 +12767,18 @@ Other versions of this operator: <a href="Changelog.md#Scatter-9">Scatter-9</a>
 <summary>scatter_with_axis</summary>
 
 ```python
+axis = 1
 node = onnx.helper.make_node(
     'Scatter',
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
-    axis=1,
+    axis=axis,
 )
 data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
 indices = np.array([[1, 3]], dtype=np.int64)
 updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+y = scatter(data, indices, updates, axis=axis)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
@@ -12806,11 +12800,7 @@ data = np.zeros((3, 3), dtype=np.float32)
 indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
 updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
-y = np.array([
-    [2.0, 1.1, 0.0],
-    [1.0, 0.0, 2.2],
-    [0.0, 2.1, 1.2]
-], dtype=np.float32)
+y = scatter(data, indices, updates)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
@@ -12918,17 +12908,18 @@ This version of the operator has been available since version 11 of the default 
 <summary>scatter_elements_with_axis</summary>
 
 ```python
+axis = 1
 node = onnx.helper.make_node(
     'ScatterElements',
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
-    axis=1,
+    axis=axis,
 )
 data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
 indices = np.array([[1, 3]], dtype=np.int64)
 updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+y = scatter_elements(data, indices, updates, axis)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_with_axis')
@@ -12950,11 +12941,7 @@ data = np.zeros((3, 3), dtype=np.float32)
 indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
 updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
-y = np.array([
-    [2.0, 1.1, 0.0],
-    [1.0, 0.0, 2.2],
-    [0.0, 2.1, 1.2]
-], dtype=np.float32)
+y = scatter_elements(data, indices, updates)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_without_axis')

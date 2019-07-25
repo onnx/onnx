@@ -10,6 +10,35 @@ from ..base import Base
 from . import expect
 
 
+# The below ScatterElements' numpy implementation is from https://stackoverflow.com/a/46204790/11767360
+def scatter_elements(data, indices, updates, axis=0):
+    if axis < 0:
+        axis = data.ndim + axis
+
+    idx_xsection_shape = indices.shape[:axis] + indices.shape[axis + 1:]
+
+    def make_slice(arr, axis, i):
+        slc = [slice(None)] * arr.ndim
+        slc[axis] = i
+        return slc
+
+    # We use indices and axis parameters to create idx
+    # idx is in a form that can be used as a NumPy advanced indices for scattering of updates param. in data
+    idx = [[*np.indices(idx_xsection_shape).reshape(indices.ndim - 1, -1),
+            indices[make_slice(indices, axis, i)].reshape(1, -1)[0]] for i in range(indices.shape[axis])]
+    idx = list(np.concatenate(idx, axis=1))
+    idx.insert(axis, idx.pop())
+
+    # updates_idx is a NumPy advanced indices for indexing of elements in the updates
+    updates_idx = list(idx)
+    updates_idx.pop(axis)
+    updates_idx.insert(axis, np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)))
+
+    scattered = np.copy(data)
+    scattered[idx] = updates[updates_idx]
+    return scattered
+
+
 class ScatterElements(Base):
 
     @staticmethod
@@ -23,28 +52,25 @@ class ScatterElements(Base):
         indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
         updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
-        y = np.array([
-            [2.0, 1.1, 0.0],
-            [1.0, 0.0, 2.2],
-            [0.0, 2.1, 1.2]
-        ], dtype=np.float32)
+        y = scatter_elements(data, indices, updates)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
                name='test_scatter_elements_without_axis')
 
     @staticmethod
     def export_scatter_elements_with_axis():  # type: () -> None
+        axis = 1
         node = onnx.helper.make_node(
             'ScatterElements',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
-            axis=1,
+            axis=axis,
         )
         data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
         indices = np.array([[1, 3]], dtype=np.int64)
         updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-        y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+        y = scatter_elements(data, indices, updates, axis)
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
                name='test_scatter_elements_with_axis')
