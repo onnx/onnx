@@ -8,7 +8,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import List, Callable, Union, Optional, Text
+from typing import Any, List, Callable, Union, Optional, Text
 
 
 def cartesian(arrays, out=None):
@@ -164,7 +164,7 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
                           x,                         # type: List[float]
                           get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
-                          **kwargs
+                          **kwargs                   # type: Any
                           ):                         # type: (...) -> np.ndarray
     if n == 1:
         return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi,
@@ -183,7 +183,7 @@ def interpolate_nd(data,                      # type: np.ndarray
                    output_size=None,          # type: Optional[List[int]]
                    scale_factors=None,        # type: Optional[List[float]]
                    roi=None,                  # type: np.ndarray
-                   **kwargs
+                   **kwargs                   # type: Any
                    ):                         # type: (...) -> np.ndarray
     def get_all_coords(data):   # type: (np.ndarray) -> np.ndarray
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
