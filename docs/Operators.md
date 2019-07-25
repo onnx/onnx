@@ -4746,15 +4746,24 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 ### <a name="GatherElements"></a><a name="gatherelements">**GatherElements**</a>
 
-  Given `data` tensor and `indices` tensor of the same rank r >= 1, gather
-  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`.
-  For instance, for a 3-D tensor the output is specified by:
-  ...
-    out[i][j][k] = input[index[i][j][k]][j][k]  # if dim == 0
-    out[i][j][k] = input[i][index[i][j][k]][k]  # if dim == 1
-    out[i][j][k] = input[i][j][index[i][j][k]]  # if dim == 2
-  ...
-  This operator is the inverse of ScatterElements.
+  GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
+  and an optional attribute `axis` that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). It is an indexing operation
+  that produces its output by indexing into the input data tensor at index
+  positions determined by elements of the `indices` tensor.
+  Its output shape is the same as the shape of `indices` and consists of one value
+  (gathered from the `data`) for each element in `indices`.
+  
+  For instance, in the 3-D case (r = 3), the output produced is determined
+  by the following equations: 
+  ```
+    out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+    out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+    out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+  ```
+  
+  This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
+  
   Example 1:
     data = [
         [1, 2],
@@ -12690,7 +12699,8 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 
 ### <a name="Scatter"></a><a name="scatter">**Scatter** (deprecated)</a>
 
-  This operator is deprecated and renamed ScatterElements. 
+  This operator is deprecated. Please use ScatterElements, which provides the same functionality.
+  
   Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
   into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
   For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
@@ -12785,13 +12795,28 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 ### <a name="ScatterElements"></a><a name="scatterelements">**ScatterElements**</a>
 
-  Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
-  into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
-  For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
-  for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
-  data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
-  where i and j are loop counters from 0 up to the respective size in `updates` - 1.
-  This operator is the inverse of GatherElements. 
+  ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
+  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value
+  to values specified by `updates` at specific index positions specified by
+  `indices`. Its output shape is the same as the shape of `data`.
+  
+  For each entry in `updates`, the target index in `data` is obtained by combining
+  the corresponding entry in `indices` with the index of the entry itself: the
+  index-value for dimension = axis is obtained from the value of the corresponding
+  entry in `indices` and the index-value for dimension != axis is obtained from the
+  index of the entry itself.
+  
+  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
+  is performed as below:
+  ```
+    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  ```
+  
+  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+  
   Example 1:
     data = [
         [0.0, 0.0, 0.0],
