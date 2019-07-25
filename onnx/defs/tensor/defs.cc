@@ -1391,14 +1391,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input \"roi\", scale = length_resized / length_original"
             "if scaler is \"half_pixel\", "
             "x_original = (x_resized + 0.5) / scale - 0.5, "
+            "if scaler is \"pytorch_half_pixel\", "
+            "x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, "
             "if scaler is \"align_corners\", "
             "x_original = x_resized * (length_original - 1) / (length_resized - 1), "
-            "if scaler is \"tf_legacy\", "
+            "if scaler is \"asymmetric\", "
             "x_original = x_resized / scale, "
+            "if scaler is \"tf_half_pixel_for_nn\", "
+            "x_original = (x_resized + 0.5) / scale, "
             "if scaler is \"tf_crop_and_resize\", "
             "x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).",
             AttributeProto::STRING,
             std::string("half_pixel"))
+        .Attr("nearest_mode",
+            "Four modes: round_prefer_floor (default), round_prefer_ceil, floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original.",
+            AttributeProto::STRING,
+            std::string("round_prefer_floor"))
         .Attr("extrapolation_value",
             "When scaler is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,

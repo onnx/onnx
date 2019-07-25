@@ -730,13 +730,13 @@ class Resize(Base):
 
     # TensorFlow v1 bicubic with half_pixel_centers=False
     @staticmethod
-    def export_resize_upsample_scales_cubic_tf_legacy():  # type: () -> None
+    def export_resize_upsample_scales_cubic_asymmetric():  # type: () -> None
         node = onnx.helper.make_node(
             'Resize',
             inputs=['X', 'roi', 'scales'],
             outputs=['Y'],
             mode='cubic',
-            scaler='tf_legacy'
+            scaler='asymmetric'
         )
 
         data = np.array([[[
@@ -766,10 +766,10 @@ class Resize(Base):
         #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
         #     16.46875]]]]
         output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
-                                scaler='tf_legacy').astype(np.float32)
+                                scaler='asymmetric').astype(np.float32)
 
         expect(node, inputs=[data, roi, scales], outputs=[output],
-               name='test_resize_upsample_scales_cubic_tf_legacy')
+               name='test_resize_upsample_scales_cubic_asymmetric')
 
     @staticmethod
     def export_resize_tf_crop_and_resize():  # type: () -> None
@@ -833,3 +833,169 @@ class Resize(Base):
 
         expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_tf_crop_and_resize')
+
+    @staticmethod
+    def export_resize_downsample_sizes_nearest_tf_half_pixel_for_nn():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='nearest',
+            scaler='tf_half_pixel_for_nn'
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        roi = np.array([], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 3, 2], dtype=np.int64)
+
+        # [[[[ 6.  8.]
+        #    [10. 12.]
+        #    [14. 16.]]]]
+        output = interpolate_nd(
+            data, nearest_coeffs, output_size=sizes, scaler='tf_half_pixel_for_nn').astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_downsample_sizes_nearest_tf_half_pixel_for_nn')
+
+    @staticmethod
+    def export_resize_downsample_sizes_linear_pytorch_half_pixel():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='linear',
+            scaler='pytorch_half_pixel'
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        roi = np.array([], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 3, 1], dtype=np.int64)
+
+        # [[[[ 1.6666666]
+        #    [ 7.       ]
+        #    [12.333333 ]]]]
+        output = interpolate_nd(
+            data, linear_coeffs, output_size=sizes, scaler='pytorch_half_pixel').astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_downsample_sizes_linear_pytorch_half_pixel')
+
+    @staticmethod
+    def export_resize_upsample_sizes_nearest_floor_align_corners():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='nearest',
+            scaler='align_corners'
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        roi = np.array([], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+        # [[[[ 1.  1.  1.  2.  2.  3.  3.  4.]
+        #    [ 1.  1.  1.  2.  2.  3.  3.  4.]
+        #    [ 1.  1.  1.  2.  2.  3.  3.  4.]
+        #    [ 5.  5.  5.  6.  6.  7.  7.  8.]
+        #    [ 5.  5.  5.  6.  6.  7.  7.  8.]
+        #    [ 9.  9.  9. 10. 10. 11. 11. 12.]
+        #    [ 9.  9.  9. 10. 10. 11. 11. 12.]
+        #    [13. 13. 13. 14. 14. 15. 15. 16.]]]]
+        output = interpolate_nd(
+                data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, scaler='align_corners').astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_upsample_sizes_nearest_floor_align_corners')
+
+    @staticmethod
+    def export_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='nearest',
+            scaler='asymmetric'
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        roi = np.array([], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+        # [[[[ 1.  2.  2.  3.  3.  4.  4.  4.]
+        #    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+        #    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+        #    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+        #    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+        #    [13. 14. 14. 15. 15. 16. 16. 16.]
+        #    [13. 14. 14. 15. 15. 16. 16. 16.]
+        #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
+        output = interpolate_nd(
+                data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'), 
+                output_size=sizes, scaler='asymmetric').astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric')
+
+    @staticmethod
+    def export_resize_upsample_sizes_nearest_ceil_half_pixel():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Resize',
+            inputs=['X', 'roi', 'scales', 'sizes'],
+            outputs=['Y'],
+            mode='nearest',
+            scaler='half_pixel'
+        )
+
+        data = np.array([[[
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ]]], dtype=np.float32)
+
+        roi = np.array([], dtype=np.float32)
+        scales = np.array([], dtype=np.float32)
+        sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+        # [[[[ 1.  2.  2.  3.  3.  4.  4.  4.]
+        #    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+        #    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+        #    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+        #    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+        #    [13. 14. 14. 15. 15. 16. 16. 16.]
+        #    [13. 14. 14. 15. 15. 16. 16. 16.]
+        #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
+        output = interpolate_nd(
+                data, lambda x: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
+
+        expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+               name='test_resize_upsample_sizes_nearest_ceil_half_pixel')
