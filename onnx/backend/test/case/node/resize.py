@@ -15,22 +15,18 @@ def cartesian(arrays, out=None):
     # type: (List[np.ndarray], np.ndarray) -> np.ndarray
     """
     From https://stackoverflow.com/a/1235363
-
     Generate a cartesian product of input arrays.
-
     Parameters
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
     out : ndarray
         Array to place the cartesian product in.
-
     Returns
     -------
     out : ndarray
         2-D array of shape (M, len(arrays)) containing cartesian products
         formed of input arrays.
-
     Examples
     --------
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
@@ -46,7 +42,6 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
     """
 
     arrays = [np.asarray(x) for x in arrays]
@@ -76,7 +71,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
                           ):                         # type: (...) -> np.ndarray
     def get_neighbor_idxes(x, n, limit):  # type: (float, int, int) -> np.ndarray
         """
-        Return the n nearest indexes, prefer the indexes smaller than x to be compatible with nearest interpolation.
+        Return the n nearest indexes, prefer the indexes smaller than x
         As a result, the ratio must be in (0, 1]
         Examples:
         get_neighbor_idxes(4, 2, 10) == [3, 4]
@@ -120,7 +115,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
             x_ori = 0.
         else:
             x_ori = x * (input_width - 1) / (output_width - 1)
-    elif scaler == 'tf_legacy':
+    elif scaler == 'asymmetric':
         x_ori = x / scale_factor
     elif scaler == 'tf_crop_and_resize':
         if output_width == 1:
@@ -132,11 +127,18 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
         # Return extrapolation_value directly as what TF CropAndResize does
         if x_ori < 0 or x_ori > input_width - 1:
             return extrapolation_value
+    elif scaler == 'tf_half_pixel_for_nn':
+        x_ori = (x + 0.5) / scale_factor
+    elif scaler == 'pytorch_half_pixel':
+        if output_width == 1:
+            x_ori = -0.5
+        else:
+            x_ori = (x + 0.5) / scale_factor - 0.5
     else:  # scaler == 'half_pixel'
         x_ori = (x + 0.5) / scale_factor - 0.5
     x_ori_int = np.floor(x_ori).astype(np.int).item()
 
-    # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori` (as required by nearest interpolation)
+    # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`
     if x_ori.is_integer():
         ratio = 1
     else:
@@ -162,23 +164,18 @@ def interpolate_nd_with_x(data,                      # type: np.ndarray
                           x,                         # type: List[float]
                           get_coeffs,                # type: Callable[[float], np.ndarray]
                           roi=None,                  # type: np.ndarray
-                          extrapolation_value=0.0,   # type: float
-                          scaler='half_pixel',       # type: Text
-                          exclude_outside=False,     # type: bool
+                          **kwargs
                           ):                         # type: (...) -> np.ndarray
     if n == 1:
         return interpolate_1d_with_x(data, scale_factors[0], x[0], get_coeffs, roi=roi,
-                                     extrapolation_value=extrapolation_value, scaler=scaler,
-                                     exclude_outside=exclude_outside)
+                                     **kwargs)
     return interpolate_1d_with_x(
         [interpolate_nd_with_x(data[i], n - 1, scale_factors[1:], x[1:], get_coeffs,
                                roi=None if roi is None else np.concatenate(
                                    [roi[1:n], roi[n + 1:]]),
-                               extrapolation_value=extrapolation_value, scaler=scaler,
-                               exclude_outside=exclude_outside)
+                               **kwargs)
          for i in range(data.shape[0])], scale_factors[0], x[0], get_coeffs,
-        roi=None if roi is None else [roi[0], roi[n]], extrapolation_value=extrapolation_value, scaler=scaler,
-        exclude_outside=exclude_outside)
+        roi=None if roi is None else [roi[0], roi[n]], **kwargs)
 
 
 def interpolate_nd(data,                      # type: np.ndarray
@@ -186,9 +183,7 @@ def interpolate_nd(data,                      # type: np.ndarray
                    output_size=None,          # type: Optional[List[int]]
                    scale_factors=None,        # type: Optional[List[float]]
                    roi=None,                  # type: np.ndarray
-                   extrapolation_value=0.0,   # type: float
-                   scaler='half_pixel',       # type: Text
-                   exclude_outside=False,     # type: bool
+                   **kwargs
                    ):                         # type: (...) -> np.ndarray
     def get_all_coords(data):   # type: (np.ndarray) -> np.ndarray
         return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
@@ -203,8 +198,7 @@ def interpolate_nd(data,                      # type: np.ndarray
     ret = np.zeros(output_size)
     for x in get_all_coords(ret):
         ret[tuple(x)] = interpolate_nd_with_x(data, len(data.shape), scale_factors, x, get_coeffs, roi=roi,
-                                              extrapolation_value=extrapolation_value, scaler=scaler,
-                                              exclude_outside=exclude_outside)
+                                              **kwargs)
     return ret
 
 
@@ -221,8 +215,17 @@ def linear_coeffs(ratio):           # type: (float) -> np.ndarray
     return np.array([1 - ratio, ratio])
 
 
-def nearest_coeffs(ratio):          # type: (float) -> np.ndarray
-    return np.array([1])
+def nearest_coeffs(ratio, mode='round_prefer_floor'):          # type: (float, Text) -> np.ndarray
+    if type(ratio) == int or ratio.is_integer():
+        return np.array([0, 1])
+    elif mode == 'round_prefer_floor':
+        return np.array([ratio <= 0.5, ratio > 0.5])
+    elif mode == 'round_prefer_ceil':
+        return np.array([ratio < 0.5, ratio >= 0.5])
+    elif mode == 'floor':
+        return np.array([1, 0])
+    elif mode == 'ceil':
+        return np.array([0, 1])
 
 
 class Resize(Base):
