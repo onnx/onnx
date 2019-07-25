@@ -924,7 +924,7 @@ class Resize(Base):
         #    [ 9.  9.  9. 10. 10. 11. 11. 12.]
         #    [13. 13. 13. 14. 14. 15. 15. 16.]]]]
         output = interpolate_nd(
-                data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, scaler='align_corners').astype(np.float32)
+            data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, scaler='align_corners').astype(np.float32)
 
         expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_upsample_sizes_nearest_floor_align_corners')
@@ -959,8 +959,8 @@ class Resize(Base):
         #    [13. 14. 14. 15. 15. 16. 16. 16.]
         #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
         output = interpolate_nd(
-                data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'), 
-                output_size=sizes, scaler='asymmetric').astype(np.float32)
+            data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'),
+            output_size=sizes, scaler='asymmetric').astype(np.float32)
 
         expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric')
@@ -995,7 +995,7 @@ class Resize(Base):
         #    [13. 14. 14. 15. 15. 16. 16. 16.]
         #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
         output = interpolate_nd(
-                data, lambda x: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
+            data, lambda x: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
 
         expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_upsample_sizes_nearest_ceil_half_pixel')
