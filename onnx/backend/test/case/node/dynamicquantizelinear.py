@@ -38,11 +38,11 @@ class DynamicQuantizeLinear(Base):
 
         X = np.array([1, 2.1, 1.3, 2.5,
                       3.34, 4.0, 1.5, 2.6,
-                      3.9, 4.0, 3.0, 2.345]).astype(np.float32).reshape((3,4))
+                      3.9, 4.0, 3.0, 2.345]).astype(np.float32).reshape((3, 4))
 
         Y = np.array([64, 134, 83, 159,
                       213, 255, 96, 166,
-                      249, 255, 191, 149]).astype(np.uint8).reshape((3,4))
+                      249, 255, 191, 149]).astype(np.uint8).reshape((3, 4))
 
         Y_Scale = np.float32(0.0156862754)
         Y_ZeroPoint = np.uint8(0)

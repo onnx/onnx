@@ -113,8 +113,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(DynamicQuantizeLinear_ver11_doc)
         .Input(0, "x", "Input tensor", "T1")
         .Output(0, "y", "Quantized output tensor", "T2")
-        .Output(1, "y_scale", "Output Scale. It's a scalar or a 1D tensor with size 1.", "tensor(float)")
-        .Output(2, "y_zero_point", "Output Zero point. It's a scalar or a 1D tensor of size 1.", "T2")
+        .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)")
+        .Output(2, "y_zero_point", "Output zero point. It's a scalar, which means a per-tensor/layer quantization.", "T2")
         .Attr(
           "to",
           "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto. "

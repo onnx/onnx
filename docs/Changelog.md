@@ -10422,9 +10422,9 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>y</tt> : T2</dt>
 <dd>Quantized output tensor</dd>
 <dt><tt>y_scale</tt> : tensor(float)</dt>
-<dd>Output Scale. It's a scalar or a 1D tensor with size 1.</dd>
+<dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> : T2</dt>
-<dd>Output Zero point. It's a scalar or a 1D tensor of size 1.</dd>
+<dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
 </dl>
 
 #### Type Constraints
