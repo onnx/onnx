@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 126/133 (94.74%, 5 generators excluded) common operators.
+Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1906,6 +1906,115 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cosh')
+```
+
+</details>
+
+
+### CumSum
+There are 6 test cases, listed as following:
+<details>
+<summary>cumsum_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y']
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 3., 6., 10., 15.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d')
+```
+
+</details>
+<details>
+<summary>cumsum_1d_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    exclusive=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([0., 1., 3., 6., 10.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_exclusive')
+```
+
+</details>
+<details>
+<summary>cumsum_1d_reverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([15., 14., 12., 9., 5.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse')
+```
+
+</details>
+<details>
+<summary>cumsum_1d_reverse_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([14., 12., 9., 5., 0.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse_exclusive')
+```
+
+</details>
+<details>
+<summary>cumsum_2d_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_0')
+```
+
+</details>
+<details>
+<summary>cumsum_2d_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_1')
 ```
 
 </details>
@@ -5095,8 +5204,8 @@ w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
 w_scale = np.array([0.00172794575], dtype=np.float32)
 w_zero_point = np.array([255], dtype=np.uint8)
 
-y_scale = np.array([0.00162681262], dtype=np.float32)
-y_zero_point = np.array([123], dtype=np.uint8)
+y_scale = np.float32(0.00162681262)
+y_zero_point = np.uint8(123)
 
 output = np.array([[0, 81, 93, 230, 52, 87, 197],
     [240, 196, 18, 160, 126, 255, 191],
@@ -6712,6 +6821,31 @@ Y = np.array(
 )
 
 expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### Round
+There are 1 test cases, listed as following:
+<details>
+<summary>round</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Round',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([0.1, 0.5, 0.9, 1.2, 1.5,
+            1.8, 2.3, 2.5, 2.7, -1.1,
+            -1.5, -1.9, -2.2, -2.5, -2.8]).astype(np.float32)
+y = np.array([0., 0., 1., 1., 2.,
+            2., 2., 2., 3., -1.,
+            -2., -2., -2., -2., -3.]).astype(np.float32)  # expected output
+expect(node, inputs=[x], outputs=[y],
+       name='test_round')
 ```
 
 </details>

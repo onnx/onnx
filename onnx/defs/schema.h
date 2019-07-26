@@ -709,7 +709,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
               << op_schema.line() << ", but it its domain is not"
-              << "known by the checker." << std::endl;
+              << " known by the checker." << std::endl;
 
           fail_schema(err.str());
         }
@@ -799,7 +799,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * the macros defined such as ONNX_OPERATOR_SET_SCHEMA to register your
    * operator schema.
    *
-   * We wrap it inside a function to avoid the statia initialization order
+   * We wrap it inside a function to avoid the static initialization order
    * fiasco.
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
