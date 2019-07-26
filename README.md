@@ -31,8 +31,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
 You can join [one of the working groups](https://github.com/onnx/onnx/wiki/%5BAnnouncement%5D-ONNX-working-groups-established) and help shape the future of ONNX.
 
-Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md)
-and [call for contributions](https://github.com/onnx/onnx/issues/426) to get started.
+Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
 
 If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
