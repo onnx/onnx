@@ -3843,9 +3843,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>
+Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>, <a href="Changelog.md#Equal-7">Equal-7</a>
 
 #### Inputs
 
@@ -3866,8 +3866,8 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
-<dd>Constrains input to integral tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -4678,7 +4678,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of any rank q.</dd>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
