@@ -411,7 +411,7 @@ class Resize(Base):
 
         # [[[[2.6666665 4.3333331]]]]
         output = interpolate_nd(
-            data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
+            data, linear_coeffs, scale_factors=scales).astype(np.float32)
 
         expect(node, inputs=[data, roi, scales], outputs=[output],
                name='test_resize_downsample_scales_linear')
@@ -829,7 +829,7 @@ class Resize(Base):
         #    [12.400001  10.        10.       ]
         #    [10.        10.        10.       ]]]]
         output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
-                                scaler='tf_crop_and_resize').astype(np.float32)
+                                scaler='tf_crop_and_resize', extrapolation_value=10.0).astype(np.float32)
 
         expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
                name='test_resize_tf_crop_and_resize')
