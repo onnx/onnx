@@ -957,7 +957,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
-          for (int i = 0, j = 0; input_shape.dim_size(); ++i) {
+          for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
             if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
                 if(input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                     fail_shape_inference(
