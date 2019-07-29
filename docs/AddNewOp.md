@@ -4,13 +4,13 @@ Operators are the basic building blocks that define ONNX model. With a rich set 
 
 In this document, we describe the process of accepting a new proposed operator and how to properly submit a new operator as part of ONNX standard. The goal is to improve on what we currently have based on our experience, learning and feedbacks we gathered from the community.
 
-# 4 steps to add an operator
+## 4 steps to add an operator
 1. Decide what to propose
 2. Submit PR for new operator/function
 3. Review of PR by Operators SIG
 4. Merging of PR and inclusion in next ONNX release
 
-# Step 1: Proposing a new operator/function
+## Step 1: Proposing a new operator/function
 In order to propose a new operator/function, the following is needed:
 1. If the operator can be composed by other ONNX operators, then it should be a function and not an operator (we have a function in ONNX : MeanVarianceNormalization).
 2. If the operators can be split to new primitives, propose those primitives instead and make the operator a function.
@@ -21,7 +21,7 @@ In order to propose a new operator/function, the following is needed:
     2. If the operator is available in more than one frameworks, make sure that your design is general and cover those frameworks.
 6. Prefer attributes over inputs.
 
-# Step 2: Submit PR
+## Step 2: Submit PR
 Once the criteria of proposing new operator/function has been satisfied, you will need to submit a PR for the new operator/function. Here the expectation of what the PR should include. The reviewer is expected to verify the completeness of the PR before signoff.
 1. Description:
     1. Write a detailed description about the operator, and its expected behavior. Pretty much, the description should be clear enough to avoid confusion between implementors.
@@ -48,11 +48,11 @@ rank inference at the very least (adding right amount of dimensions to the outpu
 ### Example to Follow
 [PR 1959](https://github.com/onnx/onnx/pull/1959) is a good example to follow.
 
-# Step 3: PR Review by Operators SIG
+## Step 3: PR Review by Operators SIG
 The [Operators SIG](https://github.com/onnx/sigs/tree/master/operators) is responsible for the operators/functions in the ONNX specification. The SIG regularly meets and reviews PRs.
 
-## Sign-off
+### Sign-off
 At least two sign-off from the Operators SIG [contributors](https://github.com/onnx/onnx/tree/master/community#community-roles).
 
-# Step 4: ONNX release
+## Step 4: ONNX release
 Once the PR is reviewed and signed off by the Operators SIG, it will be merged. Your new operator/function will be part of the master branch and available to anyone building from source. These are not official releases. ONNX periodically releases official new versions that are a snapshot of the master branch. Your new operator/function will be part of that release.
