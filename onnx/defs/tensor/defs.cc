@@ -1802,8 +1802,8 @@ Otherwise the input tensor is flattened and unique values of the flattened tenso
 This operator returns the unique elements of the input tensor and three optional outputs. 
 The first output tensor 'Y' contains all unique values or subtensors of the input. 
 The second optional output tensor 'indices': indices[j] contains the index of the first occurrence of Y[j] in input X. 
-The third optional output tensor 'inverse_indices': inverted_indices[j] contains the index of the occurrence of X[j] in the output Y. 
-The forth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+The third optional output tensor 'inverse_indices': inverse_indices[j] contains the index of the occurrence of X[j] in the output Y. 
+The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
 
 Outputs are either sorted in ascending order or optionally in the order they occur in the input. 
 
@@ -1850,7 +1850,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .Attr(
             "axis",
-            "(Optional) The dimension to apply unique. If None, the unique elements of the flattened input are returned.",
+            "(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned.",
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
@@ -1859,13 +1859,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                         "or maintained in the same order they occur in the input 'X'", "T")
         .Output(1, "indices", "A 1-D INT64 tensor " 
                           "containing corresponding input tensor indices for elements in 'Y'",
-                          "tensor(int64)")
+                          "tensor(int64)", OpSchema::Optional)
         .Output(2, "inverse_indices", "A 1-D INT64 tensor "
                           "containing corresponding output indices for elements in 'X'",
-                          "tensor(int64)")
+                          "tensor(int64)", OpSchema::Optional)
         .Output(3, "counts", "A 1-D INT64 tensor containing the "
                              "the count of each element "
-                             "of 'Y' in the input 'X'", "tensor(int64)")
+                             "of 'Y' in the input 'X'", "tensor(int64)", OpSchema::Optional)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { 
           // Type inference
@@ -1913,10 +1913,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < input_shape.dim_size(); i++) {
               auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
               if (i != axis){
-                if (input_shape.dim(i).has_dim_value())
-                  dim->set_dim_value(input_shape.dim(i).dim_value());
-                else
-                  dim->set_dim_param(input_shape.dim(i).dim_param());
+                *dim = input_shape.dim(i)
               }
             }
           }
