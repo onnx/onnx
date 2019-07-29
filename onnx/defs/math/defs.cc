@@ -776,12 +776,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto transBAttr = ctx.getAttribute("transB");
             bool transB =
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-            auto& first_input_shape = getInputShape(ctx, 0);
-            auto& second_input_shape = getInputShape(ctx, 1);
+            const auto& first_input_shape = getInputShape(ctx, 0);
+            const auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2)
               fail_shape_inference("First input does not have rank 2");
             if (second_input_shape.dim_size() != 2)
               fail_shape_inference("Second input does not have rank 2");
+
+            const auto& first_input_common_dim =
+                first_input_shape.dim(transA ? 0 : 1);
+            const auto& second_input_common_dim =
+                second_input_shape.dim(transB ? 1 : 0);
+
+            // if both common dims have values, validate their values
+            if (first_input_common_dim.has_dim_value() && 
+                second_input_common_dim.has_dim_value() && 
+                first_input_common_dim.dim_value() !=
+                    second_input_common_dim.dim_value()) {
+              fail_shape_inference("The common dimensions of the two inputs need to have the same value");
+            }
+
             updateOutputShape(
                 ctx,
                 0,
@@ -791,7 +805,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 void matmulShapeInference(
-    ONNX_NAMESPACE::InferenceContext& ctx,
+    InferenceContext& ctx,
     int input1Idx,
     int input2Idx) {
   if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
@@ -805,7 +819,7 @@ void matmulShapeInference(
     fail_shape_inference("Input tensors of wrong rank (0).");
   }
 
-  ONNX_NAMESPACE::TensorShapeProto shapeL, shapeR;
+  TensorShapeProto shapeL, shapeR;
 
   // First promote each shape to at least rank-2. This logic is
   // specific to matmul, not generic broadcasting.
@@ -834,12 +848,12 @@ void matmulShapeInference(
     }
   }
 
-  ONNX_NAMESPACE::TensorShapeProto resultShape;
+  TensorShapeProto resultShape;
 
   // Now call out to generic multidimensional broadcasting for
   // the broadcastable prefixes.
   {
-    ONNX_NAMESPACE::TensorShapeProto prefixShapeL, prefixShapeR;
+    TensorShapeProto prefixShapeL, prefixShapeR;
     for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
       *prefixShapeL.add_dim() = shapeL.dim(i);
     }
@@ -1383,13 +1397,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T3",
             {"tensor(int8)", "tensor(uint8)"},
             "Constrain output y and its zero point data type to 8-bit integer tensor.")
-        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+        .TypeAndShapeInferenceFunction([](InferenceContext&
                                               ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(3);
           if (nullptr == a_type || nullptr == b_type ||
-              a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
-              b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+              a_type->value_case() != TypeProto::kTensorType ||
+              b_type->value_case() != TypeProto::kTensorType) {
             fail_type_inference("inputs are expected to have tensor type.");
           }
 
@@ -1455,21 +1469,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T3",
             {"tensor(int32)"},
             "Constrain output Y data type as 32-bit integer tensor.")
-        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext&
+        .TypeAndShapeInferenceFunction([](InferenceContext&
                                               ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(1);
           auto y_type = ctx.getOutputType(0);
           if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
-              a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
-              b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+              a_type->value_case() != TypeProto::kTensorType ||
+              b_type->value_case() != TypeProto::kTensorType) {
             fail_type_inference(
                 "inputs are expected to have tensor type and output type should not be null.");
           }
 
           // Right now we only support int32
-          y_type->mutable_tensor_type()->set_elem_type(
-              ONNX_NAMESPACE::TensorProto::INT32);
+          y_type->mutable_tensor_type()->set_elem_type(TensorProto::INT32);
 
           matmulShapeInference(ctx, 0, 1);
         }));
