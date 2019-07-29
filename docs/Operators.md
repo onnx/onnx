@@ -4741,7 +4741,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of any rank q.</dd>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
