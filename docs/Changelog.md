@@ -166,7 +166,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices.</dd>
+<dd>The axis in which to compute the arg indices. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -207,7 +207,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices.</dd>
+<dd>The axis in which to compute the arg indices. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -1498,7 +1498,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 </dl>
 
 #### Inputs
@@ -1987,7 +1987,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 </dl>
 
 #### Inputs
@@ -3202,7 +3202,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3245,7 +3245,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3288,7 +3288,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3331,7 +3331,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3374,7 +3374,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3417,7 +3417,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3460,7 +3460,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3503,7 +3503,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3546,7 +3546,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3589,7 +3589,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -3935,7 +3935,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 </dl>
 
 #### Inputs
@@ -4910,7 +4910,7 @@ This version of the operator has been available since version 4 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on</dd>
+<dd>Which axis to concatenate on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -8896,11 +8896,11 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
 <dt><tt>scan_input_axes</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input. A negative value for an axis means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>scan_input_directions</tt> : list of ints</dt>
 <dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
 <dt><tt>scan_output_axes</tt> : list of ints</dt>
-<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output.</dd>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output. A negative value for an axis means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>scan_output_directions</tt> : list of ints</dt>
 <dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>
@@ -10116,7 +10116,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>ends</tt> : Tind</dt>
 <dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
 <dt><tt>axes</tt> (optional) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
+<dd>1-D tensor of axes that `starts` and `ends` apply to. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
 <dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
 </dl>
@@ -10242,7 +10242,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>Dimension on which to do the sort.</dd>
+<dd>Dimension on which to do the sort. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 </dl>
 
 #### Inputs

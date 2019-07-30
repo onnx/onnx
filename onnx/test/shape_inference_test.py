@@ -191,6 +191,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 2, 4))])
 
+    def test_concat_3d_negative_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2, 2)),
+             ('y', TensorProto.FLOAT, (2, 2, 2))],
+            [make_node('Concat', ['x', 'y'], ['z'], axis=-1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 2, 4))])
+
     def test_concat_param(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ("a", 2)),

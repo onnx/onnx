@@ -63,7 +63,8 @@ will throw errors.
         "axis",
         "Describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
-        "the batch_size",
+        "the batch_size. "
+        "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(
@@ -937,7 +938,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain index tensor to int64")
         .Attr(
             "axis",
-            "Dimension on which to do the sort.",
+            "Dimension on which to do the sort. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -1496,44 +1498,54 @@ output = [5, 3, 0]
  )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-      CumSum,
-      11,
+    CumSum,
+    11,
     OpSchema()
-            .SetDoc(CumSum_ver11_doc)
-      .Attr(
-          "exclusive",
-          "If set to 1 will return exclusive sum in which the top element is not included."
-          " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
-          " Otherwise, it would be the sum of the first j elements.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Attr(
-          "reverse",
-          "If set to 1 will perform the sums in reverse direction.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Input(0, "x", "An input tensor that is to be processed.", "T")
-      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))", "T2")
-      .Output(0, "y",
-              "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
-              "T")
-      .TypeConstraint("T",  {
-        "tensor(uint32)",
-        "tensor(uint64)",
-        "tensor(int32)",
-        "tensor(int64)",
-        "tensor(float)",
-        "tensor(double)"}, "Input can be of any tensor type.")
-      .TypeConstraint("T2", {
-        "tensor(int32)",
-        "tensor(int64)"}, "axis tensor can be int32 or int64 only")
-      .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-        // Type inference
-        ONNX_NAMESPACE::propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        // Output has the same shape as input
-        ONNX_NAMESPACE::propagateShapeFromInputToOutput(ctx, 0, 0);
-        return;
-      }));
+        .SetDoc(CumSum_ver11_doc)
+        .Attr(
+            "exclusive",
+            "If set to 1 will return exclusive sum in which the top element is not included."
+            " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
+            " Otherwise, it would be the sum of the first j elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "reverse",
+            "If set to 1 will perform the sums in reverse direction.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "x", "An input tensor that is to be processed.", "T")
+        .Input(
+            1,
+            "axis",
+            "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))",
+            "T2")
+        .Output(
+            0,
+            "y",
+            "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Input can be of any tensor type.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int32)", "tensor(int64)"},
+            "axis tensor can be int32 or int64 only")
+        .TypeAndShapeInferenceFunction(
+            [](ONNX_NAMESPACE::InferenceContext& ctx) {
+              // Type inference
+              ONNX_NAMESPACE::propagateElemTypeFromInputToOutput(ctx, 0, 0);
+              // Output has the same shape as input
+              ONNX_NAMESPACE::propagateShapeFromInputToOutput(ctx, 0, 0);
+              return;
+            }));
 
 static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning

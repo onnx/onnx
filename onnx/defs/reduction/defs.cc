@@ -20,7 +20,8 @@ False instead of True.)DOC";
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor.",
+        "all the dimensions of the input tensor. "
+        "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
@@ -55,10 +56,15 @@ False instead of True.)DOC";
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
       for (size_t i = 0; i < axes.size(); ++i) {
+        if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
+          fail_shape_inference(
+              "axis must be in [-rank, rank-1]. input rank was ", input_ndim);
+        }
+
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
-      // do we need handle negative axis?
+
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() &&
@@ -137,7 +143,8 @@ The type of the output tensor is integer.)DOC";
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
-        "The axis in which to compute the arg indices.",
+        "The axis in which to compute the arg indices. "
+        "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Attr(
@@ -171,6 +178,11 @@ The type of the output tensor is integer.)DOC";
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
+        if (axis < -input_ndim || axis >= input_ndim) {
+          fail_shape_inference(
+              "axis must be in [-rank, rank-1]. input rank was ", input_ndim);
+        }
+
         if (axis < 0)
           axis += input_ndim;
       }
@@ -180,7 +192,7 @@ The type of the output tensor is integer.)DOC";
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      // do we need handle negative axis?
+
       for (int i = 0; i < input_ndim; ++i) {
         if (i != axis) {
           auto dim = output_shape->add_dim();

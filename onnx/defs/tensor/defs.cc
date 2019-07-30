@@ -291,7 +291,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     Concat,
     4,
     OpSchema()
-        .Attr("axis", "Which axis to concat on", AttributeProto::INT)
+        .Attr(
+            "axis",
+            "Which axis to concatenate on. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
+            AttributeProto::INT)
         .SetDoc("Concatenate a list of tensors into a single tensor")
         .Input(
             0,
@@ -318,12 +322,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axisAttr) {
             fail_shape_inference("Required attribute axis is missing");
           }
+
           int axis = static_cast<int>(axisAttr->i());
-          if (rank <= axis) {
-            fail_shape_inference("rank must be greater than axis");
+          if (axis < -rank || axis >= rank) {
+            fail_shape_inference(
+                "axis must be in [-rank, rank-1]. input rank was ", rank);
           }
+
           if (axis < 0) {
-            return; // TODO: check if negative axis must be supported
+            axis += rank;
           }
 
           bool all_lengths_known = true;
@@ -492,7 +499,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "axes",
-            "1-D tensor of axes that `starts` and `ends` apply to.",
+            "1-D tensor of axes that `starts` and `ends` apply to. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
             "Tind",
             OpSchema::Optional)
         .Input(
@@ -1355,8 +1363,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference(ctx);
-        })
-);
+        }));
 
 static const char* Resize_ver10_doc = R"DOC(
 Resize the input tensor.
@@ -1388,10 +1395,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-           resizeShapeInference(ctx);
-        })
-);
-
+          resizeShapeInference(ctx);
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -1560,7 +1565,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
             if (axis < -out_rank || axis >= out_rank) {
               fail_shape_inference(
-                  "'axis' must be in [-rank(indices)-1, rank(indices)]");
+                  "'axis' must be in [-rank(indices), rank(indices)-1]");
             }
             if (axis < 0) {
               axis += out_rank;

@@ -762,14 +762,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
             "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input.",
+            "be used as the scan axis for every scan_input. "
+            "A negative value for an axis means counting dimensions from the back. Accepted range is [-rank, rank-1].",
             AttributeProto::INTS,
             false)
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
             "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
+            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
+            "A negative value for an axis means counting dimensions from the back. Accepted range is [-rank, rank-1].",
             AttributeProto::INTS,
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
