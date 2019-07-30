@@ -390,7 +390,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .Attr(
             "axis",
-            "Which axis to split on.",
+            "Which axis to split on. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
@@ -404,20 +405,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto axisAttr = ctx.getAttribute("axis");
-          int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
-          if (axis < 0) {
-            return;
-          }
           std::vector<int64_t> split;
           if (!getRepeatedAttribute(ctx, "split", split)) {
             if (!ctx.getInputType(0)->tensor_type().has_shape()) {
               return;
             }
             const auto& shape = ctx.getInputType(0)->tensor_type().shape();
-            if (axis >= shape.dim_size()) {
-              fail_type_inference("Invalid value of attribute 'axis'");
+            int r = shape.dim_size();
+            int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+            if (axis < -r || axis >= r) {
+              fail_type_inference(
+                  "Invalid value of attribute 'axis'. Rank=",
+                  r,
+                  " Value=",
+                  axis);
             }
+            if (axis < 0) {
+              axis += r;
+            }
+
             const auto& splitDim = shape.dim(axis);
             if (!splitDim.has_dim_value()) {
               return;
@@ -875,7 +881,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of any rank q.",
+            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. "
+            "It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
         .TypeConstraint(
@@ -962,18 +969,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
-          for (int i = 0, j = 0;
-               i < ctx.getInputType(0)->tensor_type().shape().dim_size();
-               ++i) {
+          for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
             if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
+                if(input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
+                    fail_shape_inference(
+                        "Dimension of input ", 
+                        i, 
+                        " must be 1 instead of ", 
+                        input_shape.dim(i).dim_value());
+                }
               ++j;
             } else {
               *ctx.getOutputType(0)
                    ->mutable_tensor_type()
                    ->mutable_shape()
                    ->add_dim() =
-                  ctx.getInputType(0)->tensor_type().shape().dim(i);
+                  input_shape.dim(i);
             }
           }
         }));
@@ -1193,22 +1206,50 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DepthToSpace_ver1_doc =
+static const char* DepthToSpace_ver11_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
-and width dimensions.
+and width dimensions. By default, `mode` = `DCR`.
+In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+following order: depth, column, and then row. The output y is computed from the input x as below:
+
+b, c, h, w = x.shape
+
+tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+
+tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+
+y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+
+
+In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+following order: column, row, and the depth. The output y is computed from the input x as below:
+
+b, c, h, w = x.shape
+
+tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+
+tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+
+y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
-    1,
+    11,
     OpSchema()
         .Attr(
             "blocksize",
             "Blocks of [blocksize, blocksize] are moved.",
             AttributeProto::INT)
-        .SetDoc(DepthToSpace_ver1_doc)
+        .Attr(
+            "mode",
+            "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
+            AttributeProto::STRING,
+            std::string("DCR"))
+        .SetDoc(DepthToSpace_ver11_doc)
         .Input(
             0,
             "input",
