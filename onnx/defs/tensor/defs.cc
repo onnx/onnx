@@ -873,7 +873,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of any rank q.",
+            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. "
+            "It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
         .TypeConstraint(
