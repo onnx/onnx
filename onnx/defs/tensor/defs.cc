@@ -383,7 +383,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .Attr(
             "axis",
-            "Which axis to split on.",
+            "Which axis to split on. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
@@ -397,20 +398,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto axisAttr = ctx.getAttribute("axis");
-          int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
-          if (axis < 0) {
-            return;
-          }
           std::vector<int64_t> split;
           if (!getRepeatedAttribute(ctx, "split", split)) {
             if (!ctx.getInputType(0)->tensor_type().has_shape()) {
               return;
             }
             const auto& shape = ctx.getInputType(0)->tensor_type().shape();
-            if (axis >= shape.dim_size()) {
-              fail_type_inference("Invalid value of attribute 'axis'");
+            int r = shape.dim_size();
+            int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+            if (axis < -r || axis >= r) {
+              fail_type_inference(
+                  "Invalid value of attribute 'axis'. Rank=",
+                  r,
+                  " Value=",
+                  axis);
             }
+            if (axis < 0) {
+              axis += r;
+            }
+
             const auto& splitDim = shape.dim(axis);
             if (!splitDim.has_dim_value()) {
               return;
@@ -1390,8 +1396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference(ctx);
-        })
-);
+        }));
 
 static const char* Resize_ver10_doc = R"DOC(
 Resize the input tensor.
@@ -1423,10 +1428,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-           resizeShapeInference(ctx);
-        })
-);
-
+          resizeShapeInference(ctx);
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
