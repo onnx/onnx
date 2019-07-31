@@ -1,17 +1,17 @@
-backend-test:ç
+backend-test:é
 6
 xy"DepthToSpace*
 	blocksize†*
-mode"DCR†test_depthtospace_exampleZ
+mode"CRD†test_depthtospace_crd_modeZ
 x
 
-
-
 
+
+
 b
 y
 
-
 
-
+
+
 B
