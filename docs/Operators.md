@@ -14983,28 +14983,36 @@ expect(node,
 
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
-  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
     -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
       which contains the values of the top k elements along the specified axis
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-     
-  Given two equivalent values, this operator uses the indices along the axis  as
+  
+  If "largest" is 1 (the default value) then the k largest elements are returned.
+  If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+  
+  Given two equivalent values, this operator uses the indices along the axis as
    a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
+Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a href="Changelog.md#TopK-10">TopK-10</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>Dimension on which to do the sort.</dd>
+<dt><tt>largest</tt> : int (default is 1)</dt>
+<dd>Whether to return the top-K largest or smallest elements.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>Whether to return the elements in sorted order.</dd>
 </dl>
 
 #### Inputs
@@ -15028,8 +15036,8 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
@@ -15041,30 +15049,77 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
 <summary>top_k</summary>
 
 ```python
+axis = 1
+largest = 1
+
+k = 3
 node = onnx.helper.make_node(
     'TopK',
     inputs=['x', 'k'],
     outputs=['values', 'indices'],
+    axis=axis
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
-K = np.array([3], dtype=np.int64)
-values_ref = np.array([
-    [3, 2, 1],
-    [7, 6, 5],
-    [11, 10, 9],
-], dtype=np.float32)
-indices_ref = np.array([
-    [3, 2, 1],
-    [3, 2, 1],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+#print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
 
 expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
+```
+
+</details>
+
+
+<details>
+<summary>top_k_smallest</summary>
+
+```python
+axis = 1
+largest = 0
+sorted = 1
+k = 3
+
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis,
+    largest=largest,
+    sorted=sorted
+)
+
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [11, 10, 9, 8],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 0.  1.  2.]
+# [ 4.  5.  6.]
+# [ 8.  9. 10.]]
+#print(indices_ref)
+#[[0 1 2]
+# [0 1 2]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_smallest')
 ```
 
 </details>
