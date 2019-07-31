@@ -1834,10 +1834,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Unique_ver11_doc = R"DOC(
-Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors along the 'axis' are returned. 
+Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
 Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
 
-This operator returns the unique elements of the input tensor and three optional outputs. 
+This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
 The first output tensor 'Y' contains all unique values or subtensors of the input. 
 The second optional output tensor 'indices': indices[j] contains the index of the first occurrence of Y[j] in input X. 
 The third optional output tensor 'inverse_indices': inverse_indices[j] contains the index of the occurrence of X[j] in the output Y. 
@@ -1892,18 +1892,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
-        .Output(0, "Y", "A 1-D tensor of the same type as 'X' "
-                        "containing all the unique values in 'X', either sorted "
-                        "or maintained in the same order they occur in the input 'X'", "T")
+        .Output(0, "Y", "A N-D tensor of the same type as 'X' "
+                        "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
+                        "or maintained in the same order they occur in input 'X'", "T")
         .Output(1, "indices", "A 1-D INT64 tensor " 
-                          "containing corresponding input tensor indices for elements in 'Y'",
-                          "tensor(int64)", OpSchema::Optional)
+                          "containing indices of 'Y' elements' first occurance in 'X'. "
+                          "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
+                          "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
+                          "tensor(int64)",
+                          OpSchema::Optional)
         .Output(2, "inverse_indices", "A 1-D INT64 tensor "
-                          "containing corresponding output indices for elements in 'X'",
-                          "tensor(int64)", OpSchema::Optional)
-        .Output(3, "counts", "A 1-D INT64 tensor containing the "
+                          "containing, for elements of 'X', its corresponding indices in 'Y'. ",
+                          "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
+                          "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
+                          "tensor(int64)",
+                          OpSchema::Optional)
+        .Output(3, "counts", "A 1-D INT64 tensor containing "
                              "the count of each element "
-                             "of 'Y' in the input 'X'", "tensor(int64)", OpSchema::Optional)
+                             "of 'Y' in input 'X'",
+                             "tensor(int64)",
+                             OpSchema::Optional)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { 
           // Type inference
@@ -1951,7 +1959,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < input_shape.dim_size(); i++) {
               auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
               if (i != axis){
-                *dim = input_shape.dim(i)
+                *dim = input_shape.dim(i);
               }
             }
           }
