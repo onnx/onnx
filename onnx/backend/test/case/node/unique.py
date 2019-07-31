@@ -40,9 +40,9 @@ class Unique(Base):
         indices = np.sort(indices)
         inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-        y = np.asarray([x[indices[i]] for i in range(len(indices))])
-        inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices])
-        counts = np.asarray([counts[inverse_indices_map[i]] for i in range(len(counts))])
+        y = np.asarray([x[indices[i]] for i in range(len(indices))], dtype=np.float32)
+        inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
+        counts = np.asarray([counts[inverse_indices_map[i]] for i in range(len(counts))], dtype=np.int64)
         # print(y)
         # [2.0, 1.0, 3.0, 4.0]
         # print(sorted_indices)
