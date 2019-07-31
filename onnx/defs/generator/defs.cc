@@ -541,10 +541,11 @@ inline int compute_output_dim_for_range(
   const auto& delta_data =
       delta != nullptr ? ParseData<T>(delta) : std::vector<T>(1, 1);
 
-  if (start_data.size() != 1 || limit_data.size() != 1 ||
-      delta_data.size() != 1) {
+  if (start->dims().size() != 0 || 
+      limit->dims().size() != 0 ||
+      (delta != nullptr && delta->dims().size()) != 0) {
     fail_shape_inference(
-        "Input to 'Range' op should be scalars (Tensor with only one element)");
+        "Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
   }
 
   int n = static_cast<int>(
@@ -558,7 +559,7 @@ inline int compute_output_dim_for_range(
 const std::vector<NodeProto> build_nodes_range_op() {
     // body for 'Loop node'
     GraphProto loop_sub_graph;
-    loop_sub_graph.set_name("loop body attribute");
+    loop_sub_graph.set_name("loop_body_attribute");
 
     // 'Loop' node 'body' attribute's graph inputs
     auto* input_value_info_proto_0 = loop_sub_graph.add_input();
@@ -627,17 +628,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "start",
-            "Tensor(scalar, or dims=[1]). First entry in the range.",
+            "Scalar. First entry in the range.",
             "T")
         .Input(
             1,
             "limit",
-            "Tensor(scalar, or dims=[1]). Upper limit of sequence, exclusive.",
+            "Scalar. Upper limit of sequence, exclusive.",
             "T")
         .Input(
             2,
             "delta",
-            "Tensor(scalar, or dims=[1]). Number that increments start. Defaults to 1.",
+            "(Optional) Scalar. Number that increments start. Defaults to 1 if not provided.",
             "T",
             OpSchema::Optional)
         .Output(
