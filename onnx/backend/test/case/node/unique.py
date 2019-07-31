@@ -51,4 +51,42 @@ class Unique(Base):
             axis=0
         )
         y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+        # print(y)
+        # [[1. 0. 0.]
+        #  [2. 3. 4.]]
+        # print(indices)
+        # [0 2]
+        # print(inverse_indices)
+        # [0 0 1]
+        # print(counts)
+        # [2 1]
+
         expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
+
+    @staticmethod
+    def export_with_axis_3d():  # type: () -> None
+        x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+                      [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
+
+        node_sorted = onnx.helper.make_node(
+            'Unique',
+            inputs=['X'],
+            outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+            sorted=1,
+            axis=1
+        )
+        y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+        # print(y)
+        # [[[0. 1.]
+        #  [1. 1.]
+        #  [2. 1.]]
+        # [[0. 1.]
+        #  [1. 1.]
+        #  [2. 1.]]]
+        # print(indices)
+        # [1 0 2]
+        # print(reverse_indices)
+        # [1 0 2 0]
+        # print(counts)
+        # [2 1 1]
+        expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis_3d')

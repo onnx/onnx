@@ -14984,28 +14984,36 @@ expect(node,
 
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
-  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
     -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
       which contains the values of the top k elements along the specified axis
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-     
-  Given two equivalent values, this operator uses the indices along the axis  as
+  
+  If "largest" is 1 (the default value) then the k largest elements are returned.
+  If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+  
+  Given two equivalent values, this operator uses the indices along the axis as
    a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
+Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a href="Changelog.md#TopK-10">TopK-10</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>Dimension on which to do the sort.</dd>
+<dt><tt>largest</tt> : int (default is 1)</dt>
+<dd>Whether to return the top-K largest or smallest elements.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>Whether to return the elements in sorted order.</dd>
 </dl>
 
 #### Inputs
@@ -15029,8 +15037,8 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
@@ -15042,30 +15050,77 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>
 <summary>top_k</summary>
 
 ```python
+axis = 1
+largest = 1
+
+k = 3
 node = onnx.helper.make_node(
     'TopK',
     inputs=['x', 'k'],
     outputs=['values', 'indices'],
+    axis=axis
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
-K = np.array([3], dtype=np.int64)
-values_ref = np.array([
-    [3, 2, 1],
-    [7, 6, 5],
-    [11, 10, 9],
-], dtype=np.float32)
-indices_ref = np.array([
-    [3, 2, 1],
-    [3, 2, 1],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+#print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
 
 expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
+```
+
+</details>
+
+
+<details>
+<summary>top_k_smallest</summary>
+
+```python
+axis = 1
+largest = 0
+sorted = 1
+k = 3
+
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis,
+    largest=largest,
+    sorted=sorted
+)
+
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [11, 10, 9, 8],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 0.  1.  2.]
+# [ 4.  5.  6.]
+# [ 8.  9. 10.]]
+#print(indices_ref)
+#[[0 1 2]
+# [0 1 2]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_smallest')
 ```
 
 </details>
@@ -15158,16 +15213,16 @@ expect(node, inputs=[data], outputs=[transposed],
 
 ### <a name="Unique"></a><a name="unique">**Unique**</a>
 
-  Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors along the 'axis' are returned. 
+  Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
   Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
   
-  This operator returns the unique elements of the input tensor and three optional outputs. 
+  This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
   The first output tensor 'Y' contains all unique values or subtensors of the input. 
-  The second optional output tensor 'indices': indices[j] contains the index of the first occurrence of Y[j] in input X. 
-  The third optional output tensor 'inverse_indices': inverted_indices[j] contains the index of the occurrence of X[j] in the output Y. 
-  The forth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
+  The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
   
-  Outputs are either sorted in ascending order or optionally in the order they occur in the input. 
+  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input. 
   
   https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
   
@@ -15197,6 +15252,42 @@ expect(node, inputs=[data], outputs=[transposed],
     output_indices = [0, 2]
     output_inverse_indices = [0, 0, 1]
     output_counts = [2, 1]
+  
+  Example 4:
+    input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]], 
+               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+    attribute_sorted = 1
+    attribute_axis = 1
+  
+    intermediate data are presented below for better understanding: 
+    
+    there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+    A: [[1, 1], [1, 1]], 
+       [[0, 1], [0, 1]], 
+       [[2, 1], [2, 1]], 
+       [[0, 1], [0, 1]]].
+    
+    there are 3 unique subtensors: 
+    [[1, 1], [1, 1]], 
+    [[0, 1], [0, 1]], 
+    [[2, 1], [2, 1]].
+    
+    sorted unique subtensors:
+    B: [[0, 1], [0, 1]], 
+       [[1, 1], [1, 1]], 
+       [[2, 1], [2, 1]].
+    
+    output_Y is constructed from B:
+    [[[0. 1.], [1. 1.], [2. 1.]], 
+     [[0. 1.], [1. 1.], [2. 1.]]]
+  
+    output_indices is to map from B to A:
+    [1, 0, 2]
+    
+    output_inverse_indices is to map from A to B:
+    [1, 0, 2, 0]
+  
+    output_counts = [2 1 1]
 
 #### Version
 
@@ -15206,7 +15297,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Optional) The dimension to apply unique. If None, the unique elements of the flattened input are returned.</dd>
+<dd>(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned.</dd>
 <dt><tt>sorted</tt> : int (default is 1)</dt>
 <dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
 </dl>
@@ -15218,17 +15309,17 @@ This version of the operator has been available since version 11 of the default 
 <dd>A N-D input tensor that is to be processed.</dd>
 </dl>
 
-#### Outputs
+#### Outputs (1 - 4)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A 1-D tensor of the same type as 'X' containing all the unique values in 'X', either sorted or maintained in the same order they occur in the input 'X'</dd>
-<dt><tt>indices</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing corresponding input tensor indices for elements in 'Y'</dd>
-<dt><tt>inverse_indices</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing corresponding output indices for elements in 'X'</dd>
-<dt><tt>counts</tt> : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing the the count of each element of 'Y' in the input 'X'</dd>
+<dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
+<dt><tt>indices</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dt><tt>inverse_indices</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
+<dt><tt>counts</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing the count of each element of 'Y' in input 'X'</dd>
 </dl>
 
 #### Type Constraints
@@ -15255,7 +15346,51 @@ node_sorted = onnx.helper.make_node(
     axis=0
 )
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+# print(y)
+# [[1. 0. 0.]
+#  [2. 3. 4.]]
+# print(indices)
+# [0 2]
+# print(inverse_indices)
+# [0 0 1]
+# print(counts)
+# [2 1]
+
 expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>with_axis_3d</summary>
+
+```python
+x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
+
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=1
+)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+# print(y)
+# [[[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]
+# [[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]]
+# print(indices)
+# [1 0 2]
+# print(reverse_indices)
+# [1 0 2 0]
+# print(counts)
+# [2 1 1]
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis_3d')
 ```
 
 </details>

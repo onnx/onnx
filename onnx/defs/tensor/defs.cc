@@ -1839,11 +1839,11 @@ Otherwise the input tensor is flattened and unique values of the flattened tenso
 
 This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
 The first output tensor 'Y' contains all unique values or subtensors of the input. 
-The second optional output tensor 'indices': indices[j] contains the index of the first occurrence of Y[j] in input X. 
-The third optional output tensor 'inverse_indices': inverse_indices[j] contains the index of the occurrence of X[j] in the output Y. 
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
+The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
 The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
 
-Outputs are either sorted in ascending order or optionally in the order they occur in the input. 
+Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input. 
 
 https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
 
@@ -1873,6 +1873,42 @@ Example 3:
   output_indices = [0, 2]
   output_inverse_indices = [0, 0, 1]
   output_counts = [2, 1]
+
+Example 4:
+  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]], 
+             [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+  attribute_sorted = 1
+  attribute_axis = 1
+
+  intermediate data are presented below for better understanding: 
+  
+  there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+  A: [[1, 1], [1, 1]], 
+     [[0, 1], [0, 1]], 
+     [[2, 1], [2, 1]], 
+     [[0, 1], [0, 1]]].
+  
+  there are 3 unique subtensors: 
+  [[1, 1], [1, 1]], 
+  [[0, 1], [0, 1]], 
+  [[2, 1], [2, 1]].
+  
+  sorted unique subtensors:
+  B: [[0, 1], [0, 1]], 
+     [[1, 1], [1, 1]], 
+     [[2, 1], [2, 1]].
+  
+  output_Y is constructed from B:
+  [[[0. 1.], [1. 1.], [2. 1.]], 
+   [[0. 1.], [1. 1.], [2. 1.]]]
+
+  output_indices is to map from B to A:
+  [1, 0, 2]
+  
+  output_inverse_indices is to map from A to B:
+  [1, 0, 2, 0]
+
+  output_counts = [2 1 1]
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1892,7 +1928,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
-        .Output(0, "Y", "A N-D tensor of the same type as 'X' "
+        .Output(0, "Y", "A tensor of the same type as 'X' "
                         "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
                         "or maintained in the same order they occur in input 'X'", "T")
         .Output(1, "indices", "A 1-D INT64 tensor " 
@@ -1902,7 +1938,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                           "tensor(int64)",
                           OpSchema::Optional)
         .Output(2, "inverse_indices", "A 1-D INT64 tensor "
-                          "containing, for elements of 'X', its corresponding indices in 'Y'. ",
+                          "containing, for elements of 'X', its corresponding indices in 'Y'. "
                           "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
                           "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
                           "tensor(int64)",
