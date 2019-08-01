@@ -10802,7 +10802,7 @@ This version of the operator has been available since version 11 of the default 
     A: [[1, 1], [1, 1]], 
        [[0, 1], [0, 1]], 
        [[2, 1], [2, 1]], 
-       [[0, 1], [0, 1]]].
+       [[0, 1], [0, 1]].
     
     there are 3 unique subtensors: 
     [[1, 1], [1, 1]], 

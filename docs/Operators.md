@@ -15265,7 +15265,7 @@ expect(node, inputs=[data], outputs=[transposed],
     A: [[1, 1], [1, 1]], 
        [[0, 1], [0, 1]], 
        [[2, 1], [2, 1]], 
-       [[0, 1], [0, 1]]].
+       [[0, 1], [0, 1]].
     
     there are 3 unique subtensors: 
     [[1, 1], [1, 1]], 
