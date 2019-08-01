@@ -3,17 +3,26 @@
 
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
+static const char* Constant_ver11_doc = R"DOC(
+A constant tensor. Exactly one of the two attributes, either value or sparse_value,
+must be specified.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    9,
+    11,
     OpSchema()
-        .SetDoc(Constant_ver9_doc)
+        .SetDoc(Constant_ver11_doc)
         .Attr(
             "value",
             "The value for the elements of the output tensor.",
-            AttributeProto::TENSOR)
+            AttributeProto::TENSOR,
+            false)
+        .Attr(
+            "sparse_value",
+            "The value for the elements of the output tensor in sparse format.",
+            AttributeProto::SPARSE_TENSOR,
+            false)
         .Output(
             0,
             "output",
@@ -25,12 +34,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto attr_proto = ctx.getAttribute("value");
-          if (nullptr == attr_proto || !attr_proto->has_t())
-            fail_shape_inference(
-                "Attribute 'value' of Constant node must exist with 'Tensor' data.");
-          const TensorProto& tensor_proto = attr_proto->t();
-          updateOutputElemType(ctx, 0, tensor_proto.data_type());
-          updateOutputShape(ctx, 0, tensor_proto);
+          if (nullptr != attr_proto) {
+            if (!attr_proto->has_t())
+              fail_shape_inference(
+                  "Attribute 'value' of Constant node must have 'Tensor' data.");
+            const TensorProto& tensor_proto = attr_proto->t();
+            updateOutputElemType(ctx, 0, tensor_proto.data_type());
+            updateOutputShape(ctx, 0, tensor_proto);
+            return;
+          }
+          attr_proto = ctx.getAttribute("sparse_value");
+          if (nullptr != attr_proto) {
+            if (!attr_proto->has_sparse_tensor())
+              fail_shape_inference(
+                  "Attribute 'sparse_value' of Constant node must have 'SparseTensor' data.");
+            const SparseTensorProto& sparse = attr_proto->sparse_tensor();
+            // We can assume that sparse satisfies constraints checked by the
+            // checker
+            updateOutputElemType(ctx, 0, sparse.values().data_type());
+            auto* output_shape = getOutputShape(ctx, 0);
+            for (int i = 0; i < sparse.dims_size(); ++i)
+              appendDim(output_shape, sparse.dims(i));
+            return;
+          }
+          fail_shape_inference(
+              "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.")
         }));
 
 static const char* ConstantOfShape_ver9_doc = R"DOC(
@@ -61,10 +89,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain input types.")
+        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -92,26 +117,31 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
             // This is the case when exact shape input is not available.
-            // In this case, if the number of dimensions can be infered 
+            // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
-            // of dimensions (without any dim_value information) to the output.
+            // of dimensions (without any dim_value information) to the
+            // output.
             if (ctx.getInputType(0)->tensor_type().has_shape()) {
-                auto& input_shape = getInputShape(ctx, 0);
-                auto input_shape_dim_size = input_shape.dim_size();
-                if(input_shape_dim_size > 1) {
-                    fail_shape_inference("Shape input must be a one-dimensional tensor.");
+              auto& input_shape = getInputShape(ctx, 0);
+              auto input_shape_dim_size = input_shape.dim_size();
+              if (input_shape_dim_size > 1) {
+                fail_shape_inference(
+                    "Shape input must be a one-dimensional tensor.");
+              }
+              if (input_shape.dim(0).has_dim_value()) {
+                const auto& input_shape_dim_value =
+                    input_shape.dim(0).dim_value();
+                if (input_shape_dim_value > 0) {
+                  auto final_output_shape = ctx.getOutputType(0)
+                                                ->mutable_tensor_type()
+                                                ->mutable_shape();
+                  for (int i = 0; i < input_shape_dim_value; ++i) {
+                    auto newdim = final_output_shape->add_dim();
+                    (void)(newdim); // To eliminate "unused variable" compiler
+                                    // warning.
+                  }
                 }
-                if (input_shape.dim(0).has_dim_value()) {
-                    const auto& input_shape_dim_value = input_shape.dim(0).dim_value();
-                    if (input_shape_dim_value > 0) {
-                      auto final_output_shape = 
-                          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-                        for (int i = 0; i < input_shape_dim_value; ++i) {
-                            auto newdim = final_output_shape->add_dim();
-                            (void)(newdim); // To eliminate "unused variable" compiler warning.
-                        }
-                    }
-                }
+              }
             }
             return;
           }
@@ -135,7 +165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto final_output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (const int64_t& targetShapeElem : targetShape) {
-            if(targetShapeElem > 0) {
+            if (targetShapeElem > 0) {
               auto* new_dim = final_output_shape->add_dim();
               new_dim->set_dim_value(targetShapeElem);
             } else {

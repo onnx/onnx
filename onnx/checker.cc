@@ -346,6 +346,11 @@ void check_sparse_tensor(
     fail_check(
         "Sparse tensor (", values.name(), ") must have a dense-rank > 0");
   }
+  for (int i = 0; i < dense_rank; ++i) {
+    if (sparse_tensor_proto.dims(i) <= 0)
+      fail_check(
+          "Sparse tensor (", values.name(), ") dimensions are not positive.");
+  }
 
   if (sparse_tensor_proto.has_indices()) {
     // We keep the representation simple for now.
