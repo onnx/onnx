@@ -1832,4 +1832,173 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
+
+static const char* Unique_ver11_doc = R"DOC(
+Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
+Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
+
+This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
+The first output tensor 'Y' contains all unique values or subtensors of the input. 
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
+The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
+The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+
+Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input. 
+
+https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
+
+Example 1:
+  input_X = [2, 1, 1, 3, 4, 3]
+  attribute_sorted = 0
+  attribute_axis = None
+  output_Y = [2, 1, 3, 4]
+  output_indices = [0, 1, 3, 4]
+  output_inverse_indices = [0, 1, 1, 2, 3, 2]
+  output_counts = [1, 2, 2, 1]
+
+Example 2:
+  input_X = [[1, 3], [2, 3]]
+  attribute_sorted = 1
+  attribute_axis = None
+  output_Y = [1, 2, 3]
+  output_indices = [0, 2, 1]
+  output_inverse_indices = [0, 2, 1, 2]
+  output_counts = [1, 1, 2]
+
+Example 3:
+  input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+  attribute_sorted = 1
+  attribute_axis = 0
+  output_Y = [[1, 0, 0], [2, 3, 4]]
+  output_indices = [0, 2]
+  output_inverse_indices = [0, 0, 1]
+  output_counts = [2, 1]
+
+Example 4:
+  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]], 
+             [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+  attribute_sorted = 1
+  attribute_axis = 1
+
+  intermediate data are presented below for better understanding: 
+  
+  there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+  A: [[1, 1], [1, 1]], 
+     [[0, 1], [0, 1]], 
+     [[2, 1], [2, 1]], 
+     [[0, 1], [0, 1]].
+  
+  there are 3 unique subtensors: 
+  [[1, 1], [1, 1]], 
+  [[0, 1], [0, 1]], 
+  [[2, 1], [2, 1]].
+  
+  sorted unique subtensors:
+  B: [[0, 1], [0, 1]], 
+     [[1, 1], [1, 1]], 
+     [[2, 1], [2, 1]].
+  
+  output_Y is constructed from B:
+  [[[0. 1.], [1. 1.], [2. 1.]], 
+   [[0. 1.], [1. 1.], [2. 1.]]]
+
+  output_indices is to map from B to A:
+  [1, 0, 2]
+  
+  output_inverse_indices is to map from A to B:
+  [1, 0, 2, 0]
+
+  output_counts = [2 1 1]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unique,
+    11,
+    OpSchema()
+        .SetDoc(Unique_ver11_doc)
+        .Attr(
+            "sorted",
+            "(Optional) Whether to sort the unique elements in ascending order before returning as output. "
+            "Must be one of 0, or 1 (default).",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "axis",
+            "(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
+        .Output(0, "Y", "A tensor of the same type as 'X' "
+                        "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
+                        "or maintained in the same order they occur in input 'X'", "T")
+        .Output(1, "indices", "A 1-D INT64 tensor " 
+                          "containing indices of 'Y' elements' first occurance in 'X'. "
+                          "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
+                          "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
+                          "tensor(int64)",
+                          OpSchema::Optional)
+        .Output(2, "inverse_indices", "A 1-D INT64 tensor "
+                          "containing, for elements of 'X', its corresponding indices in 'Y'. "
+                          "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
+                          "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
+                          "tensor(int64)",
+                          OpSchema::Optional)
+        .Output(3, "counts", "A 1-D INT64 tensor containing "
+                             "the count of each element "
+                             "of 'Y' in input 'X'",
+                             "tensor(int64)",
+                             OpSchema::Optional)
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { 
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          const TypeProto* xTensorProto = ctx.getInputType(0);
+          TypeProto* yTensorProto = ctx.getOutputType(0);
+          TypeProto* indicesTensorProto = nullptr;
+          TypeProto* inverseIndicesTensorProto = nullptr;
+          TypeProto* countsTensorProto = nullptr;
+          
+          // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of unknown dimension.
+          auto num_outputs = ctx.getNumOutputs();
+          if (num_outputs >= 2) {
+            indicesTensorProto = ctx.getOutputType(1);
+            updateOutputElemType(ctx, 1, TensorProto::INT64);
+            indicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+
+          if (num_outputs >= 3) {
+            inverseIndicesTensorProto = ctx.getOutputType(2);
+            updateOutputElemType(ctx, 2, TensorProto::INT64);
+            inverseIndicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+
+          if (num_outputs >= 4) {
+            countsTensorProto = ctx.getOutputType(3);
+            updateOutputElemType(ctx, 3, TensorProto::INT64);
+            countsTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+
+          auto axisAttr = ctx.getAttribute("axis");
+          if (!axisAttr) {
+            // 'axis' is not provided. Input 'X' is flattened.
+            // 'Y' is a 1-D tensor of unknown dimension.
+            yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+          else 
+          {
+            // 'axis' is provided.
+            int axis = static_cast<int>(axisAttr->i());
+
+            // 'Y' has the same shape as 'X' except in the 'axis' dimension which is unknown.
+            const TensorShapeProto& input_shape = xTensorProto->tensor_type().shape();
+
+            for (int i = 0; i < input_shape.dim_size(); i++) {
+              auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+              if (i != axis){
+                *dim = input_shape.dim(i);
+              }
+            }
+          }
+      }));
+
 } // namespace ONNX_NAMESPACE
