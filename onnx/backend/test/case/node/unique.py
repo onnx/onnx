@@ -13,17 +13,19 @@ from . import expect
 class Unique(Base):
 
     @staticmethod
-    def export_without_axis():  # type: () -> None
-        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
-
+    def export_sorted_without_axis():  # type: () -> None
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
             outputs=['Y', 'indices', 'inverse_indices', 'counts']
         )
+
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
         y, indices, inverse_indices, counts = np.unique(x, True, True, True)
         expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
 
+    @staticmethod
+    def export_not_sorted_without_axis():  # type: () -> None
         node_not_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -33,19 +35,20 @@ class Unique(Base):
         # numpy unique does not retain original order (it sorts the output unique values)
         # https://github.com/numpy/numpy/issues/8621
         # we need to recover unsorted output and indices
-        y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+        y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 
-        # prepare index mapping from sorted to unsorded
+        # prepare index mapping from sorted to unsorted
         argsorted_indices = np.argsort(indices)
-        indices = np.sort(indices)
         inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-        y = np.asarray([x[indices[i]] for i in range(len(indices))], dtype=np.float32)
+        y = np.take(x, indices, axis=0)
+        indices = indices[argsorted_indices]
         inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
-        counts = np.asarray([counts[inverse_indices_map[i]] for i in range(len(counts))], dtype=np.int64)
+        counts = counts[argsorted_indices]
         # print(y)
         # [2.0, 1.0, 3.0, 4.0]
-        # print(sorted_indices)
+        # print(indices)
         # [0 1 3 4]
         # print(inverse_indices)
         # [0, 1, 1, 2, 3, 2]
@@ -55,9 +58,7 @@ class Unique(Base):
         expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
 
     @staticmethod
-    def export_with_axis():  # type: () -> None
-        x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
-
+    def export_sorted_with_axis():  # type: () -> None
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -65,6 +66,8 @@ class Unique(Base):
             sorted=1,
             axis=0
         )
+
+        x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
         y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
         # print(y)
         # [[1. 0. 0.]
@@ -79,10 +82,7 @@ class Unique(Base):
         expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
 
     @staticmethod
-    def export_with_axis_3d():  # type: () -> None
-        x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-                      [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
-
+    def export_sorted_with_axis_3d():  # type: () -> None
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -90,6 +90,9 @@ class Unique(Base):
             sorted=1,
             axis=1
         )
+
+        x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+                      [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
         y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
         # print(y)
         # [[[0. 1.]
