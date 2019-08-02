@@ -11754,9 +11754,9 @@ Other versions of this operator: <a href="Changelog.md#Resize-10">Resize-10</a>
 <dd>N-D tensor</dd>
 <dt><tt>roi</tt> : T2</dt>
 <dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when scaler is "tf_crop_and_resize"</dd>
-<dt><tt>scales</tt> : T3</dt>
+<dt><tt>scales</tt> : tensor(float)</dt>
 <dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. It will be ignored if 'sizes' is specified.</dd>
-<dt><tt>sizes</tt> (optional) : T4</dt>
+<dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
 <dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.</dd>
 </dl>
 
@@ -11774,10 +11774,6 @@ Other versions of this operator: <a href="Changelog.md#Resize-10">Resize-10</a>
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain roi type to float or double.</dd>
-<dt><tt>T3</tt> : tensor(float)</dt>
-<dd>Constrain scales type to float.</dd>
-<dt><tt>T4</tt> : tensor(int64)</dt>
-<dd>Constrain sizes type to int64.</dd>
 </dl>
 
 
