@@ -33,22 +33,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto attr_proto = ctx.getAttribute("value");
-          if (nullptr != attr_proto) {
-            if (!attr_proto->has_t())
+          auto* value = ctx.getAttribute("value");
+          auto* sparse_value = ctx.getAttribute("sparse_value");
+
+          if ((nullptr != value) && (nullptr != sparse_value))
+            fail_shape_inference(
+                "Only one of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
+
+          if (nullptr != value) {
+            if (!value->has_t())
               fail_shape_inference(
                   "Attribute 'value' of Constant node must have 'Tensor' data.");
-            const TensorProto& tensor_proto = attr_proto->t();
+            const TensorProto& tensor_proto = value->t();
             updateOutputElemType(ctx, 0, tensor_proto.data_type());
             updateOutputShape(ctx, 0, tensor_proto);
             return;
           }
-          attr_proto = ctx.getAttribute("sparse_value");
-          if (nullptr != attr_proto) {
-            if (!attr_proto->has_sparse_tensor())
+
+          if (nullptr != sparse_value) {
+            if (!sparse_value->has_sparse_tensor())
               fail_shape_inference(
                   "Attribute 'sparse_value' of Constant node must have 'SparseTensor' data.");
-            const SparseTensorProto& sparse = attr_proto->sparse_tensor();
+            const SparseTensorProto& sparse = sparse_value->sparse_tensor();
             // We can assume that sparse satisfies constraints checked by the
             // checker
             updateOutputElemType(ctx, 0, sparse.values().data_type());
