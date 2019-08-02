@@ -4739,7 +4739,7 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to split on.</dd>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -9696,7 +9696,6 @@ This version of the operator has been available since version 10 of the default 
   result in the same boxes being selected by the algorithm.
   The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
   The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
-  Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
 
 #### Version
 
@@ -9706,7 +9705,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>center_point_box</tt> : int (default is 0)</dt>
-<dd>Integer indicate the format of the box data. The default is 0.0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box cornersand the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models.1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.</dd>
+<dd>Integer indicate the format of the box data. The default is 0. 0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models. 1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.</dd>
 </dl>
 
 #### Inputs (2 - 5)
@@ -9717,11 +9716,11 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>scores</tt> : tensor(float)</dt>
 <dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
 <dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
-<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.</dd>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
 <dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
-<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].</dd>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
 <dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
-<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar</dd>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
 </dl>
 
 #### Outputs
@@ -10397,6 +10396,70 @@ This version of the operator has been available since version 11 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
+### <a name="DepthToSpace-11"></a>**DepthToSpace-11**</a>
+
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height
+  and width dimensions. By default, `mode` = `DCR`.
+  In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: depth, column, and then row. The output y is computed from the input x as below:
+  
+  b, c, h, w = x.shape
+  
+  tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+  
+  tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+  
+  y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+  
+  
+  In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: column, row, and the depth. The output y is computed from the input x as below:
+  
+  b, c, h, w = x.shape
+  
+  tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+  
+  tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+  
+  y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>blocksize</tt> : int (required)</dt>
+<dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
@@ -10874,5 +10937,182 @@ This version of the operator has been available since version 11 of the default 
 <dd>Input and output types can be of any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="TopK-11"></a>**TopK-11**</a>
+
+  Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+  
+  If "largest" is 1 (the default value) then the k largest elements are returned.
+  If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+  
+  Given two equivalent values, this operator uses the indices along the axis as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Dimension on which to do the sort.</dd>
+<dt><tt>largest</tt> : int (default is 1)</dt>
+<dd>Whether to return the top-K largest or smallest elements.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>Whether to return the elements in sorted order.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : I</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+### <a name="Unique-11"></a>**Unique-11**</a>
+
+  Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
+  Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
+  
+  This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
+  The first output tensor 'Y' contains all unique values or subtensors of the input. 
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
+  The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+  
+  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input. 
+  
+  https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
+  
+  Example 1:
+    input_X = [2, 1, 1, 3, 4, 3]
+    attribute_sorted = 0
+    attribute_axis = None
+    output_Y = [2, 1, 3, 4]
+    output_indices = [0, 1, 3, 4]
+    output_inverse_indices = [0, 1, 1, 2, 3, 2]
+    output_counts = [1, 2, 2, 1]
+  
+  Example 2:
+    input_X = [[1, 3], [2, 3]]
+    attribute_sorted = 1
+    attribute_axis = None
+    output_Y = [1, 2, 3]
+    output_indices = [0, 2, 1]
+    output_inverse_indices = [0, 2, 1, 2]
+    output_counts = [1, 1, 2]
+  
+  Example 3:
+    input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+    attribute_sorted = 1
+    attribute_axis = 0
+    output_Y = [[1, 0, 0], [2, 3, 4]]
+    output_indices = [0, 2]
+    output_inverse_indices = [0, 0, 1]
+    output_counts = [2, 1]
+  
+  Example 4:
+    input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]], 
+               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+    attribute_sorted = 1
+    attribute_axis = 1
+  
+    intermediate data are presented below for better understanding: 
+    
+    there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+    A: [[1, 1], [1, 1]], 
+       [[0, 1], [0, 1]], 
+       [[2, 1], [2, 1]], 
+       [[0, 1], [0, 1]].
+    
+    there are 3 unique subtensors: 
+    [[1, 1], [1, 1]], 
+    [[0, 1], [0, 1]], 
+    [[2, 1], [2, 1]].
+    
+    sorted unique subtensors:
+    B: [[0, 1], [0, 1]], 
+       [[1, 1], [1, 1]], 
+       [[2, 1], [2, 1]].
+    
+    output_Y is constructed from B:
+    [[[0. 1.], [1. 1.], [2. 1.]], 
+     [[0. 1.], [1. 1.], [2. 1.]]]
+  
+    output_indices is to map from B to A:
+    [1, 0, 2]
+    
+    output_inverse_indices is to map from A to B:
+    [1, 0, 2, 0]
+  
+    output_counts = [2 1 1]
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>A N-D input tensor that is to be processed.</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
+<dt><tt>indices</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dt><tt>inverse_indices</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
+<dt><tt>counts</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing the count of each element of 'Y' in input 'X'</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input can be of any tensor type.</dd>
 </dl>
 

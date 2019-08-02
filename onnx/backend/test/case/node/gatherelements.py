@@ -34,7 +34,11 @@ class GatherElements(Base):
                          [3, 4]], dtype=np.float32)
         indices = np.array([[0, 0],
                             [1, 0]], dtype=np.int32)
+
         y = gather_elements(data, indices, axis)
+        # print(y) produces
+        # [[1, 1],
+        #  [4, 3]]
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_elements_0')
@@ -53,7 +57,11 @@ class GatherElements(Base):
                          [7, 8, 9]], dtype=np.float32)
         indices = np.array([[1, 2, 0],
                             [2, 0, 0]], dtype=np.int32)
+
         y = gather_elements(data, indices, axis)
+        # print(y) produces
+        # [[4, 8, 3],
+        #  [7, 2, 3]]
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_elements_1')

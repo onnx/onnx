@@ -60,6 +60,10 @@ class Scatter(Base):
         updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
         y = scatter(data, indices, updates)
+        # print(y) produces
+        # [[2.0, 1.1, 0.0],
+        #  [1.0, 0.0, 2.2],
+        #  [0.0, 2.1, 1.2]]
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
                name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
@@ -78,6 +82,8 @@ class Scatter(Base):
         updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
         y = scatter(data, indices, updates, axis=axis)
+        # print(y) produces
+        # [[1.0, 1.1, 3.0, 2.1, 5.0]]
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
                name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
