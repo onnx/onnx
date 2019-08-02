@@ -8,11 +8,10 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from onnx import helper
 
 
-# The below Scatter's numpy implementation is from https://stackoverflow.com/a/46204790/11767360
-def scatter(data, indices, updates, axis=0):  # type: ignore
+# The below ScatterElements' numpy implementation is from https://stackoverflow.com/a/46204790/11767360
+def scatter_elements(data, indices, updates, axis=0):  # type: ignore
     if axis < 0:
         axis = data.ndim + axis
 
@@ -46,12 +45,12 @@ def scatter(data, indices, updates, axis=0):  # type: ignore
     return scattered
 
 
-class Scatter(Base):
+class ScatterElements(Base):
 
     @staticmethod
-    def export_scatter_without_axis():  # type: () -> None
+    def export_scatter_elements_without_axis():  # type: () -> None
         node = onnx.helper.make_node(
-            'Scatter',
+            'ScatterElements',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
         )
@@ -59,20 +58,20 @@ class Scatter(Base):
         indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
         updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
-        y = scatter(data, indices, updates)
+        y = scatter_elements(data, indices, updates)
         # print(y) produces
         # [[2.0, 1.1, 0.0],
         #  [1.0, 0.0, 2.2],
         #  [0.0, 2.1, 1.2]]
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
+               name='test_scatter_elements_without_axis')
 
     @staticmethod
-    def export_scatter_with_axis():  # type: () -> None
+    def export_scatter_elements_with_axis():  # type: () -> None
         axis = 1
         node = onnx.helper.make_node(
-            'Scatter',
+            'ScatterElements',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
             axis=axis,
@@ -81,9 +80,9 @@ class Scatter(Base):
         indices = np.array([[1, 3]], dtype=np.int64)
         updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-        y = scatter(data, indices, updates, axis=axis)
+        y = scatter_elements(data, indices, updates, axis)
         # print(y) produces
         # [[1.0, 1.1, 3.0, 2.1, 5.0]]
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-               name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
+               name='test_scatter_elements_with_axis')
