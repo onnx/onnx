@@ -1463,13 +1463,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
             " be the same as the rank of input 'X'. It will be ignored if 'sizes' is specified.",
-            "T3")
+            "tensor(float)")
         .Input(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.",
-            "T4",
+            "tensor(int64)",
             OpSchema::Optional)
         .Output(0, "Y", "N-D tensor after resizing", "T1")
         .TypeConstraint(
@@ -1480,14 +1480,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .TypeConstraint(
-            "T3",
-            {"tensor(float)"},
-            "Constrain scales type to float.")
-        .TypeConstraint(
-            "T4",
-            {"tensor(int64)"},
-            "Constrain sizes type to int64.")
         .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
            resizeShapeInference(ctx, true);
