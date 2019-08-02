@@ -328,6 +328,23 @@ class TestChecker(unittest.TestCase):
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
+    def test_check_sparse_matmul(self):  # type: () -> None
+        M = 5
+        N = 10
+        # Create ValueInfoProto for input X of shape [N]
+        X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
+        # Create a [M,N] sparse-matrix constant C
+        sparse_tensor = self.make_sparse([M,N], [2, 3, 1], [3], [3, 11, 37])
+        node1 = helper.make_node('Constant', [], ['C'], sparse_value=sparse_tensor)
+        # Create ValueInfoProto for output Y of shape [M]
+        Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [M])
+        # Compute Y = C X
+        node2 = helper.make_node('MatMul', ['C', 'X'], ['Y'])
+        # create graph
+        graph = helper.make_graph([node1, node2], "sparse_matmul", [X], [Y])
+        # check graph
+        checker.check_graph(graph)
+
 
 if __name__ == '__main__':
     unittest.main()
