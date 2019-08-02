@@ -236,6 +236,9 @@ def make_attribute(
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
         attr.type = AttributeProto.TENSOR
+    elif isinstance(value, SparseTensorProto):
+        attr.sparse_tensor.CopyFrom(value)
+        attr.type = AttributeProto.SPARSE_TENSOR
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
         attr.type = AttributeProto.GRAPH
@@ -255,6 +258,9 @@ def make_attribute(
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
+        elif all(isinstance(v, SparseTensorProto) for v in value):
+            attr.sparse_tensors.extend(value)
+            attr.type = AttributeProto.SPARSE_TENSORS
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS

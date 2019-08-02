@@ -41,9 +41,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Only one of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
 
           if (nullptr != value) {
-            if (!value->has_t())
-              fail_shape_inference(
-                  "Attribute 'value' of Constant node must have 'Tensor' data.");
+            // OpSchema::Verify check ensures that the attribute value has_t():
             const TensorProto& tensor_proto = value->t();
             updateOutputElemType(ctx, 0, tensor_proto.data_type());
             updateOutputShape(ctx, 0, tensor_proto);
@@ -51,12 +49,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (nullptr != sparse_value) {
-            if (!sparse_value->has_sparse_tensor())
-              fail_shape_inference(
-                  "Attribute 'sparse_value' of Constant node must have 'SparseTensor' data.");
+            // OpSchema::Verify check ensures that the attribute value
+            // has_sparse_tensor():
             const SparseTensorProto& sparse = sparse_value->sparse_tensor();
-            // We can assume that sparse satisfies constraints checked by the
-            // checker
+            // checker.cc::check_sparse_tensor checks that the sparse-value is
+            // well-formed
             updateOutputElemType(ctx, 0, sparse.values().data_type());
             auto* output_shape = getOutputShape(ctx, 0);
             for (int i = 0; i < sparse.dims_size(); ++i)
