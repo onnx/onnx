@@ -656,4 +656,56 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
+static const char* DepthToSpace_ver1_doc = R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+the input tensor where values from the depth dimension are moved in spatial blocks to the height
+and width dimensions.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DepthToSpace,
+    1,
+    OpSchema()
+        .Attr(
+            "blocksize",
+            "Blocks of [blocksize, blocksize] are moved.",
+            AttributeProto::INT)
+        .SetDoc(DepthToSpace_ver1_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+            ", H is the height and W is the width.",
+            "T")
+        .Output(
+            0,
+            "output",
+            "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto blocksize = getAttribute(ctx, "blocksize", 0);
+          if (blocksize <= 0)
+            fail_shape_inference("Blocksize must be positive");
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() == 4) {
+              // TODO: Clarify what behavior should be if C is not a multiple of
+              // blocksize*blocksize.
+              updateOutputShape(
+                  ctx,
+                  0,
+                  {input_shape.dim(0),
+                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(2) * blocksize,
+                   input_shape.dim(3) * blocksize});
+            } else
+              fail_shape_inference("Input tensor must be 4-dimensional");
+          }
+        }));
 } // namespace ONNX_NAMESPACE

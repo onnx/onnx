@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
+Node tests have covered 129/136 (94.85%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2023,28 +2023,7 @@ expect(node, inputs=[x, axis], outputs=[y],
 ### DepthToSpace
 There are 2 test cases, listed as following:
 <details>
-<summary>depthtospace</summary>
-
-```python
-b, c, h, w = shape = (2, 8, 3, 3)
-blocksize = 2
-node = onnx.helper.make_node(
-    'DepthToSpace',
-    inputs=['x'],
-    outputs=['y'],
-    blocksize=blocksize,
-)
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace')
-```
-
-</details>
-<details>
-<summary>example</summary>
+<summary>crd_mode_example</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2052,23 +2031,80 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
     blocksize=2,
+    mode='CRD'
 )
 
-# (1, 4, 2, 3) input tensor
-x = np.array([[[[0, 1, 2],
-                [3, 4, 5]],
-               [[6, 7, 8],
-                [9, 10, 11]],
-               [[12, 13, 14],
-                [15, 16, 17]],
-               [[18, 19, 20],
-                [21, 22, 23]]]]).astype(np.float32)
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
 
-# (1, 1, 4, 6) output tensor
-y = np.array([[[[0, 6, 1, 7, 2, 8],
-                [12, 18, 13, 19, 14, 20],
-                [3, 9, 4, 10, 5, 11],
-                [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 9., 1., 10., 2., 11.],
+                [18., 27., 19., 28., 20., 29.],
+                [3., 12., 4., 13., 5., 14.],
+                [21., 30., 22., 31., 23., 32.]],
+               [[36., 45., 37., 46., 38., 47.],
+                [54., 63., 55., 64., 56., 65.],
+                [39., 48., 40., 49., 41., 50.],
+                [57., 66., 58., 67., 59., 68.]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace_crd_mode_example')
+```
+
+</details>
+<details>
+<summary>default_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+    mode='DCR'
+)
+
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
+
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 18., 1., 19., 2., 20.],
+                [36., 54., 37., 55., 38., 56.],
+                [3., 21., 4., 22., 5., 23.],
+                [39., 57., 40., 58., 41., 59.]],
+               [[9., 27., 10., 28., 11., 29.],
+                [45., 63., 46., 64., 47., 65.],
+                [12., 30., 13., 31., 14., 32.],
+                [48., 66., 49., 67., 50., 68.]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_depthtospace_example')
 ```
@@ -8891,35 +8927,80 @@ expect(node,
 
 
 ### TopK
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>top_k</summary>
 
 ```python
+axis = 1
+largest = 1
+
+k = 3
 node = onnx.helper.make_node(
     'TopK',
     inputs=['x', 'k'],
     outputs=['values', 'indices'],
+    axis=axis
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
-K = np.array([3], dtype=np.int64)
-values_ref = np.array([
-    [3, 2, 1],
-    [7, 6, 5],
-    [11, 10, 9],
-], dtype=np.float32)
-indices_ref = np.array([
-    [3, 2, 1],
-    [3, 2, 1],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+#print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
 
 expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
+```
+
+</details>
+<details>
+<summary>top_k_smallest</summary>
+
+```python
+axis = 1
+largest = 0
+sorted = 1
+k = 3
+
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis,
+    largest=largest,
+    sorted=sorted
+)
+
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [11, 10, 9, 8],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 0.  1.  2.]
+# [ 4.  5.  6.]
+# [ 8.  9. 10.]]
+#print(indices_ref)
+#[[0 1 2]
+# [0 1 2]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_smallest')
 ```
 
 </details>
@@ -8964,6 +9045,123 @@ node = onnx.helper.make_node(
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
        name='test_transpose_default')
+```
+
+</details>
+
+
+### Unique
+There are 4 test cases, listed as following:
+<details>
+<summary>not_sorted_without_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=0
+)
+# numpy unique does not retain original order (it sorts the output unique values)
+# https://github.com/numpy/numpy/issues/8621
+# we need to recover unsorted output and indices
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+
+# prepare index mapping from sorted to unsorted
+argsorted_indices = np.argsort(indices)
+inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
+
+y = np.take(x, indices, axis=0)
+indices = indices[argsorted_indices]
+inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
+counts = counts[argsorted_indices]
+# print(y)
+# [2.0, 1.0, 3.0, 4.0]
+# print(indices)
+# [0 1 3 4]
+# print(inverse_indices)
+# [0, 1, 1, 2, 3, 2]
+# print(counts)
+# [1, 2, 2, 1]
+
+expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
+```
+
+</details>
+<details>
+<summary>sorted_with_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=0
+)
+
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+# print(y)
+# [[1. 0. 0.]
+#  [2. 3. 4.]]
+# print(indices)
+# [0 2]
+# print(inverse_indices)
+# [0 0 1]
+# print(counts)
+# [2 1]
+
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
+```
+
+</details>
+<details>
+<summary>sorted_with_axis_3d</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=1
+)
+
+x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+# print(y)
+# [[[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]
+# [[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]]
+# print(indices)
+# [1 0 2]
+# print(inverse_indices)
+# [1 0 2 0]
+# print(counts)
+# [2 1 1]
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis_3d')
+```
+
+</details>
+<details>
+<summary>sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts']
+)
+
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
 ```
 
 </details>
