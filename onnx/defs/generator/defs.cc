@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 #include <cmath>
-#include <limits>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/function.h"
 
