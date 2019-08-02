@@ -1984,14 +1984,14 @@ class TestShapeInference(unittest.TestCase):
 
     def test_range_rank_inference(self):  # type: () -> None
         graph = self._make_graph(
-            [('start', TensorProto.FLOAT, ()),
-             ('limit', TensorProto.FLOAT, ()),
-             ('delta', TensorProto.FLOAT, ())],
+            [('start', TensorProto.INT32, ()),
+             ('limit', TensorProto.INT32, ()),
+             ('delta', TensorProto.INT32, ())],
             [make_node('Range', ['start', 'limit', 'delta'], ['output'])],
             [],
-            initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
-                         make_tensor('limit', TensorProto.FLOAT, (), (5,))])  # Missing 'delta' initializer
-        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (None,))])  # type: ignore
+            initializer=[make_tensor('start', TensorProto.INT32, (), (1,)),
+                         make_tensor('limit', TensorProto.INT32, (), (5,))])  # Missing 'delta' initializer
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT32, (None,))])  # type: ignore
 
     def test_roialign_symbolic(self):   # type: () -> None
         graph = self._make_graph(

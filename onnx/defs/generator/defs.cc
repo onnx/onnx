@@ -533,7 +533,7 @@ Generate a tensor containing a sequence of numbers that begin at `start` and ext
 up to `limit` (exclusive).)DOC";
 
 template <typename T>
-inline int compute_output_dim_for_range(
+inline int64_t compute_output_dim_for_range(
     const TensorProto* start,
     const TensorProto* limit,
     const TensorProto* delta) {
@@ -555,12 +555,7 @@ inline int compute_output_dim_for_range(
   if (n < 0)
     n = 0;
 
-  if (n > static_cast<int64_t>(std::numeric_limits<int>::max()))
-    fail_shape_inference(
-        "Computed output dimension value is outside the bounds "
-        "of the highest value that can be accomodated");
-
-  return static_cast<int>(n);
+  return n;
 }
 
 const std::vector<NodeProto> build_nodes_range_op() {
@@ -615,8 +610,9 @@ const std::vector<NodeProto> build_nodes_range_op() {
     return FunctionBodyHelper::BuildNodes({
       // nodes: {outputs, op, inputs, attributes}
       {{"sub_result"}, "Sub", {"limit", "start"}},
-      {{"delta_cast"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
-      {{"div_result"}, "Div", {"sub_result", "delta_cast"}},
+      {{"sub_result_casted"}, "Cast", {"sub_result"}, {{"to", static_cast<int64_t>(1)}}},
+      {{"delta_casted"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
+      {{"div_result"}, "Div", {"sub_result_casted", "delta_casted"}},
       {{"ceil_result"}, "Ceil", {"div_result"}},
       {{"ceil_cast_int"}, "Cast", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
       // we want max(0, ceil_cast_int) as negative values would evaluate to bool true in next step
@@ -635,22 +631,22 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "start",
-            "Scalar. First entry in the range.",
+            "Scalar. First entry for the range of output values.",
             "T")
         .Input(
             1,
             "limit",
-            "Scalar. Upper limit of sequence, exclusive.",
+            "Scalar. Exclusive upper limit for the range of output values.",
             "T")
         .Input(
             2,
             "delta",
-            "Scalar. Value to increment the current value by.",
+            "Scalar. Value to step by.",
             "T")
         .Output(
             0,
             "output",
-            "A 1-D tensor with same type as the inputs containing generated sequence.",
+            "A 1-D tensor with same type as the inputs containing generated range of values.",
             "T")
         .TypeConstraint(
             "T",
@@ -682,7 +678,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               limit_initializer != nullptr &&
               delta_initializer != nullptr) {
 
-
+            // Make sure the input types are homogeneous
             if ((start_initializer->data_type() !=
                     limit_initializer->data_type()) ||
                 (start_initializer->data_type() !=
@@ -691,29 +687,26 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "All inputs to 'Range' op must be of the same type");
             }
 
-            int output_dim_value = -1;
-
             // Explicitly compute the output dimension if Range's inputs are
             // stored in initializer list.
             if (start_initializer->data_type() == TensorProto::FLOAT) {
-              output_dim_value = compute_output_dim_for_range<float>(
-                  start_initializer, limit_initializer, delta_initializer);
+              output_dim->set_dim_value(compute_output_dim_for_range<float>(
+                  start_initializer, limit_initializer, delta_initializer));
             } else if (start_initializer->data_type() == TensorProto::INT32) {
-              output_dim_value = compute_output_dim_for_range<int32_t>(
-                  start_initializer, limit_initializer, delta_initializer);
+              output_dim->set_dim_value(compute_output_dim_for_range<int32_t>(
+                  start_initializer, limit_initializer, delta_initializer));
             } else if (start_initializer->data_type() == TensorProto::INT64) {
-              output_dim_value = compute_output_dim_for_range<int64_t>(
-                  start_initializer, limit_initializer, delta_initializer);
+              output_dim->set_dim_value(compute_output_dim_for_range<int64_t>(
+                  start_initializer, limit_initializer, delta_initializer));
             } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
-              output_dim_value = compute_output_dim_for_range<double>(
-                  start_initializer, limit_initializer, delta_initializer);
+              output_dim->set_dim_value(compute_output_dim_for_range<double>(
+                  start_initializer, limit_initializer, delta_initializer));
             } else {
               // 'float16' has no native CPU type -
-              // stop with rank inference
-              return;
+              // stop with rank inference, no action here
             }
 
-            output_dim->set_dim_value(output_dim_value);
+            return;
           }
         }));
 
