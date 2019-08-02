@@ -10087,15 +10087,15 @@ This version of the operator has been available since version 1 of the default O
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
-#### Inputs (2 - 3)
+#### Inputs
 
 <dl>
 <dt><tt>start</tt> : T</dt>
-<dd>Tensor(scalar, or dims=[1]). First entry in the range.</dd>
+<dd>Scalar. First entry in the range.</dd>
 <dt><tt>limit</tt> : T</dt>
-<dd>Tensor(scalar, or dims=[1]). Upper limit of sequence, exclusive.</dd>
-<dt><tt>delta</tt> (optional) : T</dt>
-<dd>Tensor(scalar, or dims=[1]). Number that increments start. Defaults to 1.</dd>
+<dd>Scalar. Upper limit of sequence, exclusive.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to increment the current value by.</dd>
 </dl>
 
 #### Outputs

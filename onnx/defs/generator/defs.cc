@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <cmath>
+#include <limits>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/function.h"
 
@@ -536,24 +537,30 @@ inline int compute_output_dim_for_range(
     const TensorProto* start,
     const TensorProto* limit,
     const TensorProto* delta) {
+
+    if (start->dims().size() != 0 || 
+        limit->dims().size() != 0 ||
+        delta->dims().size() != 0) {
+      fail_shape_inference(
+          "Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
+    }
+
   const auto& start_data = ParseData<T>(start);
   const auto& limit_data = ParseData<T>(limit);
-  const auto& delta_data =
-      delta != nullptr ? ParseData<T>(delta) : std::vector<T>(1, 1);
+  const auto& delta_data = ParseData<T>(delta);
 
-  if (start->dims().size() != 0 || 
-      limit->dims().size() != 0 ||
-      (delta != nullptr && delta->dims().size()) != 0) {
-    fail_shape_inference(
-        "Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
-  }
-
-  int n = static_cast<int>(
+  int64_t n = static_cast<int64_t>(
       ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
+
   if (n < 0)
     n = 0;
 
-  return n;
+  if (n > static_cast<int64_t>(std::numeric_limits<int>::max()))
+    fail_shape_inference(
+        "Computed output dimension value is outside the bounds "
+        "of the highest value that can be accomodated");
+
+  return static_cast<int>(n);
 }
 
 const std::vector<NodeProto> build_nodes_range_op() {
@@ -638,9 +645,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "delta",
-            "(Optional) Scalar. Number that increments start. Defaults to 1 if not provided.",
-            "T",
-            OpSchema::Optional)
+            "Scalar. Value to increment the current value by.",
+            "T")
         .Output(
             0,
             "output",
@@ -660,12 +666,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          auto num_inputs = ctx.getNumInputs();
-
           const auto* start_initializer = ctx.getInputData(0);
           const auto* limit_initializer = ctx.getInputData(1);
-          const auto* delta_initializer =
-              num_inputs == 3 ? ctx.getInputData(2) : nullptr;
+          const auto* delta_initializer = ctx.getInputData(2);
 
           // Output is always 1-D
           auto* output_dim = ctx.getOutputType(0)
@@ -673,15 +676,16 @@ ONNX_OPERATOR_SET_SCHEMA(
                                  ->mutable_shape()
                                  ->add_dim();
 
-          // all three inputs (if num_inputs == 3) (or)
-          // all two inputs (if num_inputs == 2)
-          // need to be available to infer output dim value
-          if (start_initializer != nullptr && limit_initializer != nullptr &&
-              (num_inputs == 2 || delta_initializer != nullptr)) {
-            if (start_initializer->data_type() !=
-                    limit_initializer->data_type() ||
-                (delta_initializer != nullptr &&
-                 start_initializer->data_type() !=
+          // If any of Range's inputs are not initializers, the output dimension
+          // value would remain unknown.
+          if (start_initializer != nullptr && 
+              limit_initializer != nullptr &&
+              delta_initializer != nullptr) {
+
+
+            if ((start_initializer->data_type() !=
+                    limit_initializer->data_type()) ||
+                (start_initializer->data_type() !=
                      delta_initializer->data_type())) {
               fail_shape_inference(
                   "All inputs to 'Range' op must be of the same type");
@@ -689,6 +693,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             int output_dim_value = -1;
 
+            // Explicitly compute the output dimension if Range's inputs are
+            // stored in initializer list.
             if (start_initializer->data_type() == TensorProto::FLOAT) {
               output_dim_value = compute_output_dim_for_range<float>(
                   start_initializer, limit_initializer, delta_initializer);

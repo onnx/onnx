@@ -1979,18 +1979,8 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
                          make_tensor('limit', TensorProto.FLOAT, (), (5,)),
-                         make_tensor('delta', TensorProto.FLOAT, (), (1,))])
-        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (4,))])
-
-    def test_range_no_optional_input(self):  # type: () -> None
-        graph = self._make_graph(
-            [('start', TensorProto.FLOAT, ()),
-             ('limit', TensorProto.FLOAT, ())],
-            [make_node('Range', ['start', 'limit'], ['output'])],
-            [],
-            initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
-                         make_tensor('limit', TensorProto.FLOAT, (), (5,))])
-        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (4,))])
+                         make_tensor('delta', TensorProto.FLOAT, (), (2,))])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (2,))])
 
     def test_range_rank_inference(self):  # type: () -> None
         graph = self._make_graph(
