@@ -334,7 +334,7 @@ class TestChecker(unittest.TestCase):
         # Create ValueInfoProto for input X of shape [N]
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
         # Create a [M,N] sparse-matrix constant C
-        sparse_tensor = self.make_sparse([M,N], [2, 3, 1], [3], [3, 11, 37])
+        sparse_tensor = self.make_sparse([M, N], [2, 3, 1], [3], [3, 11, 37])
         node1 = helper.make_node('Constant', [], ['C'], sparse_value=sparse_tensor)
         # Create ValueInfoProto for output Y of shape [M]
         Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [M])
