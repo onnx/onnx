@@ -3743,7 +3743,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 #### Attributes
 
 <dl>
-<dt><tt>ratio</tt> : float (default is 5.000000e-01)</dt>
+<dt><tt>ratio</tt> : float (default is 0.5)</dt>
 <dd>The ratio of random dropout</dd>
 </dl>
 
@@ -3830,7 +3830,7 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
 <dd>Coefficient of ELU.</dd>
 </dl>
 
@@ -4993,9 +4993,9 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
 <dd>Scalar multiplier for the product of input tensors A * B.</dd>
-<dt><tt>beta</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>beta</tt> : float (default is 1.0)</dt>
 <dd>Scalar multiplier for input tensor C.</dd>
 <dt><tt>transA</tt> : int (default is 0)</dt>
 <dd>Whether A should be transposed</dd>
@@ -5369,7 +5369,7 @@ Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoi
 <dl>
 <dt><tt>alpha</tt> : float (default is 2.000000e-01)</dt>
 <dd>Value of alpha.</dd>
-<dt><tt>beta</tt> : float (default is 5.000000e-01)</dt>
+<dt><tt>beta</tt> : float (default is 0.5)</dt>
 <dd>Value of beta.</dd>
 </dl>
 
@@ -5942,9 +5942,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>alpha</tt> : float (default is 1.000000e-04)</dt>
 <dd>Scaling parameter.</dd>
-<dt><tt>beta</tt> : float (default is 7.500000e-01)</dt>
+<dt><tt>beta</tt> : float (default is 0.75)</dt>
 <dd>The exponent.</dd>
-<dt><tt>bias</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>bias</tt> : float (default is 1.0)</dt>
 <dd></dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
@@ -7683,7 +7683,7 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
-<dt><tt>spatial_scale</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
 <dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
 </dl>
 
@@ -9345,7 +9345,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
 <dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
-<dt><tt>value</tt> : float (default is 0.000000e+00)</dt>
+<dt><tt>value</tt> : float (default is 0.0)</dt>
 <dd>One float, indicates the value to be filled.</dd>
 </dl>
 
@@ -10065,9 +10065,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
-<dt><tt>mean</tt> : float (default is 0.000000e+00)</dt>
+<dt><tt>mean</tt> : float (default is 0.0)</dt>
 <dd>The mean of the normal distribution.</dd>
-<dt><tt>scale</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>scale</tt> : float (default is 1.0)</dt>
 <dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -10112,9 +10112,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>mean</tt> : float (default is 0.000000e+00)</dt>
+<dt><tt>mean</tt> : float (default is 0.0)</dt>
 <dd>The mean of the normal distribution.</dd>
-<dt><tt>scale</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>scale</tt> : float (default is 1.0)</dt>
 <dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -10162,9 +10162,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
-<dt><tt>high</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>high</tt> : float (default is 1.0)</dt>
 <dd>Upper boundary of the output values.</dd>
-<dt><tt>low</tt> : float (default is 0.000000e+00)</dt>
+<dt><tt>low</tt> : float (default is 0.0)</dt>
 <dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -10209,9 +10209,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>high</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>high</tt> : float (default is 1.0)</dt>
 <dd>Upper boundary of the output values.</dd>
-<dt><tt>low</tt> : float (default is 0.000000e+00)</dt>
+<dt><tt>low</tt> : float (default is 0.0)</dt>
 <dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -12208,7 +12208,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>default 1; Pooled output Y's width.</dd>
 <dt><tt>sampling_ratio</tt> : int (default is 0)</dt>
 <dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / output_width), and likewise for height). Default is 0.</dd>
-<dt><tt>spatial_scale</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
 <dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
 </dl>
 
@@ -13209,9 +13209,9 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>bias</tt> : float (default is 0.000000e+00)</dt>
+<dt><tt>bias</tt> : float (default is 0.0)</dt>
 <dd>The bias value added to output. Default is 0.</dd>
-<dt><tt>lambd</tt> : float (default is 5.000000e-01)</dt>
+<dt><tt>lambd</tt> : float (default is 0.5)</dt>
 <dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
 </dl>
 
@@ -15106,7 +15106,7 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
 <dd>Threshold value</dd>
 </dl>
 
