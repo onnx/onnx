@@ -366,6 +366,22 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
 
+    def test_gather_elements(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2)),
+             ('i', TensorProto.INT64, (2, 2))],
+            [make_node("GatherElements", ['x', 'i'], ['y'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2))])  # type: ignore
+
+    def test_gather_elements_axis0(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 3)),
+             ('i', TensorProto.INT64, (2, 3))],
+            [make_node("GatherElements", ['x', 'i'], ['y'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3))])  # type: ignore
+
     def test_scatter(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 3)),
@@ -373,7 +389,10 @@ class TestShapeInference(unittest.TestCase):
              ('u', TensorProto.FLOAT, (2, 3))],
             [make_node("Scatter", ['x', 'i', 'u'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))],
+            opset_imports=[helper.make_opsetid("", 10)])  # type: ignore
 
     def test_scatter_axis1(self):  # type: () -> None
         graph = self._make_graph(
@@ -381,6 +400,27 @@ class TestShapeInference(unittest.TestCase):
              ('i', TensorProto.INT64, (1, 2)),
              ('u', TensorProto.FLOAT, (1, 2))],
             [make_node("Scatter", ['x', 'i', 'u'], ['y'], axis=1)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (1, 5))],
+            opset_imports=[helper.make_opsetid("", 10)])  # type: ignore
+
+    def test_scatter_elements(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 3)),
+             ('i', TensorProto.INT64, (2, 3)),
+             ('u', TensorProto.FLOAT, (2, 3))],
+            [make_node("ScatterElements", ['x', 'i', 'u'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_scatter_elements_axis1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 5)),
+             ('i', TensorProto.INT64, (1, 2)),
+             ('u', TensorProto.FLOAT, (1, 2))],
+            [make_node("ScatterElements", ['x', 'i', 'u'], ['y'], axis=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 5))])  # type: ignore
 
@@ -827,7 +867,7 @@ class TestShapeInference(unittest.TestCase):
         b = 10
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 300, 10, 10))],
-            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
+            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b, mode='DCR')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
@@ -1024,6 +1064,14 @@ class TestShapeInference(unittest.TestCase):
             [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
+
+    def test_split_negative_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=-1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (2, 2))])
 
     def test_split_from_GLU(self):  # type: () -> None
         graph = self._make_graph(
@@ -1914,6 +1962,26 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ReverseSequence', ['x', 'sequence_lens'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
+
+    def test_unique_without_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (2, 4, 2))],
+            [make_node('Unique', ['X'], ['Y', 'indices', 'inverse_indices', 'counts'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (None,)),  # type: ignore
+                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
+
+    def test_unique_with_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (2, 4, 2))],
+            [make_node('Unique', ['X'], ['Y', 'indices', 'inverse_indices', 'counts'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, None, 2)),  # type: ignore
+                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
     def test_tile(self):  # type: () -> None
         graph = self._make_graph(
