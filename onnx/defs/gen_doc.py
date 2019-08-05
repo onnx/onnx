@@ -123,7 +123,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                         formatted = str(value)
                         # use default formatting, unless too long.
                         if (len(formatted) > 10):
-                            formatted = "{:e}".format(value)
+                            formatted = str("{:e}".format(value))
                         return formatted
                     elif isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
                         return str(value.decode('utf-8'))
