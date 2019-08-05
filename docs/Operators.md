@@ -3821,13 +3821,6 @@ expect(node, inputs=[x], outputs=[y],
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>to</tt> : int (default is 2)</dt>
-<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto. Currently this is required to be uint8 .i.e. value 2.</dd>
-</dl>
-
 #### Inputs
 
 <dl>
@@ -3869,7 +3862,7 @@ The Function can be represented as a function.
 node = onnx.helper.make_node('DynamicQuantizeLinear',
     inputs=['x'],
     outputs=['y', 'y_scale', 'y_zero_point'],
-    to=np.int64(2))
+)
 
 X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
 Y = np.array([153, 255, 0, 26, 221, 179]).astype(np.uint8)

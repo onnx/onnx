@@ -10469,13 +10469,6 @@ This version of the operator has been available since version 11 of the default 
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>to</tt> : int (default is 2)</dt>
-<dd>The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto. Currently this is required to be uint8 .i.e. value 2.</dd>
-</dl>
-
 #### Inputs
 
 <dl>

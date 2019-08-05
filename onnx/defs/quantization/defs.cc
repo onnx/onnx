@@ -115,12 +115,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "y", "Quantized output tensor", "T2")
         .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)")
         .Output(2, "y_zero_point", "Output zero point. It's a scalar, which means a per-tensor/layer quantization.", "T2")
-        .Attr(
-          "to",
-          "The data type to which the elements of the input tensor are quantized to. Strictly must be one of the types from DataType enum in TensorProto. "
-          "Currently this is required to be uint8 .i.e. value 2.",
-          AttributeProto::INT,
-          static_cast<int64_t>(2))
         .TypeConstraint(
           "T1",
           {"tensor(float)"},
@@ -143,7 +137,7 @@ ONNX_OPERATOR_SET_SCHEMA(
            {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
            {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP"}, {MakeAttribute("min", 0.f), MakeAttribute("max", 255.f)}},
            {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
-           {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeRefAttribute("to", AttributeProto::INT)}},
+           {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
            {{"y_scale"}, "Identity", {"Scale"}},
            {{"y_zero_point"}, "Identity", {"Zeropoint"}},
            {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}})));

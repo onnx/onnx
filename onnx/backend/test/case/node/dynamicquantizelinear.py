@@ -18,7 +18,7 @@ class DynamicQuantizeLinear(Base):
         node = onnx.helper.make_node('DynamicQuantizeLinear',
             inputs=['x'],
             outputs=['y', 'y_scale', 'y_zero_point'],
-            to=np.int64(2))
+        )
 
         X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
         Y = np.array([153, 255, 0, 26, 221, 179]).astype(np.uint8)
