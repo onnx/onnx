@@ -15142,7 +15142,7 @@ This version of the operator has been available since version 1 of the default O
 ```python
 x = np.random.randn(3, 4, 5).astype(np.float32)
 
-for i in range(len(x) + 1):
+for i in range(x.ndim):
     node = onnx.helper.make_node(
         'Unsqueeze',
         inputs=['x'],
