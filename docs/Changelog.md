@@ -315,11 +315,11 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>consumed_inputs</tt> : list of ints (required)</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
-<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -789,7 +789,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>legacy optimization attribute.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
-<dt><tt>ratio</tt> : float (default is 0.5)</dt>
+<dt><tt>ratio</tt> : float (default is 5.000000e-01)</dt>
 <dd>(float, default 0.5) the ratio of random dropout</dd>
 </dl>
 
@@ -830,7 +830,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Coefficient of ELU default to 1.0.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
@@ -1250,9 +1250,9 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for the product of input tensors A * B, the default value is 1.0.</dd>
-<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dt><tt>beta</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for input tensor C, the default value is 1.0.</dd>
 <dt><tt>broadcast</tt> : int (default is 0)</dt>
 <dd>Whether C should be broadcasted</dd>
@@ -1331,7 +1331,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>p</tt> : float (default is 2.0)</dt>
+<dt><tt>p</tt> : float (default is 2.000000e+00)</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
 </dl>
 
@@ -1447,9 +1447,9 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.2)</dt>
+<dt><tt>alpha</tt> : float (default is 2.000000e-01)</dt>
 <dd>Value of alpha default to 0.2</dd>
-<dt><tt>beta</tt> : float (default is 0.5)</dt>
+<dt><tt>beta</tt> : float (default is 5.000000e-01)</dt>
 <dd>Value of beta default to 0.5</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
@@ -1613,7 +1613,7 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 </dl>
 
@@ -1662,11 +1662,11 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.0001)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e-04)</dt>
 <dd>Scaling parameter.</dd>
-<dt><tt>beta</tt> : float (default is 0.75)</dt>
+<dt><tt>beta</tt> : float (default is 7.500000e-01)</dt>
 <dd>The exponent.</dd>
-<dt><tt>bias</tt> : float (default is 1.0)</dt>
+<dt><tt>bias</tt> : float (default is 1.000000e+00)</dt>
 <dd></dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
@@ -1855,7 +1855,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.01)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e-02)</dt>
 <dd>Coefficient of leakage default to 0.01.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
@@ -2228,7 +2228,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : float (default is 2.0)</dt>
+<dt><tt>p</tt> : float (default is 2.000000e+00)</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
@@ -2403,7 +2403,7 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
-<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dt><tt>spatial_scale</tt> : float (default is 1.000000e+00)</dt>
 <dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
 </dl>
 
@@ -2753,7 +2753,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>paddings</tt> : list of ints (required)</dt>
 <dd>List of integers indicate the padding element count at the beginning and end of each axis, for 2D it is the number of pixel. `paddings` rank should be double of the input's rank. `paddings` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
+<dt><tt>value</tt> : float (default is 0.000000e+00)</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
 
@@ -2979,9 +2979,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
-<dt><tt>mean</tt> : float (default is 0.0)</dt>
+<dt><tt>mean</tt> : float (default is 0.000000e+00)</dt>
 <dd>The mean of the normal distribution.</dd>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
+<dt><tt>scale</tt> : float (default is 1.000000e+00)</dt>
 <dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -3025,9 +3025,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>mean</tt> : float (default is 0.0)</dt>
+<dt><tt>mean</tt> : float (default is 0.000000e+00)</dt>
 <dd>The mean of the normal distribution.</dd>
-<dt><tt>scale</tt> : float (default is 1.0)</dt>
+<dt><tt>scale</tt> : float (default is 1.000000e+00)</dt>
 <dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -3074,9 +3074,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
-<dt><tt>high</tt> : float (default is 1.0)</dt>
+<dt><tt>high</tt> : float (default is 1.000000e+00)</dt>
 <dd>Upper boundary of the output values.</dd>
-<dt><tt>low</tt> : float (default is 0.0)</dt>
+<dt><tt>low</tt> : float (default is 0.000000e+00)</dt>
 <dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -3120,9 +3120,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>high</tt> : float (default is 1.0)</dt>
+<dt><tt>high</tt> : float (default is 1.000000e+00)</dt>
 <dd>Upper boundary of the output values.</dd>
-<dt><tt>low</tt> : float (default is 0.0)</dt>
+<dt><tt>low</tt> : float (default is 0.000000e+00)</dt>
 <dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -3714,11 +3714,11 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.6732)</dt>
+<dt><tt>alpha</tt> : float (default is 1.673200e+00)</dt>
 <dd>Coefficient of SELU default to 1.6732.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
+<dt><tt>gamma</tt> : float (default is 1.050700e+00)</dt>
 <dd>Coefficient of SELU default to 1.0507.</dd>
 </dl>
 
@@ -4700,7 +4700,7 @@ This version of the operator has been available since version 2 of the default O
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
 <dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
+<dt><tt>value</tt> : float (default is 0.000000e+00)</dt>
 <dd>One float, indicates the value to be filled.</dd>
 </dl>
 
@@ -5082,11 +5082,11 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
-<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
+<dt><tt>max</tt> : float (default is 3.402823e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
+<dt><tt>min</tt> : float (default is -3.402823e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -5318,7 +5318,7 @@ This version of the operator has been available since version 6 of the default O
 <dl>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
-<dt><tt>ratio</tt> : float (default is 0.5)</dt>
+<dt><tt>ratio</tt> : float (default is 5.000000e-01)</dt>
 <dd>(float, default 0.5) the ratio of random dropout</dd>
 </dl>
 
@@ -5359,7 +5359,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Coefficient of ELU.</dd>
 </dl>
 
@@ -5462,9 +5462,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for the product of input tensors A * B, the default value is 1.0.</dd>
-<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dt><tt>beta</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for input tensor C, the default value is 1.0.</dd>
 <dt><tt>broadcast</tt> : int (default is 0)</dt>
 <dd>Whether C should be broadcasted</dd>
@@ -5512,9 +5512,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.2)</dt>
+<dt><tt>alpha</tt> : float (default is 2.000000e-01)</dt>
 <dd>Value of alpha.</dd>
-<dt><tt>beta</tt> : float (default is 0.5)</dt>
+<dt><tt>beta</tt> : float (default is 5.000000e-01)</dt>
 <dd>Value of beta.</dd>
 </dl>
 
@@ -5555,7 +5555,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
@@ -5597,7 +5597,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.01)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e-02)</dt>
 <dd>Coefficient of leakage.</dd>
 </dl>
 
@@ -5941,9 +5941,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.67326)</dt>
+<dt><tt>alpha</tt> : float (default is 1.673263e+00)</dt>
 <dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
-<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
+<dt><tt>gamma</tt> : float (default is 1.050701e+00)</dt>
 <dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
@@ -6422,9 +6422,9 @@ This version of the operator has been available since version 7 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across per activation. If false, compute the mean and variance across per feature over each mini-batch.</dd>
@@ -6545,7 +6545,7 @@ This version of the operator has been available since version 7 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>ratio</tt> : float (default is 0.5)</dt>
+<dt><tt>ratio</tt> : float (default is 5.000000e-01)</dt>
 <dd>The ratio of random dropout</dd>
 </dl>
 
@@ -6764,9 +6764,9 @@ This version of the operator has been available since version 7 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for the product of input tensors A * B.</dd>
-<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dt><tt>beta</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for input tensor C.</dd>
 <dt><tt>transA</tt> : int (default is 0)</dt>
 <dd>Whether A should be transposed</dd>
@@ -7994,9 +7994,9 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
@@ -8370,9 +8370,9 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for the product of input tensors A * B.</dd>
-<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dt><tt>beta</tt> : float (default is 1.000000e+00)</dt>
 <dd>Scalar multiplier for input tensor C.</dd>
 <dt><tt>transA</tt> : int (default is 0)</dt>
 <dd>Whether A should be transposed</dd>
@@ -9020,9 +9020,9 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>bias</tt> : float (default is 0.0)</dt>
+<dt><tt>bias</tt> : float (default is 0.000000e+00)</dt>
 <dd>The bias value added to output. Default is 0.</dd>
-<dt><tt>lambd</tt> : float (default is 0.5)</dt>
+<dt><tt>lambd</tt> : float (default is 5.000000e-01)</dt>
 <dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
 </dl>
 
@@ -9448,7 +9448,7 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>ratio</tt> : float (default is 0.5)</dt>
+<dt><tt>ratio</tt> : float (default is 5.000000e-01)</dt>
 <dd>The ratio of random dropout</dd>
 </dl>
 
@@ -10037,7 +10037,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>default 1; Pooled output Y's width.</dd>
 <dt><tt>sampling_ratio</tt> : int (default is 0)</dt>
 <dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / output_width), and likewise for height). Default is 0.</dd>
-<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dt><tt>spatial_scale</tt> : float (default is 1.000000e+00)</dt>
 <dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
 </dl>
 
@@ -10199,7 +10199,7 @@ This version of the operator has been available since version 10 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dt><tt>alpha</tt> : float (default is 1.000000e+00)</dt>
 <dd>Threshold value</dd>
 </dl>
 

@@ -120,8 +120,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
                 def format_value(value):  # type: (Any) -> Text
                     if isinstance(value, float):
-                        value = np.round(value, 5)
-                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                        value = "{:e}".format(value)
+                    elif isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
                         value = value.decode('utf-8')
                     return str(value)
 
