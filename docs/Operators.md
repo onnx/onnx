@@ -14249,8 +14249,8 @@ This version of the operator has been available since version 11 of the default 
 ```python
 node = onnx.helper.make_node(
     'ScatterND',
-    inputs = ['data', 'indices', 'updates'],
-    outputs = ['y'],
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
 )
 data = np.array(
     [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
