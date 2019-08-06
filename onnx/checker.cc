@@ -600,6 +600,15 @@ void check_graph(
     check_tensor(init, ctx);
   }
 
+  // TODO: Need to check that sparse-initializers names are distinct from
+  // initializer names. It looks like the existing checker does not check for
+  // certain duplication of names: e.g., two entries in the initializer list
+  // with same name. Will add a new integrated check.
+  for (const auto& sparse_init : graph.sparse_initializer()) {
+    check_sparse_tensor(sparse_init, ctx);
+    lex_ctx.add(sparse_init.values().name());
+  }
+
   for (const auto& node : graph.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
