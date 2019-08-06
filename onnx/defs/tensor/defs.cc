@@ -836,6 +836,72 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* ScatterND_ver11_doc = R"DOC(
+ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
+and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
+is produced by creating a copy of the input `data`, and then updating its value to values
+specified by `updates` at specific index positions specified by `indices`. Its output shape
+is the same as the shape of `data`.
+
+`indices` is an integer tensor. The last dimension of `indices` can be at most the rank of
+`data`:
+
+    indices.shape[-1] <= rank(data)
+
+`updates` is a tensor with shape
+
+    indices.shape[:-1] + data.shape[indices.shape[-1]:]
+
+The `output` is calculated via the following equation:
+
+    output = data
+    output[indices[(i_0, ..., i_{q-2})]] = updates[(i_0, ..., i_{q-2})]
+
+This operator is the inverse of GatherND. It is similar to TensorFlow's scatter_nd_update
+operation.
+
+Example 1:
+```
+  data    = [1, 2, 3, 4, 5, 6, 7, 8]
+  indices = [[4], [3], [1], [7]]
+  updates = [9, 10, 11, 12]
+  output  = [1, 11, 3, 10, 9, 6, 7, 12]
+```
+
+Example 2:
+```
+  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  indices = [[0], [2]]
+  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
+    11,
+    OpSchema()
+        .SetDoc(ScatterND_ver11_doc)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(0, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
+        .Input(0, "updates", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
+        .Output(0, "output", "Tensor of rank r >= 1.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));
+
 static const char* ScatterElements_ver11_doc = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
