@@ -14218,6 +14218,10 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : tensor(int64)</dt>
+<dd>Tensor of rank q >= 1.</dd>
 <dt><tt>updates</tt> : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
 </dl>

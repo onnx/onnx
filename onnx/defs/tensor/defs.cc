@@ -890,8 +890,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(ScatterND_ver11_doc)
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
-        .Input(0, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
-        .Input(0, "updates", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
+        .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
+        .Input(2, "updates", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
         .Output(0, "output", "Tensor of rank r >= 1.", "T")
         .TypeConstraint(
             "T",
