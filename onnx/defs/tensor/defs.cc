@@ -1468,7 +1468,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
-            " rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.",
+            " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(0, "Y", "N-D tensor after resizing", "T1")
