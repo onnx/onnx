@@ -1536,7 +1536,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-          if (nullptr != repeats_inputs) {
+          if (nullptr != repeats_inputs && hasNInputShapes(ctx, 2)) {
             // shape inference is possible only when 'repeats' is an initializer
             const auto& repeats_shape =
                 ctx.getInputType(1)->tensor_type().shape();
