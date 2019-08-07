@@ -1606,7 +1606,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Resize_ver11_doc = R"DOC(
-Resize the input tensor.
+Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale) if input \"sizes\" is not specified.
 )DOC";
