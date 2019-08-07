@@ -45,6 +45,7 @@
   * <a href="#Floor">Floor</a>
   * <a href="#GRU">GRU</a>
   * <a href="#Gather">Gather</a>
+  * <a href="#GatherElements">GatherElements</a>
   * <a href="#Gemm">Gemm</a>
   * <a href="#GlobalAveragePool">GlobalAveragePool</a>
   * <a href="#GlobalLpPool">GlobalLpPool</a>
@@ -113,6 +114,7 @@
   * <a href="#Round">Round</a>
   * <a href="#Scan">Scan</a>
   * <a href="#Scatter">Scatter</a>
+  * <a href="#ScatterElements">ScatterElements</a>
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Shrink">Shrink</a>
@@ -4689,6 +4691,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
   Example 1:
+  ```
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
@@ -4708,7 +4711,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.7],
         ],
     ]
+  ```
   Example 2:
+  ```
     data = [
         [1.0, 1.2, 1.9],
         [2.3, 3.4, 3.9],
@@ -4725,6 +4730,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.9],
         ],
     ]
+  ```
 
 #### Version
 
@@ -4802,6 +4808,160 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+
+
+### <a name="GatherElements"></a><a name="gatherelements">**GatherElements**</a>
+
+  GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
+  and an optional attribute `axis` that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). It is an indexing operation
+  that produces its output by indexing into the input data tensor at index
+  positions determined by elements of the `indices` tensor.
+  Its output shape is the same as the shape of `indices` and consists of one value
+  (gathered from the `data`) for each element in `indices`.
+  
+  For instance, in the 3-D case (r = 3), the output produced is determined
+  by the following equations: 
+  ```
+    out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+    out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+    out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+  ```
+  
+  This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
+  
+  Example 1:
+  ```
+    data = [
+        [1, 2],
+        [3, 4],
+    ]
+    indices = [
+        [0, 0],
+        [1, 0],
+    ]
+    axis = 1
+    output = [
+        [
+          [1, 1],
+          [4, 3],
+        ],
+    ]
+  ```
+  Example 2:
+  ```
+    data = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+    ]
+    indices = [
+        [1, 2, 0],
+        [2, 0, 0],
+    ]
+    axis = 0
+    output = [
+        [
+          [4, 8, 3],
+          [7, 2, 3],
+        ],
+    ]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of the same shape as indices.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gather_elements_0</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2],
+                 [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0],
+                    [1, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[1, 1],
+#  [4, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_0')
+```
+
+</details>
+
+
+<details>
+<summary>gather_elements_1</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[1, 2, 0],
+                    [2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[4, 8, 3],
+#  [7, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_1')
 ```
 
 </details>
@@ -8870,7 +9030,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>indices</tt> : T1</dt>
 <dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> : T2</dt>
-<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor and the values in the 'indices' input tensor are expected to be in the range [0, depth). TheIn case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [0, depth). In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
 <dt><tt>values</tt> : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
@@ -8935,7 +9095,7 @@ node = onnx.helper.make_node(
     outputs=['y']
 )
 indices = np.array([0, 7, 8], dtype=np.int64)
-depth = np.array([12], dtype=np.float32)
+depth = np.float32(12)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, dtype=output_type)
 y = y * (on_value - off_value) + off_value
@@ -12693,16 +12853,34 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 </details>
 
 
-### <a name="Scatter"></a><a name="scatter">**Scatter**</a>
+### <a name="Scatter"></a><a name="scatter">**Scatter** (deprecated)</a>
 
-  Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
-  into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
-  For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
-  for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
-  data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
-  where i and j are loop counters from 0 up to the respective size in `updates` - 1.
+  This operator is deprecated. Please use ScatterElements, which provides the same functionality.
+  
+  Scatter takes three inputs `data`, `updates`, and `indices` of the same
+  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value
+  to values specified by `updates` at specific index positions specified by
+  `indices`. Its output shape is the same as the shape of `data`.
+  
+  For each entry in `updates`, the target index in `data` is obtained by combining
+  the corresponding entry in `indices` with the index of the entry itself: the
+  index-value for dimension = axis is obtained from the value of the corresponding
+  entry in `indices` and the index-value for dimension != axis is obtained from the
+  index of the entry itself.
+  
+  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
+  is performed as below:
+  ```
+    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  ```
+  
+  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
   
   Example 1:
+  ```
     data = [
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0],
@@ -12721,17 +12899,134 @@ expect(node, inputs=[initial, x], outputs=[y, z],
         [1.0, 0.0, 2.2]
         [0.0, 2.1, 1.2]
     ]
-  
+  ```
   Example 2:
+  ```
     data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
     indices = [[1, 3]]
     updates = [[1.1, 2.1]]
     axis = 1
     output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been deprecated since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Scatter-9">Scatter-9</a>
+
+
+#### Examples
+
+<details>
+<summary>scatter_with_axis</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter(data, indices, updates, axis=axis)
+# print(y) produces
+# [[1.0, 1.1, 3.0, 2.1, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+
+
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = scatter(data, indices, updates)
+# print(y) produces
+# [[2.0, 1.1, 0.0],
+#  [1.0, 0.0, 2.2],
+#  [0.0, 2.1, 1.2]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+
+
+### <a name="ScatterElements"></a><a name="scatterelements">**ScatterElements**</a>
+
+  ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
+  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value
+  to values specified by `updates` at specific index positions specified by
+  `indices`. Its output shape is the same as the shape of `data`.
+  
+  For each entry in `updates`, the target index in `data` is obtained by combining
+  the corresponding entry in `indices` with the index of the entry itself: the
+  index-value for dimension = axis is obtained from the value of the corresponding
+  entry in `indices` and the index-value for dimension != axis is obtained from the
+  index of the entry itself.
+  
+  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
+  is performed as below:
+  ```
+    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  ```
+  
+  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+  
+  Example 1:
+  ```
+    data = [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+    ]
+    indices = [
+        [1, 0, 2],
+        [0, 2, 1],
+    ]
+    updates = [
+        [1.0, 1.1, 1.2],
+        [2.0, 2.1, 2.2],
+    ]
+    output = [
+        [2.0, 1.1, 0.0]
+        [1.0, 0.0, 2.2]
+        [0.0, 2.1, 1.2]
+    ]
+  ```
+  Example 2:
+  ```
+    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+    indices = [[1, 3]]
+    updates = [[1.1, 2.1]]
+    axis = 1
+    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
 #### Attributes
 
@@ -12771,34 +13066,37 @@ This version of the operator has been available since version 9 of the default O
 #### Examples
 
 <details>
-<summary>scatter_with_axis</summary>
+<summary>scatter_elements_with_axis</summary>
 
 ```python
+axis = 1
 node = onnx.helper.make_node(
-    'Scatter',
+    'ScatterElements',
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
-    axis=1,
+    axis=axis,
 )
 data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
 indices = np.array([[1, 3]], dtype=np.int64)
 updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 3.0, 2.1, 5.0]]
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='test_scatter_with_axis')
+       name='test_scatter_elements_with_axis')
 ```
 
 </details>
 
 
 <details>
-<summary>scatter_without_axis</summary>
+<summary>scatter_elements_without_axis</summary>
 
 ```python
 node = onnx.helper.make_node(
-    'Scatter',
+    'ScatterElements',
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
 )
@@ -12806,14 +13104,14 @@ data = np.zeros((3, 3), dtype=np.float32)
 indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
 updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
-y = np.array([
-    [2.0, 1.1, 0.0],
-    [1.0, 0.0, 2.2],
-    [0.0, 2.1, 1.2]
-], dtype=np.float32)
+y = scatter_elements(data, indices, updates)
+# print(y) produces
+# [[2.0, 1.1, 0.0],
+#  [1.0, 0.0, 2.2],
+#  [0.0, 2.1, 1.2]]
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='test_scatter_without_axis')
+       name='test_scatter_elements_without_axis')
 ```
 
 </details>
