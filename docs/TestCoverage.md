@@ -4918,7 +4918,7 @@ node = onnx.helper.make_node(
     outputs=['y']
 )
 indices = np.array([0, 7, 8], dtype=np.int64)
-depth = np.array([12], dtype=np.float32)
+depth = np.float32(12)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, dtype=output_type)
 y = y * (on_value - off_value) + off_value

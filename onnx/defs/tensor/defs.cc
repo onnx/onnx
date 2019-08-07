@@ -1791,8 +1791,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "depth",
             "Scalar specifying the number of classes in one-hot tensor. This is also the size "
             "of the one-hot dimension (specified by 'axis' attribute) added on in the output "
-            "tensor and the values in the 'indices' input tensor are expected to be "
-            "in the range [0, depth). The"
+            "tensor. The values in the 'indices' input tensor are expected to be "
+            "in the range [0, depth). "
             "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
             "T2")
         .Input(
@@ -1827,13 +1827,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.getNumInputs() != 3) {
             fail_type_inference("OneHot node must have three inputs.");
           }
-          // Input 'depth' must be a single-element vector.
+          // Input 'depth' must be a scalar or a single-element vector.
+          // TODO: Ideally to match spec for this input only allow Scalar should be allowed. 
+          // Making this change now can affect backward compatibility for this op.
+          // Since this does not seem like a good justification to update version for this op, 
+          // allowing both scalar and 1 element vector for now. In future when version update 
+          // for this op is done we should only allow scalar or chage the spec to allow both.
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
-            if (depth_shape.dim_size() != 1) {
-              fail_type_inference("Input 'depth' must be rank 1 tensor.");
+            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() !=1) {
+              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
             }
-            if (depth_shape.dim((int)0).has_dim_value() &&
+            if (depth_shape.dim_size() ==1 && 
+                depth_shape.dim((int)0).has_dim_value() &&
                 depth_shape.dim((int)0).dim_value() != 1) {
               fail_type_inference(
                   "Input 'depth' must have exactly one element.");
