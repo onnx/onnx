@@ -94,7 +94,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
         """
         Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original
         array
-        :param x:
+        :param x: center index (in the unpadded coordinate system) of the found nearest elements.
         :param n:  the number of the wanted elements
         :param data: the array
         :return: A tuple containing the indexes of neighbor elements (the index can be smaller than 0 or higher than
