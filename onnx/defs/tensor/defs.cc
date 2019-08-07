@@ -1611,6 +1611,28 @@ Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale) if input \"sizes\" is not specified.
 )DOC";
 
+static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
+The scaler used in interpolation.
+For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input "roi", scale = length_resized / length_original, <br/>
+
+if scaler is "half_pixel", <br/>
+x_original = (x_resized + 0.5) / scale - 0.5, <br/>
+
+if scaler is "pytorch_half_pixel", <br/>
+x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
+
+if scaler is "align_corners", <br/>
+x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
+
+if scaler is "asymmetric", <br/>
+x_original = x_resized / scale, <br/>
+
+if scaler is "tf_half_pixel_for_nn", <br/>
+x_original = (x_resized + 0.5) / scale, <br/>
+
+if scaler is "tf_crop_and_resize", <br/>
+x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
     11,
@@ -1634,26 +1656,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("coordinate_transformation_mode",
-            R"DOC(The scaler used in interpolation.
-            For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input "roi", scale = length_resized / length_original, <br/>
-
-            if scaler is "half_pixel", <br/>
-            x_original = (x_resized + 0.5) / scale - 0.5, <br/>
-
-            if scaler is "pytorch_half_pixel", <br/>
-            x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
-
-            if scaler is "align_corners", <br/>
-            x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
-            
-            if scaler is "asymmetric", <br/>
-            x_original = x_resized / scale, <br/>
-
-            if scaler is "tf_half_pixel_for_nn", <br/>
-            x_original = (x_resized + 0.5) / scale, <br/>
-
-            if scaler is "tf_crop_and_resize", <br/>
-            x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).)DOC",
+            Resize_attr_coordinate_transformation_mode_doc,
             AttributeProto::STRING,
             std::string("half_pixel"))
         .Attr("nearest_mode",
