@@ -10661,8 +10661,29 @@ This version of the operator has been available since version 11 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
+<dd>The scaler used in interpolation.
+            For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input "roi", scale = length_resized / length_original, <br/>
+
+            if scaler is "half_pixel", <br/>
+            x_original = (x_resized + 0.5) / scale - 0.5, <br/>
+
+            if scaler is "pytorch_half_pixel", <br/>
+            x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
+
+            if scaler is "align_corners", <br/>
+            x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
+            
+            if scaler is "asymmetric", <br/>
+            x_original = x_resized / scale, <br/>
+
+            if scaler is "tf_half_pixel_for_nn", <br/>
+            x_original = (x_resized + 0.5) / scale, <br/>
+
+            if scaler is "tf_crop_and_resize", <br/>
+            x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).</dd>
 <dt><tt>cubic_coeff_a</tt> : float (default is -0.75)</dt>
-<dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75 (in PyTorch). Check out https://ieeexplore.ieee.org/document/1163711 for the details.</dd>
+<dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75 (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details.</dd>
 <dt><tt>exclude_outside</tt> : int (default is 0)</dt>
 <dd>If set to 1, the weight of sampling locations outside the tensor will be set to 0 and the weight will be renormalized so that their sum is 1.0. The default value is 0.</dd>
 <dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
@@ -10671,8 +10692,6 @@ This version of the operator has been available since version 11 of the default 
 <dd>Three interpolation modes: nearest (default), linear and cubic. The "linear" mode includes linear interpolation for 1D tensor and N-D linear interpolation for N-D tensor (For example, bilinear interpolation for 2D tensor). The "cubic" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (For example, bicubic interpolation for 2D tensor).</dd>
 <dt><tt>nearest_mode</tt> : string (default is round_prefer_floor)</dt>
 <dd>Four modes: round_prefer_floor (default), round_prefer_ceil, floor, ceil. Only used by nearest interpolation. It indicates how to get "nearest" pixel in input tensor from x_original.</dd>
-<dt><tt>scaler</tt> : string (default is half_pixel)</dt>
-<dd>The scaler used in interpolation. For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input "roi", scale = length_resized / length_originalif scaler is "half_pixel", x_original = (x_resized + 0.5) / scale - 0.5, if scaler is "pytorch_half_pixel", x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, if scaler is "align_corners", x_original = x_resized * (length_original - 1) / (length_resized - 1), if scaler is "asymmetric", x_original = x_resized / scale, if scaler is "tf_half_pixel_for_nn", x_original = (x_resized + 0.5) / scale, if scaler is "tf_crop_and_resize", x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).</dd>
 </dl>
 
 #### Inputs (3 - 4)
@@ -10683,9 +10702,9 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>roi</tt> : T2</dt>
 <dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when scaler is "tf_crop_and_resize"</dd>
 <dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. It will be ignored if 'sizes' is specified.</dd>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
 <dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
-<dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. 'scales' will be ignored if 'sizes' is specified.</dd>
+<dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
 </dl>
 
 #### Outputs
