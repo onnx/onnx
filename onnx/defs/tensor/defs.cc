@@ -1426,7 +1426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("scaler",
+        .Attr("coordinate_transformation_mode",
             "The scaler used in interpolation. "
             "For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input \"roi\", scale = length_resized / length_original"
             "if scaler is \"half_pixel\", "
