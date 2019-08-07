@@ -71,7 +71,7 @@ def interpolate_1d_with_x(data,                      # type: np.ndarray
                           ):                         # type: (...) -> np.ndarray
     def get_neighbor_idxes(x, n, limit):  # type: (float, int, int) -> np.ndarray
         """
-        Return the n nearest indexes, prefer the indexes smaller than x
+        Return the n nearest indexes to x among [0, limit), prefer the indexes smaller than x.
         As a result, the ratio must be in (0, 1]
         Examples:
         get_neighbor_idxes(4, 2, 10) == [3, 4]
