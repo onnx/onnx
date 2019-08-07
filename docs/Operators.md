@@ -11880,7 +11880,7 @@ for test_name, shape in test_cases.items():
 
 ### <a name="Resize"></a><a name="resize">**Resize**</a>
 
-  Resize the input tensor.
+  Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
   Each dimension value of the output tensor is:
     output_dimension = floor(input_dimension * scale) if input \"sizes\" is not specified.
 
@@ -11895,8 +11895,9 @@ Other versions of this operator: <a href="Changelog.md#Resize-10">Resize-10</a>
 <dl>
 <dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
 <dd>
-The scaler used in interpolation.
-For each dimension, denote x_resized as the coordinate in the resized tensor, x_original as the corresponding coordinate in the original tensor, length_original as the length of the original tensor in the specific dimension, length_resized as the length of the resized tensor in the specific dimension, roi_x = (start, end) of the corresponding dimension in input "roi", scale = length_resized / length_original, <br/>
+This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
+
+The coordinate of each dimension is transformed individually. Denote x_resized as the coordinate of a specific dimension in the resized tensor, x_original as the coordinate of this dimension in the original tensor, length_original as the length of the original tensor in this dimension, length_resized as the length of the resized tensor in this dimension, roi_x = (start, end) of the this dimension in input "roi", scale = length_resized / length_original, <br/>
 
 if scaler is "half_pixel", <br/>
 x_original = (x_resized + 0.5) / scale - 0.5, <br/>
