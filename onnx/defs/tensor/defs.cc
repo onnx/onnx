@@ -1418,7 +1418,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("nearest"))
         .Attr("cubic_coeff_a",
             "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75"
-            " (in PyTorch). Check out https://ieeexplore.ieee.org/document/1163711 for the details.",
+            " (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details.",
             AttributeProto::FLOAT,
             static_cast<float>(-0.75))
         .Attr("exclude_outside",
