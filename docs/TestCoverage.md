@@ -6531,7 +6531,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales'],
     outputs=['Y'],
     mode='cubic',
-    scaler='align_corners'
+    coordinate_transformation_mode='align_corners'
 )
 
 data = np.array([[[
@@ -6548,7 +6548,7 @@ scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 #    [ 6.58076634  7.97595793  9.37114951]
 #    [12.16153268 13.55672427 14.95191585]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
+    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales], outputs=[output],
        name='test_resize_downsample_scales_cubic_align_corners')
@@ -6592,7 +6592,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales'],
     outputs=['Y'],
     mode='linear',
-    scaler='align_corners'
+    coordinate_transformation_mode='align_corners'
 )
 
 data = np.array([[[
@@ -6605,7 +6605,7 @@ scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
 # [[[[1.       3.142857]]]]
 output = interpolate_nd(
-    data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
+    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales], outputs=[output],
        name='test_resize_downsample_scales_linear_align_corners')
@@ -6682,7 +6682,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='linear',
-    scaler='pytorch_half_pixel'
+    coordinate_transformation_mode='pytorch_half_pixel'
 )
 
 data = np.array([[[
@@ -6700,7 +6700,7 @@ sizes = np.array([1, 1, 3, 1], dtype=np.int64)
 #    [ 7.       ]
 #    [12.333333 ]]]]
 output = interpolate_nd(
-    data, linear_coeffs, output_size=sizes, scaler='pytorch_half_pixel').astype(np.float32)
+    data, linear_coeffs, output_size=sizes, coordinate_transformation_mode='pytorch_half_pixel').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
        name='test_resize_downsample_sizes_linear_pytorch_half_pixel')
@@ -6745,7 +6745,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    scaler='tf_half_pixel_for_nn'
+    coordinate_transformation_mode='tf_half_pixel_for_nn'
 )
 
 data = np.array([[[
@@ -6763,7 +6763,7 @@ sizes = np.array([1, 1, 3, 2], dtype=np.int64)
 #    [10. 12.]
 #    [14. 16.]]]]
 output = interpolate_nd(
-    data, nearest_coeffs, output_size=sizes, scaler='tf_half_pixel_for_nn').astype(np.float32)
+    data, nearest_coeffs, output_size=sizes, coordinate_transformation_mode='tf_half_pixel_for_nn').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
        name='test_resize_downsample_sizes_nearest_tf_half_pixel_for_nn')
@@ -6779,7 +6779,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='linear',
-    scaler='tf_crop_and_resize'
+    coordinate_transformation_mode='tf_crop_and_resize'
 )
 
 data = np.array([[[
@@ -6798,7 +6798,7 @@ sizes = np.array([1, 1, 3, 3], dtype=np.int64)
 #    [ 8.8        9.1        9.400001 ]
 #    [10.        10.3       10.6      ]]]]
 output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
-                        scaler='tf_crop_and_resize').astype(np.float32)
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
        name='test_resize_tf_crop_and_resize')
@@ -6814,7 +6814,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='linear',
-    scaler='tf_crop_and_resize',
+    coordinate_transformation_mode='tf_crop_and_resize',
     extrapolation_value=10.0
 )
 
@@ -6834,7 +6834,7 @@ sizes = np.array([1, 1, 3, 3], dtype=np.int64)
 #    [12.400001  10.        10.       ]
 #    [10.        10.        10.       ]]]]
 output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
-                        scaler='tf_crop_and_resize', extrapolation_value=10.0).astype(np.float32)
+                        coordinate_transformation_mode='tf_crop_and_resize', extrapolation_value=10.0).astype(np.float32)
 
 expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
        name='test_resize_tf_crop_and_resize')
@@ -6942,7 +6942,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales'],
     outputs=['Y'],
     mode='cubic',
-    scaler='align_corners'
+    coordinate_transformation_mode='align_corners'
 )
 
 data = np.array([[[
@@ -6972,7 +6972,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #    [13.         13.34110787 13.80029155 14.32944606 14.67055394
 #     15.19970845 15.65889213 16.        ]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
+    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales], outputs=[output],
        name='test_resize_upsample_scales_cubic_align_corners')
@@ -6988,7 +6988,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales'],
     outputs=['Y'],
     mode='cubic',
-    scaler='asymmetric'
+    coordinate_transformation_mode='asymmetric'
 )
 
 data = np.array([[[
@@ -7018,7 +7018,7 @@ roi = np.array([], dtype=np.float32)
 #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
 #     16.46875]]]]
 output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
-                        scaler='asymmetric').astype(np.float32)
+                        coordinate_transformation_mode='asymmetric').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales], outputs=[output],
        name='test_resize_upsample_scales_cubic_asymmetric')
@@ -7065,7 +7065,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales'],
     outputs=['Y'],
     mode='linear',
-    scaler='align_corners'
+    coordinate_transformation_mode='align_corners'
 )
 
 data = np.array([[[
@@ -7081,7 +7081,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #    [2.33333333 2.66666667 3.         3.33333333]
 #    [3.         3.33333333 3.66666667 4.        ]]]]
 output = interpolate_nd(
-    data, linear_coeffs, scale_factors=scales, scaler='align_corners').astype(np.float32)
+    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales], outputs=[output],
        name='test_resize_upsample_scales_linear_align_corners')
@@ -7211,7 +7211,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    scaler='half_pixel'
+    coordinate_transformation_mode='half_pixel'
 )
 
 data = np.array([[[
@@ -7250,7 +7250,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    scaler='align_corners'
+    coordinate_transformation_mode='align_corners'
 )
 
 data = np.array([[[
@@ -7273,7 +7273,7 @@ sizes = np.array([1, 1, 8, 8], dtype=np.int64)
 #    [ 9.  9.  9. 10. 10. 11. 11. 12.]
 #    [13. 13. 13. 14. 14. 15. 15. 16.]]]]
 output = interpolate_nd(
-    data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, scaler='align_corners').astype(np.float32)
+    data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
        name='test_resize_upsample_sizes_nearest_floor_align_corners')
@@ -7289,7 +7289,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    scaler='asymmetric'
+    coordinate_transformation_mode='asymmetric'
 )
 
 data = np.array([[[
@@ -7313,7 +7313,7 @@ sizes = np.array([1, 1, 8, 8], dtype=np.int64)
 #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
 output = interpolate_nd(
     data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'),
-    output_size=sizes, scaler='asymmetric').astype(np.float32)
+    output_size=sizes, coordinate_transformation_mode='asymmetric').astype(np.float32)
 
 expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
        name='test_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric')
