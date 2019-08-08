@@ -1616,22 +1616,22 @@ This attribute describes how to transform the coordinate in the resized tensor t
 
 The coordinate of each dimension is transformed individually. Denote x_resized as the coordinate of a specific dimension in the resized tensor, x_original as the coordinate of this dimension in the original tensor, length_original as the length of the original tensor in this dimension, length_resized as the length of the resized tensor in this dimension, roi_x = (start, end) of the this dimension in input "roi", scale = length_resized / length_original, <br/>
 
-if scaler is "half_pixel", <br/>
+if coordinate_transformation_mode is "half_pixel", <br/>
 x_original = (x_resized + 0.5) / scale - 0.5, <br/>
 
-if scaler is "pytorch_half_pixel", <br/>
+if coordinate_transformation_mode is "pytorch_half_pixel", <br/>
 x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
 
-if scaler is "align_corners", <br/>
+if coordinate_transformation_mode is "align_corners", <br/>
 x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
 
-if scaler is "asymmetric", <br/>
+if coordinate_transformation_mode is "asymmetric", <br/>
 x_original = x_resized / scale, <br/>
 
-if scaler is "tf_half_pixel_for_nn", <br/>
+if coordinate_transformation_mode is "tf_half_pixel_for_nn", <br/>
 x_original = (x_resized + 0.5) / scale, <br/>
 
-if scaler is "tf_crop_and_resize", <br/>
+if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
 x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1665,14 +1665,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING,
             std::string("round_prefer_floor"))
         .Attr("extrapolation_value",
-            "When scaler is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
+            "When coordinate_transformation_mode is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
         .Input(0, "X", "N-D tensor", "T1")
         .Input(
             1,
             "roi",
-            "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when scaler is \"tf_crop_and_resize\"",
+            "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
             "T2")
         .Input(
             2,
