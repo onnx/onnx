@@ -10805,7 +10805,7 @@ if coordinate_transformation_mode is "half_pixel", <br/>
 x_original = (x_resized + 0.5) / scale - 0.5, <br/>
 
 if coordinate_transformation_mode is "pytorch_half_pixel", <br/>
-x_original = length_resize > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
+x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
 
 if coordinate_transformation_mode is "align_corners", <br/>
 x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
