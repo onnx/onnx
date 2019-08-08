@@ -1614,7 +1614,8 @@ Each dimension value of the output tensor is:
 static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
-The coordinate of each dimension is transformed individually. Denote x_resized as the coordinate of a specific dimension in the resized tensor, x_original as the coordinate of this dimension in the original tensor, length_original as the length of the original tensor in this dimension, length_resized as the length of the resized tensor in this dimension, roi_x = (start, end) of the this dimension in input "roi", scale = length_resized / length_original, <br/>
+The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example. 
+Denote x_resized as the coordinate of a specific dimension in the resized tensor, x_original as the coordinate of this dimension in the original tensor, length_original as the length of the original tensor in this dimension, length_resized as the length of the resized tensor in this dimension, roi_x = (startx, endx) of the this dimension in input "roi", scale = length_resized / length_original, <br/>
 
 if coordinate_transformation_mode is "half_pixel", <br/>
 x_original = (x_resized + 0.5) / scale - 0.5, <br/>
@@ -1641,8 +1642,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "mode",
             "Three interpolation modes: nearest (default), linear and cubic. "
-            "The \"linear\" mode includes linear interpolation for 1D tensor and N-D linear interpolation for N-D tensor (For example, bilinear interpolation for 2D tensor). "
-            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (For example, bicubic interpolation for 2D tensor)."
+            "The \"linear\" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). "
+            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor)."
             ,
             AttributeProto::STRING,
             std::string("nearest"))
@@ -1661,7 +1662,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING,
             std::string("half_pixel"))
         .Attr("nearest_mode",
-            "Four modes: round_prefer_floor (default), round_prefer_ceil, floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original.",
+            "Four modes: round_prefer_floor (default), round_prefer_ceil, floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
             AttributeProto::STRING,
             std::string("round_prefer_floor"))
         .Attr("extrapolation_value",
