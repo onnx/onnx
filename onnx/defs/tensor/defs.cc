@@ -1608,14 +1608,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Resize_ver11_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is:
-  output_dimension = floor(input_dimension * scale) if input \"sizes\" is not specified.
+  output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
 )DOC";
 
 static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example. 
-Denote x_resized as the coordinate of a specific dimension in the resized tensor, x_original as the coordinate of this dimension in the original tensor, length_original as the length of the original tensor in this dimension, length_resized as the length of the resized tensor in this dimension, roi_x = (startx, endx) of the this dimension in input "roi", scale = length_resized / length_original, <br/>
+Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, length_original as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", scale = length_resized / length_original, <br/>
 
 if coordinate_transformation_mode is "half_pixel", <br/>
 x_original = (x_resized + 0.5) / scale - 0.5, <br/>
@@ -1633,7 +1633,7 @@ if coordinate_transformation_mode is "tf_half_pixel_for_nn", <br/>
 x_original = (x_resized + 0.5) / scale, <br/>
 
 if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
-x_original = length_resized > 1 ? roi_x[0] * (length_original - 1) + x_resized * (roi_x[1] - roi_x[0]) * (length_original - 1) / (length_resized - 1) : 0.5 * (roi_x[0] + roi_x[1]) * (length_original - 1).)DOC";
+x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1).)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
@@ -1643,13 +1643,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "mode",
             "Three interpolation modes: nearest (default), linear and cubic. "
             "The \"linear\" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). "
-            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-D cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor)."
-            ,
+            "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).",
             AttributeProto::STRING,
             std::string("nearest"))
         .Attr("cubic_coeff_a",
-            "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in TensorFlow) and -0.75"
-            " (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details.",
+            "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75"
+            " (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. "
+            "This attribute is valid only if \"mode\" is \"cubic\".",
             AttributeProto::FLOAT,
             static_cast<float>(-0.75))
         .Attr("exclude_outside",
