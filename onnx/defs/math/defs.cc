@@ -1588,7 +1588,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Det_ver11_doc = R"DOC(
 Det calculates determinant of a square matrix or batches of square matrices.
-Det takes one input tensor of shape [*, M, M], where * is zero of more batch dimensions,
+Det takes one input tensor of shape [*, M, M], where * is zero or more batch dimensions,
 and the inner-most 2 dimensions form square matrices.
 The output is a tensor of shape [*], containing the determinants of all input submatrices.
 )DOC";
