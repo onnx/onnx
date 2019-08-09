@@ -10559,10 +10559,14 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Det-11"></a>**Det-11**</a>
 
   Det calculates determinant of a square matrix or batches of square matrices.
-  Det takes one input tensor of shape [*, M, M], where * is zero or more batch dimensions,
+  Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
   and the inner-most 2 dimensions form square matrices.
+<<<<<<< HEAD
   The output is a tensor of shape [*], containing the determinants of all input submatrices.
 >>>>>>> Add Det to ONNX
+=======
+  The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+>>>>>>> fix doc
 
 #### Version
 
