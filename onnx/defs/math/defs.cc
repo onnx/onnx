@@ -1586,4 +1586,45 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Det_ver11_doc = R"DOC(
+Det calculates determinant of a square matrix or batches of square matrices.
+Det takes one input tensor of shape [*, M, M], where * is zero of more batch dimensions,
+and the inner-most 2 dimensions form square matrices.
+The output is a tensor of shape [*], containing the determinants of all input submatrices.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Det,
+    11,
+    OpSchema()
+        .SetDoc(Det_ver11_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            TensorShapeProto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            const int rank = static_cast<int>(input_shape.dim_size());
+
+            if (rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+            
+            for (int i=0; i < rank - 2; ++i) {
+              auto* dim = output_shape->add_dim();
+              *dim = input_shape.dim(i);
+            }
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
