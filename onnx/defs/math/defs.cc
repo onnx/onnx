@@ -1619,7 +1619,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (rank < 2) {
               fail_shape_inference("Input rank must be >= 2.")
             }
-            
+
             for (int i=0; i < rank - 2; ++i) {
               auto* dim = output_shape->add_dim();
               *dim = input_shape.dim(i);
