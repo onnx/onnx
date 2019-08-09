@@ -135,7 +135,7 @@ ONNX_OPERATOR_SET_SCHEMA(
            {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
            {{"Min_Scaled"}, "Div", {"X_Min_Adjusted", "Scale"}},
            {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
-           {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP"}, {MakeAttribute("min", 0.f), MakeAttribute("max", 255.f)}},
+           {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
            {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
            {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
            {{"y_scale"}, "Identity", {"Scale"}},
