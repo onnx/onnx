@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def det_impl(data):
+def det_impl(data):  # type: np.ndarray -> np.ndarray
     return np.linalg.det(data)
 
 

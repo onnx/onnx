@@ -1998,7 +1998,7 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
                                       make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
-    def test_det(self):
+    def test_det(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (3, 3))],
             [make_node('Det', ['X'], ['Y'])],
