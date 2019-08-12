@@ -608,28 +608,36 @@ ONNX_OPERATOR_SET_SCHEMA(
     8,
     OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("mean")));
 
-static const char* Clip_ver6_doc = R"DOC(
+static const char* Clip_ver11_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
-specified with arguments 'min' and 'max'. They default to
-numeric_limits::lowest() and numeric_limits::max() respectively.
+specified by the inputs 'min' and 'max'. They default to
+numeric_limits::lowest() and numeric_limits::max(), respectively.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
-    6,
+    11,
     OpSchema()
-        .SetDoc(Clip_ver6_doc)
-        .Attr(
+        .SetDoc(Clip_ver11_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor whose elements to be clipped",
+            "T")
+        .Input(
+            1,
             "min",
-            "Minimum value, under which element is replaced by min",
-            AttributeProto::FLOAT,
-            std::numeric_limits<float>::lowest())
-        .Attr(
+            "Minimum value, under which element is replaced by min. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            2,
             "max",
-            "Maximum value, above which element is replaced by max",
-            AttributeProto::FLOAT,
-            std::numeric_limits<float>::max())
-        .Input(0, "input", "Input tensor whose elements to be clipped", "T")
+            "Maximum value, above which element is replaced by max. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
         .Output(0, "output", "Output tensor with clipped input elements", "T")
         .TypeConstraint(
             "T",
@@ -890,24 +898,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           matmulShapeInference(ctx, 0, 1);
         }));
 
-static const char* TopK_ver10_doc = R"DOC(
-Retrieve the top-K elements along a specified axis. Given an input tensor of
+static const char* TopK_ver11_doc = R"DOC(
+Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
     which contains the values of the top k elements along the specified axis
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-   
-Given two equivalent values, this operator uses the indices along the axis  as
+
+If "largest" is 1 (the default value) then the k largest elements are returned.
+If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+
+Given two equivalent values, this operator uses the indices along the axis as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    10,
+    11,
     OpSchema()
-        .SetDoc(TopK_ver10_doc)
+        .SetDoc(TopK_ver11_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
         .Input(
             1,
@@ -929,8 +941,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "I")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors.")
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
@@ -940,6 +952,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Dimension on which to do the sort.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
+        .Attr(
+            "largest",
+            "Whether to return the top-K largest or smallest elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "sorted",
+            "Whether to return the elements in sorted order.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference:
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
