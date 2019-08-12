@@ -3707,7 +3707,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ]).astype(np.float32)
+x = np.array([[[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]]]).astype(np.float32)
 y = det_impl(x)  # expect array([-2., -3., -8.])
 expect(node, inputs=[x], outputs=[y],
        name='test_det_nd')
