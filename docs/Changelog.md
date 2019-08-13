@@ -10566,7 +10566,11 @@ This version of the operator has been available since version 11 of the default 
 >>>>>>> Add Det to ONNX
 =======
   The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+<<<<<<< HEAD
 >>>>>>> fix doc
+=======
+  e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
+>>>>>>> emphasize the case where output is scalar. Improve shape inference error message.
 
 #### Version
 

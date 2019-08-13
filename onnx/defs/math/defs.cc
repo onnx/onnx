@@ -1591,6 +1591,7 @@ Det calculates determinant of a square matrix or batches of square matrices.
 Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
 and the inner-most 2 dimensions form square matrices.
 The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1625,7 +1626,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (mat_w.has_dim_value() &&
                 mat_h.has_dim_value() &&
                 (mat_w.dim_value() != mat_h.dim_value())) {
-              fail_shape_inference("The inner-most 2 dimensions must have the same size.");
+              fail_shape_inference(
+                  "The inner-most 2 dimensions must have the same size (mat_w:",
+                  mat_w.dim_value(),
+                  " != mat_h:",
+                  mat_h.dim_value(),
+                  ").");
             }
 
             for (int i=0; i < rank - 2; ++i) {

@@ -3649,6 +3649,7 @@ expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
   Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
   and the inner-most 2 dimensions form square matrices.
   The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+  e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
 
 #### Version
 
