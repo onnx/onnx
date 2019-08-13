@@ -426,6 +426,7 @@ std::unordered_map<int, std::string>& TypesWrapper::TensorDataTypeToTypeStr() {
 
 TypesWrapper::TypesWrapper() {
   // DataType strings. These should match the DataTypes defined in onnx.proto
+  type_str_to_tensor_data_type_["undefined"] = TensorProto_DataType_UNDEFINED;
   type_str_to_tensor_data_type_["float"] = TensorProto_DataType_FLOAT;
   type_str_to_tensor_data_type_["float16"] = TensorProto_DataType_FLOAT16;
   type_str_to_tensor_data_type_["bfloat16"] = TensorProto_DataType_BFLOAT16;
