@@ -1517,7 +1517,9 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         0,
         "Y",
         "Output data tensor from pooling across the input "
-        "tensor. Dimensions will be N x C x 1 x 1",
+        "tensor. The output tensor has the same rank as the input. "
+        "The first two dimensions of output shape are the same as "
+        "the input (N x C), while the other dimensions are all 1.",
         "T");
     schema.TypeConstraint(
         "T",
@@ -1568,7 +1570,9 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         0,
         "Y",
         "Output data tensor from pooling across the input "
-        "tensor. Dimensions will be N x C x 1 x 1",
+        "tensor. The output tensor has the same rank as the input. "
+        "The first two dimensions of output shape are the same as "
+        "the input (N x C), while the other dimensions are all 1.",
         "T");
     schema.TypeConstraint(
         "T",
