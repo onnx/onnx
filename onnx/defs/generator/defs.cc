@@ -563,14 +563,33 @@ const std::vector<NodeProto> build_nodes_range_op() {
     loop_sub_graph.set_name("loop_body_attribute");
 
     // 'Loop' node 'body' attribute's graph inputs
+    // input 0 - number of iteration
     auto* input_value_info_proto_0 = loop_sub_graph.add_input();
     input_value_info_proto_0->set_name("i");
+    // add an empty shape
+    auto* input_0_type_proto_tensor =
+        input_value_info_proto_0->mutable_type()->mutable_tensor_type();
+    input_0_type_proto_tensor->mutable_shape()->Clear();
+    // always INT64 type
+    input_0_type_proto_tensor->set_elem_type(TensorProto_DataType_INT64);
 
+    // input 1 - condition
     auto* input_value_info_proto_1 = loop_sub_graph.add_input();
     input_value_info_proto_1->set_name("cond");
+    // add an empty shape
+    auto* input_1_type_proto_tensor =
+        input_value_info_proto_1->mutable_type()->mutable_tensor_type();
+    input_1_type_proto_tensor->mutable_shape()->Clear();
+    // always BOOL type
+    input_1_type_proto_tensor->set_elem_type(TensorProto_DataType_BOOL);
 
+    // input 2 - loop carried dependency
     auto* input_value_info_proto_2 = loop_sub_graph.add_input();
     input_value_info_proto_2->set_name("prev");
+    // add an empty shape
+    auto* input_2_type_proto_tensor =
+        input_value_info_proto_2->mutable_type()->mutable_tensor_type();
+    input_2_type_proto_tensor->mutable_shape()->Clear();
 
     // 'Loop' node 'body' attribute's graph nodes
     auto* node_proto_0 = loop_sub_graph.add_node();
@@ -584,7 +603,7 @@ const std::vector<NodeProto> build_nodes_range_op() {
     node_proto_1->set_op_type("Add");
     node_proto_1->add_input();
     node_proto_1->set_input(0, "prev");
-    node_proto_1->add_input();    
+    node_proto_1->add_input();
     node_proto_1->set_input(1, "delta");
     node_proto_1->add_output();
     node_proto_1->set_output(0, "current");
@@ -613,11 +632,12 @@ const std::vector<NodeProto> build_nodes_range_op() {
       {{"delta_casted"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
       {{"div_result"}, "Div", {"sub_result_casted", "delta_casted"}},
       {{"ceil_result"}, "Ceil", {"div_result"}},
-      {{"ceil_cast_int"}, "Cast", {"ceil_result"}, {{"to", static_cast<int64_t>(7)}}},
-      // we want max(0, ceil_cast_int) as negative values would evaluate to bool true in next step
-      {{"ceil_cast_int_relu"}, "Relu", {"ceil_cast_int"}},
-      {{"ceil_cast_bool"}, "Cast", {"ceil_cast_int_relu"}, {{"to", static_cast<int64_t>(9)}}},
-      {{"variadic_output", "output"}, "Loop", {"ceil_cast_int_relu", "ceil_cast_bool", "start"}, {MakeAttribute("body", loop_sub_graph)}}
+      // we want max(0, ceil_cast_int) as negative values would evaluate to
+      // bool true in next step
+      {{"ceil_result_relu"}, "Relu", {"ceil_result"}},
+      {{"ceil_result_relu_int"}, "Cast", {"ceil_result_relu"}, {{"to", static_cast<int64_t>(7)}}},      
+      {{"ceil_result_relu_bool"}, "Cast", {"ceil_result_relu"}, {{"to", static_cast<int64_t>(9)}}},
+      {{"variadic_output", "output"}, "Loop", {"ceil_result_relu_int", "ceil_result_relu_bool", "start"}, {MakeAttribute("body", loop_sub_graph)}}
   });
 
 }

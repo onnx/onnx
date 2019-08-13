@@ -5411,10 +5411,11 @@ node = onnx.helper.make_node(
     outputs=['output'],
 )
 
-start = np.array([1.0], dtype=np.float32)
-limit = np.array([5.0], dtype=np.float32)
-delta = np.array([2.0], dtype=np.float32)
-output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [1.0, 3.0]
+start = np.float32(1)
+limit = np.float32(5)
+delta = np.float32(2)
+
+output = np.arange(start, limit, delta, dtype=np.float32)  # expected output [1.0, 3.0]
 expect(node, inputs=[start, limit, delta], outputs=[output],
        name='test_range_float_type_positive_delta')
 ```
@@ -5430,10 +5431,11 @@ node = onnx.helper.make_node(
     outputs=['output'],
 )
 
-start = np.array([10], dtype=np.int32)
-limit = np.array([6], dtype=np.int32)
-delta = np.array([-3], dtype=np.int32)
-output = np.arange(start[0], limit[0], delta[0], dtype=np.int32)  # expected output [10, 7]
+start = np.int32(10)
+limit = np.int32(6)
+delta = np.int32(-3)
+
+output = np.arange(start, limit, delta, dtype=np.int32)  # expected output [10, 7]
 expect(node, inputs=[start, limit, delta], outputs=[output],
        name='test_range_int32_type_negative_delta')
 ```
