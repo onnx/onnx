@@ -3,12 +3,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto
-from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info
+from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML
+from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
-
+import os
 import numpy as np  # type: ignore
 
 
@@ -366,6 +366,22 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
 
+    def test_gather_elements(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2)),
+             ('i', TensorProto.INT64, (2, 2))],
+            [make_node("GatherElements", ['x', 'i'], ['y'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2))])  # type: ignore
+
+    def test_gather_elements_axis0(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 3)),
+             ('i', TensorProto.INT64, (2, 3))],
+            [make_node("GatherElements", ['x', 'i'], ['y'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3))])  # type: ignore
+
     def test_scatter(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 3)),
@@ -373,7 +389,10 @@ class TestShapeInference(unittest.TestCase):
              ('u', TensorProto.FLOAT, (2, 3))],
             [make_node("Scatter", ['x', 'i', 'u'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))],
+            opset_imports=[helper.make_opsetid("", 10)])  # type: ignore
 
     def test_scatter_axis1(self):  # type: () -> None
         graph = self._make_graph(
@@ -381,6 +400,27 @@ class TestShapeInference(unittest.TestCase):
              ('i', TensorProto.INT64, (1, 2)),
              ('u', TensorProto.FLOAT, (1, 2))],
             [make_node("Scatter", ['x', 'i', 'u'], ['y'], axis=1)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (1, 5))],
+            opset_imports=[helper.make_opsetid("", 10)])  # type: ignore
+
+    def test_scatter_elements(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 3)),
+             ('i', TensorProto.INT64, (2, 3)),
+             ('u', TensorProto.FLOAT, (2, 3))],
+            [make_node("ScatterElements", ['x', 'i', 'u'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_scatter_elements_axis1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 5)),
+             ('i', TensorProto.INT64, (1, 2)),
+             ('u', TensorProto.FLOAT, (1, 2))],
+            [make_node("ScatterElements", ['x', 'i', 'u'], ['y'], axis=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 5))])  # type: ignore
 
@@ -827,7 +867,7 @@ class TestShapeInference(unittest.TestCase):
         b = 10
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 300, 10, 10))],
-            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
+            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b, mode='DCR')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
@@ -1024,6 +1064,14 @@ class TestShapeInference(unittest.TestCase):
             [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
+
+    def test_split_negative_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=-1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (2, 2))])
 
     def test_split_from_GLU(self):  # type: () -> None
         graph = self._make_graph(
@@ -1565,7 +1613,7 @@ class TestShapeInference(unittest.TestCase):
     def test_onehot_without_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('indices', TensorProto.INT64, (2, 2)),
-             ('depth', TensorProto.INT64, (1, )),
+             ('depth', TensorProto.INT64, ()),
              ('values', TensorProto.FLOAT, (2, ))],
             [make_node('OneHot', ['indices', 'depth', 'values'], 'Y')],
             [])
@@ -1915,6 +1963,26 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])
 
+    def test_unique_without_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (2, 4, 2))],
+            [make_node('Unique', ['X'], ['Y', 'indices', 'inverse_indices', 'counts'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (None,)),  # type: ignore
+                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
+
+    def test_unique_with_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (2, 4, 2))],
+            [make_node('Unique', ['X'], ['Y', 'indices', 'inverse_indices', 'counts'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, None, 2)),  # type: ignore
+                                      make_tensor_value_info('indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
+                                      make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
+
     def test_tile(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5, 6)),
@@ -1941,6 +2009,100 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Tile', ['x', 'repeats'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None, None))])  # type: ignore
+
+    def test_linearclassifier_1D_input(self):  # type: () -> None
+        if ONNX_ML:
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (5,))],
+                [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.0008, -0.0008], intercepts=[2.0, 2.0], classlabels_ints=[1, 2])],
+                [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,)),
+                                          make_tensor_value_info('z', TensorProto.FLOAT, (1, 2))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
+
+    def test_linearclassifier_2D_input(self):  # type: () -> None
+        if ONNX_ML:
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (4, 5))],
+                [make_node('LinearClassifier', ['x'], ['y', 'z'], domain='ai.onnx.ml', coefficients=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6], intercepts=[2.0, 2.0, 3.0], classlabels_ints=[1, 2, 3])],
+                [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (4,)),
+                                          make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
+
+    def test_roialign_symbolic(self):   # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('rois', TensorProto.FLOAT, ('num_rois', 4)),
+             ('batch_indices', TensorProto.INT64, ('num_rois',))],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'], output_height=10, output_width=5)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ('num_rois', 'C', 10, 5))])  # type: ignore
+
+    def test_roialign_symbolic_defaults(self):   # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('rois', TensorProto.FLOAT, ('num_rois', 4)),
+             ('batch_indices', TensorProto.INT64, ('num_rois',))],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ('num_rois', 'C', 1, 1))])  # type: ignore
+
+    def test_roialign_num_rois(self):   # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('rois', TensorProto.FLOAT, ('num_rois', 4)),
+             ('batch_indices', TensorProto.INT64, (15,))],
+            [make_node('RoiAlign', ['x', 'rois', 'batch_indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (15, 'C', 1, 1))])  # type: ignore
+
+    def test_label_encoder_string_int64(self):  # type: () -> None
+        if ONNX_ML:
+            string_list = ['A', 'm', 'y']
+            float_list = [94.17, 36.00]
+            int64_list = [12, 28, 86]
+            graph = self._make_graph(
+                [('x', TensorProto.STRING, (6, 1))],
+                [make_node('LabelEncoder', ['x'], ['y'], domain='ai.onnx.ml',
+                           keys_strings=string_list, values_int64s=int64_list)], [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (6, 1))],
+                                          opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
+
+            graph = self._make_graph(
+                [('x', TensorProto.INT64, (2, 3))],
+                [make_node('LabelEncoder', ['x'], ['y'], domain='ai.onnx.ml',
+                           keys_int64s=int64_list, values_strings=string_list)], [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.STRING, (2, 3))],
+                                  opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
+
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, (2,))],
+                [make_node('LabelEncoder', ['x'], ['y'], domain='ai.onnx.ml',
+                           keys_floats=float_list, values_int64s=int64_list)], [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (2,))],
+                                  opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
+
+            graph = self._make_graph(
+                [('x', TensorProto.INT64, (8,))],
+                [make_node('LabelEncoder', ['x'], ['y'], domain='ai.onnx.ml',
+                           keys_int64s=int64_list, values_floats=float_list)], [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (8,))],
+                                  opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
+
+            graph = self._make_graph(
+                [('x', TensorProto.FLOAT, ())],
+                [make_node('LabelEncoder', ['x'], ['y'], domain='ai.onnx.ml',
+                           keys_floats=float_list, values_strings=string_list)], [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.STRING, ())],
+                                  opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
+
+            graph = self._make_graph(
+                [('x', TensorProto.STRING, (1, 2))],
+                [make_node('LabelEncoder', ['x'], ['y'], domain='ai.onnx.ml',
+                           keys_strings=string_list, values_floats=float_list)], [])
+            self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2))],
+                                  opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
 
 
 if __name__ == '__main__':

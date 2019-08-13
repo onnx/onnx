@@ -578,4 +578,130 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
+static const char* Scatter_ver9_doc = R"DOC(
+Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
+into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
+For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
+for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
+data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
+where i and j are loop counters from 0 up to the respective size in `updates` - 1.
+
+Example 1:
+  data = [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+  ]
+  indices = [
+      [1, 0, 2],
+      [0, 2, 1],
+  ]
+  updates = [
+      [1.0, 1.1, 1.2],
+      [2.0, 2.1, 2.2],
+  ]
+  output = [
+      [2.0, 1.1, 0.0]
+      [1.0, 0.0, 2.2]
+      [0.0, 2.1, 1.2]
+  ]
+
+Example 2:
+  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+  indices = [[1, 3]]
+  updates = [[1.1, 2.1]]
+  axis = 1
+  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Scatter,
+    9,
+    OpSchema()
+        .SetDoc(Scatter_ver9_doc)
+        .Attr(
+            "axis",
+            "Which axis to scatter on. Negative value means "
+            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input).",
+            "Tind")
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
+            "T")
+        .Output(0, "output", "Tensor of rank r >= 1 (same rank as input).", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input and output types can be of any tensor type.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* DepthToSpace_ver1_doc = R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+the input tensor where values from the depth dimension are moved in spatial blocks to the height
+and width dimensions.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DepthToSpace,
+    1,
+    OpSchema()
+        .Attr(
+            "blocksize",
+            "Blocks of [blocksize, blocksize] are moved.",
+            AttributeProto::INT)
+        .SetDoc(DepthToSpace_ver1_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+            ", H is the height and W is the width.",
+            "T")
+        .Output(
+            0,
+            "output",
+            "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto blocksize = getAttribute(ctx, "blocksize", 0);
+          if (blocksize <= 0)
+            fail_shape_inference("Blocksize must be positive");
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() == 4) {
+              // TODO: Clarify what behavior should be if C is not a multiple of
+              // blocksize*blocksize.
+              updateOutputShape(
+                  ctx,
+                  0,
+                  {input_shape.dim(0),
+                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(2) * blocksize,
+                   input_shape.dim(3) * blocksize});
+            } else
+              fail_shape_inference("Input tensor must be 4-dimensional");
+          }
+        }));
 } // namespace ONNX_NAMESPACE
