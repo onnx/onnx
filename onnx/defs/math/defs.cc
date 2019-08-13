@@ -608,28 +608,36 @@ ONNX_OPERATOR_SET_SCHEMA(
     8,
     OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("mean")));
 
-static const char* Clip_ver6_doc = R"DOC(
+static const char* Clip_ver11_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
-specified with arguments 'min' and 'max'. They default to
-numeric_limits::lowest() and numeric_limits::max() respectively.
+specified by the inputs 'min' and 'max'. They default to
+numeric_limits::lowest() and numeric_limits::max(), respectively.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
-    6,
+    11,
     OpSchema()
-        .SetDoc(Clip_ver6_doc)
-        .Attr(
+        .SetDoc(Clip_ver11_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor whose elements to be clipped",
+            "T")
+        .Input(
+            1,
             "min",
-            "Minimum value, under which element is replaced by min",
-            AttributeProto::FLOAT,
-            std::numeric_limits<float>::lowest())
-        .Attr(
+            "Minimum value, under which element is replaced by min. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            2,
             "max",
-            "Maximum value, above which element is replaced by max",
-            AttributeProto::FLOAT,
-            std::numeric_limits<float>::max())
-        .Input(0, "input", "Input tensor whose elements to be clipped", "T")
+            "Maximum value, above which element is replaced by max. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
         .Output(0, "output", "Output tensor with clipped input elements", "T")
         .TypeConstraint(
             "T",

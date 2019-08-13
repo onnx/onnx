@@ -1613,7 +1613,7 @@ class TestShapeInference(unittest.TestCase):
     def test_onehot_without_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('indices', TensorProto.INT64, (2, 2)),
-             ('depth', TensorProto.INT64, (1, )),
+             ('depth', TensorProto.INT64, ()),
              ('values', TensorProto.FLOAT, (2, ))],
             [make_node('OneHot', ['indices', 'depth', 'values'], 'Y')],
             [])
