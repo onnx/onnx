@@ -20,18 +20,25 @@ class DynamicQuantizeLinear(Base):
             outputs=['y', 'y_scale', 'y_zero_point'],
         )
 
+        # expected scale 0.0196078438 and zero point 153
         X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
-        Y = np.array([153, 255, 0, 26, 221, 179]).astype(np.uint8)
-        Y_Scale = np.float32(0.0196078438)
-        Y_ZeroPoint = np.uint8(153)
+        x_min = np.minimum(0, np.min(X))
+        x_max = np.maximum(0, np.max(X))
+        Y_Scale = (x_max - x_min)/(255 - 0)  #uint8 -> [0, 255]
+        Y_ZeroPoint = np.clip(round((0-x_min)/Y_Scale), 0, 255).astype(np.uint8)
+        Y = np.clip(np.round(X/Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
         expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
                name='test_dynamicquantizelinear')
 
+        # expected scale 0.0156862754 and zero point 255
         X = np.array([-1.0, -2.1, -1.3, -2.5, -3.34, -4.0]).astype(np.float32)
-        Y = np.array([191, 121, 172, 96, 42, 0]).astype(np.uint8)
-        Y_Scale = np.float32(0.0156862754)
-        Y_ZeroPoint = np.uint8(255)
+        x_min = np.minimum(0, np.min(X))
+        x_max = np.maximum(0, np.max(X))
+        Y_Scale = (x_max - x_min)/(255 - 0)  #uint8 -> [0, 255]
+        Y_ZeroPoint = np.clip(round((0-x_min)/Y_Scale), 0, 255).astype(np.uint8)
+        Y = np.clip(np.round(X/Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
 
         expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
                name='test_dynamicquantizelinear_max_adjusted')
@@ -40,12 +47,12 @@ class DynamicQuantizeLinear(Base):
                       3.34, 4.0, 1.5, 2.6,
                       3.9, 4.0, 3.0, 2.345]).astype(np.float32).reshape((3, 4))
 
-        Y = np.array([64, 134, 83, 159,
-                      213, 255, 96, 166,
-                      249, 255, 191, 149]).astype(np.uint8).reshape((3, 4))
-
-        Y_Scale = np.float32(0.0156862754)
-        Y_ZeroPoint = np.uint8(0)
+        # expected scale 0.0156862754 and zero point 0
+        x_min = np.minimum(0, np.min(X))
+        x_max = np.maximum(0, np.max(X))
+        Y_Scale = (x_max - x_min)/(255 - 0)  #uint8 -> [0, 255]
+        Y_ZeroPoint = np.clip(round((0-x_min)/Y_Scale), 0, 255).astype(np.uint8)
+        Y = np.clip(np.round(X/Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
         expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
                name='test_dynamicquantizelinear_min_adjusted')
