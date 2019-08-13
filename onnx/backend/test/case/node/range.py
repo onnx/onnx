@@ -20,10 +20,16 @@ class Range(Base):
             outputs=['output'],
         )
 
-        start = np.array([1.0], dtype=np.float32)
-        limit = np.array([5.0], dtype=np.float32)
-        delta = np.array([2.0], dtype=np.float32)
-        output = np.arange(start[0], limit[0], delta[0], dtype=np.float32)  # expected output [1.0, 3.0]
+        start_val = 1.0
+        start = np.array(start_val, dtype=np.float32)  # scalar
+
+        limit_val = 5.0
+        limit = np.array(limit_val, dtype=np.float32)  # scalar
+
+        delta_val = 2.0
+        delta = np.array(delta_val, dtype=np.float32)  # scalar
+
+        output = np.arange(start_val, limit_val, delta_val, dtype=np.float32)  # expected output [1.0, 3.0]
         expect(node, inputs=[start, limit, delta], outputs=[output],
                name='test_range_float_type_positive_delta')
 
@@ -35,9 +41,16 @@ class Range(Base):
             outputs=['output'],
         )
 
-        start = np.array([10], dtype=np.int32)
-        limit = np.array([6], dtype=np.int32)
-        delta = np.array([-3], dtype=np.int32)
-        output = np.arange(start[0], limit[0], delta[0], dtype=np.int32)  # expected output [10, 7]
+        start_val = 10
+        start = np.array(start_val, dtype=np.int32)  # scalar
+
+        limit_val = 6
+        limit = np.array(limit_val, dtype=np.int32)  # scalar
+
+        delta_val = -3
+        delta = np.array(delta_val, dtype=np.int32)  # scalar
+
+
+        output = np.arange(start_val, limit_val, delta_val, dtype=np.int32)  # expected output [10, 7]
         expect(node, inputs=[start, limit, delta], outputs=[output],
                name='test_range_int32_type_negative_delta')
