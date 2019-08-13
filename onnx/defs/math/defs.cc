@@ -1603,7 +1603,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            "Constrain input and output types to floating-point tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1618,6 +1618,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             if (rank < 2) {
               fail_shape_inference("Input rank must be >= 2.")
+            }
+
+            const auto mat_w = input_shape.dim(rank - 1);
+            const auto mat_h = input_shape.dim(rank - 2);
+            if (mat_w.has_dim_value() &&
+                mat_h.has_dim_value() &&
+                (mat_w.dim_value() != mat_h.dim_value())) {
+              fail_shape_inference("The inner-most 2 dimensions must have the same size.");
             }
 
             for (int i=0; i < rank - 2; ++i) {

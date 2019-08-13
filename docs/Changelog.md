@@ -10615,7 +10615,7 @@ The Function can be represented as a function.
 
 =======
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
 >>>>>>> Add Det to ONNX
