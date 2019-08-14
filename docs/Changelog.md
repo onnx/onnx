@@ -11263,8 +11263,7 @@ This version of the operator has been available since version 11 of the default 
       output = data
       output[indices[(i_0, ..., i_{q-2})]] = updates[(i_0, ..., i_{q-2})]
   
-  This operator is the inverse of GatherND. It is similar to TensorFlow's scatter_nd_update
-  operation.
+  This operator is the inverse of GatherND.
   
   Example 1:
   ```
