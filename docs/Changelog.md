@@ -10495,6 +10495,66 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
+  Scale is calculated as:
+  ```
+   y_scale = (max(x) - min(x))/(qmax - qmin)
+   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+   * data range is adjusted to include 0.
+  ```
+  Zero point is calculated as:
+  ```
+  intermediate_zero_point = (qmin - min(x))/(qmax - qmin)
+  y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
+  * rounding to nearest ties to even.
+  ```
+  Data quantization formula is:
+  ```
+  y = saturate (round (x / y_scale) + y_zero_point)
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
+  * rounding to nearest ties to even.
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>Quantized output tensor</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> : T2</dt>
+<dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain 'x' to float tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
 ### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
