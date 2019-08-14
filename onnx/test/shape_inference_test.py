@@ -1020,6 +1020,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24, 1, 1))])
 
+    def test_reduce_op_default_axes_keep_dims_false(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceMax', 'x', 'y', keepdims=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
+
     def test_argmax_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
@@ -1690,6 +1697,14 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
 
+    def test_constant(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['y'],
+                       value=make_tensor('value_tensor', TensorProto.INT64, (3,), (3, 4, 5)))],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.INT64, (3,))])  # type: ignore
+
     def test_constantofshape_with_input_shape(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
@@ -1706,6 +1721,62 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.UINT8, (None, None, None))])  # type: ignore
+
+    def test_eyelike(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4))],
+            [make_node("EyeLike", ['x'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.UINT8, (2, 4))])
+
+    def test_eyelike_dtype_override(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4))],
+            [make_node("EyeLike", ['x'], ['y'], dtype=3)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.INT8, (2, 4))])
+
+    def test_randomuniform(self):  # type: () -> None
+        graph = self._make_graph(
+            [],
+            [make_node("RandomUniform", [], ['y'], low=0.0, high=1.0, dtype=3, shape=[2, 4])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.INT8, (2, 4))])
+
+    def test_randomnormal(self):  # type: () -> None
+        graph = self._make_graph(
+            [],
+            [make_node("RandomNormal", [], ['y'], mean=0.0, scale=1.0, dtype=1, shape=[2, 4])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (2, 4))])
+
+    def test_randomuniformlike(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4))],
+            [make_node("RandomUniformLike", ['x'], ['y'], low=0.0, high=1.0, dtype=3)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.INT8, (2, 4))])
+
+    def test_randomnormallike(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4))],
+            [make_node("RandomNormalLike", ['x'], ['y'], mean=0.0, scale=1.0, dtype=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (2, 4))])
+
+    def test_multinomial(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2))],
+            [make_node("Multinomial", ['x'], ['y'], sample_size=4)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4))])
 
     def test_convinteger(self):  # type: () -> None
         graph = self._make_graph(
