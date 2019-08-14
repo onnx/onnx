@@ -10793,28 +10793,25 @@ This version of the operator has been available since version 11 of the default 
   The pseudocode determining the contents of the output is shown below-
   
   `for(int i=0; i<number_of_elements; ++i)`
-  `{`   
+  
+  `{`
+     
   `    output[i] =  start + (i * delta);  ` 
+  
   `}`	
   
   
   `Example 1`
-  Inputs:
-  start = 3
-  limit = 9
-  delta = 3
   
-  Output:
-  [3, 6]
+  Inputs: start = 3, limit = 9, delta = 3
+  
+  Output: [3, 6]
   
   `Example 2`
-  Inputs:
-  start = 10
-  limit = 4
-  delta = -2
   
-  Output:
-  [10, 8, 6]
+  Inputs: start = 10, limit = 4, delta = -2
+  
+  Output: [10, 8, 6]
   
 
 #### Version
