@@ -305,22 +305,37 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
 
-    def test_resize(self):  # type: () -> None
+    def test_resize_size(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
+             ('scales', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (4,))],
+            [make_node("Resize", ['x', 'roi', 'scales', 'sizes'], ['y'])],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (4,), (3, 5, 6, 7))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (3, 5, 6, 7))])
+
+    def test_resize_scale(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
              ('scales', TensorProto.FLOAT, (4,))],
-            [make_node("Resize", ['x', 'scales'], ['y'])],
+            [make_node("Resize", ['x', 'roi', 'scales'], ['y'])],
             [],
             initializer=[make_tensor('scales', TensorProto.FLOAT, (4,), (1.0, 1.1, 1.3, 1.9))])
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
 
-    def test_resize_raw_data(self):  # type: () -> None
+    def test_resize_scale_raw_data(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (1, 3, 4, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
              ('scales', TensorProto.FLOAT, (4,))],
-            [make_node("Resize", ['x', 'scales'], ['y'])],
+            [make_node("Resize", ['x', 'roi', 'scales'], ['y'])],
             [],
             initializer=[make_tensor('scales', TensorProto.FLOAT, (4,),
                                      vals=np.array([2.0, 1.1, 2.3, 1.9], dtype='<f4').tobytes(), raw=True)])
