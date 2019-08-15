@@ -841,21 +841,29 @@ ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of r
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
 specified by `updates` at specific index positions specified by `indices`. Its output shape
-is the same as the shape of `data`.
+is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
+That is, two or more `updates` for the same index-location is not supported.
 
-`indices` is an integer tensor. The last dimension of `indices` can be at most the rank of
-`data`:
+`indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
+ `indices' is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
+update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
+update to a slice of the tensor.
 
-    indices.shape[-1] <= rank(data)
-
-`updates` is a tensor with shape
-
-    indices.shape[:-1] + data.shape[indices.shape[-1]:]
+`updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
+first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
+The remaining dimensions of `updates` correspond to the dimensions of the
+replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
+corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
+must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+of shapes.
 
 The `output` is calculated via the following equation:
 
-    output = data
-    output[indices[(i_0, ..., i_{q-2})]] = updates[(i_0, ..., i_{q-2})]
+    output = np.copy(data)
+    update_indices = indices.shape[:-1]
+    for idx in np.ndindex(update_indices):
+        output[indices[idx]] = updates[idx]
 
 This operator is the inverse of GatherND.
 
