@@ -11271,6 +11271,10 @@ This version of the operator has been available since version 11 of the default 
       for idx in np.ndindex(update_indices):
           output[indices[idx]] = updates[idx]
   
+  The order of iteration in the above loop is not specified.
+  In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
+  This ensures that the output value does not depend on the iteration order.
+  
   This operator is the inverse of GatherND.
   
   Example 1:
