@@ -2965,7 +2965,6 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is specified by the `shape` argument and the parameter of the normal distribution
   specified by `mean` and `scale`.
-  
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -3011,7 +3010,6 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a normal distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the normal distribution are specified by `mean` and `scale`.
-  
   The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message, and be valid as an output type.
@@ -3060,7 +3058,6 @@ This version of the operator has been available since version 1 of the default O
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is specified by the `shape` argument and the range by `low` and `high`.
-  
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -3106,7 +3103,6 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a uniform distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the uniform distribution are specified by `low` and `high`.
-  
   The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
@@ -10840,6 +10836,58 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
+
+### <a name="Range-11"></a>**Range-11**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  up to `limit` (exclusive).
+  The number of elements in the output of range is computed as below-
+  `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
+  The pseudocode determining the contents of the output is shown below-
+  `for(int i=0; i<number_of_elements; ++i)`
+  `{`
+     
+  `    output[i] =  start + (i * delta);  ` 
+  `}`	
+  `Example 1`
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  `Example 2`
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 ### <a name="Resize-11"></a>**Resize-11**</a>
 
