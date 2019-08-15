@@ -236,6 +236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* RandomUniform_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
+
 The data type is specified by the 'dtype' argument. The 'dtype' argument must
 be one of the data types specified in the 'DataType' enum field in the
 TensorProto message.
@@ -285,6 +286,7 @@ static const char* RandomNormal_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is specified by the `shape` argument and the parameter of the normal distribution
 specified by `mean` and `scale`.
+
 The data type is specified by the 'dtype' argument. The 'dtype' argument must
 be one of the data types specified in the 'DataType' enum field in the
 TensorProto message.
@@ -334,6 +336,7 @@ static const char* RandomUniformLike_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the uniform distribution are specified by `low` and `high`.
+
 The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message and be valid as an output type.
@@ -398,6 +401,7 @@ static const char* RandomNormalLike_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the normal distribution are specified by `mean` and `scale`.
+
 The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message, and be valid as an output type.
