@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
+<dt><tt>max</tt> : float (default is (3.402823e+38))</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
+<dt><tt>min</tt> : float (default is (-3.402823e+38))</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -10370,6 +10370,41 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Constant-11"></a>**Constant-11**</a>
+
+  A constant tensor. Exactly one of the two attributes, either value or sparse_value,
+  must be specified.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
+<dd>The value for the elements of the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor containing the same value of the provided tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="CumSum-11"></a>**CumSum-11**</a>
 
   Performs cumulative sum of the input elements along the given axis.
@@ -10840,6 +10875,67 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
+
+### <a name="Range-11"></a>**Range-11**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  up to `limit` (exclusive).
+  
+  The number of elements in the output of range is computed as below-
+  
+  `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
+  
+  The pseudocode determining the contents of the output is shown below-
+  
+  `for(int i=0; i<number_of_elements; ++i)`
+  
+  `{`
+     
+  `    output[i] =  start + (i * delta);  ` 
+  
+  `}`	
+  
+  `Example 1`
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  
+  `Example 2`
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 ### <a name="Resize-11"></a>**Resize-11**</a>
 
