@@ -19,10 +19,6 @@ package {PACKAGE_NAME};
 //
 // The normative semantic specification of the ONNX IR is found in docs/IR.md.
 // Definitions of the built-in neural network operators may be found in docs/Operators.md.
-// #if ONNX-ML
-// Definitions of the built-in classical machine learning operators may be found in 
-// docs/Operators-ml.md.
-// #endif
 
 // Notes
 //
@@ -474,8 +470,6 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
-// #if ONNX-ML
-
   // repeated T
   message Sequence {
     // The type and optional shape of each element of the sequence.
@@ -511,13 +505,9 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
-// #endif
-
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
-
-// #if ONNX-ML
 
     // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
     //        as input and output to graphs and nodes. These types are needed to naturally
@@ -533,8 +523,6 @@ message TypeProto {
     Opaque opaque_type = 7;
 
     SparseTensor sparse_tensor_type = 8;
-
-// #endif
   }
 
   // An optional denotation can be used to denote the whole 

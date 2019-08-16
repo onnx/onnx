@@ -475,11 +475,59 @@ message TypeProto {
     TensorShapeProto shape = 2;
   }
 
+  // repeated T
+  message Sequence {
+    // The type and optional shape of each element of the sequence.
+    // This field MUST be present for this version of the IR.
+    TypeProto elem_type = 1;
+  };
+
+  // map<K,V>
+  message Map {
+    // This field MUST have a valid TensorProto.DataType value
+    // This field MUST be present for this version of the IR.
+    // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
+    int32 key_type = 1;
+    // This field MUST be present for this version of the IR.
+    TypeProto value_type = 2;
+  };
+
+  message Opaque {
+    // When missing, the domain is the same as the model's.
+    string domain = 1;
+    // The name is optional but significant when provided.
+    string name = 2;
+    // parameters that help defining the type
+    // DEPRECATED do not use.
+    // repeated TypeProto parameters = 3;
+  }
+
+  message SparseTensor { 
+    // This field MUST NOT have the value of UNDEFINED 
+    // This field MUST have a valid TensorProto.DataType value
+    // This field MUST be present for this version of the IR. 
+    int32 elem_type = 1;
+    TensorShapeProto shape = 2;
+  }
 
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
 
+    // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
+    //        as input and output to graphs and nodes. These types are needed to naturally
+    //        support classical ML operators.  DNN operators SHOULD restrict their input
+    //        and output types to tensors.
+
+    // The type of a sequence.
+    Sequence sequence_type = 4;
+
+    // The type of a map.
+    Map map_type = 5;
+
+    Opaque opaque_type = 7;
+
+    SparseTensor sparse_tensor_type = 8;
   }
 
   // An optional denotation can be used to denote the whole 
