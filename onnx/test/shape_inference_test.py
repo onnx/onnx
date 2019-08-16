@@ -2141,6 +2141,29 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, y_shape)])  # type: ignore
 
+    def test_range(self):  # type: () -> None
+        graph = self._make_graph(
+            [('start', TensorProto.FLOAT, ()),
+             ('limit', TensorProto.FLOAT, ()),
+             ('delta', TensorProto.FLOAT, ())],
+            [make_node('Range', ['start', 'limit', 'delta'], ['output'])],
+            [],
+            initializer=[make_tensor('start', TensorProto.FLOAT, (), (1,)),
+                         make_tensor('limit', TensorProto.FLOAT, (), (5,)),
+                         make_tensor('delta', TensorProto.FLOAT, (), (2,))])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (2,))])
+
+    def test_range_rank_inference(self):  # type: () -> None
+        graph = self._make_graph(
+            [('start', TensorProto.INT32, ()),
+             ('limit', TensorProto.INT32, ()),
+             ('delta', TensorProto.INT32, ())],
+            [make_node('Range', ['start', 'limit', 'delta'], ['output'])],
+            [],
+            initializer=[make_tensor('start', TensorProto.INT32, (), (1,)),
+                         make_tensor('limit', TensorProto.INT32, (), (5,))])  # Missing 'delta' initializer
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT32, (None,))])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()
