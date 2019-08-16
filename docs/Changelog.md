@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
+<dt><tt>max</tt> : float (default is (3.402823e+38))</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
+<dt><tt>min</tt> : float (default is (-3.402823e+38))</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
