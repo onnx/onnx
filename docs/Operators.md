@@ -1537,9 +1537,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
@@ -5480,7 +5480,7 @@ Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoi
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 2.000000e-01)</dt>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
 <dd>Value of alpha.</dd>
 <dt><tt>beta</tt> : float (default is 0.5)</dt>
 <dd>Value of beta.</dd>
@@ -5798,7 +5798,7 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
@@ -6053,7 +6053,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e-04)</dt>
+<dt><tt>alpha</tt> : float (default is 0.0001)</dt>
 <dd>Scaling parameter.</dd>
 <dt><tt>beta</tt> : float (default is 0.75)</dt>
 <dd>The exponent.</dd>
@@ -6417,7 +6417,7 @@ Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1<
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e-02)</dt>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
 <dd>Coefficient of leakage.</dd>
 </dl>
 
@@ -14103,9 +14103,9 @@ Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.673263e+00)</dt>
+<dt><tt>alpha</tt> : float (default is 1.67326)</dt>
 <dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
-<dt><tt>gamma</tt> : float (default is 1.050701e+00)</dt>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
 <dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 

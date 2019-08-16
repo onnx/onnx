@@ -315,11 +315,11 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>consumed_inputs</tt> : list of ints (required)</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
-<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -1447,7 +1447,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 2.000000e-01)</dt>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
 <dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float (default is 0.5)</dt>
 <dd>Value of beta default to 0.5</dd>
@@ -1613,7 +1613,7 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 </dl>
 
@@ -1662,7 +1662,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e-04)</dt>
+<dt><tt>alpha</tt> : float (default is 0.0001)</dt>
 <dd>Scaling parameter.</dd>
 <dt><tt>beta</tt> : float (default is 0.75)</dt>
 <dd>The exponent.</dd>
@@ -1855,7 +1855,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e-02)</dt>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
 <dd>Coefficient of leakage default to 0.01.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
@@ -3714,11 +3714,11 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.673200e+00)</dt>
+<dt><tt>alpha</tt> : float (default is 1.6732)</dt>
 <dd>Coefficient of SELU default to 1.6732.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>gamma</tt> : float (default is 1.050700e+00)</dt>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
 <dd>Coefficient of SELU default to 1.0507.</dd>
 </dl>
 
@@ -5082,11 +5082,11 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
-<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.402823e+38)</dt>
+<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.402823e+38)</dt>
+<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -5512,7 +5512,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 2.000000e-01)</dt>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
 <dd>Value of alpha.</dd>
 <dt><tt>beta</tt> : float (default is 0.5)</dt>
 <dd>Value of beta.</dd>
@@ -5555,7 +5555,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
@@ -5597,7 +5597,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.000000e-02)</dt>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
 <dd>Coefficient of leakage.</dd>
 </dl>
 
@@ -5941,9 +5941,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.673263e+00)</dt>
+<dt><tt>alpha</tt> : float (default is 1.67326)</dt>
 <dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
-<dt><tt>gamma</tt> : float (default is 1.050701e+00)</dt>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
 <dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
@@ -6422,9 +6422,9 @@ This version of the operator has been available since version 7 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across per activation. If false, compute the mean and variance across per feature over each mini-batch.</dd>
@@ -7994,9 +7994,9 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 1.000000e-05)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>momentum</tt> : float (default is 9.000000e-01)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
