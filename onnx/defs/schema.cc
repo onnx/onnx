@@ -260,6 +260,14 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check("Attribute '", name, "' is expected to have field 't'");
         }
         break;
+      case AttributeProto::SPARSE_TENSOR:
+        if (!attr_proto.has_sparse_tensor()) {
+          fail_check(
+              "Attribute '",
+              name,
+              "' is expected to have field 'sparse_tensor'");
+        }
+        break;
       case AttributeProto::GRAPH:
         if (!attr_proto.has_g()) {
           fail_check("Attribute '", name, "' is expected to have field 'g'");
@@ -287,6 +295,11 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check(
               "Attribute '", name, "' is expected to have field 'tensors'");
         }
+        break;
+      case AttributeProto::SPARSE_TENSORS:
+        // Not adding check ... we should likely delete the check in all other
+        // cases, which will not allow us to have an empty list as a valid value
+        // for an attribute and this seems undesirable.
         break;
       case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {

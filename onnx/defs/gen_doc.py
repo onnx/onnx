@@ -120,9 +120,13 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
                 def format_value(value):  # type: (Any) -> Text
                     if isinstance(value, float):
-                        value = np.round(value, 5)
-                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
-                        value = value.decode('utf-8')
+                        formatted = str(np.round(value, 5))
+                        # use default formatting, unless too long.
+                        if (len(formatted) > 10):
+                            formatted = str("({:e})".format(value))
+                        return formatted
+                    elif isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                        return str(value.decode('utf-8'))
                     return str(value)
 
                 if isinstance(default_value, list):
