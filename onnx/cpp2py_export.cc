@@ -110,7 +110,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("INTS", AttributeProto::INTS)
       .value("STRINGS", AttributeProto::STRINGS)
       .value("TENSORS", AttributeProto::TENSORS)
-      .value("GRAPHS", AttributeProto::GRAPHS);
+      .value("GRAPHS", AttributeProto::GRAPHS)
+      .value("SPARSE_TENSOR", AttributeProto::SPARSE_TENSOR)
+      .value("SPARSE_TENSORS", AttributeProto::SPARSE_TENSORS);
 
   py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
       .value("COMMON", OpSchema::SupportType::COMMON)

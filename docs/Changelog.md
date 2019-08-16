@@ -10382,7 +10382,7 @@ This version of the operator has been available since version 11 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>sparse_value</tt> : ???</dt>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
 <dd>The value for the elements of the output tensor in sparse format.</dd>
 <dt><tt>value</tt> : tensor</dt>
 <dd>The value for the elements of the output tensor.</dd>

@@ -2363,7 +2363,7 @@ Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a
 #### Attributes
 
 <dl>
-<dt><tt>sparse_value</tt> : ???</dt>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
 <dd>The value for the elements of the output tensor in sparse format.</dd>
 <dt><tt>value</tt> : tensor</dt>
 <dd>The value for the elements of the output tensor.</dd>
