@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML
+from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
@@ -2118,6 +2118,28 @@ class TestShapeInference(unittest.TestCase):
                            keys_strings=string_list, values_floats=float_list)], [])
             self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2))],
                                   opset_imports=[make_opsetid('ai.onnx.ml', 2), make_opsetid('', 11)])
+
+    def make_sparse(self,
+                    shape,  # type: Sequence[int]
+                    values,  # type: Sequence[int]
+                    indices_shape,  # type: Sequence[int]
+                    indices  # type: Sequence[int]
+                    ):  # type: (...) -> SparseTensorProto
+        sparse = SparseTensorProto()
+        sparse.dims.extend(shape)
+        nnz = len(values)
+        sparse.values.CopyFrom(helper.make_tensor('spval', TensorProto.INT64, (nnz,), values))
+        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
+        return sparse
+
+    def test_constant_sparse(self):  # type: () -> None
+        y_shape = [100]
+        y_value = self.make_sparse(y_shape, [13, 17, 19], [3], [9, 27, 81])
+        graph = self._make_graph(
+            [],
+            [make_node('Constant', [], ['y'], sparse_value=y_value)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, y_shape)])  # type: ignore
 
     def test_range(self):  # type: () -> None
         graph = self._make_graph(
