@@ -243,10 +243,14 @@ void check_sparse_tensor_indices_1(
     fail_check(
         "Sparse tensor indices (",
         indices.name(),
-        ") does not have NNZ values.");
+        ") has ",
+        indices.dims(0),
+        " values, but NNZ is ",
+        nnz);
 
   // Check if indices appear in ascending order, and if they have valid
-  // values.
+  // values. The i-th value in index_data is the linear index of the i-th
+  // non-zero value.
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
 
   int64_t prev_index = -1;
@@ -258,7 +262,9 @@ void check_sparse_tensor_indices_1(
           indices.name(),
           ") index value at position [",
           i,
-          "] out of range.");
+          "] out of range [0, ",
+          dense_size - 1,
+          "]");
     if (curr_index <= prev_index) {
       fail_check(
           "Sparse tensor (",
@@ -353,13 +359,6 @@ void check_sparse_tensor(
   }
 
   if (sparse_tensor_proto.has_indices()) {
-    // We keep the representation simple for now.
-    // indices must be a tensor of shape [NNZ, dense_rank].
-    // Each index value is a tuple (i_1, i_2, ..., i_r).
-    // An alternative would be to represent each index value as single
-    // integer value (the linearized index), the value the index would
-    // have if the tensor is reshaped to be 1-dimensional. This is more
-    // compact. We may add support for this later if required.
     const TensorProto& indices = sparse_tensor_proto.indices();
     check_tensor(indices, ctx);
     if (indices.data_type() != TensorProto::INT64)
@@ -367,9 +366,11 @@ void check_sparse_tensor(
           "Sparse tensor indices (", indices.name(), ") must have INT64 type.");
     switch (indices.dims().size()) {
       case 1:
+        // Indices in linearized format
         check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz);
         return;
       case 2:
+        // Check COO-style index. E.g., an index for a 3D tensor is a 3-tuple.
         check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz);
         return;
       default:

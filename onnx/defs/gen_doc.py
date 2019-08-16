@@ -123,7 +123,6 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                         formatted = str(np.round(value, 5))
                         # use default formatting, unless too long.
                         if (len(formatted) > 10):
-                            print(formatted)
                             formatted = str("({:e})".format(value))
                         return formatted
                     elif isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
