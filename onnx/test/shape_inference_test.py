@@ -2045,8 +2045,8 @@ class TestShapeInference(unittest.TestCase):
                                           make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
                                           opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
-	def test_roialign_symbolic(self):   # type: () -> None
-		graph = self._make_graph(
+    def test_roialign_symbolic(self):   # type: () -> None
+        graph = self._make_graph(
             [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
              ('rois', TensorProto.FLOAT, ('num_rois', 4)),
              ('batch_indices', TensorProto.INT64, ('num_rois',))],

@@ -5,11 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-<<<<<<< HEAD
-Node tests have covered 128/135 (94.81%, 5 generators excluded) common operators.
-=======
-Node tests have covered 133/140 (95.00%, 5 generators excluded) common operators.
->>>>>>> upstream/master
+Node tests have covered 134/141 (95.04%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2737,25 +2733,6 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 </details>
 
 
-<<<<<<< HEAD
-### GatherND
-There are 1 test cases, listed as following:
-<details>
-<summary>gathernd</summary>
-
-```python
-node = onnx.helper.make_node(
-    'GatherND',
-    inputs=['data', 'indices'],
-    outputs=['output'],
-)
-
-data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
-indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
-output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
-expect(node, inputs=[data, indices], outputs=[output],
-       name='test_gathernd_example')
-=======
 ### GatherElements
 There are 2 test cases, listed as following:
 <details>
@@ -2808,7 +2785,28 @@ y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_1')
->>>>>>> upstream/master
+```
+
+</details>
+
+
+### GatherND
+There are 1 test cases, listed as following:
+<details>
+<summary>gathernd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
+output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example')
 ```
 
 </details>
