@@ -6,6 +6,19 @@
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
+    const std::vector<int64_t>& sizes_data,
+    TensorShapeProto* output_shape) {
+  if (!sizes_data.empty()) {
+    for (int i = 0; i < input_shape.dim_size(); ++i) {
+      auto* dim = output_shape->mutable_dim(i);
+      dim->set_dim_value(sizes_data[i]);
+    }
+    return;
+  }
+}
+
+void resizeShapeInferenceHelper(
+    const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape) {
   for (int i = 0; i < input_shape.dim_size(); ++i) {
@@ -33,14 +46,14 @@ void resizeShapeInferenceHelper(
   }
 }
 
-void resizeShapeInference(InferenceContext& ctx) {
+void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  const auto scales = ctx.getInputData(1);
+  const auto scales = ctx.getInputData(is_resize_op ? 2 : 1);
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -57,7 +70,21 @@ void resizeShapeInference(InferenceContext& ctx) {
     }
   }
 
-  if (nullptr != scales) {
+  if (is_resize_op && ctx.getNumInputs() == 4) {
+    const auto sizes = ctx.getInputData(3);
+    if (nullptr != sizes) {
+      if (sizes->data_type() == TensorProto::INT64) {
+        const auto sizes_data = ParseData<int64_t>(sizes);
+        if (sizes_data.size() != static_cast<size_t>(input_shape.dim_size())) {
+          fail_shape_inference(
+              "Number of elements of input 'sizes' must be same as rank of input 'X'");
+        }
+        resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
+      } else {
+        fail_shape_inference("Input 'sizes' must have int64 element type.");
+      }
+    }
+  } else if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.
     if (scales->data_type() == TensorProto::FLOAT) {
       const auto& scales_data = ParseData<float>(scales);
@@ -68,7 +95,7 @@ void resizeShapeInference(InferenceContext& ctx) {
       resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
     } else {
       fail_shape_inference("Input 'scales' must have float element type.");
-    } // nullptr != scales
-  }
+    }
+  } // nullptr != scales
 }
 } // namespace ONNX_NAMESPACE
