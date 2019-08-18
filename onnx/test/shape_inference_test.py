@@ -2045,17 +2045,8 @@ class TestShapeInference(unittest.TestCase):
                                           make_tensor_value_info('z', TensorProto.FLOAT, (4, 3))],
                                           opset_imports=[make_opsetid('ai.onnx.ml', 1), make_opsetid('', 11)])
 
-<<<<<<< HEAD
-    def test_gathernd(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (4, 5, 6)),
-             ('indices', TensorProto.INT64, (2,))],
-            [make_node('GatherND', ['x', 'indices'], ['y'])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
-=======
-    def test_roialign_symbolic(self):   # type: () -> None
-        graph = self._make_graph(
+	def test_roialign_symbolic(self):   # type: () -> None
+		graph = self._make_graph(
             [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
              ('rois', TensorProto.FLOAT, ('num_rois', 4)),
              ('batch_indices', TensorProto.INT64, ('num_rois',))],
@@ -2172,7 +2163,14 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('start', TensorProto.INT32, (), (1,)),
                          make_tensor('limit', TensorProto.INT32, (), (5,))])  # Missing 'delta' initializer
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT32, (None,))])  # type: ignore
->>>>>>> upstream/master
+
+    def test_gathernd(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('indices', TensorProto.INT64, (2,))],
+            [make_node('GatherND', ['x', 'indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
 
 
 if __name__ == '__main__':
