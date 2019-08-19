@@ -10735,7 +10735,7 @@ This version of the operator has been available since version 11 of the default 
   2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
   
   3) The value of `indices` need to be non-negative (i.e.) >= 0. The upper bound for each value in `indices` 
-     should is bound the `data_shape` value along the corresponding axis (i.e.) `0 <= indices[(q-1) dimensions, i] < data_shape[i]`
+     is the `data_shape` value along the corresponding axis (i.e.) `0 <= indices[:, :, i] < data_shape[i]`
   
   The output is computed as follows:
   
@@ -10744,33 +10744,45 @@ This version of the operator has been available since version 11 of the default 
   1) If `indices_shape[-1] > r` => error condition
   
   2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-     of 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
-     Each *scalar value* corresponding to `data [indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+     containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
+     Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
      to form the `output` tensor (Example 1 below)
   
   3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-     of 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
-     Each *tensor slice* corresponding to `data [indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+     containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
+     Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
      to form the `output` tensor (Examples 2, 3, and 4 below)
   
   `Example 1`
+  
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+  
     indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  
     output  = [0,3]           # output_shape = [2]
   
   `Example 2`
+  
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
-    indices = [[1],[0]]      # indices_shape = [2, 1] 
+  
+    indices = [[1],[0]]      # indices_shape = [2, 1]
+  
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
   
   `Example 3`
+  
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+  
     indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+  
     output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
   
   `Example 4`
+  
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+  
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+  
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
   
 
