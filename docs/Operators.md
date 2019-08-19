@@ -2351,18 +2351,21 @@ for test_case, values_ in test_cases.items():
 
 ### <a name="Constant"></a><a name="constant">**Constant**</a>
 
-  A constant tensor.
+  A constant tensor. Exactly one of the two attributes, either value or sparse_value,
+  must be specified.
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a>
+Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a>, <a href="Changelog.md#Constant-9">Constant-9</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>value</tt> : tensor (required)</dt>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 

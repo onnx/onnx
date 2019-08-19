@@ -581,6 +581,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Unique);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, TopK);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, DepthToSpace);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Equal);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, DynamicQuantizeLinear);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GatherElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScatterElements);
@@ -597,16 +598,18 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Unique)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, CumSum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Round)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 11, BitShift)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, TopK)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 11, DepthToSpace)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Equal)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Constant)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 11, DynamicQuantizeLinear)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GatherElements)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScatterElements)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 11, GatherElements)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 11, ScatterElements)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Scatter)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Clip)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Resize)>());
