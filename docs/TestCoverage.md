@@ -2791,9 +2791,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 
 ### GatherND
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>gathernd</summary>
+<summary>float32</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2804,9 +2804,31 @@ node = onnx.helper.make_node(
 
 data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
 indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
-output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+assert (np.array_equal(output, expected_output) == True)
 expect(node, inputs=[data, indices], outputs=[output],
-       name='test_gathernd_example')
+       name='test_gathernd_example_float32')
+```
+
+</details>
+<details>
+<summary>int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[0, 1], [2, 3]], dtype=np.int32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([0, 3], dtype=np.int32)
+assert (np.array_equal(output, expected_output) == True)
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32')
 ```
 
 </details>
