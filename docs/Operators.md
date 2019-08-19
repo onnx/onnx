@@ -5097,7 +5097,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
   
-  3) The value of indices need to be non-negative (i.e.) >= 0. The upper bound for each value in `indices` 
+  3) The value of `indices` need to be non-negative (i.e.) >= 0. The upper bound for each value in `indices` 
      should is bound the `data_shape` value along the corresponding axis (i.e.) `0 <= indices[(q-1) dimensions, i] < data_shape[i]`
   
   The output is computed as follows:
@@ -5106,14 +5106,14 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
    
   1) If `indices_shape[-1] > r` => error condition
   
-  2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, ignoring the outermost `(q-1)` dimensions of `indices`,
-     within `indices` there are tensors of rank `r`.Let us think of each such `r` ranked tensor as `indices_slice`. 
-     Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)` dimensional tensor 
+  2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+     of 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
+     Each *scalar value* corresponding to `data [indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
      to form the `output` tensor (Example 1 below)
   
-  3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, ignoring the outermost `(q-1)` dimensions of `indices`,
-     within `indices` there are tensors of `rank < r`.Let us think of each such tensor as `indices_slice`. 
-     Each *tensor slice* corresponding to `data[indices_slice, :]` is filled into the corresponding location of the `(q-1)` dimensional tensor 
+  3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+     of 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
+     Each *tensor slice* corresponding to `data [indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
      to form the `output` tensor (Examples 2, 3, and 4 below)
   
   `Example 1`
