@@ -2806,7 +2806,7 @@ data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
 indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
 output = gather_nd_impl(data, indices)
 expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
-assert (np.array_equal(output, expected_output) == True)
+assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example_float32')
 ```
@@ -2826,7 +2826,7 @@ data = np.array([[0, 1], [2, 3]], dtype=np.int32)
 indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
 output = gather_nd_impl(data, indices)
 expected_output = np.array([0, 3], dtype=np.int32)
-assert (np.array_equal(output, expected_output) == True)
+assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example_int32')
 ```
