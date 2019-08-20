@@ -198,6 +198,7 @@ std::unique_ptr<Graph> graphProtoToGraph(
   // outputs them. Therefore we initialize the Nodes and Values in
   // several stages.
   //
+  // 0) add all initializers as input Values
   // 1) add all input (to the graph) Values, owned by the sentinel Param node
   // 2) add all Nodes and their output Values, but don't intialize inputs
   // 3) initialize inputs of all Nodes
@@ -225,6 +226,12 @@ std::unique_ptr<Graph> graphProtoToGraph(
     g->appendNode(n);
     n->outputs()[0]->setUniqueName("");
     value_by_name_of[""] = n->outputs()[0];
+  }
+
+  for (int i = 0; i < gp.initializer_size(); i++) {
+    auto init = tensorProtoToTensor(gp.initializer(i));
+    auto v = g->addInitializerAndInput(init, init.name());
+    value_by_name_of[init.name()] = v;
   }
 
   for (int i = 0; i < gp.input_size(); i++) {
@@ -312,11 +319,6 @@ std::unique_ptr<Graph> graphProtoToGraph(
           tensorShapeProtoToDimensions(
               gp.value_info(i).type().tensor_type().shape()));
     }
-  }
-
-  for (int i = 0; i < gp.initializer_size(); i++) {
-    auto init = tensorProtoToTensor(gp.initializer(i));
-    g->addInitializer(init, init.name());
   }
 
   return g;
