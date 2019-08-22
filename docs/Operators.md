@@ -10394,7 +10394,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>limit</tt> : T</dt>
 <dd>Scalar. Exclusive upper limit for the range of output values.</dd>
 <dt><tt>delta</tt> (optional) : T</dt>
-<dd>Scalar. Value to step by (Defaults to 1).</dd>
+<dd>(Optional) Scalar. Value to step by (Defaults to 1).</dd>
 </dl>
 
 #### Outputs
