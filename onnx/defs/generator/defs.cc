@@ -629,7 +629,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2, 
             "delta", 
-            "Scalar. Value to step by (Defaults to 1).", 
+            "(Optional) Scalar. Value to step by (Defaults to 1).", 
             "T",
             OpSchema::Optional)
         .Output(
