@@ -29,6 +29,21 @@ class Range(Base):
                name='test_range_float_type_positive_delta')
 
     @staticmethod
+    def export_range_int64_type_missing_delta():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Range',
+            inputs=['start', 'limit'],
+            outputs=['output'],
+        )
+
+        start = np.int64(1)
+        limit = np.int64(3)
+
+        output = np.arange(start, limit, 1, dtype=np.int64)  # expected output [1, 2]
+        expect(node, inputs=[start, limit], outputs=[output],
+               name='test_range_int64_type_missing_delta')
+
+    @staticmethod
     def export_range_int32_type_negative_delta():  # type: () -> None
         node = onnx.helper.make_node(
             'Range',
