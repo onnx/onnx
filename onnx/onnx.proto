@@ -542,7 +542,7 @@ message TypeProto {
 
     // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
     //        as input and output to graphs and nodes. These types are needed to naturally
-    //        support classical ML operators.  DNN operators SHOULD restrict their input
+    //        support classical ML operators. DNN operators SHOULD restrict their input
     //        and output types to tensors.
 
     // The type of a sequence.
