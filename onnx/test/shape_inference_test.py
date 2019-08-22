@@ -2153,6 +2153,16 @@ class TestShapeInference(unittest.TestCase):
                          make_tensor('delta', TensorProto.FLOAT, (), (2,))])
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (2,))])
 
+    def test_range_missing_optional_input(self):  # type: () -> None
+        graph = self._make_graph(
+            [('start', TensorProto.INT64, ()),
+             ('limit', TensorProto.INT64, ())],
+            [make_node('Range', ['start', 'limit'], ['output'])],
+            [],
+            initializer=[make_tensor('start', TensorProto.INT64, (), (2,)),
+                         make_tensor('limit', TensorProto.INT64, (), (7,))])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT64, (5,))])
+
     def test_range_rank_inference(self):  # type: () -> None
         graph = self._make_graph(
             [('start', TensorProto.INT32, ()),

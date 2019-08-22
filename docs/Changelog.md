@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is (3.402823e+38))</dt>
+<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is (-3.402823e+38))</dt>
+<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -10908,15 +10908,15 @@ This version of the operator has been available since version 11 of the default 
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>start</tt> : T</dt>
 <dd>Scalar. First entry for the range of output values.</dd>
 <dt><tt>limit</tt> : T</dt>
 <dd>Scalar. Exclusive upper limit for the range of output values.</dd>
-<dt><tt>delta</tt> : T</dt>
-<dd>Scalar. Value to step by.</dd>
+<dt><tt>delta</tt> (optional) : T</dt>
+<dd>Scalar. Value to step by (Defaults to 1).</dd>
 </dl>
 
 #### Outputs
@@ -10932,10 +10932,6 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 ### <a name="Resize-11"></a>**Resize-11**</a>
 

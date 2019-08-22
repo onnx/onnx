@@ -5451,7 +5451,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
 
 ### Range
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>range_float_type_positive_delta</summary>
 
@@ -5489,6 +5489,25 @@ delta = np.int32(-3)
 output = np.arange(start, limit, delta, dtype=np.int32)  # expected output [10, 7]
 expect(node, inputs=[start, limit, delta], outputs=[output],
        name='test_range_int32_type_negative_delta')
+```
+
+</details>
+<details>
+<summary>range_int64_type_missing_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit'],
+    outputs=['output'],
+)
+
+start = np.int64(1)
+limit = np.int64(3)
+
+output = np.arange(start, limit, 1, dtype=np.int64)  # expected output [1, 2]
+expect(node, inputs=[start, limit], outputs=[output],
+       name='test_range_int64_type_missing_delta')
 ```
 
 </details>

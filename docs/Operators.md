@@ -95,6 +95,7 @@
   * <a href="#RandomNormalLike">RandomNormalLike</a>
   * <a href="#RandomUniform">RandomUniform</a>
   * <a href="#RandomUniformLike">RandomUniformLike</a>
+  * <a href="#Range">Range</a>
   * <a href="#Reciprocal">Reciprocal</a>
   * <a href="#ReduceL1">ReduceL1</a>
   * <a href="#ReduceL2">ReduceL2</a>
@@ -150,7 +151,6 @@
   **Operators with function registered:**
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
-  * <a href="#Range">Range</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -10386,15 +10386,15 @@ This version of the operator has been available since version 1 of the default O
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>start</tt> : T</dt>
 <dd>Scalar. First entry for the range of output values.</dd>
 <dt><tt>limit</tt> : T</dt>
 <dd>Scalar. Exclusive upper limit for the range of output values.</dd>
-<dt><tt>delta</tt> : T</dt>
-<dd>Scalar. Value to step by.</dd>
+<dt><tt>delta</tt> (optional) : T</dt>
+<dd>Scalar. Value to step by (Defaults to 1).</dd>
 </dl>
 
 #### Outputs
@@ -10410,10 +10410,6 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 
 #### Examples
@@ -10457,6 +10453,27 @@ delta = np.int32(-3)
 output = np.arange(start, limit, delta, dtype=np.int32)  # expected output [10, 7]
 expect(node, inputs=[start, limit, delta], outputs=[output],
        name='test_range_int32_type_negative_delta')
+```
+
+</details>
+
+
+<details>
+<summary>range_int64_type_missing_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit'],
+    outputs=['output'],
+)
+
+start = np.int64(1)
+limit = np.int64(3)
+
+output = np.arange(start, limit, 1, dtype=np.int64)  # expected output [1, 2]
+expect(node, inputs=[start, limit], outputs=[output],
+       name='test_range_int64_type_missing_delta')
 ```
 
 </details>

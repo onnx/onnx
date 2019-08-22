@@ -593,14 +593,14 @@ inline int64_t compute_output_dim_for_range(
     const TensorProto* limit,
     const TensorProto* delta) {
   if (start->dims().size() != 0 || limit->dims().size() != 0 ||
-      delta->dims().size() != 0) {
+      (delta != nullptr && delta->dims().size() != 0)) {
     fail_shape_inference(
         "Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
   }
 
   const auto& start_data = ParseData<T>(start);
   const auto& limit_data = ParseData<T>(limit);
-  const auto& delta_data = ParseData<T>(delta);
+  const auto& delta_data = (delta != nullptr) ? ParseData<T>(delta) : std::vector<T>(1, 1);
 
   int64_t n = static_cast<int64_t>(
       ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
@@ -609,101 +609,6 @@ inline int64_t compute_output_dim_for_range(
     n = 0;
 
   return n;
-}
-
-const std::vector<NodeProto> build_nodes_range_op() {
-  // body for 'Loop node'
-  GraphProto loop_sub_graph;
-  loop_sub_graph.set_name("loop_body_attribute");
-
-  // 'Loop' node 'body' attribute's graph inputs
-  // input 0 - number of iteration
-  auto* input_value_info_proto_0 = loop_sub_graph.add_input();
-  input_value_info_proto_0->set_name("i");
-  // add an empty shape
-  auto* input_0_type_proto_tensor =
-      input_value_info_proto_0->mutable_type()->mutable_tensor_type();
-  input_0_type_proto_tensor->mutable_shape()->Clear();
-  // always INT64 type
-  input_0_type_proto_tensor->set_elem_type(TensorProto_DataType_INT64);
-
-  // input 1 - condition
-  auto* input_value_info_proto_1 = loop_sub_graph.add_input();
-  input_value_info_proto_1->set_name("cond");
-  // add an empty shape
-  auto* input_1_type_proto_tensor =
-      input_value_info_proto_1->mutable_type()->mutable_tensor_type();
-  input_1_type_proto_tensor->mutable_shape()->Clear();
-  // always BOOL type
-  input_1_type_proto_tensor->set_elem_type(TensorProto_DataType_BOOL);
-
-  // input 2 - loop carried dependency
-  auto* input_value_info_proto_2 = loop_sub_graph.add_input();
-  input_value_info_proto_2->set_name("prev");
-  // add an empty shape
-  auto* input_2_type_proto_tensor =
-      input_value_info_proto_2->mutable_type()->mutable_tensor_type();
-  input_2_type_proto_tensor->mutable_shape()->Clear();
-
-  // 'Loop' node 'body' attribute's graph nodes
-  auto* node_proto_0 = loop_sub_graph.add_node();
-  node_proto_0->set_op_type("Identity");
-  node_proto_0->add_input();
-  node_proto_0->set_input(0, "cond");
-  node_proto_0->add_output();
-  node_proto_0->set_output(0, "cond_out");
-
-  auto* node_proto_1 = loop_sub_graph.add_node();
-  node_proto_1->set_op_type("Add");
-  node_proto_1->add_input();
-  node_proto_1->set_input(0, "prev");
-  node_proto_1->add_input();
-  node_proto_1->set_input(1, "delta");
-  node_proto_1->add_output();
-  node_proto_1->set_output(0, "current");
-
-  auto* node_proto_2 = loop_sub_graph.add_node();
-  node_proto_2->set_op_type("Identity");
-  node_proto_2->add_input();
-  node_proto_2->set_input(0, "prev");
-  node_proto_2->add_output();
-  node_proto_2->set_output(0, "range");
-
-  // 'Loop' node 'body' attribute's graph inputs
-  auto* output_value_info_proto_0 = loop_sub_graph.add_output();
-  output_value_info_proto_0->set_name("cond_out");
-
-  auto* output_value_info_proto_1 = loop_sub_graph.add_output();
-  output_value_info_proto_1->set_name("current");
-
-  auto* output_value_info_proto_2 = loop_sub_graph.add_output();
-  output_value_info_proto_2->set_name("range");
-
-  return FunctionBodyHelper::BuildNodes(
-      {// nodes: {outputs, op, inputs, attributes}
-       {{"sub_result"}, "Sub", {"limit", "start"}},
-       {{"sub_result_casted"},
-        "Cast",
-        {"sub_result"},
-        {{"to", static_cast<int64_t>(1)}}},
-       {{"delta_casted"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
-       {{"div_result"}, "Div", {"sub_result_casted", "delta_casted"}},
-       {{"ceil_result"}, "Ceil", {"div_result"}},
-       // we want max(0, ceil_cast_int) as negative values would evaluate to
-       // bool true in next step
-       {{"ceil_result_relu"}, "Relu", {"ceil_result"}},
-       {{"ceil_result_relu_int"},
-        "Cast",
-        {"ceil_result_relu"},
-        {{"to", static_cast<int64_t>(7)}}},
-       {{"ceil_result_relu_bool"},
-        "Cast",
-        {"ceil_result_relu"},
-        {{"to", static_cast<int64_t>(9)}}},
-       {{"variadic_output", "output"},
-        "Loop",
-        {"ceil_result_relu_int", "ceil_result_relu_bool", "start"},
-        {MakeAttribute("body", loop_sub_graph)}}});
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -721,7 +626,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "limit",
             "Scalar. Exclusive upper limit for the range of output values.",
             "T")
-        .Input(2, "delta", "Scalar. Value to step by.", "T")
+        .Input(
+            2, 
+            "delta", 
+            "Scalar. Value to step by (Defaults to 1).", 
+            "T",
+            OpSchema::Optional)
         .Output(
             0,
             "output",
@@ -735,15 +645,17 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int32)",
              "tensor(int64)"},
             "Constrain input types to common numeric type tensors.")
-        .FunctionBody(build_nodes_range_op())
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
+          const auto num_inputs = ctx.getNumInputs();
+
           // Shape inference
-          const auto* start_initializer = ctx.getInputData(0);
-          const auto* limit_initializer = ctx.getInputData(1);
-          const auto* delta_initializer = ctx.getInputData(2);
+          const TensorProto* start_initializer = ctx.getInputData(0);
+          const TensorProto* limit_initializer = ctx.getInputData(1);
+          const TensorProto* delta_initializer =
+              num_inputs == 3 ? ctx.getInputData(2) : nullptr;
 
           // Output is always 1-D
           auto* output_dim = ctx.getOutputType(0)
@@ -751,15 +663,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                                  ->mutable_shape()
                                  ->add_dim();
 
+
           // If any of Range's inputs are not initializers, the output dimension
           // value would remain unknown.
           if (start_initializer != nullptr && limit_initializer != nullptr &&
-              delta_initializer != nullptr) {
+              (num_inputs == 2 || delta_initializer != nullptr)) {
             // Make sure the input types are homogeneous
             if ((start_initializer->data_type() !=
                  limit_initializer->data_type()) ||
-                (start_initializer->data_type() !=
-                 delta_initializer->data_type())) {
+                (num_inputs == 3 &&
+                 (start_initializer->data_type() !=
+                 delta_initializer->data_type()))) {
               fail_shape_inference(
                   "All inputs to 'Range' op must be of the same type");
             }
