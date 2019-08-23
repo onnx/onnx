@@ -3690,7 +3690,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.arange(4).reshape(2, 2).astype(np.float32)
-y = det_impl(x)  # expect -2
+y = np.linalg.det(x)  # expect -2
 expect(node, inputs=[x], outputs=[y],
        name='test_det_2d')
 ```
@@ -3709,7 +3709,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([[[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]]]).astype(np.float32)
-y = det_impl(x)  # expect array([-2., -3., -8.])
+y = np.linalg.det(x)  # expect array([-2., -3., -8.])
 expect(node, inputs=[x], outputs=[y],
        name='test_det_nd')
 ```

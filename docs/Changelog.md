@@ -10530,7 +10530,39 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-<<<<<<< HEAD
+### <a name="Det-11"></a>**Det-11**</a>
+
+  Det calculates determinant of a square matrix or batches of square matrices.
+  Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+  and the inner-most 2 dimensions form square matrices.
+  The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+  e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
 ### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
 
   A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
@@ -10555,22 +10587,6 @@ This version of the operator has been available since version 11 of the default 
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
   * rounding to nearest ties to even.
   ```
-=======
-### <a name="Det-11"></a>**Det-11**</a>
-
-  Det calculates determinant of a square matrix or batches of square matrices.
-  Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices.
-<<<<<<< HEAD
-  The output is a tensor of shape [*], containing the determinants of all input submatrices.
->>>>>>> Add Det to ONNX
-=======
-  The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
-<<<<<<< HEAD
->>>>>>> fix doc
-=======
-  e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
->>>>>>> emphasize the case where output is scalar. Improve shape inference error message.
 
 #### Version
 
@@ -10579,34 +10595,24 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>x</tt> : T1</dt>
-=======
-<dt><tt>X</tt> : T</dt>
->>>>>>> Add Det to ONNX
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>y</tt> : T2</dt>
 <dd>Quantized output tensor</dd>
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> : T2</dt>
 <dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
-=======
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
->>>>>>> Add Det to ONNX
 </dl>
 
 #### Type Constraints
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>T1</tt> : tensor(float)</dt>
 <dd>Constrain 'x' to float tensor.</dd>
 <dt><tt>T2</tt> : tensor(uint8)</dt>
@@ -10617,12 +10623,6 @@ This version of the operator has been available since version 11 of the default 
 
 The Function can be represented as a function.
 
-=======
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to floating-point tensors.</dd>
-</dl>
-
->>>>>>> Add Det to ONNX
 ### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
