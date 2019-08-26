@@ -10626,6 +10626,89 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
 
+### <a name="Gather-11"></a>**Gather-11**</a>
+
+  Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
+  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
+  them in an output tensor of rank q + (r - 1).
+  Example 1:
+  ```
+    data = [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ]
+    indices = [
+        [0, 1],
+        [1, 2],
+    ]
+    output = [
+        [
+            [1.0, 1.2],
+            [2.3, 3.4],
+        ],
+        [
+            [2.3, 3.4],
+            [4.5, 5.7],
+        ],
+    ]
+  ```
+  Example 2:
+  ```
+    data = [
+        [1.0, 1.2, 1.9],
+        [2.3, 3.4, 3.9],
+        [4.5, 5.7, 5.9],
+    ]
+    indices = [
+        [0, 2],
+    ]
+    axis = 1,
+    output = [
+        [
+            [1.0, 1.9],
+            [2.3, 3.9],
+            [4.5, 5.9],
+        ],
+    ]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1]along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank q + (r - 1).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
 ### <a name="GatherElements-11"></a>**GatherElements-11**</a>
 
   GatherElements takes two inputs `data` and `indices` of the same rank r >= 1

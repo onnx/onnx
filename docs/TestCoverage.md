@@ -2692,7 +2692,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
 
 ### Gather
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>gather_0</summary>
 
@@ -2728,6 +2728,25 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+<details>
+<summary>gather_2</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.arange(10).astype(np.float32)
+indices = np.array([0, -9, -10])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_2')
 ```
 
 </details>

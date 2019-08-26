@@ -928,7 +928,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Gather_ver1_doc = R"DOC(
+static const char* Gather_ver11_doc = R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
@@ -977,9 +977,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
-    1,
+    11,
     OpSchema()
-        .SetDoc(Gather_ver1_doc)
+        .SetDoc(Gather_ver11_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
@@ -990,8 +990,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. "
-            "It is an error if any of the index values are out of bounds.",
+            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1]"
+            "along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
         .TypeConstraint(

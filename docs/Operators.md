@@ -4849,7 +4849,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>
 
 #### Attributes
 
@@ -4864,7 +4866,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1]along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -4923,6 +4925,27 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+
+
+<details>
+<summary>gather_2</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.arange(10).astype(np.float32)
+indices = np.array([0, -9, -10])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_2')
 ```
 
 </details>
