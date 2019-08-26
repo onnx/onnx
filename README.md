@@ -33,7 +33,7 @@ ONNX is a [community project](https://github.com/onnx/community). We encourage y
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
 
 If you think some operator should be added to ONNX specification, please read
-[this document](docs/AddNewOp.md).
+[this document](docs/operators/AddNewOp.md).
 
 # Discuss
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use Gitter for more real-time discussion:
