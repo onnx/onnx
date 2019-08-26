@@ -2753,7 +2753,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 
 ### GatherElements
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>gather_elements_0</summary>
 
@@ -2804,6 +2804,33 @@ y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_1')
+```
+
+</details>
+<details>
+<summary>gather_elements_2</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[-1, -2, 0],
+                    [-2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[7, 5, 3],
+#  [4, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_2')
 ```
 
 </details>
@@ -7864,7 +7891,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 
 ### ScatterElements
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -7886,6 +7913,30 @@ y = scatter_elements(data, indices, updates, axis)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_negative_indices</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, -3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 2.1, 4.0, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_negative_indices')
 ```
 
 </details>

@@ -5026,7 +5026,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, with the same rank r as the input.</dd>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to bewithin bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -5100,6 +5100,35 @@ y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_1')
+```
+
+</details>
+
+
+<details>
+<summary>gather_elements_2</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[-1, -2, 0],
+                    [-2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[7, 5, 3],
+#  [4, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_2')
 ```
 
 </details>
@@ -14034,7 +14063,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input).</dd>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to bewithin bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 <dt><tt>updates</tt> : T</dt>
 <dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
 </dl>
@@ -14079,6 +14108,32 @@ y = scatter_elements(data, indices, updates, axis)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_with_negative_indices</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, -3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 2.1, 4.0, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_negative_indices')
 ```
 
 </details>
