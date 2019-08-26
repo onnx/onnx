@@ -2732,7 +2732,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 </details>
 <details>
-<summary>gather_2</summary>
+<summary>gather_negative_indices</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2746,7 +2746,7 @@ indices = np.array([0, -9, -10])
 y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-       name='test_gather_2')
+       name='test_gather_negative_indices')
 ```
 
 </details>
@@ -2808,7 +2808,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 </details>
 <details>
-<summary>gather_elements_2</summary>
+<summary>gather_elements_negative_indices</summary>
 
 ```python
 axis = 0
@@ -2830,7 +2830,7 @@ y = gather_elements(data, indices, axis)
 #  [4, 2, 3]]
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-       name='test_gather_elements_2')
+       name='test_gather_elements_negative_indices')
 ```
 
 </details>

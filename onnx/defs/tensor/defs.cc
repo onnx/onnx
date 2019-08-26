@@ -813,7 +813,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of r >= 1 (same rank as input).",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Input(
             2,
@@ -905,7 +906,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of r >= 1 (same rank as input).",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Input(
             2,
@@ -990,7 +992,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1]"
+            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] "
             "along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
@@ -1113,7 +1115,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, with the same rank r as the input.",
+            "Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of the same shape as indices.", "T")
         .TypeConstraint(

@@ -4866,7 +4866,7 @@ Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1]along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -4931,7 +4931,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 
 <details>
-<summary>gather_2</summary>
+<summary>gather_negative_indices</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -4945,7 +4945,7 @@ indices = np.array([0, -9, -10])
 y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-       name='test_gather_2')
+       name='test_gather_negative_indices')
 ```
 
 </details>
@@ -5026,7 +5026,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to bewithin bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -5106,7 +5106,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 
 <details>
-<summary>gather_elements_2</summary>
+<summary>gather_elements_negative_indices</summary>
 
 ```python
 axis = 0
@@ -5128,7 +5128,7 @@ y = gather_elements(data, indices, axis)
 #  [4, 2, 3]]
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-       name='test_gather_elements_2')
+       name='test_gather_elements_negative_indices')
 ```
 
 </details>
@@ -14063,7 +14063,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to bewithin bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 <dt><tt>updates</tt> : T</dt>
 <dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
 </dl>

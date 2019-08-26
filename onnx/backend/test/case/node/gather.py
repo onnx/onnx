@@ -43,7 +43,7 @@ class Gather(Base):
                name='test_gather_1')
 
     @staticmethod
-    def export_gather_2():  # type: () -> None
+    def export_gather_negative_indices():  # type: () -> None
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -55,4 +55,4 @@ class Gather(Base):
         y = np.take(data, indices, axis=0)
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-               name='test_gather_2')
+               name='test_gather_negative_indices')
