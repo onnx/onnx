@@ -10784,7 +10784,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -10957,6 +10957,61 @@ This version of the operator has been available since version 11 of the default 
 <dd>tensor of int64, which should be a scalar.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>tensor of bool, which should be a scalar.</dd>
+</dl>
+
+### <a name="OneHot-11"></a>**OneHot-11**</a>
+
+  Produces a one-hot tensor based on inputs.
+      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+      are specified as part of required input argument 'values', which is a two-element tensor of format
+      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+      input tensor. The additional dimension is for one-hot representation. The additional dimension will
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
+      output tensor.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>indices</tt> : T1</dt>
+<dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dt><tt>depth</tt> : T2</dt>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dt><tt>values</tt> : T3</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T3</dt>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
 </dl>
 
 ### <a name="Range-11"></a>**Range-11**</a>

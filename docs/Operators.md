@@ -5026,7 +5026,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -9177,12 +9177,14 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
       dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
       dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-      the range [0, depth) will result in one-hot representation with all 'off_value' values in the
+      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
       output tensor.
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#OneHot-9">OneHot-9</a>
 
 #### Attributes
 
@@ -9195,9 +9197,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>indices</tt> : T1</dt>
-<dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> : T2</dt>
-<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [0, depth). In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
 <dt><tt>values</tt> : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
@@ -9244,6 +9246,32 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>with_negative_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, -2],
+                    [2, -4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
 ```
 
 </details>

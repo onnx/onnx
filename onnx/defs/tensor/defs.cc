@@ -1115,7 +1115,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, with the same rank r as the input.All index values are expected to be "
+            "Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be "
             "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of the same shape as indices.", "T")
@@ -1759,7 +1759,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains to boolean tensors."));
 
-static const char* OneHot_ver9_doc = R"DOC(
+static const char* OneHot_ver11_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
     The locations represented by the index values in the 'indices' input tensor will have 'on_value'
     and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
@@ -1770,15 +1770,15 @@ static const char* OneHot_ver9_doc = R"DOC(
     dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
     dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
     as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-    the range [0, depth) will result in one-hot representation with all 'off_value' values in the
+    the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
     output tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     OneHot,
-    9,
+    11,
     OpSchema()
-        .SetDoc(OneHot_ver9_doc)
+        .SetDoc(OneHot_ver11_doc)
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
@@ -1789,9 +1789,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "indices",
-            "Input tensor containing indices. The values must be non-negative integers. "
-            "Any entries in the 'indices' input tensor with values outside the range [0, depth) "
-            "will result in one-hot representation with all 'off_value' values in the output tensor."
+            "Input tensor containing indices. Any entries in the 'indices' input tensor with "
+            "values outside the range [-depth, depth-1] will result in one-hot representation with all "
+            "'off_value' values in the output tensor."
             "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
             "T1")
         .Input(
@@ -1800,7 +1800,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Scalar specifying the number of classes in one-hot tensor. This is also the size "
             "of the one-hot dimension (specified by 'axis' attribute) added on in the output "
             "tensor. The values in the 'indices' input tensor are expected to be "
-            "in the range [0, depth). "
+            "in the range [-depth, depth-1]. "
             "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
             "T2")
         .Input(
