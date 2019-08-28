@@ -52,6 +52,24 @@ void check_value_info(
       const auto& type = value_info.type().tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
+      for (const auto& dim : type.shape().dim()) {
+        switch (dim.value_case()) {
+          case TensorShapeProto_Dimension::ValueCase::kDimParam:
+            break;
+          case TensorShapeProto_Dimension::ValueCase::kDimValue:
+            if (dim.dim_value() < 0)
+              fail_check(
+                  "dim value must >=0, (value_info name: ",
+                  value_info.name(),
+                  "): ");
+            break;
+          default:
+            fail_check(
+                "tensor dim info is not set (value_info name: ",
+                value_info.name(),
+                "): ");
+        }
+      }
     } break;
 #ifdef ONNX_ML
     case TypeProto::kSequenceType: {
