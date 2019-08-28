@@ -10530,6 +10530,39 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+### <a name="Det-11"></a>**Det-11**</a>
+
+  Det calculates determinant of a square matrix or batches of square matrices.
+  Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+  and the inner-most 2 dimensions form square matrices.
+  The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+  e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
 ### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
 
   A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
