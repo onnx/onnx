@@ -43,7 +43,14 @@ before_build:
   )
   ELSE
   (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy
+    IF "%CONDA_PREFIX%"=="C:\Miniconda36-x64"
+    (
+    conda install -y -c conda-forge libprotobuf=3.5.2 numpy=1.17.0
+    )
+    ELSE
+    (
+    conda install -y -c conda-forge libprotobuf=3.5.2 numpy
+    )
   )
 - cmd: pip install --quiet pytest nbval numpy
 
