@@ -442,7 +442,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Slice_ver10_doc = R"DOC(
+static const char* Slice_ver11_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
@@ -481,9 +481,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
-    10,
+    11,
     OpSchema()
-        .SetDoc(Slice_ver10_doc)
+        .SetDoc(Slice_ver11_doc)
         .Input(0, "data", "Tensor of data to extract slices from.", "T")
         .Input(
             1,
@@ -498,7 +498,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "axes",
-            "1-D tensor of axes that `starts` and `ends` apply to.",
+            "1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions "
+            "from the back. Accepted range in [-r, r-1].",
             "Tind",
             OpSchema::Optional)
         .Input(
@@ -1129,7 +1130,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 1, 0);
         }));
 
-static const char* Squeeze_ver1_doc = R"DOC(
+static const char* Squeeze_ver11_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
@@ -1138,14 +1139,14 @@ the shape. If an axis is selected with shape entry not equal to one, an error is
 
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
-    1,
+    11,
     OpSchema()
         .Attr(
             "axes",
             "List of non-negative integers, indicate the dimensions to squeeze.",
             AttributeProto::INTS,
             OPTIONAL)
-        .SetDoc(Squeeze_ver1_doc)
+        .SetDoc(Squeeze_ver11_doc)
         .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
         .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
         .TypeConstraint(
@@ -1170,8 +1171,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
-          for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
-            if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
+          const auto rank = input_shape.dim_size();
+          for (int i = 0, j = 0; i < rank; ++i) {
+            auto axis_j = axes[j] < 0
+                ? axes[j] + rank : axes[j];
+            if (static_cast<size_t>(j) < axes.size() && axis_j == i) {
                 if(input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                     fail_shape_inference(
                         "Dimension of input ", 
