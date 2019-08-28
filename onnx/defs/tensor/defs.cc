@@ -1664,9 +1664,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             Resize_attr_coordinate_transformation_mode_doc,
             AttributeProto::STRING,
             std::string("half_pixel"))
-        .Attr(
-            "nearest_mode",
-            "Four modes: round_prefer_floor (default), round_prefer_ceil, floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
+        .Attr("nearest_mode",
+            "Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
             AttributeProto::STRING,
             std::string("round_prefer_floor"))
         .Attr(
