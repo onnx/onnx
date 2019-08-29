@@ -2401,7 +2401,7 @@ Some salient points about the inputs' rank and shape:
 
 2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
 
-3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`
+3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
    It is an error if any of the index values are out of bounds.
 
 The output is computed as follows:
