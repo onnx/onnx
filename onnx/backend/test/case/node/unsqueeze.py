@@ -25,3 +25,16 @@ class Unsqueeze(Base):
 
         expect(node, inputs=[x], outputs=[y],
                name='test_unsqueeze')
+
+    @staticmethod
+    def export_unsqueeze_negative_axes():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Unsqueeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[-2],
+        )
+        x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+        y = np.squeeze(x, axis=-2)
+        expect(node, inputs=[x], outputs=[y],
+               name='test_unsqueeze_negative_axes')

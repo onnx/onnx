@@ -1143,7 +1143,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "axes",
-            "List of non-negative integers, indicate the dimensions to squeeze.",
+            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "from the back. Accepted range in [-r, r-1].",
             AttributeProto::INTS,
             OPTIONAL)
         .SetDoc(Squeeze_ver11_doc)
@@ -1170,11 +1171,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-
           const auto rank = input_shape.dim_size();
           for (int i = 0, j = 0; i < rank; ++i) {
-            auto axis_j = axes[j] < 0
-                ? axes[j] + rank : axes[j];
+            auto axis_j = axes[j] < 0 ? axes[j] + rank : axes[j];
             if (static_cast<size_t>(j) < axes.size() && axis_j == i) {
                 if(input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                     fail_shape_inference(
@@ -1194,7 +1193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Unsqueeze_ver1_doc = R"DOC(
+static const char* Unsqueeze_ver11_doc = R"DOC(
 Insert single-dimensional entries to the shape of a tensor.
 Takes one required argument `axes`, a list of dimensions that will be inserted.
 Dimension indices in `axes` are as seen in the output tensor. For example:
@@ -1204,13 +1203,14 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
-    1,
+    11,
     OpSchema()
         .Attr(
             "axes",
-            "List of non-negative integers, indicate the dimensions to be inserted",
+            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
+            "from the back. Accepted range in [-r, r-1].",
             AttributeProto::INTS)
-        .SetDoc(Unsqueeze_ver1_doc)
+        .SetDoc(Unsqueeze_ver11_doc)
         .Input(0, "data", "Original tensor", "T")
         .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
         .TypeConstraint(
@@ -1234,7 +1234,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto rank = input_shape.dim_size();
+          for(int i = 0; i < axes.size(); ++i) {
+            axes[i] = axes[i] < 0 ? axes[i] + rank : axes[i];
+          }
           int j = 0;
           for (int i = 0;
                i < ctx.getInputType(0)->tensor_type().shape().dim_size();
@@ -1760,7 +1764,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains to boolean tensors."));
 
-static const char* OneHot_ver9_doc = R"DOC(
+static const char* OneHot_ver11_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
     The locations represented by the index values in the 'indices' input tensor will have 'on_value'
     and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
@@ -1777,14 +1781,15 @@ static const char* OneHot_ver9_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     OneHot,
-    9,
+    11,
     OpSchema()
-        .SetDoc(OneHot_ver9_doc)
+        .SetDoc(OneHot_ver11_doc)
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
             "axis=-1 means that the additional dimension will be inserted as the "
-            "innermost/last dimension in the output tensor.",
+            "innermost/last dimension in the output tensor. Negative value means counting dimensions "
+            "from the back. Accepted range in [-r-1, r] where r = rank(indices).",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Input(

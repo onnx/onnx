@@ -1080,4 +1080,223 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
+static const char* Unsqueeze_ver1_doc = R"DOC(
+Insert single-dimensional entries to the shape of a tensor.
+Takes one required argument `axes`, a list of dimensions that will be inserted.
+Dimension indices in `axes` are as seen in the output tensor. For example:
+  Given a tensor such that tensor with shape [3, 4, 5], then
+  Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unsqueeze,
+    1,
+    OpSchema()
+        .Attr(
+            "axes",
+            "List of non-negative integers, indicate the dimensions to be inserted",
+            AttributeProto::INTS)
+        .SetDoc(Unsqueeze_ver1_doc)
+        .Input(0, "data", "Original tensor", "T")
+        .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          std::vector<int64_t> axes;
+          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+            return;
+          }
+          std::sort(axes.begin(), axes.end());
+
+          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+            return;
+          }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          int j = 0;
+          for (int i = 0;
+               i < ctx.getInputType(0)->tensor_type().shape().dim_size();
+               ++i) {
+            while (static_cast<size_t>(j) < axes.size() &&
+                   axes[j] ==
+                       ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
+              ctx.getOutputType(0)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->add_dim()
+                  ->set_dim_value(1);
+              ++j;
+            }
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() =
+                ctx.getInputType(0)->tensor_type().shape().dim(i);
+          }
+          while (static_cast<size_t>(j) < axes.size() &&
+                 axes[j] ==
+                     ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->add_dim()
+                ->set_dim_value(1);
+            ++j;
+          }
+        }));
+
+static const char* OneHot_ver9_doc = R"DOC(
+    Produces a one-hot tensor based on inputs.
+    The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+    are specified as part of required input argument 'values', which is a two-element tensor of format
+    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+    input tensor. The additional dimension is for one-hot representation. The additional dimension will
+    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+    the range [0, depth) will result in one-hot representation with all 'off_value' values in the
+    output tensor.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OneHot,
+    9,
+    OpSchema()
+        .SetDoc(OneHot_ver9_doc)
+        .Attr(
+            "axis",
+            "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
+            "axis=-1 means that the additional dimension will be inserted as the "
+            "innermost/last dimension in the output tensor.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Input(
+            0,
+            "indices",
+            "Input tensor containing indices. The values must be non-negative integers. "
+            "Any entries in the 'indices' input tensor with values outside the range [0, depth) "
+            "will result in one-hot representation with all 'off_value' values in the output tensor."
+            "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
+            "T1")
+        .Input(
+            1,
+            "depth",
+            "Scalar specifying the number of classes in one-hot tensor. This is also the size "
+            "of the one-hot dimension (specified by 'axis' attribute) added on in the output "
+            "tensor. The values in the 'indices' input tensor are expected to be "
+            "in the range [0, depth). "
+            "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
+            "T2")
+        .Input(
+            2,
+            "values",
+            "Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], "
+            "where 'on_value' is the value used for filling locations specified in 'indices' input "
+            "tensor, and 'off_value' is the value used for filling locations other than those specified "
+            "in 'indices' input tensor. ",
+            "T3")
+        .Output(
+            0,
+            "output",
+            "Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. "
+            "The data type for the elements of the output tensor is the same as the type of input 'values' "
+            "is used.",
+            "T3")
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_numeric_types(),
+            "Constrains input to only numeric types.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_numeric_types(),
+            "Constrains input to only numeric types.")
+        .TypeConstraint(
+            "T3",
+            OpSchema::all_tensor_types(),
+            "Constrain to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Check that the node has three inputs.
+          if (ctx.getNumInputs() != 3) {
+            fail_type_inference("OneHot node must have three inputs.");
+          }
+          // Input 'depth' must be a scalar or a single-element vector.
+          // TODO: Ideally to match spec for this input only allow Scalar should be allowed.
+          // Making this change now can affect backward compatibility for this op.
+          // Since this does not seem like a good justification to update version for this op,
+          // allowing both scalar and 1 element vector for now. In future when version update
+          // for this op is done we should only allow scalar or chage the spec to allow both.
+          if (hasInputShape(ctx, 1)) {
+            auto& depth_shape = getInputShape(ctx, 1);
+            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() !=1) {
+              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
+            }
+            if (depth_shape.dim_size() ==1 &&
+                depth_shape.dim((int)0).has_dim_value() &&
+                depth_shape.dim((int)0).dim_value() != 1) {
+              fail_type_inference(
+                  "Input 'depth' must have exactly one element.");
+            }
+          }
+          // Input 'values' must be a two-element vector.
+          if (hasInputShape(ctx, 2)) {
+            auto& values_shape = getInputShape(ctx, 2);
+            if (values_shape.dim_size() != 1) {
+              fail_type_inference("Input 'values' must be rank 1 tensor.");
+            }
+            if (values_shape.dim((int)0).has_dim_value() &&
+                values_shape.dim((int)0).dim_value() != 2) {
+              fail_type_inference(
+                  "Input 'values' must have exactly two elements.");
+            }
+          }
+          // Set output type to be the same as the third input, 'values'.
+          propagateElemTypeFromInputToOutput(ctx, 2, 0);
+          // Set the output shape, if input 0 (indices) shape is available.
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& indices_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            int r = indices_shape.dim_size();
+            if (r < 1) {
+              fail_shape_inference("Indices tensor must have rank >= 1");
+            }
+            int out_rank = r + 1;
+            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+            if (axis < -out_rank || axis >= out_rank) {
+              fail_shape_inference(
+                  "'axis' must be in [-rank(indices)-1, rank(indices)]");
+            }
+            if (axis < 0) {
+              axis += out_rank;
+            }
+            auto* output_shape = getOutputShape(ctx, 0);
+            for (int i = 0; i < out_rank; ++i) {
+              auto* dim = output_shape->add_dim();
+              if (i < axis) {
+                if (indices_shape.dim(i).has_dim_value()) {
+                  dim->set_dim_value(indices_shape.dim(i).dim_value());
+                } else if (indices_shape.dim(i).has_dim_param()) {
+                  dim->set_dim_param(indices_shape.dim(i).dim_param());
+                }
+              } else if (i > axis) {
+                if (indices_shape.dim(i - 1).has_dim_value()) {
+                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
+                } else if (indices_shape.dim(i - 1).has_dim_param()) {
+                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
+                }
+              }
+            }
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
