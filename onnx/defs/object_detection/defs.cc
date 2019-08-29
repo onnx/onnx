@@ -183,11 +183,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto selected_indices_type =
+          // Type inference - Output is always of type INT64
+          auto* selected_indices_type =
               ctx.getOutputType(0)->mutable_tensor_type();
           selected_indices_type->set_elem_type(
-              ::ONNX_NAMESPACE::TensorProto_DataType::
-                  TensorProto_DataType_INT64);
+              TensorProto_DataType::TensorProto_DataType_INT64);
+
+          // Shape inference
+          // The exact shape cannot be determined as it depends on the input and
+          // other input configurations for the op But part of the shape can be
+          // established
+
+          auto* selected_indices_shape = getOutputShape(ctx, 0);
+          selected_indices_shape->clear_dim();
+
+          // Output is 2D always
+
+          // The value of the first dim is determined by input data
+          // hence its value cannot be determined statically
+          selected_indices_shape->add_dim();
+
+          // The value of the second dim is 3
+          selected_indices_shape->add_dim()->set_dim_value(3);
         }));
 
 } // namespace ONNX_NAMESPACE
