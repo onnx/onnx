@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 135/142 (95.07%, 5 generators excluded) common operators.
+Node tests have covered 136/143 (95.10%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2823,6 +2823,50 @@ y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_1')
+```
+
+</details>
+
+
+### GatherND
+There are 2 test cases, listed as following:
+<details>
+<summary>float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_float32')
+```
+
+</details>
+<details>
+<summary>int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[0, 1], [2, 3]], dtype=np.int32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([0, 3], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32')
 ```
 
 </details>
