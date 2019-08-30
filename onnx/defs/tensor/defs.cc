@@ -837,6 +837,83 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* ScatterND_ver11_doc = R"DOC(
+ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
+and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
+is produced by creating a copy of the input `data`, and then updating its value to values
+specified by `updates` at specific index positions specified by `indices`. Its output shape
+is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
+That is, two or more `updates` for the same index-location is not supported.
+
+`indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
+ `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
+update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
+update to a slice of the tensor.
+
+`updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
+first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
+The remaining dimensions of `updates` correspond to the dimensions of the
+replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
+corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
+must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+of shapes.
+
+The `output` is calculated via the following equation:
+
+    output = np.copy(data)
+    update_indices = indices.shape[:-1]
+    for idx in np.ndindex(update_indices):
+        output[indices[idx]] = updates[idx]
+
+The order of iteration in the above loop is not specified.
+In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
+This ensures that the output value does not depend on the iteration order.
+
+This operator is the inverse of GatherND.
+
+Example 1:
+```
+  data    = [1, 2, 3, 4, 5, 6, 7, 8]
+  indices = [[4], [3], [1], [7]]
+  updates = [9, 10, 11, 12]
+  output  = [1, 11, 3, 10, 9, 6, 7, 12]
+```
+
+Example 2:
+```
+  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  indices = [[0], [2]]
+  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
+    11,
+    OpSchema()
+        .SetDoc(ScatterND_ver11_doc)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
+        .Input(2, "updates", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
+        .Output(0, "output", "Tensor of rank r >= 1.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));
+
 static const char* ScatterElements_ver11_doc = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
@@ -1175,20 +1252,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0, j = 0; i < rank; ++i) {
             auto axis_j = axes[j] < 0 ? axes[j] + rank : axes[j];
             if (static_cast<size_t>(j) < axes.size() && axis_j == i) {
-                if(input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
-                    fail_shape_inference(
-                        "Dimension of input ", 
-                        i, 
-                        " must be 1 instead of ", 
-                        input_shape.dim(i).dim_value());
-                }
+              if (input_shape.dim(i).has_dim_value() &&
+                  input_shape.dim(i).dim_value() != 1) {
+                fail_shape_inference(
+                    "Dimension of input ",
+                    i,
+                    " must be 1 instead of ",
+                    input_shape.dim(i).dim_value());
+              }
               ++j;
             } else {
               *ctx.getOutputType(0)
                    ->mutable_tensor_type()
                    ->mutable_shape()
-                   ->add_dim() =
-                  input_shape.dim(i);
+                   ->add_dim() = input_shape.dim(i);
             }
           }
         }));
@@ -1654,18 +1731,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).",
             AttributeProto::STRING,
             std::string("nearest"))
-        .Attr("cubic_coeff_a",
+        .Attr(
+            "cubic_coeff_a",
             "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75"
             " (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. "
             "This attribute is valid only if \"mode\" is \"cubic\".",
             AttributeProto::FLOAT,
             static_cast<float>(-0.75))
-        .Attr("exclude_outside",
+        .Attr(
+            "exclude_outside",
             "If set to 1, the weight of sampling locations outside the tensor will be set to 0"
             " and the weight will be renormalized so that their sum is 1.0. The default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("coordinate_transformation_mode",
+        .Attr(
+            "coordinate_transformation_mode",
             Resize_attr_coordinate_transformation_mode_doc,
             AttributeProto::STRING,
             std::string("half_pixel"))
@@ -1673,7 +1753,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
             AttributeProto::STRING,
             std::string("round_prefer_floor"))
-        .Attr("extrapolation_value",
+        .Attr(
+            "extrapolation_value",
             "When coordinate_transformation_mode is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
@@ -1708,7 +1789,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-           resizeShapeInference(ctx, true);
+          resizeShapeInference(ctx, true);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1842,17 +1923,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only allow Scalar should be allowed. 
-          // Making this change now can affect backward compatibility for this op.
-          // Since this does not seem like a good justification to update version for this op, 
-          // allowing both scalar and 1 element vector for now. In future when version update 
-          // for this op is done we should only allow scalar or chage the spec to allow both.
+          // TODO: Ideally to match spec for this input only allow Scalar should
+          // be allowed. Making this change now can affect backward
+          // compatibility for this op. Since this does not seem like a good
+          // justification to update version for this op, allowing both scalar
+          // and 1 element vector for now. In future when version update for
+          // this op is done we should only allow scalar or chage the spec to
+          // allow both.
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
-            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() !=1) {
-              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
+            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
+              fail_type_inference(
+                  "Input 'depth' must be a scalar or rank 1 tensor.");
             }
-            if (depth_shape.dim_size() ==1 && 
+            if (depth_shape.dim_size() == 1 &&
                 depth_shape.dim((int)0).has_dim_value() &&
                 depth_shape.dim((int)0).dim_value() != 1) {
               fail_type_inference(
@@ -2215,28 +2299,44 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
-        .Output(0, "Y", "A tensor of the same type as 'X' "
-                        "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
-                        "or maintained in the same order they occur in input 'X'", "T")
-        .Output(1, "indices", "A 1-D INT64 tensor " 
-                          "containing indices of 'Y' elements' first occurance in 'X'. "
-                          "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
-                          "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
-                          "tensor(int64)",
-                          OpSchema::Optional)
-        .Output(2, "inverse_indices", "A 1-D INT64 tensor "
-                          "containing, for elements of 'X', its corresponding indices in 'Y'. "
-                          "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
-                          "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
-                          "tensor(int64)",
-                          OpSchema::Optional)
-        .Output(3, "counts", "A 1-D INT64 tensor containing "
-                             "the count of each element "
-                             "of 'Y' in input 'X'",
-                             "tensor(int64)",
-                             OpSchema::Optional)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { 
+        .Output(
+            0,
+            "Y",
+            "A tensor of the same type as 'X' "
+            "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
+            "or maintained in the same order they occur in input 'X'",
+            "T")
+        .Output(
+            1,
+            "indices",
+            "A 1-D INT64 tensor "
+            "containing indices of 'Y' elements' first occurance in 'X'. "
+            "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
+            "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "inverse_indices",
+            "A 1-D INT64 tensor "
+            "containing, for elements of 'X', its corresponding indices in 'Y'. "
+            "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
+            "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Output(
+            3,
+            "counts",
+            "A 1-D INT64 tensor containing "
+            "the count of each element "
+            "of 'Y' in input 'X'",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Input can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           const TypeProto* xTensorProto = ctx.getInputType(0);
@@ -2244,25 +2344,32 @@ ONNX_OPERATOR_SET_SCHEMA(
           TypeProto* indicesTensorProto = nullptr;
           TypeProto* inverseIndicesTensorProto = nullptr;
           TypeProto* countsTensorProto = nullptr;
-          
-          // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of unknown dimension.
+
+          // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of
+          // unknown dimension.
           auto num_outputs = ctx.getNumOutputs();
           if (num_outputs >= 2) {
             indicesTensorProto = ctx.getOutputType(1);
             updateOutputElemType(ctx, 1, TensorProto::INT64);
-            indicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            indicesTensorProto->mutable_tensor_type()
+                ->mutable_shape()
+                ->add_dim();
           }
 
           if (num_outputs >= 3) {
             inverseIndicesTensorProto = ctx.getOutputType(2);
             updateOutputElemType(ctx, 2, TensorProto::INT64);
-            inverseIndicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            inverseIndicesTensorProto->mutable_tensor_type()
+                ->mutable_shape()
+                ->add_dim();
           }
 
           if (num_outputs >= 4) {
             countsTensorProto = ctx.getOutputType(3);
             updateOutputElemType(ctx, 3, TensorProto::INT64);
-            countsTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+            countsTensorProto->mutable_tensor_type()
+                ->mutable_shape()
+                ->add_dim();
           }
 
           auto axisAttr = ctx.getAttribute("axis");
@@ -2270,22 +2377,162 @@ ONNX_OPERATOR_SET_SCHEMA(
             // 'axis' is not provided. Input 'X' is flattened.
             // 'Y' is a 1-D tensor of unknown dimension.
             yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
-          }
-          else 
-          {
+          } else {
             // 'axis' is provided.
             int axis = static_cast<int>(axisAttr->i());
 
-            // 'Y' has the same shape as 'X' except in the 'axis' dimension which is unknown.
-            const TensorShapeProto& input_shape = xTensorProto->tensor_type().shape();
+            // 'Y' has the same shape as 'X' except in the 'axis' dimension
+            // which is unknown.
+            const TensorShapeProto& input_shape =
+                xTensorProto->tensor_type().shape();
 
             for (int i = 0; i < input_shape.dim_size(); i++) {
-              auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
-              if (i != axis){
+              auto* dim = yTensorProto->mutable_tensor_type()
+                              ->mutable_shape()
+                              ->add_dim();
+              if (i != axis) {
                 *dim = input_shape.dim(i);
               }
             }
           }
-      }));
+        }));
+
+static const char* GatherND_ver11_doc = R"DOC(
+Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers 
+slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
+
+`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
+where each element defines a slice of `data`
+
+Some salient points about the inputs' rank and shape:
+ 
+1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
+
+2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
+
+3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+   It is an error if any of the index values are out of bounds.
+
+The output is computed as follows:
+
+The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
+ 
+1) If `indices_shape[-1] > r` => error condition
+
+2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+   containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
+   Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+   to form the `output` tensor (Example 1 below)
+
+3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+   containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
+   Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+   to form the `output` tensor (Examples 2, 3, and 4 below)
+
+This operator is the inverse of `ScatterND`.
+
+`Example 1`
+
+  data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+
+  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+
+  output  = [0,3]           # output_shape = [2]
+
+`Example 2`
+
+  data    = [[0,1],[2,3]]  # data_shape = [2, 2]
+
+  indices = [[1],[0]]      # indices_shape = [2, 1]
+
+  output  = [[2,3],[0,1]]  # output_shape = [2, 2]
+
+`Example 3`
+
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+
+  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
+
+`Example 4`
+
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+
+  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GatherND,
+    11,
+    OpSchema()
+        .SetDoc(GatherND_ver11_doc)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
+        .Output(
+            0,
+            "output",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (!hasNInputShapes(ctx, 2)) {
+            // cannot proceed with shape or rank inference
+            return;
+          }
+
+          const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto data_rank = data_shape.dim_size();
+
+          const auto& indices_shape =
+              ctx.getInputType(1)->tensor_type().shape();
+          const auto indices_rank = indices_shape.dim_size();
+
+          if (data_rank < 1 || indices_rank < 1) {
+            fail_shape_inference(
+                "Both `data` and `indices` input tensors in GatherND op "
+                "need to have rank larger than 0.");
+          }
+
+          // cannot ascertain if the input shapes are valid if shape of
+          // `indices` is missing last dimension value so return at this point
+          if (!indices_shape.dim(indices_rank - 1).has_dim_value()) {
+            return;
+          }
+
+          const auto last_index_dimension =
+              indices_shape.dim(indices_rank - 1).dim_value();
+
+          if (last_index_dimension > data_rank) {
+            fail_shape_inference(
+                "Last dimension of `indices` input tensor in GatherND op "
+                "must not be larger than the rank of `data` tensor");
+          }
+
+          for (int i = 0; i < indices_rank - 1; ++i) {
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() = indices_shape.dim(i);
+          }
+
+          for (int i = static_cast<int>(last_index_dimension); i < data_rank;
+               ++i) {
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() = data_shape.dim(i);
+          }
+        }));
 
 } // namespace ONNX_NAMESPACE
