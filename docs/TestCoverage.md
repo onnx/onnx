@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 133/140 (95.00%, 5 generators excluded) common operators.
+Node tests have covered 136/143 (95.10%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2139,6 +2139,44 @@ expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
 </details>
 
 
+### Det
+There are 2 test cases, listed as following:
+<details>
+<summary>2d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Det',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.arange(4).reshape(2, 2).astype(np.float32)
+y = np.linalg.det(x)  # expect -2
+expect(node, inputs=[x], outputs=[y],
+       name='test_det_2d')
+```
+
+</details>
+<details>
+<summary>nd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Det',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([[[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]]]).astype(np.float32)
+y = np.linalg.det(x)  # expect array([-2., -3., -8.])
+expect(node, inputs=[x], outputs=[y],
+       name='test_det_nd')
+```
+
+</details>
+
+
 ### Div
 There are 2 test cases, listed as following:
 <details>
@@ -2831,6 +2869,50 @@ y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_negative_indices')
+```
+
+</details>
+
+
+### GatherND
+There are 2 test cases, listed as following:
+<details>
+<summary>float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_float32')
+```
+
+</details>
+<details>
+<summary>int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[0, 1], [2, 3]], dtype=np.int32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([0, 3], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32')
 ```
 
 </details>
@@ -7985,6 +8067,39 @@ y = scatter_elements(data, indices, updates)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_without_axis')
+```
+
+</details>
+
+
+### ScatterND
+There are 1 test cases, listed as following:
+<details>
+<summary>scatternd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterND',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.array(
+    [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+indices = np.array([[0], [2]], dtype=np.int64)
+updates = np.array(
+    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]], dtype=np.float32)
+# Expecting output as np.array(
+#    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates)
+expect(node, inputs=[data, indices, updates], outputs=[output],
+       name='test_scatternd')
 ```
 
 </details>

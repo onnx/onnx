@@ -439,6 +439,15 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 5))])  # type: ignore
 
+    def test_scatternd(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('indices', TensorProto.INT64, (3, 3, 2)),
+             ('updates', TensorProto.FLOAT, (3, 3, 6))],
+            [make_node("ScatterND", ['x', 'indices', 'updates'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])  # type: ignore
+
     def test_squeeze(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
@@ -1998,6 +2007,19 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('inverse_indices', TensorProto.INT64, (None,)),  # type: ignore
                                       make_tensor_value_info('counts', TensorProto.INT64, (None,))])  # type: ignore
 
+    def test_det(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (3, 3))],
+            [make_node('Det', ['X'], ['Y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, ())])
+
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (4, 5, 6, 7, 7))],
+            [make_node('Det', ['X'], ['Y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (4, 5, 6))])
+
     def test_tile(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5, 6)),
@@ -2163,6 +2185,14 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('start', TensorProto.INT32, (), (1,)),
                          make_tensor('limit', TensorProto.INT32, (), (5,))])  # Missing 'delta' initializer
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT32, (None,))])  # type: ignore
+
+    def test_gathernd(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('indices', TensorProto.INT64, (2,))],
+            [make_node('GatherND', ['x', 'indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
 
 
 if __name__ == '__main__':
