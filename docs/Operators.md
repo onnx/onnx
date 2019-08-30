@@ -5289,7 +5289,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : tensor(int64)</dt>
-<dd>Tensor of rank q >= 1.</dd>
+<dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs

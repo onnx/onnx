@@ -2465,7 +2465,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(GatherND_ver11_doc)
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
-        .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
+        .Input(1, "indices", "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
+            "along axis of size s. It is an error if any of the index values are out of bounds.", "tensor(int64)")
         .Output(
             0,
             "output",
