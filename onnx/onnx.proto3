@@ -566,7 +566,3 @@ message OperatorSetIdProto {
   // This field MUST be present in this version of the IR.
   int64 version = 2;
 }
-
-// For using protobuf-lite
-option optimize_for = LITE_RUNTIME;
-
