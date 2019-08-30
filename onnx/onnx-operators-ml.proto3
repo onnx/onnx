@@ -169,3 +169,7 @@ message OperatorSetProto {
   // The (name, version) MUST be unique across all OperatorProtos/FunctionProtos in operator/functions
   repeated FunctionProto functions = 9;
 }
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
+
