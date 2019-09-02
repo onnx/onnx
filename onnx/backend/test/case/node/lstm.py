@@ -64,7 +64,7 @@ class LSTM_Helper():
         self.W = params[W]
         self.R = params[R]
 
-    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
+    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray, np.ndarray]
         seq_length = self.X.shape[0]
         Y = np.empty([seq_length, self.num_directions, self.batch_size, self.hidden_size])
         Y_c = np.empty([self.num_directions, self.batch_size, self.hidden_size])
