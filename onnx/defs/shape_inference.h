@@ -379,6 +379,10 @@ inline TensorShapeProto* getOutputShape(InferenceContext& ctx, size_t n) {
     fail_type_inference("Output ", n, " expected to have tensor type");
 }
 
+inline void appendDim(TensorShapeProto* shape, int64_t dim_value) {
+  shape->add_dim()->set_dim_value(dim_value);
+}
+
 inline void updateOutputShape(
     InferenceContext& ctx,
     size_t outputIndex,
