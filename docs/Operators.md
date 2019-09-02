@@ -12315,6 +12315,8 @@ for test_name, shape in test_cases.items():
         outputs=['reshaped'],
     )
 
+    # replace zeros with corresponding dim size
+    # we need to do this because np.reshape doesn't support 0
     new_shape = np.copy(shape)
     zero_index = np.where(shape == 0)
     new_shape[zero_index] = np.array(original_shape)[zero_index]
