@@ -4882,7 +4882,11 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  Example 1:
+  
+    let k = indices[i_{0}, …, i_{q-1}]
+    axis = 0:
+    then, output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  
   ```
     data = [
         [1.0, 1.2],
@@ -4904,7 +4908,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
         ],
     ]
   ```
-  Example 2:
+    axis = 1:
+    then, output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j{1}, …, j_{r-2} ]
+  
   ```
     data = [
         [1.0, 1.2, 1.9],
@@ -9398,6 +9404,13 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
       the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
       output tensor.
+  
+      when axis = 0:
+      output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+  
+      when axis = -1:
+      output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
+  
 
 #### Version
 
@@ -9409,7 +9422,7 @@ Other versions of this operator: <a href="Changelog.md#OneHot-9">OneHot-9</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+<dd>(Optional) Axis along which one-hot representation in added. This attribute indicates the added axis in the output tensor.Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
 </dl>
 
 #### Inputs
