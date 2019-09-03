@@ -555,13 +555,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices.</dd>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -642,6 +644,32 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random'
 
 
 <details>
+<summary>negative_axis_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random')
+```
+
+</details>
+
+
+<details>
 <summary>no_keepdims</summary>
 
 ```python
@@ -676,13 +704,15 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices.</dd>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -757,6 +787,32 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 1, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axis_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random')
 ```
 
 </details>
@@ -2172,13 +2228,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Compress-9">Compress-9</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected.</dd>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -2187,7 +2245,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>input</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>condition</tt> : T1</dt>
-<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length alone the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length along the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
 </dl>
 
 #### Outputs
@@ -2280,21 +2338,45 @@ expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
 </details>
 
 
+<details>
+<summary>compress_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=-1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=-1)
+# print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_negative_axis')
+```
+
+</details>
+
+
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
   Concatenate a list of tensors into a single tensor
 
 #### Version
 
-This version of the operator has been available since version 4 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>, <a href="Changelog.md#Concat-4">Concat-4</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on</dd>
+<dd>Which axis to concat on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -2347,6 +2429,18 @@ for test_case, values_ in test_cases.items():
         output = np.concatenate(values, i)
         expect(node, inputs=[v for v in values], outputs=[output],
                name='test_concat_' + test_case + '_axis_' + str(i))
+
+    for i in range(-len(values[0].shape), 0):
+        in_args = ['value' + str(k) for k in range(len(values))]
+        node = onnx.helper.make_node(
+            'Concat',
+            inputs=[s for s in in_args],
+            outputs=['output'],
+            axis=i
+        )
+        output = np.concatenate(values, i)
+        expect(node, inputs=[v for v in values], outputs=[output],
+               name='test_concat_' + test_case + '_axis_negative_' + str(abs(i)))
 ```
 
 </details>
@@ -3285,7 +3379,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>x</tt> : T</dt>
 <dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : T2</dt>
-<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))</dd>
+<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
 </dl>
 
 #### Outputs
@@ -3419,6 +3513,25 @@ axis = np.array([1]).astype(np.int32)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_axis_1')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([-1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_negative_axis')
 ```
 
 </details>
@@ -4956,7 +5069,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1]</dd>
 </dl>
 
 #### Inputs
@@ -5095,7 +5208,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1]</dd>
 </dl>
 
 #### Inputs
@@ -5819,13 +5932,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Hardmax-1">Hardmax-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range in [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -5923,6 +6038,16 @@ node = onnx.helper.make_node(
 y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_2')
+
+node = onnx.helper.make_node(
+    'Hardmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardmax_negative_axis')
 ```
 
 </details>
@@ -6892,13 +7017,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">LogSoftmax-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range in [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -7005,6 +7132,16 @@ node = onnx.helper.make_node(
 y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_axis_2')
+
+node = onnx.helper.make_node(
+    'LogSoftmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_logsoftmax_negative_axis')
 ```
 
 </details>
@@ -9373,13 +9510,15 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#OneHot-9">OneHot-9</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor. Negative value means counting dimensions from the back. Accepted range is [-r-1, r] where r = rank(indices).</dd>
 </dl>
 
 #### Inputs
@@ -10802,13 +10941,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceL1-1">ReduceL1-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -10950,6 +11091,44 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-1]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceL1',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+# print(data)
+#[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
+
+reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[3.], [7.]], [[11.], [15.]], [[19.], [23.]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l1_negative_axes_keep_dims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l1_negative_axes_keep_dims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulted
@@ -10961,13 +11140,15 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceL2-1">ReduceL2-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11118,6 +11299,48 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-1]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceL2',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+# print(data)
+#[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
+
+reduced = np.sqrt(np.sum(
+    a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
+# print(reduced)
+#[[[2.23606798], [5.]]
+# [[7.81024968], [10.63014581]]
+# [[13.45362405], [16.2788206 ]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l2_negative_axes_keep_dims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sqrt(np.sum(
+    a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l2_negative_axes_keep_dims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
   Computes the log sum of the input tensor's element along the provided axes. The resulted
@@ -11129,13 +11352,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">ReduceLogSum-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11177,6 +11402,26 @@ data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, keepdims=True))
 expect(node, inputs=[data], outputs=[reduced],
        name='test_reduce_log_sum_default')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReduceLogSum',
+    inputs=['data'],
+    outputs=["reduced"],
+    axes=[-2]
+)
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(-2), keepdims=True))
+# print(reduced)
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_negative_axes')
 ```
 
 </details>
@@ -11225,13 +11470,15 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">ReduceLogSumExp-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11381,6 +11628,48 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+node = onnx.helper.make_node(
+    'ReduceLogSumExp',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.array(
+    [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
+    dtype=np.float32)
+reduced = np.log(np.sum(np.exp(data),
+                        axis=tuple(axes),
+                        keepdims=keepdims == 1))
+# print(reduced)
+# [[[20., 2.31326175]]
+# [[40.00004578, 2.31326175]]
+# [[60.00671387, 2.31326175]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+      name='test_reduce_log_sum_exp_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.log(np.sum(np.exp(data),
+                        axis=tuple(axes),
+                        keepdims=keepdims == 1))
+
+expect(node, inputs=[data], outputs=[reduced],
+      name='test_reduce_log_sum_exp_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulted
@@ -11392,13 +11681,15 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11525,6 +11816,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMax',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[20., 2.]]
+# [[40., 2.]]
+# [[60., 2.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
   Computes the mean of the input tensor's element along the provided axes. The resulted
@@ -11536,13 +11861,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11670,6 +11997,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_r
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+# [[[12.5, 1.5]]
+# [[35., 1.5]]
+# [[57.5, 1.5]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulted
@@ -11681,13 +12042,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_r
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11814,6 +12177,39 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMin', inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[5., 1.]]
+# [[30., 1.]]
+# [[55., 1.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
   Computes the product of the input tensor's element along the provided axes. The resulted
@@ -11825,13 +12221,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceProd-1">ReduceProd-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11956,6 +12354,39 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_keepdims_r
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceProd',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[3., 8.]]
+# [[35., 48.]]
+# [[99., 120.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
@@ -11967,13 +12398,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_keepdims_r
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceSum-1">ReduceSum-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -12101,6 +12534,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[4., 6.]]
+# [[12., 14.]]
+# [[20., 22.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's element along the provided axes. The resulted
@@ -12112,13 +12579,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">ReduceSumSquare-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -12241,6 +12710,40 @@ data = np.random.uniform(-10, 10, shape).astype(np.float32)
 reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSumSquare',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[10., 20.s]]
+# [[74., 100.]]
+# [[202., 244.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_random')
 ```
 
 </details>
@@ -14271,7 +14774,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1]</dd>
 </dl>
 
 #### Inputs
@@ -15060,7 +15563,7 @@ Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a 
 <dt><tt>ends</tt> : Tind</dt>
 <dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
 <dt><tt>axes</tt> (optional) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range in [-r, r-1].</dd>
+<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1].</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
 <dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
 </dl>
@@ -15292,13 +15795,15 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Softmax-1">Softmax-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range in [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -15405,6 +15910,16 @@ node = onnx.helper.make_node(
 y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_axis_2')
+
+node = onnx.helper.make_node(
+    'Softmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_softmax_negative_axis')
 ```
 
 </details>
@@ -15782,7 +16297,7 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range in [-r, r-1].</dd>
+<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1].</dd>
 </dl>
 
 #### Inputs
@@ -16796,7 +17311,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a hr
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>Dimension on which to do the sort.</dd>
+<dd>Dimension on which to do the sort. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>largest</tt> : int (default is 1)</dt>
 <dd>Whether to return the top-K largest or smallest elements.</dd>
 <dt><tt>sorted</tt> : int (default is 1)</dt>
@@ -16866,6 +17381,44 @@ values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
 expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
+```
+
+</details>
+
+
+<details>
+<summary>top_k_negative_axis</summary>
+
+```python
+axis = -1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis
+)
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [8, 9, 10, 11],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+# print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_negative_axis')
 ```
 
 </details>
@@ -17084,7 +17637,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned.</dd>
+<dd>(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 <dt><tt>sorted</tt> : int (default is 1)</dt>
 <dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
 </dl>
@@ -17223,6 +17776,37 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
 
 <details>
+<summary>sorted_with_negative_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=-1
+)
+
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 3]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
+# print(y)
+# [[0. 1.]
+#  [0. 1.]
+#  [3. 2.]]
+# print(indices)
+# [1 0]
+# print(inverse_indices)
+# [1 0 0]
+# print(counts)
+# [2 1]
+
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_negative_axis')
+```
+
+</details>
+
+
+<details>
 <summary>sorted_without_axis</summary>
 
 ```python
@@ -17258,7 +17842,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1<
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range in [-r, r-1].</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1].</dd>
 </dl>
 
 #### Inputs

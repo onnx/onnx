@@ -150,6 +150,79 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors."));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    Concat,
+    4,
+    OpSchema()
+        .Attr("axis", "Which axis to concat on", AttributeProto::INT)
+        .SetDoc("Concatenate a list of tensors into a single tensor")
+        .Input(
+            0,
+            "inputs",
+            "List of tensors for concatenation",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "concat_result", "Concatenated tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto numInputs = ctx.getNumInputs();
+          if (numInputs < 1 ||
+              !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+            return;
+          }
+
+          auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+
+          auto axisAttr = ctx.getAttribute("axis");
+          if (!axisAttr) {
+            fail_shape_inference("Required attribute axis is missing");
+          }
+          int axis = static_cast<int>(axisAttr->i());
+          if (rank <= axis) {
+            fail_shape_inference("rank must be greater than axis");
+          }
+          if (axis < 0) {
+            return; // TODO: check if negative axis must be supported
+          }
+
+          bool all_lengths_known = true;
+          int total_length = 0;
+
+          auto* output_shape =
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          for (int64_t i = 0; i < rank; ++i) {
+            output_shape->add_dim();
+          }
+
+          for (size_t i = 0; i < numInputs; i++) {
+            const auto& shape = ctx.getInputType(i)->tensor_type().shape();
+            if (shape.dim_size() != rank)
+              fail_shape_inference("All inputs to Concat must have same rank");
+            for (int j = 0; j < rank; j++) {
+              if (j == axis) {
+                if (shape.dim(j).has_dim_value()) {
+                  total_length += static_cast<int>(shape.dim(j).dim_value());
+                } else {
+                  all_lengths_known = false;
+                }
+              } else {
+                auto& output_dim = *output_shape->mutable_dim(j);
+                const auto& input_dim = shape.dim(j);
+                mergeInDimensionInfo(input_dim, output_dim, j);
+              }
+            }
+          }
+
+          if (all_lengths_known) {
+            output_shape->mutable_dim(axis)->set_dim_value(total_length);
+          }
+        }));
+
 static const char* Split_ver1_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. The lengths of the split can be specified using argument 'axis' or
@@ -938,7 +1011,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1]",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -1299,4 +1372,43 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Compress_ver9_doc = R"DOC(
+    Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+    In case axis is not provided, input is flattened before elements are selected.
+    Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+    )DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Compress,
+    9,
+    OpSchema()
+        .SetDoc(Compress_ver9_doc)
+        .Attr(
+            "axis",
+            "(Optional) Axis along which to take slices. If not specified, "
+            "input is flattened before elements being selected.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(0, "input", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "condition",
+            "Rank 1 tensor of booleans to indicate which slices or data elements to be selected. "
+            "Its length can be less than the input length alone the axis "
+            "or the flattened input size if axis is not specified. "
+            "In such cases data slices or elements exceeding the condition length are discarded.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains to boolean tensors."));
 } // namespace ONNX_NAMESPACE

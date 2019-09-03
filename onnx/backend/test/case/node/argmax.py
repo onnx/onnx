@@ -77,3 +77,23 @@ class ArgMax(Base):
         # result's shape: [1, 3, 4]
         result = argmax_use_numpy(data, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+
+    @staticmethod
+    def export_negative_axis_keepdims():  # type: () -> None
+        data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+        axis = -1
+        keepdims = 1
+        node = onnx.helper.make_node(
+            'ArgMax',
+            inputs=['data'],
+            outputs=['result'],
+            axis=axis,
+            keepdims=keepdims)
+        # result: [[0], [1]]
+        result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+        expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example')
+
+        data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+        # result's shape: [2, 3, 1]
+        result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+        expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random')
