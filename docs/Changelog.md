@@ -10665,9 +10665,12 @@ This version of the operator has been available since version 11 of the default 
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
   
-    let k = indices[i_{0}, …, i_{q-1}]
-    axis = 0:
-    then, output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  axis = 0 :
+  
+  Let \
+  k = indices[i_{0}, …, i_{q-1}] \
+  then \
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
   
   ```
     data = [
@@ -10690,8 +10693,12 @@ This version of the operator has been available since version 11 of the default 
         ],
     ]
   ```
-    axis = 1:
-    then, output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j{1}, …, j_{r-2} ]
+  axis = 1 :
+  
+  Let \
+  k = indices[i_{0}, …, i_{q-1}] \
+  then \
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j{1}, …, j_{r-2} ]
   
   ```
     data = [
