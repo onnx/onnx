@@ -1870,7 +1870,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis < 0) {
             axis += rank;
           }
-          if (axis > rank) {
+          if (axis > rank || axis < 0) {
             fail_shape_inference(
                 "Invalid value(", axis, ") for attribute 'axis'");
           }
