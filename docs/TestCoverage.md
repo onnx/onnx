@@ -5102,8 +5102,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=axisValue
 )
-indices = np.array([[1, -2],
-                    [2, -4]], dtype=np.float32)
+indices = np.array([0, -7, -8], dtype=np.int64)
 depth = np.array([10], dtype=np.float32)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)

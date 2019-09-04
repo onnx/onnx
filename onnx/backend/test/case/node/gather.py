@@ -56,3 +56,6 @@ class Gather(Base):
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_negative_indices')
+
+        # print(y)
+        # [0. 1. 0.]
