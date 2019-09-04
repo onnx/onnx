@@ -57,7 +57,13 @@ class GRU_Helper():
         return np.tanh(x)
 
     def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
+        seq_length = self.X.shape[0]
+        hidden_size = self.H_0.shape[-1]
+        batch_size = self.X.shape[1]
+
+        Y = np.empty([seq_length, batch_size, hidden_size, self.num_directions])
         h_list = []
+
         [w_z, w_r, w_h] = np.split(self.W, 3)
         [r_z, r_r, r_h] = np.split(self.R, 3)
         [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(self.B, 6)
@@ -77,10 +83,12 @@ class GRU_Helper():
             H = (1 - z) * h + z * H_t
             h_list.append(H)
             H_t = H
+
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
-            output = np.expand_dims(concatenated, 1)
-        return output, h_list[-1]
+            Y[:, :, :, 0] = concatenated
+
+        return Y, Y[-1]
 
 
 class GRU(Base):

@@ -63,8 +63,14 @@ class LSTM_Helper():
         return np.tanh(x)
 
     def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
-        [p_i, p_o, p_f] = np.split(self.P, 3)
+        seq_length = self.X.shape[0]
+        hidden_size = self.H_0.shape[-1]
+        batch_size = self.X.shape[1]
+
+        Y = np.empty([seq_length, batch_size, hidden_size, self.num_directions])
         h_list = []
+
+        [p_i, p_o, p_f] = np.split(self.P, 3)
         H_t = self.H_0
         C_t = self.C_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
@@ -80,10 +86,12 @@ class LSTM_Helper():
             h_list.append(H)
             H_t = H
             C_t = C
+
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
-            output = np.expand_dims(concatenated, 1)
-        return output, h_list[-1]
+            Y[:, :, :, 0] = concatenated
+
+        return Y, Y[-1]
 
 
 class LSTM(Base):

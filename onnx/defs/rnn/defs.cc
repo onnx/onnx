@@ -29,24 +29,31 @@ void RNNShapeInference(InferenceContext& ctx) {
   }
 
   auto num_outputs = ctx.getNumOutputs();
+  auto time_major_value = getAttribute(ctx, "time_major", 1);
 
   if (num_outputs > 0) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    updateOutputShape(
-        ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
+
+    if (time_major_value == 1) {
+      auto dims = {seq_length, batch_size, hidden_size, num_directions};
+      updateOutputShape(ctx, 0, dims);
+    } else {
+      auto dims = {seq_length, batch_size, hidden_size, num_directions};
+      updateOutputShape(ctx, 0, dims);
+    }
   }
 
   if (num_outputs > 1) {
     // Y_h
     propagateElemTypeFromInputToOutput(ctx, 0, 1);
-    updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
+    updateOutputShape(ctx, 1, {batch_size, hidden_size, num_directions});
   }
 
   if (num_outputs > 2) {
     // Y_c : only in the case of LSTM
     propagateElemTypeFromInputToOutput(ctx, 0, 2);
-    updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
+    updateOutputShape(ctx, 2, {batch_size, hidden_size, num_directions});
   }
 }
 
@@ -58,6 +65,15 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
         std::string("forward"));
+    schema.Attr(
+        "time_major",
+        "The shape format of the input X and output Y"
+        "If 1, the shapes are [seq_length, batch_size, input_size] and "
+        "[seq_length, batch_size, hidden_size, num_directions] respectively."
+        "If not 1, the shapes are [batch_size, seq_length, input_size] and "
+        "[batch_size, seq_length, hidden_size, num_directions] respectively.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
     schema.Attr(
         "hidden_size",
         "Number of neurons in the hidden layer",
@@ -103,21 +119,21 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         5,
         "initial_h",
         "Optional initial value of the hidden. If not specified - assumed "
-        "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+        "to be 0. It has shape `[batch_size, hidden_size, num_directions]`.",
         "T",
         OpSchema::Optional);
     schema.Output(
         0,
         "Y",
         "A tensor that concats all the intermediate output values of the hidden. "
-        "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
+        "It has shape `[seq_length, batch_size, hidden_size, num_directions]`. ",
         "T",
         OpSchema::Optional);
     schema.Output(
         1,
         "Y_h",
         "The last output value of the hidden. It has shape "
-        "`[num_directions, batch_size, hidden_size]`.",
+        "`[batch_size, hidden_size, num_directions]`.",
         "T",
         OpSchema::Optional);
     schema.TypeConstraint(
@@ -130,7 +146,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver7_doc = R"DOC(
+static const char* RNN_ver11_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -195,9 +211,9 @@ Equations (Default: f=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
-    7,
+    11,
     OpSchema()
-        .SetDoc(RNN_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(RNN_ver11_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -230,7 +246,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver7_doc = R"DOC(
+static const char* GRU_ver11_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -307,9 +323,9 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
-    7,
+    11,
     OpSchema()
-        .SetDoc(GRU_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GRU_ver11_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -350,7 +366,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver7_doc = R"DOC(
+static const char* LSTM_ver11_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -435,9 +451,9 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
-    7,
+    11,
     OpSchema()
-        .SetDoc(LSTM_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(LSTM_ver11_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
