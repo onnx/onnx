@@ -331,4 +331,8 @@ setuptools.setup(
             'backend-test-tools = onnx.backend.test.cmd_tools:main',
         ]
     },
+    classifiers=[
+         "Programming Language :: Python :: 2",
+         "Programming Language :: Python :: 3"
+    ],
 )
