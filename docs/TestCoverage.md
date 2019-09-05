@@ -2703,7 +2703,7 @@ for i in range(-len(shape), 0):
     new_shape = (np.prod(shape[0:i]).astype(int), -1)
     b = np.reshape(a, new_shape)
     expect(node, inputs=[a], outputs=[b],
-           name='test_flatten_negative_axis' + str(i))
+           name='test_flatten_negative_axis' + str(abs(i)))
 ```
 
 </details>
