@@ -68,7 +68,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         std::string("forward"));
     schema.Attr(
         "time_major",
-        "The shape format of the input X and output Y"
+        "The shape format of the input X and output Y. "
         "If 1, the shapes are [seq_length, batch_size, input_size] and "
         "[seq_length, batch_size, hidden_size, num_directions] respectively."
         "If not 1, the shapes are [batch_size, seq_length, input_size] and "
