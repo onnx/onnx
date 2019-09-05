@@ -4718,9 +4718,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href="Changelog.md#GRU-3">GRU-3</a>
+Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href="Changelog.md#GRU-3">GRU-3</a>, <a href="Changelog.md#GRU-7">GRU-7</a>
 
 #### Attributes
 
@@ -4739,6 +4739,8 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>linear_before_reset</tt> : int (default is 0)</dt>
 <dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
+<dt><tt>time_major</tt> : int (default is 1)</dt>
+<dd>The shape format of the input X and output YIf 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -4755,16 +4757,16 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 </dl>
 
 #### Outputs (0 - 2)
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size, num_directions]`. </dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
-<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -4780,6 +4782,37 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 #### Examples
 
 <details>
+<summary>batchwise</summary>
+
+```python
+input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 6
+number_of_gates = 3
+weight_scale = 0.1
+time_major = 0
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size,
+    time_major=time_major
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+gru = GRU_Helper(X=input, W=W, R=R, time_major=time_major)
+Y, Y_h = gru.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -4793,7 +4826,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -4823,7 +4856,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -4857,7 +4890,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -6453,9 +6486,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
+Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>, <a href="Changelog.md#LSTM-7">LSTM-7</a>
 
 #### Attributes
 
@@ -6474,6 +6507,8 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int (default is 0)</dt>
 <dd>Couple the input and forget gates if 1.</dd>
+<dt><tt>time_major</tt> : int (default is 1)</dt>
+<dd>The shape format of the input X and output YIf 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -6490,7 +6525,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 <dt><tt>initial_c</tt> (optional) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional) : T</dt>
@@ -6501,9 +6536,9 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size, num_directions]`. </dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
-<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 <dt><tt>Y_c</tt> (optional) : T</dt>
 <dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -6521,6 +6556,37 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 #### Examples
 
 <details>
+<summary>batchwise</summary>
+
+```python
+input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 7
+weight_scale = 0.1
+number_of_gates = 4
+time_major = 0
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size,
+    time_major=time_major
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, time_major=time_major)
+Y, Y_h = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_lstm_batchwise')
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -6534,7 +6600,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -6564,7 +6630,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -6599,7 +6665,7 @@ number_of_peepholes = 3
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -10223,9 +10289,9 @@ expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
+Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>, <a href="Changelog.md#RNN-7">RNN-7</a>
 
 #### Attributes
 
@@ -10242,6 +10308,8 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>time_major</tt> : int (default is 1)</dt>
+<dd>The shape format of the input X and output YIf 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -10258,16 +10326,16 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 </dl>
 
 #### Outputs (0 - 2)
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size, num_directions]`. </dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
-<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -10283,6 +10351,36 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 #### Examples
 
 <details>
+<summary>batchwise</summary>
+
+```python
+input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+time_major = 0
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size,
+    time_major=time_major
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, time_major=time_major)
+Y, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -10295,7 +10393,7 @@ weight_scale = 0.1
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -10324,7 +10422,7 @@ weight_scale = 0.1
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -10358,7 +10456,7 @@ hidden_size = 5
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 

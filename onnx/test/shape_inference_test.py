@@ -921,6 +921,21 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, batchsize, hiddensize, 2)),
             make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, hiddensize, 2))])
 
+    def test_rnn_batchwise(self):  # type: () -> None
+        self._rnn_batchwise(64, 32, 10, 4)
+
+    def _rnn_batchwise(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (batchsize, seqlen, inpsize)),
+             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
+                time_major=0)],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('all', TensorProto.FLOAT, (batchsize, seqlen, hiddensize, 1)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, hiddensize, 1))])
+
     def test_rnn_bidirectional(self):  # type: () -> None
         self._rnn_bidirectional(64, 32, 10, 4)
 

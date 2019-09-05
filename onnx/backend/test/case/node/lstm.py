@@ -21,6 +21,7 @@ class LSTM_Helper():
         H_0 = str('initial_h')
         C_0 = str('initial_c')
         P = str('P')
+        TM = str('time_major')
         number_of_gates = 4
         number_of_peepholes = 3
 
@@ -43,13 +44,18 @@ class LSTM_Helper():
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
             c_0 = params[C_0] if C_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
 
+            TM = params[TM] if TM in params else 1
             self.X = params[X]
+            if TM != 1:
+                self.X = np.swapaxes(self.X, 0, 1)
             self.W = params[W]
             self.R = params[R]
             self.B = b
             self.P = p
             self.H_0 = h_0
             self.C_0 = c_0
+            self.TM = TM
+
         else:
             raise NotImplementedError()
 
@@ -91,7 +97,7 @@ class LSTM_Helper():
         if self.num_directions == 1:
             Y[:, :, :, 0] = concatenated
 
-        return Y, Y[-1]
+        return Y if self.TM == 1 else np.swapaxes(Y, 0, 1), Y[-1]
 
 
 class LSTM(Base):
@@ -108,7 +114,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -132,7 +138,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -161,7 +167,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -178,3 +184,28 @@ class LSTM(Base):
         _, Y_h = lstm.step()
         expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
                name='test_lstm_with_peepholes')
+
+    @staticmethod
+    def export_batchwise():  # type: () -> None
+        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 7
+        weight_scale = 0.1
+        number_of_gates = 4
+        time_major = 0
+
+        node = onnx.helper.make_node(
+            'LSTM',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', 'Y_h'],
+            hidden_size=hidden_size,
+            time_major=time_major
+        )
+
+        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+        lstm = LSTM_Helper(X=input, W=W, R=R, time_major=time_major)
+        Y, Y_h = lstm.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_lstm_batchwise')

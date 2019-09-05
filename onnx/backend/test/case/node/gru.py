@@ -20,6 +20,7 @@ class GRU_Helper():
         B = str('B')
         H_0 = str('initial_h')
         LBR = str('linear_before_reset')
+        TM = str('time_major')
         number_of_gates = 3
 
         required_inputs = [X, W, R]
@@ -40,12 +41,16 @@ class GRU_Helper():
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             lbr = params[LBR] if LBR in params else 0
 
+            tm = params[TM] if TM in params else 1
             self.X = params[X]
+            if tm != 1:
+                self.X = np.swapaxes(self.X, 0, 1)
             self.W = params[W]
             self.R = params[R]
             self.B = b
             self.H_0 = h_0
             self.LBR = lbr
+            self.TM = tm
 
         else:
             raise NotImplementedError()
@@ -88,7 +93,7 @@ class GRU_Helper():
         if self.num_directions == 1:
             Y[:, :, :, 0] = concatenated
 
-        return Y, Y[-1]
+        return Y if self.TM == 1 else np.swapaxes(Y, 0, 1), Y[-1]
 
 
 class GRU(Base):
@@ -105,7 +110,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -129,7 +134,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -157,7 +162,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -172,3 +177,28 @@ class GRU(Base):
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_seq_length')
+
+    @staticmethod
+    def export_batchwise():  # type: () -> None
+        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 6
+        number_of_gates = 3
+        weight_scale = 0.1
+        time_major = 0
+
+        node = onnx.helper.make_node(
+            'GRU',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', 'Y_h'],
+            hidden_size=hidden_size,
+            time_major=time_major
+        )
+
+        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+        gru = GRU_Helper(X=input, W=W, R=R, time_major=time_major)
+        Y, Y_h = gru.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')

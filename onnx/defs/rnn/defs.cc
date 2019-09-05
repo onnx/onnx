@@ -19,27 +19,28 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (hidden_size_value > 0)
     hidden_size.set_dim_value(hidden_size_value);
 
+  auto time_major_value = getAttribute(ctx, "time_major", 1);
+
   if (hasInputShape(ctx, 0)) {
     auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    seq_length = first_input_shape.dim((time_major_value == 1) ? 0 : 1);
+    batch_size = first_input_shape.dim((time_major_value == 1) ? 1 : 0);
   }
 
   auto num_outputs = ctx.getNumOutputs();
-  auto time_major_value = getAttribute(ctx, "time_major", 1);
 
   if (num_outputs > 0) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-    if (time_major_value == 1) {
+    if (time_major_value == 1) {      
       auto dims = {seq_length, batch_size, hidden_size, num_directions};
       updateOutputShape(ctx, 0, dims);
     } else {
-      auto dims = {seq_length, batch_size, hidden_size, num_directions};
+      auto dims = {batch_size, seq_length, hidden_size, num_directions};
       updateOutputShape(ctx, 0, dims);
     }
   }

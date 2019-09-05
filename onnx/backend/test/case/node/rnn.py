@@ -19,6 +19,7 @@ class RNN_Helper():
         R = str('R')
         B = str('B')
         H_0 = str('initial_h')
+        TM = str('time_major')
 
         required_inputs = [X, W, R]
         for i in required_inputs:
@@ -37,11 +38,16 @@ class RNN_Helper():
             b = params[B] if B in params else np.zeros(2 * hidden_size, dtype=np.float32)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
 
+            tm = params[TM] if TM in params else 1
             self.X = params[X]
+            if tm != 1:
+                self.X = np.swapaxes(self.X, 0, 1)
             self.W = params[W]
             self.R = params[R]
             self.B = b
             self.H_0 = h_0
+            self.TM = tm
+
         else:
             raise NotImplementedError()
 
@@ -67,7 +73,7 @@ class RNN_Helper():
         if self.num_directions == 1:
             Y[:, :, :, 0] = concatenated
 
-        return Y, Y[-1]
+        return Y if self.TM == 1 else np.swapaxes(Y, 0, 1), Y[-1]
 
 
 class RNN(Base):
@@ -83,7 +89,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -106,7 +112,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -134,7 +140,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -149,3 +155,27 @@ class RNN(Base):
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = rnn.step()
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
+
+    @staticmethod
+    def export_batchwise():  # type: () -> None
+        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 4
+        weight_scale = 0.1
+        time_major = 0
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', 'Y_h'],
+            hidden_size=hidden_size,
+            time_major=time_major
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, time_major=time_major)
+        Y, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')
