@@ -2186,6 +2186,14 @@ class TestShapeInference(unittest.TestCase):
                          make_tensor('limit', TensorProto.INT32, (), (5,))])  # Missing 'delta' initializer
         self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.INT32, (None,))])  # type: ignore
 
+    def test_gathernd(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('indices', TensorProto.INT64, (2,))],
+            [make_node('GatherND', ['x', 'indices'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
+
     def test_nonmaxsuppression(self):  # type: () -> None
         graph = self._make_graph(
             [('boxes', TensorProto.FLOAT, (1, 3, 4)),
