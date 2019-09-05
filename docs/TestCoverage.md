@@ -2703,7 +2703,7 @@ for i in range(-len(shape), 0):
     new_shape = (np.prod(shape[0:i]).astype(int), -1)
     b = np.reshape(a, new_shape)
     expect(node, inputs=[a], outputs=[b],
-           name='test_flatten_negative_axis' + str(abs(i)))
+           name='test_flatten_negative_axis' + str(i))
 ```
 
 </details>
@@ -10126,7 +10126,7 @@ node = onnx.helper.make_node(
     axes=[-2],
 )
 x = np.random.randn(1, 3, 1, 5).astype(np.float32)
-y = np.squeeze(x, axis=-2)
+y = np.expand_dims(x, axis=-2)
 expect(node, inputs=[x], outputs=[y],
        name='test_unsqueeze_negative_axes')
 ```

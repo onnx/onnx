@@ -55,6 +55,10 @@ False instead of True.)DOC";
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
       for (size_t i = 0; i < axes.size(); ++i) {
+        if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
+          fail_shape_inference(
+              "axis must be in [-rank, rank-1]. input rank was ", input_ndim);
+        }
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
@@ -171,6 +175,10 @@ The type of the output tensor is integer.)DOC";
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
+        if (axis < -input_ndim || axis >= input_ndim) {
+          fail_shape_inference(
+            "'axis' must be in [-rank(indices), rank(indices)-1]");
+        }
         if (axis < 0)
           axis += input_ndim;
       }

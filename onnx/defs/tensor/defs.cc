@@ -291,8 +291,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     Concat,
     11,
     OpSchema()
-        .Attr("axis", "Which axis to concat on. A negative value means counting dimensions from the back. "
-        "Accepted range is [-rank, rank-1].", AttributeProto::INT)
+        .Attr(
+            "axis", "Which axis to concat on. A negative value means counting dimensions from the back. "
+            "Accepted range is [-rank, rank-1].",
+            AttributeProto::INT)
         .SetDoc("Concatenate a list of tensors into a single tensor")
         .Input(
             0,
@@ -321,11 +323,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           int axis = static_cast<int>(axisAttr->i());
           if (axis < -rank || axis >= rank) {
-          fail_type_inference(
-            "Invalid value of attribute 'axis'. Rank=",
-            rank,
-            " Value=",
-            axis);
+            fail_shape_inference("axis must be in [-rank, rank-1].");
           }
           if (axis < 0) {
             axis += rank;
@@ -504,7 +502,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "axes",
             "1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1].",
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             "Tind",
             OpSchema::Optional)
         .Input(
@@ -812,7 +810,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
-            "counting dimensions from the back. Accepted range is [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -981,7 +979,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
-            "counting dimensions from the back. Accepted range is [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -1066,7 +1064,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
-            "counting dimensions from the back. Accepted range is [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -1188,7 +1186,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
-            "counting dimensions from the back. Accepted range is [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -1225,7 +1223,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axes",
             "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1].",
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS,
             OPTIONAL)
         .SetDoc(Squeeze_ver11_doc)
@@ -1289,7 +1287,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axes",
             "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1].",
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS)
         .SetDoc(Unsqueeze_ver11_doc)
         .Input(0, "data", "Original tensor", "T")
@@ -1318,6 +1316,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           for(size_t (i) = 0; i < axes.size(); ++i) {
+            if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
+              fail_shape_inference(
+              "'axis' must be in [-rank(indices), rank(indices)-1]");
+            }
             if (axes[i] < 0)
               axes[i] += input_ndim;
           }
@@ -1995,7 +1997,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
             if (axis < -out_rank || axis >= out_rank) {
               fail_shape_inference(
-                  "'axis' must be in [-rank(indices)-1, rank(indices)]");
+                  "'axis' must be in [-rank(indices), rank(indices)-1]");
             }
             if (axis < 0) {
               axis += out_rank;

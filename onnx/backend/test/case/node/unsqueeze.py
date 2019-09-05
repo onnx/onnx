@@ -35,6 +35,6 @@ class Unsqueeze(Base):
             axes=[-2],
         )
         x = np.random.randn(1, 3, 1, 5).astype(np.float32)
-        y = np.squeeze(x, axis=-2)
+        y = np.expand_dims(x, axis=-2)
         expect(node, inputs=[x], outputs=[y],
                name='test_unsqueeze_negative_axes')

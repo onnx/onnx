@@ -88,11 +88,12 @@ will throw errors.
       if (!hasNInputShapes(ctx, 1)) {
         return;
       }
-      const TensorShapeProto& indices_shape =
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+      const TensorShapeProto& input_shape =
         ctx.getInputType(0)->tensor_type().shape();
-      int r = indices_shape.dim_size();
-      if (r < 1) {
-        fail_shape_inference("Indices tensor must have rank >= 1");
+      int r = input_shape.dim_size();
+      if (r != 2) {
+        fail_shape_inference("Input tensor must have rank == 2");
       }
       int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
       if (axis){
