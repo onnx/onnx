@@ -4916,7 +4916,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   Let \
   k = indices[i_{0}, …, i_{q-1}] \
   then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j{1}, …, j_{r-2} ]
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
   
   ```
     data = [
@@ -9504,8 +9504,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=axisValue
 )
-indices = np.array([[1, -2],
-                    [2, -4]], dtype=np.float32)
+indices = np.array([0, -7, -8], dtype=np.int64)
 depth = np.array([10], dtype=np.float32)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)

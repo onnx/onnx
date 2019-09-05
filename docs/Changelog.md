@@ -10698,7 +10698,7 @@ This version of the operator has been available since version 11 of the default 
   Let \
   k = indices[i_{0}, …, i_{q-1}] \
   then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j{1}, …, j_{r-2} ]
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
   
   ```
     data = [
@@ -11112,7 +11112,7 @@ This version of the operator has been available since version 11 of the default 
       dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
       dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-      the range [-depth, depth-1] (boundaries are inclusive) will result in one-hot representation with all 'off_value' values in the
+      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
       output tensor.
   
       when axis = 0:
