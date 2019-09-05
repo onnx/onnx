@@ -25,23 +25,23 @@ class RNN_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        self.num_directions = params[str(W)].shape[0]
+        self.num_directions = params[str(W)].shape[-1]
 
         if self.num_directions == 1:
             for k in params.keys():
                 if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+                    params[k] = np.squeeze(params[k], axis=-1)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
+            tm = params[TM] if TM in params else 1
+            x = params[X]
+            x = x if tm == 1 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * hidden_size, dtype=np.float32)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
 
-            tm = params[TM] if TM in params else 1
-            self.X = params[X]
-            if tm != 1:
-                self.X = np.swapaxes(self.X, 0, 1)
+            self.X = x
             self.W = params[W]
             self.R = params[R]
             self.B = b
@@ -93,8 +93,8 @@ class RNN(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
         rnn = RNN_Helper(X=input, W=W, R=R)
         _, Y_h = rnn.step()
@@ -116,13 +116,13 @@ class RNN(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
         # Adding custom bias
-        W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
-        R_B = np.zeros((1, hidden_size)).astype(np.float32)
-        B = np.concatenate((W_B, R_B), axis=1)
+        W_B = custom_bias * np.ones((hidden_size, 1)).astype(np.float32)
+        R_B = np.zeros((hidden_size, 1)).astype(np.float32)
+        B = np.concatenate((W_B, R_B), axis=0)
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = rnn.step()
@@ -144,13 +144,13 @@ class RNN(Base):
             hidden_size=hidden_size
         )
 
-        W = np.random.randn(1, hidden_size, input_size).astype(np.float32)
-        R = np.random.randn(1, hidden_size, hidden_size).astype(np.float32)
+        W = np.random.randn(hidden_size, input_size, 1).astype(np.float32)
+        R = np.random.randn(hidden_size, hidden_size, 1).astype(np.float32)
 
         # Adding custom bias
-        W_B = np.random.randn(1, hidden_size).astype(np.float32)
-        R_B = np.random.randn(1, hidden_size).astype(np.float32)
-        B = np.concatenate((W_B, R_B), axis=1)
+        W_B = np.random.randn(hidden_size, 1).astype(np.float32)
+        R_B = np.random.randn(hidden_size, 1).astype(np.float32)
+        B = np.concatenate((W_B, R_B), axis=0)
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = rnn.step()
@@ -162,7 +162,7 @@ class RNN(Base):
 
         input_size = 2
         hidden_size = 4
-        weight_scale = 0.1
+        weight_scale = 0.5
         time_major = 0
 
         node = onnx.helper.make_node(
@@ -173,8 +173,8 @@ class RNN(Base):
             time_major=time_major
         )
 
-        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
         rnn = RNN_Helper(X=input, W=W, R=R, time_major=time_major)
         Y, Y_h = rnn.step()

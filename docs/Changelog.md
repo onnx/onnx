@@ -10766,11 +10766,11 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
+<dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[3*hidden_size, input_size, num_directions]`.</dd>
 <dt><tt>R</tt> : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[3*hidden_size, hidden_size, num_directions]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
+<dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[6*hidden_size, num_directions]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
@@ -11099,19 +11099,19 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
+<dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[4*hidden_size, input_size, num_directions]`.</dd>
 <dt><tt>R</tt> : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[4*hidden_size, hidden_size, num_directions]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[8*hidden_size, num_directions]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 <dt><tt>initial_c</tt> (optional) : T</dt>
-<dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 <dt><tt>P</tt> (optional) : T</dt>
-<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[3*hidde_size, num_directions]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (0 - 3)
@@ -11122,7 +11122,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 <dt><tt>Y_c</tt> (optional) : T</dt>
-<dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dd>The last output value of the cell. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -11383,11 +11383,11 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
+<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[hidden_size, input_size, num_directions]`.</dd>
 <dt><tt>R</tt> : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[hidden_size, hidden_size, num_directions]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[2*hidden_size, num_directions]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>

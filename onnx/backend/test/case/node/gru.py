@@ -27,24 +27,24 @@ class GRU_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        self.num_directions = params[W].shape[0]
+        self.num_directions = params[W].shape[-1]
 
         if self.num_directions == 1:
             for k in params.keys():
                 if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+                    params[k] = np.squeeze(params[k], axis=-1)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
+            tm = params[TM] if TM in params else 1
+            x = params[X]
+            x = x if tm == 1 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             lbr = params[LBR] if LBR in params else 0
 
-            tm = params[TM] if TM in params else 1
-            self.X = params[X]
-            if tm != 1:
-                self.X = np.swapaxes(self.X, 0, 1)
+            self.X = x
             self.W = params[W]
             self.R = params[R]
             self.B = b
@@ -114,8 +114,8 @@ class GRU(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
         gru = GRU_Helper(X=input, W=W, R=R)
         _, Y_h = gru.step()
@@ -138,13 +138,13 @@ class GRU(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
         # Adding custom bias
-        W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-        R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
-        B = np.concatenate((W_B, R_B), axis=1)
+        W_B = custom_bias * np.ones((number_of_gates * hidden_size, 1)).astype(np.float32)
+        R_B = np.zeros((number_of_gates * hidden_size, 1)).astype(np.float32)
+        B = np.concatenate((W_B, R_B), axis=0)
 
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
@@ -166,13 +166,13 @@ class GRU(Base):
             hidden_size=hidden_size
         )
 
-        W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(np.float32)
-        R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(np.float32)
+        W = np.random.randn(number_of_gates * hidden_size, input_size, 1).astype(np.float32)
+        R = np.random.randn(number_of_gates * hidden_size, hidden_size, 1).astype(np.float32)
 
         # Adding custom bias
-        W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
-        R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
-        B = np.concatenate((W_B, R_B), axis=1)
+        W_B = np.random.randn(number_of_gates * hidden_size, 1).astype(np.float32)
+        R_B = np.random.randn(number_of_gates * hidden_size, 1).astype(np.float32)
+        B = np.concatenate((W_B, R_B), axis=0)
 
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
@@ -185,7 +185,7 @@ class GRU(Base):
         input_size = 2
         hidden_size = 6
         number_of_gates = 3
-        weight_scale = 0.1
+        weight_scale = 0.2
         time_major = 0
 
         node = onnx.helper.make_node(
@@ -196,8 +196,8 @@ class GRU(Base):
             time_major=time_major
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
         gru = GRU_Helper(X=input, W=W, R=R, time_major=time_major)
         Y, Y_h = gru.step()

@@ -898,8 +898,8 @@ class TestShapeInference(unittest.TestCase):
     def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
-             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
+             ('w', TensorProto.FLOAT, (hiddensize, inpsize, 1)),
+             ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 1))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize)],
             [])
         self._assert_inferred(graph, [
@@ -912,8 +912,8 @@ class TestShapeInference(unittest.TestCase):
     def _rnn_bidirectional(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (2, hiddensize, inpsize)),
-             ('r', TensorProto.FLOAT, (2, hiddensize, hiddensize))],
+             ('w', TensorProto.FLOAT, (hiddensize, inpsize, 2)),
+             ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 2))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 direction="bidirectional")],
             [])
@@ -927,8 +927,8 @@ class TestShapeInference(unittest.TestCase):
     def _rnn_batchwise(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (batchsize, seqlen, inpsize)),
-             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
-             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
+             ('w', TensorProto.FLOAT, (hiddensize, inpsize, 1)),
+             ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 1))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 time_major=0)],
             [])
@@ -942,8 +942,8 @@ class TestShapeInference(unittest.TestCase):
     def _lstm_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),
-             ('r', TensorProto.FLOAT, (1, 4 * hiddensize, hiddensize))],
+             ('w', TensorProto.FLOAT, (4 * hiddensize, inpsize, 1)),
+             ('r', TensorProto.FLOAT, (4 * hiddensize, hiddensize, 1))],
             [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize)],
             [])
         self._assert_inferred(graph, [

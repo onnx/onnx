@@ -2644,7 +2644,7 @@ input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 input_size = 2
 hidden_size = 6
 number_of_gates = 3
-weight_scale = 0.1
+weight_scale = 0.2
 time_major = 0
 
 node = onnx.helper.make_node(
@@ -2655,8 +2655,8 @@ node = onnx.helper.make_node(
     time_major=time_major
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
 gru = GRU_Helper(X=input, W=W, R=R, time_major=time_major)
 Y, Y_h = gru.step()
@@ -2682,8 +2682,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
 gru = GRU_Helper(X=input, W=W, R=R)
 _, Y_h = gru.step()
@@ -2710,13 +2710,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=1)
+W_B = custom_bias * np.ones((number_of_gates * hidden_size, 1)).astype(np.float32)
+R_B = np.zeros((number_of_gates * hidden_size, 1)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=0)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
@@ -2742,13 +2742,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(np.float32)
-R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(np.float32)
+W = np.random.randn(number_of_gates * hidden_size, input_size, 1).astype(np.float32)
+R = np.random.randn(number_of_gates * hidden_size, hidden_size, 1).astype(np.float32)
 
 # Adding custom bias
-W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
-R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=1)
+W_B = np.random.randn(number_of_gates * hidden_size, 1).astype(np.float32)
+R_B = np.random.randn(number_of_gates * hidden_size, 1).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=0)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
@@ -3417,7 +3417,7 @@ input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 
 input_size = 2
 hidden_size = 7
-weight_scale = 0.1
+weight_scale = 0.3
 number_of_gates = 4
 time_major = 0
 
@@ -3429,8 +3429,8 @@ node = onnx.helper.make_node(
     time_major=time_major
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, time_major=time_major)
 Y, Y_h = lstm.step()
@@ -3456,8 +3456,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
@@ -3484,13 +3484,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
-B = np.concatenate((W_B, R_B), 1)
+W_B = custom_bias * np.ones((number_of_gates * hidden_size, 1)).astype(np.float32)
+R_B = np.zeros((number_of_gates * hidden_size, 1)).astype(np.float32)
+B = np.concatenate((W_B, R_B), 0)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = lstm.step()
@@ -3518,13 +3518,13 @@ node = onnx.helper.make_node(
 )
 
 # Initializing Inputs
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
-B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+B = np.zeros((2 * number_of_gates * hidden_size, 1)).astype(np.float32)
 seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
-init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
+init_h = np.zeros((input.shape[1], hidden_size, 1)).astype(np.float32)
+init_c = np.zeros((input.shape[1], hidden_size, 1)).astype(np.float32)
+P = weight_scale * np.ones((number_of_peepholes * hidden_size, 1)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
 _, Y_h = lstm.step()
@@ -5506,7 +5506,7 @@ input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 
 input_size = 2
 hidden_size = 4
-weight_scale = 0.1
+weight_scale = 0.5
 time_major = 0
 
 node = onnx.helper.make_node(
@@ -5517,8 +5517,8 @@ node = onnx.helper.make_node(
     time_major=time_major
 )
 
-W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
 rnn = RNN_Helper(X=input, W=W, R=R, time_major=time_major)
 Y, Y_h = rnn.step()
@@ -5543,8 +5543,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
 rnn = RNN_Helper(X=input, W=W, R=R)
 _, Y_h = rnn.step()
@@ -5570,13 +5570,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
+R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
-R_B = np.zeros((1, hidden_size)).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=1)
+W_B = custom_bias * np.ones((hidden_size, 1)).astype(np.float32)
+R_B = np.zeros((hidden_size, 1)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=0)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
@@ -5602,13 +5602,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = np.random.randn(1, hidden_size, input_size).astype(np.float32)
-R = np.random.randn(1, hidden_size, hidden_size).astype(np.float32)
+W = np.random.randn(hidden_size, input_size, 1).astype(np.float32)
+R = np.random.randn(hidden_size, hidden_size, 1).astype(np.float32)
 
 # Adding custom bias
-W_B = np.random.randn(1, hidden_size).astype(np.float32)
-R_B = np.random.randn(1, hidden_size).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=1)
+W_B = np.random.randn(hidden_size, 1).astype(np.float32)
+R_B = np.random.randn(hidden_size, 1).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=0)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()

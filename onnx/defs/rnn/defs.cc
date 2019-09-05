@@ -227,21 +227,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "W",
             "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
             "(if bidirectional). The tensor has shape "
-            "`[num_directions, hidden_size, input_size]`.",
+            "`[hidden_size, input_size, num_directions]`.",
             "T")
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
             "(if bidirectional). The tensor has shape "
-            "`[num_directions, hidden_size, hidden_size]`.",
+            "`[hidden_size, hidden_size, num_directions]`.",
             "T")
         .Input(
             3,
             "B",
             "The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` "
             "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
-            "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
+            "`[2*hidden_size, num_directions]`. Optional: If not specified - assumed "
             "to be 0.",
             "T",
             OpSchema::Optional)
@@ -347,21 +347,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "W",
             "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
-            "`[num_directions, 3*hidden_size, input_size]`.",
+            "`[3*hidden_size, input_size, num_directions]`.",
             "T")
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
-            "`[num_directions, 3*hidden_size, hidden_size]`.",
+            "`[3*hidden_size, hidden_size, num_directions]`.",
             "T")
         .Input(
             3,
             "B",
             "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
             "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
-            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
+            "has shape `[6*hidden_size, num_directions]`. Optional: If not specified "
             "- assumed to be 0",
             "T",
             OpSchema::Optional)
@@ -473,21 +473,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "W",
             "The weight tensor for the gates. Concatenation of `W[iofc]` and "
             "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
-            "`[num_directions, 4*hidden_size, input_size]`.",
+            "`[4*hidden_size, input_size, num_directions]`.",
             "T")
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[iofc]` and "
             "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
-            "`[num_directions, 4*hidden_size, hidden_size]`.",
+            "`[4*hidden_size, hidden_size, num_directions]`.",
             "T")
         .Input(
             3,
             "B",
             "The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, "
             "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
-            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
+            "tensor has shape `[8*hidden_size, num_directions]`. Optional: If not "
             "specified - assumed to be 0.",
             "T",
             OpSchema::Optional)
@@ -495,7 +495,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             6,
             "initial_c",
             "Optional initial value of the cell. If not specified - assumed "
-            "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+            "to be 0. It has shape `[batch_size, hidden_size, num_directions]`.",
             "T",
             OpSchema::Optional)
         .Input(
@@ -503,7 +503,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "P",
             "The weight tensor for peepholes. Concatenation of `P[iof]` and "
             "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
-            "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
+            "`[3*hidde_size, num_directions]`. Optional: If not specified - "
             "assumed to be 0.",
             "T",
             OpSchema::Optional)
@@ -512,7 +512,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "Y_c",
             "The last output value of the cell. It has shape "
-            "`[num_directions, batch_size, hidden_size]`.",
+            "`[batch_size, hidden_size, num_directions]`.",
             "T",
             OpSchema::Optional));
 } // namespace ONNX_NAMESPACE

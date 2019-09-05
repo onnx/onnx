@@ -29,25 +29,25 @@ class LSTM_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        self.num_directions = params[W].shape[0]
+        self.num_directions = params[W].shape[-1]
 
         if self.num_directions == 1:
             for k in params.keys():
                 if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+                    params[k] = np.squeeze(params[k], axis=-1)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
+            tm = params[TM] if TM in params else 1
+            x = params[X]
+            x = x if tm == 1 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size, dtype=np.float32)
             p = params[P] if P in params else np.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
             c_0 = params[C_0] if C_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
 
-            TM = params[TM] if TM in params else 1
-            self.X = params[X]
-            if TM != 1:
-                self.X = np.swapaxes(self.X, 0, 1)
+            self.X = x
             self.W = params[W]
             self.R = params[R]
             self.B = b
@@ -118,8 +118,8 @@ class LSTM(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
         lstm = LSTM_Helper(X=input, W=W, R=R)
         _, Y_h = lstm.step()
@@ -142,13 +142,13 @@ class LSTM(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
         # Adding custom bias
-        W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-        R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
-        B = np.concatenate((W_B, R_B), 1)
+        W_B = custom_bias * np.ones((number_of_gates * hidden_size, 1)).astype(np.float32)
+        R_B = np.zeros((number_of_gates * hidden_size, 1)).astype(np.float32)
+        B = np.concatenate((W_B, R_B), 0)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = lstm.step()
@@ -172,13 +172,13 @@ class LSTM(Base):
         )
 
         # Initializing Inputs
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
-        B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+        B = np.zeros((2 * number_of_gates * hidden_size, 1)).astype(np.float32)
         seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
-        init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-        init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-        P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
+        init_h = np.zeros((input.shape[1], hidden_size, 1)).astype(np.float32)
+        init_c = np.zeros((input.shape[1], hidden_size, 1)).astype(np.float32)
+        P = weight_scale * np.ones((number_of_peepholes * hidden_size, 1)).astype(np.float32)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
         _, Y_h = lstm.step()
@@ -191,7 +191,7 @@ class LSTM(Base):
 
         input_size = 2
         hidden_size = 7
-        weight_scale = 0.1
+        weight_scale = 0.3
         number_of_gates = 4
         time_major = 0
 
@@ -203,8 +203,8 @@ class LSTM(Base):
             time_major=time_major
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
+        R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, time_major=time_major)
         Y, Y_h = lstm.step()
