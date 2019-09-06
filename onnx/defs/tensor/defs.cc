@@ -1313,7 +1313,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           for(size_t (i) = 0; i < axes.size(); ++i) {
-            if (axes[i] < -input_ndim || axes[i] >= input_ndim + axes.size()) {
+            if (axes[i] < -input_ndim || axes[i] >= input_ndim + int64_t (axes.size())) {
               fail_shape_inference(
               "'axis' must be in [-rank(indices), rank(indices)-1]");
             }
