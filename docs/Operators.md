@@ -4740,7 +4740,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 <dt><tt>linear_before_reset</tt> : int (default is 0)</dt>
 <dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
 <dt><tt>time_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output YIf 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
+<dd>The shape format of the input X and output Y. If 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -6508,7 +6508,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>, <a hr
 <dt><tt>input_forget</tt> : int (default is 0)</dt>
 <dd>Couple the input and forget gates if 1.</dd>
 <dt><tt>time_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output YIf 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
+<dd>The shape format of the input X and output Y. If 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -10309,7 +10309,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>, <a href
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>time_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output YIf 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
+<dd>The shape format of the input X and output Y. If 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 6)
