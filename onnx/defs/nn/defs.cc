@@ -320,7 +320,10 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -464,7 +467,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "dilations",
-            "Dilation value along each spatial axis of filter.",
+            "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
             OPTIONAL)
         .Output(
@@ -674,7 +677,10 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -876,17 +882,24 @@ computes the output.)DOC";
         OPTIONAL);
     schema.Attr(
         "dilations",
-        "dilation value along each spatial axis of the filter.",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
+    schema.Attr(
+        "pads",
+        pads_doc,
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -1437,11 +1450,14 @@ output_shape can also be explicitly specified in which case pads values are auto
         OPTIONAL);
     schema.Attr(
         "dilations",
-        "dilation value along each spatial axis of the filter.",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
