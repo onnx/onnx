@@ -363,7 +363,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver2_doc =
+static const char* Split_ver11_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
@@ -371,7 +371,7 @@ Otherwise, the tensor is split to equal sized parts.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    2,
+    11,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T")
         .Output(
@@ -391,35 +391,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
-        .SetDoc(Split_ver2_doc)
+        .SetDoc(Split_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }
-
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           std::vector<int64_t> split;
           if (!getRepeatedAttribute(ctx, "split", split)) {
             if (!ctx.getInputType(0)->tensor_type().has_shape()) {
               return;
             }
             const auto& shape = ctx.getInputType(0)->tensor_type().shape();
-            int r = shape.dim_size();
+            int rank = shape.dim_size();
             int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-            if (axis < -r || axis >= r) {
+            if (axis < -rank || axis >= rank) {
               fail_type_inference(
                   "Invalid value of attribute 'axis'. Rank=",
-                  r,
+                  rank,
                   " Value=",
                   axis);
             }
             if (axis < 0) {
-              axis += r;
+              axis += rank;
             }
-
             const auto& splitDim = shape.dim(axis);
             if (!splitDim.has_dim_value()) {
               return;

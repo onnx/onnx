@@ -1411,4 +1411,79 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             {"tensor(bool)"},
             "Constrains to boolean tensors."));
+
+static const char* Split_ver2_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified
+'axis'. Lengths of the parts can be specified using argument 'split'.
+Otherwise, the tensor is split to equal sized parts.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Split,
+    2,
+    OpSchema()
+        .Input(0, "input", "The tensor to split", "T")
+        .Output(
+            0,
+            "outputs",
+            "One or more outputs forming list of tensors after splitting",
+            "T",
+            OpSchema::Variadic)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .Attr(
+            "axis",
+            "Which axis to split on. ",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
+        .SetDoc(Split_ver2_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+            propagateElemTypeFromInputToOutput(ctx, 0, i);
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto axisAttr = ctx.getAttribute("axis");
+          int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
+          if (axis < 0) {
+            return;
+          }
+          std::vector<int64_t> split;
+          if (!getRepeatedAttribute(ctx, "split", split)) {
+            if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+              return;
+            }
+            const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+            if (axis >= shape.dim_size()) {
+              fail_type_inference("Invalid value of attribute 'axis'");
+            }
+            const auto& splitDim = shape.dim(axis);
+            if (!splitDim.has_dim_value()) {
+              return;
+            }
+            int splitDimValue = static_cast<int>(splitDim.dim_value());
+            int chunkSize =
+                splitDimValue / static_cast<int>(ctx.getNumOutputs());
+            int leftOver = splitDimValue -
+                (chunkSize * static_cast<int>(ctx.getNumOutputs()));
+            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+              split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
+            }
+
+            for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
+                  shape;
+              ctx.getOutputType(i)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->mutable_dim(axis)
+                  ->set_dim_value(split[i]);
+            }
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
