@@ -13,6 +13,7 @@ import functools
 from onnx import (ValueInfoProto,
                   AttributeProto,
                   TensorProto,
+                  SparseTensorProto,
                   NodeProto,
                   ModelProto,
                   GraphProto,
@@ -77,6 +78,10 @@ def check_node(node, ctx=DEFAULT_CONTEXT):  # type: (NodeProto, C.CheckerContext
 @_create_checker(GraphProto)
 def check_graph(graph, ctx=DEFAULT_CONTEXT):  # type: (GraphProto, C.CheckerContext) -> None
     pass
+
+
+def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProto, C.CheckerContext) -> None
+    C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
 def check_model(model):  # type: (Union[ModelProto, Text]) -> None

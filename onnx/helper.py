@@ -8,7 +8,7 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import TensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
@@ -176,6 +176,18 @@ def make_tensor(
     return tensor
 
 
+def make_sparse_tensor(
+    values,   # type: TensorProto
+    indices,   # type: TensorProto
+    dims   # type: Sequence[int]
+):  # type: (...) -> SparseTensorProto
+    sparse = SparseTensorProto()
+    sparse.values.CopyFrom(values)
+    sparse.indices.CopyFrom(indices)
+    sparse.dims.extend(dims)
+    return sparse
+
+
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.
 
@@ -224,6 +236,9 @@ def make_attribute(
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
         attr.type = AttributeProto.TENSOR
+    elif isinstance(value, SparseTensorProto):
+        attr.sparse_tensor.CopyFrom(value)
+        attr.type = AttributeProto.SPARSE_TENSOR
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
         attr.type = AttributeProto.GRAPH
@@ -243,6 +258,9 @@ def make_attribute(
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
+        elif all(isinstance(v, SparseTensorProto) for v in value):
+            attr.sparse_tensors.extend(value)
+            attr.type = AttributeProto.SPARSE_TENSORS
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
