@@ -98,7 +98,7 @@ python setup.py typecheck
 
 Pull requests require a signed CLA before consideration for merging. All repositories under the ONNX organization use a common [individual CLA](https://cla-assistant.io/onnx/) that is automatically checked by the PR process.
 
-If your employer prohibits you from signing an individual CLArequires a corporate CLA (CCLA), then please follow these instructions:
+If your employer prohibits you from signing an individual CLA and hence requiring a corporate CLA (CCLA), please follow these instructions:
   * Step 1: Download the CCLA from [here](https://github.com/onnx/steering-committee/blob/master/CCLAs/ccla_template.md) 
   * Step 2: Complete the form
   * Step 3: Open a PR in the https://github.com/onnx/steering-committee/tree/master/CCLAs repo with the completed CCLA attached in the [CCLA directory](https://github.com/onnx/onnx/tree/master/community/CCLAs). 
