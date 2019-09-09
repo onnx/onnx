@@ -40,7 +40,7 @@ python onnx/defs/gen_doc.py
 
 ONNX is an open standard, and we encourage developers to contribute high
 quality operators to ONNX specification.
-Before proposing a new operator, please read [the tutorial](AddNewOp.md).
+Before proposing a new operator, please read [the tutorial](operators/AddNewOp.md).
 
 # Testing
 

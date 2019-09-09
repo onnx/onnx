@@ -23,7 +23,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Python API Overview](docs/PythonAPIOverview.md)
 
 # Programming utilities for working with ONNX Graphs
-* [Shape and Type Inference](docs/ShapeInference.md)
+* [Shape and Type Inference](docs/operators/ShapeInference.md)
 * [Graph Optimization](docs/Optimizer.md)
 * [Opset Version Conversion](docs/VersionConverter.md)
 
@@ -33,7 +33,7 @@ ONNX is a [community project](community). We encourage you to join the effort an
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
 
 If you think some operator should be added to ONNX specification, please read
-[this document](docs/AddNewOp.md).
+[this document](docs/operators/AddNewOp.md).
 
 # Discuss
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use Gitter for more real-time discussion:
