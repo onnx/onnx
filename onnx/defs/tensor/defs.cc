@@ -1883,7 +1883,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. This attribute indicates the "
-            "added axis in the output tensor.Default: axis=-1. axis=-1 means that the additional "
+            "added axis in the output tensor. Default: axis=-1. axis=-1 means that the additional "
             "dimension will be inserted as the innermost/last dimension in the output tensor.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
@@ -1937,7 +1937,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only allow Scalar should
+          // TODO: Ideally to match spec for this input only Scalar should
           // be allowed. Making this change now can affect backward
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar

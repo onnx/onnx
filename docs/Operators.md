@@ -9429,7 +9429,7 @@ Other versions of this operator: <a href="Changelog.md#OneHot-9">OneHot-9</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>(Optional) Axis along which one-hot representation in added. This attribute indicates the added axis in the output tensor.Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+<dd>(Optional) Axis along which one-hot representation in added. This attribute indicates the added axis in the output tensor. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
 </dl>
 
 #### Inputs

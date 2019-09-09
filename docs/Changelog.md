@@ -11130,7 +11130,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>(Optional) Axis along which one-hot representation in added. This attribute indicates the added axis in the output tensor.Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+<dd>(Optional) Axis along which one-hot representation in added. This attribute indicates the added axis in the output tensor. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
 </dl>
 
 #### Inputs
