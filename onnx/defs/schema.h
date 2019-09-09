@@ -709,7 +709,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
               << op_schema.line() << ", but it its domain is not"
-              << "known by the checker." << std::endl;
+              << " known by the checker." << std::endl;
 
           fail_schema(err.str());
         }
