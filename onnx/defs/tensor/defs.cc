@@ -2405,7 +2405,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             int axis = static_cast<int>(axisAttr->i());
             const TensorShapeProto& input_shape =
                 xTensorProto->tensor_type().shape();
-            int64_t rank = input_shape.dim_size();
+            int rank = input_shape.dim_size();
             if (axis < 0)
                 axis += rank;
             if (axis < 0 || axis >= rank)
