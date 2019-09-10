@@ -6,6 +6,77 @@
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+
+std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(
+    const char* name,
+    const char* description) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+The operator computes the {name} ({description}) values for each layer in the batch
+ of the given input. The input is a 2-D tensor (Tensor<float>) of size
+(batch_size x input_feature_dimensions). The output tensor has the same shape
+and contains the {name} values of the corresponding input.
+
+Input does not need to explicitly be a 2D vector; rather, it will be
+coerced into one. For an arbitrary n-dimensional tensor
+input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+the axis provided, then input will be coerced into a 2-dimensional tensor with
+dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+case where axis=1, this means the input tensor will be coerced into a 2D tensor
+of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+Each of these dimensions must be matched correctly, or else the operator
+will throw errors.
+)DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{description}", description);
+    schema.SetDoc(doc);
+    schema.Attr(
+        "axis",
+        "Describes the axis of the inputs when coerced "
+        "to 2D; defaults to one because the 0th axis most likely describes "
+        "the batch_size",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
+    schema.Input(
+        0,
+        "input",
+        "The input tensor that's coerced into a 2D matrix of size (NxD) "
+        "as described above.",
+        "T");
+    schema.Output(
+        0,
+        "output",
+        "The output values with the same "
+        "shape as input tensor (the original size without coercion).",
+        "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Softmax,
+    1,
+    OpSchema().FillUsing(
+        SoftmaxFamilyDocGenerator_opset1("softmax", "normalized exponential")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LogSoftmax,
+    1,
+    OpSchema().FillUsing(
+        SoftmaxFamilyDocGenerator_opset1("logsoftmax", "log of softmax")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Hardmax,
+    1,
+    OpSchema().FillUsing(SoftmaxFamilyDocGenerator_opset1(
+        "hardmax",
+        "1 for the first maximum value, and 0 for all others")));
+
 const char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second

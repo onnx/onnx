@@ -582,7 +582,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_9_doc = R"DOC(
+static const char* scan_11_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
@@ -708,9 +708,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    9,
+    11,
     OpSchema()
-        .SetDoc(scan_9_doc)
+        .SetDoc(scan_11_doc)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -762,14 +762,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
             "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input.",
+            "be used as the scan axis for every scan_input. Negative value for an axis means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS,
             false)
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
             "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
+            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
+            "Negative value for an axis means counting dimensions from the back. Accepted "
+            "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
