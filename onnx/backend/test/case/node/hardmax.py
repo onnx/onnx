@@ -75,3 +75,13 @@ class Hardmax(Base):
         y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_hardmax_axis_2')
+
+        node = onnx.helper.make_node(
+            'Hardmax',
+            inputs=['x'],
+            outputs=['y'],
+            axis=-1,
+        )
+        y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+        expect(node, inputs=[x], outputs=[y],
+               name='test_hardmax_negative_axis')
