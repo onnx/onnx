@@ -1574,13 +1574,8 @@ ONNX_OPERATOR_SET_SCHEMA(
       .TypeConstraint("T2", {
         "tensor(int32)",
         "tensor(int64)"}, "axis tensor can be int32 or int64 only")
-      .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-        // Type inference
-        ONNX_NAMESPACE::propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        // Output has the same shape as input
-        ONNX_NAMESPACE::propagateShapeFromInputToOutput(ctx, 0, 0);
-        return;
-      }));
+      .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput)
+      );
 
 static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
