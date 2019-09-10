@@ -63,7 +63,8 @@ will throw errors.
         "axis",
         "Describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
-        "the batch_size",
+        "the batch_size. Negative value means counting dimensions "
+        "from the back. Accepted range in [-r, r-1] where r = rank(input).",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(
@@ -82,7 +83,29 @@ will throw errors.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+      const TensorShapeProto& input_shape =
+        ctx.getInputType(0)->tensor_type().shape();
+      int r = input_shape.dim_size();
+      if (r != 2) {
+        fail_shape_inference("Input tensor must have rank == 2");
+      }
+      int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+      if (axis){
+        if (axis < -r || axis >= r) {
+          fail_shape_inference(
+            "'axis' must be in [-rank(indices), rank(indices)-1]");
+        }
+        if (axis < 0) {
+          axis += r;
+        }
+      }
+    });
   };
 }
 
@@ -647,19 +670,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
-    1,
+    11,
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator("softmax", "normalized exponential")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
-    1,
+    11,
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
-    1,
+    11,
     OpSchema().FillUsing(SoftmaxFamilyDocGenerator(
         "hardmax",
         "1 for the first maximum value, and 0 for all others")));
@@ -949,7 +972,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain index tensor to int64")
         .Attr(
             "axis",
-            "Dimension on which to do the sort.",
+            "Dimension on which to do the sort. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Attr(
@@ -1535,7 +1559,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           AttributeProto::INT,
           static_cast<int64_t>(0))
       .Input(0, "x", "An input tensor that is to be processed.", "T")
-      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))", "T2")
+      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
+            "Negative value means counting dimensions from the back.", "T2")
       .Output(0, "y",
               "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
               "T")
