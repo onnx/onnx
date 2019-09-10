@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -148,6 +149,79 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Concat,
+    4,
+    OpSchema()
+        .Attr("axis", "Which axis to concat on", AttributeProto::INT)
+        .SetDoc("Concatenate a list of tensors into a single tensor")
+        .Input(
+            0,
+            "inputs",
+            "List of tensors for concatenation",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "concat_result", "Concatenated tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto numInputs = ctx.getNumInputs();
+          if (numInputs < 1 ||
+              !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+            return;
+          }
+
+          auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+
+          auto axisAttr = ctx.getAttribute("axis");
+          if (!axisAttr) {
+            fail_shape_inference("Required attribute axis is missing");
+          }
+          int axis = static_cast<int>(axisAttr->i());
+          if (rank <= axis) {
+            fail_shape_inference("rank must be greater than axis");
+          }
+          if (axis < 0) {
+            return; // TODO: check if negative axis must be supported
+          }
+
+          bool all_lengths_known = true;
+          int total_length = 0;
+
+          auto* output_shape =
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          for (int64_t i = 0; i < rank; ++i) {
+            output_shape->add_dim();
+          }
+
+          for (size_t i = 0; i < numInputs; i++) {
+            const auto& shape = ctx.getInputType(i)->tensor_type().shape();
+            if (shape.dim_size() != rank)
+              fail_shape_inference("All inputs to Concat must have same rank");
+            for (int j = 0; j < rank; j++) {
+              if (j == axis) {
+                if (shape.dim(j).has_dim_value()) {
+                  total_length += static_cast<int>(shape.dim(j).dim_value());
+                } else {
+                  all_lengths_known = false;
+                }
+              } else {
+                auto& output_dim = *output_shape->mutable_dim(j);
+                const auto& input_dim = shape.dim(j);
+                mergeInDimensionInfo(input_dim, output_dim, j);
+              }
+            }
+          }
+
+          if (all_lengths_known) {
+            output_shape->mutable_dim(axis)->set_dim_value(total_length);
+          }
+        }));
 
 static const char* Split_ver1_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
@@ -657,6 +731,242 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Slice_ver10_doc = R"DOC(
+Produces a slice of the input tensor along multiple axes. Similar to numpy:
+https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+dimension and step for each axis in the list of axes, it uses this information to
+slice the input `data` tensor. If a negative value is passed for any of the
+start or end indices, it represent number of elements before the end of that
+dimension. If the value passed to start or end is larger than the `n` (the
+number of elements in this dimension), it represents `n`. For slicing to the
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+If a negative value is passed for step, it represents slicing backward.
+If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
+Example 1:
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  axes = [0, 1]
+  starts = [1, 0]
+  ends = [2, 3]
+  steps = [1, 2]
+  result = [
+      [5, 7],
+  ]
+Example 2:
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  starts = [0, 1]
+  ends = [-1, 1000]
+  result = [
+      [2, 3, 4],
+  ]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Slice,
+    10,
+    OpSchema()
+        .SetDoc(Slice_ver10_doc)
+        .Input(0, "data", "Tensor of data to extract slices from.", "T")
+        .Input(
+            1,
+            "starts",
+            "1-D tensor of starting indices of corresponding axis in `axes`",
+            "Tind")
+        .Input(
+            2,
+            "ends",
+            "1-D tensor of ending indices (exclusive) of corresponding axis in `axes`",
+            "Tind")
+        .Input(
+            3,
+            "axes",
+            "1-D tensor of axes that `starts` and `ends` apply to.",
+            "Tind",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "steps",
+            "1-D tensor of slice step of corresponding axis in `axes`. Default to 1. ",
+            "Tind",
+            OpSchema::Optional)
+        .Output(0, "output", "Sliced data tensor.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          size_t num_inputs = ctx.getNumInputs();
+          if (num_inputs != 3 && num_inputs != 4 && num_inputs != 5) {
+            fail_type_inference(
+                "Slice op must have either three, four or five inputs.");
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          // Shape Inference if
+          //     1. 2nd and 3rd input data (starts, ends) are available.
+          // and 2. 4th and 5th optional input (axes, steps) are either not set,
+          // or set and is initializer.
+          const TensorProto* startsInitializer = ctx.getInputData(1);
+          const TensorProto* endsInitializer = ctx.getInputData(2);
+          const TensorProto* axesInitializer =
+              hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
+          const TensorProto* stepsInitializer =
+              hasInputShape(ctx, 4) ? ctx.getInputData(4) : nullptr;
+
+          if (!startsInitializer || !endsInitializer ||
+              (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
+              (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            return;
+          }
+
+          // don't know data_type- can't proceed
+          if (!startsInitializer->has_data_type())
+            return;
+
+          auto get_initializer_data =
+              [](const TensorProto* initializer) -> std::vector<int64_t> {
+            std::vector<int64_t> vec;
+            if (initializer->data_type() == TensorProto::INT64) {
+              const auto& data = ParseData<int64_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else if (initializer->data_type() == TensorProto::INT32) {
+              const auto& data = ParseData<int32_t>(initializer);
+              vec.insert(vec.end(), data.begin(), data.end());
+            } else {
+              // unaccepted data type
+              fail_shape_inference(
+                  "Only supports `int32_t` or `int64_t` inputs for starts/ends/axes/steps");
+            }
+            return vec;
+          };
+
+          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
+            if (val < low)
+              return low;
+            if (val > high)
+              return high;
+            return val;
+          };
+
+          std::vector<int64_t> starts = get_initializer_data(startsInitializer);
+          std::vector<int64_t> ends = get_initializer_data(endsInitializer);
+
+          if (starts.size() != ends.size()) {
+            fail_shape_inference(
+                "Incorrect or missing input value for starts and ends");
+          }
+
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_rank = input_shape.dim_size();
+          std::vector<int64_t> axes(starts.size());
+          if (!axesInitializer) {
+            std::iota(axes.begin(), axes.end(), 0);
+          } else {
+            axes = get_initializer_data(axesInitializer);
+            if (axes.size() != starts.size()) {
+              fail_shape_inference("Input axes has incorrect length");
+            }
+          }
+
+          std::vector<int64_t> steps;
+          if (!stepsInitializer) {
+            steps = std::vector<int64_t>(starts.size(), 1);
+          } else {
+            steps = get_initializer_data(stepsInitializer);
+            if (steps.size() != axes.size()) {
+              fail_shape_inference("Input steps has incorrect length");
+            }
+          }
+
+          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            // first update rank of output dim
+            auto* output_dim = ctx.getOutputType(0)
+                                   ->mutable_tensor_type()
+                                   ->mutable_shape()
+                                   ->add_dim();
+            const auto& input_dim = input_shape.dim((int)i);
+            if (input_dim.has_dim_value()) {
+              output_dim->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              output_dim->set_dim_param(input_dim.dim_param());
+            }
+          }
+
+          std::unordered_set<int64_t> unique_axes;
+          size_t axes_size = axes.size();
+          for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
+            auto axis = axes[axis_index] < 0
+                ? axes[axis_index] + static_cast<int64_t>(input_rank)
+                : axes[axis_index];
+
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+              fail_shape_inference("Input axes has invalid data");
+
+            if (unique_axes.find(axis) != unique_axes.end())
+              fail_shape_inference("'axes' has duplicates");
+
+            unique_axes.insert(axis);
+
+            auto input_dim =
+                ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+
+            // input dim value is missing - cannot perform shape inference for
+            // this axis
+            if (!input_dim.has_dim_value())
+              continue;
+
+            const auto input_dim_value = input_dim.dim_value();
+
+            // process step
+            auto step = steps[axis_index];
+            if (step == 0)
+              fail_shape_inference("'step' cannot be 0");
+
+            // process start
+            auto start = starts[axis_index];
+            if (start < 0)
+              start += input_dim_value;
+            if (step < 0)
+              start = clamp(start, 0, input_dim_value - 1);
+            else
+              start = clamp(start, 0, input_dim_value);
+
+            // process end
+            auto end = ends[axis_index];
+            if (end < 0)
+              end += input_dim_value;
+            if (step < 0)
+              end = clamp(end, -1, input_dim_value);
+            else
+              end = clamp(end, 0, input_dim_value);
+
+            // find output dim value for this axis
+            auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
+            if (temp < 0)
+              temp = 0;
+
+            // assign output value
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim((int)axis)
+                ->set_dim_value(temp);
+          }
+        }));
+
 static const char* Scatter_ver9_doc = R"DOC(
 Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
 into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
@@ -701,7 +1011,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1]",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -838,7 +1148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1]",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
@@ -891,6 +1201,140 @@ ONNX_OPERATOR_SET_SCHEMA(
                 (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
+          }
+}));
+
+static const char* Squeeze_ver1_doc = R"DOC(
+Remove single-dimensional entries from the shape of a tensor.
+Takes a  parameter `axes` with a list of axes to squeeze.
+If `axes` is not provided, all the single dimensions will be removed from
+the shape. If an axis is selected with shape entry not equal to one, an error is raised.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Squeeze,
+    1,
+    OpSchema()
+        .Attr(
+            "axes",
+            "List of non-negative integers, indicate the dimensions to squeeze.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .SetDoc(Squeeze_ver1_doc)
+        .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
+        .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          std::vector<int64_t> axes;
+          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+            return;
+          }
+
+          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+            return;
+          }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+
+          for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
+            if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
+                if(input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
+                    fail_shape_inference(
+                        "Dimension of input ",
+                        i,
+                        " must be 1 instead of ",
+                        input_shape.dim(i).dim_value());
+                }
+              ++j;
+            } else {
+              *ctx.getOutputType(0)
+                   ->mutable_tensor_type()
+                   ->mutable_shape()
+                   ->add_dim() =
+                  input_shape.dim(i);
+            }
+          }
+        }));
+
+static const char* Unsqueeze_ver1_doc = R"DOC(
+Insert single-dimensional entries to the shape of a tensor.
+Takes one required argument `axes`, a list of dimensions that will be inserted.
+Dimension indices in `axes` are as seen in the output tensor. For example:
+  Given a tensor such that tensor with shape [3, 4, 5], then
+  Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unsqueeze,
+    1,
+    OpSchema()
+        .Attr(
+            "axes",
+            "List of non-negative integers, indicate the dimensions to be inserted",
+            AttributeProto::INTS)
+        .SetDoc(Unsqueeze_ver1_doc)
+        .Input(0, "data", "Original tensor", "T")
+        .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          std::vector<int64_t> axes;
+          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+            return;
+          }
+          std::sort(axes.begin(), axes.end());
+
+          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+            return;
+          }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          int j = 0;
+          for (int i = 0;
+               i < ctx.getInputType(0)->tensor_type().shape().dim_size();
+               ++i) {
+            while (static_cast<size_t>(j) < axes.size() &&
+                   axes[j] ==
+                       ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
+              ctx.getOutputType(0)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->add_dim()
+                  ->set_dim_value(1);
+              ++j;
+            }
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() =
+                ctx.getInputType(0)->tensor_type().shape().dim(i);
+          }
+          while (static_cast<size_t>(j) < axes.size() &&
+                 axes[j] ==
+                     ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->add_dim()
+                ->set_dim_value(1);
+            ++j;
           }
         }));
 
@@ -1038,4 +1482,119 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
+static const char* Compress_ver9_doc = R"DOC(
+    Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+    In case axis is not provided, input is flattened before elements are selected.
+    Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+    )DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Compress,
+    9,
+    OpSchema()
+        .SetDoc(Compress_ver9_doc)
+        .Attr(
+            "axis",
+            "(Optional) Axis along which to take slices. If not specified, "
+            "input is flattened before elements being selected.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(0, "input", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "condition",
+            "Rank 1 tensor of booleans to indicate which slices or data elements to be selected. "
+            "Its length can be less than the input length alone the axis "
+            "or the flattened input size if axis is not specified. "
+            "In such cases data slices or elements exceeding the condition length are discarded.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains to boolean tensors."));
+
+static const char* Split_ver2_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified
+'axis'. Lengths of the parts can be specified using argument 'split'.
+Otherwise, the tensor is split to equal sized parts.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Split,
+    2,
+    OpSchema()
+        .Input(0, "input", "The tensor to split", "T")
+        .Output(
+            0,
+            "outputs",
+            "One or more outputs forming list of tensors after splitting",
+            "T",
+            OpSchema::Variadic)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .Attr(
+            "axis",
+            "Which axis to split on. ",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
+        .SetDoc(Split_ver2_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+            propagateElemTypeFromInputToOutput(ctx, 0, i);
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto axisAttr = ctx.getAttribute("axis");
+          int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
+          if (axis < 0) {
+            return;
+          }
+          std::vector<int64_t> split;
+          if (!getRepeatedAttribute(ctx, "split", split)) {
+            if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+              return;
+            }
+            const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+            if (axis >= shape.dim_size()) {
+              fail_type_inference("Invalid value of attribute 'axis'");
+            }
+            const auto& splitDim = shape.dim(axis);
+            if (!splitDim.has_dim_value()) {
+              return;
+            }
+            int splitDimValue = static_cast<int>(splitDim.dim_value());
+            int chunkSize =
+                splitDimValue / static_cast<int>(ctx.getNumOutputs());
+            int leftOver = splitDimValue -
+                (chunkSize * static_cast<int>(ctx.getNumOutputs()));
+            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+              split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
+            }
+
+            for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
+                  shape;
+              ctx.getOutputType(i)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->mutable_dim(axis)
+                  ->set_dim_value(split[i]);
+            }
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
