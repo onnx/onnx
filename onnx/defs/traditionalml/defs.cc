@@ -67,7 +67,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(CastMap_ver1_doc)
         .Input(0, "X", "The input map that is to be cast to a tensor", "T1")
-        .Output(0, "Y", "A tensor representing the same data as the input map, ordered by their keys", "T2")
+        .Output(
+            0,
+            "Y",
+            "A tensor representing the same data as the input map, ordered by their keys",
+            "T2")
         .TypeConstraint(
             "T1",
             {"map(int64, string)", "map(int64, float)"},
@@ -188,7 +192,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(DictVectorizer_ver1_doc)
         .Input(0, "X", "A dictionary.", "T1")
-        .Output(0, "Y", "A 1-D tensor holding values from the input dictionary.", "T2")
+        .Output(
+            0,
+            "Y",
+            "A 1-D tensor holding values from the input dictionary.",
+            "T2")
         .TypeConstraint(
             "T1",
             {"map(string, int64)",
@@ -237,7 +245,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(FeatureVectorizer_ver1_doc)
-        .Input(0, "X", "An ordered collection of tensors, all with the same element type.", "T1", OpSchema::Variadic)
+        .Input(
+            0,
+            "X",
+            "An ordered collection of tensors, all with the same element type.",
+            "T1",
+            OpSchema::Variadic)
         .Output(
             0,
             "Y",
@@ -342,11 +355,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "A list of strings. One and only one of 'keys_*'s should be set.",
             AttributeProto::STRINGS,
             OPTIONAL)
-        .Attr(
-            "keys_int64s",
-            "A list of ints.",
-            AttributeProto::INTS,
-            OPTIONAL)
+        .Attr("keys_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL)
         .Attr(
             "keys_floats",
             "A list of floats.",
@@ -377,11 +386,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "An integer.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
-        .Attr(
-            "default_float",
-            "A float.",
-            AttributeProto::FLOAT,
-            -0.f)
+        .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Label encoder is one-to-one mapping.
           if (ctx.getNumInputs() != 1)
@@ -389,24 +394,22 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (ctx.getNumOutputs() != 1)
             fail_shape_inference("Label encoder has only one output.");
 
-          // Input and output shapes are the same.
-          propagateShapeFromInputToOutput(ctx, 0, 0);
-
           // Load all key_* attributes.
           std::vector<std::string> keys_strings;
-          bool keys_strings_result = getRepeatedAttribute(
-              ctx, "keys_strings", keys_strings);
+          bool keys_strings_result =
+              getRepeatedAttribute(ctx, "keys_strings", keys_strings);
           std::vector<int64_t> keys_int64s;
-          bool keys_int64s_result = getRepeatedAttribute(
-              ctx, "keys_int64s", keys_int64s);
+          bool keys_int64s_result =
+              getRepeatedAttribute(ctx, "keys_int64s", keys_int64s);
           std::vector<float> keys_floats;
-          bool keys_floats_result = getRepeatedAttribute(
-              ctx, "keys_floats", keys_floats);
+          bool keys_floats_result =
+              getRepeatedAttribute(ctx, "keys_floats", keys_floats);
 
           // Check if only one keys_* attribute is set.
           if (static_cast<int>(keys_strings_result) +
                   static_cast<int>(keys_int64s_result) +
-                  static_cast<int>(keys_floats_result) != 1)
+                  static_cast<int>(keys_floats_result) !=
+              1)
             fail_shape_inference(
                 "Only one of keys_*'s can be set in label encoder.");
 
@@ -424,19 +427,20 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           // Load all values_* attributes.
           std::vector<std::string> values_strings;
-          bool values_strings_result = getRepeatedAttribute(
-              ctx, "values_strings", values_strings);
+          bool values_strings_result =
+              getRepeatedAttribute(ctx, "values_strings", values_strings);
           std::vector<int64_t> values_int64s;
-          bool values_int64s_result = getRepeatedAttribute(
-              ctx, "values_int64s", values_int64s);
+          bool values_int64s_result =
+              getRepeatedAttribute(ctx, "values_int64s", values_int64s);
           std::vector<float> values_floats;
-          bool values_floats_result = getRepeatedAttribute(
-              ctx, "values_floats", values_floats);
+          bool values_floats_result =
+              getRepeatedAttribute(ctx, "values_floats", values_floats);
 
           // Check if only one values_* attribute is set.
           if (static_cast<int>(values_strings_result) +
                   static_cast<int>(values_int64s_result) +
-                  static_cast<int>(values_floats_result) != 1)
+                  static_cast<int>(values_floats_result) !=
+              1)
             fail_shape_inference(
                 "Only one of values_*'s can be set in label encoder.");
 
@@ -448,6 +452,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             output_elem_type->set_elem_type(TensorProto::INT64);
           if (values_floats_result)
             output_elem_type->set_elem_type(TensorProto::FLOAT);
+
+          // Input and output shapes are the same.
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
         }));
 
 static const char* LinearClassifier_ver1_doc = R"DOC(
@@ -477,7 +485,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(string)", "tensor(int64)"},
             "The output will be a tensor of strings or integers.")
-        .Attr("coefficients", "A collection of weights of the model(s).", AttributeProto::FLOATS)
+        .Attr(
+            "coefficients",
+            "A collection of weights of the model(s).",
+            AttributeProto::FLOATS)
         .Attr(
             "intercepts",
             "A collection of intercepts.",
@@ -505,15 +516,59 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("NONE"))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           std::vector<std::string> label_strs;
-          auto result =
+          std::vector<int64_t> label_ints;
+
+          auto labels_strings_present =
               getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
-          bool using_strings = (result && !label_strs.empty());
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+          bool using_strings = (labels_strings_present && !label_strs.empty());
+
+          if (!using_strings) {
+            getRepeatedAttribute(ctx, "classlabels_ints", label_ints);
+          }
+
+          // Type inference
+          auto* output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (using_strings) {
             output_elem_type->set_elem_type(TensorProto::STRING);
           } else {
             output_elem_type->set_elem_type(TensorProto::INT64);
           }
+
+          // second output is always of float type
+          ctx.getOutputType(1)->mutable_tensor_type()->set_elem_type(
+              TensorProto::FLOAT);
+
+          // Shape/Rank inference begins
+
+          // establish the number of classes
+          std::vector<float> intercepts;
+          getRepeatedAttribute(ctx, "intercepts", intercepts);
+          int class_count = static_cast<int>(intercepts.size());
+          if (intercepts.size() == 1 &&
+              ((using_strings && label_strs.size() == 2) ||
+               (!using_strings && label_ints.size() == 2))) {
+            class_count = 2;
+          }
+
+          TensorShapeProto_Dimension batch_size_dim, class_count_dim;
+          class_count_dim.set_dim_value(class_count);
+
+          if (hasNInputShapes(ctx, 1)) {
+            const auto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const auto input_rank = input_shape.dim_size();
+            if (input_rank == 1) {
+              // if input_rank is 1, batch_size is interpreted to be 1
+              batch_size_dim.set_dim_value(1);
+            } else if (input_rank == 2) {
+              batch_size_dim = input_shape.dim((int)0);
+            } else {
+              fail_shape_inference("Input's shape should be 1D or 2D");
+            }
+          }
+
+          updateOutputShape(ctx, 0, {batch_size_dim});
+          updateOutputShape(ctx, 1, {batch_size_dim, class_count_dim});
         }));
 
 static const char* LinearRegressor_ver1_doc = R"DOC(
@@ -582,7 +637,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Normalizer_ver1_doc)
-        .Input(0, "X", "Data to be encoded, a tensor of shape [N,C] or [C]", "T")
+        .Input(
+            0,
+            "X",
+            "Data to be encoded, a tensor of shape [N,C] or [C]",
+            "T")
         .Output(0, "Y", "Encoded output data", "tensor(float)")
         .TypeConstraint(
             "T",
@@ -614,7 +673,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(OneHotEncoder_ver1_doc)
         .Input(0, "X", "Data to be encoded.", "T")
-        .Output(0, "Y", "Encoded output data, having one more dimension than X.", "tensor(float)")
+        .Output(
+            0,
+            "Y",
+            "Encoded output data, having one more dimension than X.",
+            "tensor(float)")
         .TypeConstraint(
             "T",
             {"tensor(string)",
@@ -861,7 +924,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "Thresholds to do the splitting on for each node.",
             AttributeProto::FLOATS,
             OPTIONAL)
-        .Attr("nodes_hitrates", "Popularity of each node, used for performance and may be omitted.", AttributeProto::FLOATS, OPTIONAL)
+        .Attr(
+            "nodes_hitrates",
+            "Popularity of each node, used for performance and may be omitted.",
+            AttributeProto::FLOATS,
+            OPTIONAL)
         .Attr(
             "nodes_modes",
             "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
@@ -984,7 +1051,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "nodes_hitrates",
-            "Popularity of each node, used for performance and may be omitted.", 
+            "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::FLOATS,
             OPTIONAL)
         .Attr(

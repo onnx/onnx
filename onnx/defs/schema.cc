@@ -33,25 +33,29 @@ OpSchema::FormalParameter::FormalParameter(
     std::string type_str,
     std::string description,
     FormalParameterOption param_option,
-    bool is_homogeneous)
+    bool is_homogeneous,
+    int min_arity)
     : name_(std::move(name)),
       type_set_(std::move(allowed_type_set)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
       param_option_(param_option),
-      is_homogeneous_(is_homogeneous) {}
+      is_homogeneous_(is_homogeneous),
+      min_arity_(min_arity) {}
 
 OpSchema::FormalParameter::FormalParameter(
     std::string name,
     std::string description,
     std::string type_str,
     FormalParameterOption param_option,
-    bool is_homogeneous)
+    bool is_homogeneous,
+    int min_arity)
     : name_(std::move(name)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
       param_option_(param_option),
-      is_homogeneous_(is_homogeneous) {}
+      is_homogeneous_(is_homogeneous),
+      min_arity_(min_arity) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -79,6 +83,10 @@ OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
 
 bool OpSchema::FormalParameter::GetIsHomogeneous() const {
   return is_homogeneous_;
+}
+
+int OpSchema::FormalParameter::GetMinArity() const {
+  return min_arity_;
 }
 
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
@@ -223,33 +231,38 @@ void OpSchema::Verify(const NodeProto& node) const {
           "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
-    if (attr_proto.has_ref_attr_name()) {
-      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
-        fail_check(
-            "Mismatched attribute type in '", node.name() + " : " + name, "'");
-      }
+   // Type would be UNDEFINED if not set
+    if (attr_proto.type() != expected_type) {
+      fail_check(
+          "Mismatched attribute type in '", node.name() + " : " + name, "'");
+    }
+
+    // ref_attr_name is only valid when non-empty
+    // we simply read default value if not present
+    if (!attr_proto.ref_attr_name().empty()) {
       continue;
     }
 
     switch (expected_type) {
+      // if attr_proto().type() != UNDEFINED
+      // we consider primitive types to be set even
+      // if proto3 did not output default values into the stream
+      // in which case we will read the default
       case AttributeProto::FLOAT:
-        if (!attr_proto.has_f()) {
-          fail_check("Attribute '", name, "' is expected to have field 'f'");
-        }
-        break;
       case AttributeProto::INT:
-        if (!attr_proto.has_i()) {
-          fail_check("Attribute '", name, "' is expected to have field 'i'");
-        }
-        break;
       case AttributeProto::STRING:
-        if (!attr_proto.has_s()) {
-          fail_check("Attribute '", name, "' is expected to have field 's'");
-        }
         break;
       case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
           fail_check("Attribute '", name, "' is expected to have field 't'");
+        }
+        break;
+      case AttributeProto::SPARSE_TENSOR:
+        if (!attr_proto.has_sparse_tensor()) {
+          fail_check(
+              "Attribute '",
+              name,
+              "' is expected to have field 'sparse_tensor'");
         }
         break;
       case AttributeProto::GRAPH:
@@ -279,6 +292,11 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check(
               "Attribute '", name, "' is expected to have field 'tensors'");
         }
+        break;
+      case AttributeProto::SPARSE_TENSORS:
+        // Not adding check ... we should likely delete the check in all other
+        // cases, which will not allow us to have an empty list as a valid value
+        // for an attribute and this seems undesirable.
         break;
       case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {
@@ -509,7 +527,8 @@ OpSchema& OpSchema::Input(
     std::string description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
@@ -518,7 +537,8 @@ OpSchema& OpSchema::Input(
       std::move(description),
       std::move(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
   return *this;
 }
 
@@ -528,14 +548,16 @@ OpSchema& OpSchema::Input(
     const char* description,
     const char* type_str,
     FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   return Input(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
 }
 
 OpSchema& OpSchema::Output(
@@ -544,7 +566,8 @@ OpSchema& OpSchema::Output(
     std::string description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
@@ -553,7 +576,8 @@ OpSchema& OpSchema::Output(
       std::move(description),
       std::move(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
   return *this;
 }
 
@@ -563,14 +587,16 @@ OpSchema& OpSchema::Output(
     const char* description,
     const char* type_str,
     FormalParameterOption param_option,
-    bool is_homogeneous) {
+    bool is_homogeneous,
+    int min_arity) {
   return Output(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
       param_option,
-      is_homogeneous);
+      is_homogeneous,
+      min_arity);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -631,7 +657,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
 }
 
 const FunctionProto* OpSchema::GetFunction() const {
-  return function_body_.node_size()>0 ? &function_body_ : nullptr;
+  return function_body_.node_size() > 0 ? &function_body_ : nullptr;
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
@@ -641,7 +667,7 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction(){
+void OpSchema::BuildFunction() {
   function_body_.set_name(this->name_);
   function_body_.set_doc_string(this->doc_);
   function_body_.set_since_version(this->since_version_);
@@ -685,7 +711,7 @@ void OpSchema::Finalize() {
       case OpSchema::Variadic:
         // Only last input formal parameter could be variadic.
         ENFORCE((inputs_.size() - 1) == i);
-        min_input_ = max_input_ + 1;
+        min_input_ = max_input_ + inputs_[i].GetMinArity();
         max_input_ = std::numeric_limits<int>::max();
         break;
     }
@@ -704,7 +730,7 @@ void OpSchema::Finalize() {
       case OpSchema::Variadic:
         // Only last output formal parameter could be variadic.
         ENFORCE((outputs_.size() - 1) == i);
-        min_output_ = max_output_ + 1;
+        min_output_ = max_output_ + outputs_[i].GetMinArity();
         max_output_ = std::numeric_limits<int>::max();
         break;
     }

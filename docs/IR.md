@@ -39,7 +39,7 @@ Nothing in this specification should be construed as advocating one implementati
 
 ## ONNX Versioning
 
-Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
+Versioning features in several places in ONNX -- the IR (Intermediate Representation) specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
 Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
@@ -55,7 +55,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator.
+Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators and their semantics at a particular point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -115,7 +115,7 @@ Name|Type|Description
 magic|string|The value ‘ONNXOPSET’
 ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
-ir_build_metadata|string|The symbolic identifier of the operator to invoke.
+ir_build_metadata|string|The build metadata of this version of the operator set.
 domain|string|The domain of the operator set. Must be unique among all sets.
 opset_version|int64|The version of the set of operators. 
 doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
@@ -156,7 +156,7 @@ Graphs have the following properties:
 |---|---|---|
 name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
-initializer|Tensor[]|A list of named tensor values, used to specify default values for some of the inputs of the graph. Each initializer value is associated with an input by name matching.
+initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value.
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
@@ -251,7 +251,7 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
 f|float|A 32-bit floating-point value.
 i|int64|A 64-bit integer value.
-S|byte[]|UTF-8 string.
+s|byte[]|UTF-8 string.
 t|Tensor|A tensor value.
 g|Graph|A graph.
 floats|float[]|A list of 32-bit floating-point values.
@@ -299,7 +299,7 @@ Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for
 Unsigned Integer Types|uint8, uint16|Unsigned integers of 8 or 16 bits are supported.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
-Other|bool|Boolean value represent data with only two values, typically true and false.
+Other|bool|Boolean values represent data with only two values, typically true and false.
 
 ### Input / Output Data Types
 
@@ -308,16 +308,16 @@ The following types are used to define the types of graph and node inputs and ou
 |Variant | Type | Description | 
 |---|---|---|
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
-ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
-ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
+ONNX|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
+ONNX|map|Maps represent associative tables, defined by a key type and a value type.
 
 ONNX currently does not define a sparse tensor type.
 
-#### Tensor shapes
+#### Static tensor shapes
 
-In addition to element type, tensors have shape. A tensor shape is a list of records that define whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
+In addition to element type, tensor types have a **static** shape. The static shape of a tensor variable is related to, but different from, the runtime (dynamic) shape of a tensor value. A static tensor shape is a list of records that indicates whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
 
-The shape record is defined by 'TensorShapeProto':
+The static shape is defined by 'TensorShapeProto':
 
 ```
 message TensorShapeProto {
@@ -341,19 +341,25 @@ Which is referenced by the Tensor type message:
 
 The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
 
-Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
+Each size in the list MAY be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. A dimension MAY have neither dim_value nor dim_param set. Such a dimension represents an unknown dimension unrelated to other unknown dimensions.
 
 For example, a NxM matrix would have the shape list [N,M].
 
 The name of each dimension variable MUST adhere to C identifier syntax.
 
-Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. Dimension variables appearing in a graph's 'value_info' record are scoped to each value, allowing each value to have its shape defined independently. 
+Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
+
+ONNXML supports richer types such as Sequences of Tensors. The global scoping of dimension variables means that a variable with type "Sequence<Tensor<float, [M,N]>" represents a sequence of tensors that *all have the same shape*. The dimension variables M or N must be omitted from the above type if that dimension does not have a fixed size across all tensors in the sequence. The entire shape must be omitted from the type if different tensors in the sequence may have different ranks.
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
-The emptry string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
-
 Shapes MAY be defined using a combination of integers and variables.
+
+_Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
+* The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set. 
+* The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
+* A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
+* ONNXML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables local to a type may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
 
 ### Attribute Types
 
