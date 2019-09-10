@@ -522,12 +522,12 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        over_init_strs = []  # optional inputs that override an initializer
+        in_with_init_strs = []  # optional inputs with initializer providing default value
         for inp in graph.input:
             if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
             else:
-                over_init_strs.append(printable_value_info(inp))
+                in_with_init_strs.append(printable_value_info(inp))
         if in_strs:
             content.append(prefix + ' '.join(header))
             header = []
@@ -535,17 +535,17 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
                 content.append(prefix + '  ' + line)
         header.append(")")
 
-        if over_init_strs:
-            header.append("overridable initializers (")
+        if in_with_init_strs:
+            header.append("optional inputs with matching initializers (")
             content.append(prefix + ' '.join(header))
             header = []
-            for line in over_init_strs:
+            for line in in_with_init_strs:
                 content.append(prefix + '  ' + line)
             header.append(")")
 
         # from IR 4 onwards an initializer is not required to have a matching graph input
         # so output the name, type and shape of those as well
-        if len(over_init_strs) < len(initializers):
+        if len(in_with_init_strs) < len(initializers):
             graph_inputs = {i.name for i in graph.input}
             init_strs = [printable_tensor_proto(i) for i in graph.initializer
                          if i.name not in graph_inputs]
