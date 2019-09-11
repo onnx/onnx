@@ -64,7 +64,7 @@ will throw errors.
         "Describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
         "the batch_size. Negative value means counting dimensions "
-        "from the back. Accepted range in [-r, r-1] where r = rank(input).",
+        "from the back. Accepted range is [-r, r-1] where r = rank(input).",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(

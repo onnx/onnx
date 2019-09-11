@@ -30,7 +30,7 @@ class ArgMin(Base):
             outputs=['result'],
             axis=axis,
             keepdims=keepdims)
-        # result: [[1, 0]]
+        # The content of result is : [[1, 0]]
         result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
 
@@ -50,7 +50,7 @@ class ArgMin(Base):
             outputs=['result'],
             axis=axis,
             keepdims=keepdims)
-        # result: [[1], [0]]
+        # The content of result is : [[1], [0]]
         result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
 
@@ -69,7 +69,7 @@ class ArgMin(Base):
             outputs=['result'],
             keepdims=keepdims)
 
-        # result: [[0], [0]]
+        # The content of result is : [[0], [0]]
         result = argmin_use_numpy(data, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
 
@@ -89,7 +89,7 @@ class ArgMin(Base):
             outputs=['result'],
             axis=axis,
             keepdims=keepdims)
-        # result: [[1], [0]]
+        # The content of result is : [[1], [0]]
         result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example')
 
