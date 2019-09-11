@@ -900,7 +900,7 @@ class TestShapeInference(unittest.TestCase):
         assert dir == "forward" or dir == "reverse" or dir == "bidirectional", "invalid direction"
 
     def _rnn(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int, str) -> None
-        _assert_direction(dir)
+        self._assert_direction(dir)
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
@@ -920,7 +920,7 @@ class TestShapeInference(unittest.TestCase):
         self._rnn(64, 32, 10, 4, "bidirectional")
 
     def _lstm(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int) -> None
-        _assert_direction(dir)
+        self._assert_direction(dir)
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),
@@ -941,7 +941,7 @@ class TestShapeInference(unittest.TestCase):
         self._lstm(64, 32, 10, 4, "bidirectional")
 
     def _gru(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int) -> None
-        _assert_direction(dir)
+        self._assert_direction(dir)
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, 3 * hiddensize, inpsize)),
