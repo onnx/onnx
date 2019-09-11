@@ -27,12 +27,19 @@ class TestToolsFunctions(unittest.TestCase):
         )
         model_def = helper.make_model(graph_def, producer_name='test')
         updated_def = update_model_dims.update_inputs_outputs_dims(
-            model_def, [[1, 1, 'x1', -1], [1, 1, 3, 3]], [[1, 1, -1, -1]])
+            model_def,
+            {
+                "x": [1, 1, 'x1', -1],
+                "W": [1, 1, 3, 3],
+            },
+            {
+                "y": [1, 1, -1, -1],
+            })
         onnx.checker.check_model(updated_def)
         self.assertEqual(updated_def.graph.input[0].type.tensor_type.shape.dim[2].dim_param, 'x1')
-        self.assertEqual(updated_def.graph.input[0].type.tensor_type.shape.dim[3].dim_param, 'in_0_3')
-        self.assertEqual(updated_def.graph.output[0].type.tensor_type.shape.dim[2].dim_param, 'out_0_2')
-        self.assertEqual(updated_def.graph.output[0].type.tensor_type.shape.dim[3].dim_param, 'out_0_3')
+        self.assertEqual(updated_def.graph.input[0].type.tensor_type.shape.dim[3].dim_param, 'x_3')
+        self.assertEqual(updated_def.graph.output[0].type.tensor_type.shape.dim[2].dim_param, 'y_2')
+        self.assertEqual(updated_def.graph.output[0].type.tensor_type.shape.dim[3].dim_param, 'y_3')
 
 
 if __name__ == '__main__':
