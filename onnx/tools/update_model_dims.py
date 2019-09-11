@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from six import string_types
-from typing import Any, List, Text, Dict
+from typing import Any, List, Text, Dict, Set
 from onnx import ModelProto, ValueInfoProto
 
 import onnx.checker
@@ -35,8 +35,8 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
                 updated_model = update_inputs_outputs_dims(model, input_dims, output_dims)
                 onnx.save(updated_model, 'model.onnx')
     """
-    dim_param_set = set()
-    def init_dim_param_set(dim_param_set, value_infos):
+    dim_param_set = set()  # Set[str]
+    def init_dim_param_set(dim_param_set, value_infos):  # type: (Set[str], List[ValueInfoProto]) -> None
         for info in value_infos:
             shape = info.type.tensor_type.shape
             for dim in shape.dim:
