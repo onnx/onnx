@@ -100,7 +100,7 @@ to verify it works.  Note that this command does not work from
 a source checkout directory; in this case you'll see:
 
 ```
-ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'
+ImportError: cannot import name 'ONNX_ML'
 ```
 
 Change into another directory to fix this error.
