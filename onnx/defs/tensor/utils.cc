@@ -99,7 +99,7 @@ void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
   } // nullptr != scales
 }
 
-void resizeShapeInferenceHelper_opset7(
+void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape) {
@@ -128,7 +128,7 @@ void resizeShapeInferenceHelper_opset7(
   }
 }
 
-void resizeShapeInference_opset7(InferenceContext& ctx) {
+void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -160,7 +160,7 @@ void resizeShapeInference_opset7(InferenceContext& ctx) {
         fail_shape_inference(
             "Number of elements of input 'scales' must be same as rank of input 'X'");
       }
-      resizeShapeInferenceHelper_opset7(input_shape, scales_data, output_shape);
+      resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
     } else {
       fail_shape_inference("Input 'scales' must have float element type.");
     } // nullptr != scales

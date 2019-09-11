@@ -23,9 +23,9 @@ void resizeShapeInferenceHelper(
     TensorShapeProto* output_shape);
 
 // The below is called by ops between opset 7 and opset 10, inclusively.
-void resizeShapeInference_opset7(InferenceContext& ctx);
+void resizeShapeInference_opset7_to_10(InferenceContext& ctx);
 
-void resizeShapeInferenceHelper_opset7(
+void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape);

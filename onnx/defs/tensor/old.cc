@@ -485,7 +485,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_shape_inference(
                   "Number of elements of attribute 'scales' must be same as rank of input 'X'");
               }
-              resizeShapeInferenceHelper_opset7(input_shape, scales_data, output_shape);
+              resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
             } else {
               fail_shape_inference(
                 "Attribute 'scales' must have floats type.");
@@ -525,7 +525,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference_opset7(ctx);
+          resizeShapeInference_opset7_to_10(ctx);
         }
 ));
 
@@ -559,7 +559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference_opset7(ctx);
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Slice_ver1_doc = R"DOC(
