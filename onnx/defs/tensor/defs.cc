@@ -1265,9 +1265,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
+          std::transform(
+              axes.begin(),
+              axes.end(),
+              axes.begin(),
+              [&](int64_t axis) -> int64_t {
+                return axis < 0 ? axis + input_ndim : axis;
+              });
+
           for (int i = 0, j = 0; i < input_ndim; ++i) {
-            auto axis_j = axes[j] < 0 ? axes[j] + input_ndim : axes[j];
-            if (static_cast<size_t>(j) < axes.size() && axis_j == i) {
+            if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).has_dim_value() &&
                   input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
