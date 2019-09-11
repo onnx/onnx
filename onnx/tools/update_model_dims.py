@@ -51,7 +51,6 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
         dim_proto = tensor.type.tensor_type.shape.dim[j]
         if isinstance(dim, int):
             if dim >= 0:
-                import pdb; pdb.set_trace()
                 if dim_proto.HasField('dim_value') and dim_proto.dim_value != dim:
                     raise ValueError('Unable to set dimension value to {} for axis {} of {}. Contradicts existing dimension value {}.'
                         .format(dim, j, name, dim_proto.dim_value))
