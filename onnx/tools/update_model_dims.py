@@ -18,7 +18,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
 
         Example. if we have the following shape for inputs and outputs:
                 shape(input_1) = ('b', 3, 'w', 'h')
-                and shape(input_2) = ('b', 4)
+                shape(input_2) = ('b', 4)
                 and shape(output)  = ('b', 'd', 5)
 
             The parameters can be provided as:
