@@ -2194,10 +2194,11 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
 
-    def test_cumsum_reverse(self):  # type: () -> None
+    def test_cumsum(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (2, 3))],
-            [make_node('CumSum', ['x'], ['z'], reverse=1)],
+            [('x', TensorProto.FLOAT, (2,3)),
+             ('axis', TensorProto.FLOAT, (1))],
+            [make_node('CumSum', ['x', 'axis'], 'z')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])
 
