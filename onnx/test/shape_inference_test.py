@@ -895,49 +895,70 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
-    def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
+    @staticmethod
+    def _assert_direction(dir):  # type: (str) -> None
+        assert dir == "forward" || dir == "reverse" || dir == "bidirectional", "invalid direction"
+
+    def _rnn(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int, str) -> None
+        _assert_direction(dir)
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
              ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
-            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize)],
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize, direction=dir)],
             [])
+        num_directions = 1
+        if dir == "bidirectional":
+            num_directions = 2
         self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, num_directions, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (num_directions, batchsize, hiddensize))])
 
-    def test_rnn_forward(self):  # type: () -> None
-        self._rnn_forward(64, 32, 10, 4)
+    def test_rnn(self):  # type: () -> None
+        self._rnn(64, 32, 10, 4, "forward")
+        self._rnn(64, 32, 10, 4, "reverse")
+        self._rnn(64, 32, 10, 4, "bidirectional")
 
-    def _rnn_bidirectional(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (2, hiddensize, inpsize)),
-             ('r', TensorProto.FLOAT, (2, hiddensize, hiddensize))],
-            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
-                direction="bidirectional")],
-            [])
-        self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 2, batchsize, hiddensize)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (2, batchsize, hiddensize))])
-
-    def test_rnn_bidirectional(self):  # type: () -> None
-        self._rnn_bidirectional(64, 32, 10, 4)
-
-    def _lstm_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
+    def _lstm(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int) -> None
+        _assert_direction(dir)
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),
              ('r', TensorProto.FLOAT, (1, 4 * hiddensize, hiddensize))],
-            [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize)],
+            [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize, direction=dir)],
             [])
+        num_directions = 1
+        if dir == "bidirectional":
+            num_directions = 2
         self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
-            make_tensor_value_info('hidden', TensorProto.FLOAT, (1, batchsize, hiddensize)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, num_directions, batchsize, hiddensize)),
+            make_tensor_value_info('hidden', TensorProto.FLOAT, (num_directions, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (num_directions, batchsize, hiddensize))])
 
-    def test_lstm_forward(self):  # type: () -> None
-        self._lstm_forward(64, 32, 10, 4)
+    def test_lstm(self):  # type: () -> None
+        self._lstm(64, 32, 10, 4, "forward")
+        self._lstm(64, 32, 10, 4, "reverse")
+        self._lstm(64, 32, 10, 4, "bidirectional")
+
+    def _gru(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int) -> None
+        _assert_direction(dir)
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
+             ('w', TensorProto.FLOAT, (1, 3 * hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, 3 * hiddensize, hiddensize))],
+            [make_node('GRU', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize, direction=dir)],
+            [])
+        num_directions = 1
+        if dir == "bidirectional":
+            num_directions = 2
+        self._assert_inferred(graph, [
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, num_directions, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (num_directions, batchsize, hiddensize))])
+
+    def test_gru(self):  # type: () -> None
+        self._gru(64, 32, 10, 4, "forward")
+        self._gru(64, 32, 10, 4, "reverse")
+        self._gru(64, 32, 10, 4, "bidirectional")
 
     def test_topk_default_axis(self):  # type: () -> None
         graph = self._make_graph(
