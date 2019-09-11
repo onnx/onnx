@@ -897,7 +897,7 @@ class TestShapeInference(unittest.TestCase):
 
     @staticmethod
     def _assert_direction(dir):  # type: (str) -> None
-        assert dir == "forward" || dir == "reverse" || dir == "bidirectional", "invalid direction"
+        assert dir == "forward" or dir == "reverse" or dir == "bidirectional", "invalid direction"
 
     def _rnn(self, seqlen, batchsize, inpsize, hiddensize, dir):  # type: (int, int, int, int, str) -> None
         _assert_direction(dir)
