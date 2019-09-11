@@ -15,6 +15,7 @@ Working Groups have most of their discussions on Gitter. If you are interested i
 | [Training](https://gitter.im/onnx/training) | Expand ONNX to support training as well as inference |
 | [Edge/Mobile](https://gitter.im/onnx/edge) | Enable deployment of ONNX models to edge platforms by identifying the ONNX operators that must be supported by mobile and IoT runtimes, defining tool chain requirements, and contributing to ONNX compatibility tests |
 | [Data Pipelines](https://gitter.im/onnx/pipelines) | Define new operators for processing the data that goes in and comes out |
+| [Foundation](https://gitter.im/onnx/foundation) | Identify and evaluate non-profit foundation options for the ONNX consortium.  Execute on best option. |
 
 ## Completed working groups
 

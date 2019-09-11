@@ -37,7 +37,7 @@ class OneHot(Base):
             outputs=['y']
         )
         indices = np.array([0, 7, 8], dtype=np.int64)
-        depth = np.array([12], dtype=np.float32)
+        depth = np.float32(12)
         values = np.array([off_value, on_value], dtype=output_type)
         y = one_hot(indices, depth, dtype=output_type)
         y = y * (on_value - off_value) + off_value
@@ -62,3 +62,23 @@ class OneHot(Base):
         y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
         y = y * (on_value - off_value) + off_value
         expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+
+    @staticmethod
+    def export_with_negative_axis():  # type: () -> None
+        axisValue = -2
+        on_value = 3
+        off_value = 1
+        output_type = np.float32
+        node = onnx.helper.make_node(
+            'OneHot',
+            inputs=['indices', 'depth', 'values'],
+            outputs=['y'],
+            axis=axisValue
+        )
+        indices = np.array([[1, 9],
+                            [2, 4]], dtype=np.float32)
+        depth = np.array([10], dtype=np.float32)
+        values = np.array([off_value, on_value], dtype=output_type)
+        y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+        y = y * (on_value - off_value) + off_value
+        expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_negative_axis')

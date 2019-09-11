@@ -1517,7 +1517,9 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         0,
         "Y",
         "Output data tensor from pooling across the input "
-        "tensor. Dimensions will be N x C x 1 x 1",
+        "tensor. The output tensor has the same rank as the input. "
+        "The first two dimensions of output shape are the same as "
+        "the input (N x C), while the other dimensions are all 1.",
         "T");
     schema.TypeConstraint(
         "T",
@@ -1568,7 +1570,9 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         0,
         "Y",
         "Output data tensor from pooling across the input "
-        "tensor. Dimensions will be N x C x 1 x 1",
+        "tensor. The output tensor has the same rank as the input. "
+        "The first two dimensions of output shape are the same as "
+        "the input (N x C), while the other dimensions are all 1.",
         "T");
     schema.TypeConstraint(
         "T",
@@ -1822,7 +1826,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrains input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Flatten_ver9_doc = R"DOC(
+static const char* Flatten_ver11_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1830,9 +1834,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    9,
+    11,
     OpSchema()
-        .SetDoc(Flatten_ver9_doc)
+        .SetDoc(Flatten_ver11_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
@@ -1850,7 +1854,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis",
             "Indicate up to which input dimensions "
             "(exclusive) should be flattened to the outer dimension of the output. "
-            "The value for axis must be in the range [0, R], where R is the rank of the input tensor. "
+            "The value for axis must be in the range [-r, r], where r is the rank of the input tensor. "
+            "Negative value means counting dimensions from the back. "
             "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
             "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
             AttributeProto::INT,
@@ -1862,6 +1867,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = getInputShape(ctx, 0);
           int rank = static_cast<int>(input_shape.dim_size());
           int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          if (axis < 0) {
+            axis += rank;
+          }
           if (axis > rank || axis < 0) {
             fail_shape_inference(
                 "Invalid value(", axis, ") for attribute 'axis'");
