@@ -2197,7 +2197,7 @@ class TestShapeInference(unittest.TestCase):
     def test_cumsum(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2,3)),
-             ('axis', TensorProto.FLOAT, (1))],
+             ('axis', TensorProto.FLOAT, (1,))],
             [make_node('CumSum', ['x', 'axis'], 'z')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])
