@@ -359,9 +359,9 @@ class TestPrintableGraph(unittest.TestCase):
         graph = helper.make_graph(
             [add],
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])], #inputs
-            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])], #outputs
-            [helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])], # initializers
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])],  # initializers
             doc_string=None,
             value_info=value_info
         )
