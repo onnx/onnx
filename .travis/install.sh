@@ -6,7 +6,7 @@ source "${script_path%/*}/setup.sh"
 export ONNX_BUILD_TESTS=1
 pip install --quiet protobuf numpy
 
-export CMAKE_ARGS="-DONNX_WERROR=ON"
+export CMAKE_ARGS="-DON||NX_WERROR=ON"
 if [[ -n "USE_LITE_PROTO" ]]; then
     export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
 fi
