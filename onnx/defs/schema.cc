@@ -231,29 +231,26 @@ void OpSchema::Verify(const NodeProto& node) const {
           "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
-    if (attr_proto.has_ref_attr_name()) {
-      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
-        fail_check(
-            "Mismatched attribute type in '", node.name() + " : " + name, "'");
-      }
+   // Type would be UNDEFINED if not set
+    if (attr_proto.type() != expected_type) {
+      fail_check(
+          "Mismatched attribute type in '", node.name() + " : " + name, "'");
+    }
+
+    // ref_attr_name is only valid when non-empty
+    // we simply read default value if not present
+    if (!attr_proto.ref_attr_name().empty()) {
       continue;
     }
 
     switch (expected_type) {
+      // if attr_proto().type() != UNDEFINED
+      // we consider primitive types to be set even
+      // if proto3 did not output default values into the stream
+      // in which case we will read the default
       case AttributeProto::FLOAT:
-        if (!attr_proto.has_f()) {
-          fail_check("Attribute '", name, "' is expected to have field 'f'");
-        }
-        break;
       case AttributeProto::INT:
-        if (!attr_proto.has_i()) {
-          fail_check("Attribute '", name, "' is expected to have field 'i'");
-        }
-        break;
       case AttributeProto::STRING:
-        if (!attr_proto.has_s()) {
-          fail_check("Attribute '", name, "' is expected to have field 's'");
-        }
         break;
       case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
