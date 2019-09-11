@@ -36,16 +36,16 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
                 onnx.save(updated_model, 'model.onnx')
     """
     dim_param_set = set()  # type: Set[str]
-    def init_dim_param_set(dim_param_set, value_infos):  # type: (Set[str], RepeatedCompositeFieldContainer[ValueInfoProto]) -> None
+    def init_dim_param_set(dim_param_set, value_infos):  # type: (Set[str], List[ValueInfoProto]) -> None
         for info in value_infos:
             shape = info.type.tensor_type.shape
             for dim in shape.dim:
                 if dim.HasField('dim_param'):
                     dim_param_set.add(dim.dim_param)
 
-    init_dim_param_set(dim_param_set, model.graph.input)
-    init_dim_param_set(dim_param_set, model.graph.output)
-    init_dim_param_set(dim_param_set, model.graph.value_info)
+    init_dim_param_set(dim_param_set, model.graph.input)  # type: ignore
+    init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore
+    init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore
 
     def update_dim(tensor, dim, j, name):  # type: (ValueInfoProto, Any, int, Text) -> None
         dim_proto = tensor.type.tensor_type.shape.dim[j]
