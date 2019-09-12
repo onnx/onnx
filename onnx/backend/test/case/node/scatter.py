@@ -32,7 +32,7 @@ def scatter(data, indices, updates, axis=0):  # type: ignore
     # We use indices and axis parameters to create idx
     # idx is in a form that can be used as a NumPy advanced indices for scattering of updates param. in data
     idx = [[unpack(np.indices(idx_xsection_shape).reshape(indices.ndim - 1, -1)),
-            indices[make_slice(indices, axis, i)].reshape(1, -1)[0]] for i in range(indices.shape[axis])]
+            indices[tuple(make_slice(indices, axis, i))].reshape(1, -1)[0]] for i in range(indices.shape[axis])]
     idx = list(np.concatenate(idx, axis=1))
     idx.insert(axis, idx.pop())
 
@@ -42,7 +42,7 @@ def scatter(data, indices, updates, axis=0):  # type: ignore
     updates_idx.insert(axis, np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)))
 
     scattered = np.copy(data)
-    scattered[idx] = updates[updates_idx]
+    scattered[idx] = updates[tuple(updates_idx)]
     return scattered
 
 

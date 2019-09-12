@@ -31,7 +31,7 @@ def scatter_elements(data, indices, updates, axis=0):  # type: ignore
     # We use indices and axis parameters to create idx
     # idx is in a form that can be used as a NumPy advanced indices for scattering of updates param. in data
     idx = [[unpack(np.indices(idx_xsection_shape).reshape(indices.ndim - 1, -1)),
-            indices[make_slice(indices, axis, i)].reshape(1, -1)[0]] for i in range(indices.shape[axis])]
+            indices[tuple(make_slice(indices, axis, i))].reshape(1, -1)[0]] for i in range(indices.shape[axis])]
     idx = list(np.concatenate(idx, axis=1))
     idx.insert(axis, idx.pop())
 
@@ -41,7 +41,7 @@ def scatter_elements(data, indices, updates, axis=0):  # type: ignore
     updates_idx.insert(axis, np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)))
 
     scattered = np.copy(data)
-    scattered[idx] = updates[updates_idx]
+    scattered[tuple(idx)] = updates[tuple(updates_idx)]
     return scattered
 
 
@@ -86,3 +86,23 @@ class ScatterElements(Base):
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
                name='test_scatter_elements_with_axis')
+
+    @staticmethod
+    def export_scatter_elements_with_negative_indices():  # type: () -> None
+        axis = 1
+        node = onnx.helper.make_node(
+            'ScatterElements',
+            inputs=['data', 'indices', 'updates'],
+            outputs=['y'],
+            axis=axis,
+        )
+        data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+        indices = np.array([[1, -3]], dtype=np.int64)
+        updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+        y = scatter_elements(data, indices, updates, axis)
+        # print(y) produces
+        # [[1.0, 1.1, 2.1, 4.0, 5.0]]
+
+        expect(node, inputs=[data, indices, updates], outputs=[y],
+               name='test_scatter_elements_with_negative_indices')
