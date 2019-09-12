@@ -1,7 +1,8 @@
-backend-test:~
-$
+backend-test:
+6
 x
-axisy"CumSum*
+axisy"CumSum*
+	exclusive *
 reverse  test_cumsum_1d_reverse_exclusiveZ
 x
 
