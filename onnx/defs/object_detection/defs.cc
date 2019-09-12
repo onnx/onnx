@@ -134,7 +134,6 @@ orthogonal transformations and translations of the coordinate system; thus trans
 result in the same boxes being selected by the algorithm.
 The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
 The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
-Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -154,19 +153,19 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "max_output_boxes_per_class",
-            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.",
+            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.",
             "tensor(int64)",
             OpSchema::Optional)
         .Input(
             3,
             "iou_threshold",
-            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(
             4,
             "score_threshold",
-            "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar",
+            "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.",
             "tensor(float)",
             OpSchema::Optional)
         .Output(
@@ -176,10 +175,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int64)")
         .Attr(
             "center_point_box",
-            "Integer indicate the format of the box data. The default is 0."
-            "0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners"
-            "and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models."
-            "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.",
+            "Integer indicate the format of the box data. The default is 0. "
+            "0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners "
+            "and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models. "
+            "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .SetDoc(NonMaxSuppression_doc)
