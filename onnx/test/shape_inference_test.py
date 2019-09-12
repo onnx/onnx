@@ -1117,15 +1117,14 @@ class TestShapeInference(unittest.TestCase):
                        max_gram_length=2,
                        max_skip_count=0,
                        ngram_counts=[0, 4],
-                       ngram_indexes=[0,1,2,3,4,5,6],
-                       pool_int64s=[2,3,5,4,5,6,7,8,6,7])
-            ],
+                       ngram_indexes=[0, 1, 2, 3, 4, 5, 6],
+                       pool_int64s=[2, 3, 5, 4, 5, 6, 7, 8, 6, 7])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [7])])
 
     def test_TfIdfVectorizer_2D(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, [15,12])],
+            [('x', TensorProto.FLOAT, [15, 12])],
             [make_node(
                 'TfIdfVectorizer',
                 'x',
@@ -1135,11 +1134,10 @@ class TestShapeInference(unittest.TestCase):
                 max_gram_length=2,
                 max_skip_count=0,
                 ngram_counts=[0, 4],
-                ngram_indexes=[0,1,2,3,4,5,6],
-                pool_int64s=[2,3,5,4,5,6,7,8,6,7])
-            ],
+                ngram_indexes=[0, 1, 2, 3, 4, 5, 6],
+                pool_int64s=[2, 3, 5, 4, 5, 6, 7, 8, 6, 7])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [15,7])])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [15, 7])])
 
     def test_StringNormalizer_1D(self):  # type: () -> None
         graph = self._make_graph(
@@ -1150,10 +1148,10 @@ class TestShapeInference(unittest.TestCase):
 
     def test_StringNormalizer_2D(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.STRING, (1,12))],
+            [('x', TensorProto.STRING, (1, 12))],
             [make_node('StringNormalizer', 'x', 'y')],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.STRING, (1,None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.STRING, (1, None))])  # type: ignore
 
     def test_batch_norm(self):  # type: () -> None
         graph = self._make_graph(
