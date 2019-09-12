@@ -20,7 +20,7 @@ False instead of True.)DOC";
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
+        "all the dimensions of the input tensor.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
@@ -55,10 +55,6 @@ False instead of True.)DOC";
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
       for (size_t i = 0; i < axes.size(); ++i) {
-        if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
-          fail_shape_inference(
-              "axis must be in [-rank, rank-1]. input rank was ", input_ndim);
-        }
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
@@ -82,52 +78,52 @@ False instead of True.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMax,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("max")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMin,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("min")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSumSquare,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("sum square")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMean,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("mean")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceProd,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("product")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSum,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("log sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("log sum exponent")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceL1,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("L1 norm")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceL2,
-    11,
+    1,
     OpSchema().FillUsing(ReduceDocGenerator("L2 norm")));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
@@ -141,7 +137,7 @@ The type of the output tensor is integer.)DOC";
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
-        "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
+        "The axis in which to compute the arg indices.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Attr(
@@ -175,10 +171,6 @@ The type of the output tensor is integer.)DOC";
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
-        if (axis < -input_ndim || axis >= input_ndim) {
-          fail_shape_inference(
-            "'axis' must be in [-rank(indices), rank(indices)-1]");
-        }
         if (axis < 0)
           axis += input_ndim;
       }
@@ -206,12 +198,12 @@ The type of the output tensor is integer.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ArgMax,
-    11,
+    1,
     OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ArgMin,
-    11,
+    1,
     OpSchema().FillUsing(ArgReduceDocGenerator("min")));
 
 } // namespace ONNX_NAMESPACE
