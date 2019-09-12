@@ -16,7 +16,7 @@ const char* pads_doc =
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
 const char* auto_pad_doc =
-    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
@@ -40,8 +40,8 @@ void convPoolShapeInference(
   }
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have atleast 2 dimensions");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -493,8 +493,8 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
     return; // If first input does not have shape, we cannot infer much.
   }
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor X must have atleast 2 dimensions.");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor X must have atleast 3 dimensions.");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -733,8 +733,8 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
 
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
   if (rios_shape.dim_size() != 2) {
     fail_shape_inference("RoIs tensor must have 2 dimensions");

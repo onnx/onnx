@@ -1110,7 +1110,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
@@ -2607,7 +2607,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
@@ -2778,7 +2778,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
@@ -2884,7 +2884,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
@@ -7363,7 +7363,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
@@ -7658,7 +7658,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
@@ -10060,7 +10060,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. The default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
