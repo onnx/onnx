@@ -36,6 +36,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
                 onnx.save(updated_model, 'model.onnx')
     """
     dim_param_set = set()  # type: Set[Text]
+
     def init_dim_param_set(dim_param_set, value_infos):  # type: (Set[Text], List[ValueInfoProto]) -> None
         for info in value_infos:
             shape = info.type.tensor_type.shape
