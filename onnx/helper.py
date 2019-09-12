@@ -358,6 +358,30 @@ def make_tensor_value_info(
     return value_info_proto
 
 
+def make_sequence_value_info(
+        name,  # type: Text
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        doc_string="",  # type: Text
+        shape_denotation=None,  # type: Optional[List[Text]]
+):  # type: (...) -> ValueInfoProto
+    """Makes a ValueInfoProto based on the data type and shape for Sequence."""
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+    if doc_string:
+        value_info_proto.doc_string = doc_string
+
+    sequence_type_proto = value_info_proto.type.sequence_type
+    sequence_type_proto.elem_type.tensor_type.elem_type = elem_type
+
+    tensor_value_info = make_tensor_value_info(name, elem_type, shape, doc_string, shape_denotation)
+
+    if shape is not None:
+        sequence_type_proto.elem_type.tensor_type.shape.CopyFrom(tensor_value_info.type.tensor_type.shape)
+
+    return value_info_proto
+
+
 def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     if isinstance(s, text_type):
         sanitized = s
