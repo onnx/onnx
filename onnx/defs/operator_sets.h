@@ -617,6 +617,12 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, LogSoftmax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Softmax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Scan);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Split);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, AveragePool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, MaxPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, MaxUnpool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, LpPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Conv);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ConvTranspose);
 
 // Iterate over schema from ai.onnx version 11
 class OpSet_Onnx_ver11 {
@@ -670,6 +676,12 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Softmax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Scan)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Split)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, AveragePool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, MaxPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, MaxUnpool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, LpPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Conv)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ConvTranspose)>());
   }
 };
 

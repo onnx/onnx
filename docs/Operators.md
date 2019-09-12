@@ -1102,9 +1102,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>, <a href="Changelog.md#AveragePool-7">AveragePool-7</a>
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>, <a href="Changelog.md#AveragePool-7">AveragePool-7</a>, <a href="Changelog.md#AveragePool-10">AveragePool-10</a>
 
 #### Attributes
 
@@ -2601,7 +2601,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Attributes
 
@@ -2878,7 +2880,9 @@ expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_wi
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTranspose-1</a>
 
 #### Attributes
 
@@ -7420,9 +7424,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
+Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>, <a href="Changelog.md#LpPool-2">LpPool-2</a>
 
 #### Attributes
 
@@ -7715,9 +7719,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>, <a href="Changelog.md#MaxPool-10">MaxPool-10</a>
 
 #### Attributes
 
@@ -8292,7 +8296,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">MaxUnpool-9</a>
 
 #### Attributes
 
