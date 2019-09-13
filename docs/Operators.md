@@ -2372,7 +2372,7 @@ expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
 
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
-  Concatenate a list of tensors into a single tensor
+  Concatenate a list of tensors into a single tensor. All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 
 #### Version
 
@@ -2457,7 +2457,7 @@ for test_case, values_ in test_cases.items():
 ### <a name="ConcatFromSequence"></a><a name="concatfromsequence">**ConcatFromSequence**</a>
 
   Concatenate a sequence of tensors into a single tensor.
-  All input tensors must have the same rank.
+  All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
   By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
   When 'new_axis' is 1, the behavior is similar to numpy.stack.
 
@@ -15267,7 +15267,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>input_sequence</tt> : S</dt>
 <dd>Input sequence.</dd>
 <dt><tt>position</tt> : I</dt>
-<dd>Position of the tensor in the array. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+<dd>Position of the tensor in the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
 #### Outputs
@@ -15302,7 +15302,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>inputs</tt> (variadic) : T</dt>
-<dd>List of tensors.</dd>
+<dd>Tensors.</dd>
 </dl>
 
 #### Outputs
@@ -15372,7 +15372,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>input_sequence</tt> : S</dt>
 <dd>Input sequence.</dd>
 <dt><tt>position</tt> (optional) : I</dt>
-<dd>Position of the tensor in the array. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+<dd>Position of the tensor in the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
 #### Outputs

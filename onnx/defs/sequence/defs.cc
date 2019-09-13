@@ -118,7 +118,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "inputs",
-            "List of tensors.",
+            "Tensors.",
             "T",
             OpSchema::Variadic)
         .Output(
@@ -135,7 +135,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_sequence_types(),
             "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          size_t numInputs = ctx.getNumInputs();
+          const size_t numInputs = ctx.getNumInputs();
           if (numInputs < 1) {
             fail_type_inference("SequenceConstruct is expected to have at least 1 input.");
           }
@@ -270,7 +270,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "position",
-            "Position of the tensor in the array. "
+            "Position of the tensor in the sequence. "
             "Negative value means counting positions from the back. "
             "Accepted range in `[-n, n - 1]`, "
             "where `n` is the number of tensors in 'input_sequence'. "
@@ -318,7 +318,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "position",
-            "Position of the tensor in the array. "
+            "Position of the tensor in the sequence. "
             "Negative value means counting positions from the back. "
             "Accepted range in `[-n, n - 1]`, "
             "where `n` is the number of tensors in 'input_sequence'. "
@@ -568,7 +568,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* ConcatFromSequence_ver11_doc = R"DOC(
 Concatenate a sequence of tensors into a single tensor.
-All input tensors must have the same rank.
+All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
 When 'new_axis' is 1, the behavior is similar to numpy.stack.
 )DOC";

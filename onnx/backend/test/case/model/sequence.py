@@ -85,7 +85,7 @@ class Sequence(Base):
         #2nd testcase - erase and at.
         # 1. SequenceConstruct(x, y, z):    -> [x, y, z]
         # 2. SequenceErase(1):              -> [x, z]
-        # 4. SequenceAt(1):                 -> z
+        # 3. SequenceAt(1):                 -> z
         seq_construct_node = onnx.helper.make_node('SequenceConstruct', ['X', 'Y', 'Z'], ['seq_1'])
         seq_erase_node = onnx.helper.make_node('SequenceErase', ['seq_1', 'pos_erase'], ['seq_2'])
         seq_at_node = onnx.helper.make_node('SequenceAt', ['seq_2', 'pos_at'], ['out'])

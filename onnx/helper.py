@@ -363,7 +363,7 @@ def make_sequence_value_info(
         elem_type,  # type: int
         shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
-        shape_denotation=None,  # type: Optional[List[Text]]
+        elem_shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
     """Makes a ValueInfoProto based on the data type and shape for Sequence."""
     value_info_proto = ValueInfoProto()
@@ -374,7 +374,7 @@ def make_sequence_value_info(
     sequence_type_proto = value_info_proto.type.sequence_type
     sequence_type_proto.elem_type.tensor_type.elem_type = elem_type
 
-    tensor_value_info = make_tensor_value_info(name, elem_type, shape, doc_string, shape_denotation)
+    tensor_value_info = make_tensor_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
 
     if shape is not None:
         sequence_type_proto.elem_type.tensor_type.shape.CopyFrom(tensor_value_info.type.tensor_type.shape)
