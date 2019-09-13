@@ -9,6 +9,7 @@
 
 namespace ONNX_NAMESPACE {
 
+// target-shape = Union (target-shape, source_shape)
 void UnionShapeInfoToSequence(
     const TensorShapeProto& source_shape,
     TypeProto_Tensor& target_type) {
@@ -378,7 +379,8 @@ If 'split' is a scalar, then 'input' will be split into equally sized chunks(if 
 Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
 by 'split'.
 Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
-specified in 'split'.
+specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
+dimension size of input tensor on 'axis'.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

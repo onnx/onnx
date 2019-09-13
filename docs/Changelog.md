@@ -12903,7 +12903,8 @@ This version of the operator has been available since version 11 of the default 
   Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
   by 'split'.
   Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
-  specified in 'split'.
+  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
+  dimension size of input tensor on 'axis'.
 
 #### Version
 

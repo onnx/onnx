@@ -16621,7 +16621,8 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
   Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
   by 'split'.
   Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
-  specified in 'split'.
+  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
+  dimension size of input tensor on 'axis'.
 
 #### Version
 
