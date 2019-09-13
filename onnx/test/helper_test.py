@@ -331,5 +331,45 @@ class TestHelperTensorFunctions(unittest.TestCase):
         checker.check_value_info(vi)
 
 
+class TestPrintableGraph(unittest.TestCase):
+
+    def test_initializer_with_matching_graph_input(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
+
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+             helper.make_tensor_value_info("Y_Initializer", TensorProto.FLOAT, [1])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])],  # initializers
+            doc_string=None,
+            value_info=value_info
+        )
+
+        graph_str = helper.printable_graph(graph)
+        self.assertTrue(''') optional inputs with matching initializers (
+  %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
+
+    def test_initializer_no_matching_graph_input(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
+
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])],  # initializers
+            doc_string=None,
+            value_info=value_info
+        )
+
+        graph_str = helper.printable_graph(graph)
+        self.assertTrue(''') initializers (
+  %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
+
+
 if __name__ == '__main__':
     unittest.main()
