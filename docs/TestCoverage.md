@@ -5427,9 +5427,9 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 
 ### Pad
-There are 3 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>constant_pad_with_1D_pads</summary>
+<summary>constant_pad</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -5440,7 +5440,7 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
 pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
-value = np.array([1.2]).astype(np.float32)
+value = np.float32(1.2)
 y = pad_impl(
     x,
     ((0, 0), (0, 0), (1, 2), (3, 4)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
@@ -5449,37 +5449,12 @@ y = pad_impl(
 )
 
 expect(node, inputs=[x, pads, value], outputs=[y],
-       name='test_constant_pad_with_1D_pads')
+       name='test_constant_pad')
 ```
 
 </details>
 <details>
-<summary>constant_pad_with_2D_pads</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Pad',
-    inputs=['x', 'pads', 'value'],
-    outputs=['y'],
-    mode='constant'
-)
-x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-pads = np.array([[0, 0, 1, 3, 0, 0, 2, 4]]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
-value = np.array([1.2]).astype(np.float32)
-y = pad_impl(
-    x,
-    ((0, 0), (0, 0), (1, 2), (3, 4)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
-    'constant',
-    1.2
-)
-
-expect(node, inputs=[x, pads, value], outputs=[y],
-       name='test_constant_pad_with_2D_pads')
-```
-
-</details>
-<details>
-<summary>reflection_and_edge_pad_with_1D_pads</summary>
+<summary>reflection_and_edge_pad</summary>
 
 ```python
 for mode in ['edge', 'reflect']:
@@ -5489,7 +5464,7 @@ for mode in ['edge', 'reflect']:
         outputs=['y'],
         mode=mode
     )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    x = np.random.randn(1, 3, 4, 5).astype(np.int32)
     pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
     y = pad_impl(
         x,
@@ -5498,7 +5473,7 @@ for mode in ['edge', 'reflect']:
     )
 
     expect(node, inputs=[x, pads], outputs=[y],
-           name='test_{}_pad_with_1D_pads'.format(mode))
+           name='test_{}_pad'.format(mode))
 ```
 
 </details>

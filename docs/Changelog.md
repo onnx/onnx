@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is (3.402823e+38))</dt>
+<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is (-3.402823e+38))</dt>
+<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -10867,9 +10867,9 @@ This version of the operator has been available since version 11 of the default 
   axis = 0 :
   
   Let \
-  k = indices[i_{0}, â€¦, i_{q-1}] \
+  k = indices[i_{0}, …, i_{q-1}] \
   then \
-  output[i_{0}, â€¦, i_{q-1}, j_{0}, â€¦, j_{r-2}] = input[k , j_{0}, â€¦, j_{r-2} ]
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
   
   ```
     data = [
@@ -10895,9 +10895,9 @@ This version of the operator has been available since version 11 of the default 
   axis = 1 :
   
   Let \
-  k = indices[i_{0}, â€¦, i_{q-1}] \
+  k = indices[i_{0}, …, i_{q-1}] \
   then \
-  output[i_{0}, â€¦, i_{q-1}, j_{0}, â€¦, j_{r-2}] = input[j_{0}, k, j_{1}, â€¦, j_{r-2} ]
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
   
   ```
     data = [
@@ -11463,22 +11463,42 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Pad-11"></a>**Pad-11**</a>
 
-  Given `data` tensor, pads, mode, and value.
-  Example:
+  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `value`, 
+  a padded tensor (`output`) is generated.
+  
+  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  
+  1) `constant`(default) - pads with a given constant value as specified by `value` (which defaults to 0)
+  
+  2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+  
+  3) `edge` - pads with the edge values of array
+  
+  Example (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
-    data = [
+  
+    data = 
+    [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
-    ]
+    ] 
+  
     pads = [0, 2, 0, 0]
-    output = [
+  
+    mode = 'constant'
+  
+    value = 0.0
+  
+    output = 
+    [
         [
             [0.0, 0.0, 1.0, 1.2],
             [0.0, 0.0, 2.3, 3.4],
             [0.0, 0.0, 4.5, 5.7],
         ],
     ]
+  
 
 #### Version
 
@@ -11488,7 +11508,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>mode</tt> : string (default is constant)</dt>
-<dd>Three modes: `constant`(default) - pads with a given constant value, `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, `edge` - pads with the edge values of array</dd>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -11497,9 +11517,9 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
 <dt><tt>pads</tt> : tensor(int64)</dt>
-<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank] or a 2D tensor of shape [1, 2 * input_rank]. `pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
 <dt><tt>value</tt> (optional) : T</dt>
-<dd>(Optional) A scalar or rank 1 tensor containing a single value to be filled if the mode chosen is `constant` (by default it is 0.0).</dd>
+<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0.0).</dd>
 </dl>
 
 #### Outputs
@@ -11512,8 +11532,8 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input and output to only numeric types.</dd>
 </dl>
 
 ### <a name="Range-11"></a>**Range-11**</a>
