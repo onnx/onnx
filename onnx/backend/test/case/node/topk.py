@@ -90,3 +90,35 @@ class TopK(Base):
 
         expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
                name='test_top_k_smallest')
+
+    @staticmethod
+    def export_top_k_negative_axis():  # type: () -> None
+        axis = -1
+        largest = 1
+
+        k = 3
+        node = onnx.helper.make_node(
+            'TopK',
+            inputs=['x', 'k'],
+            outputs=['values', 'indices'],
+            axis=axis
+        )
+        X = np.array([
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 10, 11],
+        ], dtype=np.float32)
+        K = np.array([k], dtype=np.int64)
+        values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+        # print(values_ref)
+        #[[ 3.  2.  1.]
+        # [ 7.  6.  5.]
+        # [11. 10.  9.]]
+        # print(indices_ref)
+        #[[3 2 1]
+        # [3 2 1]
+        # [3 2 1]]
+
+        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+               name='test_top_k_negative_axis')
