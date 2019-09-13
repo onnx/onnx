@@ -2479,22 +2479,42 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Pad_ver11_doc = R"DOC(
-Given `data` tensor, pads, mode, and value.
-Example:
+Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `value`, 
+a padded tensor (`output`) is generated.
+
+The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+
+1) `constant`(default) - pads with a given constant value as specified by `value` (which defaults to 0)
+
+2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+
+3) `edge` - pads with the edge values of array
+
+Example (`constant` mode):
   Insert 0 pads to the beginning of the second dimension.
-  data = [
+
+  data = 
+  [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ]
+  ] 
+
   pads = [0, 2, 0, 0]
-  output = [
+
+  mode = 'constant'
+
+  value = 0.0
+
+  output = 
+  [
       [
           [0.0, 0.0, 1.0, 1.2],
           [0.0, 0.0, 2.3, 3.4],
           [0.0, 0.0, 4.5, 5.7],
       ],
   ]
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2503,9 +2523,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "mode",
-            "Three modes: `constant`(default) - pads with a given constant value, "
-            "`reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis, "
-            "`edge` - pads with the edge values of array",
+            "Supported modes: `constant`(default), `reflect`, `edge`",
             AttributeProto::STRING,
             std::string("constant"))
         .SetDoc(Pad_ver11_doc)
@@ -2515,22 +2533,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "pads",
             "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
             "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
-            "`pads` should be a 1D tensor of shape [2 * input_rank] or a 2D tensor of shape [1, 2 * input_rank]. "
-            "`pads` format (1D example) should be as follow [x1_begin, x2_begin,...,x1_end, x2_end,...], "
-            "where xi_begin is the number of pixels added at the beginning of axis `i` and "
-            "xi_end, the number of pixels added at the end of axis `i`.",
+            "`pads` should be a 1D tensor of shape [2 * input_rank]. "
+            "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
+            "where xi_begin is the number of pad values added at the beginning of axis `i` and "
+            "xi_end, the number of pad values added at the end of axis `i`.",
             "tensor(int64)")
         .Input(
             2,
             "value",
-            "(Optional) A scalar or rank 1 tensor containing a single value to be filled if the mode chosen is `constant` (by default it is 0.0).",
+            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0.0).",
             "T",
             OpSchema::Optional)
         .Output(0, "output", "Tensor after padding.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrains input and output to only numeric types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2545,14 +2563,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
             const auto& pads_shape = ctx.getInputType(1)->tensor_type().shape();
-            if ((pads_initializer->dims_size() != 1 &&
-                 pads_initializer->dims_size() != 2) ||
-                (pads_initializer->dims_size() == 2 &&
-                 pads_shape.dim((int)0).dim_value() != 1) ||
+            if (pads_initializer->dims_size() != 1 ||
                 pads_initializer->data_type() != TensorProto::INT64)
               fail_shape_inference(
-                  "'pads' input must be a 1D (shape: [input_rank]) "
-                  "or 2D tensor (shape: [1, input_rank]) of type int64");
+                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
 
@@ -2561,7 +2575,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             auto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
@@ -2573,9 +2587,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
             }
           } else {
-            // Infer ouput shapes' rank in any case
+            // Infer output shapes' rank in any case
             auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
               output_shape_0->add_dim();
             }
           }
