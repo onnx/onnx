@@ -1200,7 +1200,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
-}));
+        }));
 
 static const char* Squeeze_ver1_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
