@@ -5215,9 +5215,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
+<dt><tt>max</tt> : float (default is (3.402823e+38))</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
+<dt><tt>min</tt> : float (default is (-3.402823e+38))</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -10867,9 +10867,9 @@ This version of the operator has been available since version 11 of the default 
   axis = 0 :
   
   Let \
-  k = indices[i_{0}, …, i_{q-1}] \
+  k = indices[i_{0}, Â…, i_{q-1}] \
   then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  output[i_{0}, Â…, i_{q-1}, j_{0}, Â…, j_{r-2}] = input[k , j_{0}, Â…, j_{r-2} ]
   
   ```
     data = [
@@ -10895,9 +10895,9 @@ This version of the operator has been available since version 11 of the default 
   axis = 1 :
   
   Let \
-  k = indices[i_{0}, …, i_{q-1}] \
+  k = indices[i_{0}, Â…, i_{q-1}] \
   then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+  output[i_{0}, Â…, i_{q-1}, j_{0}, Â…, j_{r-2}] = input[j_{0}, k, j_{1}, Â…, j_{r-2} ]
   
   ```
     data = [
