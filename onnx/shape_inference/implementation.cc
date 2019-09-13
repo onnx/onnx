@@ -257,7 +257,7 @@ void InferShapeForFunctionNode(
   std::vector<TypeProto> temp_types_cache(func->input_size());
   for (int i = 0; i < func->input_size(); ++i) {
     temp_types_cache[i] = *ctx.getInputType(i);
-    temp_valueTypesByName[func->input().Get(i)] = &temp_types_cache.back();
+    temp_valueTypesByName[func->input().Get(i)] = &temp_types_cache[i];
   }
   // Get a temporary initial value map
   std::unordered_map<std::string, const TensorProto*> temp_initializersByName;

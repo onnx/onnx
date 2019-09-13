@@ -1,5 +1,6 @@
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
@@ -70,6 +71,7 @@ void check_value_info(
       enforce_has_field(type, shape);
     } break;
 #endif
+
     default:
       fail_check(
           "Unrecognized type value case (value_info name: ",
@@ -192,7 +194,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
       case TensorProto::INT32:
       case TensorProto::UINT8:
+      case TensorProto::INT8:
       case TensorProto::UINT16:
+      case TensorProto::INT16:
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
@@ -222,6 +226,161 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   }
 
 #undef check_field
+}
+
+// Check that the index data stored in a SparseTensorProto is valid.
+// indices: a 1-dimensional tensor; indices[i] represents the
+// linearized index value for the i-th nonzero value.
+void check_sparse_tensor_indices_1(
+    const TensorProto& indices,
+    const SparseTensorProto& sparse_tensor_proto,
+    size_t nnz) {
+  int dense_rank = sparse_tensor_proto.dims_size();
+  int64_t dense_size = 1;
+  for (int i = 0; i < dense_rank; ++i)
+    dense_size *= sparse_tensor_proto.dims(i);
+  if (static_cast<size_t>(indices.dims(0)) != nnz)
+    fail_check(
+        "Sparse tensor indices (",
+        indices.name(),
+        ") has ",
+        indices.dims(0),
+        " values, but NNZ is ",
+        nnz);
+
+  // Check if indices appear in ascending order, and if they have valid
+  // values. The i-th value in index_data is the linear index of the i-th
+  // non-zero value.
+  const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
+
+  int64_t prev_index = -1;
+  for (size_t i = 0; i < nnz; ++i) {
+    int64_t curr_index = index_data[i]; // linearized index of i-th value
+    if (curr_index < 0 || curr_index >= dense_size)
+      fail_check(
+          "Sparse tensor (",
+          indices.name(),
+          ") index value at position [",
+          i,
+          "] out of range [0, ",
+          dense_size - 1,
+          "]");
+    if (curr_index <= prev_index) {
+      fail_check(
+          "Sparse tensor (",
+          indices.name(),
+          ") index value at position [",
+          i,
+          "] not in sorted order.");
+    }
+    prev_index = curr_index;
+  }
+}
+
+// Check that the index data stored in a SparseTensorProto is valid.
+// indices: a 2-dimensional tensor; indices[i,j] represents the j-th
+// index value for the i-th nonzero value.
+void check_sparse_tensor_indices_2(
+    const TensorProto& indices,
+    const SparseTensorProto& sparse_tensor_proto,
+    size_t nnz) {
+  int dense_rank = sparse_tensor_proto.dims_size();
+  if (static_cast<size_t>(indices.dims(0)) != nnz)
+    fail_check(
+        "Sparse tensor indices (",
+        indices.name(),
+        ") first dimension size does not equal NNZ.");
+  if (indices.dims(1) != dense_rank)
+    fail_check(
+        "Sparse tensor indices (",
+        indices.name(),
+        ") second dimension size does not match rank of tensor.");
+
+  // Check if indices appear in ascending order, and if they have valid
+  // values.
+  const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
+
+  int64_t prev_index = -1;
+  for (size_t i = 0; i < nnz; ++i) {
+    int64_t curr_index = 0; // linearized index of i-th value
+    for (int j = 0; j < dense_rank; ++j) {
+      auto index_ij = index_data[i * dense_rank + j];
+      if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j)))
+        fail_check(
+            "Sparse tensor (",
+            indices.name(),
+            ") index value at position [",
+            i,
+            ",",
+            j,
+            "] out of range.");
+      curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
+    }
+    if (curr_index <= prev_index) {
+      fail_check(
+          "Sparse tensor (",
+          indices.name(),
+          ") index value at position [",
+          i,
+          "] not in lexicographic sorted order.");
+    }
+    prev_index = curr_index;
+  }
+}
+
+void check_sparse_tensor(
+    const SparseTensorProto& sparse_tensor_proto,
+    const CheckerContext& ctx) {
+  enforce_has_field(sparse_tensor_proto, values);
+
+  const TensorProto& values = sparse_tensor_proto.values();
+  check_tensor(values, ctx);
+
+  // values must be a tensor of shape [NNZ]
+  // Currently we restrict the value associated with a particular index-tuple
+  // to be a single value. In the future, if there is a requirement,
+  // we may extend this to permit the value to be a "sub-tensor", in which
+  // case values will have dimension > 1.
+  if (values.dims_size() != 1)
+    fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
+  size_t nnz = static_cast<size_t>(values.dims(0));
+
+  int dense_rank = sparse_tensor_proto.dims_size();
+  if (dense_rank == 0) {
+    // TODO: Should we add a name field for a sparse-tensor-proto?
+    // Currently, values has a name, but message may be a bit confusing.
+    fail_check(
+        "Sparse tensor (", values.name(), ") must have a dense-rank > 0");
+  }
+  for (int i = 0; i < dense_rank; ++i) {
+    if (sparse_tensor_proto.dims(i) <= 0)
+      fail_check(
+          "Sparse tensor (", values.name(), ") dimensions are not positive.");
+  }
+
+  if (sparse_tensor_proto.has_indices()) {
+    const TensorProto& indices = sparse_tensor_proto.indices();
+    check_tensor(indices, ctx);
+    if (indices.data_type() != TensorProto::INT64)
+      fail_check(
+          "Sparse tensor indices (", indices.name(), ") must have INT64 type.");
+    switch (indices.dims().size()) {
+      case 1:
+        // Indices in linearized format
+        check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz);
+        return;
+      case 2:
+        // Check COO-style index. E.g., an index for a 3D tensor is a 3-tuple.
+        check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz);
+        return;
+      default:
+        fail_check(
+            "Sparse tensor indices (",
+            indices.name(),
+            ") must have rank 1 or 2.");
+    }
+  } else if (nnz != 0)
+    fail_check("Sparse tensor (", values.name(), ") has no index values.");
 }
 
 // NB: This is a generic "attribute well-formedness" check, it doesn't
@@ -261,19 +420,21 @@ void check_attribute(
   check_singular_field(s, AttributeProto::STRING);
   check_singular_field(t, AttributeProto::TENSOR);
   check_singular_field(g, AttributeProto::GRAPH);
+  check_singular_field(sparse_tensor, AttributeProto::SPARSE_TENSOR);
   check_repeated_field(floats, AttributeProto::FLOATS);
   check_repeated_field(ints, AttributeProto::INTS);
   check_repeated_field(strings, AttributeProto::STRINGS);
   check_repeated_field(tensors, AttributeProto::TENSORS);
   check_repeated_field(graphs, AttributeProto::GRAPHS);
+  check_repeated_field(sparse_tensors, AttributeProto::SPARSE_TENSORS);
 
 #undef check_type
 #undef check_singular_field
 #undef check_repeated_field
 
   // Normally, used_fields is expected to be 1.
-  // In proto3, when the value to be set is type default value (say 0 for int),
-  // used_fields may be 0.
+  // In proto3, when the value to be set is type default value (say 0 for
+  // int), used_fields may be 0.
   if (used_fields > 1) {
     fail_check(
         "Attribute (name: ",
@@ -297,6 +458,10 @@ void check_attribute(
     check_tensor(attr.t(), ctx);
   }
 
+  if (attr.has_sparse_tensor()) {
+    check_sparse_tensor(attr.sparse_tensor(), ctx);
+  }
+
   if (attr.has_g()) {
     CheckerContext subgraph_ctx(ctx);
     subgraph_ctx.set_is_main_graph(false);
@@ -305,6 +470,9 @@ void check_attribute(
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
+  }
+  for (const auto& sparse_tensor : attr.sparse_tensors()) {
+    check_sparse_tensor(sparse_tensor, ctx);
   }
   if (attr.graphs().size() > 0) {
     CheckerContext subgraph_ctx(ctx);
@@ -344,9 +512,9 @@ void check_node(
                                                    "ScaledTanh"};
   if (experimental_ops.count(node.op_type())) {
     std::cerr << "Warning: " << node.op_type() << " was a removed "
-      << "experimental ops. In the future, we may directly "
-      << "reject this operator. Please update your model as soon "
-      << "as possible." << std::endl;
+              << "experimental ops. In the future, we may directly "
+              << "reject this operator. Please update your model as soon "
+              << "as possible." << std::endl;
     return;
   }
 
@@ -376,7 +544,8 @@ void check_node(
       // TODO: expose the registration of the op schemas appropriately in
       // python, so we can load and register operators in other domains
       //
-      // before we complete the above todo, let's skip the schema check for now
+      // before we complete the above todo, let's skip the schema check for
+      // now
     }
   } else if (schema->Deprecated()) {
     fail_check(
@@ -432,6 +601,15 @@ void check_graph(
     check_tensor(init, ctx);
   }
 
+  // TODO: Need to check that sparse-initializers names are distinct from
+  // initializer names. It looks like the existing checker does not check for
+  // certain duplication of names: e.g., two entries in the initializer list
+  // with same name. Will add a new integrated check.
+  for (const auto& sparse_init : graph.sparse_initializer()) {
+    check_sparse_tensor(sparse_init, ctx);
+    lex_ctx.add(sparse_init.values().name());
+  }
+
   for (const auto& node : graph.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -448,9 +626,11 @@ void check_graph(
             "\n is not output of any previous nodes.");
       }
     }
+
     // This needs to happen before SSA check since we don't want to recurse and
     // find that outputs from control flow ops are colliding with names in the
     // inner block
+
     try {
       check_node(node, ctx, lex_ctx);
     } catch (ValidationError& ex) {
@@ -597,7 +777,6 @@ void check_model(const std::string& model_path) {
   std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
   if (!model_stream.good()) {
     fail_check(
-
         "Unable to open model file:",
         model_path,
         ". Please check if it is a valid file.");
