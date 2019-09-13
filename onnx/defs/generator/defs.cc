@@ -640,10 +640,6 @@ const std::vector<NodeProto> build_nodes_range_op() {
   // input 2 - loop carried dependency
   auto* input_value_info_proto_2 = loop_sub_graph.add_input();
   input_value_info_proto_2->set_name("prev");
-  // add an empty shape
-  auto* input_2_type_proto_tensor =
-      input_value_info_proto_2->mutable_type()->mutable_tensor_type();
-  input_2_type_proto_tensor->mutable_shape()->Clear();
 
   // 'Loop' node 'body' attribute's graph nodes
   auto* node_proto_0 = loop_sub_graph.add_node();
