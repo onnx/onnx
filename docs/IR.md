@@ -308,8 +308,8 @@ The following types are used to define the types of graph and node inputs and ou
 |Variant | Type | Description | 
 |---|---|---|
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
-ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
-ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
+ONNX|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
+ONNX|map|Maps represent associative tables, defined by a key type and a value type.
 
 ONNX currently does not define a sparse tensor type.
 
