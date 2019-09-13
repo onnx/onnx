@@ -11,7 +11,7 @@ from . import expect
 
 
 def pad_impl(data, pad_width, mode, constant_values=0.0):
-    # type: (np.ndarray, Any, Any, Any) -> np.ndarray
+    # type: (np.ndarray, tuple, str, float) -> np.ndarray
     if mode == 'constant':
         y = np.pad(
             data,
@@ -32,7 +32,7 @@ def pad_impl(data, pad_width, mode, constant_values=0.0):
 class Pad(Base):
 
     @staticmethod
-    def export_constant_pad_with_1D_pads():  # type: () -> None
+    def export_constant_pad():  # type: () -> None
         node = onnx.helper.make_node(
             'Pad',
             inputs=['x', 'pads', 'value'],
@@ -53,7 +53,7 @@ class Pad(Base):
                name='test_constant_pad')
 
     @staticmethod
-    def export_reflection_and_edge_pad_with_1D_pads():  # type: () -> None
+    def export_reflection_and_edge_pad():  # type: () -> None
         for mode in ['edge', 'reflect']:
             node = onnx.helper.make_node(
                 'Pad',
