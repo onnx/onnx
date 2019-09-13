@@ -42,7 +42,7 @@ def scatter(data, indices, updates, axis=0):  # type: ignore
     updates_idx.insert(axis, np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)))
 
     scattered = np.copy(data)
-    scattered[idx] = updates[tuple(updates_idx)]
+    scattered[tuple(idx)] = updates[tuple(updates_idx)]
     return scattered
 
 
