@@ -10867,9 +10867,9 @@ This version of the operator has been available since version 11 of the default 
   axis = 0 :
   
   Let \
-  k = indices[i_{0}, …, i_{q-1}] \
+  k = indices[i_{0}, â€¦, i_{q-1}] \
   then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  output[i_{0}, â€¦, i_{q-1}, j_{0}, â€¦, j_{r-2}] = input[k , j_{0}, â€¦, j_{r-2} ]
   
   ```
     data = [
@@ -10895,9 +10895,9 @@ This version of the operator has been available since version 11 of the default 
   axis = 1 :
   
   Let \
-  k = indices[i_{0}, …, i_{q-1}] \
+  k = indices[i_{0}, â€¦, i_{q-1}] \
   then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+  output[i_{0}, â€¦, i_{q-1}, j_{0}, â€¦, j_{r-2}] = input[j_{0}, k, j_{1}, â€¦, j_{r-2} ]
   
   ```
     data = [
