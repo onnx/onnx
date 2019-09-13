@@ -2180,7 +2180,15 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
 
-    def test_pad_1d_pads_with_no_optional_input(self):  # type: () -> None
+    def test_cumsum(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3)),
+             ('axis', TensorProto.FLOAT, (1,))],
+            [make_node('CumSum', ['x', 'axis'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])
+
+    def test_pad(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, None, 2)),
              ('pads', TensorProto.INT64, (6,))],
@@ -2188,17 +2196,6 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('pads', TensorProto.INT64, (6,), (1, 3, 1, 1, 0, 1,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, None, 4))])  # type: ignore
-
-    def test_pad_2d_pads_with_optional_input(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (2, 3, 4, 4)),
-             ('pads', TensorProto.INT64, (1, 8,)),
-             ('value', TensorProto.FLOAT, (1,))],
-            [make_node('Pad', ['x', 'pads', 'value'], 'y', mode="constant")],
-            [],
-            initializer=[make_tensor('pads', TensorProto.INT64, (1, 8,), (0, 0, 3, 1, 0, 0, 4, 2,)),
-                         make_tensor('value', TensorProto.FLOAT, (1,), (2,))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 11, 7))])
 
 
 if __name__ == '__main__':

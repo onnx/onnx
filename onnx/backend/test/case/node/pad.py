@@ -11,7 +11,7 @@ from . import expect
 
 
 def pad_impl(data, pad_width, mode, constant_values=0.0):
-    # type: (np.ndarray, tuple, str, float) -> np.ndarray
+    # type: (np.ndarray, Any, Any, Any) -> np.ndarray
     if mode == 'constant':
         y = np.pad(
             data,
@@ -41,7 +41,7 @@ class Pad(Base):
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
         pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
-        value = np.array([1.2]).astype(np.float32)
+        value = np.float32(1.2)
         y = pad_impl(
             x,
             ((0, 0), (0, 0), (1, 2), (3, 4)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
@@ -50,28 +50,7 @@ class Pad(Base):
         )
 
         expect(node, inputs=[x, pads, value], outputs=[y],
-               name='test_constant_pad_with_1D_pads')
-
-    @staticmethod
-    def export_constant_pad_with_2D_pads():  # type: () -> None
-        node = onnx.helper.make_node(
-            'Pad',
-            inputs=['x', 'pads', 'value'],
-            outputs=['y'],
-            mode='constant'
-        )
-        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-        pads = np.array([[0, 0, 1, 3, 0, 0, 2, 4]]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
-        value = np.array([1.2]).astype(np.float32)
-        y = pad_impl(
-            x,
-            ((0, 0), (0, 0), (1, 2), (3, 4)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
-            'constant',
-            1.2
-        )
-
-        expect(node, inputs=[x, pads, value], outputs=[y],
-               name='test_constant_pad_with_2D_pads')
+               name='test_constant_pad')
 
     @staticmethod
     def export_reflection_and_edge_pad_with_1D_pads():  # type: () -> None
@@ -82,7 +61,7 @@ class Pad(Base):
                 outputs=['y'],
                 mode=mode
             )
-            x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+            x = np.random.randn(1, 3, 4, 5).astype(np.int32)
             pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
             y = pad_impl(
                 x,
@@ -91,4 +70,4 @@ class Pad(Base):
             )
 
             expect(node, inputs=[x, pads], outputs=[y],
-                   name='test_{}_pad_with_1D_pads'.format(mode))
+                   name='test_{}_pad'.format(mode))

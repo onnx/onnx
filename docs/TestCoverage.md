@@ -323,7 +323,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     keepdims=keepdims)
 
-# result: [[0], [0]]
+# The content of result is : [[0], [0]]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
 
@@ -347,7 +347,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1], [0]]
+# The content of result is : [[1], [0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
 
@@ -371,7 +371,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1], [0]]
+# The content of result is : [[1], [0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example')
 
@@ -395,7 +395,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1, 0]]
+# The content of result is : [[1, 0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
 
@@ -2851,7 +2851,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
 
 ### Gather
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>gather_0</summary>
 
@@ -2890,10 +2890,29 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 ```
 
 </details>
+<details>
+<summary>gather_negative_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.arange(10).astype(np.float32)
+indices = np.array([0, -9, -10])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_negative_indices')
+```
+
+</details>
 
 
 ### GatherElements
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>gather_elements_0</summary>
 
@@ -2944,6 +2963,33 @@ y = gather_elements(data, indices, axis)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_elements_1')
+```
+
+</details>
+<details>
+<summary>gather_elements_negative_indices</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[-1, -2, 0],
+                    [-2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[7, 5, 3],
+#  [4, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_negative_indices')
 ```
 
 </details>
@@ -5158,7 +5204,7 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 
 
 ### OneHot
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>with_axis</summary>
 
@@ -5204,6 +5250,30 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_negative_axis')
+```
+
+</details>
+<details>
+<summary>with_negative_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([0, -7, -8], dtype=np.int64)
+
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
 ```
 
 </details>
@@ -8441,7 +8511,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 
 ### ScatterElements
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -8463,6 +8533,30 @@ y = scatter_elements(data, indices, updates, axis)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_negative_indices</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, -3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 2.1, 4.0, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_negative_indices')
 ```
 
 </details>
