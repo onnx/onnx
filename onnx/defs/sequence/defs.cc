@@ -10,7 +10,15 @@
 namespace ONNX_NAMESPACE {
 
 // target-shape = Union (target-shape, source_shape)
-void UnionShapeInfoToSequence(
+// Example 1: same rank, different dimensions
+//    input1 shape: (2, 3, 4, 'x')
+//    input2 shape: (2, 'y', 5, 'x')
+//    output shape: (2, None, None, 'x')
+// Example 2: different rank
+//    input1 shape: (2, 3, 4, 'x')
+//    input2 shape: (2, 3, 4)
+//    output shape: None
+void UnionShapeInfo(
     const TensorShapeProto& source_shape,
     TypeProto_Tensor& target_type) {
   if (target_type.has_shape()) {
@@ -129,7 +137,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           size_t numInputs = ctx.getNumInputs();
           if (numInputs < 1) {
-            return;
+            fail_type_inference("SequenceConstruct is expected to have at least 1 input.");
           }
 
           std::vector<int> input_elem_types;
@@ -157,7 +165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 1; i < numInputs; ++i) {
             const auto& input_shape = ctx.getInputType(i)->tensor_type().shape();
-            UnionShapeInfoToSequence(input_shape, *output_tensor_type);
+            UnionShapeInfo(input_shape, *output_tensor_type);
           }
         }));
 
@@ -240,7 +248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           *(output_tensor_type->mutable_shape()) = 
               ctx.getInputType(0)->sequence_type().elem_type().tensor_type().shape();
 
-          UnionShapeInfoToSequence(ctx.getInputType(1)->tensor_type().shape(), *output_tensor_type);
+          UnionShapeInfo(ctx.getInputType(1)->tensor_type().shape(), *output_tensor_type);
         }));
 
 static const char* SequenceAt_ver11_doc = R"DOC(
