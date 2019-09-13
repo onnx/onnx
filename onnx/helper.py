@@ -470,6 +470,18 @@ def printable_value_info(v):  # type: (ValueInfoProto) -> Text
     return s
 
 
+def printable_tensor_proto(t):  # type: (TensorProto) -> Text
+    s = '%{}['.format(t.name)
+    s += TensorProto.DataType.Name(t.data_type)
+    if t.dims is not None:
+        if len(t.dims):
+            s += str(', ' + 'x'.join(map(str, t.dims)))
+        else:
+            s += str(', scalar')
+    s += ']'
+    return s
+
+
 def printable_node(node, prefix='', subgraphs=False):  # type: (NodeProto, Text, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
     content = []
     if len(node.output):
@@ -506,16 +518,16 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
     indent = prefix + '  '
     # header
     header = ['graph', graph.name]
-    initialized = {t.name for t in graph.initializer}
+    initializers = {t.name for t in graph.initializer}
     if len(graph.input):
         header.append("(")
-        in_strs = []
-        init_strs = []
+        in_strs = []  # required inputs
+        in_with_init_strs = []  # optional inputs with initializer providing default value
         for inp in graph.input:
-            if inp.name not in initialized:
+            if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
             else:
-                init_strs.append(printable_value_info(inp))
+                in_with_init_strs.append(printable_value_info(inp))
         if in_strs:
             content.append(prefix + ' '.join(header))
             header = []
@@ -523,7 +535,20 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
                 content.append(prefix + '  ' + line)
         header.append(")")
 
-        if init_strs:
+        if in_with_init_strs:
+            header.append("optional inputs with matching initializers (")
+            content.append(prefix + ' '.join(header))
+            header = []
+            for line in in_with_init_strs:
+                content.append(prefix + '  ' + line)
+            header.append(")")
+
+        # from IR 4 onwards an initializer is not required to have a matching graph input
+        # so output the name, type and shape of those as well
+        if len(in_with_init_strs) < len(initializers):
+            graph_inputs = {i.name for i in graph.input}
+            init_strs = [printable_tensor_proto(i) for i in graph.initializer
+                         if i.name not in graph_inputs]
             header.append("initializers (")
             content.append(prefix + ' '.join(header))
             header = []
