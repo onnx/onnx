@@ -257,10 +257,18 @@ inline void propagateElemTypeFromDtypeToOutput(
       ctx, attribute_tensor_datatype, outputIndex);
 }
 
+inline bool hasShape(const TypeProto& type) {
+  if (type.has_tensor_type()) {
+    return type.tensor_type().has_shape();
+  } else if (type.has_sequence_type() && type.sequence_type().has_elem_type()) {
+    return hasShape(type.sequence_type().elem_type());
+  }
+  return false;
+}
+
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
-      ctx.getInputType(n)->has_tensor_type() &&
-      ctx.getInputType(n)->tensor_type().has_shape();
+      hasShape(*ctx.getInputType(n));
 }
 
 inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
