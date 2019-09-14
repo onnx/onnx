@@ -162,13 +162,16 @@ input|ValueInfo[]|The input “parameters” of the graph, possibly initialized 
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
 
-Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
+Each main (top-level) graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
 Name|Type|Description
 |---|---|---|
 name|string|The name of the value/parameter.
 type|Type|The type of the value.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
+
+Nested subgraphs (specified as attribute values) MUST define the names of its inputs and outputs
+and MAY define the types of its inputs and outputs.
 
 Each graph MUST specify a name.
 
@@ -265,9 +268,9 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 #### Variadic Inputs and Outputs
  
-The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values. A variadic operator has an associated minimum arity, which specifies the minimum number of operands that must be specified.
 
-For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. 
+For each variadic operator input, N or more node inputs must be specified where N is the minimum arity of the operator. For each variadic operator output, N or more node outputs must be specified where N is the minimum arity of the operator. 
 
 #### Optional Inputs and Outputs
 
