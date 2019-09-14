@@ -10,8 +10,18 @@ from ..base import Base
 from . import expect
 
 
-def pad_impl(data, pad_width, mode, constant_values=0.0):
-    # type: (np.ndarray, tuple, str, float) -> np.ndarray
+def pad_impl(data, raw_pads, mode, constant_values=0.0):
+    # type: (np.ndarray, np.ndarray, str, float) -> np.ndarray
+
+    input_rank = data.ndim
+    if input_rank * 2 != raw_pads.size:
+        raise Exception('The number of elements in raw_pads should be 2 * data_rank')
+
+    # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
+    pad_width = ()
+    for i in range(int(raw_pads.size / 2)):
+        pad_width += ((raw_pads[i], raw_pads[i + input_rank])),
+
     if mode == 'constant':
         y = np.pad(
             data,
@@ -26,6 +36,7 @@ def pad_impl(data, pad_width, mode, constant_values=0.0):
         pad_width=pad_width,
         mode=mode,
     )
+
     return y
 
 
@@ -44,7 +55,7 @@ class Pad(Base):
         value = np.float32(1.2)
         y = pad_impl(
             x,
-            ((0, 0), (0, 0), (1, 2), (3, 4)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
+            pads,
             'constant',
             1.2
         )
@@ -65,7 +76,7 @@ class Pad(Base):
             pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
             y = pad_impl(
                 x,
-                ((0, 0), (0, 0), (1, 1), (1, 1)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
+                pads,
                 mode
             )
 

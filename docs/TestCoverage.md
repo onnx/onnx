@@ -5443,7 +5443,7 @@ pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begi
 value = np.float32(1.2)
 y = pad_impl(
     x,
-    ((0, 0), (0, 0), (1, 2), (3, 4)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
+    pads,
     'constant',
     1.2
 )
@@ -5468,7 +5468,7 @@ for mode in ['edge', 'reflect']:
     pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
     y = pad_impl(
         x,
-        ((0, 0), (0, 0), (1, 1), (1, 1)),  # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
+        pads,
         mode
     )
 

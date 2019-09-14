@@ -52,7 +52,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     } else {
       // opset 11 and above - first check if 'pad' node has 'pads' input
       // initialized
-      const auto pads_name = pad->inputs()[1]->uniqueName();
+      const auto& pads_name = pad->inputs()[1]->uniqueName();
       const auto pads_initializer = graph.getInitializer(pads_name);
       // 'pad' node has the 'pads' input which has not been initialized -
       // can't proceed with fusing
@@ -83,39 +83,57 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     }
 
     // Process 'value'
-    double value = 0.0;
-    if (pad->hasAttribute(kvalue)) {
-      // opset 10 and below
-      value = static_cast<double>(pad->f(kvalue));
+    // opset 10 and below
+    if (pad->hasAttribute(kvalue) && static_cast<double>(pad->f(kvalue)) != 0.0) {
+      return false;
     } else if (pad->inputs().size() == 3) {
       // opset 11 and above - check if the 'pad' node has the optional 'value'
       // input check if it has data initialized
-      const auto value_name = pad->inputs()[2]->uniqueName();
+      const auto& value_name = pad->inputs()[2]->uniqueName();
       const auto value_initializer = graph.getInitializer(value_name);
 
       // 'pad' node has the 'value' input which has not been initialized -
       // can't proceed with fusing
-      if (value_initializer == graph.initializers().end())
-        return false;
+      if (value_initializer == graph.initializers().end()) {
+        return false;      
+      }
 
-      // parse 'value' data from the initialized input
-      if (value_initializer->elem_type() == TensorProto::FLOAT) {
-        const auto& data = ParseData<float>(&*value_initializer);
-        value = static_cast<double>(data[0]);
-      } else if (value_initializer->elem_type() == TensorProto::DOUBLE) {
-        const auto& data = ParseData<double>(&*value_initializer);
-        value = data[0];
-      } else {
-        // either float16 or not relevant data type for this input - no fusing
-        return false;
+      // parse 'value' data from the initialized input and stop optimizer if the
+      // value is non-zero
+      switch (value_initializer->elem_type()) {
+        case TensorProto::FLOAT:
+          if (ParseData<float>(&*value_initializer)[0] != 0)
+            return false; // cannot fuse Pad into Conv
+          else
+            break;
+
+        case TensorProto::DOUBLE:
+          if (ParseData<double>(&*value_initializer)[0] != 0)
+            return false; // cannot fuse Pad into Conv
+          else
+            break;
+
+        case TensorProto::INT32:
+          if (ParseData<int32_t>(&*value_initializer)[0] != 0)
+            return false; // cannot fuse Pad into Conv
+          else
+            break;
+
+        case TensorProto::INT64:
+          if (ParseData<int64_t>(&*value_initializer)[0] != 0)
+            return false; // cannot fuse Pad into Conv
+          else
+            break;
+  
+        // TODO: Support more uncommon but valid types for Pad op (int8, uint8, int16, uint16, etc.)       
+
+        default:
+          return false; // Either type of Value is invalid or not yet supported by data parsing logic.
+                        // Since we canot validate the data present in 'Value', we exit the optimizer   
       }
     }
 
-    // check if Pad is used to zero-pad the input
-    if (value != 0.0) {
-      return false;
-    }
-
+    // check if some values in 'pads' prevents us from fusing it into 'Conv' node
     int pads_size = static_cast<int>(pads.size());
 
     // check if padding is applied only on feature dims

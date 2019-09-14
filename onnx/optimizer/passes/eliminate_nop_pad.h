@@ -24,13 +24,16 @@ struct EliminateNopPad final : public PredicateBasedPass {
     if (node->hasAttribute(kpads)) {
       // opset 10 and below
       const auto& pads = node->is(kpads);
-      for (size_t i = 0; i < pads.size(); i++)
-        if (pads[i] > 0)
-          return false;
+      for (size_t i = 0; i < pads.size(); i++) {
+        // if pad value is non-zero, this is not a nop pad
+        if (pads[i] != 0) {
+          return false;      			
+        }
+      }
       return true;
     } else {
       // opset 11 and above
-      const auto pads_name = node->inputs()[1]->uniqueName();
+      const auto& pads_name = node->inputs()[1]->uniqueName();
       const auto pads_initializer = graph.getInitializer(pads_name);
       // 'pad' node has the 'pads' input which has not been initialized -
       // can't proceed with elimination
@@ -41,8 +44,10 @@ struct EliminateNopPad final : public PredicateBasedPass {
       if (pads_initializer->elem_type() == TensorProto::INT64) {
         const auto& pads = ParseData<int64_t>(&*pads_initializer);
         for (const auto& val : pads) {
-          if (val > 0)
+          // if pad value is non-zero, this is not a nop pad
+          if (val != 0) {
             return false;
+          }      
         }
         return true;
       }
