@@ -295,7 +295,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis", "Which axis to concat on. A negative value means counting dimensions from the back. "
             "Accepted range is [-r, r-1] where r = rank(inputs)..",
             AttributeProto::INT)
-        .SetDoc("Concatenate a list of tensors into a single tensor")
+        .SetDoc(
+            "Concatenate a list of tensors into a single tensor. "
+            "All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.")
         .Input(
             0,
             "inputs",
@@ -1709,7 +1711,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, false);
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Resize_ver11_doc = R"DOC(
