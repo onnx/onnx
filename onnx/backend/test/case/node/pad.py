@@ -20,7 +20,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0):
     # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
     pad_width = ()
     for i in range(int(raw_pads.size / 2)):
-        pad_width += ((raw_pads[i], raw_pads[i + input_rank])),
+        pad_width += ((raw_pads[i], raw_pads[i + input_rank])),  # type: ignore
 
     if mode == 'constant':
         y = np.pad(

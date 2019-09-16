@@ -802,7 +802,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_pad_into_conv_with_optional_value(self):  # type: () -> None
         pad = helper.make_node(
             "Pad",
-            ["X", "Pads", "Value"],
+            ["X", "Pads", "Constant_value"],
             ["P"],
             mode="constant"
         )
@@ -812,14 +812,14 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 2, 2)),
              helper.make_tensor_value_info("Pads", TensorProto.INT64, (8,)),
-             helper.make_tensor_value_info("Value", TensorProto.FLOAT, ()),
+             helper.make_tensor_value_info("Constant_value", TensorProto.FLOAT, ()),
              helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))],
             [helper.make_tensor("Pads", TensorProto.INT64,
              dims=(8,),
              vals=np.array([0, 0, 0, 0, 0, 0, 1, 1]).astype(np.int64).tobytes(),
              raw=True),
-             helper.make_tensor("Value", TensorProto.FLOAT,
+             helper.make_tensor("Constant_value", TensorProto.FLOAT,
              dims=(),
              vals=np.array([0]).astype(np.float32).tobytes(),
              raw=True)])
@@ -833,7 +833,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_pad_into_conv_with_nonzero_optional_value(self):  # type: () -> None
         pad = helper.make_node(
             "Pad",
-            ["X", "Pads", "Value"],
+            ["X", "Pads", "Constant_value"],
             ["P"],
             mode="constant"
         )
@@ -843,16 +843,16 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 2, 2)),
              helper.make_tensor_value_info("Pads", TensorProto.INT64, (8,)),
-             helper.make_tensor_value_info("Value", TensorProto.FLOAT, ()),
+             helper.make_tensor_value_info("Constant_value", TensorProto.FLOAT, ()),
              helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))],
             [helper.make_tensor("Pads", TensorProto.INT64,
              dims=(8,),
              vals=np.array([0, 0, 0, 0, 0, 0, 1, 1]).astype(np.int64).tobytes(),
              raw=True),
-             helper.make_tensor("Value", TensorProto.FLOAT,
+             helper.make_tensor("Constant_value", TensorProto.FLOAT,
              dims=(),
-             vals=np.array([25]).astype(np.float32).tobytes(),  # non-zero value -> so no pad
+             vals=np.array([25]).astype(np.float32).tobytes(),  # non-zero Constant_value -> so no pad
              raw=True)])
         optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
 

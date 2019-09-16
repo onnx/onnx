@@ -9986,12 +9986,12 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `value`, 
+  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
   a padded tensor (`output`) is generated.
   
   The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
   
-  1) `constant`(default) - pads with a given constant value as specified by `value` (which defaults to 0)
+  1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
   
   2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
   
@@ -10011,7 +10011,7 @@ expect(node, inputs=[x, slope], outputs=[y],
   
     mode = 'constant'
   
-    value = 0.0
+    constant_value = 0.0
   
     output = 
     [
@@ -10043,8 +10043,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href
 <dd>Input tensor.</dd>
 <dt><tt>pads</tt> : tensor(int64)</dt>
 <dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
-<dt><tt>value</tt> (optional) : T</dt>
-<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0.0).</dd>
+<dt><tt>constant_value</tt> (optional) : T</dt>
+<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).</dd>
 </dl>
 
 #### Outputs

@@ -2517,18 +2517,19 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Pad_ver11_doc = R"DOC(
-Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `value`, 
+Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
 a padded tensor (`output`) is generated.
 
 The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
-1) `constant`(default) - pads with a given constant value as specified by `value` (which defaults to 0)
+1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
 
 2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
 
 3) `edge` - pads with the edge values of array
 
-Example (`constant` mode):
+
+Example 1 (`constant` mode):
   Insert 0 pads to the beginning of the second dimension.
 
   data = 
@@ -2542,7 +2543,7 @@ Example (`constant` mode):
 
   mode = 'constant'
 
-  value = 0.0
+  constant_value = 0.0
 
   output = 
   [
@@ -2550,6 +2551,50 @@ Example (`constant` mode):
           [0.0, 0.0, 1.0, 1.2],
           [0.0, 0.0, 2.3, 3.4],
           [0.0, 0.0, 4.5, 5.7],
+      ],
+  ]
+
+
+Example 2 (`reflect` mode):
+  data = 
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ] 
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'reflect'
+
+  output = 
+  [
+      [
+          [1.0, 1.2, 1.0, 1.2],
+          [2.3, 3.4, 2.3, 3.4],
+          [4.5, 5.7, 4.5, 5.7],
+      ],
+  ]
+
+
+Example 3 (`edge` mode):
+  data = 
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ] 
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'edge'
+
+  output = 
+  [
+      [
+          [1.0, 1.0, 1.0, 1.2],
+          [2.3, 2.3, 2.3, 3.4],
+          [4.5, 4.5, 4.5, 5.7],
       ],
   ]
 
@@ -2578,8 +2623,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int64)")
         .Input(
             2,
-            "value",
-            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0.0).",
+            "constant_value",
+            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).",
             "T",
             OpSchema::Optional)
         .Output(0, "output", "Tensor after padding.", "T")
