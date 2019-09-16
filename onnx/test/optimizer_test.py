@@ -15,7 +15,7 @@ import unittest
 
 class TestOptimizer(unittest.TestCase):
 
-    def _optimized(self, graph, opts, fixed_point=False, **kwargs):  # type: (GraphProto, Sequence[Text], bool, ...) -> ModelProto
+    def _optimized(self, graph, opts, fixed_point=False, **kwargs):  # type: (GraphProto, Sequence[Text], bool, **Any) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test', **kwargs)
         optimized_model = onnx.optimizer.optimize(orig_model, opts, fixed_point)
         checker.check_model(optimized_model)
