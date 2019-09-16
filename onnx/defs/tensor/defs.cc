@@ -2645,7 +2645,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Infer output shape if 'pads' tensor is available
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
-            const auto& pads_shape = ctx.getInputType(1)->tensor_type().shape();
             if (pads_initializer->dims_size() != 1 ||
                 pads_initializer->data_type() != TensorProto::INT64)
               fail_shape_inference(
