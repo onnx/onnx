@@ -88,7 +88,7 @@ enum Version {
   // - Add quantization annotation in GraphProto to map tensor with its scale and zero point quantization parameters.
   IR_VERSION_2019_3_18 = 0x0000000000000005;
 
-  // IR VERSION 6 published on <TBD>
+  // IR VERSION 6 published on Sep 19, 2019
   // - Add support for sparse tensor constants stored in model.
   //   - Add message SparseTensorProto
   //   - Add sparse initializers
