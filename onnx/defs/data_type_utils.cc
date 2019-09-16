@@ -126,7 +126,6 @@ std::string DataTypeUtils::ToString(
       return left + "tensor(" +
           ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" + right;
     }
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kSequenceType: {
       return ToString(
           type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
@@ -138,6 +137,7 @@ std::string DataTypeUtils::ToString(
       return ToString(
           type_proto.map_type().value_type(), left + map_str, ")" + right);
     }
+#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
       static const std::string empty;
       std::string result;
@@ -178,7 +178,6 @@ void DataTypeUtils::FromString(
     TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
-#ifdef ONNX_ML
   if (s.LStrip("seq")) {
     s.ParensWhitespaceStrip();
     return FromString(
@@ -198,7 +197,9 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(v.Data(), v.Size()),
         *type_proto.mutable_map_type()->mutable_value_type());
-  } else if (s.LStrip("opaque")) {
+  } else
+#ifdef ONNX_ML
+      if (s.LStrip("opaque")) {
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
     if (!s.Empty()) {

@@ -20,7 +20,7 @@ False instead of True.)DOC";
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).",
+        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
@@ -141,7 +141,7 @@ The type of the output tensor is integer.)DOC";
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
-        "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(input).",
+        "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Attr(

@@ -485,7 +485,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_shape_inference(
                   "Number of elements of attribute 'scales' must be same as rank of input 'X'");
               }
-              resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
+              resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
             } else {
               fail_shape_inference(
                 "Attribute 'scales' must have floats type.");
@@ -525,7 +525,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, false);
+          resizeShapeInference_opset7_to_10(ctx);
         }
 ));
 
@@ -559,52 +559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto& input_shape = getInputShape(ctx, 0);
-          auto* output_shape = getOutputShape(ctx, 0);
-          // output_shape->clear_dim();
-          auto scales = ctx.getInputData(1);
-          if (nullptr != scales) {
-            // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == input_shape.dim_size()) {
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                int64_t dim_value = static_cast<int64_t>(std::floor(
-                    static_cast<float>(input_shape.dim(i).dim_value()) *
-                    scales->float_data(i)));
-                if (output_shape->dim_size() > i) {
-                  if (output_shape->dim(i).has_dim_value()) {
-                    if (output_shape->dim(i).dim_value() != dim_value) {
-                      fail_shape_inference(
-                          "Dimension value inferred (",
-                          dim_value,
-                          ") is not equal to the existing dim value (",
-                          output_shape->dim(i).dim_value(),
-                          ").");
-                    }
-                  } else {
-                    output_shape->mutable_dim(i)->set_dim_value(dim_value);
-                  }
-                } else {
-                  output_shape->add_dim()->set_dim_value(
-                      static_cast<int64_t>(dim_value));
-                }
-              }
-            } else {
-              fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
-            }
-          } else {
-            if (0 == output_shape->dim_size()) {
-              // Infer output shape's rank in any case.
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                output_shape->add_dim();
-              }
-            }
-          }
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Slice_ver1_doc = R"DOC(
@@ -1092,6 +1047,117 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Input tensor must be 4-dimensional");
           }
         }));
+
+static const char* Gather_ver1_doc = R"DOC(
+Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
+entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
+them in an output tensor of rank q + (r - 1).
+Example 1:
+```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+  indices = [
+      [0, 1],
+      [1, 2],
+  ]
+  output = [
+      [
+          [1.0, 1.2],
+          [2.3, 3.4],
+      ],
+      [
+          [2.3, 3.4],
+          [4.5, 5.7],
+      ],
+  ]
+```
+Example 2:
+```
+  data = [
+      [1.0, 1.2, 1.9],
+      [2.3, 3.4, 3.9],
+      [4.5, 5.7, 5.9],
+  ]
+  indices = [
+      [0, 2],
+  ]
+  axis = 1,
+  output = [
+      [
+          [1.0, 1.9],
+          [2.3, 3.9],
+          [4.5, 5.9],
+      ],
+  ]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Gather,
+    1,
+    OpSchema()
+        .SetDoc(Gather_ver1_doc)
+        .Attr(
+            "axis",
+            "Which axis to gather on. Negative value means "
+            "counting dimensions from the back. Accepted range is [-r, r-1]",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. "
+            "It is an error if any of the index values are out of bounds.",
+            "Tind")
+        .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to any tensor type.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
+          const TensorShapeProto& data_shape =
+              ctx.getInputType(0)->tensor_type().shape();
+          const TensorShapeProto& indices_shape =
+              ctx.getInputType(1)->tensor_type().shape();
+          int r = data_shape.dim_size();
+          if (r < 1) {
+            fail_shape_inference("data tensor must have rank >= 1");
+          }
+          int q = indices_shape.dim_size();
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          if (axis < -r || axis >= r) {
+            fail_shape_inference("axis must be in [-r, r-1]");
+          }
+          if (axis < 0) {
+            axis += r;
+          }
+          int out_rank = q + r - 1;
+
+          if (out_rank == 0) {
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          }
+          for (int i = 0; i < out_rank; ++i) {
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() = (i < axis) ? data_shape.dim(i) : // i < axis < r
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
+                                            : // i - axis < q
+                    data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
+          }
+}));
 
 static const char* Squeeze_ver1_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.

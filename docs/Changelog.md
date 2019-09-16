@@ -1204,7 +1204,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1]</dd>
 </dl>
 
 #### Inputs
@@ -9877,7 +9877,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is uint8 typed 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -10301,7 +10301,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -10342,7 +10342,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -10497,7 +10497,7 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Concat-11"></a>**Concat-11**</a>
 
-  Concatenate a list of tensors into a single tensor
+  Concatenate a list of tensors into a single tensor. All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 
 #### Version
 
@@ -10507,7 +10507,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
+<dd>Which axis to concat on. A negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(inputs)..</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -10527,6 +10527,49 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain output types to any tensor type.</dd>
+</dl>
+
+### <a name="ConcatFromSequence-11"></a>**ConcatFromSequence-11**</a>
+
+  Concatenate a sequence of tensors into a single tensor.
+  All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
+  By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
+  When 'new_axis' is 1, the behavior is similar to numpy.stack.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (required)</dt>
+<dd>Which axis to concat on. Accepted range in `[-r, r - 1]`, where `r` is the rank of input tensors. When `new_axis` is 1, accepted range is `[-r - 1, r]`. </dd>
+<dt><tt>new_axis</tt> : int (default is 0)</dt>
+<dd>Insert and concatenate on a new axis or not, default 0 means do not insert new axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Sequence of tensors for concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>concat_result</tt> : T</dt>
+<dd>Concatenated tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain input types to any tensor type.</dd>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
@@ -10858,6 +10901,102 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output to all tensor types.</dd>
 </dl>
 
+### <a name="Gather-11"></a>**Gather-11**</a>
+
+  Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
+  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
+  them in an output tensor of rank q + (r - 1).
+  
+  axis = 0 :
+  
+  Let \
+  k = indices[i_{0}, …, i_{q-1}] \
+  then \
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  
+  ```
+    data = [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ]
+    indices = [
+        [0, 1],
+        [1, 2],
+    ]
+    output = [
+        [
+            [1.0, 1.2],
+            [2.3, 3.4],
+        ],
+        [
+            [2.3, 3.4],
+            [4.5, 5.7],
+        ],
+    ]
+  ```
+  axis = 1 :
+  
+  Let \
+  k = indices[i_{0}, …, i_{q-1}] \
+  then \
+  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+  
+  ```
+    data = [
+        [1.0, 1.2, 1.9],
+        [2.3, 3.4, 3.9],
+        [4.5, 5.7, 5.9],
+    ]
+    indices = [
+        [0, 2],
+    ]
+    axis = 1,
+    output = [
+        [
+            [1.0, 1.9],
+            [2.3, 3.9],
+            [4.5, 5.9],
+        ],
+    ]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank q + (r - 1).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
 ### <a name="GatherElements-11"></a>**GatherElements-11**</a>
 
   GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
@@ -10924,7 +11063,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Inputs
@@ -10933,7 +11072,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, with the same rank r as the input.</dd>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -11030,7 +11169,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : tensor(int64)</dt>
-<dd>Tensor of rank q >= 1.</dd>
+<dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -11073,7 +11212,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range in [-r, r-1] where r = rank(input).</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -11123,7 +11262,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range in [-r, r-1] where r = rank(input).</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -11315,8 +11454,15 @@ This version of the operator has been available since version 11 of the default 
       dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
       dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-      the range [0, depth) will result in one-hot representation with all 'off_value' values in the
+      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
       output tensor.
+  
+      when axis = 0:
+      output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+  
+      when axis = -1:
+      output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
+  
 
 #### Version
 
@@ -11333,9 +11479,9 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>indices</tt> : T1</dt>
-<dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> : T2</dt>
-<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [0, depth). In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
 <dt><tt>values</tt> : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
@@ -11436,7 +11582,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11479,7 +11625,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11522,7 +11668,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11565,7 +11711,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11608,7 +11754,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11651,7 +11797,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11694,7 +11840,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11737,7 +11883,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11780,7 +11926,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -11823,7 +11969,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -12258,7 +12404,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Inputs
@@ -12267,7 +12413,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input).</dd>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 <dt><tt>updates</tt> : T</dt>
 <dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
 </dl>
@@ -12376,6 +12522,215 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
+### <a name="SequenceAt-11"></a>**SequenceAt-11**</a>
+
+  Outputs a tensor copy from the tensor at 'position' in 'input_sequence'.
+  Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
+  Negative value means counting positions from the back.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>position</tt> : I</dt>
+<dd>Position of the tensor in the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>tensor</tt> : T</dt>
+<dd>Output tensor at the specified position in the input sequence.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+### <a name="SequenceConstruct-11"></a>**SequenceConstruct-11**</a>
+
+  Construct a tensor sequence containing 'inputs' tensors.
+  All tensors in 'inputs' must have the same data type.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>inputs</tt> (variadic) : T</dt>
+<dd>Tensors.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>Sequence enclosing the input tensors.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to any tensor type.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to any tensor type.</dd>
+</dl>
+
+### <a name="SequenceEmpty-11"></a>**SequenceEmpty-11**</a>
+
+  Construct an empty tensor sequence, with given data type.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type of the tensors in the output sequence. The default type is 'float'.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : S</dt>
+<dd>Empty sequence.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to any tensor type.</dd>
+</dl>
+
+### <a name="SequenceErase-11"></a>**SequenceErase-11**</a>
+
+  Outputs a tensor sequence that removes the tensor at 'position' from 'input_sequence'.
+  Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
+  Negative value means counting positions from the back.
+  'position' is optional, by default it erases the last tensor from 'input_sequence'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>position</tt> (optional) : I</dt>
+<dd>Position of the tensor in the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>Output sequence that has the tensor at the specified position removed.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+### <a name="SequenceInsert-11"></a>**SequenceInsert-11**</a>
+
+  Outputs a tensor sequence that inserts 'tensor' into 'input_sequence' at 'position'.
+  'tensor' must have the same data type as 'input_sequence'.
+  Accepted range for 'position' is in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'.
+  Negative value means counting positions from the back.
+  'position' is optional, by default it inserts 'tensor' to the back of 'input_sequence'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>tensor</tt> : T</dt>
+<dd>Input tensor to be inserted into the input sequence.</dd>
+<dt><tt>position</tt> (optional) : I</dt>
+<dd>Position in the sequence where the new tensor is inserted. It is optional and default is to insert to the back of the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>Output sequence that contains the inserted tensor at given position.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+### <a name="SequenceLength-11"></a>**SequenceLength-11**</a>
+
+  Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>length</tt> : I</dt>
+<dd>Length of input sequence. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain output to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
 ### <a name="Slice-11"></a>**Slice-11**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
@@ -12427,7 +12782,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>ends</tt> : Tind</dt>
 <dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
 <dt><tt>axes</tt> (optional) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
 <dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
 </dl>
@@ -12474,7 +12829,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range in [-r, r-1] where r = rank(input).</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -12512,7 +12867,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -12538,6 +12893,59 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+### <a name="SplitToSequence-11"></a>**SplitToSequence-11**</a>
+
+  Split a tensor into a sequence of tensors, along the specified
+  'axis'. Lengths of the parts can be specified using argument 'split'.
+  'split' must contain only positive numbers.
+  'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
+  If 'split' is a scalar, then 'input' will be split into equally sized chunks(if possible).
+  Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
+  by 'split'.
+  Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
+  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
+  dimension size of input tensor on 'axis'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the split dimension or not. Default 1, which means we keep split dimension. If input 'split' is specified, this attribute is ignored.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional) : I</dt>
+<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be positive. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>One or more outputs forming a sequence of tensors after splitting</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to all tensor types.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain split size to integral tensor.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to all tensor types.</dd>
+</dl>
+
 ### <a name="Squeeze-11"></a>**Squeeze-11**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
@@ -12553,7 +12961,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Inputs
@@ -12770,7 +13178,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Inputs
