@@ -257,17 +257,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Pad_ver1_doc = R"DOC(
 Given `data` tensor, paddings, mode, and value.
-
 Example:
   Insert 0 paddings to the beginning of the second dimension.
-
   data = [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
   ]
   paddings = [0, 0, 2, 0]
-
   output = [
       [
           [0.0, 0.0, 1.0, 1.2],
@@ -484,7 +481,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_shape_inference(
                     "Number of elements of attribute 'scales' must be same as rank of input 'X'");
               }
-              resizeShapeInferenceHelper(
+              resizeShapeInferenceHelper_opset7_to_10(
                   input_shape, scales_data, output_shape);
             } else {
               fail_shape_inference("Attribute 'scales' must have floats type.");
@@ -523,7 +520,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, false);
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Resize_ver10_doc = R"DOC(
@@ -556,52 +553,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Resize_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto& input_shape = getInputShape(ctx, 0);
-          auto* output_shape = getOutputShape(ctx, 0);
-          // output_shape->clear_dim();
-          auto scales = ctx.getInputData(1);
-          if (nullptr != scales) {
-            // Infer output shape's dimension value if 'scales' is known.
-            if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == input_shape.dim_size()) {
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                int64_t dim_value = static_cast<int64_t>(std::floor(
-                    static_cast<float>(input_shape.dim(i).dim_value()) *
-                    scales->float_data(i)));
-                if (output_shape->dim_size() > i) {
-                  if (output_shape->dim(i).has_dim_value()) {
-                    if (output_shape->dim(i).dim_value() != dim_value) {
-                      fail_shape_inference(
-                          "Dimension value inferred (",
-                          dim_value,
-                          ") is not equal to the existing dim value (",
-                          output_shape->dim(i).dim_value(),
-                          ").");
-                    }
-                  } else {
-                    output_shape->mutable_dim(i)->set_dim_value(dim_value);
-                  }
-                } else {
-                  output_shape->add_dim()->set_dim_value(
-                      static_cast<int64_t>(dim_value));
-                }
-              }
-            } else {
-              fail_shape_inference(
-                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
-            }
-          } else {
-            if (0 == output_shape->dim_size()) {
-              // Infer output shape's rank in any case.
-              for (int i = 0; i < input_shape.dim_size(); ++i) {
-                output_shape->add_dim();
-              }
-            }
-          }
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Slice_ver1_doc = R"DOC(
@@ -971,7 +923,6 @@ For each entry in `updates`, the target index in `data` is specified by correspo
 for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
 data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
 where i and j are loop counters from 0 up to the respective size in `updates` - 1.
-
 Example 1:
   data = [
       [0.0, 0.0, 0.0],
@@ -991,7 +942,6 @@ Example 1:
       [1.0, 0.0, 2.2]
       [0.0, 2.1, 1.2]
   ]
-
 Example 2:
   data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
   indices = [[1, 3]]
@@ -1687,5 +1637,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
-
 } // namespace ONNX_NAMESPACE

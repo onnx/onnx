@@ -296,7 +296,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Which axis to concat on. A negative value means counting dimensions from the back. "
             "Accepted range is [-r, r-1] where r = rank(inputs)..",
             AttributeProto::INT)
-        .SetDoc("Concatenate a list of tensors into a single tensor")
+        .SetDoc(
+            "Concatenate a list of tensors into a single tensor. "
+            "All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.")
         .Input(
             0,
             "inputs",
@@ -1021,10 +1023,10 @@ them in an output tensor of rank q + (r - 1).
 
 axis = 0 :
 
-Let \
-k = indices[i_{0}, …, i_{q-1}] \
-then \
-output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+Let
+k = indices[i_{0}, ..., i_{q-1}]
+Then
+output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
 
 ```
   data = [
@@ -1049,10 +1051,10 @@ output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2}
 ```
 axis = 1 :
 
-Let \
-k = indices[i_{0}, …, i_{q-1}] \
-then \
-output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+Let
+k = indices[i_{0}, ..., i_{q-1}]
+Then
+output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
 
 ```
   data = [
@@ -1624,7 +1626,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, false);
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Resize_ver11_doc = R"DOC(
