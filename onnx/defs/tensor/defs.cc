@@ -1018,10 +1018,10 @@ them in an output tensor of rank q + (r - 1).
 
 axis = 0 :
 
-Let \
-k = indices[i_{0}, …, i_{q-1}] \
-then \
-output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+Let
+k = indices[i_{0}, ... i_{q-1}]
+then
+output[i_{0}, ... i_{q-1}, j_{0}, ... j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
 
 ```
   data = [
@@ -1046,10 +1046,10 @@ output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2}
 ```
 axis = 1 :
 
-Let \
-k = indices[i_{0}, …, i_{q-1}] \
-then \
-output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+Let
+k = indices[i_{0}, ..., i_{q-1}]
+then
+output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
 
 ```
   data = [
