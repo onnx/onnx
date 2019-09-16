@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import os
 
+from .onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
