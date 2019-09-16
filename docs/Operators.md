@@ -9997,7 +9997,8 @@ expect(node, inputs=[x, slope], outputs=[y],
   
   3) `edge` - pads with the edge values of array
   
-  Example (`constant` mode):
+  
+  Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
   
     data = 
@@ -10019,6 +10020,50 @@ expect(node, inputs=[x, slope], outputs=[y],
             [0.0, 0.0, 1.0, 1.2],
             [0.0, 0.0, 2.3, 3.4],
             [0.0, 0.0, 4.5, 5.7],
+        ],
+    ]
+  
+  
+  Example 2 (`reflect` mode):
+    data = 
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ] 
+  
+    pads = [0, 2, 0, 0]
+  
+    mode = 'reflect'
+  
+    output = 
+    [
+        [
+            [1.0, 1.2, 1.0, 1.2],
+            [2.3, 3.4, 2.3, 3.4],
+            [4.5, 5.7, 4.5, 5.7],
+        ],
+    ]
+  
+  
+  Example 3 (`edge` mode):
+    data = 
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ] 
+  
+    pads = [0, 2, 0, 0]
+  
+    mode = 'edge'
+  
+    output = 
+    [
+        [
+            [1.0, 1.0, 1.0, 1.2],
+            [2.3, 2.3, 2.3, 3.4],
+            [4.5, 4.5, 4.5, 5.7],
         ],
     ]
   

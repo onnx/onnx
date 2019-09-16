@@ -10,8 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def pad_impl(data, raw_pads, mode, constant_values=0.0):
-    # type: (np.ndarray, np.ndarray, unicode, float) -> np.ndarray
+def pad_impl(data, raw_pads, mode, constant_values=0.0):  # type: ignore
 
     input_rank = data.ndim
     if input_rank * 2 != raw_pads.size:
