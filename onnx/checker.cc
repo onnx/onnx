@@ -53,7 +53,6 @@ void check_value_info(
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-#ifdef ONNX_ML
     case TypeProto::kSequenceType: {
       const auto& type = value_info.type().sequence_type();
       enforce_has_field(type, elem_type);
@@ -63,6 +62,7 @@ void check_value_info(
       enforce_has_field(type, key_type);
       enforce_has_field(type, value_type);
     } break;
+#ifdef ONNX_ML
     case TypeProto::kOpaqueType:
       break;
     case TypeProto::kSparseTensorType: {

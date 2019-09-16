@@ -163,7 +163,8 @@ message AttributeProto {
 message ValueInfoProto {
   // This field MUST be present in this version of the IR.
   optional string name = 1;     // namespace Value
-  // This field MUST be present in this version of the IR.
+  // This field MUST be present in this version of the IR for
+  // inputs and outputs of the top-level graph.
   optional TypeProto type = 2;
   // A human-readable documentation for this value. Markdown is allowed.
   optional string doc_string = 3;
