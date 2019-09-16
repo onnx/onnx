@@ -35,7 +35,16 @@ A Member can become a Contributor by being sponsored by 2 existing Approvers fro
 
 Approvers need to be active Contributors for at least 3 months and be sponsored by a SIG chair with no objections from other SIG chairs.
 
-**Member Companies** are organizations that support ONNX. They generally fund people to work on the project and resources for running the project, their logos are displayed on the website and other materials, and they sometimes help host community events. Member companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations. Being a Member Company does not by itself confer any compliance or certification to the Member Company's products.
+**Member Companies** are organizations that support ONNX in one or more of the following ways:
+* Having employees participate in SIGs, Working Groups, or the Steering Committee
+* Hosting a workshop or meetup for ONNX
+* Providing resources for building or hosting ONNX assets
+* Doing media or PR activities to promote ONNX
+* Shipping a product that supports ONNX  
+
+Member Companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations. Being a Member Company does not by itself confer any compliance or certification to the Member Company's products.
+
+Member Companies can request their logo be displayed on the website and other materials by following these [instructions](logo_request.md).
 
 ## Organizational Structure
 
