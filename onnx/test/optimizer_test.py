@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto
-from typing import Sequence, Text, Tuple, List, Callable
+from typing import Sequence, Text, Any, Tuple, List, Callable
 from onnx import numpy_helper
 
 import numpy as np  # type: ignore
