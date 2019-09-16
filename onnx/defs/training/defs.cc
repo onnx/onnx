@@ -107,7 +107,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0.0f)
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float scalars.")
         .TypeConstraint(
             "T2",
@@ -115,7 +115,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to 64-bit integer scalars.")
         .TypeConstraint(
             "T3",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             // In comments below, we assume that the input list is
@@ -253,7 +253,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1e-6f)
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float scalars.")
         .TypeConstraint(
             "T2",
@@ -261,7 +261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to 64-bit integer scalars.")
         .TypeConstraint(
             "T3",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext &ctx) {
             // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2, H1, H2] and
@@ -410,7 +410,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING)
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float scalars.")
         .TypeConstraint(
             "T2",
@@ -418,7 +418,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint(
             "T3",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and

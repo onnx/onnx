@@ -10374,11 +10374,11 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain output types to 64-bit integer scalars.</dd>
-<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T3</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
 
@@ -10481,11 +10481,11 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain output types to 64-bit integer scalars.</dd>
-<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T3</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
 
@@ -11746,11 +11746,11 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain input types to 64-bit integer scalars.</dd>
-<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T3</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
 
