@@ -5074,10 +5074,10 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   
   axis = 0 :
   
-  Let \
-  k = indices[i_{0}, …, i_{q-1}] \
-  then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  Let
+  k = indices[i_{0}, ..., i_{q-1}]
+  Then
+  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
   
   ```
     data = [
@@ -5102,10 +5102,10 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   ```
   axis = 1 :
   
-  Let \
-  k = indices[i_{0}, …, i_{q-1}] \
-  then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+  Let
+  k = indices[i_{0}, ..., i_{q-1}]
+  Then
+  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
   
   ```
     data = [
@@ -10454,7 +10454,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is uint8 typed 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -18323,26 +18323,6 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1<
 #### Examples
 
 <details>
-<summary>unsqueeze</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Unsqueeze',
-    inputs=['x'],
-    outputs=['y'],
-    axes=[0],
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.expand_dims(x, axis=0)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_unsqueeze')
-```
-
-</details>
-
-
-<details>
 <summary>unsqueeze_negative_axes</summary>
 
 ```python
@@ -18356,6 +18336,73 @@ x = np.random.randn(1, 3, 1, 5).astype(np.float32)
 y = np.expand_dims(x, axis=-2)
 expect(node, inputs=[x], outputs=[y],
        name='test_unsqueeze_negative_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_one_axis</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+for i in range(x.ndim):
+    node = onnx.helper.make_node(
+        'Unsqueeze',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[i],
+    )
+    y = np.expand_dims(x, axis=i)
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_unsqueeze_axis_' + str(i))
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_three_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[2, 4, 5],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_three_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_two_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1, 4],
+)
+y = np.expand_dims(x, axis=1)
+y = np.expand_dims(y, axis=4)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_two_axes')
 ```
 
 </details>

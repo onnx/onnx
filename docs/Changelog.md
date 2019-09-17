@@ -9877,7 +9877,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is uint8 typed 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -10909,10 +10909,10 @@ This version of the operator has been available since version 11 of the default 
   
   axis = 0 :
   
-  Let \
-  k = indices[i_{0}, …, i_{q-1}] \
-  then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[k , j_{0}, …, j_{r-2} ]
+  Let
+  k = indices[i_{0}, ..., i_{q-1}]
+  Then
+  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
   
   ```
     data = [
@@ -10937,10 +10937,10 @@ This version of the operator has been available since version 11 of the default 
   ```
   axis = 1 :
   
-  Let \
-  k = indices[i_{0}, …, i_{q-1}] \
-  then \
-  output[i_{0}, …, i_{q-1}, j_{0}, …, j_{r-2}] = input[j_{0}, k, j_{1}, …, j_{r-2} ]
+  Let
+  k = indices[i_{0}, ..., i_{q-1}]
+  Then
+  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
   
   ```
     data = [
