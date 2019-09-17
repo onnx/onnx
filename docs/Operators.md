@@ -5618,6 +5618,30 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 #### Examples
 
 <details>
+<summary>all_attributes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    alpha=0.25,
+    beta=0.25,
+    transA=1,
+    transB=1
+)
+a = np.random.ranf([4, 3]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.random.ranf([1, 5]).astype(np.float32)
+y = 0.25 * np.dot(a.T, b.T) + 0.25 * c
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_all_attributes')
+```
+
+</details>
+
+
+<details>
 <summary>alpha</summary>
 
 ```python
@@ -5680,26 +5704,6 @@ expect(node, inputs=[a, b, c], outputs=[y],
 
 
 <details>
-<summary>default_no_bias</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Gemm',
-    inputs=['a', 'b', 'c'],
-    outputs=['y']
-)
-a = np.random.ranf([3, 5]).astype(np.float32)
-b = np.random.ranf([5, 4]).astype(np.float32)
-c = np.zeros([1, 4]).astype(np.float32)
-y = np.dot(a, b) + c
-expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_default_no_bias')
-```
-
-</details>
-
-
-<details>
 <summary>default_scalar_bias</summary>
 
 ```python
@@ -5710,10 +5714,30 @@ node = onnx.helper.make_node(
 )
 a = np.random.ranf([2, 3]).astype(np.float32)
 b = np.random.ranf([3, 4]).astype(np.float32)
-c = np.random.ranf([1]).astype(np.float32)
+c = np.random.ranf(1).astype(np.float32)
 y = np.dot(a, b) + c
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_scalar_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_single_elem_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 7]).astype(np.float32)
+b = np.random.ranf([7, 3]).astype(np.float32)
+c = np.random.ranf([1]).astype(np.float32)
+y = np.dot(a, b) + c
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_single_elem_vector_bias')
 ```
 
 </details>
@@ -5734,6 +5758,26 @@ c = np.random.ranf([1, 4]).astype(np.float32)
 y = np.dot(a, b) + c
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_vector_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_zero_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = np.dot(a, b) + c
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_zero_bias')
 ```
 
 </details>
