@@ -74,6 +74,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.name, "str")
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
+        # empty str
+        attr = helper.make_attribute("str", "")
+        self.assertEqual(attr.name, "str")
+        self.assertEqual(helper.get_attribute_value(attr), b"")
+        checker.check_attribute(attr)
 
     def test_attr_repeated_float(self):  # type: () -> None
         attr = helper.make_attribute("floats", [1.0, 2.0])
@@ -301,6 +306,27 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
+    def test_make_sparse_tensor(self):  # type: () -> None
+        values = [1.1, 2.2, 3.3, 4.4, 5.5]
+        values_tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(5, ),
+            vals=values
+        )
+        indices = [1, 3, 5, 7, 9]
+        indices_tensor = helper.make_tensor(
+            name='test_indices',
+            data_type=TensorProto.INT64,
+            dims=(5, ),
+            vals=indices
+        )
+        dense_shape = [10]
+        sparse = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
+        self.assertEqual(sparse.values, values_tensor)
+        self.assertEqual(sparse.indices, indices_tensor)
+        self.assertEqual(sparse.dims, dense_shape)
+
     def test_make_tensor_value_info(self):  # type: () -> None
         vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))
         checker.check_value_info(vi)
@@ -308,6 +334,46 @@ class TestHelperTensorFunctions(unittest.TestCase):
         # scalar value
         vi = helper.make_tensor_value_info('Y', TensorProto.FLOAT, ())
         checker.check_value_info(vi)
+
+
+class TestPrintableGraph(unittest.TestCase):
+
+    def test_initializer_with_matching_graph_input(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
+
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+             helper.make_tensor_value_info("Y_Initializer", TensorProto.FLOAT, [1])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])],  # initializers
+            doc_string=None,
+            value_info=value_info
+        )
+
+        graph_str = helper.printable_graph(graph)
+        self.assertTrue(''') optional inputs with matching initializers (
+  %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
+
+    def test_initializer_no_matching_graph_input(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
+
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])],  # initializers
+            doc_string=None,
+            value_info=value_info
+        )
+
+        graph_str = helper.printable_graph(graph)
+        self.assertTrue(''') initializers (
+  %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
 
 
 if __name__ == '__main__':

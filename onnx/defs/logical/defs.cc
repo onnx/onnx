@@ -15,8 +15,8 @@ inline void unaryLogicalOpInference(InferenceContext& ctx) {
 }
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
-    return [=](OpSchema& schema) {
-        std::string doc = R"DOC(
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
@@ -113,13 +113,24 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
-    7,
+    11,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("equal"))
         .TypeConstraint(
             "T",
-            {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
-            "Constrains input to integral tensors.")
+            {"tensor(bool)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
@@ -166,7 +177,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Z", "Output tensor", "T")
         .TypeConstraint(
             "T",
-            {"tensor(uint8)", "tensor(uint16)", "tensor(uint32)", "tensor(uint64)"},
+            {"tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)"},
             "Constrain input and output types to integer tensors.")
         .Attr(
             "direction",
@@ -184,4 +198,4 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-}  // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE

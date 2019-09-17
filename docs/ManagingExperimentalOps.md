@@ -1,3 +1,5 @@
+## [Deprecated - as of v1.5 experimental ops are no longer supported]
+
 The experimental flag in ONNX operator definitions indicates that a customer of ONNX may not be able to take a long term dependency on that op. Ops in the ONNX namespace (ai.onnx) in the _master_ branch, whether experimental or not, go through the regular review process. 
 
 Experimental ops that are being worked on that do not have consensus yet can be managed in one of 2 ways: 

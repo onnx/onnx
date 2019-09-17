@@ -90,5 +90,6 @@ DEFINE_TO_TENSOR_LIST(std::string, TensorProto_DataType_STRING, string)
 DEFINE_PARSE_DATA(int32_t, int32_data)
 DEFINE_PARSE_DATA(int64_t, int64_data)
 DEFINE_PARSE_DATA(float, float_data)
+DEFINE_PARSE_DATA(double, double_data)
 
 } // namespace ONNX_NAMESPACE
