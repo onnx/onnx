@@ -615,20 +615,6 @@ class TestShapeInference(unittest.TestCase):
                          make_tensor('axes', TensorProto.INT32, (2,), (0, 1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (2, 2))])
 
-    def test_pad(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (1, None, 2))],
-            [make_node('Pad', 'x', 'y', pads=[1, 3, 1, 1, 0, 1])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, None, 4))])  # type: ignore
-
-    def test_constant_pad_2d(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (2, 3, 4, 4))],
-            [make_node('Pad', 'x', 'y', pads=[0, 0, 3, 1, 0, 0, 4, 2], mode="constant", value=2.0)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 11, 7))])
-
     def test_conv(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
@@ -2566,6 +2552,29 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
              make_tensor_value_info('out', TensorProto.FLOAT, (2, 3, 'x', None))])  # type: ignore
+
+    def test_pad_opset10(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, None, 2))],
+            [make_node('Pad', 'x', 'y', pads=[1, 3, 1, 1, 0, 1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, None, 4))], opset_imports=[helper.make_opsetid("", 10)])  # type: ignore
+
+    def test_constant_pad_2d_opset10(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 4))],
+            [make_node('Pad', 'x', 'y', pads=[0, 0, 3, 1, 0, 0, 4, 2], mode="constant", value=2.0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 11, 7))], opset_imports=[helper.make_opsetid("", 10)])
+
+    def test_pad(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, None, 2)),
+             ('pads', TensorProto.INT64, (6,))],
+            [make_node('Pad', ['x', 'pads'], 'y')],
+            [],
+            initializer=[make_tensor('pads', TensorProto.INT64, (6,), (1, 3, 1, 1, 0, 1,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, None, 4))])  # type: ignore
 
 
 if __name__ == '__main__':
