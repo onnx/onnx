@@ -9986,45 +9986,110 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given `data` tensor, pads, mode, and value.
-  Example:
+  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
+  a padded tensor (`output`) is generated.
+  
+  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  
+  1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
+  
+  2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+  
+  3) `edge` - pads with the edge values of array
+  
+  
+  Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
-    data = [
+  
+    data = 
+    [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
-    ]
+    ] 
+  
     pads = [0, 2, 0, 0]
-    output = [
+  
+    mode = 'constant'
+  
+    constant_value = 0.0
+  
+    output = 
+    [
         [
             [0.0, 0.0, 1.0, 1.2],
             [0.0, 0.0, 2.3, 3.4],
             [0.0, 0.0, 4.5, 5.7],
         ],
     ]
+  
+  
+  Example 2 (`reflect` mode):
+    data = 
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ] 
+  
+    pads = [0, 2, 0, 0]
+  
+    mode = 'reflect'
+  
+    output = 
+    [
+        [
+            [1.0, 1.2, 1.0, 1.2],
+            [2.3, 3.4, 2.3, 3.4],
+            [4.5, 5.7, 4.5, 5.7],
+        ],
+    ]
+  
+  
+  Example 3 (`edge` mode):
+    data = 
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ] 
+  
+    pads = [0, 2, 0, 0]
+  
+    mode = 'edge'
+  
+    output = 
+    [
+        [
+            [1.0, 1.0, 1.0, 1.2],
+            [2.3, 2.3, 2.3, 3.4],
+            [4.5, 4.5, 4.5, 5.7],
+        ],
+    ]
+  
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href="Changelog.md#Pad-2">Pad-2</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>mode</tt> : string (default is constant)</dt>
-<dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>One float, indicates the value to be filled.</dd>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
+<dt><tt>pads</tt> : tensor(int64)</dt>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
+<dt><tt>constant_value</tt> (optional) : T</dt>
+<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).</dd>
 </dl>
 
 #### Outputs
@@ -10037,8 +10102,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input and output to only numeric types.</dd>
 </dl>
 
 
@@ -10050,21 +10115,21 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 ```python
 node = onnx.helper.make_node(
     'Pad',
-    inputs=['x'],
+    inputs=['x', 'pads', 'value'],
     outputs=['y'],
-    mode='constant',
-    value=1.2,
-    pads=[0, 0, 1, 3, 0, 0, 2, 4],
+    mode='constant'
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-y = np.pad(
+pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+y = pad_impl(
     x,
-    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
-    mode='constant',
-    constant_values=1.2,
+    pads,
+    'constant',
+    1.2
 )
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
 ```
 
@@ -10078,19 +10143,19 @@ expect(node, inputs=[x], outputs=[y],
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
         'Pad',
-        inputs=['x'],
+        inputs=['x', 'pads'],
         outputs=['y'],
-        mode=mode,
-        pads=[0, 0, 1, 1, 0, 0, 1, 1]
+        mode=mode
     )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
+    x = np.random.randn(1, 3, 4, 5).astype(np.int32)
+    pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+    y = pad_impl(
         x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
+        pads,
+        mode
     )
 
-    expect(node, inputs=[x], outputs=[y],
+    expect(node, inputs=[x, pads], outputs=[y],
            name='test_{}_pad'.format(mode))
 ```
 
