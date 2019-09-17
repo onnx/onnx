@@ -4,13 +4,13 @@
 #pragma once
 
 // Before:
-//   P = Pad(X) - opset 10 and below (or) Pad(X, Pads, [Value]) - opset 11 and
+//   P = Pad(X) - opset 10 and below (or) Pad(X, Pads, [Constant_value]) - opset 11 and
 //   above Z = Conv(P, Y)
 // After:
 //   Z = Conv(X, Y) with "pads" attribute set
 //
 // the pass handles the case when Pad is zero-padding the input
-// (i.e. mode=constant and Value=0)
+// (i.e. mode=constant and Constant_value=0)
 
 #include <numeric>
 
@@ -82,24 +82,24 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       return false;
     }
 
-    // Process 'value'
+    // Process 'Constant_value'
     // opset 10 and below
     if (pad->hasAttribute(kvalue) && static_cast<double>(pad->f(kvalue)) != 0.0) {
       return false;
     } else if (pad->inputs().size() == 3) {
-      // opset 11 and above - check if the 'pad' node has the optional 'value'
+      // opset 11 and above - check if the 'pad' node has the optional 'Constant_value'
       // input check if it has data initialized
       const auto& value_name = pad->inputs()[2]->uniqueName();
       const auto value_initializer = graph.getInitializer(value_name);
 
-      // 'pad' node has the 'value' input which has not been initialized -
+      // 'pad' node has the 'Constant_value' input which has not been initialized -
       // can't proceed with fusing
       if (value_initializer == graph.initializers().end()) {
         return false;      
       }
 
-      // parse 'value' data from the initialized input and stop optimizer if the
-      // value is non-zero
+      // parse 'Constant_value' data from the initialized input and stop optimizer if the
+      // Constant_value is non-zero
       switch (value_initializer->elem_type()) {
         case TensorProto::FLOAT:
           if (ParseData<float>(&*value_initializer)[0] != 0)
@@ -128,8 +128,8 @@ struct FusePadIntoConv final : public PredicateBasedPass {
         // TODO: Support more uncommon but valid types for Pad op (int8, uint8, int16, uint16, etc.)       
 
         default:
-          return false; // Either type of Value is invalid or not yet supported by data parsing logic.
-                        // Since we canot validate the data present in 'Value', we exit the optimizer   
+          return false; // Either type of Constant_value is invalid or not yet supported by data parsing logic.
+                        // Since we canot validate the data present in 'Constant_value', we exit the optimizer   
       }
     }
 
