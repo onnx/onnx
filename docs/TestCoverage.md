@@ -5580,21 +5580,21 @@ There are 2 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Pad',
-    inputs=['x'],
+    inputs=['x', 'pads', 'value'],
     outputs=['y'],
-    mode='constant',
-    value=1.2,
-    pads=[0, 0, 1, 3, 0, 0, 2, 4],
+    mode='constant'
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-y = np.pad(
+pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+y = pad_impl(
     x,
-    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
-    mode='constant',
-    constant_values=1.2,
+    pads,
+    'constant',
+    1.2
 )
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
 ```
 
@@ -5606,19 +5606,19 @@ expect(node, inputs=[x], outputs=[y],
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
         'Pad',
-        inputs=['x'],
+        inputs=['x', 'pads'],
         outputs=['y'],
-        mode=mode,
-        pads=[0, 0, 1, 1, 0, 0, 1, 1]
+        mode=mode
     )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
+    x = np.random.randn(1, 3, 4, 5).astype(np.int32)
+    pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+    y = pad_impl(
         x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
+        pads,
+        mode
     )
 
-    expect(node, inputs=[x], outputs=[y],
+    expect(node, inputs=[x, pads], outputs=[y],
            name='test_{}_pad'.format(mode))
 ```
 
