@@ -3057,7 +3057,7 @@ node = onnx.helper.make_node(
 a = np.random.ranf([4, 3]).astype(np.float32)
 b = np.random.ranf([5, 4]).astype(np.float32)
 c = np.random.ranf([1, 5]).astype(np.float32)
-y = gemm_reference_implementation(a, b, c, transA=1., transB=1., alpha=0.25, beta=0.35)
+y = gemm_reference_implementation(a, b, c, transA=1, transB=1, alpha=0.25, beta=0.35)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_all_attributes')
 ```
@@ -3199,12 +3199,12 @@ node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    transA=1.
+    transA=1
 )
 a = np.random.ranf([6, 3]).astype(np.float32)
 b = np.random.ranf([6, 4]).astype(np.float32)
 c = np.zeros([1, 4]).astype(np.float32)
-y = gemm_reference_implementation(a, b, c, transA=1.)
+y = gemm_reference_implementation(a, b, c, transA=1)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_transposeA')
 ```
@@ -3218,12 +3218,12 @@ node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    transB=1.
+    transB=1
 )
 a = np.random.ranf([3, 6]).astype(np.float32)
 b = np.random.ranf([4, 6]).astype(np.float32)
 c = np.zeros([1, 4]).astype(np.float32)
-y = gemm_reference_implementation(a, b, c, transB=1.)
+y = gemm_reference_implementation(a, b, c, transB=1)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_transposeB')
 ```

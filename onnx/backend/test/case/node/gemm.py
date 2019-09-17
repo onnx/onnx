@@ -10,9 +10,10 @@ from ..base import Base
 from . import expect
 
 
-def gemm_reference_implementation(A, B, C, alpha=1., beta=1., transA=0., transB=0.):
-    A = A if transA == 0. else A.T
-    B = B if transB == 0. else B.T
+def gemm_reference_implementation(A, B, C, alpha=1., beta=1., transA=0,
+                                  transB=0):  # type: (np.ndarray, np.ndarray, np.ndarray, float, float, int, int) -> np.ndarray
+    A = A if transA == 0 else A.T
+    B = B if transB == 0 else B.T
 
     Y = alpha * np.dot(A, B) + beta * C
 
@@ -97,12 +98,12 @@ class Gemm(Base):
             'Gemm',
             inputs=['a', 'b', 'c'],
             outputs=['y'],
-            transA=1.
+            transA=1
         )
         a = np.random.ranf([6, 3]).astype(np.float32)
         b = np.random.ranf([6, 4]).astype(np.float32)
         c = np.zeros([1, 4]).astype(np.float32)
-        y = gemm_reference_implementation(a, b, c, transA=1.)
+        y = gemm_reference_implementation(a, b, c, transA=1)
         expect(node, inputs=[a, b, c], outputs=[y],
                name='test_gemm_transposeA')
 
@@ -112,12 +113,12 @@ class Gemm(Base):
             'Gemm',
             inputs=['a', 'b', 'c'],
             outputs=['y'],
-            transB=1.
+            transB=1
         )
         a = np.random.ranf([3, 6]).astype(np.float32)
         b = np.random.ranf([4, 6]).astype(np.float32)
         c = np.zeros([1, 4]).astype(np.float32)
-        y = gemm_reference_implementation(a, b, c, transB=1.)
+        y = gemm_reference_implementation(a, b, c, transB=1)
         expect(node, inputs=[a, b, c], outputs=[y],
                name='test_gemm_transposeB')
 
@@ -165,6 +166,6 @@ class Gemm(Base):
         a = np.random.ranf([4, 3]).astype(np.float32)
         b = np.random.ranf([5, 4]).astype(np.float32)
         c = np.random.ranf([1, 5]).astype(np.float32)
-        y = gemm_reference_implementation(a, b, c, transA=1., transB=1., alpha=0.25, beta=0.35)
+        y = gemm_reference_implementation(a, b, c, transA=1, transB=1, alpha=0.25, beta=0.35)
         expect(node, inputs=[a, b, c], outputs=[y],
                name='test_gemm_all_attributes')
