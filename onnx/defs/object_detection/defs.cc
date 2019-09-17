@@ -12,7 +12,6 @@ Region of Interest (RoI) align operation described in the
 RoiAlign consumes an input tensor X and region of interests (rois)
 to apply pooling across each RoI; it produces a 4-D tensor of shape
 (num_rois, C, output_height, output_width).
-
 RoiAlign is proposed to avoid the misalignment by removing
 quantizations while converting from original image into feature
 map and from feature map into RoI feature; in each ROI bin,
@@ -97,86 +96,33 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int64)"},
             "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-          // Shape inference
-          auto* output_shape = getOutputShape(ctx, 0);
-          output_shape->clear_dim();
+          size_t input_param = 0, rois_param = 1, batch_index_param = 2;
 
-          // Needs only 2 input shapes to do shape inferencing
-          // The third shape is not explicitly needed to do shape
-          // inference. In this implementation the third shape is
-          // validated if present
-          if (hasNInputShapes(ctx, 2)) {
-            const auto& input_shape = getInputShape(ctx, 0);
-            const auto& rois_shape = getInputShape(ctx, 1);
+          checkInputRank(ctx, input_param, 4);
+          checkInputRank(ctx, rois_param, 2);
+          checkInputRank(ctx, batch_index_param, 1);
 
-            // Validate 'X' shape/rank
-            if (input_shape.dim_size() != 4) {
-              fail_shape_inference(
-                  "first input tensor 'X' has wrong rank - needs to be of rank 4");
-            }
+          // Output dimensions, initialized to an unknown-dimension-value
+          Dim num_rois, C, ht, width;
 
-            // Validate 'rois' shape/rank
-            if (rois_shape.dim_size() != 2) {
-              fail_shape_inference(
-                  "'rois' input tensor has wrong rank - needs to be of rank 2");
-            }
+          // Get value of C from dim 1 of input_param, if available
+          unifyInputDim(ctx, input_param, 1, C);
 
-            if (rois_shape.dim(1).has_dim_value() &&
-                rois_shape.dim(1).dim_value() != 4) {
-              fail_shape_inference(
-                  "'rois' input tensor has incorrect value in the second dimension - needs to be 4 but instead got " +
-                  std::to_string(rois_shape.dim(1).dim_value()));
-            }
+          // Get value of num_rois from dim 0 of rois_param, if available
+          unifyInputDim(ctx, rois_param, 0, num_rois);
+          // ... or from dim 0 of batch_index_param, if available
+          unifyInputDim(ctx, batch_index_param, 0, num_rois);
 
-            // Validate 'batch_indices' shape/rank if present
-            // Also validate 'batch_indices' shape relative to 'rois_shape'
-            if (hasInputShape(ctx, 2)) {
-              const auto& batch_indices_shape = getInputShape(ctx, 2);
-              if (batch_indices_shape.dim_size() != 1) {
-                fail_shape_inference(
-                    "'batch_indices' shape input tensor has wrong dimension");
-              }
+          // Get height from attribute, using default-value of 1
+          unifyDim(ht, getAttribute(ctx, "output_height", 1));
 
-              if (rois_shape.dim(0).has_dim_value() &&
-                  batch_indices_shape.dim(0).has_dim_value() &&
-                  rois_shape.dim(0).dim_value() !=
-                      batch_indices_shape.dim(0).dim_value()) {
-                fail_shape_inference(
-                    "'rois' input tensor's shape value in the first dimension should match "
-                    " the 'batch_indices' input tensor's shape value in the first dimension");
-              }
-            }
+          // Get width from attribute, using default-value of 1
+          unifyDim(width, getAttribute(ctx, "output_width", 1));
 
-            auto* first_dim = output_shape->add_dim();
-            if (rois_shape.dim(0).has_dim_param()) {
-              first_dim->set_dim_param(rois_shape.dim(0).dim_param());
-            } else if (rois_shape.dim(0).has_dim_value()) {
-              first_dim->set_dim_value(
-                  static_cast<int64_t>(rois_shape.dim(0).dim_value()));
-            }
-
-            auto* second_dim = output_shape->add_dim();
-            if (input_shape.dim(1).has_dim_param()) {
-              second_dim->set_dim_param(input_shape.dim(1).dim_param());
-            } else if (input_shape.dim(1).has_dim_value()) {
-              second_dim->set_dim_value(
-                  static_cast<int64_t>(input_shape.dim(1).dim_value()));
-            }
-
-            output_shape->add_dim()->set_dim_value(
-                getAttribute(ctx, "output_height", 1));
-            output_shape->add_dim()->set_dim_value(
-                getAttribute(ctx, "output_width", 1));
-          } else {
-            // Rank inference
-            // Output is always 4-D
-            for (int i = 0; i < 4; ++i) {
-              output_shape->add_dim();
-            }
-          }
+          // set output shape:
+          updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
 static const char* NonMaxSuppression_doc = R"DOC(
@@ -187,7 +133,6 @@ orthogonal transformations and translations of the coordinate system; thus trans
 result in the same boxes being selected by the algorithm.
 The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
 The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
-Note: The boxes doesn't has class dimension which means it alwasy has scores calculated for different classes on same box.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -207,19 +152,19 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "max_output_boxes_per_class",
-            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar.",
+            "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.",
             "tensor(int64)",
             OpSchema::Optional)
         .Input(
             3,
             "iou_threshold",
-            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1].",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(
             4,
             "score_threshold",
-            "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar",
+            "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.",
             "tensor(float)",
             OpSchema::Optional)
         .Output(
@@ -229,10 +174,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int64)")
         .Attr(
             "center_point_box",
-            "Integer indicate the format of the box data. The default is 0."
-            "0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners"
-            "and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models."
-            "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytoch models.",
+            "Integer indicate the format of the box data. The default is 0. "
+            "0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners "
+            "and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models. "
+            "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .SetDoc(NonMaxSuppression_doc)
@@ -254,6 +199,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Output is 2D always
 
           // The value of the first dim is determined by input data
+          // hence its value cannot be determined statically
           selected_indices_shape->add_dim();
 
           // The value of the second dim is 3
