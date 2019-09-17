@@ -12,6 +12,7 @@ Region of Interest (RoI) align operation described in the
 RoiAlign consumes an input tensor X and region of interests (rois)
 to apply pooling across each RoI; it produces a 4-D tensor of shape
 (num_rois, C, output_height, output_width).
+
 RoiAlign is proposed to avoid the misalignment by removing
 quantizations while converting from original image into feature
 map and from feature map into RoI feature; in each ROI bin,
