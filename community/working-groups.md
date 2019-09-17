@@ -12,16 +12,17 @@ Working Groups have most of their discussions on Gitter. If you are interested i
 
 | Working Group      | Objectives    |
 | ------------------ | ------------- |
-| [Quantization](https://gitter.im/onnx/quantization) | Enhance ONNX to support quantized data types and operators on a variety of runtimes and hardware devices |
 | [Training](https://gitter.im/onnx/training) | Expand ONNX to support training as well as inference |
 | [Edge/Mobile](https://gitter.im/onnx/edge) | Enable deployment of ONNX models to edge platforms by identifying the ONNX operators that must be supported by mobile and IoT runtimes, defining tool chain requirements, and contributing to ONNX compatibility tests |
 | [Data Pipelines](https://gitter.im/onnx/pipelines) | Define new operators for processing the data that goes in and comes out |
+| [Foundation](https://gitter.im/onnx/foundation) | Identify and evaluate non-profit foundation options for the ONNX consortium.  Execute on best option. |
 
 ## Completed working groups
 
 | Working Group      | Objectives    | Status |
 | ------------------ | ------------- | ------ |
 | [Control Flow and Loops](https://gitter.im/onnx/ControlFlowWG) | Enable dynamic control structures to enable advanced models for NLP, speech, and video/image processing | Completed - If, Loop, and Scan operators were added in ONNX 1.3 release. |
+| [Quantization](https://gitter.im/onnx/quantization) | Enhance ONNX to support quantized data types and operators on a variety of runtimes and hardware devices | Completed - added in ONNX 1.5 release. |
 
 ## Inactive working groups
 

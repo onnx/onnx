@@ -38,7 +38,7 @@ print('TensorProto:\n{}'.format(tensor))
 
 # Convert the TensorProto to a Numpy array
 new_array = numpy_helper.to_array(tensor)
-print('After round trip, Numpy array:\n{}\n'.format(numpy_array))
+print('After round trip, Numpy array:\n{}\n'.format(new_array))
 
 # Save the TensorProto
 with open('tensor.pb', 'wb') as f:
@@ -213,4 +213,20 @@ import onnx.utils
 
 model = onnx.load('path/to/the/model.onnx')
 polished_model = onnx.utils.polish_model(model)
+```
+
+## Tools
+### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
+Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
+to the provided values in the parameter. You could provide both static and dynamic dimension size,
+by using dim_param. For more information on static and dynamic dimension size, checkout [Tensor Shapes](IR.md#tensor-shapes).
+
+The function runs model checker after the input/output sizes are updated.
+```python
+import onnx
+from onnx.tools import update_model_dims
+
+model = onnx.load('path/to/the/model.onnx')
+# Here both 'seq', 'batch' and -1 are dynamic using dim_param.
+variable_length_model = update_model_dims.update_inputs_outputs_dims(model, {'input_name': ['seq', 'batch', 3, -1]}, {'output_name': ['seq', 'batch', 1, -1]})
 ```

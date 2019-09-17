@@ -21,7 +21,7 @@ flake8
 if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
   pip uninstall -y onnx
-  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
+  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install --no-use-pep517 -e .[mypy]
 
   time python setup.py --quiet typecheck
 
