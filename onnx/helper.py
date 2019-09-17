@@ -275,25 +275,25 @@ def make_attribute(
 
 
 def get_attribute_value(attr):  # type: (AttributeProto) -> Any
-    if attr.type is AttributeProto.FLOAT:
+    if attr.type == AttributeProto.FLOAT:
         return attr.f
-    elif attr.type is AttributeProto.INT:
+    elif attr.type == AttributeProto.INT:
         return attr.i
-    elif attr.type is AttributeProto.STRING:
+    elif attr.type == AttributeProto.STRING:
         return attr.s
-    elif attr.type is AttributeProto.TENSOR:
+    elif attr.type == AttributeProto.TENSOR:
         return attr.t
-    elif attr.type is AttributeProto.GRAPH:
+    elif attr.type == AttributeProto.GRAPH:
         return attr.g
-    elif attr.type is AttributeProto.FLOATS:
+    elif attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
-    elif attr.type is AttributeProto.INTS:
+    elif attr.type == AttributeProto.INTS:
         return list(attr.ints)
-    elif attr.type is AttributeProto.STRINGS:
+    elif attr.type == AttributeProto.STRINGS:
         return list(attr.strings)
-    elif attr.type is AttributeProto.TENSORS:
+    elif attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
-    elif attr.type is AttributeProto.GRAPHS:
+    elif attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
     else:
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))
