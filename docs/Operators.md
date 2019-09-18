@@ -5221,7 +5221,7 @@ node = onnx.helper.make_node(
     'Gather',
     inputs=['data', 'indices'],
     outputs=['y'],
-    axis=1,
+    axis=0,
 )
 data = np.arange(10).astype(np.float32)
 indices = np.array([0, -9, -10])
@@ -5718,7 +5718,7 @@ node = onnx.helper.make_node(
 )
 a = np.random.ranf([2, 3]).astype(np.float32)
 b = np.random.ranf([3, 4]).astype(np.float32)
-c = np.array(3.14)
+c = np.array(3.14).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_scalar_bias')
@@ -6198,11 +6198,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -6211,7 +6209,8 @@ expect(node, inputs=[x], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the hardmax values of the corresponding input.
 
 #### Version
 
@@ -7283,11 +7282,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -7296,7 +7293,8 @@ expect(node, inputs=[x], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the logsoftmax values of the corresponding input.
 
 #### Version
 
@@ -16407,11 +16405,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -16420,7 +16416,8 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the softmax values of the corresponding input.
 
 #### Version
 

@@ -82,7 +82,28 @@ and contains the {name} values of the corresponding input.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      
+      // Shape inference starts
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+
+      // Validate the value of 'axis'
+      const TensorShapeProto& input_shape =
+        ctx.getInputType(0)->tensor_type().shape();
+      int r = input_shape.dim_size();
+      int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+      if (axis < -r || axis >= r) {
+          fail_shape_inference(
+         "'axis' must be in [" -r, " , " , (r-1) , "]. Its actual value is: ", axis);
+      }
+
+      // Shape inference
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+    });
   };
 }
 

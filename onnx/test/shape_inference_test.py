@@ -1169,6 +1169,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
 
+    def test_logsoftmax_3d_negative_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6))],
+            [make_node('LogSoftmax', ['x'], 'z', axis=-1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
+
     def test_maxpool(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],

@@ -2898,7 +2898,7 @@ node = onnx.helper.make_node(
     'Gather',
     inputs=['data', 'indices'],
     outputs=['y'],
-    axis=1,
+    axis=0,
 )
 data = np.arange(10).astype(np.float32)
 indices = np.array([0, -9, -10])
@@ -3130,7 +3130,7 @@ node = onnx.helper.make_node(
 )
 a = np.random.ranf([2, 3]).astype(np.float32)
 b = np.random.ranf([3, 4]).astype(np.float32)
-c = np.array(3.14)
+c = np.array(3.14).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_scalar_bias')
