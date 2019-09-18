@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import platform
 
 import numpy as np  # type: ignore
 from onnx import TensorProto
@@ -11,7 +12,7 @@ from onnx import mapping
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
-if sys.byteorder != 'little':
+if platform.system() != 'AIX' and sys.byteorder != 'little':
     raise RuntimeError(
         'Numpy helper for tensor/ndarray is not available on big endian '
         'systems yet.')
