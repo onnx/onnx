@@ -742,11 +742,12 @@ computation if attribute transA is non-zero, same for B and transB.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    9,
+    11,
     OpSchema()
         .SetDoc(
             Gemm_ver9_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B") +
+            GenerateOptionalArgumentsDoc())
         .Input(
             0,
             "A",
@@ -764,9 +765,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "C",
-            "Input tensor C. "
+            "Optional input tensor C. "
+            "If not specified - assumed to be 0."
             "The shape of C should be unidirectional broadcastable to (M, N).",
-            "T")
+            "T",
+            OpSchema::Optional)
         .Output(0, "Y", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
             "T",

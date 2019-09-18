@@ -3040,7 +3040,7 @@ expect(node, inputs=[data, indices], outputs=[output],
 
 
 ### Gemm
-There are 10 test cases, listed as following:
+There are 11 test cases, listed as following:
 <details>
 <summary>all_attributes</summary>
 
@@ -3116,6 +3116,23 @@ c = np.random.ranf([3, 4]).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_matrix_bias')
+```
+
+</details>
+<details>
+<summary>default_no_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 10]).astype(np.float32)
+b = np.random.ranf([10, 3]).astype(np.float32)
+y = gemm_reference_implementation(a, b)
+expect(node, inputs=[a, b], outputs=[y],
+       name='test_gemm_default_no_bias')
 ```
 
 </details>
