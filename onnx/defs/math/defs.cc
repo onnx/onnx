@@ -766,7 +766,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "C",
             "Optional input tensor C. "
-            "If not specified - assumed to be 0."
+            "If not specified - assumed to be 0. "
             "The shape of C should be unidirectional broadcastable to (M, N).",
             "T",
             OpSchema::Optional)

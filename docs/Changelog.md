@@ -11413,7 +11413,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
 <dt><tt>C</tt> (optional) : T</dt>
-<dd>Optional input tensor C. If not specified - assumed to be 0.The shape of C should be unidirectional broadcastable to (M, N).</dd>
+<dd>Optional input tensor C. If not specified - assumed to be 0. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
