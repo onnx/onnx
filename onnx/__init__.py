@@ -67,7 +67,7 @@ def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) 
         result = proto.SerializeToString()
         return result
     else:
-        raise ValueError('No SerializeToString method is detected. '
+        raise TypeError('No SerializeToString method is detected. '
                          'neither proto is a str.\ntype is {}'.format(type(proto)))
 
 
