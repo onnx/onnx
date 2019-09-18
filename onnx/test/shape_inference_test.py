@@ -1016,6 +1016,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
 
+    def test_gemm_no_bias(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (13, 7)),
+             ('y', TensorProto.FLOAT, (7, 17))],
+            [make_node('Gemm', ['x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (13, 17))])
+
     def test_reduce_op_shape_2_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
