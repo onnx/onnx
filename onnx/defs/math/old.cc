@@ -1114,10 +1114,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2)
+            if (first_input_shape.dim_size() != 2) {
               fail_shape_inference("First input does not have rank 2");
-            if (second_input_shape.dim_size() != 2)
+            }
+            if (second_input_shape.dim_size() != 2) {
               fail_shape_inference("Second input does not have rank 2");
+            }
             updateOutputShape(
                 ctx,
                 0,
@@ -1208,10 +1210,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2)
+            if (first_input_shape.dim_size() != 2) {
               fail_shape_inference("First input does not have rank 2");
-            if (second_input_shape.dim_size() != 2)
+            }
+            if (second_input_shape.dim_size() != 2) {
               fail_shape_inference("Second input does not have rank 2");
+            }
             updateOutputShape(
                 ctx,
                 0,
