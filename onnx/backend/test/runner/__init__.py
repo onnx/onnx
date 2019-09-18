@@ -32,7 +32,8 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
 
 
 def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callable[..., Any]]
-    assert times >= 1
+    test = unittest.TestCase()  
+    test.assertGreaterEqual(times, 1)
 
     def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
         @functools.wraps(func)
