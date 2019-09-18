@@ -472,14 +472,14 @@ C-style code:
 
     graph body-net (
       %i[INT32, scalar]
-      %keepgoing[BOOL, scalar]
-      %b[INT32, scalar]
+      %keepgoing_in[BOOL, scalar]
+      %b_in[INT32, scalar]
     ) {
-      %my_local = Add(%a, %b)
-      %b_out = Sub(%a, %b)
+      %my_local = Add(%a, %b_in)
+      %b_out = Sub(%a, %b_in)
       %keepgoing_out = Greater(%my_local, %b_out)
-      %user_defined_vals = Add(%b, %b)
-      return %keepgoing_out, %b_out, %user_defined_vals
+      %user_defined_val = Add(%b_in, %b_in)
+      return %keepgoing_out, %b_out, %user_defined_val
     }
 
 *Sample equivalent C code*
@@ -494,23 +494,35 @@ C-style code:
       const int max_trip_count = 10; // Analogous to input M
       int user_defined_vals[]; // Imagine this is resizable
       /* End implicitly-defined code */
-      for (int i=0; i < max_trip_count && keepgoing; ++i) {
+      /* initialize loop-carried variables and scan-output variables */
+      bool keepgoing_out = keepgoing
+      int b_out = b
+
+      for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+        /* Implicitly-defined code: bind actual parameter values
+           to formal parameter variables of loop-body */
+        keepgoing_in = keepgoing_out; 
+        b_in = b_out;
+
         /* User-defined code (loop body) */
-        int my_local = a + b; // Reading values in the enclosing scope is fine
-        b = a - b; // writes fine if we specify b as a loop-carried dependency
-        keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-        user_defined_vals[i] = b + b;
+        int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+        b_out = a - b_in;
+        keepgoing_out = my_local > b_out; 
+        user_defined_val = b_in + b_in; // b_in and b_out are different variables
         /* End user-defined code */
+
+        /* Implicitly defined-code */
+        user_defined_vals[i] = user_defined_val // accumulate scan-output values
       }
-      // my_local = 123; // Can't do this. my_local was defined in the the body
+      // my_local = 123; // Can't do this. my_local was defined in the body
 
       // These below values are live-out from the loop and therefore accessible
-      b_out; user_defined_vals; keepgoing_out;
+      // b_out; user_defined_vals; keepgoing_out;
     }
 
 There are several things of note in this code snippet:
 
-1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
    be referenced in the inputs of the loop.
 2) Any variables which you wish to make available in the enclosing scope (i.e.
    the variables b and keepgoing) must be declared as either loop-carried
