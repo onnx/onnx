@@ -74,6 +74,8 @@ def set_external_data(tensor,  # type: TensorProto
                       checksum=None,  # type: Optional[Text]
                       basepath=None  # type: Optional[Text]
                       ):  # type: (...) -> None
+    if not tensor.HasField("raw_data"):
+        raise ValueError("raw_data field doesn't exist.")
     del tensor.external_data[:]
     tensor.data_location = TensorProto.EXTERNAL
     for (k, v) in {
@@ -92,7 +94,7 @@ def set_external_data(tensor,  # type: TensorProto
 def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None):
     # type: (ModelProto, bool, Optional[Text]) -> None
     """
-    call to set all tensors as external data. save_model saves all the tensors data as external data after calling this function.
+    Call to set all tensors as external data. save_model saves all the tensors data as external data after calling this function.
     @params
     model: ModelProto to be converted.
     all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
@@ -105,15 +107,17 @@ def convert_model_to_external_data(model, all_tensors_to_one_file=True, location
         if location:
             file_name = location
         for tensor in _get_all_tensors(model):
-            set_external_data(tensor, file_name)
+            if tensor.HasField("raw_data"):
+                set_external_data(tensor, file_name)
     else:
         for tensor in _get_all_tensors(model):
-            set_external_data(tensor, tensor.name)
+            if tensor.HasField("raw_data"):
+                set_external_data(tensor, tensor.name)
 
 
 def convert_model_from_external_data(model):  # type: (ModelProto) -> None
     """
-    call to set all tensors data as embedded data. save_model saves all the tensors data as embedded data after calling this function.
+    Call to set all tensors data as embedded data. save_model saves all the tensors data as embedded data after calling this function.
     @params
     model: ModelProto to be converted.
     """
