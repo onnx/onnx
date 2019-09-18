@@ -727,7 +727,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Gemm_ver9_doc = R"DOC(General Matrix multiplication:
+static const char* Gemm_ver11_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
 A' = transpose(A) if transA else A
@@ -742,11 +742,13 @@ computation if attribute transA is non-zero, same for B and transB.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    9,
+    11,
     OpSchema()
         .SetDoc(
-            Gemm_ver9_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+            Gemm_ver11_doc +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B") +
+            "\n" +
+            GenerateOptionalArgumentsDoc())
         .Input(
             0,
             "A",
@@ -764,9 +766,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "C",
-            "Input tensor C. "
+            "Optional input tensor C. "
+            "If not specified, the computation is done as if C is a scalar 0. "
             "The shape of C should be unidirectional broadcastable to (M, N).",
-            "T")
+            "T",
+            OpSchema::Optional)
         .Output(0, "Y", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
             "T",
@@ -809,10 +813,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2)
+            if (first_input_shape.dim_size() != 2) {
               fail_shape_inference("First input does not have rank 2");
-            if (second_input_shape.dim_size() != 2)
+            }
+            if (second_input_shape.dim_size() != 2) {
               fail_shape_inference("Second input does not have rank 2");
+            }
             updateOutputShape(
                 ctx,
                 0,
