@@ -10,17 +10,29 @@ from ..base import Base
 from . import expect
 
 
+def reshape_reference_implementation(data, shape):  # type: (np.ndarray, np.ndarray) -> np.ndarray
+    # replace zeros with corresponding dim size
+    # we need to do this because np.reshape doesn't support 0
+    new_shape = np.copy(shape)
+    zeros_index = np.where(shape == 0)
+    new_shape[zeros_index] = np.array(data.shape)[zeros_index]
+    reshaped = np.reshape(data, new_shape)
+    return reshaped
+
+
 class Reshape(Base):
 
     @staticmethod
     def export():  # type: () -> None
         original_shape = [2, 3, 4]
         test_cases = {
-            'reordered_dims': np.array([2, 4, 3], dtype=np.int64),
+            'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
+            'reordered_last_dims': np.array([2, 4, 3], dtype=np.int64),
             'reduced_dims': np.array([2, 12], dtype=np.int64),
             'extended_dims': np.array([2, 3, 2, 2], dtype=np.int64),
             'one_dim': np.array([24], dtype=np.int64),
             'negative_dim': np.array([2, -1, 2], dtype=np.int64),
+            'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
             'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
             'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
         }
@@ -33,12 +45,7 @@ class Reshape(Base):
                 outputs=['reshaped'],
             )
 
-            # replace zeros with corresponding dim size
-            # we need to do this because np.reshape doesn't support 0
-            new_shape = np.copy(shape)
-            zero_index = np.where(shape == 0)
-            new_shape[zero_index] = np.array(original_shape)[zero_index]
+            reshaped = reshape_reference_implementation(data, shape)
 
-            reshaped = np.reshape(data, new_shape)
             expect(node, inputs=[data, shape], outputs=[reshaped],
                    name='test_reshape_' + test_name)
