@@ -727,7 +727,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Gemm_ver9_doc = R"DOC(General Matrix multiplication:
+static const char* Gemm_ver11_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
 A' = transpose(A) if transA else A
@@ -745,8 +745,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(
-            Gemm_ver9_doc +
+            Gemm_ver11_doc +
             GenerateBroadcastingDocUni("tensor C", "tensor A * B") +
+            "\n" +
             GenerateOptionalArgumentsDoc())
         .Input(
             0,
@@ -766,7 +767,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "C",
             "Optional input tensor C. "
-            "If not specified - assumed to be 0. "
+            "If not specified, the computation is done as if C is a scalar 0. "
             "The shape of C should be unidirectional broadcastable to (M, N).",
             "T",
             OpSchema::Optional)
