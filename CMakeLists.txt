@@ -32,7 +32,17 @@ if(NOT DEFINED ONNX_ML)
   endif()
   option(ONNX_ML "Enable traditional ML API." ${DEFAULT_ONNX_ML})
 endif()
+
 option(ONNXIFI_DUMMY_BACKEND "Use dummy backend in onnxifi test driver." OFF)
+
+if(NOT DEFINED ONNX_VERIFY_PROTO3)
+  if(DEFINED ENV{ONNX_VERIFY_PROTO3})
+    set(PROTO3_ENABLED $ENV{ONNX_VERIFY_PROTO3})
+  else()
+    set(PROTO3_ENABLED OFF)
+  endif()
+  option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
+endif()
 
 # Set C++11 as standard for the whole project
 if(NOT MSVC)
@@ -193,13 +203,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(ONNX_USE_LITE_PROTO)
       list(APPEND GEN_PROTO_ARGS -l)
     endif()
+    if(ONNX_VERIFY_PROTO3)
+        if(NOT ONNX_PROTOC_EXECUTABLE)
+          message(FATAL_ERROR "Protobuf compiler not found")
+        endif()
+        list(APPEND GEN_PROTO_ARGS --protoc_path)
+        list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
+    endif()
+
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
                        COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
                        VERBATIM)
-
+    message("Generated: ${GENERATED_PROTO}")
     set(PROTOC_ARGS
         ${GENERATED_PROTO}
         -I
