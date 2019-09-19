@@ -46,7 +46,7 @@ def optimize(model, passes=None, fixed_point=False):  # type: (ModelProto, Optio
                   'fuse_consecutive_transposes',
                   'fuse_transpose_into_gemm']
     if not isinstance(model, ModelProto):
-        raise ValueError('Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
+        raise TypeError('Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
 
     model_str = model.SerializeToString()
     if fixed_point:
