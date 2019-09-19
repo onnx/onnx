@@ -1128,6 +1128,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [])
 
+    def test_split_fail_with_inequal_division(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1)],
+            [])
+        self._assert_inferred(graph, [])
+
     def test_split_from_GLU(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7))],

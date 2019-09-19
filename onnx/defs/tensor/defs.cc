@@ -455,12 +455,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ")");
             }
           } else {
-            int chunkSize =
-                splitDimValue / static_cast<int>(ctx.getNumOutputs());
-            int leftOver = splitDimValue -
-                (chunkSize * static_cast<int>(ctx.getNumOutputs()));
+            int numOutputs = static_cast<int>(ctx.getNumOutputs());
+            if (splitDimValue % numOutputs != 0) {
+              fail_shape_inference("The input is not evenly splittable");
+            }
+            int chunkSize = splitDimValue / numOutputs;
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
+              split.push_back(chunkSize);
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
