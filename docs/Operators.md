@@ -4911,7 +4911,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href="Changelog.md#GRU-3">GRU-3</a>, <a href="Changelog.md#GRU-7">GRU-7</a>
 
@@ -6937,7 +6937,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>, <a href="Changelog.md#LSTM-7">LSTM-7</a>
 
@@ -10879,7 +10879,7 @@ expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>, <a href="Changelog.md#RNN-7">RNN-7</a>
 
