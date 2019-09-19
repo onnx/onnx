@@ -419,6 +419,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           const auto& splitDim = shape.dim(axis);
           if (!splitDim.has_dim_value()) {
+            for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
+                  shape;
+              ctx.getOutputType(i)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->mutable_dim(axis)
+                  ->Clear();
+            }
             return;
           }
           int splitDimValue = static_cast<int>(splitDim.dim_value());
