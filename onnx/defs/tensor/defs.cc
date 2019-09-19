@@ -439,14 +439,20 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "Mismatch between number of splits (",
                   split.size(),
                   ") and outputs (",
-                  ctx.getNumOutputs());
+                  ctx.getNumOutputs(),
+                  ")");
             }
             int64_t totalDim = 0;
             for (int64_t d : split) {
               totalDim += d;
             }
             if (totalDim != splitDimValue) {
-              return;
+              fail_shape_inference(
+                  "Mismatch between the sum of 'split' (",
+                  totalDim,
+                  ") and the split dimension of the input (",
+                  splitDimValue,
+                  ")");
             }
           } else {
             int chunkSize =
