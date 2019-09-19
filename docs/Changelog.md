@@ -11434,11 +11434,9 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Hardmax-11"></a>**Hardmax-11**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -11447,7 +11445,8 @@ This version of the operator has been available since version 11 of the default 
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the hardmax values of the corresponding input.
 
 #### Version
 
@@ -11484,11 +11483,9 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="LogSoftmax-11"></a>**LogSoftmax-11**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -11497,7 +11494,8 @@ This version of the operator has been available since version 11 of the default 
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the logsoftmax values of the corresponding input.
 
 #### Version
 
@@ -13362,11 +13360,9 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Softmax-11"></a>**Softmax-11**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -13375,7 +13371,8 @@ This version of the operator has been available since version 11 of the default 
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the softmax values of the corresponding input.
 
 #### Version
 
