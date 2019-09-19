@@ -48,7 +48,7 @@ class Gather(Base):
             'Gather',
             inputs=['data', 'indices'],
             outputs=['y'],
-            axis=1,
+            axis=0,
         )
         data = np.arange(10).astype(np.float32)
         indices = np.array([0, -9, -10])
