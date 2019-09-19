@@ -3040,7 +3040,7 @@ expect(node, inputs=[data, indices], outputs=[output],
 
 
 ### Gemm
-There are 10 test cases, listed as following:
+There are 11 test cases, listed as following:
 <details>
 <summary>all_attributes</summary>
 
@@ -3116,6 +3116,23 @@ c = np.random.ranf([3, 4]).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_matrix_bias')
+```
+
+</details>
+<details>
+<summary>default_no_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 10]).astype(np.float32)
+b = np.random.ranf([10, 3]).astype(np.float32)
+y = gemm_reference_implementation(a, b)
+expect(node, inputs=[a, b], outputs=[y],
+       name='test_gemm_default_no_bias')
 ```
 
 </details>
@@ -7313,11 +7330,15 @@ There are 1 test cases, listed as following:
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
-    'reduced_dims': np.array([3, 8], dtype=np.int64),
-    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reordered_last_dims': np.array([2, 4, 3], dtype=np.int64),
+    'reduced_dims': np.array([2, 12], dtype=np.int64),
+    'extended_dims': np.array([2, 3, 2, 2], dtype=np.int64),
     'one_dim': np.array([24], dtype=np.int64),
-    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
+    'negative_dim': np.array([2, -1, 2], dtype=np.int64),
+    'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
+    'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
+    'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
@@ -7328,7 +7349,8 @@ for test_name, shape in test_cases.items():
         outputs=['reshaped'],
     )
 
-    reshaped = np.reshape(data, shape)
+    reshaped = reshape_reference_implementation(data, shape)
+
     expect(node, inputs=[data, shape], outputs=[reshaped],
            name='test_reshape_' + test_name)
 ```
