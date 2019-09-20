@@ -7509,14 +7509,14 @@ expect(node, inputs=[x], outputs=[y],
       }
   
       graph body-net (
-        %i[INT32, scalar]
-        %keepgoing_in[BOOL, scalar]
-        %b_in[INT32, scalar]
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
       ) {
         %my_local = Add(%a, %b_in)
-        %b_out = Sub(%a, %b_in)
-        %keepgoing_out = Greater(%my_local, %b_out)
-        %user_defined_val = Add(%b_in, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
         return %keepgoing_out, %b_out, %user_defined_val
       }
   
@@ -7539,8 +7539,8 @@ expect(node, inputs=[x], outputs=[y],
         for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
           /* Implicitly-defined code: bind actual parameter values
              to formal parameter variables of loop-body */
-          keepgoing_in = keepgoing_out; 
-          b_in = b_out;
+          bool keepgoing_in = keepgoing_out; 
+          bool b_in = b_out;
   
           /* User-defined code (loop body) */
           int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
@@ -7552,7 +7552,7 @@ expect(node, inputs=[x], outputs=[y],
           /* Implicitly defined-code */
           user_defined_vals[i] = user_defined_val // accumulate scan-output values
         }
-        // my_local = 123; // Can't do this. my_local was defined in the body
+        // int t = my_local; // Can't do this. my_local is not accessible here.
   
         // These below values are live-out from the loop and therefore accessible
         // b_out; user_defined_vals; keepgoing_out;
