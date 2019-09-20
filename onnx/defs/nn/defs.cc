@@ -1299,8 +1299,12 @@ output_shape can also be explicitly specified in which case pads values are auto
         OPTIONAL);
     schema.Attr(
         "output_padding",
-        "The zero-padding added to one side of the output."
-        " This is also called adjs/adjustment in some frameworks.",
+        "Additinal elements added to the side with higher coordinate indexes in the output. "
+        "Each element in \"output_padding\" cannot be larger than the stride along the associated axis. "
+        "By default, this attribute is a zero vector. "
+        "Note that this attribute doesn't directly affect the computed output values. "
+        "It only controls the selection of the computed values. "
+        "This is also called adjs or adjustment in some frameworks.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
