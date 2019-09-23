@@ -244,7 +244,7 @@ void IfInferenceFunction(InferenceContext& ctx) {
           else_output->value_case());
     }
 
-		auto* if_output = ctx.getOutputType(i);
+    auto* if_output = ctx.getOutputType(i);
 		*if_output = *then_output;
 
     if (then_output->has_tensor_type()) {
