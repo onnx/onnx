@@ -2948,7 +2948,7 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTran
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>output_padding</tt> : list of ints</dt>
-<dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks.</dd>
+<dd>Additional elements added to the side with higher coordinate indices in the output. Each padding value in "output_padding" must be less than the corresponding stride/dilation dimension. By default, this attribute is a zero vector. Note that this attribute doesn't directly affect the computed output values. It only controls the selection of the computed values, so changing this attribute only adds or removes output elements. If "output_shape" is explicitly provided, "output_padding" does not contribute additional size to "output_shape" but participates in the computation of the needed padding amount. This is also called adjs or adjustment in some frameworks.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -5221,7 +5221,7 @@ node = onnx.helper.make_node(
     'Gather',
     inputs=['data', 'indices'],
     outputs=['y'],
-    axis=1,
+    axis=0,
 )
 data = np.arange(10).astype(np.float32)
 indices = np.array([0, -9, -10])
@@ -5573,12 +5573,13 @@ expect(node, inputs=[data, indices], outputs=[output],
   and output tensor Y has shape (M, N). A will be transposed before doing the
   computation if attribute transA is non-zero, same for B and transB.
   This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>, <a href="Changelog.md#Gemm-9">Gemm-9</a>
 
 #### Attributes
 
@@ -5593,15 +5594,15 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 <dd>Whether B should be transposed</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>A</tt> : T</dt>
 <dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
-<dt><tt>C</tt> : T</dt>
-<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
+<dt><tt>C</tt> (optional) : T</dt>
+<dd>Optional input tensor C. If not specified, the computation is done as if C is a scalar 0. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
@@ -5708,6 +5709,25 @@ expect(node, inputs=[a, b, c], outputs=[y],
 
 
 <details>
+<summary>default_no_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 10]).astype(np.float32)
+b = np.random.ranf([10, 3]).astype(np.float32)
+y = gemm_reference_implementation(a, b)
+expect(node, inputs=[a, b], outputs=[y],
+       name='test_gemm_default_no_bias')
+```
+
+</details>
+
+
+<details>
 <summary>default_scalar_bias</summary>
 
 ```python
@@ -5718,7 +5738,7 @@ node = onnx.helper.make_node(
 )
 a = np.random.ranf([2, 3]).astype(np.float32)
 b = np.random.ranf([3, 4]).astype(np.float32)
-c = np.array(3.14)
+c = np.array(3.14).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_scalar_bias')
@@ -6198,11 +6218,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -6211,7 +6229,8 @@ expect(node, inputs=[x], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the hardmax values of the corresponding input.
 
 #### Version
 
@@ -7283,11 +7302,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -7296,7 +7313,8 @@ expect(node, inputs=[x], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the logsoftmax values of the corresponding input.
 
 #### Version
 
@@ -16407,11 +16425,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -16420,7 +16436,8 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the softmax values of the corresponding input.
 
 #### Version
 
