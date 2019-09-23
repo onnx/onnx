@@ -388,7 +388,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    1,
+    11,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
@@ -396,8 +396,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "outputs",
             "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same shape and same "
-            "data type.",
+            "the `then_branch` and `else_branch` must be of the same same data type. "
+            "If `then_branch` and `else_branch` produce tensors with different "
+            "shapes, conflict shapes would be unknown.",
             "V",
             OpSchema::Variadic,
             false)
