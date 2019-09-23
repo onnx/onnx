@@ -6415,7 +6415,9 @@ expect(node, inputs=[data], outputs=[data],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 
 #### Attributes
 
@@ -6437,7 +6439,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same same data type. If `then_branch` and `else_branch` produce tensors with different shapes, conflict shapes would be unknown.</dd>
 </dl>
 
 #### Type Constraints
