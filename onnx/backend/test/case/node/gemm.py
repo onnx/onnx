@@ -4,16 +4,18 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
+from typing import Optional
 
 import onnx
 from ..base import Base
 from . import expect
 
 
-def gemm_reference_implementation(A, B, C, alpha=1., beta=1., transA=0,
-                                  transB=0):  # type: (np.ndarray, np.ndarray, np.ndarray, float, float, int, int) -> np.ndarray
+def gemm_reference_implementation(A, B, C=None, alpha=1., beta=1., transA=0,
+                                  transB=0):  # type: (np.ndarray, np.ndarray, Optional[np.ndarray], float, float, int, int) -> np.ndarray
     A = A if transA == 0 else A.T
     B = B if transB == 0 else B.T
+    C = C if C is not None else np.array(0)
 
     Y = alpha * np.dot(A, B) + beta * C
 
@@ -37,6 +39,19 @@ class Gemm(Base):
                name='test_gemm_default_zero_bias')
 
     @staticmethod
+    def export_default_no_bias():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Gemm',
+            inputs=['a', 'b'],
+            outputs=['y']
+        )
+        a = np.random.ranf([2, 10]).astype(np.float32)
+        b = np.random.ranf([10, 3]).astype(np.float32)
+        y = gemm_reference_implementation(a, b)
+        expect(node, inputs=[a, b], outputs=[y],
+               name='test_gemm_default_no_bias')
+
+    @staticmethod
     def export_default_scalar_bias():  # type: () -> None
         node = onnx.helper.make_node(
             'Gemm',
@@ -45,7 +60,7 @@ class Gemm(Base):
         )
         a = np.random.ranf([2, 3]).astype(np.float32)
         b = np.random.ranf([3, 4]).astype(np.float32)
-        c = np.array(3.14)
+        c = np.array(3.14).astype(np.float32)
         y = gemm_reference_implementation(a, b, c)
         expect(node, inputs=[a, b, c], outputs=[y],
                name='test_gemm_default_scalar_bias')
