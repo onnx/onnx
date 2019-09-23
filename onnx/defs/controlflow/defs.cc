@@ -244,8 +244,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
           else_output->value_case());
     }
 
-		auto* if_output = ctx.getOutputType(i);
-		*if_output = *then_output;
+    auto* if_output = ctx.getOutputType(i);
+    *if_output = *then_output;
 
     if (then_output->has_tensor_type()) {
       auto then_elem_type = then_output->tensor_type().elem_type();
@@ -261,16 +261,16 @@ void IfInferenceFunction(InferenceContext& ctx) {
             else_elem_type);
       }
 
-			if (checkShapeCompatibility(
+      if (checkShapeCompatibility(
               then_output->tensor_type().shape(),
               else_output->tensor_type().shape())) {
         // merge the 'else' shape information to check it's consistent and
         // augment the 'if' output if possible
         mergeInShapeInfo(
             else_output->tensor_type(), *if_output->mutable_tensor_type());
-			} else {
-				if_output->mutable_tensor_type()->clear_shape();
-			}
+      } else {
+        if_output->mutable_tensor_type()->clear_shape();
+      }
     }
   }
 }
@@ -396,9 +396,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "outputs",
             "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same same data type. "
-            "If `then_branch` and `else_branch` produce tensors with different "
-            "shapes, conflict shapes would be unknown.",
+            "the `then_branch` and `else_branch` must be of the same data type. "
+            "The `then_branch` and `else_branch` may produce tensors with the same "
+            "element type and different shapes. For example, if the the first "
+            "output of `then_branch` is a float tensor with shape [2] and the "
+            "first output of `else_branch` is another float tensor with shape [3], "
+            "If's first output should be a float tensor with an unset shape field.",
             "V",
             OpSchema::Variadic,
             false)
