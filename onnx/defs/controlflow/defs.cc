@@ -245,7 +245,7 @@ void IfInferenceFunction(InferenceContext& ctx) {
     }
 
     auto* if_output = ctx.getOutputType(i);
-		*if_output = *then_output;
+    *if_output = *then_output;
 
     if (then_output->has_tensor_type()) {
       auto then_elem_type = then_output->tensor_type().elem_type();
