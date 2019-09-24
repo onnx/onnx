@@ -613,48 +613,6 @@ inline void mergeInShapeInfo(
     mergeInShapeInfo(source.shape(), target);
 }
 
-// If two dimensions have different numerical values, return
-// false. Otherwise, true is returned.
-inline bool checkDimensionCompatibility(
-    const TensorShapeProto_Dimension& source_dim,
-    const TensorShapeProto_Dimension& target_dim) {
-  if (source_dim.has_dim_value() && target_dim.has_dim_value()) {
-    auto source_value = source_dim.dim_value();
-    auto target_value = target_dim.dim_value();
-		if (target_value != source_value) {
-			return false;
-		}
-	}
-  return true;
-}
-
-/*
-Return true if two shapes are compatible. Otherwise, false is returned.
-Two shapes are compatible only if the following conditions are true.
-* Two shapes have the same number of dimension elements.
-* If corresponding dimensions are not symbolic, their values much be identical.
-*/
-inline bool checkShapeCompatibility(const TensorShapeProto& source, const TensorShapeProto& target) {
-  auto num_source_dims = source.dim_size();
-  auto num_target_dims = target.dim_size();
-  if (num_source_dims != num_target_dims) {
-		return false;
-  }
-
-  auto& source_dims = source.dim();
-  auto& target_dims = target.dim();
-
-  for (int i = 0, end = source_dims.size(); i < end; ++i) {
-    auto& source_dim = source_dims.Get(i);
-    auto& target_dim = target_dims.Get(i);
-    if (!checkDimensionCompatibility(source_dim, target_dim)) {
-      return false;
-		}
-  }
-
-	return true;
-}
-
 // Return a copy of a type, with a specified dimension removed from its shape.
 inline TypeProto RemoveIthDimensionFromShape(
     const TypeProto& proto,

@@ -261,15 +261,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
             else_elem_type);
       }
 
-      if (checkShapeCompatibility(
-              then_output->tensor_type().shape(),
-              else_output->tensor_type().shape())) {
-        // merge the 'else' shape information. If the shape from 'then` branch 
-        // is not consistent with that from 'else' branch, the corresponding
-        // tensor in If's output will have an unknown shape.
-        UnionShapeInfo(
-            else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
-      }
+      UnionShapeInfo(
+          else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
     }
   }
 }

@@ -1712,14 +1712,14 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Add', ['current_value', 'add_value'], ['then_output'])],
             "then_subgraph",
             [],  # no inputs
-            [make_tensor_value_info('then_output', TensorProto.UNDEFINED, None)],
+            [make_tensor_value_info('then_output', TensorProto.UNDEFINED, (1,))],
         )
 
         else_subgraph = helper.make_graph(
             [make_node('Sub', ['current_value', 'sub_value'], ['else_output'])],
             "else_subgraph",
             [],  # no inputs
-            [make_tensor_value_info('else_output', TensorProto.UNDEFINED, None)],
+            [make_tensor_value_info('else_output', TensorProto.UNDEFINED, (5,))],
         )
 
         graph = self._make_graph(
@@ -1732,7 +1732,7 @@ class TestShapeInference(unittest.TestCase):
             []
         )
 
-        self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, None)])
+        self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (None,))])
 
     def test_maxunpool_shape_without_output_shape(self):  # type: () -> None
         graph = self._make_graph(
