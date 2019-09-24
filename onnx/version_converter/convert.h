@@ -31,7 +31,6 @@
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/constant_9_8.h"
 
-
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
