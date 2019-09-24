@@ -1732,7 +1732,7 @@ class TestShapeInference(unittest.TestCase):
             []
         )
 
-        self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (None,))])
+        self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (None,))])  # type: ignore
 
     def test_maxunpool_shape_without_output_shape(self):  # type: () -> None
         graph = self._make_graph(
