@@ -11508,7 +11508,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same same data type. If `then_branch` and `else_branch` produce tensors with different shapes, conflict shapes would be unknown.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should be a float tensor with an unset shape field. In contrast, shapes [2, 3] and [2, 4] are not compatible.</dd>
 </dl>
 
 #### Type Constraints

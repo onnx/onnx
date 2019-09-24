@@ -266,8 +266,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
               else_output->tensor_type().shape())) {
         // merge the 'else' shape information to check it's consistent and
         // augment the 'if' output if possible
-        mergeInShapeInfo(
-            else_output->tensor_type(), *if_output->mutable_tensor_type());
+        UnionShapeInfo(
+            else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
       } else {
         if_output->mutable_tensor_type()->clear_shape();
       }
@@ -398,10 +398,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Values that are live-out to the enclosing scope. The return values in "
             "the `then_branch` and `else_branch` must be of the same data type. "
             "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. For example, if the the first "
-            "output of `then_branch` is a float tensor with shape [2] and the "
+            "element type and different shapes. "
+            "If corresponding outputs from the then-branch and the else-branch have "
+            "static shapes S1 and S2, then the shape of the corresponding output "
+            "variable of the if-node (if present) must be compatible with both S1 "
+            "and S2 as it represents the union of both possible shapes."
+            "For example, if in a model file, the the first "
+            "output of `then_branch` is typed float tensor with shape [2] and the "
             "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should be a float tensor with an unset shape field.",
+            "If's first output should be a float tensor with an unset shape field. "
+            "In contrast, shapes [2, 3] and [2, 4] are not compatible.",
             "V",
             OpSchema::Variadic,
             false)
