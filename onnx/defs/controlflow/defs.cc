@@ -398,7 +398,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For example, if in a model file, the the first "
             "output of `then_branch` is typed float tensor with shape [2] and the "
             "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, (b) "
+            "If's first output should have (a) no shape set, or (b) "
             "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
             "a shape of rank 1 with a unique `dim_param`. "
             "In contrast, the first output cannot have the shape [2] since [2] and "
