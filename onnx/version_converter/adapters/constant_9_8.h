@@ -1,5 +1,13 @@
 // Adapter for Constant in default domain from version 9 to 8
 
+// Constant version 8 has type constraints for tensor: float16, float, double
+// Constant version 9 has type constraints for tensor: uint8, uint16, uint32, uint64, int8,
+// int16, int32, int64, float16, float, double, string, bool, complex64, complex128
+
+// Types: bool, int8, int16, int32, uint8, uint16 are cast to float
+// Types: uint32, int64, uint64 are cast to double
+// Types: string, complex64, complex128 are not supported
+
 #pragma once
 
 #include "onnx/version_converter/adapters/adapter.h"
@@ -27,8 +35,9 @@ struct Constant_9_8 final : public Adapter {
 
     if (output_type == TensorProto_DataType::TensorProto_DataType_FLOAT ||
         output_type == TensorProto_DataType::TensorProto_DataType_FLOAT16 ||
-        output_type == TensorProto_DataType::TensorProto_DataType_DOUBLE)
+        output_type == TensorProto_DataType::TensorProto_DataType_DOUBLE) {
         return;
+    }
     
     const std::unordered_set<int> &cast_to_float_types = { 
         TensorProto_DataType::TensorProto_DataType_BOOL,
@@ -83,7 +92,6 @@ struct Constant_9_8 final : public Adapter {
       for (Use u : original_uses) {
         u.user->replaceInputWith(node->output(), post_cast->output());
       }
-
     }
   }
 
