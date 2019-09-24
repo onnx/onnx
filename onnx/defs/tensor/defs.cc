@@ -1310,7 +1310,8 @@ For example:
 
 The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
 The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
-Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
+Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+The order of values in `axes` does not matter and can come in any order. 
 
 )DOC";
 

@@ -18535,7 +18535,8 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
   
   The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
-  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
   
 
 #### Version
@@ -18656,6 +18657,29 @@ y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x], outputs=[y],
         name='test_unsqueeze_two_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

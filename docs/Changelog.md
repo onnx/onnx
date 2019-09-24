@@ -5212,9 +5212,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is (3.402823e+38))</dt>
+<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is (-3.402823e+38))</dt>
+<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -13726,7 +13726,8 @@ This version of the operator has been available since version 11 of the default 
   
   The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
-  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
   
 
 #### Version
