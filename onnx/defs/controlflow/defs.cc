@@ -524,11 +524,19 @@ There are several things of note in this code snippet:
 
 1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
    be referenced in the inputs of the loop.
-2) Any variables which you wish to make available in the enclosing scope (i.e.
-   the variables b and keepgoing) must be declared as either loop-carried
-   dependencies (both at the op inputs and output and at the body net input and
-   output) or scan_outputs.
-3) Values created in the body cannot be accessed in the enclosing scope.
+2) Any values computed in the loop body that needs to be used in a subsequent
+   iteration or after the loop are modelled using a pair of variables in the loop-body,
+   consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+   These are referred to as loop-carried dependences. The loop operation node
+   supplies the input value of the input variable for the first iteration, and
+   returns the output value of the output variable produced by the final
+   iteration.
+3) Scan_output variables are used to implicitly concatenate values computed across
+   all the iterations. In the above example, the value of user_defined_val computed
+   over all iterations are concatenated and returned as the value of user_defined_vals
+   after the loop.
+4) Values created in the body cannot be accessed in the enclosing scope,
+   except using the mechanism described above.
 
 Note that the semantics of this op support "diagonal" or "wavefront" execution.
 (See Step 3 here for an example:
