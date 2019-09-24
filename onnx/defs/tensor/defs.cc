@@ -417,8 +417,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis < 0) {
             axis += rank;
           }
-          const auto& splitDim = shape.dim(axis);
-          if (!splitDim.has_dim_value()) {
+          const auto& split_dim = shape.dim(axis);
+          if (!split_dim.has_dim_value()) {
             for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
               *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
                   shape;
@@ -430,7 +430,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
-          int splitDimValue = static_cast<int>(splitDim.dim_value());
+          int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
           if (getRepeatedAttribute(ctx, "split", split)) {
@@ -442,26 +442,26 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx.getNumOutputs(),
                   ")");
             }
-            int64_t totalDim = 0;
+            int64_t total_dim = 0;
             for (int64_t d : split) {
-              totalDim += d;
+              total_dim += d;
             }
-            if (totalDim != splitDimValue) {
+            if (total_dim != split_dim_value) {
               fail_shape_inference(
                   "Mismatch between the sum of 'split' (",
-                  totalDim,
+                  total_dim,
                   ") and the split dimension of the input (",
-                  splitDimValue,
+                  split_dim_value,
                   ")");
             }
           } else {
-            int numOutputs = static_cast<int>(ctx.getNumOutputs());
-            if (splitDimValue % numOutputs != 0) {
+            int num_outputs = static_cast<int>(ctx.getNumOutputs());
+            if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
             }
-            int chunkSize = splitDimValue / numOutputs;
+            int chunk_size = split_dim_value / num_outputs;
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(chunkSize);
+              split.push_back(chunk_size);
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
