@@ -61,6 +61,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_doc));
+        .SetDoc(NonMaxSuppression_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto selected_indices_type =
+              ctx.getOutputType(0)->mutable_tensor_type();
+          selected_indices_type->set_elem_type(
+              ::ONNX_NAMESPACE::TensorProto_DataType::
+                  TensorProto_DataType_INT64);
+        }));
 
 } // namespace ONNX_NAMESPACE
