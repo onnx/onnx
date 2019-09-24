@@ -455,12 +455,26 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 2))])
 
-    def test_unsqueeze(self):  # type: () -> None
+    def test_unsqueeze_regular(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 2))],
             [make_node('Unsqueeze', 'x', 'y', axes=[0, 1, 3, 5])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))])
+
+    def test_unsqueeze_unsorted_axes(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5))],
+            [make_node('Unsqueeze', 'x', 'y', axes=[4, 0])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 4, 5, 1))])
+
+    def test_unsqueeze_negative_axes(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5))],
+            [make_node('Unsqueeze', 'x', 'y', axes=[0, -1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 4, 5, 1))])
 
     def test_slice_without_input_shape(self):  # type: () -> None
         graph = self._make_graph(
