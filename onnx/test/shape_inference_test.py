@@ -464,8 +464,8 @@ class TestShapeInference(unittest.TestCase):
 
     def test_unsqueeze_unsorted_axes(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (5, 4, 3))],
-            [make_node('Unsqueeze', 'x', 'y', axes=[0, 4])],
+            [('x', TensorProto.FLOAT, (3, 4, 5))],
+            [make_node('Unsqueeze', 'x', 'y', axes=[4, 0])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 4, 5, 1))])
 
