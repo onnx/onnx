@@ -264,12 +264,11 @@ void IfInferenceFunction(InferenceContext& ctx) {
       if (checkShapeCompatibility(
               then_output->tensor_type().shape(),
               else_output->tensor_type().shape())) {
-        // merge the 'else' shape information to check it's consistent and
-        // augment the 'if' output if possible
+        // merge the 'else' shape information. If the shape from 'then` branch 
+        // is not consistent with that from 'else' branch, the corresponding
+        // tensor in If's output will have an unknown shape.
         UnionShapeInfo(
             else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
-      } else {
-        if_output->mutable_tensor_type()->clear_shape();
       }
     }
   }
@@ -406,8 +405,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For example, if in a model file, the the first "
             "output of `then_branch` is typed float tensor with shape [2] and the "
             "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should be a float tensor with an unset shape field. "
-            "In contrast, shapes [2, 3] and [2, 4] are not compatible.",
+            "If's first output should have (a) no type set, (b) "
+            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
+            "a shape of rank 1 with a unique `dim_param`. "
+            "In contrast, the first output cannot have the shape [2] since [2] and "
+            "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
             false)
