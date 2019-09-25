@@ -1926,6 +1926,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           // and 1 element vector for now. In future when version update for
           // this op is done we should only allow scalar or chage the spec to
           // allow both.
+          int64_t depth = 0;
+          std::string depth_name = "";
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
             if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
@@ -1937,6 +1939,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                 depth_shape.dim((int)0).dim_value() != 1) {
               fail_type_inference(
                   "Input 'depth' must have exactly one element.");
+            }
+            const TensorProto* depth_initializer = ctx.getInputData(1);
+            if (depth_initializer != nullptr) {
+              if (depth_initializer->has_raw_data()) {
+                if (depth_initializer->data_type() == TensorProto::INT64) {
+                  depth = ParseData<int64_t>(depth_initializer)[0];
+                } else if (depth_initializer->data_type() == TensorProto::INT32) {
+                  depth = (int64_t) ParseData<int32_t>(depth_initializer)[0];
+                }
+              }
+              depth_name = depth_initializer->name();
             }
           }
           // Input 'values' must be a two-element vector.
@@ -1979,6 +1992,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 } else if (indices_shape.dim(i).has_dim_param()) {
                   dim->set_dim_param(indices_shape.dim(i).dim_param());
                 }
+              } else if (i == axis) {
+                if (depth_name != "")
+                  dim->set_dim_param(depth_name);
+                else
+                  dim->set_dim_value(depth);
               } else if (i > axis) {
                 if (indices_shape.dim(i - 1).has_dim_value()) {
                   dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
