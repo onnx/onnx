@@ -4073,9 +4073,9 @@ expect(node, inputs=[x], outputs=[y],
   ```
   Zero point is calculated as:
   ```
-  intermediate_zero_point = (qmin - min(x))/(qmax - qmin)
+  intermediate_zero_point = (qmin - min(x))/y_scale
   y_zero_point = cast(round(saturate(itermediate_zero_point)))
-  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * where qmin is the min value for the quantization range .i.e 0 in the case of uint8
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
   * rounding to nearest ties to even.
   ```
