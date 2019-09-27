@@ -94,7 +94,7 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
   return &instance;
 }
 
-void OpSchema::Verify(const NodeProto& node) const {
+void OpSchema::Verify(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map) const {
   if (deprecated_) {
     fail_check(
         "Operator '",
@@ -173,6 +173,19 @@ void OpSchema::Verify(const NodeProto& node) const {
           ")'s input ",
           in_idx,
           " is marked single but has an empty string in the graph");
+    }
+    if (nullptr != type_map) {
+      const auto& all_supported_types = inputs_[in_idx].GetTypes();
+      const auto& type_iter = type_map->find(node.input(in_idx));
+      if (type_iter != type_map->end() &&
+          all_supported_types.find(Utils::DataTypeUtils::ToType(*type_iter->second)) == all_supported_types.end()) {
+        fail_check(
+          "Node (",
+          node.name(),
+          ")'s input ",
+          in_idx,
+          " is of unsupported type");
+      }
     }
   }
 

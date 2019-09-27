@@ -215,7 +215,7 @@ class OpSchema final {
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
    */
-  void Verify(const NodeProto& node) const;
+  void Verify(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map = nullptr) const;
 
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
