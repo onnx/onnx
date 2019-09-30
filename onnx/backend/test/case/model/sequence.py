@@ -12,31 +12,36 @@ from . import expect
 from onnx import TensorProto
 from typing import List, Optional, Text, Union
 
-def SequenceEmptyImpl():
+def SequenceEmptyImpl():  # type: () -> List[Optional[np.ndarray]]
     return []
 
-def SequenceConstructImpl(*tensors):
+def SequenceConstructImpl(*tensors):  # type: (*np.ndarray) -> List[np.ndarray]
     return list(tensors)
 
 def SequenceInsertImpl(sequence, tensor, position=None):
+    # type: (List[np.ndarray], np.ndarray, Optional[int]) -> List[np.ndarray]
     if position is None:
         position = len(sequence)
     sequence.insert(position, tensor)
     return sequence
 
 def SequenceAtImpl(sequence, position):
+    # type: (List[np.ndarray], int) -> np.ndarray
     return sequence[position]
 
 def SequenceEraseImpl(sequence, position=None):
+    # type: (List[np.ndarray], Optional[int]) -> List[Optional[np.ndarray]]
     if position is None:
         position = -1
     del sequence[position]
     return sequence
 
 def SequenceLengthImpl(sequence):
+    # type: (List[np.ndarray]) -> np.int64
     return np.int64(len(sequence))
 
 def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
+    # type: (np.ndarray, Optional[Union[int, List[int]]], int, int) -> List[np.ndarray]
     dim_size = tensor.shape[axis]
     if split is None:
         split = 1
@@ -45,12 +50,13 @@ def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
             results = np.array_split(tensor, split_indices, axis)
             return [np.squeeze(res, axis) for res in results]
     if np.isscalar(split):
-        split_indices = [i * split + 1 for i in range(dim_size) if i * split + 1 < dim_size]
+        split_indices = [i * split + 1 for i in range(dim_size) if i * split + 1 < dim_size]  # type: ignore
     else:
         split_indices = np.cumsum(split) + 1
-    return np.array_split(tensor, split_indices, axis)
+    return np.array_split(tensor, split_indices, axis)  # type: ignore
 
 def ConcatFromSequenceImpl(sequence, axis, new_axis=0):
+    # type: (List[np.ndarray], int, Optional[int]) -> np.ndarray
     if new_axis:
         return np.concatenate(sequence, axis)
     else:
@@ -220,7 +226,8 @@ class Sequence(Base):
         x = np.ones(tensor_shape, dtype=np.float32)
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
-        concat_out = ConcatFromSequenceImpl((x, y, z), 1)
+        out = SequenceConstructImpl(x, y, z)
+        concat_out = ConcatFromSequenceImpl(out, 1)
 
         graph = make_graph(
             [seq_construct_node, seq_concat_node],
@@ -243,7 +250,8 @@ class Sequence(Base):
         x = np.ones(tensor_shape, dtype=np.float32)
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
-        concat_out = ConcatFromSequenceImpl((x, y, z), -1)
+        out = SequenceConstructImpl(x, y, z)
+        concat_out = ConcatFromSequenceImpl(out, -1)
 
         graph = make_graph(
             [seq_construct_node, seq_concat_node],
