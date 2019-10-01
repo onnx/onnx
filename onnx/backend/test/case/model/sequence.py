@@ -12,11 +12,14 @@ from . import expect
 from onnx import TensorProto
 from typing import List, Optional, Text, Union
 
+
 def SequenceEmptyImpl():  # type: () -> List[Optional[np.ndarray]]
     return []
 
+
 def SequenceConstructImpl(*tensors):  # type: (*np.ndarray) -> List[np.ndarray]
     return list(tensors)
+
 
 def SequenceInsertImpl(sequence, tensor, position=None):
     # type: (List[np.ndarray], np.ndarray, Optional[int]) -> List[np.ndarray]
@@ -25,9 +28,11 @@ def SequenceInsertImpl(sequence, tensor, position=None):
     sequence.insert(position, tensor)
     return sequence
 
+
 def SequenceAtImpl(sequence, position):
     # type: (List[np.ndarray], int) -> np.ndarray
     return sequence[position]
+
 
 def SequenceEraseImpl(sequence, position=None):
     # type: (List[np.ndarray], Optional[int]) -> List[Optional[np.ndarray]]
@@ -36,9 +41,11 @@ def SequenceEraseImpl(sequence, position=None):
     del sequence[position]
     return sequence
 
+
 def SequenceLengthImpl(sequence):
     # type: (List[np.ndarray]) -> np.int64
     return np.int64(len(sequence))
+
 
 def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
     # type: (np.ndarray, Optional[Union[int, List[int]]], int, int) -> List[np.ndarray]
@@ -55,12 +62,14 @@ def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
         split_indices = np.cumsum(split) + 1
     return np.array_split(tensor, split_indices, axis)  # type: ignore
 
+
 def ConcatFromSequenceImpl(sequence, axis, new_axis=0):
     # type: (List[np.ndarray], int, Optional[int]) -> np.ndarray
     if new_axis:
         return np.concatenate(sequence, axis)
     else:
         return np.stack(sequence, axis)
+
 
 class Sequence(Base):
 
