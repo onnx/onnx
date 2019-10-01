@@ -301,8 +301,6 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
-tests_require.append('typing')
-tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
