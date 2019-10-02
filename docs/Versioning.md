@@ -127,6 +127,24 @@ Notes:
 - Values that are new or updated from a previous OpSet version are in **bold**.
 - \*: the operator is deprecated.
 
+### Operator Deprecations
+
+The following deprecated operators should be removed from models, substituted with newer operators, or decomposed:
+
+Old operator      |New Operator
+-|-
+`ATen`              |NA
+`Affine`            |`Add(Mul(X, alpha), beta)`
+`ConstantFill`      |`ConstantOfShape`
+`Crop`              |`Slice-1`
+`DynamicSlice`      |`Slice-10`
+`GRUUnit`           |NA
+`GivenTensorFill`   |`Const` or `ConstantOfShape`
+`ImageScaler`       |`Add(Mul(X, scale), Unsqueeze(bias, [0, 2, 3]))`
+`ParametricSoftplus`|`Mul(alpha, Softplus(Mul(beta, X)))`
+`Scale`             |`Mul(X, scale)`
+`ScaledTanh`        |`Mul(Tanh(Mul(X, beta)), alpha)`
+
 ## Model versioning
 
 Model versioning is ultimately the domain of a given organization. Therefore, this section of the specification is not normative. It simply outlines a set of recommended practices.
@@ -165,3 +183,4 @@ ONNX version|File format version|Operator set version ai.onnx|Operator set versi
 1.3|3|8|1
 1.4.1|4|9|1
 1.5.0|5|10|1
+1.6.0|5|11|1
