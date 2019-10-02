@@ -261,10 +261,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
             else_elem_type);
       }
 
-      // merge the 'else' shape information to check it's consistent and
-      // augment the 'if' output if possible
-      mergeInShapeInfo(
-          else_output->tensor_type(), *if_output->mutable_tensor_type());
+      UnionShapeInfo(
+          else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
     }
   }
 }
@@ -382,7 +380,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    1,
+    11,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
@@ -390,8 +388,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "outputs",
             "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same shape and same "
-            "data type.",
+            "the `then_branch` and `else_branch` must be of the same data type. "
+            "The `then_branch` and `else_branch` may produce tensors with the same "
+            "element type and different shapes. "
+            "If corresponding outputs from the then-branch and the else-branch have "
+            "static shapes S1 and S2, then the shape of the corresponding output "
+            "variable of the if-node (if present) must be compatible with both S1 "
+            "and S2 as it represents the union of both possible shapes."
+            "For example, if in a model file, the the first "
+            "output of `then_branch` is typed float tensor with shape [2] and the "
+            "first output of `else_branch` is another float tensor with shape [3], "
+            "If's first output should have (a) no shape set, or (b) "
+            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
+            "a shape of rank 1 with a unique `dim_param`. "
+            "In contrast, the first output cannot have the shape [2] since [2] and "
+            "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
             false)
@@ -582,7 +593,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_9_doc = R"DOC(
+static const char* scan_11_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
@@ -708,9 +719,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    9,
+    11,
     OpSchema()
-        .SetDoc(scan_9_doc)
+        .SetDoc(scan_11_doc)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -762,14 +773,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
             "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input.",
+            "be used as the scan axis for every scan_input. Negative value for an axis means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS,
             false)
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
             "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
+            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
+            "Negative value for an axis means counting dimensions from the back. Accepted "
+            "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")

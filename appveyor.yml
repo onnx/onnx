@@ -18,8 +18,10 @@ environment:
 
   matrix:
   - CONDA_PREFIX: C:\Miniconda35-x64
+    ONNX_VERIFY_PROTO3: 1
 
   - CONDA_PREFIX: C:\Miniconda36-x64
+    ONNX_VERIFY_PROTO3: 1
 
   - CONDA_PREFIX: C:\Miniconda36
 

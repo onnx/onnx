@@ -289,10 +289,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Concat,
-    4,
+    11,
     OpSchema()
-        .Attr("axis", "Which axis to concat on", AttributeProto::INT)
-        .SetDoc("Concatenate a list of tensors into a single tensor")
+        .Attr(
+            "axis",
+            "Which axis to concat on. A negative value means counting dimensions from the back. "
+            "Accepted range is [-r, r-1] where r = rank(inputs)..",
+            AttributeProto::INT)
+        .SetDoc(
+            "Concatenate a list of tensors into a single tensor. "
+            "All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.")
         .Input(
             0,
             "inputs",
@@ -319,11 +325,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Required attribute axis is missing");
           }
           int axis = static_cast<int>(axisAttr->i());
-          if (rank <= axis) {
-            fail_shape_inference("rank must be greater than axis");
+          if (axis < -rank || axis >= rank) {
+            fail_shape_inference("axis must be in [-rank, rank-1].");
           }
           if (axis < 0) {
-            return; // TODO: check if negative axis must be supported
+            axis += rank;
           }
 
           bool all_lengths_known = true;
@@ -360,7 +366,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver2_doc =
+static const char* Split_ver11_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
@@ -368,7 +374,7 @@ Otherwise, the tensor is split to equal sized parts.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    2,
+    11,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T")
         .Output(
@@ -384,39 +390,37 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to split on. "
-            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].",
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] "
+            "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
-        .SetDoc(Split_ver2_doc)
+        .SetDoc(Split_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }
-
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           std::vector<int64_t> split;
           if (!getRepeatedAttribute(ctx, "split", split)) {
             if (!ctx.getInputType(0)->tensor_type().has_shape()) {
               return;
             }
             const auto& shape = ctx.getInputType(0)->tensor_type().shape();
-            int r = shape.dim_size();
+            int rank = shape.dim_size();
             int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-            if (axis < -r || axis >= r) {
+            if (axis < -rank || axis >= rank) {
               fail_type_inference(
                   "Invalid value of attribute 'axis'. Rank=",
-                  r,
+                  rank,
                   " Value=",
                   axis);
             }
             if (axis < 0) {
-              axis += r;
+              axis += rank;
             }
-
             const auto& splitDim = shape.dim(axis);
             if (!splitDim.has_dim_value()) {
               return;
@@ -442,7 +446,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Slice_ver10_doc = R"DOC(
+static const char* Slice_ver11_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
@@ -481,9 +485,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
-    10,
+    11,
     OpSchema()
-        .SetDoc(Slice_ver10_doc)
+        .SetDoc(Slice_ver11_doc)
         .Input(0, "data", "Tensor of data to extract slices from.", "T")
         .Input(
             1,
@@ -498,7 +502,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "axes",
-            "1-D tensor of axes that `starts` and `ends` apply to.",
+            "1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             "Tind",
             OpSchema::Optional)
         .Input(
@@ -806,14 +811,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of r >= 1 (same rank as input).",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Input(
             2,
@@ -902,7 +908,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(ScatterND_ver11_doc)
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
-        .Input(2, "updates", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T")
         .Output(0, "output", "Tensor of rank r >= 1.", "T")
         .TypeConstraint(
             "T",
@@ -975,14 +985,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of r >= 1 (same rank as input).",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Input(
             2,
@@ -1005,11 +1016,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Gather_ver1_doc = R"DOC(
+static const char* Gather_ver11_doc = R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
-Example 1:
+
+axis = 0 :
+
+Let
+k = indices[i_{0}, ..., i_{q-1}]
+Then
+output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
+
 ```
   data = [
       [1.0, 1.2],
@@ -1031,7 +1049,13 @@ Example 1:
       ],
   ]
 ```
-Example 2:
+axis = 1 :
+
+Let
+k = indices[i_{0}, ..., i_{q-1}]
+Then
+output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+
 ```
   data = [
       [1.0, 1.2, 1.9],
@@ -1054,21 +1078,21 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
-    1,
+    11,
     OpSchema()
-        .SetDoc(Gather_ver1_doc)
+        .SetDoc(Gather_ver11_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds. "
-            "It is an error if any of the index values are out of bounds.",
+            "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] "
+            "along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
         .TypeConstraint(
@@ -1101,7 +1125,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += r;
           }
           int out_rank = q + r - 1;
-
           if (out_rank == 0) {
             ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
@@ -1183,14 +1206,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
-            "counting dimensions from the back. Accepted range in [-r, r-1]",
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
             "indices",
-            "Tensor of int32/int64 indices, with the same rank r as the input.",
+            "Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind")
         .Output(0, "output", "Tensor of the same shape as indices.", "T")
         .TypeConstraint(
@@ -1206,7 +1230,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 1, 0);
         }));
 
-static const char* Squeeze_ver1_doc = R"DOC(
+static const char* Squeeze_ver11_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
@@ -1215,14 +1239,15 @@ the shape. If an axis is selected with shape entry not equal to one, an error is
 
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
-    1,
+    11,
     OpSchema()
         .Attr(
             "axes",
-            "List of non-negative integers, indicate the dimensions to squeeze.",
+            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INTS,
             OPTIONAL)
-        .SetDoc(Squeeze_ver1_doc)
+        .SetDoc(Squeeze_ver11_doc)
         .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
         .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
         .TypeConstraint(
@@ -1246,9 +1271,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_ndim = input_shape.dim_size();
+          std::transform(
+              axes.begin(),
+              axes.end(),
+              axes.begin(),
+              [&](int64_t axis) -> int64_t {
+                return axis < 0 ? axis + input_ndim : axis;
+              });
 
-          for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
-            if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
+          for (int i = 0, j = 0; i < input_ndim; ++i) {
+            if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).has_dim_value() &&
                   input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
@@ -1267,23 +1300,31 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Unsqueeze_ver1_doc = R"DOC(
-Insert single-dimensional entries to the shape of a tensor.
-Takes one required argument `axes`, a list of dimensions that will be inserted.
-Dimension indices in `axes` are as seen in the output tensor. For example:
-  Given a tensor such that tensor with shape [3, 4, 5], then
-  Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+static const char* Unsqueeze_ver11_doc = R"DOC(
+Insert single-dimensional entries to the shape of an input tensor (`data`).
+Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+
+For example:
+  Given an input tensor (`data`) of shape [3, 4, 5], then
+  Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+
+The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+The order of values in `axes` does not matter and can come in any order. 
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
-    1,
+    11,
     OpSchema()
         .Attr(
             "axes",
-            "List of non-negative integers, indicate the dimensions to be inserted",
+            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
             AttributeProto::INTS)
-        .SetDoc(Unsqueeze_ver1_doc)
+        .SetDoc(Unsqueeze_ver11_doc)
         .Input(0, "data", "Original tensor", "T")
         .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
         .TypeConstraint(
@@ -1300,18 +1341,40 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
             return;
           }
-          std::sort(axes.begin(), axes.end());
+
+          // validate 'axes' for duplicate entries
+          std::unordered_set<int64_t> unique_values;
+          for (const auto val : axes) {
+            if (unique_values.find(val) != unique_values.end()) {
+              fail_shape_inference(
+                  "'axes' attribute must not contain any duplicates");
+            }
+            unique_values.insert(val);
+          }
 
           if (!ctx.getInputType(0)->tensor_type().has_shape()) {
             return;
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_ndim = input_shape.dim_size();
+          const auto output_ndim = input_ndim + static_cast<int>(axes.size());
+          for (size_t(i) = 0; i < axes.size(); ++i) {
+            if (axes[i] < -output_ndim || axes[i] >= output_ndim) {
+              fail_shape_inference(
+                  "values in 'axes' are beyond the bounds of the computed output shape");
+            }
+            if (axes[i] < 0) {
+              axes[i] += output_ndim;
+            }
+          }
+
+          // sort after correcting negative axes values (if any) in the previous step
+          std::sort(axes.begin(), axes.end());
 
           int j = 0;
-          for (int i = 0;
-               i < ctx.getInputType(0)->tensor_type().shape().dim_size();
-               ++i) {
+          for (int i = 0; i < input_ndim; ++i) {
             while (static_cast<size_t>(j) < axes.size() &&
                    axes[j] ==
                        ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -1337,96 +1400,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->add_dim()
                 ->set_dim_value(1);
             ++j;
-          }
-        }));
-
-static const char* Pad_ver2_doc = R"DOC(
-Given `data` tensor, pads, mode, and value.
-Example:
-  Insert 0 pads to the beginning of the second dimension.
-  data = [
-      [1.0, 1.2],
-      [2.3, 3.4],
-      [4.5, 5.7],
-  ]
-  pads = [0, 2, 0, 0]
-  output = [
-      [
-          [0.0, 0.0, 1.0, 1.2],
-          [0.0, 0.0, 2.3, 3.4],
-          [0.0, 0.0, 4.5, 5.7],
-      ],
-  ]
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Pad,
-    2,
-    OpSchema()
-        .Attr(
-            "pads",
-            "List of integers indicating the number of padding elements to add or remove (if negative) "
-            "at the beginning and end of each axis. For 2D it is the number of pixels. "
-            "`pads` rank should be double of the input's rank. `pads` format should be as follow "
-            "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-            "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-            "the end of axis `i`.",
-            AttributeProto::INTS)
-        .Attr(
-            "mode",
-            "Three modes: constant(default), reflect, edge",
-            AttributeProto::STRING,
-            std::string("constant"))
-        .Attr(
-            "value",
-            "One float, indicates the value to be filled.",
-            AttributeProto::FLOAT,
-            0.0f)
-        .SetDoc(Pad_ver2_doc)
-        .Input(0, "data", "Input tensor.", "T")
-        .Output(0, "output", "Tensor after padding.", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-
-          std::vector<int64_t> pads;
-          if (!getRepeatedAttribute(ctx, "pads", pads))
-            fail_shape_inference("Attribute value for pads is required");
-          if (pads.size() != static_cast<size_t>(input_shape.dim_size() * 2)) {
-            fail_shape_inference("Attribute pads has incorrect length");
-            ;
-          }
-
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
-            auto* newdim = ctx.getOutputType(0)
-                               ->mutable_tensor_type()
-                               ->mutable_shape()
-                               ->add_dim();
-            if (ctx.getInputType(0)
-                    ->tensor_type()
-                    .shape()
-                    .dim((int)i)
-                    .has_dim_value()) {
-              newdim->set_dim_value(
-                  ctx.getInputType(0)
-                      ->tensor_type()
-                      .shape()
-                      .dim((int)i)
-                      .dim_value() +
-                  pads[i] + pads[input_shape.dim_size() + i]);
-            } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
-              *newdim = input_shape.dim((int)i);
-            }
           }
         }));
 
@@ -1679,7 +1652,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, false);
+          resizeShapeInference_opset7_to_10(ctx);
         }));
 
 static const char* Resize_ver11_doc = R"DOC(
@@ -1741,7 +1714,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             Resize_attr_coordinate_transformation_mode_doc,
             AttributeProto::STRING,
             std::string("half_pixel"))
-        .Attr("nearest_mode",
+        .Attr(
+            "nearest_mode",
             "Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
             AttributeProto::STRING,
             std::string("round_prefer_floor"))
@@ -1797,7 +1771,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Compress_ver9_doc = R"DOC(
+static const char* Compress_ver11_doc = R"DOC(
     Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
     In case axis is not provided, input is flattened before elements are selected.
     Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
@@ -1805,13 +1779,14 @@ static const char* Compress_ver9_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
-    9,
+    11,
     OpSchema()
-        .SetDoc(Compress_ver9_doc)
+        .SetDoc(Compress_ver11_doc)
         .Attr(
             "axis",
             "(Optional) Axis along which to take slices. If not specified, "
-            "input is flattened before elements being selected.",
+            "input is flattened before elements being selected. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "input", "Tensor of rank r >= 1.", "T")
@@ -1819,7 +1794,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "condition",
             "Rank 1 tensor of booleans to indicate which slices or data elements to be selected. "
-            "Its length can be less than the input length alone the axis "
+            "Its length can be less than the input length along the axis "
             "or the flattened input size if axis is not specified. "
             "In such cases data slices or elements exceeding the condition length are discarded.",
             "T1")
@@ -1835,9 +1810,31 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains to boolean tensors."));
+            "Constrains to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& indices_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            int r = indices_shape.dim_size();
+            if (r < 1) {
+              fail_shape_inference("Indices tensor must have rank >= 1");
+            }
+            auto axisAttr = ctx.getAttribute("axis");
+            if (axisAttr) {
+              int axis = static_cast<int>(axisAttr->i());
+              if (axis < -r || axis >= r) {
+                fail_shape_inference(
+                    "'axis' must be in [-rank(indices), rank(indices)-1]");
+              }
+              if (axis < 0) {
+                axis += r;
+              }
+            }
+          }
+        }));
 
-static const char* OneHot_ver9_doc = R"DOC(
+static const char* OneHot_ver11_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
     The locations represented by the index values in the 'indices' input tensor will have 'on_value'
     and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
@@ -1848,28 +1845,36 @@ static const char* OneHot_ver9_doc = R"DOC(
     dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
     dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
     as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-    the range [0, depth) will result in one-hot representation with all 'off_value' values in the
+    the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
     output tensor.
+
+    when axis = 0:
+    output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+
+    when axis = -1:
+    output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     OneHot,
-    9,
+    11,
     OpSchema()
-        .SetDoc(OneHot_ver9_doc)
+        .SetDoc(OneHot_ver11_doc)
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
             "axis=-1 means that the additional dimension will be inserted as the "
-            "innermost/last dimension in the output tensor.",
+            "innermost/last dimension in the output tensor. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r-1, r] where r = rank(indices).",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Input(
             0,
             "indices",
-            "Input tensor containing indices. The values must be non-negative integers. "
-            "Any entries in the 'indices' input tensor with values outside the range [0, depth) "
-            "will result in one-hot representation with all 'off_value' values in the output tensor."
+            "Input tensor containing indices. Any entries in the 'indices' input tensor with "
+            "values outside the range [-depth, depth-1] will result in one-hot representation with all "
+            "'off_value' values in the output tensor."
             "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
             "T1")
         .Input(
@@ -1878,7 +1883,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Scalar specifying the number of classes in one-hot tensor. This is also the size "
             "of the one-hot dimension (specified by 'axis' attribute) added on in the output "
             "tensor. The values in the 'indices' input tensor are expected to be "
-            "in the range [0, depth). "
+            "in the range [-depth, depth-1]. "
             "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
             "T2")
         .Input(
@@ -1914,7 +1919,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only allow Scalar should
+          // TODO: Ideally to match spec for this input only Scalar should
           // be allowed. Making this change now can affect backward
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar
@@ -1960,7 +1965,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
             if (axis < -out_rank || axis >= out_rank) {
               fail_shape_inference(
-                  "'axis' must be in [-rank(indices)-1, rank(indices)]");
+                  "'axis' must be in [-rank(indices), rank(indices)-1]");
             }
             if (axis < 0) {
               axis += out_rank;
@@ -2286,7 +2291,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .Attr(
             "axis",
-            "(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned.",
+            "(Optional) The dimension to apply unique. If not specified, the unique elements of the "
+            "flattened input are returned. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             OPTIONAL)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
@@ -2371,12 +2378,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // 'axis' is provided.
             int axis = static_cast<int>(axisAttr->i());
+            const TensorShapeProto& input_shape =
+                xTensorProto->tensor_type().shape();
+            int rank = input_shape.dim_size();
+            if (axis < 0)
+              axis += rank;
+            if (axis < 0 || axis >= rank)
+              fail_shape_inference("Invalid value for attribute axis");
 
             // 'Y' has the same shape as 'X' except in the 'axis' dimension
             // which is unknown.
-            const TensorShapeProto& input_shape =
-                xTensorProto->tensor_type().shape();
-
             for (int i = 0; i < input_shape.dim_size(); i++) {
               auto* dim = yTensorProto->mutable_tensor_type()
                               ->mutable_shape()
@@ -2462,7 +2473,12 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(GatherND_ver11_doc)
         .Input(0, "data", "Tensor of rank r >= 1.", "T")
-        .Input(1, "indices", "Tensor of rank q >= 1.", "tensor(int64)")
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
+            "along axis of size s. It is an error if any of the index values are out of bounds.",
+            "tensor(int64)")
         .Output(
             0,
             "output",
@@ -2524,6 +2540,168 @@ ONNX_OPERATOR_SET_SCHEMA(
                  ->mutable_shape()
                  ->add_dim() = data_shape.dim(i);
           }
+        }));
+
+static const char* Pad_ver11_doc = R"DOC(
+Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
+a padded tensor (`output`) is generated.
+
+The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+
+1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
+
+2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+
+3) `edge` - pads with the edge values of array
+
+
+Example 1 (`constant` mode):
+  Insert 0 pads to the beginning of the second dimension.
+
+  data = 
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ] 
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'constant'
+
+  constant_value = 0.0
+
+  output = 
+  [
+      [
+          [0.0, 0.0, 1.0, 1.2],
+          [0.0, 0.0, 2.3, 3.4],
+          [0.0, 0.0, 4.5, 5.7],
+      ],
+  ]
+
+
+Example 2 (`reflect` mode):
+  data = 
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ] 
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'reflect'
+
+  output = 
+  [
+      [
+          [1.0, 1.2, 1.0, 1.2],
+          [2.3, 3.4, 2.3, 3.4],
+          [4.5, 5.7, 4.5, 5.7],
+      ],
+  ]
+
+
+Example 3 (`edge` mode):
+  data = 
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ] 
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'edge'
+
+  output = 
+  [
+      [
+          [1.0, 1.0, 1.0, 1.2],
+          [2.3, 2.3, 2.3, 3.4],
+          [4.5, 4.5, 4.5, 5.7],
+      ],
+  ]
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Pad,
+    11,
+    OpSchema()
+        .Attr(
+            "mode",
+            "Supported modes: `constant`(default), `reflect`, `edge`",
+            AttributeProto::STRING,
+            std::string("constant"))
+        .SetDoc(Pad_ver11_doc)
+        .Input(0, "data", "Input tensor.", "T")
+        .Input(
+            1,
+            "pads",
+            "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
+            "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
+            "`pads` should be a 1D tensor of shape [2 * input_rank]. "
+            "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
+            "where xi_begin is the number of pad values added at the beginning of axis `i` and "
+            "xi_end, the number of pad values added at the end of axis `i`.",
+            "tensor(int64)")
+        .Input(
+            2,
+            "constant_value",
+            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).",
+            "T",
+            OpSchema::Optional)
+        .Output(0, "output", "Tensor after padding.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input and output to only numeric types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference needs the input data shape
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_rank = input_shape.dim_size();
+
+          // Infer output shape if 'pads' tensor is available
+          const auto* pads_initializer = ctx.getInputData(1);
+          if (nullptr != pads_initializer) {
+            if (pads_initializer->dims_size() != 1 ||
+                pads_initializer->data_type() != TensorProto::INT64)
+              fail_shape_inference(
+                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+
+            const auto& pads_data = ParseData<int64_t>(pads_initializer);
+
+            if (pads_data.size() != static_cast<size_t>(2 * input_rank))
+              fail_shape_inference("Pads has incorrect number of values");
+
+            auto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+              const auto& input_dim = input_shape.dim((int)i);
+              auto* output_dim = output_shape->add_dim();
+              if (input_dim.has_dim_value()) {
+                output_dim->set_dim_value(
+                    input_dim.dim_value() + pads_data[i] +
+                    pads_data[i + input_rank]);
+              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
+                *output_dim = input_dim;
+              }
+            }
+          } else {
+            // Infer output shapes' rank in any case
+            auto* output_shape_0 = getOutputShape(ctx, 0);
+            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+              output_shape_0->add_dim();
+            }
+          }
+          return;
         }));
 
 } // namespace ONNX_NAMESPACE
