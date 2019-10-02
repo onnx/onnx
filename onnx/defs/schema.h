@@ -211,11 +211,13 @@ class OpSchema final {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
+  void CheckInputOutputType(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map) const;
+
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
    */
-  void Verify(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map = nullptr) const;
+  void Verify(const NodeProto& node) const;
 
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
