@@ -97,7 +97,7 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map) const {
 
   std::unordered_map<std::string, DataType> type_constraints;
-  for (int in_idx = 0; in_idx < node.input_size() && in_idx < inputs_.size(); ++in_idx) {
+  for (int in_idx = 0; in_idx < node.input_size() && in_idx < static_cast<int>(inputs_.size()); ++in_idx) {
     const auto& all_supported_types = inputs_[in_idx].GetTypes();
     const auto& type_iter = type_map->find(node.input(in_idx));
     if (type_iter != type_map->end()) {
@@ -124,9 +124,9 @@ void OpSchema::CheckInputOutputType(const NodeProto& node, std::unordered_map<st
         }
       }
     }
-  } //for
+  }
 
-  for (int out_idx = 0; out_idx < node.output_size() && out_idx < outputs_.size(); ++out_idx) {
+  for (int out_idx = 0; out_idx < node.output_size() && out_idx < static_cast<int>(outputs_.size()); ++out_idx) {
     const auto& all_supported_types = outputs_[out_idx].GetTypes();
     const auto& type_iter = type_map->find(node.output(out_idx));
     if (type_iter != type_map->end()) {
@@ -164,8 +164,6 @@ void OpSchema::Verify(const NodeProto& node) const {
         "' has been deprecated since version ",
         since_version_);
   }
-
-  std::unordered_map<std::string, DataType> type_constraints;
 
   // Check the number of inputs.
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
@@ -238,7 +236,7 @@ void OpSchema::Verify(const NodeProto& node) const {
           in_idx,
           " is marked single but has an empty string in the graph");
     }
-  } //for
+  }
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
