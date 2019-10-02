@@ -103,6 +103,8 @@ void OpSchema::Verify(const NodeProto& node, std::unordered_map<std::string, Typ
         since_version_);
   }
 
+  std::unordered_map<std::string, DataType> type_constraints;
+
   // Check the number of inputs.
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
     fail_check(
@@ -177,14 +179,29 @@ void OpSchema::Verify(const NodeProto& node, std::unordered_map<std::string, Typ
     if (nullptr != type_map) {
       const auto& all_supported_types = inputs_[in_idx].GetTypes();
       const auto& type_iter = type_map->find(node.input(in_idx));
-      if (type_iter != type_map->end() &&
-          all_supported_types.find(Utils::DataTypeUtils::ToType(*type_iter->second)) == all_supported_types.end()) {
-        fail_check(
-          "Node (",
-          node.name(),
-          ")'s input ",
-          in_idx,
-          " is of unsupported type");
+      if (type_iter != type_map->end()) {
+        if (all_supported_types.find(Utils::DataTypeUtils::ToType(*type_iter->second)) == all_supported_types.end()) {
+          fail_check(
+            "Node (",
+            node.name(),
+            ")'s input ",
+            in_idx,
+            " is of unsupported type");
+        }
+        if (inputs_[in_idx].GetIsHomogeneous()) {
+          const auto& type_str = inputs_[in_idx].GetTypeStr();
+          if (type_constraints.find(type_str) == type_constraints.end()) {
+            type_constraints[type_str] = Utils::DataTypeUtils::ToType(*type_iter->second);
+          } else if (type_constraints[type_str] != Utils::DataTypeUtils::ToType(*type_iter->second)) {
+            fail_check(
+              "Node (",
+              node.name(),
+              ")'s input ",
+              in_idx,
+              " is of a different type from previous inputs of type ",
+              type_str);
+          }
+        }
       }
     }
   }
