@@ -41,3 +41,21 @@ class Gather(Base):
 
         expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_1')
+
+    @staticmethod
+    def export_gather_negative_indices():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Gather',
+            inputs=['data', 'indices'],
+            outputs=['y'],
+            axis=0,
+        )
+        data = np.arange(10).astype(np.float32)
+        indices = np.array([0, -9, -10])
+        y = np.take(data, indices, axis=0)
+
+        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+               name='test_gather_negative_indices')
+
+        # print(y)
+        # [0. 1. 0.]

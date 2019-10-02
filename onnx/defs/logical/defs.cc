@@ -6,10 +6,12 @@
 namespace ONNX_NAMESPACE {
 
 inline void unaryLogicalOpInference(InferenceContext& ctx) {
-  updateOutputElemType(ctx, 0, TensorProto::BOOL);
-  if (hasInputShape(ctx, 0)) {
-    propagateShapeFromInputToOutput(ctx, 0, 0);
-  }
+    // Type inference
+    updateOutputElemType(ctx, 0, TensorProto::BOOL);
+    // Shape inference
+    if (hasInputShape(ctx, 0)) {
+        propagateShapeFromInputToOutput(ctx, 0, 0);
+    }
 }
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
@@ -20,21 +22,23 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
 
 {broadcast_doc}
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
-    schema.SetDoc(doc);
-    schema.Input(0, "A", "First input operand for the logical operator.", "T");
-    schema.Input(1, "B", "Second input operand for the logical operator.", "T");
-    schema.Output(0, "C", "Result tensor.", "T1");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      updateOutputElemType(ctx, 0, TensorProto::BOOL);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        schema.SetDoc(doc);
+        schema.Input(0, "A", "First input operand for the logical operator.", "T");
+        schema.Input(1, "B", "Second input operand for the logical operator.", "T");
+        schema.Output(0, "C", "Result tensor.", "T1");
+        schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference 
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          // Shape inference
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        });
+    };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -184,7 +188,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "or \"LEFT\" (for left shift).",
             AttributeProto::STRING)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
                 ctx.getInputType(0)->tensor_type().shape(),

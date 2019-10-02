@@ -28,7 +28,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Opset Version Conversion](docs/VersionConverter.md)
 
 # Contribute
-ONNX is a [community project](https://github.com/onnx/community). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [SIGs](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
+ONNX is a [community project](community). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [SIGs](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
 
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
 
