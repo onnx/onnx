@@ -211,6 +211,7 @@ class OpSchema final {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
+  // Check if input and output types fall into valid set and match each other
   void CheckInputOutputType(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map) const;
 
   /**
