@@ -198,13 +198,13 @@ void OpSchema::Verify(const NodeProto& node, std::unordered_map<std::string, Typ
               node.name(),
               ")'s input ",
               in_idx,
-              " is of a different type from previous inputs of type ",
+              " is of a different type from other input of type ",
               type_str);
           }
         }
       }
-    }
-  }
+    } //if (nullptr != type_map)
+  } //for
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
@@ -232,6 +232,35 @@ void OpSchema::Verify(const NodeProto& node, std::unordered_map<std::string, Typ
           out_idx,
           " is marked single but has an empty string in the graph");
     }
+    if (nullptr != type_map) {
+      const auto& all_supported_types = outputs_[out_idx].GetTypes();
+      const auto& type_iter = type_map->find(node.output(out_idx));
+      if (type_iter != type_map->end()) {
+        if (all_supported_types.find(Utils::DataTypeUtils::ToType(*type_iter->second)) == all_supported_types.end()) {
+          fail_check(
+            "Node (",
+            node.name(),
+            ")'s output ",
+            out_idx,
+            " is of unsupported type");
+        }
+        if (outputs_[out_idx].GetIsHomogeneous()) {
+          const auto& type_str = outputs_[out_idx].GetTypeStr();
+          if (type_constraints.find(type_str) == type_constraints.end()) {
+            type_constraints[type_str] = Utils::DataTypeUtils::ToType(*type_iter->second);
+          } else if (type_constraints[type_str] != Utils::DataTypeUtils::ToType(*type_iter->second)) {
+            fail_check(
+              "Node (",
+              node.name(),
+              ")'s output ",
+              out_idx,
+              " is of a different type from other input or output of type ",
+              type_str);
+          }
+        }
+      }
+    } //if (nullptr != type_map)
+
   }
 
   // An internal symbol is defined as starting with two underscores. Attributes
