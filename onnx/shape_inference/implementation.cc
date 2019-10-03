@@ -214,7 +214,7 @@ static void InferShapesImpl(
 	}
 
     try {
-      schema->CheckInputOutputType(n, &valueTypesByName);
+      schema->CheckInputOutputType(n, g, valueTypesByName);
       for (int i = 0; i < n.output_size(); ++i) {
         const auto* inferredType = ctx.getOutputType(i);
         if (!inferredType->has_tensor_type() &&

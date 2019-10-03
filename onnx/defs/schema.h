@@ -212,7 +212,7 @@ class OpSchema final {
   }
 
   // Check if input and output types fall into valid set and match each other
-  void CheckInputOutputType(const NodeProto& node, std::unordered_map<std::string, TypeProto*>* type_map) const;
+  void CheckInputOutputType(const NodeProto& node, GraphProto* g, std::unordered_map<std::string, TypeProto*>& type_map) const;
 
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
