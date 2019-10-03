@@ -105,10 +105,11 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (nullptr == param_type ||
        (param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
        (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
-      continue;
+      fail_check(param.GetName(), " has undefined type");
     } else if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
       fail_check(param.GetName(), " has unsupported type");
-    } else if (param.GetIsHomogeneous()) {
+    }
+    if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = type_proto;
@@ -116,17 +117,16 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
         fail_check(param.GetName(), " has inconsistent type");
       }
     }
-  }
-  // check all output types and do inference when necessary
+  }//for inputs
+  //check all output types
   for (size_t out_idx = 0; out_idx < ctx.getNumOutputs() && out_idx < outputs_.size(); ++out_idx) {
     const auto& param      = outputs_[out_idx];
     const auto& type_str   = param.GetTypeStr();
     const auto& param_type = ctx.getOutputType(out_idx);
     const auto& all_types  = param.GetTypes();
-    if (nullptr == param_type) {
-      continue;
-    } else if ((param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
-               (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
+    //infer type if necessary
+    if ((param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
+        (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
       if (all_types.size() == 1 || type_constraints.find(type_str) != type_constraints.end()) {
         const auto& input_type_proto = Utils::DataTypeUtils::ToTypeProto(all_types.size() == 1 ? *all_types.begin() : type_constraints[type_str]);
         if (input_type_proto.has_tensor_type()) {
@@ -138,7 +138,8 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
       fail_check(param.GetName(), " has unsupported type");
-    } else if (param.GetIsHomogeneous()) {
+    }
+    if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = type_proto;
@@ -146,7 +147,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
         fail_check(param.GetName(), " has inconsistent type");
       }
     }//else
-  }
+  }//for outputs
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
