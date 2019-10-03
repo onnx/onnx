@@ -94,64 +94,58 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
   return &instance;
 }
 
-void OpSchema::CheckParamType(const FormalParameter& param,
-                              const std::string& param_name,
-                              GraphProto& g,
-                              std::unordered_map<std::string, TypeProto*>& type_map,
-                              std::unordered_map<std::string, DataType>& type_constraints) const {
-
-    const auto& all_supported_types = param.GetTypes();
-    const auto& type_iter = type_map.find(param_name);
-
-    if (type_iter == type_map.end() || // if type not set or it is undefined
-       (type_iter->second->has_tensor_type() && type_iter->second->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
-       (type_iter->second->has_sequence_type() && type_iter->second->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
-
-      // set the type if we could infer it by constraints
-      if (all_supported_types.size() == 1 || type_constraints.find(param.GetTypeStr()) != type_constraints.end()) {
-        if (type_iter == type_map.end()) {
-          auto vi = g.add_value_info();
-          vi->set_name(param_name);
-          type_map[param_name] = vi->mutable_type();
-        }
-        const auto& input_type_proto = Utils::DataTypeUtils::ToTypeProto(all_supported_types.size() == 1 ? *all_supported_types.begin() : type_constraints[param.GetTypeStr()]);
+void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
+  std::unordered_map<std::string, DataType> type_constraints;
+  // check all input types
+  for (size_t in_idx = 0; in_idx < ctx.getNumInputs() && in_idx < inputs_.size(); ++in_idx) {
+    const auto& param      = inputs_[in_idx];
+    const auto& type_str   = param.GetTypeStr();
+    const auto& param_type = ctx.getInputType(in_idx);
+    const auto& all_types  = param.GetTypes();
+    if (nullptr == param_type ||
+       (param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
+       (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
+      continue;
+    } else if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+      fail_check(param.GetName(), " has unsupported type");
+    } else if (param.GetIsHomogeneous()) {
+      const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
+      if (type_constraints.find(type_str) == type_constraints.end()) {
+        type_constraints[type_str] = type_proto;
+      } else if (type_constraints[type_str] != type_proto) {
+        fail_check(param.GetName(), " has inconsistent type");
+      }
+    }
+  }
+  // check all output types and do inference when necessary
+  for (size_t out_idx = 0; out_idx < ctx.getNumOutputs() && out_idx < outputs_.size(); ++out_idx) {
+    const auto& param      = outputs_[out_idx];
+    const auto& type_str   = param.GetTypeStr();
+    const auto& param_type = ctx.getOutputType(out_idx);
+    const auto& all_types  = param.GetTypes();
+    if (nullptr == param_type) {
+      continue;
+    } else if ((param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
+               (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
+      if (all_types.size() == 1 || type_constraints.find(type_str) != type_constraints.end()) {
+        const auto& input_type_proto = Utils::DataTypeUtils::ToTypeProto(all_types.size() == 1 ? *all_types.begin() : type_constraints[type_str]);
         if (input_type_proto.has_tensor_type()) {
-          type_map[param_name]->mutable_tensor_type()->set_elem_type(input_type_proto.tensor_type().elem_type());
+          param_type->mutable_tensor_type()->set_elem_type(input_type_proto.tensor_type().elem_type());
         } else if (input_type_proto.has_sequence_type()) {
-          type_map[param_name]->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(input_type_proto.sequence_type().elem_type().tensor_type().elem_type());
-        }
-      }
-    } else {
-
-      if (all_supported_types.find(Utils::DataTypeUtils::ToType(*type_iter->second)) == all_supported_types.end()) {
-        fail_check(
-          "Parameter ",
-          param_name,
-          " is of unsupported type");
-      }
-
-      if (param.GetIsHomogeneous()) {
-        const auto& type_str = param.GetTypeStr();
-        if (type_constraints.find(type_str) == type_constraints.end()) {
-          type_constraints[type_str] = Utils::DataTypeUtils::ToType(*type_iter->second);
-        } else if (type_constraints[type_str] != Utils::DataTypeUtils::ToType(*type_iter->second)) {
-          fail_check(
-            "Parameter ",
-            param_name,
-            " is of a different type from other params of ",
-            type_str);
+          param_type->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(input_type_proto.sequence_type().elem_type().tensor_type().elem_type());
         }
       }
     }
-}
-
-void OpSchema::CheckInputOutputType(const NodeProto& node, GraphProto& g, std::unordered_map<std::string, TypeProto*>& type_map) const {
-  std::unordered_map<std::string, DataType> type_constraints;
-  for (int in_idx = 0; in_idx < node.input_size() && in_idx < static_cast<int>(inputs_.size()); ++in_idx) {
-    CheckParamType(inputs_[in_idx], node.input(in_idx), g, type_map, type_constraints);
-  }
-  for (int out_idx = 0; out_idx < node.output_size() && out_idx < static_cast<int>(outputs_.size()); ++out_idx) {
-    CheckParamType(outputs_[out_idx], node.output(out_idx), g, type_map, type_constraints);
+    if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+      fail_check(param.GetName(), " has unsupported type");
+    } else if (param.GetIsHomogeneous()) {
+      const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
+      if (type_constraints.find(type_str) == type_constraints.end()) {
+        type_constraints[type_str] = type_proto;
+      } else if (type_constraints[type_str] != type_proto) {
+        fail_check(param.GetName(), " has inconsistent type");
+      }
+    }//else
   }
 }
 

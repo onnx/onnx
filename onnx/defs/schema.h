@@ -211,10 +211,8 @@ class OpSchema final {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
-  void CheckParamType(const FormalParameter& param, const std::string& param_name, GraphProto& g, std::unordered_map<std::string, TypeProto*>& type_map, std::unordered_map<std::string, DataType>& type_constraints) const;
-
   // Check if input and output types fall into valid set and match each other
-  void CheckInputOutputType(const NodeProto& node, GraphProto& g, std::unordered_map<std::string, TypeProto*>& type_map) const;
+  void CheckInputOutputType(struct InferenceContext&) const;
 
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
