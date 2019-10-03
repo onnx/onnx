@@ -124,6 +124,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     const auto& type_str   = param.GetTypeStr();
     const auto& param_type = ctx.getOutputType(out_idx);
     const auto& all_types  = param.GetTypes();
+    bool output_type_found = true;
     //infer type if necessary
     if ((param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
         (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
@@ -133,8 +134,15 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
           param_type->mutable_tensor_type()->set_elem_type(input_type_proto.tensor_type().elem_type());
         } else if (input_type_proto.has_sequence_type()) {
           param_type->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(input_type_proto.sequence_type().elem_type().tensor_type().elem_type());
+        } else {
+          output_type_found = false;
         }
-      }
+      } else {
+        output_type_found = false;
+      } 
+    }
+    if (!output_type_found) {
+      continue;
     }
     if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
       fail_check(param.GetName(), " has unsupported type");
