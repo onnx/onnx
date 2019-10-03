@@ -138,7 +138,7 @@ void OpSchema::CheckParamType(const FormalParameter& param,
           fail_check(
             "Parameter ",
             param_name,
-            " is of a different type from other input of type ",
+            " is of a different type from other params of ",
             type_str);
         }
       }
