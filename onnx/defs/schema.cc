@@ -106,14 +106,14 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
       // fail_check(param.GetName(), " has undefined type");
       continue;
     } else if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
-      fail_check(param.GetName(), " has unsupported type");
+      fail_check(param.GetName(), " has unsupported type", Utils::DataTypeUtils::ToString(*param_type,"",""));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = type_proto;
       } else if (type_constraints[type_str] != type_proto) {
-        fail_check(param.GetName(), " has inconsistent type");
+        fail_check(param.GetName(), " has inconsistent type", Utils::DataTypeUtils::ToString(*param_type,"",""));
       }
     }
   }//for inputs
@@ -143,14 +143,14 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
       continue;
     }
     if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
-      fail_check(param.GetName(), " has unsupported type");
+      fail_check(param.GetName(), " has unsupported type", Utils::DataTypeUtils::ToString(*param_type,"",""));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = type_proto;
       } else if (type_constraints[type_str] != type_proto) {
-        fail_check(param.GetName(), " has inconsistent type");
+        fail_check(param.GetName(), " has inconsistent type", Utils::DataTypeUtils::ToString(*param_type,"",""));
       }
     }//else
   }//for outputs
