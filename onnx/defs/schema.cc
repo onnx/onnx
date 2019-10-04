@@ -105,7 +105,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       // fail_check(param.GetName(), " has undefined type");
       continue;
-    } else if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+    } else if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
       fail_check(param.GetName(), " has unsupported type");
     }
     if (param.GetIsHomogeneous()) {
@@ -142,7 +142,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (!output_type_found) {
       continue;
     }
-    if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+    if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
       fail_check(param.GetName(), " has unsupported type");
     }
     if (param.GetIsHomogeneous()) {
