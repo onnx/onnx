@@ -102,9 +102,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     const auto& type_str   = param.GetTypeStr();
     const auto& param_type = ctx.getInputType(in_idx);
     const auto& all_types  = param.GetTypes();
-    if (nullptr == param_type ||
-       (param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
-       (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
+    if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       // fail_check(param.GetName(), " has undefined type");
       continue;
     } else if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
@@ -127,8 +125,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     const auto& all_types  = param.GetTypes();
     bool output_type_found = true;
     //infer type if necessary
-    if ((param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
-        (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
+    if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       if (all_types.size() == 1 || type_constraints.find(type_str) != type_constraints.end()) {
         const auto& input_type_proto = Utils::DataTypeUtils::ToTypeProto(all_types.size() == 1 ? *all_types.begin() : type_constraints[type_str]);
         if (input_type_proto.has_tensor_type()) {
