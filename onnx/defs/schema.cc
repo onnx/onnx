@@ -105,7 +105,8 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (nullptr == param_type ||
        (param_type->has_tensor_type() && param_type->tensor_type().elem_type() == TensorProto::UNDEFINED) || 
        (param_type->has_sequence_type() && param_type->sequence_type().elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED)) {
-      fail_check(param.GetName(), " has undefined type");
+      // fail_check(param.GetName(), " has undefined type");
+      continue;
     } else if (all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
       fail_check(param.GetName(), " has unsupported type");
     }
