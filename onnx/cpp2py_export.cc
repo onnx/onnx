@@ -301,7 +301,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  }, py::arg("check_type") = false);
+  }, "bytes"_a, "check_type"_a = false);
 }
 
 } // namespace ONNX_NAMESPACE
