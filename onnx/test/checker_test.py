@@ -345,9 +345,9 @@ class TestChecker(unittest.TestCase):
         # check graph
         checker.check_graph(graph)
 
-    def test_check_model_unsupported_input_type(self): # type: () -> None
+    def test_check_model_unsupported_input_type(self):  # type: () -> None
         N = 10
-        X = helper.make_tensor_value_info('X', TensorProto.BOOL,  [N])
+        X = helper.make_tensor_value_info('X', TensorProto.BOOL, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [N])
         Z = helper.make_tensor_value_info('Z', TensorProto.FLOAT, [N])
         onnx_id = helper.make_opsetid("", 6)
@@ -356,7 +356,7 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(checker.ValidationError, checker.check_model, model, True)
 
-    def test_check_modle_inconsistent_type(self): # type: () -> None
+    def test_check_modle_inconsistent_type(self):  # type: () -> None
         N = 10
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.INT32, [N])
@@ -367,16 +367,17 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(checker.ValidationError, checker.check_model, model, True)
 
-    def test_check_model_unsupported_output_type(self): # type: () -> None
+    def test_check_model_unsupported_output_type(self):  # type: () -> None
         N = 10
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [N])
-        Z = helper.make_tensor_value_info('Z', TensorProto.BOOL,  [N])
+        Z = helper.make_tensor_value_info('Z', TensorProto.BOOL, [N])
         onnx_id = helper.make_opsetid("", 6)
         node = helper.make_node('Add', ['X', 'Y'], ['Z'])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(RuntimeError, checker.check_model, model, True)
+
 
 if __name__ == '__main__':
     unittest.main()
