@@ -294,14 +294,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
 
-  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type = false) {
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
     shape_inference::InferShapes(proto, check_type);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  });
+  }, py::arg("check_type") = false);
 }
 
 } // namespace ONNX_NAMESPACE
