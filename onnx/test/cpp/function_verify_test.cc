@@ -16,11 +16,9 @@ using TENSOR_TYPES_MAP =
 void VerifyTypeConstraint(
     const OpSchema& function_op,
     const FunctionProto* function_proto,
-    int& counter
-) {
-  // TC for function nodes should satisfy the definition defined in the opschema
-  // This is designed to be a best-effort test
-  // TODO: Revisit to have a more consummate check on it
+    int& counter) {
+  // This is a simple partial type-checker for a function-body.
+  // TODO: Revisit to make the type-checker more complete.
   TENSOR_TYPES_MAP tc_map;
   std::set<std::string> primitive_types(
       OpSchema::all_tensor_types().begin(), OpSchema::all_tensor_types().end());
@@ -49,51 +47,49 @@ void VerifyTypeConstraint(
     const OpSchema* schema = OpSchemaRegistry::Schema(
         op_type, function_op.since_version(), function_op.domain());
 
-    std::unordered_map<std::string, int> input_tensor_name_idx_map;
-    std::unordered_map<std::string, int> output_tensor_name_idx_map;
-    // Enforce it on input
-    for (unsigned int i = 0; i < schema->inputs().size(); ++i) {
-      auto& input = schema->inputs().at(i);
-      input_tensor_name_idx_map[input.GetName()] = i;
-    }
-    for (auto& tensor_name_tc : tc_map) {
-      auto iter = input_tensor_name_idx_map.find(tensor_name_tc.first);
-      if (iter == input_tensor_name_idx_map.end())
-        continue;
-      const auto& types = schema->inputs().at(iter->second).GetTypes();
-      std::unordered_set<std::string> allowed_types;
-      for (auto& s : types) {
-        allowed_types.insert(*s);
-      }
-      for (auto& type : tensor_name_tc.second) {
-        if (allowed_types.find(type) == allowed_types.end()) {
-          fail_check(
-              "Input type " + type + " defined in " + schema->Name() +
-              "'s function body is not allowed in node " + op_type);
+    // Check inputs of node:
+    auto num_formal_inputs = schema->inputs().size();
+    auto num_actual_inputs = node.input_size();
+    // The above may not be same due to optional inputs
+    auto num_checked_inputs = std::min(num_formal_inputs, num_actual_inputs);
+    for (unsigned int i = 0; i < num_checked_inputs; ++i) {
+      auto actual_param_name = node.input(i);
+      auto iter = tc_map.find(actual_param_name);
+      if (iter != tc_map.end()) {
+        const auto& types = schema->inputs().at(i).GetTypes();
+        std::unordered_set<std::string> allowed_types;
+        for (auto& s : types) {
+          allowed_types.insert(*s);
+        }
+        for (auto& actual_type : iter.second) {
+          if (allowed_types.find(actual_type) == allowed_types.end()) {
+            fail_check(
+                "Input type " + actual_type + " defined in " + schema->Name() +
+                "'s function body is not allowed in node " + op_type);
+          }
         }
       }
     }
 
-    // Enforce it on output
-    for (unsigned int i = 0; i < schema->outputs().size(); ++i) {
-      auto& output = schema->outputs().at(i);
-      output_tensor_name_idx_map[output.GetName()] = i;
-    }
-
-    for (auto& tensor_name_tc : tc_map) {
-      auto iter = output_tensor_name_idx_map.find(tensor_name_tc.first);
-      if (iter == output_tensor_name_idx_map.end())
-        continue;
-      const auto& types = schema->outputs().at(iter->second).GetTypes();
-      std::unordered_set<std::string> allowed_types;
-      for (auto& s : types) {
-        allowed_types.insert(*s);
-      }
-      for (auto& type : tensor_name_tc.second) {
-        if (allowed_types.find(type) == allowed_types.end()) {
-          fail_check(
-              "Output type " + type + " defined in " + schema->Name() +
-              "'s function body is not allowed in node " + op_type);
+    // Check outputs of node:
+    auto num_formal_outputs = schema->outputs().size();
+    auto num_actual_outputs = node.output_size();
+    auto num_checked_outputs = std::min(num_formal_outputs, num_actual_outputs);
+    for (unsigned int i = 0; i < num_checked_outputs; ++i) {
+      auto actual_param_name = node.output(i);
+      auto iter = tc_map.find(actual_param_name);
+      if (iter != tc_map.end()) {
+        const auto& types = schema->outputs().at(i).GetTypes();
+        std::unordered_set<std::string> allowed_types;
+        for (auto& s : types) {
+          allowed_types.insert(*s);
+        }
+        for (auto& actual_type : tensor_name_tc.second) {
+          if (allowed_types.find(actual_type) == allowed_types.end()) {
+            fail_check(
+                "Output type " + actual_type + " defined in " + schema->Name() +
+                "'s function body is not allowed in node " + op_type);
+          }
         }
       }
     }
@@ -102,7 +98,10 @@ void VerifyTypeConstraint(
   ++counter;
 }
 
-void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
+void VerifyFunction(
+    const OpSchema& op,
+    const FunctionProto* function_proto,
+    int& counter) {
   // Verify function proto is valid
   if (!function_proto) {
     fail_check("Cannot get function body for op '", op.Name(), "'");
@@ -110,18 +109,17 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
   CheckerContext ctx;
   std::unordered_map<std::string, int> op_set;
   if ((int)function_proto->since_version() != op.since_version()) {
-    fail_check("Unmatched since_version defined in function op '", op.Name(), "'");
+    fail_check(
+        "Unmatched since_version defined in function op '", op.Name(), "'");
   }
   auto version_range =
-      OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(
-          op.domain());
+      OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(op.domain());
   if (function_proto->since_version() > version_range.second ||
       function_proto->since_version() < version_range.first) {
     fail_check("Invalid function version in function op '", op.Name(), "'");
   }
-  
-  op_set.insert(
-      {op.domain(), op.since_version()});
+
+  op_set.insert({op.domain(), op.since_version()});
   ctx.set_opset_imports(op_set);
   ctx.set_is_main_graph(false);
   LexicalScopeContext lex_ctx;
@@ -142,17 +140,18 @@ TEST(FunctionVerification, VerifyFunctionOps) {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
   int function_counter = 0, verified_counter = 0;
   for (const auto s : schemas) {
-    if (!s.HasFunction()) continue;
-    try{
+    if (!s.HasFunction())
+      continue;
+    try {
       ++function_counter;
       auto function_body = s.GetFunction();
       VerifyFunction(s, function_body, verified_counter);
-    }catch (ONNX_NAMESPACE::checker::ValidationError e){
+    } catch (ONNX_NAMESPACE::checker::ValidationError e) {
       FAIL() << e.what();
     }
   }
-  std::cerr << "[          ] Verified " << verified_counter << "/" 
-    << function_counter << " Functions." << std::endl;
+  std::cerr << "[          ] Verified " << verified_counter << "/"
+            << function_counter << " Functions." << std::endl;
 }
 
 } // namespace Test
