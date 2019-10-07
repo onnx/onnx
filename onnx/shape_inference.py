@@ -20,14 +20,14 @@ graph, that means that the provided values are invalid (or there is a
 bug in shape inference), and the result is unspecified.
 
 Arguments:
-    input (ModelProto): ModelProto
+    input (ModelProto,bool): ModelProto
 
 Return:
     return (ModelProto) model with inferred shape information
 """
 
 
-def infer_shapes(model, check_type = False):  # type: (ModelProto) -> ModelProto
+def infer_shapes(model, check_type=False):  # type: (ModelProto,bool) -> ModelProto
     if not isinstance(model, ModelProto):
         raise ValueError('Shape inference only accepts ModelProto, '
                          'incorrect type: {}'.format(type(model)))
