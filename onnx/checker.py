@@ -85,7 +85,7 @@ def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProt
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
-def check_model(model, full_check=False):  # type: (Union[ModelProto, Text]) -> None
+def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], bool) -> None
     if isinstance(model, string_types):
         C.check_model_path(model)
         if full_check:
