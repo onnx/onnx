@@ -527,7 +527,7 @@ C-style code:
       }
       // int t = my_local; // Can't do this. my_local is not accessible here.
 
-      // These below values are live-out from the loop and therefore accessible
+      // The values below are bound to the output variables of the loop and therefore accessible
       // b_out; user_defined_vals; keepgoing_out;
     }
 
