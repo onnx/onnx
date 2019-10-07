@@ -94,14 +94,6 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
   return &instance;
 }
 
-std::string ConcatAllType(const std::unordered_set<std::string>& dt_set) {
-  std::stringstream ss;
-  for (const auto& dt: dt_set) {
-    ss << dt << ",";
-  }
-  return ss.str();
-}
-
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // check all input types
@@ -109,24 +101,18 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     const auto& param      = inputs_[in_idx];
     const auto& type_str   = param.GetTypeStr();
     const auto& param_type = ctx.getInputType(in_idx);
-    // const auto& all_types  = param.GetTypes();
-    std::unordered_set<std::string> all_supported_types;
-    for (const auto& t: param.GetTypes()) {
-      all_supported_types.insert(*t);
-    }
+    const auto& all_types  = param.GetTypes();
     if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      // fail_check(param.GetName(), " has undefined type");
       continue;
-    } else if (!all_supported_types.empty() && all_supported_types.find(*Utils::DataTypeUtils::ToType(*param_type)) == all_supported_types.end()) {
-      // fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", Utils::DataTypeUtils::ToString(*param_type,"",""), " supported data types are: ", ConcatAllType(all_types));
-      fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", *Utils::DataTypeUtils::ToType(*param_type), " supported data types are: ", ConcatAllType(all_supported_types));
+    } else if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+      fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", *Utils::DataTypeUtils::ToType(*param_type));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
       } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(param.GetName(), " has inconsistent type ", Utils::DataTypeUtils::ToString(*param_type,"",""));
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
   }//for inputs
@@ -135,16 +121,14 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     const auto& param      = outputs_[out_idx];
     const auto& type_str   = param.GetTypeStr();
     const auto& param_type = ctx.getOutputType(out_idx);
-    // const auto& all_types  = param.GetTypes();
-    std::unordered_set<std::string> all_supported_types;
-    for (const auto& t: param.GetTypes()) {
-      all_supported_types.insert(*t);
-    }
+    const auto& all_types  = param.GetTypes();
     bool output_type_found = true;
     //infer type if necessary
     if (param_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      if (all_supported_types.size() == 1 || type_constraints.find(type_str) != type_constraints.end()) {
-        auto data_type = Utils::DataTypeUtils::ToType(all_supported_types.size() == 1 ? *all_supported_types.begin() : type_constraints[type_str]);
+      if (all_types.size() == 1) {
+        *param_type = Utils::DataTypeUtils::ToTypeProto(*all_types.begin());
+      } else if (type_constraints.find(type_str) != type_constraints.end()) {
+        auto data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
         *param_type = Utils::DataTypeUtils::ToTypeProto(data_type);
       } else {
         output_type_found = false;
@@ -153,16 +137,15 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (!output_type_found) {
       continue;
     }
-    if (!all_supported_types.empty() && all_supported_types.find(*Utils::DataTypeUtils::ToType(*param_type)) == all_supported_types.end()) {
-      // fail_check(param.GetName(), " has unsupported type ", Utils::DataTypeUtils::ToString(*param_type,"",""));
-      fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", *Utils::DataTypeUtils::ToType(*param_type), " supported data types are: ", ConcatAllType(all_supported_types));
+    if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+      fail_check(param.GetName(), " has unsupported type ", *Utils::DataTypeUtils::ToType(*param_type));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
       } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(param.GetName(), " has inconsistent type ", Utils::DataTypeUtils::ToString(*param_type,"",""));
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
       }
     }//else
   }//for outputs

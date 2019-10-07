@@ -89,11 +89,11 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], boo
     if isinstance(model, string_types):
         C.check_model_path(model)
         if full_check:
-            onnx.shape_inference.infer_shapes(onnx.load(model))
+            onnx.shape_inference.infer_shapes(onnx.load(model), True)
     else:
         C.check_model(model.SerializeToString())
         if full_check:
-            onnx.shape_inference.infer_shapes(model)
+            onnx.shape_inference.infer_shapes(model, True)
 
 
 ValidationError = C.ValidationError

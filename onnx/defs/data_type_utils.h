@@ -40,7 +40,7 @@ class DataTypeUtils final {
 
   static const TypeProto& ToTypeProto(const DataType& data_type);
 
-// private:
+ private:
   static void FromString(const std::string& type_str, TypeProto& type_proto);
 
   static void FromDataTypeString(
