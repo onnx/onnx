@@ -10233,8 +10233,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 argsorted_indices = np.argsort(indices)
 inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-y = np.take(x, indices, axis=0)
 indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
 # print(y)
@@ -10358,7 +10358,7 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
 
 ### Unsqueeze
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>unsqueeze_negative_axes</summary>
 
@@ -10434,6 +10434,27 @@ y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x], outputs=[y],
         name='test_unsqueeze_two_axes')
+```
+
+</details>
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

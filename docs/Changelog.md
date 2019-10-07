@@ -11480,6 +11480,46 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="If-11"></a>**If-11**</a>
+
+  If conditional
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>else_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
+<dt><tt>then_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>cond</tt> : B</dt>
+<dd>Condition for the if</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Only bool</dd>
+</dl>
+
 ### <a name="LogSoftmax-11"></a>**LogSoftmax-11**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
@@ -11895,6 +11935,52 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
+
+### <a name="NonMaxSuppression-11"></a>**NonMaxSuppression-11**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0. 0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models. 1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
 
 ### <a name="OneHot-11"></a>**OneHot-11**</a>
 
@@ -13737,11 +13823,18 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Unsqueeze-11"></a>**Unsqueeze-11**</a>
 
-  Insert single-dimensional entries to the shape of a tensor.
-  Takes one required argument `axes`, a list of dimensions that will be inserted.
-  Dimension indices in `axes` are as seen in the output tensor. For example:
-    Given a tensor such that tensor with shape [3, 4, 5], then
-    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  
+  For example:
+    Given an input tensor (`data`) of shape [3, 4, 5], then
+    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  
+  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
+  
 
 #### Version
 
@@ -13751,7 +13844,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Inputs

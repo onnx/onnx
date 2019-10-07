@@ -6415,7 +6415,9 @@ expect(node, inputs=[data], outputs=[data],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 
 #### Attributes
 
@@ -6437,7 +6439,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -9396,7 +9398,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#NonMaxSuppression-10">NonMaxSuppression-10</a>
 
 #### Attributes
 
@@ -18412,8 +18416,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 argsorted_indices = np.argsort(indices)
 inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-y = np.take(x, indices, axis=0)
 indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
 # print(y)
@@ -18546,11 +18550,18 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
 ### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
 
-  Insert single-dimensional entries to the shape of a tensor.
-  Takes one required argument `axes`, a list of dimensions that will be inserted.
-  Dimension indices in `axes` are as seen in the output tensor. For example:
-    Given a tensor such that tensor with shape [3, 4, 5], then
-    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  
+  For example:
+    Given an input tensor (`data`) of shape [3, 4, 5], then
+    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  
+  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
+  
 
 #### Version
 
@@ -18562,7 +18573,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1<
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Inputs
@@ -18670,6 +18681,29 @@ y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x], outputs=[y],
         name='test_unsqueeze_two_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

@@ -1301,11 +1301,18 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Unsqueeze_ver11_doc = R"DOC(
-Insert single-dimensional entries to the shape of a tensor.
-Takes one required argument `axes`, a list of dimensions that will be inserted.
-Dimension indices in `axes` are as seen in the output tensor. For example:
-  Given a tensor such that tensor with shape [3, 4, 5], then
-  Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+Insert single-dimensional entries to the shape of an input tensor (`data`).
+Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+
+For example:
+  Given an input tensor (`data`) of shape [3, 4, 5], then
+  Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+
+The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+The order of values in `axes` does not matter and can come in any order. 
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1315,7 +1322,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axes",
             "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
             AttributeProto::INTS)
         .SetDoc(Unsqueeze_ver11_doc)
         .Input(0, "data", "Original tensor", "T")
@@ -1334,7 +1341,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
             return;
           }
-          std::sort(axes.begin(), axes.end());
+
+          // validate 'axes' for duplicate entries
+          std::unordered_set<int64_t> unique_values;
+          for (const auto val : axes) {
+            if (unique_values.find(val) != unique_values.end()) {
+              fail_shape_inference(
+                  "'axes' attribute must not contain any duplicates");
+            }
+            unique_values.insert(val);
+          }
 
           if (!ctx.getInputType(0)->tensor_type().has_shape()) {
             return;
@@ -1343,10 +1359,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
+          const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           for (size_t(i) = 0; i < axes.size(); ++i) {
-            if (axes[i] < 0)
-              axes[i] += input_ndim;
+            if (axes[i] < -output_ndim || axes[i] >= output_ndim) {
+              fail_shape_inference(
+                  "values in 'axes' are beyond the bounds of the computed output shape");
+            }
+            if (axes[i] < 0) {
+              axes[i] += output_ndim;
+            }
           }
+
+          // sort after correcting negative axes values (if any) in the previous step
+          std::sort(axes.begin(), axes.end());
+
           int j = 0;
           for (int i = 0; i < input_ndim; ++i) {
             while (static_cast<size_t>(j) < axes.size() &&
