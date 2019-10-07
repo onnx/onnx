@@ -13,6 +13,10 @@ using namespace checker;
 using TENSOR_TYPES_MAP =
     std::unordered_map<std::string, std::vector<std::string>>;
 
+// Unfortunately, the different data-structures use different int types to
+// represent a parameter-index.
+using parameter_index = unsigned int;
+
 void VerifyTypeConstraint(
     const OpSchema& function_op,
     const FunctionProto* function_proto,
@@ -48,11 +52,11 @@ void VerifyTypeConstraint(
         op_type, function_op.since_version(), function_op.domain());
 
     // Check inputs of node:
-    auto num_formal_inputs = schema->inputs().size();
-    auto num_actual_inputs = node.input_size();
+    parameter_index num_formal_inputs = schema->inputs().size();
+    parameter_index num_actual_inputs = node.input_size();
     // The above may not be same due to optional inputs
     auto num_checked_inputs = std::min(num_formal_inputs, num_actual_inputs);
-    for (unsigned int i = 0; i < num_checked_inputs; ++i) {
+    for (parameter_index i = 0; i < num_checked_inputs; ++i) {
       auto actual_param_name = node.input(i);
       auto iter = tc_map.find(actual_param_name);
       if (iter != tc_map.end()) {
@@ -72,10 +76,10 @@ void VerifyTypeConstraint(
     }
 
     // Check outputs of node:
-    auto num_formal_outputs = schema->outputs().size();
-    auto num_actual_outputs = node.output_size();
+    parameter_index num_formal_outputs = schema->outputs().size();
+    parameter_index num_actual_outputs = node.output_size();
     auto num_checked_outputs = std::min(num_formal_outputs, num_actual_outputs);
-    for (unsigned int i = 0; i < num_checked_outputs; ++i) {
+    for (parameter_index i = 0; i < num_checked_outputs; ++i) {
       auto actual_param_name = node.output(i);
       auto iter = tc_map.find(actual_param_name);
       if (iter != tc_map.end()) {
@@ -84,7 +88,7 @@ void VerifyTypeConstraint(
         for (auto& s : types) {
           allowed_types.insert(*s);
         }
-        for (auto& actual_type : tensor_name_tc.second) {
+        for (auto& actual_type : iter.second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
                 "Output type " + actual_type + " defined in " + schema->Name() +
