@@ -989,4 +989,119 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
+
+void IfInferenceFunction1(InferenceContext& ctx) {
+  // there are no inputs so we just need to run the subgraph inferencing for
+  // then/else subgraphs and apply those to the outputs.
+  std::vector<const TypeProto*> subgraph_input_types; // none
+  std::vector<const TensorProto*> input_data; // none
+
+  std::vector<const TypeProto*> then_output_types;
+  std::vector<const TypeProto*> else_output_types;
+
+  // Run inferencing on the subgraph
+  GraphInferencer* graphInferencer =
+      ctx.getGraphAttributeInferencer("then_branch");
+  if (graphInferencer) {
+    then_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
+  if (graphInferencer) {
+    else_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  auto num_outputs = ctx.getNumOutputs();
+  auto num_then_outputs = then_output_types.size();
+  auto num_else_outputs = else_output_types.size();
+
+  // the output types for then and else should be the same
+  if (num_then_outputs != num_else_outputs) {
+    fail_type_inference(
+        "then_branch and else_branch produce different number of outputs. ",
+        num_then_outputs,
+        " != ",
+        num_else_outputs);
+  }
+
+  if (num_then_outputs != num_outputs) {
+    fail_type_inference(
+        "If node has ",
+        num_outputs,
+        " but subgraphs produce ",
+        num_then_outputs);
+  }
+
+  for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
+    auto then_output = then_output_types[i];
+    auto else_output = else_output_types[i];
+
+    if (then_output->value_case() != else_output->value_case()) {
+      fail_type_inference(
+          "Mismatched type for output ",
+          i,
+          " then=",
+          then_output->value_case(),
+          " else=",
+          else_output->value_case());
+    }
+
+    auto* if_output = ctx.getOutputType(i);
+    *if_output = *then_output;
+
+    if (then_output->has_tensor_type()) {
+      auto then_elem_type = then_output->tensor_type().elem_type();
+      auto else_elem_type = else_output->tensor_type().elem_type();
+
+      if (then_elem_type != else_elem_type) {
+        fail_type_inference(
+            "Mismatched tensor element type for output ",
+            i,
+            " then=",
+            then_elem_type,
+            " else=",
+            else_elem_type);
+      }
+
+      // merge the 'else' shape information to check it's consistent and
+      // augment the 'if' output if possible
+      mergeInShapeInfo(
+          else_output->tensor_type(), *if_output->mutable_tensor_type());
+    }
+  }
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    If,
+    1,
+    OpSchema()
+        .SetDoc("If conditional")
+        .Input(0, "cond", "Condition for the if", "B")
+        .Output(
+            0,
+            "outputs",
+            "Values that are live-out to the enclosing scope. The return values in "
+            "the `then_branch` and `else_branch` must be of the same shape and same "
+            "data type.",
+            "V",
+            OpSchema::Variadic,
+            false)
+        .Attr(
+            "then_branch",
+            "Graph to run if condition is true. Has N outputs: values you wish to "
+            "be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the else_branch.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "else_branch",
+            "Graph to run if condition is false. Has N outputs: values you wish to"
+            " be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the then_branch.",
+            AttributeProto::GRAPH)
+        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
+        .TypeAndShapeInferenceFunction(IfInferenceFunction1));
+
 } // namespace ONNX_NAMESPACE
