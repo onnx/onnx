@@ -52,7 +52,8 @@ void VerifyTypeConstraint(
         op_type, function_op.since_version(), function_op.domain());
 
     // Check inputs of node:
-    parameter_index num_formal_inputs = schema->inputs().size();
+    parameter_index num_formal_inputs =
+        static_cast<parameter_index>(schema->inputs().size());
     parameter_index num_actual_inputs = node.input_size();
     // The above may not be same due to optional inputs
     auto num_checked_inputs = std::min(num_formal_inputs, num_actual_inputs);
@@ -65,7 +66,7 @@ void VerifyTypeConstraint(
         for (auto& s : types) {
           allowed_types.insert(*s);
         }
-        for (auto& actual_type : iter.second) {
+        for (auto& actual_type : iter->second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
                 "Input type " + actual_type + " defined in " + schema->Name() +
@@ -76,7 +77,8 @@ void VerifyTypeConstraint(
     }
 
     // Check outputs of node:
-    parameter_index num_formal_outputs = schema->outputs().size();
+    parameter_index num_formal_outputs =
+        static_cast<parameter_index>(schema->outputs().size());
     parameter_index num_actual_outputs = node.output_size();
     auto num_checked_outputs = std::min(num_formal_outputs, num_actual_outputs);
     for (parameter_index i = 0; i < num_checked_outputs; ++i) {
@@ -88,7 +90,7 @@ void VerifyTypeConstraint(
         for (auto& s : types) {
           allowed_types.insert(*s);
         }
-        for (auto& actual_type : iter.second) {
+        for (auto& actual_type : iter->second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
                 "Output type " + actual_type + " defined in " + schema->Name() +
