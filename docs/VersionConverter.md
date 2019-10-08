@@ -33,14 +33,14 @@ which accepts an input `ModelProto`, the initial opset version of the model,
 and the target opset verison, and which returns a new `ModelProto` which
 is the result of apply all relevant adapters between initial_version and
 target_version. For a list of available passes, see
-[convert.h](onnx/version_converter/convert.h).
+[convert.h](/onnx/version_converter/convert.h).
 
 ## Implementing Adapters
 
 You can implement a new adapter by subclassing `Adapter`, and registering
 your new adapter with `VersionConverter::registerAdapter()`. Adapters operate
-on an in-memory graph representation defined in [ir.h](onnx/common/ir.h).
-There are a number of examples in the [adapters](onnx/version_converter/adapters)
+on an in-memory graph representation defined in [ir.h](/onnx/common/ir.h).
+There are a number of examples in the [adapters](/onnx/version_converter/adapters)
 directory.  Please ensure that all adapters convert from opset version i to i + 1 
 or i - 1, i.e. from Version 6 to Version 5 or vice versa, even if the 2 versions
 being converted between are Version 1 and Version 6.
