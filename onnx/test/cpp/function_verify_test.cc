@@ -29,9 +29,6 @@ void VerifyTypeConstraint(
   for (const auto& input : function_op.inputs()) {
     std::string name = input.GetName();
     for (const auto& t : input.GetTypes()) {
-      if (!primitive_types.count(*t)) {
-        return; // skip variable types check for now
-      }
       tc_map[name].emplace_back(*t);
     }
   }
@@ -39,9 +36,6 @@ void VerifyTypeConstraint(
   for (const auto& output : function_op.outputs()) {
     std::string name = output.GetName();
     for (const auto& t : output.GetTypes()) {
-      if (!primitive_types.count(*t)) {
-        return; // skip variable types check for now
-      }
       tc_map[name].emplace_back(*t);
     }
   }
@@ -69,8 +63,9 @@ void VerifyTypeConstraint(
         for (auto& actual_type : iter->second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
-                "Input type " + actual_type + " defined in " + schema->Name() +
-                "'s function body is not allowed in node " + op_type);
+                "Input type " + actual_type + " of parameter " +
+                actual_param_name + " of function " + function_op.Name() +
+                " is not allowed by operator " + op_type);
           }
         }
       }
@@ -93,8 +88,9 @@ void VerifyTypeConstraint(
         for (auto& actual_type : iter->second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
-                "Output type " + actual_type + " defined in " + schema->Name() +
-                "'s function body is not allowed in node " + op_type);
+                "Output type " + actual_type + " of parameter " +
+                actual_param_name + " of function " + function_op.Name() +
+                " is not allowed by operator " + op_type);
           }
         }
       }
