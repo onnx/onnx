@@ -47,7 +47,7 @@ void VerifyTypeConstraint(
     auto num_actual_inputs = static_cast<size_t>(node.input_size());
 
     for (size_t i = 0; i < num_actual_inputs; ++i) {
-      auto actual_param_name = node.input(i);
+      auto actual_param_name = node.input(static_cast<int>(i));
       auto iter = tc_map.find(actual_param_name);
       if (iter != tc_map.end()) {
         // if i >= num_formal_inputs, it is a variadic parameter corresponding
