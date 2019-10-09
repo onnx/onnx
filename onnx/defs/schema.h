@@ -211,6 +211,9 @@ class OpSchema final {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
+  // Check if input and output types fall into valid set and match each other
+  void CheckInputOutputType(struct InferenceContext&) const;
+
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
