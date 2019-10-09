@@ -13,10 +13,6 @@ using namespace checker;
 using TENSOR_TYPES_MAP =
     std::unordered_map<std::string, std::vector<std::string>>;
 
-// Unfortunately, the different data-structures use different int types to
-// represent a parameter-index.
-using parameter_index = unsigned int;
-
 void VerifyTypeConstraint(
     const OpSchema& function_op,
     const FunctionProto* function_proto,
@@ -45,17 +41,19 @@ void VerifyTypeConstraint(
     const OpSchema* schema = OpSchemaRegistry::Schema(
         op_type, function_op.since_version(), function_op.domain());
 
-    // Check inputs of node:
-    parameter_index num_formal_inputs =
-        static_cast<parameter_index>(schema->inputs().size());
-    parameter_index num_actual_inputs = node.input_size();
-    // The above may not be same due to optional inputs
-    auto num_checked_inputs = std::min(num_formal_inputs, num_actual_inputs);
-    for (parameter_index i = 0; i < num_checked_inputs; ++i) {
+    // Check that the types of actual inputs, if known, are legal as per schema
+    // of called op:
+    auto num_formal_inputs = static_cast<size_t>(schema->inputs().size());
+    auto num_actual_inputs = static_cast<size_t>(node.input_size());
+
+    for (size_t i = 0; i < num_actual_inputs; ++i) {
       auto actual_param_name = node.input(i);
       auto iter = tc_map.find(actual_param_name);
       if (iter != tc_map.end()) {
-        const auto& types = schema->inputs().at(i).GetTypes();
+        // if i >= num_formal_inputs, it is a variadic parameter corresponding
+        // to the last formal parameter.
+        auto formal_i = std::min(i, num_formal_inputs - 1);
+        const auto& types = schema->inputs().at(formal_i).GetTypes();
         std::unordered_set<std::string> allowed_types;
         for (auto& s : types) {
           allowed_types.insert(*s);
@@ -71,30 +69,9 @@ void VerifyTypeConstraint(
       }
     }
 
-    // Check outputs of node:
-    parameter_index num_formal_outputs =
-        static_cast<parameter_index>(schema->outputs().size());
-    parameter_index num_actual_outputs = node.output_size();
-    auto num_checked_outputs = std::min(num_formal_outputs, num_actual_outputs);
-    for (parameter_index i = 0; i < num_checked_outputs; ++i) {
-      auto actual_param_name = node.output(i);
-      auto iter = tc_map.find(actual_param_name);
-      if (iter != tc_map.end()) {
-        const auto& types = schema->outputs().at(i).GetTypes();
-        std::unordered_set<std::string> allowed_types;
-        for (auto& s : types) {
-          allowed_types.insert(*s);
-        }
-        for (auto& actual_type : iter->second) {
-          if (allowed_types.find(actual_type) == allowed_types.end()) {
-            fail_check(
-                "Output type " + actual_type + " of parameter " +
-                actual_param_name + " of function " + function_op.Name() +
-                " is not allowed by operator " + op_type);
-          }
-        }
-      }
-    }
+    // No simple check exists for outputs: we need to integrate type inference
+    // to identify the possible output types and verify that they are included
+    // in the function-schema.
   }
 
   ++counter;
