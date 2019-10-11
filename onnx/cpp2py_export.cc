@@ -61,7 +61,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         std::string bytes = "";
         if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
-        return py::bytes(bytes);});
+        return py::bytes(bytes);
+      });
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -109,7 +110,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("INTS", AttributeProto::INTS)
       .value("STRINGS", AttributeProto::STRINGS)
       .value("TENSORS", AttributeProto::TENSORS)
-      .value("GRAPHS", AttributeProto::GRAPHS);
+      .value("GRAPHS", AttributeProto::GRAPHS)
+      .value("SPARSE_TENSOR", AttributeProto::SPARSE_TENSOR)
+      .value("SPARSE_TENSORS", AttributeProto::SPARSE_TENSORS);
 
   py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
       .value("COMMON", OpSchema::SupportType::COMMON)
@@ -200,6 +203,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       });
 
   checker.def(
+      "check_sparse_tensor",
+      [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+        SparseTensorProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_sparse_tensor(proto, ctx);
+      });
+
+  checker.def(
       "check_attribute",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         AttributeProto proto{};
@@ -283,14 +294,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
 
-  shape_inference.def("infer_shapes", [](const py::bytes& bytes) {
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
-    shape_inference::InferShapes(proto);
+    shape_inference::InferShapes(proto, check_type);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  });
+  }, "bytes"_a, "check_type"_a = false);
 }
 
 } // namespace ONNX_NAMESPACE

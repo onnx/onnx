@@ -41,11 +41,9 @@ std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
- of the given input. The input is a 2-D tensor (Tensor<float>) of size
-(batch_size x input_feature_dimensions). The output tensor has the same shape
-and contains the {name} values of the corresponding input.
+ of the given input.
 
-Input does not need to explicitly be a 2D vector; rather, it will be
+The input does not need to explicitly be a 2D vector; rather, it will be
 coerced into one. For an arbitrary n-dimensional tensor
 input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
 the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -54,7 +52,8 @@ case where axis=1, this means the input tensor will be coerced into a 2D tensor
 of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
 In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
 Each of these dimensions must be matched correctly, or else the operator
-will throw errors.
+will throw errors. The output tensor has the same shape
+and contains the {name} values of the corresponding input.
 )DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{description}", description);
@@ -63,7 +62,8 @@ will throw errors.
         "axis",
         "Describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
-        "the batch_size",
+        "the batch_size. Negative value means counting dimensions "
+        "from the back. Accepted range is [-r, r-1] where r = rank(input).",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(
@@ -82,7 +82,28 @@ will throw errors.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      
+      // Shape inference starts
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+
+      // Validate the value of 'axis'
+      const TensorShapeProto& input_shape =
+        ctx.getInputType(0)->tensor_type().shape();
+      int r = input_shape.dim_size();
+      int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+      if (axis < -r || axis >= r) {
+          fail_shape_inference(
+         "'axis' must be in [" -r, " , " , (r-1) , "]. Its actual value is: ", axis);
+      }
+
+      // Shape inference
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+    });
   };
 }
 
@@ -608,28 +629,36 @@ ONNX_OPERATOR_SET_SCHEMA(
     8,
     OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("mean")));
 
-static const char* Clip_ver6_doc = R"DOC(
+static const char* Clip_ver11_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
-specified with arguments 'min' and 'max'. They default to
-numeric_limits::lowest() and numeric_limits::max() respectively.
+specified by the inputs 'min' and 'max'. They default to
+numeric_limits::lowest() and numeric_limits::max(), respectively.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
-    6,
+    11,
     OpSchema()
-        .SetDoc(Clip_ver6_doc)
-        .Attr(
+        .SetDoc(Clip_ver11_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor whose elements to be clipped",
+            "T")
+        .Input(
+            1,
             "min",
-            "Minimum value, under which element is replaced by min",
-            AttributeProto::FLOAT,
-            std::numeric_limits<float>::lowest())
-        .Attr(
+            "Minimum value, under which element is replaced by min. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            2,
             "max",
-            "Maximum value, above which element is replaced by max",
-            AttributeProto::FLOAT,
-            std::numeric_limits<float>::max())
-        .Input(0, "input", "Input tensor whose elements to be clipped", "T")
+            "Maximum value, above which element is replaced by max. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
         .Output(0, "output", "Output tensor with clipped input elements", "T")
         .TypeConstraint(
             "T",
@@ -639,19 +668,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
-    1,
+    11,
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator("softmax", "normalized exponential")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
-    1,
+    11,
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
-    1,
+    11,
     OpSchema().FillUsing(SoftmaxFamilyDocGenerator(
         "hardmax",
         "1 for the first maximum value, and 0 for all others")));
@@ -696,7 +725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Gemm_ver9_doc = R"DOC(General Matrix multiplication:
+static const char* Gemm_ver11_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
 A' = transpose(A) if transA else A
@@ -711,11 +740,13 @@ computation if attribute transA is non-zero, same for B and transB.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    9,
+    11,
     OpSchema()
         .SetDoc(
-            Gemm_ver9_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+            Gemm_ver11_doc +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B") +
+            "\n" +
+            GenerateOptionalArgumentsDoc())
         .Input(
             0,
             "A",
@@ -733,9 +764,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "C",
-            "Input tensor C. "
+            "Optional input tensor C. "
+            "If not specified, the computation is done as if C is a scalar 0. "
             "The shape of C should be unidirectional broadcastable to (M, N).",
-            "T")
+            "T",
+            OpSchema::Optional)
         .Output(0, "Y", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
             "T",
@@ -778,10 +811,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2)
+            if (first_input_shape.dim_size() != 2) {
               fail_shape_inference("First input does not have rank 2");
-            if (second_input_shape.dim_size() != 2)
+            }
+            if (second_input_shape.dim_size() != 2) {
               fail_shape_inference("Second input does not have rank 2");
+            }
             updateOutputShape(
                 ctx,
                 0,
@@ -890,24 +925,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           matmulShapeInference(ctx, 0, 1);
         }));
 
-static const char* TopK_ver10_doc = R"DOC(
-Retrieve the top-K elements along a specified axis. Given an input tensor of
+static const char* TopK_ver11_doc = R"DOC(
+Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
     which contains the values of the top k elements along the specified axis
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-   
-Given two equivalent values, this operator uses the indices along the axis  as
+
+If "largest" is 1 (the default value) then the k largest elements are returned.
+If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+
+Given two equivalent values, this operator uses the indices along the axis as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    10,
+    11,
     OpSchema()
-        .SetDoc(TopK_ver10_doc)
+        .SetDoc(TopK_ver11_doc)
         .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
         .Input(
             1,
@@ -929,17 +968,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "I")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors.")
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
             "Constrain index tensor to int64")
         .Attr(
             "axis",
-            "Dimension on which to do the sort.",
+            "Dimension on which to do the sort. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
+        .Attr(
+            "largest",
+            "Whether to return the top-K largest or smallest elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "sorted",
+            "Whether to return the elements in sorted order.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference:
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1513,7 +1563,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           AttributeProto::INT,
           static_cast<int64_t>(0))
       .Input(0, "x", "An input tensor that is to be processed.", "T")
-      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x))", "T2")
+      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
+            "Negative value means counting dimensions from the back.", "T2")
       .Output(0, "y",
               "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
               "T")
@@ -1527,13 +1578,8 @@ ONNX_OPERATOR_SET_SCHEMA(
       .TypeConstraint("T2", {
         "tensor(int32)",
         "tensor(int64)"}, "axis tensor can be int32 or int64 only")
-      .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-        // Type inference
-        ONNX_NAMESPACE::propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        // Output has the same shape as input
-        ONNX_NAMESPACE::propagateShapeFromInputToOutput(ctx, 0, 0);
-        return;
-      }));
+      .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput)
+      );
 
 static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
@@ -1563,5 +1609,60 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Det_ver11_doc = R"DOC(
+Det calculates determinant of a square matrix or batches of square matrices.
+Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+and the inner-most 2 dimensions form square matrices.
+The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Det,
+    11,
+    OpSchema()
+        .SetDoc(Det_ver11_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to floating-point tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            TensorShapeProto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            const int rank = static_cast<int>(input_shape.dim_size());
+
+            if (rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+
+            const auto mat_w = input_shape.dim(rank - 1);
+            const auto mat_h = input_shape.dim(rank - 2);
+            if (mat_w.has_dim_value() &&
+                mat_h.has_dim_value() &&
+                (mat_w.dim_value() != mat_h.dim_value())) {
+              fail_shape_inference(
+                  "The inner-most 2 dimensions must have the same size (mat_w:",
+                  mat_w.dim_value(),
+                  " != mat_h:",
+                  mat_h.dim_value(),
+                  ").");
+            }
+
+            for (int i=0; i < rank - 2; ++i) {
+              auto* dim = output_shape->add_dim();
+              *dim = input_shape.dim(i);
+            }
+          }
+        }));
 
 } // namespace ONNX_NAMESPACE

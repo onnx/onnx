@@ -42,6 +42,7 @@ extras_require = {}
 ################################################################################
 
 ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
+ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 
@@ -180,6 +181,8 @@ class cmake_build(setuptools.Command):
                     cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
+            if ONNX_VERIFY_PROTO3:
+                cmake_args.append('-DONNX_VERIFY_PROTO3=1')
             if ONNX_BUILD_TESTS:
                 cmake_args.append('-DONNX_BUILD_TESTS=ON')
             if 'CMAKE_ARGS' in os.environ:
@@ -286,7 +289,7 @@ install_requires.extend([
     'protobuf',
     'numpy',
     'six',
-    'typing>=3.6.4',
+    'typing>=3.6.4; python_version < "3.5"',
     'typing-extensions>=3.6.2.1',
 ])
 
@@ -298,8 +301,6 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
-tests_require.append('typing')
-tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2

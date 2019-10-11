@@ -35,7 +35,7 @@ OpSchema& Opschema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFun
 ```
 
 `InferenceFunction` is defined in
-[shape_inference.h](onnx/defs/shape_inference.h), along with the core
+[shape_inference.h](/onnx/defs/shape_inference.h), along with the core
 interface struct `InferenceContext` and an assortment of helper
 methods. `InferenceContext` is the core struct which is provided to
 your inference function. It allows accessing information about the
