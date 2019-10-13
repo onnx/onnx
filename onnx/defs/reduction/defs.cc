@@ -27,7 +27,7 @@ False instead of True.)DOC";
         "keepdims",
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1));      
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
@@ -106,7 +106,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMean,
     11,
-    OpSchema().FillUsing(ReduceDocGenerator("mean")));
+    OpSchema().FillUsing(ReduceDocGenerator("mean")));   
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceProd,

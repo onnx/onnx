@@ -6176,7 +6176,7 @@ The Function can be represented as a function.
 #### Examples
 
 <details>
-<summary>6_dimensions</summary>
+<summary>6D</summary>
 
 ```python
 

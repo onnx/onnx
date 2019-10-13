@@ -3376,7 +3376,7 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GroupNormalization
 There are 4 test cases, listed as following:
 <details>
-<summary>6_dimensions</summary>
+<summary>6D</summary>
 
 ```python
 

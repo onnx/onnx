@@ -30,8 +30,9 @@ def GroupNorm4d(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.
     var = np.var(x, axis=(2, 3, 4), keepdims=True)
     x = (x - mean) / np.sqrt(var + eps)
     x = x.reshape((N, C, H, W))
-    return   x * gamma + beta
-    
+    return x * gamma + beta
+
+
 def GroupNormNd(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
     originalShape = x.shape
     N = x.shape[0]
