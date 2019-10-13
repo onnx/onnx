@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
+Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3082,116 +3082,6 @@ expect(node, inputs=[a, b, c], outputs=[y],
 ```
 
 </details>
-
-
-### GroupNormalization
-There are 4 test cases, listed as following:
-<details>
-<summary>6_dimensions</summary>
-
-```python
-
-# A 4 dimension
-x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
-
-b = np.array([0, 0, 0, 0]).astype(np.float32)
-s = np.array([1, 1, 1, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 1e-05
-
-y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
-```
-
-</details>
-<details>
-<summary>groupnormalization</summary>
-
-```python
-
-x = np.array([[[[4., 5.], [0., 6.]],
-               [[6., 6.], [9., 6.]],
-               [[3., 4.], [6., 0.]],
-               [[6., 6.], [2., 1.]]],
-              [[[3., 3.], [5., 4.]],
-               [[9., 1.], [2., 1.]],
-               [[6., 2.], [4., 2.]],
-               [[1., 1.], [6., 1.]]]]).astype(np.float32)
-
-b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
-s = np.array([1, 1, 0, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 1e-05
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
-```
-
-</details>
-<details>
-<summary>large_eps</summary>
-
-```python
-
-x = np.random.rand(2, 4, 10, 12).astype(np.float32)
-
-b = np.array([0, 0, 0, 0]).astype(np.float32)
-s = np.array([1, 1, 1, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 10.0
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
-```
-
-</details>
-<details>
-<summary>large_num_groups</summary>
-
-```python
-
-x = np.random.rand(2, 18, 10, 12).astype(np.float32)
-
-b = np.zeros([18]).astype(np.float32)
-s = np.ones([18]).astype(np.float32)
-
-num_groups = 9
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups)
-
-y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
-```
-
-</details>
-
-
-### HardSigmoid
-There are 2 test cases, listed as following:
 <details>
 <summary>beta</summary>
 
@@ -3490,7 +3380,7 @@ There are 4 test cases, listed as following:
 
 ```python
 
-# A 4 dimension 
+# A 4 dimension
 x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
 
 b = np.array([0, 0, 0, 0]).astype(np.float32)
@@ -3506,7 +3396,7 @@ node = onnx.helper.make_node('GroupNormalization',
                              outputs=['y'],
                              num_groups=num_groups,
                              epsilon=eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')        
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
 ```
 
 </details>
@@ -3514,6 +3404,7 @@ expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
 <summary>groupnormalization</summary>
 
 ```python
+
 
 x = np.array([[[[4., 5.], [0., 6.]],
                [[6., 6.], [9., 6.]],
@@ -3524,21 +3415,12 @@ x = np.array([[[[4., 5.], [0., 6.]],
                [[6., 2.], [4., 2.]],
                [[1., 1.], [6., 1.]]]]).astype(np.float32)
 
-<<<<<<< HEAD
-b = np.array([1.0, 1.5, -1.0, 1.5]).astype(np.float32)
-<<<<<<< HEAD
-s = np.array([0, 1, 0, 1]).astype(np.float32)
-=======
-s = np.array([[0, 1, 0, 1]]).astype(np.float32)
->>>>>>> Definition of group normalization
-=======
+
 b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
 s = np.array([1, 1, 0, 1]).astype(np.float32)
->>>>>>> Adding support for n dimensional group norm
 
 num_groups = 2
 eps = 1e-05
-
 
 node = onnx.helper.make_node('GroupNormalization',
                              inputs=['x', 's', 'b'],
@@ -3547,6 +3429,7 @@ node = onnx.helper.make_node('GroupNormalization',
                              epsilon=eps)
 
 y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+
 expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
 ```
 
@@ -3593,7 +3476,7 @@ node = onnx.helper.make_node('GroupNormalization',
                              num_groups=num_groups)
 
 y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')        
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
 ```
 
 </details>

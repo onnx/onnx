@@ -6,7 +6,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, int version = 1) {
+std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
@@ -28,13 +28,6 @@ False instead of True.)DOC";
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    if (version == 11) {
-      schema.Attr(
-          "exclude_axes",
-          "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0));
-    }        
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
@@ -70,19 +63,6 @@ False instead of True.)DOC";
         }
         if (axes[i] < 0)
           axes[i] += input_ndim;
-      }
-
-      auto exclude_axes_proto = ctx.getAttribute("exclude_axes");      
-      if(exclude_axes_proto) {
-        if (exclude_axes_proto->i() == 1) {
-          std::vector<int64_t> includedAxes;
-          for (int i = 0; i < input_ndim; ++i) {
-            if(std::find(axes.begin(), axes.end(), i) == axes.end()) {
-              includedAxes.push_back(i); 
-            }
-          }
-          axes = includedAxes;
-        }
       }
 
       // do we need handle negative axis?
@@ -127,11 +107,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     ReduceMean,
     11,
     OpSchema().FillUsing(ReduceDocGenerator("mean")));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceMean,
-    11,
-    OpSchema().FillUsing(ReduceDocGenerator("mean", 11)));    
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceProd,

@@ -9,17 +9,29 @@ import onnx
 from ..base import Base
 from . import expect
 
+'''
+# x: input features with shape [N,C,H,W]
+# gamma, beta: scale and offset, with shape [1,C,1,1]
+# G: number of groups for GN
+
+N, C, H, W = x.shape
+x = tf.reshape(x, [N, G, C // G, H, W])
+mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
+x = (x−mean) / tf.sqrt(var + eps)
+x = tf.reshape(x, [N, C, H, W])
+return x∗gamma + beta
+'''
 
 def GroupNorm4d(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
+
     N, C, H, W = x.shape
     x = x.reshape((N, G, C // G, H, W))
     mean = np.mean(x, axis=(2, 3, 4), keepdims=True)
     var = np.var(x, axis=(2, 3, 4), keepdims=True)
     x = (x - mean) / np.sqrt(var + eps)
     x = x.reshape((N, C, H, W))
-    return x * gamma + beta
-
-
+    return   x * gamma + beta
+    
 def GroupNormNd(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
     originalShape = x.shape
     N = x.shape[0]
@@ -48,6 +60,7 @@ class GroupNormalization(Base):
     @staticmethod
     def export():  # type: () -> None
 
+ 
         x = np.array([[[[4., 5.], [0., 6.]],
                        [[6., 6.], [9., 6.]],
                        [[3., 4.], [6., 0.]],
@@ -57,6 +70,7 @@ class GroupNormalization(Base):
                        [[6., 2.], [4., 2.]],
                        [[1., 1.], [6., 1.]]]]).astype(np.float32)
 
+        
         b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
         s = np.array([1, 1, 0, 1]).astype(np.float32)
 
@@ -70,7 +84,9 @@ class GroupNormalization(Base):
                                      epsilon=eps)
 
         y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+
         expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
+
 
     @staticmethod
     def export_large_eps():  # type: () -> None
@@ -92,6 +108,7 @@ class GroupNormalization(Base):
         y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
         expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
 
+    
     @staticmethod
     def export_large_num_groups():  # type: () -> None
 
@@ -111,7 +128,7 @@ class GroupNormalization(Base):
         expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
 
     @staticmethod
-    def export_6_dimensions():  # type: () -> None
+    def export_6D():  # type: () -> None
 
         # A 4 dimension
         x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)

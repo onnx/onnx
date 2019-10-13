@@ -159,19 +159,8 @@
   * <a href="#Xor">Xor</a>
 
   **Operators with function registered:**
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
-=======
   * <a href="#GroupNormalization">GroupNormalization</a>
->>>>>>> Initial definition of group-norm
-=======
-  * <a href="#GroupNormalization">GroupNormalization</a>
->>>>>>> Definition of group normalization
-=======
-  * <a href="#GroupNormalization">GroupNormalization</a>
->>>>>>> Initial definition of group-norm
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#Range">Range</a>
 
@@ -4814,7 +4803,7 @@ Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -5679,337 +5668,8 @@ expect(node, inputs=[a, b, c], outputs=[y],
 </details>
 
 
-<<<<<<< HEAD
 <details>
 <summary>beta</summary>
-=======
-### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
-
-  Carries out group normalization as described in the paper
-  https://arxiv.org/abs/1803.08494. 
-
-#### Version
-
-This version of the operator has been available since version 11 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>num_groups</tt> : int (required)</dt>
-<dd>The number of groups. It should be greater than 0 and less than or equal to C</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dt><tt>scale</tt> : T</dt>
-<dd>The input 1-dimensional scale tensor of size C.</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>The input 1-dimensional bias tensor of size C.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The output tensor of the same shape as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-#### Function
-
-The Function can be represented as a function.
-
-
-#### Examples
-
-<details>
-<summary>6_dimensions</summary>
-
-```python
-
-# A 4 dimension
-x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
-
-b = np.array([0, 0, 0, 0]).astype(np.float32)
-s = np.array([1, 1, 1, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 1e-05
-
-y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
-```
-
-</details>
-
-
-<details>
-<summary>groupnormalization</summary>
-
-```python
-
-x = np.array([[[[4., 5.], [0., 6.]],
-               [[6., 6.], [9., 6.]],
-               [[3., 4.], [6., 0.]],
-               [[6., 6.], [2., 1.]]],
-              [[[3., 3.], [5., 4.]],
-               [[9., 1.], [2., 1.]],
-               [[6., 2.], [4., 2.]],
-               [[1., 1.], [6., 1.]]]]).astype(np.float32)
-
-b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
-s = np.array([1, 1, 0, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 1e-05
-
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
-```
-
-</details>
-
-
-<<<<<<< HEAD
-<details>
-<summary>large_eps</summary>
-=======
-### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
-
-  Carries out group normalization as described in the paper
-  https://arxiv.org/abs/1803.08494. 
-
-#### Version
-
-This version of the operator has been available since version 11 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>num_groups</tt> : int (required)</dt>
-<dd>The number of groups. It should be greater than 0 and less than or equal to C</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dt><tt>scale</tt> : T</dt>
-<dd>The input 1-dimensional scale tensor of size C.</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>The input 1-dimensional bias tensor of size C.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The output tensor of the same shape as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-#### Function
-
-The Function can be represented as a function.
-
-
-#### Examples
-
-<details>
-<summary>6_dimensions</summary>
-
-```python
-
-# A 4 dimension 
-x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
-
-b = np.array([0, 0, 0, 0]).astype(np.float32)
-s = np.array([1, 1, 1, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 1e-05
-
-y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')        
-```
-
-</details>
-
-
-<details>
-<summary>groupnormalization</summary>
-
-```python
-
-x = np.array([[[[4., 5.], [0., 6.]],
-               [[6., 6.], [9., 6.]],
-               [[3., 4.], [6., 0.]],
-               [[6., 6.], [2., 1.]]],
-              [[[3., 3.], [5., 4.]],
-               [[9., 1.], [2., 1.]],
-               [[6., 2.], [4., 2.]],
-               [[1., 1.], [6., 1.]]]]).astype(np.float32)
-
-b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
-s = np.array([1, 1, 0, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 1e-05
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
-```
-
-</details>
-
-
-<details>
-<summary>large_eps</summary>
-
-```python
-
-x = np.random.rand(2, 4, 10, 12).astype(np.float32)
-
-b = np.array([0, 0, 0, 0]).astype(np.float32)
-s = np.array([1, 1, 1, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 10.0
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
-```
-
-</details>
-
-
-<details>
-<summary>large_num_groups</summary>
-
-```python
-
-x = np.random.rand(2, 18, 10, 12).astype(np.float32)
-
-b = np.zeros([18]).astype(np.float32)
-s = np.ones([18]).astype(np.float32)
-
-num_groups = 9
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups)
-
-y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
-```
-
-</details>
-
-
-### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
->>>>>>> Initial definition of group-norm
-
-```python
-
-x = np.random.rand(2, 4, 10, 12).astype(np.float32)
-
-b = np.array([0, 0, 0, 0]).astype(np.float32)
-s = np.array([1, 1, 1, 1]).astype(np.float32)
-
-num_groups = 2
-eps = 10.0
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups,
-                             epsilon=eps)
-
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
-```
-
-</details>
-
-
-<details>
-<summary>large_num_groups</summary>
-
-```python
-
-x = np.random.rand(2, 18, 10, 12).astype(np.float32)
-
-b = np.zeros([18]).astype(np.float32)
-s = np.ones([18]).astype(np.float32)
-
-num_groups = 9
-
-node = onnx.helper.make_node('GroupNormalization',
-                             inputs=['x', 's', 'b'],
-                             outputs=['y'],
-                             num_groups=num_groups)
-
-y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')        
-```
-
-</details>
-
-
-### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
->>>>>>> Definition of group normalization
 
 ```python
 node = onnx.helper.make_node(
@@ -6105,27 +5765,9 @@ expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_single_elem_vector_bias')
 ```
 
-<<<<<<< HEAD
 </details>
-=======
-x = np.array([[[[4., 5.], [0., 6.]],
-               [[6., 6.], [9., 6.]],
-               [[3., 4.], [6., 0.]],
-               [[6., 6.], [2., 1.]]],
-              [[[3., 3.], [5., 4.]],
-               [[9., 1.], [2., 1.]],
-               [[6., 2.], [4., 2.]],
-               [[1., 1.], [6., 1.]]]]).astype(np.float32)
 
-b = np.array([1.0, 1.5, -1.0, 1.5]).astype(np.float32)
-s = np.array([0, 1, 0, 1]).astype(np.float32)
->>>>>>> Working exapnded groupnorm
 
-num_groups = 2
-eps = 1e-05
-
-<<<<<<< HEAD
-<<<<<<< HEAD
 <details>
 <summary>default_vector_bias</summary>
 
@@ -6142,34 +5784,6 @@ y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_vector_bias')
 ```
-=======
-#y = x * s + b
-'''
-y = np.array([[[[-0.5241, -0.1048], [-2.2014,  0.3145]],
-               [[ 1.4717,  1.4717], [ 3.3586,  1.4717]],
-               [[ 0.2236, -0.2236], [-1.1180,  1.5652]],
-               [[ 2.6770,  2.6770], [-0.0062, -0.6770]]],
-              [[[-0.2041, -0.2041], [ 0.6124,  0.2041]],
-               [[ 4.3680, -0.5309], [ 0.0814, -0.5309]],
-               [[-1.5416,  0.4316], [-0.5550,  0.4316]],
-               [[-0.3874, -0.3874], [ 3.3123, -0.3874]]]]).astype(np.float32)
-'''
-
-=======
->>>>>>> Updating after code review
-y = np.array([[[[ 1.0000,  1.0000], [ 1.0000,  1.0000]],
-               [[ 1.8145,  1.8145],[ 3.0724,  1.8145]],
-               [[-1.0000, -1.0000],[-1.0000, -1.0000]],
-               [[ 2.6180,  2.6180],[ 0.8292,  0.3820]]],
-              [[[ 1.0000,  1.0000],[ 1.0000,  1.0000]],
-               [[ 3.7454,  0.4794],[ 0.8876,  0.4794]],
-               [[-1.0000, -1.0000],[-1.0000, -1.0000]],
-               [[ 0.5751,  0.5751],[ 3.0416,  0.5751]]]]).astype(np.float32)
-
-node = onnx.helper.make_node('GroupNormalization', inputs=['x', 's', 'b'], outputs=['y'], num_groups=num_groups, epsilon=eps)        
-<<<<<<< HEAD
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_example')
->>>>>>> Working exapnded groupnorm
 
 </details>
 
@@ -6210,9 +5824,6 @@ c = np.zeros([1, 4]).astype(np.float32)
 y = gemm_reference_implementation(a, b, c, transA=1)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_transposeA')
-=======
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
->>>>>>> Updating after code review
 ```
 
 </details>
@@ -6509,6 +6120,169 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_bcast')
+```
+
+</details>
+
+
+### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
+
+  Carries out group normalization as described in the paper
+  https://arxiv.org/abs/1803.08494. 
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>num_groups</tt> : int (required)</dt>
+<dd>The number of groups. It should be greater than 0 and less than or equal to C</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>The input 1-dimensional scale tensor of size C.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output tensor of the same shape as input</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+
+#### Examples
+
+<details>
+<summary>6_dimensions</summary>
+
+```python
+
+# A 4 dimension
+x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
+
+b = np.array([0, 0, 0, 0]).astype(np.float32)
+s = np.array([1, 1, 1, 1]).astype(np.float32)
+
+num_groups = 2
+eps = 1e-05
+
+y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=eps)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
+```
+
+</details>
+
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+
+
+x = np.array([[[[4., 5.], [0., 6.]],
+               [[6., 6.], [9., 6.]],
+               [[3., 4.], [6., 0.]],
+               [[6., 6.], [2., 1.]]],
+              [[[3., 3.], [5., 4.]],
+               [[9., 1.], [2., 1.]],
+               [[6., 2.], [4., 2.]],
+               [[1., 1.], [6., 1.]]]]).astype(np.float32)
+
+
+b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
+s = np.array([1, 1, 0, 1]).astype(np.float32)
+
+num_groups = 2
+eps = 1e-05
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=eps)
+
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
+```
+
+</details>
+
+
+<details>
+<summary>large_eps</summary>
+
+```python
+
+x = np.random.rand(2, 4, 10, 12).astype(np.float32)
+
+b = np.array([0, 0, 0, 0]).astype(np.float32)
+s = np.array([1, 1, 1, 1]).astype(np.float32)
+
+num_groups = 2
+eps = 10.0
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=eps)
+
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
+```
+
+</details>
+
+
+<details>
+<summary>large_num_groups</summary>
+
+```python
+
+x = np.random.rand(2, 18, 10, 12).astype(np.float32)
+
+b = np.zeros([18]).astype(np.float32)
+s = np.ones([18]).astype(np.float32)
+
+num_groups = 9
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups)
+
+y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
 ```
 
 </details>
@@ -13215,30 +12989,13 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_a
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 Other versions of this operator: <a href="Changelog.md#ReduceSum-1">ReduceSum-1</a>
-=======
-Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>
->>>>>>> Adding support for n dimensional group norm
-=======
-Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>
->>>>>>> Adding support for n dimensional group norm
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<<<<<<< HEAD
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
-=======
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>exclude_axes</tt> : int (default is 0)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
-<<<<<<< HEAD
->>>>>>> Adding support for n dimensional group norm
-=======
->>>>>>> Adding support for n dimensional group norm
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>

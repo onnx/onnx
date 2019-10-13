@@ -1686,6 +1686,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           FunctionBodyHelper::Const<int64_t>("N_End", 1),
           FunctionBodyHelper::Const<int64_t>("C_Start", 1),
           FunctionBodyHelper::Const<int64_t>("C_End", 2),
+        
+          FunctionBodyHelper::Const<int64_t>("H_Start", 2),
+          FunctionBodyHelper::Const<int64_t>("H_End", 3),
+          FunctionBodyHelper::Const<int64_t>("W_Start", 3),
+          FunctionBodyHelper::Const<int64_t>("W_End", INT_MAX),
+
+          
           FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
           FunctionBodyHelper::Const<int64_t>("H_W_End", INT_MAX),
           FunctionBodyHelper::ConstOfShape<int64_t>("One", {1}, {1}),
@@ -1700,18 +1707,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           {{"N"}, "Slice", {"X_Shape", "N_Start", "N_End"}},
           {{"C"}, "Slice", {"X_Shape", "C_Start", "C_End"}},
           {{"H_W"}, "Slice", {"X_Shape", "H_W_Start", "H_W_End"}},
+          {{"H"}, "Slice", {"X_Shape", "H_Start", "H_End"}},
+          {{"W"}, "Slice", {"X_Shape", "W_Start", "W_End"}},
+
+          // To support multi dimension inputs flatten to 2D [D1, D2 * D3 * ... * Dn]
+          {{"W'"}, "ReduceProd", {"W"}, {{"axes", std::vector<int64_t>{0}}, {"keepdims", (int64_t)1}}},
 
           //x = tf.reshape(x, [N, G, C // G, H, W])
           {{"C/G"}, "Div", {"C", "G"}},
-          {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H_W"}, {{"axis", (int64_t)0}}},
+          {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H", "W'"}, {{"axis", (int64_t)0}}},
           {{"X_Reshape"}, "Reshape", {"input", "X_NewShape"}},
 
           //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
-          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{0, 1}}, {"exclude_axes", (int64_t)1}}},
+          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
           {{"EX_squared"}, "Pow", {"Mean", "Exponent"}},
           {{"X_squared"}, "Pow", {"X_Reshape", "Exponent"}},
-          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{0, 1}}, {"exclude_axes", (int64_t)1}}},
+          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
           {{"Var"}, "Sub", {"E_Xsquared", "EX_squared"}},
+
 
           //x = (x−mean) / tf.sqrt(var + eps)
           {{"Var+Eps"}, "Add", {"Var", "EPS"}},
@@ -1746,6 +1759,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     10,
     OpSchema()
+        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
+        .Attr(
             "ratio",
             "The ratio of random dropout",
             AttributeProto::FLOAT,
@@ -1757,7 +1772,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain output mask types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
           if (ctx.getNumOutputs() == 2) {
+            updateOutputElemType(ctx, 1, TensorProto::BOOL);
+            if (hasNInputShapes(ctx, 1)) {
+              propagateShapeFromInputToOutput(ctx, 0, 1);
+            }
+          }
+}));
+            
 
 static const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,

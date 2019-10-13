@@ -636,9 +636,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gemm);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, If);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GroupNormalization);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ReduceMean);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GroupNormalization);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ReduceMean);
 
 // Iterate over schema from ai.onnx version 11
 class OpSet_Onnx_ver11 {
@@ -710,10 +707,7 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, If)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GroupNormalization)>());           
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ReduceMean)>());      
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GroupNormalization)>());           
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ReduceMean)>());      
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GroupNormalization)>());    
   }
 };
 
