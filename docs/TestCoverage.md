@@ -3387,15 +3387,15 @@ b = np.array([0, 0, 0, 0]).astype(np.float32)
 s = np.array([1, 1, 1, 1]).astype(np.float32)
 
 num_groups = 2
-eps = 1e-05
+epsilon = 1e-05
 
-y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
+y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, epsilon)
 
 node = onnx.helper.make_node('GroupNormalization',
                              inputs=['x', 's', 'b'],
                              outputs=['y'],
                              num_groups=num_groups,
-                             epsilon=eps)
+                             epsilon=epsilon)
 expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
 ```
 
@@ -3420,22 +3420,22 @@ b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
 s = np.array([1, 1, 0, 1]).astype(np.float32)
 
 num_groups = 2
-eps = 1e-05
+epsilon = 1e-05
 
 node = onnx.helper.make_node('GroupNormalization',
                              inputs=['x', 's', 'b'],
                              outputs=['y'],
                              num_groups=num_groups,
-                             epsilon=eps)
+                             epsilon=epsilon)
 
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, epsilon)
 
 expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
 ```
 
 </details>
 <details>
-<summary>large_eps</summary>
+<summary>large_epsilon</summary>
 
 ```python
 
@@ -3445,16 +3445,16 @@ b = np.array([0, 0, 0, 0]).astype(np.float32)
 s = np.array([1, 1, 1, 1]).astype(np.float32)
 
 num_groups = 2
-eps = 10.0
+epsilon = 10.0
 
 node = onnx.helper.make_node('GroupNormalization',
                              inputs=['x', 's', 'b'],
                              outputs=['y'],
                              num_groups=num_groups,
-                             epsilon=eps)
+                             epsilon=epsilon)
 
-y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, epsilon)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_epsilon')
 ```
 
 </details>

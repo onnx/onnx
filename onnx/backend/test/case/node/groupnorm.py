@@ -9,31 +9,19 @@ import onnx
 from ..base import Base
 from . import expect
 
-'''
-# x: input features with shape [N,C,H,W]
-# gamma, beta: scale and offset, with shape [1,C,1,1]
-# G: number of groups for GN
 
-N, C, H, W = x.shape
-x = tf.reshape(x, [N, G, C // G, H, W])
-mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
-x = (x−mean) / tf.sqrt(var + eps)
-x = tf.reshape(x, [N, C, H, W])
-return x∗gamma + beta
-'''
-
-def GroupNorm4d(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
+def GroupNorm4d(x, gamma, beta, G, epsilon=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
 
     N, C, H, W = x.shape
     x = x.reshape((N, G, C // G, H, W))
     mean = np.mean(x, axis=(2, 3, 4), keepdims=True)
     var = np.var(x, axis=(2, 3, 4), keepdims=True)
-    x = (x - mean) / np.sqrt(var + eps)
+    x = (x - mean) / np.sqrt(var + epsilon)
     x = x.reshape((N, C, H, W))
     return x * gamma + beta
 
 
-def GroupNormNd(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
+def GroupNormNd(x, gamma, beta, G, epsilon=1e-05):  # type: (np.array, np.array, np.array, int, float) -> np.array
     originalShape = x.shape
     N = x.shape[0]
     C = x.shape[1]
@@ -51,7 +39,7 @@ def GroupNormNd(x, gamma, beta, G, eps=1e-05):  # type: (np.array, np.array, np.
 
     mean = np.mean(x, axis=tuple(axis), keepdims=True)
     var = np.var(x, axis=tuple(axis), keepdims=True)
-    x = (x - mean) / np.sqrt(var + eps)
+    x = (x - mean) / np.sqrt(var + epsilon)
     x = x.reshape(originalShape)
     return x * gamma + beta
 
@@ -76,21 +64,21 @@ class GroupNormalization(Base):
         s = np.array([1, 1, 0, 1]).astype(np.float32)
 
         num_groups = 2
-        eps = 1e-05
+        epsilon = 1e-05
 
         node = onnx.helper.make_node('GroupNormalization',
                                      inputs=['x', 's', 'b'],
                                      outputs=['y'],
                                      num_groups=num_groups,
-                                     epsilon=eps)
+                                     epsilon=epsilon)
 
-        y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
+        y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, epsilon)
 
         expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
 
 
     @staticmethod
-    def export_large_eps():  # type: () -> None
+    def export_large_epsilon():  # type: () -> None
 
         x = np.random.rand(2, 4, 10, 12).astype(np.float32)
 
@@ -98,16 +86,16 @@ class GroupNormalization(Base):
         s = np.array([1, 1, 1, 1]).astype(np.float32)
 
         num_groups = 2
-        eps = 10.0
+        epsilon = 10.0
 
         node = onnx.helper.make_node('GroupNormalization',
                                      inputs=['x', 's', 'b'],
                                      outputs=['y'],
                                      num_groups=num_groups,
-                                     epsilon=eps)
+                                     epsilon=epsilon)
 
-        y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, eps)
-        expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_eps')
+        y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, epsilon)
+        expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_epsilon')
 
     
     @staticmethod
@@ -138,13 +126,13 @@ class GroupNormalization(Base):
         s = np.array([1, 1, 1, 1]).astype(np.float32)
 
         num_groups = 2
-        eps = 1e-05
+        epsilon = 1e-05
 
-        y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, eps)
+        y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, epsilon)
 
         node = onnx.helper.make_node('GroupNormalization',
                                      inputs=['x', 's', 'b'],
                                      outputs=['y'],
                                      num_groups=num_groups,
-                                     epsilon=eps)
+                                     epsilon=epsilon)
         expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')

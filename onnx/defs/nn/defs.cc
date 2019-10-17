@@ -1638,16 +1638,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 
 
-static const char* GroupNormalization_ver11_doc = R"DOC(
+static const char* GroupNormalization_ver12_doc = R"DOC(
 Carries out group normalization as described in the paper
 https://arxiv.org/abs/1803.08494. 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
-    11,
+    12,
     OpSchema()
-        .SetDoc(GroupNormalization_ver11_doc)
+        .SetDoc(GroupNormalization_ver12_doc)
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1672,9 +1672,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "The output tensor of the same shape as input", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)"},
-            // "tensor(double)" - Can not hve tensor(double) because that is not supported by ConstOfShape
-            // But the VerifyTypeConstraint test assumes that the input type is used on the op, which is incorrect
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
