@@ -2715,7 +2715,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2,))])
 
-    def test_gatherelements_noshape(self):  # type: () -> None
+    def test_gatherelements_indices_missing_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (6,)),
              ('indices', TensorProto.INT64, None)],  # type: ignore
