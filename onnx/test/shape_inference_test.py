@@ -2718,10 +2718,10 @@ class TestShapeInference(unittest.TestCase):
     def test_gatherelements_noshape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (6,)),
-             ('indices', TensorProto.INT64, ())],
+             ('indices', TensorProto.INT64, None)],  # type: ignore
             [make_node('GatherElements', ['x', 'indices'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])  # type: ignore
 
 
 if __name__ == '__main__':
