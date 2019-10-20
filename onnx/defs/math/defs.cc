@@ -98,7 +98,7 @@ and contains the {name} values of the corresponding input.
       int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
       if (axis < -r || axis >= r) {
           fail_shape_inference(
-         "'axis' must be in [" -r, " , " , (r-1) , "]. Its actual value is: ", axis);
+         "'axis' must be in [", -r, " , " , (r-1) , "]. Its actual value is: ", axis);
       }
 
       // Shape inference
