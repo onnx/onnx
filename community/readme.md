@@ -20,9 +20,11 @@ The ONNX community adheres to the following principles:
 
 ## Community Roles
 
-**Members** are individuals who are interested in or participate in the ONNX community. Members are able to follow and participate in all public modes of communication used by the ONNX community including but not limited to GitHub, Gitter, Stack Overflow, email announcements and discussion aliases. Members are expected to adhere to the Code of Conduct but do not have any specific responsibilities.
+### Members
+Members are individuals who are interested in or participate in the ONNX community. Members are able to follow and participate in all public modes of communication used by the ONNX community including but not limited to GitHub, Gitter, Stack Overflow, email announcements and discussion aliases. Members are expected to adhere to the Code of Conduct but do not have any specific responsibilities.
 
-**Contributors** are Members who are active contributors in the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors can be active in many ways including but not limited to:
+### Contributors
+Contributors are Members who are active contributors in the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors can be active in many ways including but not limited to:
 
 * Authoring or reviewing PRs on GitHub
 * Filing or commenting on issues on GitHub
@@ -31,11 +33,13 @@ The ONNX community adheres to the following principles:
 
 A Member can become a Contributor by being sponsored by 2 existing Approvers from different companies. Contributors who are not active in the last 12 months will be removed.
 
-**Approvers** are Contributors who are experienced with some aspect of the project and with general software engineering principles. Approvers are responsible for reviewing contributions for acceptance by considering not just code quality but also holistic impact of the contribution including compatibility, performance, and interactions with other areas.
+### Approvers
+Approvers are Contributors who are experienced with some aspect of the project and with general software engineering principles. Approvers are responsible for reviewing contributions for acceptance by considering not just code quality but also holistic impact of the contribution including compatibility, performance, and interactions with other areas.
 
 Approvers need to be active Contributors for at least 3 months and be sponsored by a SIG chair with no objections from other SIG chairs.
 
-**Member Companies** are organizations that support ONNX in one or more of the following ways:
+### Member Companies
+Member Companies are organizations that support ONNX in one or more of the following ways:
 * Having employees participate in SIGs, Working Groups, or the Steering Committee
 * Hosting a workshop or meetup for ONNX
 * Providing resources for building or hosting ONNX assets
