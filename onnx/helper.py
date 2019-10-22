@@ -270,7 +270,7 @@ def make_attribute(
                 "its applicable type.")
     else:
         raise TypeError(
-            'Value "{}" is not valid attribute data type.'.format(value))
+            'value "{}" is not valid attribute data type.'.format(value))
     return attr
 
 
