@@ -269,7 +269,7 @@ def make_attribute(
                 "You passed in an iterable attribute but I cannot figure out "
                 "its applicable type.")
     else:
-        raise ValueError(
+        raise TypeError(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
 
