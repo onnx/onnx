@@ -1227,7 +1227,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 1, 0);
+          // propagate indices' shape to output if it exists
+          if (hasInputShape(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 1, 0);
+          }
         }));
 
 static const char* Squeeze_ver11_doc = R"DOC(
@@ -1370,7 +1373,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          // sort after correcting negative axes values (if any) in the previous step
+          // sort after correcting negative axes values (if any) in the previous
+          // step
           std::sort(axes.begin(), axes.end());
 
           int j = 0;
