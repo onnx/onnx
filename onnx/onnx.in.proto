@@ -456,6 +456,11 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
+// TensorProtos stores multiple TensorProto objects in one single proto.
+message TensorProtos {
+  repeated TensorProto protos = 1;
+}
+
 // A serialized sparse-tensor value
 message SparseTensorProto {
   // The sequence of non-default values are encoded as a tensor of shape [NNZ].
