@@ -27,7 +27,7 @@ False instead of True.)DOC";
         "keepdims",
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1));      
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
@@ -50,9 +50,11 @@ False instead of True.)DOC";
       auto output_shape =
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
+
       auto axes_proto = ctx.getAttribute("axes");
-      if (axes_proto)
+      if (axes_proto) {
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
+      }
 
       for (size_t i = 0; i < axes.size(); ++i) {
         if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
@@ -62,6 +64,7 @@ False instead of True.)DOC";
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
+
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
@@ -103,7 +106,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMean,
     11,
-    OpSchema().FillUsing(ReduceDocGenerator("mean")));
+    OpSchema().FillUsing(ReduceDocGenerator("mean")));   
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceProd,

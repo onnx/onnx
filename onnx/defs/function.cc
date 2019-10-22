@@ -17,6 +17,7 @@ void FunctionExpandHelper(
     const FunctionProto& func,
     GraphProto& g,
     const std::string& node_prefix) {
+
   // Create a temporary unique node prefix for tensor names
   std::string uniq_prefix = node_prefix;
   if (uniq_prefix.empty()) {

@@ -1391,6 +1391,15 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
+    def test_groupnorm_norm(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
+             ('scale', TensorProto.FLOAT, (4,)),
+             ('b', TensorProto.FLOAT, (4,))],
+            [make_node('GroupNormalization', ['x', 'scale', 'b'], ['out'], num_groups=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])        
+
     def test_global_maxpool(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],

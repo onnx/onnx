@@ -215,6 +215,7 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
 
 
 def main(args):  # type: (Type[Args]) -> None
+    print("Main called ", args.changelog, args.output)
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
         fout.write(

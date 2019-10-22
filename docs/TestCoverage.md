@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
+Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3368,6 +3368,115 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_bcast')
+```
+
+</details>
+
+
+### GroupNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>6D</summary>
+
+```python
+
+# A 4 dimension
+x = np.random.rand(2, 4, 3, 6, 4, 2).astype(np.float32)
+
+b = np.array([0, 0, 0, 0]).astype(np.float32)
+s = np.array([1, 1, 1, 1]).astype(np.float32)
+
+num_groups = 2
+epsilon = 1e-05
+
+y = GroupNormNd(x, s.reshape((1, 4, 1, 1, 1, 1)), b.reshape((1, 4, 1, 1, 1, 1)), num_groups, epsilon)
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=epsilon)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_6D')
+```
+
+</details>
+<details>
+<summary>groupnormalization</summary>
+
+```python
+
+
+x = np.array([[[[4., 5.], [0., 6.]],
+               [[6., 6.], [9., 6.]],
+               [[3., 4.], [6., 0.]],
+               [[6., 6.], [2., 1.]]],
+              [[[3., 3.], [5., 4.]],
+               [[9., 1.], [2., 1.]],
+               [[6., 2.], [4., 2.]],
+               [[1., 1.], [6., 1.]]]]).astype(np.float32)
+
+
+b = np.array([1, 1.5, -1.0, 1.5]).astype(np.float32)
+s = np.array([1, 1, 0, 1]).astype(np.float32)
+
+num_groups = 2
+epsilon = 1e-05
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=epsilon)
+
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, epsilon)
+
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm')
+```
+
+</details>
+<details>
+<summary>large_epsilon</summary>
+
+```python
+
+x = np.random.rand(2, 4, 10, 12).astype(np.float32)
+
+b = np.array([0, 0, 0, 0]).astype(np.float32)
+s = np.array([1, 1, 1, 1]).astype(np.float32)
+
+num_groups = 2
+epsilon = 10.0
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups,
+                             epsilon=epsilon)
+
+y = GroupNorm4d(x, s.reshape((1, 4, 1, 1)), b.reshape((1, 4, 1, 1)), num_groups, epsilon)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_epsilon')
+```
+
+</details>
+<details>
+<summary>large_num_groups</summary>
+
+```python
+
+x = np.random.rand(2, 18, 10, 12).astype(np.float32)
+
+b = np.zeros([18]).astype(np.float32)
+s = np.ones([18]).astype(np.float32)
+
+num_groups = 9
+
+node = onnx.helper.make_node('GroupNormalization',
+                             inputs=['x', 's', 'b'],
+                             outputs=['y'],
+                             num_groups=num_groups)
+
+y = GroupNorm4d(x, s.reshape((1, 18, 1, 1)), b.reshape((1, 18, 1, 1)), num_groups)
+expect(node, inputs=[x, s, b], outputs=[y], name='test_groupnorm_large_num_groups')
 ```
 
 </details>
@@ -8838,6 +8947,12 @@ y = np.array(x.shape).astype(np.int64)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_shape')
+
+x = np.array([1, 2, 3, 4]).astype(np.float32)
+y = np.array([4]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_shape_1d')
 ```
 
 </details>

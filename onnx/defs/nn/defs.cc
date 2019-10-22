@@ -1636,6 +1636,115 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
+
+
+static const char* GroupNormalization_ver12_doc = R"DOC(
+Carries out group normalization as described in the paper
+https://arxiv.org/abs/1803.08494. 
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GroupNormalization,
+    12,
+    OpSchema()
+        .SetDoc(GroupNormalization_ver12_doc)
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero.",
+            AttributeProto::FLOAT,
+            1e-5f)
+        .Attr(
+            "num_groups",
+            "The number of groups. It should be greater than 0 and less than or equal to C",
+            AttributeProto::INT)
+        .Input(
+            0,
+            "input",
+           "Input data tensor from the previous operator; "
+            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
+            "where N is the batch size, C is the number of channels. "
+            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
+            "T")
+        .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
+        .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
+        .Output(0, "output", "The output tensor of the same shape as input", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+        })
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+        {
+          FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+          FunctionBodyHelper::Const<int64_t>("N_Start", 0),
+          FunctionBodyHelper::Const<int64_t>("N_End", 1),
+          FunctionBodyHelper::Const<int64_t>("C_Start", 1),
+          FunctionBodyHelper::Const<int64_t>("C_End", 2),
+        
+          FunctionBodyHelper::Const<int64_t>("H_Start", 2),
+          FunctionBodyHelper::Const<int64_t>("H_End", 3),
+          FunctionBodyHelper::Const<int64_t>("W_Start", 3),
+          FunctionBodyHelper::Const<int64_t>("W_End", INT_MAX),
+
+          
+          FunctionBodyHelper::Const<int64_t>("H_W_Start", 2),
+          FunctionBodyHelper::Const<int64_t>("H_W_End", INT_MAX),
+          FunctionBodyHelper::ConstOfShape<int64_t>("One", {1}, {1}),
+          
+          {{"EPS"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "epsilon")}},
+          {{"G"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::TENSOR, "num_groups")}},          
+
+          // Comments taken from https://arxiv.org/abs/1803.08494. 
+
+          //N, C, H, W = x.shape
+          {{"X_Shape"}, "Shape", {"input"}},
+          {{"N"}, "Slice", {"X_Shape", "N_Start", "N_End"}},
+          {{"C"}, "Slice", {"X_Shape", "C_Start", "C_End"}},
+          {{"H_W"}, "Slice", {"X_Shape", "H_W_Start", "H_W_End"}},
+          {{"H"}, "Slice", {"X_Shape", "H_Start", "H_End"}},
+          {{"W"}, "Slice", {"X_Shape", "W_Start", "W_End"}},
+
+          // To support multi dimension inputs flatten to 2D [D1, D2 * D3 * ... * Dn]
+          {{"W'"}, "ReduceProd", {"W"}, {{"axes", std::vector<int64_t>{0}}, {"keepdims", (int64_t)1}}},
+
+          //x = tf.reshape(x, [N, G, C // G, H, W])
+          {{"C/G"}, "Div", {"C", "G"}},
+          {{"X_NewShape"}, "Concat", {"N", "G", "C/G", "H", "W'"}, {{"axis", (int64_t)0}}},
+          {{"X_Reshape"}, "Reshape", {"input", "X_NewShape"}},
+
+          //mean, var = tf.nn.moments(x, [2, 3, 4], keepdims=True)
+          {{"Mean"}, "ReduceMean", {"X_Reshape"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
+          {{"EX_squared"}, "Pow", {"Mean", "Exponent"}},
+          {{"X_squared"}, "Pow", {"X_Reshape", "Exponent"}},
+          {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {{"axes", std::vector<int64_t>{2, 3, 4}}}},
+          {{"Var"}, "Sub", {"E_Xsquared", "EX_squared"}},
+
+
+          //x = (x−mean) / tf.sqrt(var + eps)
+          {{"Var+Eps"}, "Add", {"Var", "EPS"}},
+          {{"Sqrt(Var+Eps)"}, "Sqrt", {"Var+Eps"}},
+          {{"X-Mean"}, "Sub", {"X_Reshape", "Mean"}},
+          {{"X'"}, "Div", {"X-Mean", "Sqrt(Var+Eps)"}},
+
+          //x = tf.reshape(x, [N, C, H, W])
+          {{"X'_Reshape"}, "Reshape", {"X'", "X_Shape"}},
+
+          //gamma beta : scale and offset with shape [1, C, 1, 1]
+          {{"OnesOfHW"}, "ConstantOfShape", {"H_W"}, {{"value", ToTensor<int64_t>({1})}}},
+          {{"C_Shape"}, "Concat", {"One", "C", "OnesOfHW"}, {{"axis", (int64_t)0}}},
+          {{"Gamma"}, "Reshape", {"scale", "C_Shape"}},
+          {{"Beta"}, "Reshape", {"B", "C_Shape"}},
+
+          //y = x * gamma + beta
+          {{"X*Gamma"}, "Mul", {"X'_Reshape", "Gamma"}},
+          {{"output"}, "Add", {"X*Gamma", "Beta"}}
+        }
+        )));
+
 static const char* Dropout_ver10_doc = R"DOC(
 Dropout takes one input floating tensor and produces two tensor outputs,
 output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
@@ -1673,7 +1782,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               propagateShapeFromInputToOutput(ctx, 0, 1);
             }
           }
-        }));
+}));
+            
 
 static const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
