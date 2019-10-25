@@ -4176,7 +4176,7 @@ expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the function `f(x) = alpha * (expm1(x)) for x <
+  (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
   
 
