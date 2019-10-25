@@ -1132,6 +1132,77 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type_to
         assert converted_model.opset_import[0].version == to_opset
 
+    # Test RNN Adapter: 11 -> 12
+    def test_rnn_11_12(self):  # type: () -> None
+        from_opset = 11
+        to_opset = 12
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_greater",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 2 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "RNN"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "time_major"
+
+    # Test RNN Adapter: 12 -> 11
+    def test_rnn_12_11(self):  # type: () -> None
+        from_opset = 12
+        to_opset = 11
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size,
+            time_major=1,
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_greater",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [hidden_size, input_size, num_directions]),
+             onnx.helper.make_tensor_value_info("R", data_type, [hidden_size, hidden_size, num_directions]),
+             onnx.helper.make_tensor_value_info("B", data_type, [2 * hidden_size, num_directions])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [batch_size, hidden_size, num_directions])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        print(list(converted_model.graph.output[0].type.tensor_type.shape))
+        assert converted_model.graph.node[0].op_type == "GRU"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 1
+
 
 if __name__ == '__main__':
     unittest.main()

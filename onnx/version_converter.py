@@ -60,6 +60,8 @@ Supported adapters:
     --Dropout from Opset 6 to Opset 5
     --Dropout from Opset 6 to Opset 7
     --Dropout from Opset 5 to Opset 6
+    --RNN from Opset 11 to Opset 12
+    --RNN from Opset 12 to Opset 11
 
 Unsupported adapters:
     --Min from Opset 8 to Opset 7
