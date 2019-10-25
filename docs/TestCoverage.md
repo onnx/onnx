@@ -2427,12 +2427,12 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-1.2642411, 0., 1.]
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + (np.expm1(np.clip(x, -np.inf, 0))) * 2.0
 expect(node, inputs=[x], outputs=[y],
        name='test_elu_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + (np.expm1(np.clip(x, -np.inf, 0))) * 2.0
 expect(node, inputs=[x], outputs=[y],
        name='test_elu')
 ```
@@ -2449,7 +2449,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+y = np.clip(x, 0, np.inf) + (np.expm1(np.clip(x, -np.inf, 0))) * default_alpha
 expect(node, inputs=[x], outputs=[y],
        name='test_elu_default')
 ```
@@ -8778,12 +8778,12 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-3.79272318, 0., 3.]
-y = np.clip(x, 0, np.inf) * 3.0 + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
+y = np.clip(x, 0, np.inf) * 3.0 + (np.expm1(np.clip(x, -np.inf, 0))) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y],
        name='test_selu_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) * 3.0 + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
+y = np.clip(x, 0, np.inf) * 3.0 + (np.expm1(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y],
        name='test_selu')
 ```
@@ -8802,7 +8802,7 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, 0, np.inf) * default_gamma + \
-    (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+    (np.expm1(np.clip(x, -np.inf, 0))) * default_alpha * default_gamma
 expect(node, inputs=[x], outputs=[y],
        name='test_selu_default')
 ```
