@@ -8783,7 +8783,7 @@ expect(node, inputs=[x], outputs=[y],
        name='test_selu_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) * 3.0 + (np.expm1(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
+y = np.clip(x, 0, np.inf) * 3.0 + (np.expm1(np.clip(x, -np.inf, 0))) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y],
        name='test_selu')
 ```
