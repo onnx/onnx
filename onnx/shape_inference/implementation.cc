@@ -6,6 +6,19 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
+std::string getValueCaseString(const TypeProto& type) {
+    switch (type.value_case()) {
+    case 1:
+        return "tensor_type";
+    case 4:
+        return "sequence_type";
+    case 5:
+        return "map_type";
+    default:
+        return ONNX_NAMESPACE::to_string(type.value_case());
+    }
+}
+
 std::string getElemTypeString(const TypeProto_Tensor& type) {
 #ifndef ONNX_USE_LITE_PROTO
     const std::string type_str = TensorProto::DataType_Name(
@@ -66,9 +79,9 @@ void checkShapesAndTypes(
   if (inferredTypeCase != existingTypeCase) {
     fail_type_inference(
       "type case mismatch. existing=",
-      existingTypeCase,
+      getValueCaseString(existingType),
       " inferred=",
-      inferredTypeCase);
+      getValueCaseString(inferredType));
   }
 
   if (inferredType.has_tensor_type() && existingType.has_tensor_type()) {
@@ -419,7 +432,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
           "Graph input #",
           i,
           " is tensor type, but provided type is ",
-          inferredInput->value_case());
+          getValueCaseString(*inferredInput));
 
     const auto& inferredType = inferredInput->tensor_type();
 
