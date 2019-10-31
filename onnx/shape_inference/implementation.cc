@@ -7,16 +7,24 @@ namespace shape_inference {
 namespace {
 
 std::string getValueCaseString(const TypeProto& type) {
-    switch (type.value_case()) {
-    case 1:
-        return "tensor_type";
-    case 4:
-        return "sequence_type";
-    case 5:
-        return "map_type";
+  switch (type.value_case()) {
+    case TypeProto::ValueCase::kTensorType:
+      return "tensor_type";
+    case TypeProto::ValueCase::kSequenceType:
+      return "sequence_type";
+    case TypeProto::ValueCase::kMapType:
+      return "map_type";
+#ifdef ONNX_ML
+    case TypeProto::ValueCase::kOpaqueType:
+      return "opaque_type";
+    case TypeProto::ValueCase::kSparseTensorType:
+      return "sparse_tensor_type";
+#endif
+    case TypeProto::ValueCase::VALUE_NOT_SET:
+      return "NOT_SET";
     default:
-        return ONNX_NAMESPACE::to_string(type.value_case());
-    }
+      return ONNX_NAMESPACE::to_string(type.value_case());
+  }
 }
 
 std::string getElemTypeString(const TypeProto_Tensor& type) {
