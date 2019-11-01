@@ -649,14 +649,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "min",
             "Minimum value, under which element is replaced by min. "
-            "It must be a scalar(tensor of empty shape).",
+            "It must be a scalar (tensor of empty shape).",
             "T",
             OpSchema::Optional)
         .Input(
             2,
             "max",
             "Maximum value, above which element is replaced by max. "
-            "It must be a scalar(tensor of empty shape).",
+            "It must be a scalar (tensor of empty shape).",
             "T",
             OpSchema::Optional)
         .Output(0, "output", "Output tensor with clipped input elements", "T")

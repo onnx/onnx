@@ -67,7 +67,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
-        "in LSTM. Default values are the same as of corresponding ONNX operators."
+        "in LSTM. Default values are the same as of corresponding ONNX operators. "
         "For example with LeakyRelu, the default alpha is 0.01.",
         AttributeProto::FLOATS,
         OPTIONAL);
@@ -131,7 +131,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
 }
 
 static const char* RNN_ver7_doc = R"DOC(
-Computes an one-layer simple RNN. This operator is usually supported
+Computes a one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
 Notations:
@@ -231,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(RNNDocGenerator("RNN")));
 
 static const char* GRU_ver7_doc = R"DOC(
-Computes an one-layer GRU. This operator is usually supported via some custom
+Computes a one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
 Notations:
@@ -351,7 +351,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(RNNDocGenerator("GRU")));
 
 static const char* LSTM_ver7_doc = R"DOC(
-Computes an one-layer LSTM. This operator is usually supported via some
+Computes a one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
 Notations:

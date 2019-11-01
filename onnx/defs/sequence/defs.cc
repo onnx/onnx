@@ -147,7 +147,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Accepted range in `[-n, n]`, "
             "where `n` is the number of tensors in 'input_sequence'. "
             "It is an error if any of the index values are out of bounds. "
-            "It must be a scalar(tensor of empty shape).",
+            "It must be a scalar (tensor of empty shape).",
             "I",
             OpSchema::Optional)
         .Output(
@@ -166,7 +166,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "I",
             {"tensor(int32)", "tensor(int64)"},
-            "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
+            "Constrain position to integral tensor. It must be a scalar (tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto seq_elem_type = 
               ctx.getInputType(0)->sequence_type().elem_type().tensor_type().elem_type();
@@ -221,7 +221,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Accepted range in `[-n, n - 1]`, "
             "where `n` is the number of tensors in 'input_sequence'. "
             "It is an error if any of the index values are out of bounds. "
-            "It must be a scalar(tensor of empty shape).",
+            "It must be a scalar (tensor of empty shape).",
             "I")
         .Output(
             0,
@@ -239,7 +239,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "I",
             {"tensor(int32)", "tensor(int64)"},
-            "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
+            "Constrain position to integral tensor. It must be a scalar (tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->CopyFrom(ctx.getInputType(0)->sequence_type().elem_type());
         }));
@@ -269,7 +269,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Accepted range in `[-n, n - 1]`, "
             "where `n` is the number of tensors in 'input_sequence'. "
             "It is an error if any of the index values are out of bounds. "
-            "It must be a scalar(tensor of empty shape).",
+            "It must be a scalar (tensor of empty shape).",
             "I",
             OpSchema::Optional)
         .Output(
@@ -284,7 +284,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "I",
             {"tensor(int32)", "tensor(int64)"},
-            "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
+            "Constrain position to integral tensor. It must be a scalar (tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->CopyFrom(*ctx.getInputType(0));
         }));
@@ -306,7 +306,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "length",
-            "Length of input sequence. It must be a scalar(tensor of empty shape).",
+            "Length of input sequence. It must be a scalar (tensor of empty shape).",
             "I")
         .TypeConstraint(
             "S",
@@ -315,7 +315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
-            "Constrain output to integral tensor. It must be a scalar(tensor of empty shape).")
+            "Constrain output to integral tensor. It must be a scalar (tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::INT64);

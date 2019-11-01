@@ -452,7 +452,7 @@ https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
 dimension and step for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
-start or end indices, it represent number of elements before the end of that
+start or end indices, it represents number of elements before the end of that
 dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
 end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
@@ -1878,7 +1878,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indices",
             "Input tensor containing indices. Any entries in the 'indices' input tensor with "
             "values outside the range [-depth, depth-1] will result in one-hot representation with all "
-            "'off_value' values in the output tensor."
+            "'off_value' values in the output tensor. "
             "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
             "T1")
         .Input(
@@ -2210,7 +2210,7 @@ Otherwise the input tensor is flattened and unique values of the flattened tenso
 
 This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
 The first output tensor 'Y' contains all unique values or subtensors of the input. 
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurence in 'X'.
 The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
 The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
 
@@ -2312,7 +2312,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "indices",
             "A 1-D INT64 tensor "
-            "containing indices of 'Y' elements' first occurance in 'X'. "
+            "containing indices of 'Y' elements' first occurence in 'X'. "
             "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
             "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
             "tensor(int64)",

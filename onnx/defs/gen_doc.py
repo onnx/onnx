@@ -214,6 +214,14 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
+class Schema(object):
+    def __init__(self, i):
+        self.i = i
+
+    def __getattr__(self, item):
+        return getattr(defs.get_all_schemas_with_history()[self.i], item)
+
+
 def main(args):  # type: (Type[Args]) -> None
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
@@ -224,8 +232,8 @@ def main(args):  # type: (Type[Args]) -> None
 
         # domain -> version -> [schema]
         dv_index = defaultdict(lambda: defaultdict(list))  # type: Dict[Text, Dict[int, List[OpSchema]]]
-        for schema in defs.get_all_schemas_with_history():
-            dv_index[schema.domain][schema.since_version].append(schema)
+        for i, schema in enumerate(defs.get_all_schemas_with_history()):
+            dv_index[schema.domain][schema.since_version].append(Schema(i))
 
         fout.write('\n')
 
@@ -255,8 +263,8 @@ def main(args):  # type: (Type[Args]) -> None
 
         # domain -> support level -> name -> [schema]
         index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
-        for schema in defs.get_all_schemas_with_history():
-            index[schema.domain][int(schema.support_level)][schema.name].append(schema)
+        for i, schema in enumerate(defs.get_all_schemas_with_history()):
+            index[schema.domain][int(schema.support_level)][schema.name].append(Schema(i))
 
         fout.write('\n')
 

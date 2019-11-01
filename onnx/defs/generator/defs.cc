@@ -78,7 +78,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(ConstantOfShape_ver9_doc)
         .Attr(
             "value",
-            "(Optional) The value of the output elements."
+            "(Optional) The value of the output elements. "
             "Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32",
             AttributeProto::TENSOR,
             OPTIONAL)
@@ -90,8 +90,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "Output tensor of shape specified by 'input'."
-            "If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'."
+            "Output tensor of shape specified by 'input'. "
+            "If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'. "
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
@@ -205,8 +205,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "dtype",
-            "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not"
+            "(Optional) The data type for the elements of the output tensor. If not specified, "
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not "
             "specified, then type defaults to 'float'.",
             AttributeProto::INT,
             OPTIONAL)
@@ -396,7 +396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "dtype",
-            "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
+            "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
             OPTIONAL)
@@ -461,7 +461,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "dtype",
-            "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
+            "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
             OPTIONAL)
