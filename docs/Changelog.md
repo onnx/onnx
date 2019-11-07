@@ -8662,7 +8662,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>output (always 2D tensor)</dd>
+<dd>output</dd>
 </dl>
 
 #### Type Constraints
@@ -13398,11 +13398,13 @@ This version of the operator has been available since version 11 of the default 
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
+  start or end indices, it represents number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If a negative value is passed for step, it represents slicing backward.
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+  when sclicing forward and 'INT_MIN' when slicing backward.
+  If a negative value is passed for step, it represents slicing backward. 
+  However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
@@ -13444,7 +13446,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> (optional) : Tind</dt>
 <dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
