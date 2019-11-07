@@ -203,6 +203,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         check_field(int32_data);
         break;
 
+      case TensorProto::POSIX_DATETIME:
       case TensorProto::INT64:
         check_field(int64_data);
         break;

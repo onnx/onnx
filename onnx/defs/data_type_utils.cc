@@ -441,6 +441,7 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["uint64"] = TensorProto_DataType_UINT64;
   type_str_to_tensor_data_type_["complex64"] = TensorProto_DataType_COMPLEX64;
   type_str_to_tensor_data_type_["complex128"] = TensorProto_DataType_COMPLEX128;
+  type_str_to_tensor_data_type_["posix_datetime"] = TensorProto_DataType_POSIX_DATETIME;
   type_str_to_tensor_data_type_["string"] = TensorProto_DataType_STRING;
   type_str_to_tensor_data_type_["bool"] = TensorProto_DataType_BOOL;
 
