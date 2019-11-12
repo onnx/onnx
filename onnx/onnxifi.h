@@ -38,13 +38,13 @@ extern "C" {
 #endif
 
 #ifndef ONNXIFI_CHECK_RESULT
-#if defined(__GNUC__) && (__GNUC__ >= 4)
-#define ONNXIFI_CHECK_RESULT __attribute__((__warn_unused_result__))
-#elif defined(_MSC_VER) && (_MSC_VER >= 1700)
-#define ONNXIFI_CHECK_RESULT _Check_return_
-#else
-#define ONNXIFI_CHECK_RESULT
-#endif
+  #if defined(__GNUC__) && (__GNUC__ >= 4)
+    #define ONNXIFI_CHECK_RESULT __attribute__((__warn_unused_result__))
+  #elif defined(_MSC_VER) && (_MSC_VER >= 1700)
+    #define ONNXIFI_CHECK_RESULT _Check_return_
+  #else
+    #define ONNXIFI_CHECK_RESULT
+  #endif
 #endif
 
 #include <stddef.h>
@@ -203,8 +203,8 @@ typedef int32_t onnxEventState;
  * shape dimension (batch size), using TensorShapeProto.dim_param for
  * ModelProto.graph.input.type.shape or ModelProto.graph.output.type.shape.
  *
- * The exact numerical value of the  of all input and output tensors must be
- * specified in the onnxSetGraphIO call(s).
+ * The exact numerical value of the  of all input and output tensors must be specified
+ * in the onnxSetGraphIO call(s).
  */
 #define ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE 0x02
 /**
@@ -943,39 +943,51 @@ typedef struct onnxMemoryFenceV1 {
 } onnxMemoryFenceV1;
 
 /* Function pointer declarations for dynamic loading */
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxGetBackendIDsFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetBackendIDsFunction)(
     onnxBackendID* backendIDs,
     size_t* numBackends);
-typedef onnxStatus(ONNXIFI_ABI* onnxReleaseBackendIDFunction)(
+typedef onnxStatus
+  (ONNXIFI_ABI* onnxReleaseBackendIDFunction)(
     onnxBackendID backendID);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(
-    ONNXIFI_ABI* onnxGetBackendInfoFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetBackendInfoFunction)(
     onnxBackendID backendID,
     onnxBackendInfo infoType,
     void* infoValue,
     size_t* infoValueSize);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(
-    ONNXIFI_ABI* onnxGetBackendCompatibilityFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetBackendCompatibilityFunction)(
     onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxInitBackendFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxInitBackendFunction)(
     onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
-typedef onnxStatus(ONNXIFI_ABI* onnxReleaseBackendFunction)(
+typedef onnxStatus
+  (ONNXIFI_ABI* onnxReleaseBackendFunction)(
     onnxBackend backend);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(
-    ONNXIFI_ABI* onnxInitEventFunction)(onnxBackend backend, onnxEvent* event);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxSignalEventFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxInitEventFunction)(
+    onnxBackend backend,
+    onnxEvent* event);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxSignalEventFunction)(
     onnxEvent event);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxGetEventStateFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetEventStateFunction)(
     onnxEvent event,
     onnxEventState* state);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxWaitEventFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxWaitEventFunction)(
     onnxEvent event);
-typedef onnxStatus(ONNXIFI_ABI* onnxReleaseEventFunction)(onnxEvent event);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxInitGraphFunction)(
+typedef onnxStatus
+  (ONNXIFI_ABI* onnxReleaseEventFunction)(
+    onnxEvent event);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxInitGraphFunction)(
     onnxBackend backend,
     const uint64_t* auxPropertiesList,
     size_t onnxModelSize,
@@ -983,17 +995,21 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxInitGraphFunction)(
     uint32_t weightsCount,
     const onnxTensorDescriptorV1* weightDescriptors,
     onnxGraph* graph);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxSetGraphIOFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxSetGraphIOFunction)(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptorV1* inputDescriptors,
     uint32_t outputsCount,
     const onnxTensorDescriptorV1* outputDescriptors);
-typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxRunGraphFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxRunGraphFunction)(
     onnxGraph graph,
     const onnxMemoryFenceV1* inputFence,
     onnxMemoryFenceV1* outputFence);
-typedef onnxStatus(ONNXIFI_ABI* onnxReleaseGraphFunction)(onnxGraph graph);
+typedef onnxStatus
+  (ONNXIFI_ABI* onnxReleaseGraphFunction)(
+    onnxGraph graph);
 
 /**
  * Get stable IDs of available backends on the system.
@@ -1053,7 +1069,9 @@ typedef onnxStatus(ONNXIFI_ABI* onnxReleaseGraphFunction)(onnxGraph graph);
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxGetBackendIDs(onnxBackendID* backendIDs, size_t* numBackends);
+  onnxGetBackendIDs(
+    onnxBackendID* backendIDs,
+    size_t* numBackends);
 
 /**
  * Deinitialize ONNXIFI backend IDs and release associated resources.
@@ -1074,7 +1092,8 @@ onnxGetBackendIDs(onnxBackendID* backendIDs, size_t* numBackends);
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
-onnxReleaseBackendID(onnxBackendID backendID);
+  onnxReleaseBackendID(
+    onnxBackendID backendID);
 
 /**
  * Query high-level information about the backend and its target device.
@@ -1163,7 +1182,8 @@ onnxReleaseBackendID(onnxBackendID backendID);
  *                                            the backend was disconnected or
  *                                            uninstalled from the system.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxGetBackendInfo(
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  onnxGetBackendInfo(
     onnxBackendID backendID,
     onnxBackendInfo infoType,
     void* infoValue,
@@ -1284,7 +1304,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxGetBackendInfo(
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxGetBackendCompatibility(
+  onnxGetBackendCompatibility(
     onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel);
@@ -1341,7 +1361,8 @@ onnxGetBackendCompatibility(
  *                                       backend experienced an unrecovered
  *                                       internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitBackend(
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  onnxInitBackend(
     onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
@@ -1364,7 +1385,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitBackend(
  *                                       backend experienced an unrecovered
  *                                       internal error.
  */
-ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI onnxReleaseBackend(onnxBackend backend);
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
+  onnxReleaseBackend(
+    onnxBackend backend);
 
 /**
  * Initialize a single-shot ONNXIFI event.
@@ -1407,7 +1430,9 @@ ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI onnxReleaseBackend(onnxBackend backend);
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxInitEvent(onnxBackend backend, onnxEvent* event);
+  onnxInitEvent(
+    onnxBackend backend,
+    onnxEvent* event);
 
 /**
  * Change the state of an ONNXIFI event to signalled.
@@ -1430,7 +1455,8 @@ onnxInitEvent(onnxBackend backend, onnxEvent* event);
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxSignalEvent(onnxEvent event);
+  onnxSignalEvent(
+    onnxEvent event);
 
 /**
  * Query ONNXIFI event state without blocking.
@@ -1459,7 +1485,9 @@ onnxSignalEvent(onnxEvent event);
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxGetEventState(onnxEvent event, onnxEventState* state);
+  onnxGetEventState(
+    onnxEvent event,
+    onnxEventState* state);
 
 /**
  * Wait until an ONNXIFI event transitions to signalled state.
@@ -1481,7 +1509,8 @@ onnxGetEventState(onnxEvent event, onnxEventState* state);
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxWaitEvent(onnxEvent event);
+  onnxWaitEvent(
+    onnxEvent event);
 
 /**
  * Deinitialize an ONNXIFI event and release associated resources.
@@ -1497,7 +1526,9 @@ onnxWaitEvent(onnxEvent event);
  *                                       implementation experienced an
  *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI onnxReleaseEvent(onnxEvent event);
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
+  onnxReleaseEvent(
+    onnxEvent event);
 
 /**
  * Parse an ONNXIFI graph and convert it for a particular backend.
@@ -1692,7 +1723,8 @@ ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI onnxReleaseEvent(onnxEvent event);
  *                                       implementation experienced an
  *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitGraph(
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  onnxInitGraph(
     onnxBackend backend,
     const uint64_t* auxPropertiesList,
     size_t onnxModelSize,
@@ -1839,7 +1871,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitGraph(
  *                                       backend experienced an unrecovered
  *                                       internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetGraphIO(
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  onnxSetGraphIO(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptorV1* inputDescriptors,
@@ -1937,7 +1970,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetGraphIO(
  *                                       backend experienced an unrecovered
  *                                       internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxRunGraph(
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  onnxRunGraph(
     onnxGraph graph,
     const onnxMemoryFenceV1* inputFence,
     onnxMemoryFenceV1* outputFence);
@@ -1959,7 +1993,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxRunGraph(
  *                                       graph backend experienced an
  *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI onnxReleaseGraph(onnxGraph graph);
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
+  onnxReleaseGraph(
+    onnxGraph graph);
 
 #ifdef __cplusplus
 } /* extern "C" */
