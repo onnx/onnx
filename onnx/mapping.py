@@ -22,7 +22,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
     int(TensorProto.UINT32): np.dtype('uint32'),
     int(TensorProto.UINT64): np.dtype('uint64'),
-    int(TensorProto.POSIX_DATETIME): np.dtype('uint64'),
+    int(TensorProto.POSIX_DATETIME): np.dtype('int64'),
     int(TensorProto.STRING): np.dtype(np.object)
 }
 
