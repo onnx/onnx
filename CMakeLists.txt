@@ -16,6 +16,7 @@ cmake_policy(SET CMP0063 NEW)
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag " OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -42,6 +43,17 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
     set(PROTO3_ENABLED OFF)
   endif()
   option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
+endif()
+
+ if (ONNX_USE_PROTOBUF_SHARED_LIBS)
+  if(MSVC)
+    add_definitions(-DPROTOBUF_USE_DLLS)
+  else()
+    message(
+      STATUS 
+        "Building ONNX with Protobuf as shared lib is only available for MSVC compilers. Please read the build instructions for more details."
+    )
+  endif()
 endif()
 
 # Set C++11 as standard for the whole project
@@ -445,6 +457,13 @@ if(BUILD_ONNX_PYTHON)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                                    ${EXTRA_FLAGS})
+    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+      target_compile_options(onnx_cpp2py_export 
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
+                                             # have dll-interface to be used by 
+                                             # clients of class 'type2'
+                            )
+    endif()
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -491,7 +510,7 @@ if(MSVC)
                                          # unsigned type, result still unsigned:
                                          # include\google\protobuf\wire_format_l
                                          # ite.h
-                                 ${EXTRA_FLAGS})
+                                 ${EXTRA_FLAGS})            
   target_compile_options(onnx
                          PRIVATE /MP
                                  /WX
@@ -503,6 +522,18 @@ if(MSVC)
                                  /wd4146 # unary minus operator applied to
                                          # unsigned type, result still unsigned
                                  ${EXTRA_FLAGS})
+  if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+      target_compile_options(onnx_proto 
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
+                                             # have dll-interface to be used by 
+                                             # clients of class 'type2'
+                            )
+      target_compile_options(onnx 
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
+                                             # have dll-interface to be used by
+                                             # clients of class 'type2'
+                            )
+  endif()
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
