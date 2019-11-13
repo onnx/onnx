@@ -452,11 +452,13 @@ https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
 dimension and step for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
-start or end indices, it represent number of elements before the end of that
+start or end indices, it represents number of elements before the end of that
 dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
-end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-If a negative value is passed for step, it represents slicing backward.
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+when sclicing forward and 'INT_MIN' when slicing backward.
+If a negative value is passed for step, it represents slicing backward. 
+However step value cannot be 0.
 If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 Example 1:
@@ -509,7 +511,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             4,
             "steps",
-            "1-D tensor of slice step of corresponding axis in `axes`. Default to 1. ",
+            "1-D tensor of slice step of corresponding axis in `axes`. "
+            "Negative value means slicing backward. 'steps' cannot be 0. "
+            "Defaults to 1.",
             "Tind",
             OpSchema::Optional)
         .Output(0, "output", "Sliced data tensor.", "T")
@@ -1227,7 +1231,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 1, 0);
+          // propagate indices' shape to output if it exists
+          if (hasInputShape(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 1, 0);
+          }
         }));
 
 static const char* Squeeze_ver11_doc = R"DOC(
@@ -1370,7 +1377,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          // sort after correcting negative axes values (if any) in the previous step
+          // sort after correcting negative axes values (if any) in the previous
+          // step
           std::sort(axes.begin(), axes.end());
 
           int j = 0;
@@ -2111,7 +2119,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(NonZero_ver9_doc)
         .Input(0, "X", "input", "T")
-        .Output(0, "Y", "output (always 2D tensor)", "tensor(int64)")
+        .Output(0, "Y", "output", "tensor(int64)")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
