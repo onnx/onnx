@@ -317,10 +317,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
             return;
           }
-          if (numInputs == 1) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-            return;
-          }
 
           auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
 
@@ -334,6 +330,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           if (axis < 0) {
             axis += rank;
+          }
+
+          if (numInputs == 1) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+            return;
           }
 
           bool all_lengths_known = true;
