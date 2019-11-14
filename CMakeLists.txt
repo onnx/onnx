@@ -46,12 +46,12 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
 endif()
 
  if (ONNX_USE_PROTOBUF_SHARED_LIBS)
-  if(MSVC)
+  if(MSVC AND ONNX_USE_MSVC_STATIC_RUNTIME)
     add_definitions(-DPROTOBUF_USE_DLLS)
   else()
     message(
-      STATUS 
-        "Building ONNX with Protobuf as shared lib is only available for MSVC compilers. Please read the build instructions for more details."
+      FATAL_ERROR 
+        "Building ONNX with Protobuf as shared lib is only available for MSVC compilers and that too when USE_MSVC_STATIC_RUNTIME environment variable is set to 1. Please read the build instructions for more details."
     )
   endif()
 endif()

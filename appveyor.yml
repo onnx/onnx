@@ -41,14 +41,7 @@ before_build:
 - >
   IF "%_arch%"=="x64"
   (
-  IF "%CONDA_PREFIX%"=="C:\Miniconda35-x64"
-  (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy  
-  )
-  ELSE
-  (
-  conda install -y -c conda-forge libprotobuf=3.5.2=he51fdeb_1 numpy=1.17.0
-  )
+  conda install -y -c conda-forge libprotobuf=3.5.2=he51fdeb_1 numpy
   )
   ELSE
   (
