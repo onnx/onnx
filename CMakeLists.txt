@@ -464,7 +464,7 @@ if(BUILD_ONNX_PYTHON)
                                              # clients of class 'type2'
                             )
     endif()
-    target_compile_options(onnx_cpp2py_export PRIVATE /MT)
+    add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
 endif()
@@ -510,7 +510,7 @@ if(MSVC)
                                          # unsigned type, result still unsigned:
                                          # include\google\protobuf\wire_format_l
                                          # ite.h
-                                 ${EXTRA_FLAGS})            
+                                 ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
                                  /WX

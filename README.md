@@ -98,9 +98,11 @@ When building on Windows it is highly recommended that you also build protobuf l
 Step 1 : Build protobuf locally
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
 git checkout 3.9.x
 cd cmake
-cmake -G "Visual Studio 15 2017 Win64" -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
+# Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
+cmake -G "Visual Studio 15 2017 Win64" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
@@ -115,6 +117,8 @@ git submodule update --init --recursive
 # Set environment variables to find protobuf
 set PATH=<protobuf_install_dir>\bin;%PATH%
 
+# Set environment variable to make sure ONNX does not statically link to runtime
+set USE_MSVC_STATIC_RUNTIME=0
 # Build ONNX
 python setup.py install
 ```
