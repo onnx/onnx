@@ -6415,7 +6415,9 @@ expect(node, inputs=[data], outputs=[data],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 
 #### Attributes
 
@@ -6437,7 +6439,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -7509,15 +7511,15 @@ expect(node, inputs=[x], outputs=[y],
       }
   
       graph body-net (
-        %i[INT32, scalar]
-        %keepgoing[BOOL, scalar]
-        %b[INT32, scalar]
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
       ) {
-        %my_local = Add(%a, %b)
-        %b_out = Sub(%a, %b)
-        %keepgoing_out = Greater(%my_local, %b_out)
-        %user_defined_vals = Add(%b, %b)
-        return %keepgoing_out, %b_out, %user_defined_vals
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
       }
   
   *Sample equivalent C code*
@@ -7532,29 +7534,49 @@ expect(node, inputs=[x], outputs=[y],
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
         /* End implicitly-defined code */
-        for (int i=0; i < max_trip_count && keepgoing; ++i) {
-          /* User-defined code (loop body) */
-          int my_local = a + b; // Reading values in the enclosing scope is fine
-          b = a - b; // writes fine if we specify b as a loop-carried dependency
-          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-          user_defined_vals[i] = b + b;
-          /* End user-defined code */
-        }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
   
-        // These below values are live-out from the loop and therefore accessible
-        b_out; user_defined_vals; keepgoing_out;
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out; 
+          bool b_in = b_out;
+  
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out; 
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+  
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+  
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
       }
   
   There are several things of note in this code snippet:
   
-  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
-  2) Any variables which you wish to make available in the enclosing scope (i.e.
-     the variables b and keepgoing) must be declared as either loop-carried
-     dependencies (both at the op inputs and output and at the body net input and
-     output) or scan_outputs.
-  3) Values created in the body cannot be accessed in the enclosing scope.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
   
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
@@ -9376,7 +9398,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#NonMaxSuppression-10">NonMaxSuppression-10</a>
 
 #### Attributes
 
@@ -9703,7 +9727,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>output (always 2D tensor)</dd>
+<dd>output</dd>
 </dl>
 
 #### Type Constraints
@@ -14160,7 +14184,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='half_pixel'
+    coordinate_transformation_mode='half_pixel',
+    nearest_mode='ceil'
 )
 
 data = np.array([[[
@@ -14201,7 +14226,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='align_corners'
+    coordinate_transformation_mode='align_corners',
+    nearest_mode='floor'
 )
 
 data = np.array([[[
@@ -14242,7 +14268,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='asymmetric'
+    coordinate_transformation_mode='asymmetric',
+    nearest_mode='round_prefer_ceil'
 )
 
 data = np.array([[[
@@ -16164,11 +16191,13 @@ expect(node, inputs=[x], outputs=[y],
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
+  start or end indices, it represents number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If a negative value is passed for step, it represents slicing backward.
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+  when sclicing forward and 'INT_MIN' when slicing backward.
+  If a negative value is passed for step, it represents slicing backward. 
+  However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
@@ -16212,7 +16241,7 @@ Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a 
 <dt><tt>axes</tt> (optional) : Tind</dt>
 <dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
@@ -18392,8 +18421,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 argsorted_indices = np.argsort(indices)
 inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-y = np.take(x, indices, axis=0)
 indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
 # print(y)
@@ -18526,11 +18555,18 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
 ### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
 
-  Insert single-dimensional entries to the shape of a tensor.
-  Takes one required argument `axes`, a list of dimensions that will be inserted.
-  Dimension indices in `axes` are as seen in the output tensor. For example:
-    Given a tensor such that tensor with shape [3, 4, 5], then
-    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  
+  For example:
+    Given an input tensor (`data`) of shape [3, 4, 5], then
+    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  
+  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
+  
 
 #### Version
 
@@ -18542,7 +18578,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1<
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Inputs
@@ -18650,6 +18686,29 @@ y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x], outputs=[y],
         name='test_unsqueeze_two_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

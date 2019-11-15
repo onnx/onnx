@@ -8662,7 +8662,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>output (always 2D tensor)</dd>
+<dd>output</dd>
 </dl>
 
 #### Type Constraints
@@ -11480,6 +11480,46 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="If-11"></a>**If-11**</a>
+
+  If conditional
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>else_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
+<dt><tt>then_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>cond</tt> : B</dt>
+<dd>Condition for the if</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Only bool</dd>
+</dl>
+
 ### <a name="LogSoftmax-11"></a>**LogSoftmax-11**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
@@ -11590,15 +11630,15 @@ This version of the operator has been available since version 11 of the default 
       }
   
       graph body-net (
-        %i[INT32, scalar]
-        %keepgoing[BOOL, scalar]
-        %b[INT32, scalar]
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
       ) {
-        %my_local = Add(%a, %b)
-        %b_out = Sub(%a, %b)
-        %keepgoing_out = Greater(%my_local, %b_out)
-        %user_defined_vals = Add(%b, %b)
-        return %keepgoing_out, %b_out, %user_defined_vals
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
       }
   
   *Sample equivalent C code*
@@ -11613,29 +11653,49 @@ This version of the operator has been available since version 11 of the default 
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
         /* End implicitly-defined code */
-        for (int i=0; i < max_trip_count && keepgoing; ++i) {
-          /* User-defined code (loop body) */
-          int my_local = a + b; // Reading values in the enclosing scope is fine
-          b = a - b; // writes fine if we specify b as a loop-carried dependency
-          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-          user_defined_vals[i] = b + b;
-          /* End user-defined code */
-        }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
   
-        // These below values are live-out from the loop and therefore accessible
-        b_out; user_defined_vals; keepgoing_out;
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out; 
+          bool b_in = b_out;
+  
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out; 
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+  
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+  
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
       }
   
   There are several things of note in this code snippet:
   
-  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
-  2) Any variables which you wish to make available in the enclosing scope (i.e.
-     the variables b and keepgoing) must be declared as either loop-carried
-     dependencies (both at the op inputs and output and at the body net input and
-     output) or scan_outputs.
-  3) Values created in the body cannot be accessed in the enclosing scope.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
   
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
@@ -11875,6 +11935,52 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
+
+### <a name="NonMaxSuppression-11"></a>**NonMaxSuppression-11**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0. 0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models. 1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
 
 ### <a name="OneHot-11"></a>**OneHot-11**</a>
 
@@ -13292,11 +13398,13 @@ This version of the operator has been available since version 11 of the default 
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
+  start or end indices, it represents number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If a negative value is passed for step, it represents slicing backward.
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+  when sclicing forward and 'INT_MIN' when slicing backward.
+  If a negative value is passed for step, it represents slicing backward. 
+  However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
@@ -13338,7 +13446,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> (optional) : Tind</dt>
 <dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
@@ -13717,11 +13825,18 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Unsqueeze-11"></a>**Unsqueeze-11**</a>
 
-  Insert single-dimensional entries to the shape of a tensor.
-  Takes one required argument `axes`, a list of dimensions that will be inserted.
-  Dimension indices in `axes` are as seen in the output tensor. For example:
-    Given a tensor such that tensor with shape [3, 4, 5], then
-    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  
+  For example:
+    Given an input tensor (`data`) of shape [3, 4, 5], then
+    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  
+  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
+  
 
 #### Version
 
@@ -13731,7 +13846,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Inputs
