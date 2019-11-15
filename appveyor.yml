@@ -37,22 +37,20 @@ install:
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
 - cmd: SET _prefix=%CONDA_PREFIX:~0,14%
+- cmd: SET _arch=%CONDA_PREFIX:~15,18%
 - >
+  IF "%_arch%"=="x64"
+  (
+  conda install -y -c conda-forge libprotobuf=3.5.2=he51fdeb_1 numpy
+  )
+  ELSE
+  (
+  conda install -y -c conda-forge libprotobuf=3.5.2=vc14_0 numpy
+  )
+
   IF "%_prefix%"=="C:\Miniconda37"
   (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy &&
   set "PATH=%PATH%;%CONDA_PREFIX%\Library\bin"
-  )
-  ELSE
-  (
-  IF "%CONDA_PREFIX%"=="C:\Miniconda36-x64"
-  (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy=1.17.0
-  )
-  ELSE
-  (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy
-  )
   )
 - cmd: pip install --quiet pytest nbval numpy
 
