@@ -60,6 +60,7 @@ conda install -c conda-forge onnx
 
 ## Source
 
+### Linux and MacOS
 You will need an install of protobuf and numpy to build ONNX.  One easy
 way to get these dependencies is via
 [Anaconda](https://www.anaconda.com/download/):
@@ -115,10 +116,12 @@ cd onnx
 git submodule update --init --recursive
 
 # Set environment variables to find protobuf and turn off static linking of ONNX to runtime library.
-# even better option is to add it to user\system PATH so this step can be performed only once.
+# Even better option is to add it to user\system PATH so this step can be performed only once.
 # For more details check https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=vs-2017
 set PATH=<protobuf_install_dir>\bin;%PATH%
 set USE_MSVC_STATIC_RUNTIME=0
+
+# Optional : Set environment variable `ONNX_ML=1` for onnx-ml
 
 # Build ONNX
 python setup.py install
@@ -131,7 +134,7 @@ However please note : This method is just added as a convenience for users and t
 
 ```
 # Use conda-forge protobuf
-conda install -c conda-forge protobuf numpy
+conda install -c conda-forge protobuf=3.9.2 numpy
 
 # Get ONNX
 git clone https://github.com/onnx/onnx.git
@@ -142,6 +145,8 @@ git submodule update --init --recursive
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 
 # Build ONNX
+# Optional : Set environment variable `ONNX_ML=1` for onnx-ml
+
 python setup.py install
 ```
 
