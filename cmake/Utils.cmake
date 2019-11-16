@@ -1,12 +1,10 @@
 #
-# Add MSVC RunTime Flag, this part is necessary for tests in CI
+# Add MSVC RunTime Flag
 function(add_msvc_runtime_flag lib)
   if(${ONNX_USE_MSVC_STATIC_RUNTIME})
-    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-      target_compile_options(${lib} PRIVATE /MTd)
-    else()
-      target_compile_options(${lib} PRIVATE /MT)
-    endif()
+    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MT> $<$<CONFIG:Debug>:/MTd>)    
+  else()
+    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MD> $<$<CONFIG:Debug>:/MDd>)
   endif()
 endfunction()
 
