@@ -153,7 +153,7 @@ The type of the output tensor is integer.)DOC";
         static_cast<int64_t>(1));
     schema.Attr(
         "select_last_index",
-        "Wether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
+        "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(0, "data", "An input tensor.", "T");

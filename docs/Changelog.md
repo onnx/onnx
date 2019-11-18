@@ -13892,7 +13892,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
-<dd>Wether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
 
 #### Inputs
@@ -13937,7 +13937,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
-<dd>Wether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
 
 #### Inputs
