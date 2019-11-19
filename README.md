@@ -166,6 +166,15 @@ ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'
 
 Change into another directory to fix this error.
 
+Another potential error is:
+
+```
+ImportError: cannot import name 'ONNX_ML'
+```
+
+You just need to cd to onnx in your source code tree and repeat.
+
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
