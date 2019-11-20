@@ -211,6 +211,9 @@ class OpSchema final {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
+  // Check if input and output types fall into valid set and match each other
+  void CheckInputOutputType(struct InferenceContext&) const;
+
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
@@ -493,6 +496,22 @@ class OpSchema final {
     return all_numeric_types;
   }
 
+  static const std::vector<std::string>& all_numeric_sequence_types() {
+    static const std::vector<std::string> all_numeric_sequence_types = {
+        "seq(tensor(uint8))",
+        "seq(tensor(uint16))",
+        "seq(tensor(uint32))",
+        "seq(tensor(uint64))",
+        "seq(tensor(int8))",
+        "seq(tensor(int16))",
+        "seq(tensor(int32))",
+        "seq(tensor(int64))",
+        "seq(tensor(float16))",
+        "seq(tensor(float))",
+        "seq(tensor(double))"};
+    return all_numeric_sequence_types;
+  }
+
   static const std::vector<std::string>& all_tensor_types() {
     static const std::vector<std::string> all_tensor_types = {
         "tensor(uint8)",
@@ -511,6 +530,26 @@ class OpSchema final {
         "tensor(complex64)",
         "tensor(complex128)"};
     return all_tensor_types;
+  }
+
+  static const std::vector<std::string>& all_tensor_sequence_types() {
+    static const std::vector<std::string> all_tensor_sequence_types = {
+        "seq(tensor(uint8))",
+        "seq(tensor(uint16))",
+        "seq(tensor(uint32))",
+        "seq(tensor(uint64))",
+        "seq(tensor(int8))",
+        "seq(tensor(int16))",
+        "seq(tensor(int32))",
+        "seq(tensor(int64))",
+        "seq(tensor(float16))",
+        "seq(tensor(float))",
+        "seq(tensor(double))",
+        "seq(tensor(string))",
+        "seq(tensor(bool))",
+        "seq(tensor(complex64))",
+        "seq(tensor(complex128))"};
+    return all_tensor_sequence_types;
   }
 
   // Calls the passed function with `this` as an argument. Useful for

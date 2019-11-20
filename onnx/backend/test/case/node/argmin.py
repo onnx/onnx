@@ -30,7 +30,7 @@ class ArgMin(Base):
             outputs=['result'],
             axis=axis,
             keepdims=keepdims)
-        # result: [[1, 0]]
+        # The content of result is : [[1, 0]]
         result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
 
@@ -50,7 +50,7 @@ class ArgMin(Base):
             outputs=['result'],
             axis=axis,
             keepdims=keepdims)
-        # result: [[1], [0]]
+        # The content of result is : [[1], [0]]
         result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
 
@@ -69,7 +69,7 @@ class ArgMin(Base):
             outputs=['result'],
             keepdims=keepdims)
 
-        # result: [[0], [0]]
+        # The content of result is : [[0], [0]]
         result = argmin_use_numpy(data, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
 
@@ -77,3 +77,23 @@ class ArgMin(Base):
         # result's shape: [1, 3, 4]
         result = argmin_use_numpy(data, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+
+    @staticmethod
+    def export_negative_axis_keepdims():  # type: () -> None
+        data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+        axis = -1
+        keepdims = 1
+        node = onnx.helper.make_node(
+            'ArgMin',
+            inputs=['data'],
+            outputs=['result'],
+            axis=axis,
+            keepdims=keepdims)
+        # The content of result is : [[1], [0]]
+        result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+        expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example')
+
+        data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+        # result's shape: [2, 3, 1]
+        result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+        expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random')

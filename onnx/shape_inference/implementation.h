@@ -162,18 +162,36 @@ void checkShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     const TypeProto_Tensor& existingType);
 
+void checkShapesAndTypes(
+    const TypeProto_Sequence& inferredType,
+    const TypeProto_Sequence& existingType);
+
+void checkShapesAndTypes(
+    const TypeProto& inferredType,
+    const TypeProto& existingType);
+
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType);
 
+void mergeShapesAndTypes(
+    const TypeProto_Sequence& inferredType,
+    TypeProto_Tensor* existingType);
+
+void mergeShapesAndTypes(
+    const TypeProto& inferredType,
+    TypeProto* existingType);
+
 void InferShapes(
     ModelProto& m,
+    bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
+    bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
 

@@ -257,10 +257,18 @@ inline void propagateElemTypeFromDtypeToOutput(
       ctx, attribute_tensor_datatype, outputIndex);
 }
 
+inline bool hasShape(const TypeProto& type) {
+  if (type.has_tensor_type()) {
+    return type.tensor_type().has_shape();
+  } else if (type.has_sequence_type() && type.sequence_type().has_elem_type()) {
+    return hasShape(type.sequence_type().elem_type());
+  }
+  return false;
+}
+
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
-      ctx.getInputType(n)->has_tensor_type() &&
-      ctx.getInputType(n)->tensor_type().has_shape();
+      hasShape(*ctx.getInputType(n));
 }
 
 inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
@@ -736,6 +744,60 @@ inline void unifyDim(Dim& dim, int64_t value) {
     checkDimEquality(dim.dim_value(), value);
   } else
     dim.set_dim_value(value);
+}
+
+// target-shape = Union (target-shape, source_shape)
+// Example 1: same rank, different dimensions
+//    input1 shape: (2, 3, 4, 'x')
+//    input2 shape: (2, 'y', 5, 'x')
+//    output shape: (2, None, None, 'x')
+// Example 2: different rank
+//    input1 shape: (2, 3, 4, 'x')
+//    input2 shape: (2, 3, 4)
+//    output shape: None
+inline void UnionShapeInfo(
+    const TensorShapeProto& source_shape,
+    TypeProto_Tensor& target_type) {
+  if (target_type.has_shape()) {
+    TensorShapeProto* target_shape = target_type.mutable_shape();
+
+    auto source_rank = source_shape.dim_size();
+    auto target_rank = target_shape->dim_size();
+    if (source_rank != target_rank) {
+      target_type.clear_shape();
+      return;
+    }
+
+    for (int i = 0; i < source_rank; ++i) {
+      const auto source_dim = source_shape.dim(i);
+      const auto target_dim = target_shape->dim(i);
+      bool is_dims_conflict = [&](){
+        if (source_dim.has_dim_value()) {
+          if (target_dim.has_dim_value() &&
+              target_dim.dim_value() == source_dim.dim_value()) {
+            return false;
+          }
+          return true;
+        }
+
+        if (source_dim.has_dim_param()) {
+          if (target_dim.has_dim_param() &&
+              target_dim.dim_param() == source_dim.dim_param()) {
+            return false;
+          }
+          return true;
+        }
+
+        return (target_dim.has_dim_value() || target_dim.has_dim_param());
+      }();
+      if (is_dims_conflict &&
+          (target_dim.has_dim_value() || target_dim.has_dim_param())) {
+        auto dim = target_shape->mutable_dim(i);
+        dim->clear_dim_value();
+        dim->clear_dim_param();
+      }
+    }
+  }
 }
 
 } // namespace ONNX_NAMESPACE

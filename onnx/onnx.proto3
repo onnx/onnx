@@ -61,7 +61,7 @@ enum Version {
   // The version field is always serialized and we will use it to store the
   // version that the  graph is generated from. This helps us set up version
   // control. 
-  // For the IR, we are using simple numbers starting with with 0x00000001, 
+  // For the IR, we are using simple numbers starting with 0x00000001,
   // which was the version we published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x0000000000000001;
 
@@ -86,7 +86,7 @@ enum Version {
   // - Add quantization annotation in GraphProto to map tensor with its scale and zero point quantization parameters.
   IR_VERSION_2019_3_18 = 0x0000000000000005;
 
-  // IR VERSION 6 published on <TBD>
+  // IR VERSION 6 published on Sep 19, 2019
   // - Add support for sparse tensor constants stored in model.
   //   - Add message SparseTensorProto
   //   - Add sparse initializers
@@ -163,7 +163,8 @@ message AttributeProto {
 message ValueInfoProto {
   // This field MUST be present in this version of the IR.
   string name = 1;     // namespace Value
-  // This field MUST be present in this version of the IR.
+  // This field MUST be present in this version of the IR for
+  // inputs and outputs of the top-level graph.
   TypeProto type = 2;
   // A human-readable documentation for this value. Markdown is allowed.
   string doc_string = 3;
@@ -510,18 +511,38 @@ message TypeProto {
     TensorShapeProto shape = 2;
   }
 
-  message SparseTensor { 
-    // This field MUST NOT have the value of UNDEFINED 
+  // repeated T
+  message Sequence {
+    // The type and optional shape of each element of the sequence.
+    // This field MUST be present for this version of the IR.
+    TypeProto elem_type = 1;
+  };
+
+  // map<K,V>
+  message Map {
     // This field MUST have a valid TensorProto.DataType value
-    // This field MUST be present for this version of the IR. 
-    int32 elem_type = 1;
-    TensorShapeProto shape = 2;
-  }
-  
+    // This field MUST be present for this version of the IR.
+    // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
+    int32 key_type = 1;
+    // This field MUST be present for this version of the IR.
+    TypeProto value_type = 2;
+  };
+
 
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
+
+    // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
+    //        as input and output to graphs and nodes. These types are needed to naturally
+    //        support classical ML operators.  DNN operators SHOULD restrict their input
+    //        and output types to tensors.
+
+    // The type of a sequence.
+    Sequence sequence_type = 4;
+
+    // The type of a map.
+    Map map_type = 5;
 
   }
 

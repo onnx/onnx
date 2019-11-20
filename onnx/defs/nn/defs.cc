@@ -184,92 +184,6 @@ void convPoolShapeInference(
   }
 }
 
-std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
-    const char* name,
-    const char* opName,
-    const char* additionalDescription) {
-  return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
- {name} consumes an input tensor X and applies {opName} pooling across
- the tensor according to kernel sizes, stride sizes, and pad lengths.
- {opName} pooling consisting of computing the {opName} on all values of a
- subset of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing. The output spatial shape will be following:
- ```
- output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-
- * pad_shape[i] is sum of pads along axis i
- ```
-
- `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
- ```
- VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
- SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
- ```
- And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
- ```
- pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
- ```
- {additionalDescription}
- )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
-    schema.SetDoc(doc);
-    schema.Attr(
-        "kernel_shape",
-        "The size of the kernel along each axis.",
-        AttributeProto::INTS);
-    schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
-    schema.Attr(
-        "auto_pad",
-        auto_pad_doc,
-        AttributeProto::STRING,
-        std::string("NOTSET"));
-    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
-    schema.Input(
-        0,
-        "X",
-        "Input data tensor from the previous operator; "
-        "dimensions for image case are (N x C x H x W), "
-        "where N is the batch size, C is the number of "
-        "channels, and H and W are the height and the "
-        "width of the data. For non image case, the "
-        "dimensions are in the form of "
-        "(N x C x D1 x D2 ... Dn), where N is the batch "
-        "size. Optionally, if dimension denotation is "
-        "in effect, the operation expects the input "
-        "data tensor to arrive with the dimension denotation "
-        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-        "T");
-    schema.Output(
-        0,
-        "Y",
-        "Output data tensor from average or max pooling across "
-        "the input tensor. Dimensions will vary based "
-        "on various kernel, stride, and pad sizes. Floor value of "
-        "the dimension is used",
-        "T");
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (ctx.getNumOutputs() > 1) {
-        // MaxPool with two outputs case.
-        auto output_type = ctx.getOutputType(1);
-        if (output_type->value_case() == TypeProto::kTensorType ||
-            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-        }
-      }
-      convPoolShapeInference(ctx, false, true, 0, 1);
-    });
-  };
-}
-
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
@@ -320,7 +234,10 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -376,29 +293,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
-    1,
-    OpSchema().FillUsing(PoolOpSchemaGenerator_9(
-        "AveragePool",
-        "average",
-        "The output of each pooling window is divided by the number of elements exclude pad.")));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    AveragePool,
-    7,
-    OpSchema()
-        .FillUsing(PoolOpSchemaGenerator_9(
-            "AveragePool",
-            "average",
-            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
-        .Attr(
-            "count_include_pad",
-            "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0)));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    AveragePool,
-    10,
+    11,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
@@ -413,44 +308,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
-    1,
-    OpSchema().FillUsing(PoolOpSchemaGenerator_9(
-        "MaxPool",
-        "max",
-        "The output of each pooling window is maximum number of elements exclude pad.")));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    MaxPool,
-    8,
-    OpSchema()
-        .FillUsing(PoolOpSchemaGenerator_9(
-            "MaxPool",
-            "max",
-            "The output of each pooling window is maximum number of elements exclude pad."))
-        .Attr(
-            "storage_order",
-            "The storage order of the tensor. 0 is row major, and 1 is column major.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Output(
-            1,
-            "Indices",
-            "Indices tensor from max pooling across the input tensor. "
-            "The dimensions of indices are the same as output tensor. "
-            "The values in indices of are the indices of the selected values during pooling. "
-            "The indices are computed as flatten 1-D tensor, "
-            "and the indices do not consider padding. "
-            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
-            "I",
-            OpSchema::Optional)
-        .TypeConstraint(
-            "I",
-            {"tensor(int64)"},
-            "Constrain index tensor to int64"));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    MaxPool,
-    10,
+    11,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
@@ -464,7 +322,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "dilations",
-            "Dilation value along each spatial axis of filter.",
+            "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
             OPTIONAL)
         .Output(
@@ -595,7 +453,7 @@ In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
-    9,
+    11,
     OpSchema()
         .SetDoc(MaxUnpool_ver9_doc)
         .Attr(
@@ -604,7 +462,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INTS)
         .Attr(
             "strides",
-            "Stride along each spatial axis.",
+            "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
             OPTIONAL)
         .Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL)
@@ -674,7 +532,10 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -718,7 +579,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpPool,
-    2,
+    11,
     OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
 
 // For ROI pool operations.
@@ -876,17 +737,24 @@ computes the output.)DOC";
         OPTIONAL);
     schema.Attr(
         "dilations",
-        "dilation value along each spatial axis of the filter.",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
+    schema.Attr(
+        "pads",
+        pads_doc,
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -901,7 +769,7 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Conv,
-    1,
+    11,
     OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
 static const char* QLinearConv_ver10_doc = R"DOC(
@@ -1431,17 +1299,28 @@ output_shape can also be explicitly specified in which case pads values are auto
         OPTIONAL);
     schema.Attr(
         "output_padding",
-        "The zero-padding added to one side of the output."
-        " This is also called adjs/adjustment in some frameworks.",
+        "Additional elements added to the side with higher coordinate indices in the output. "
+        "Each padding value in \"output_padding\" must be less than the corresponding stride/dilation dimension. "
+        "By default, this attribute is a zero vector. "
+        "Note that this attribute doesn't directly affect the computed output values. "
+        "It only controls the selection of the computed values, "
+        "so changing this attribute only adds or removes output elements. "
+        "If \"output_shape\" is explicitly provided, "
+        "\"output_padding\" does not contribute additional size to \"output_shape\" but "
+        "participates in the computation of the needed padding amount. "
+        "This is also called adjs or adjustment in some frameworks.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
         "dilations",
-        "dilation value along each spatial axis of the filter.",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -1460,7 +1339,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConvTranspose,
-    1,
+    11,
     OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
 // For GlobalPool operations.
@@ -1826,7 +1705,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrains input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Flatten_ver9_doc = R"DOC(
+static const char* Flatten_ver11_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1834,9 +1713,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    9,
+    11,
     OpSchema()
-        .SetDoc(Flatten_ver9_doc)
+        .SetDoc(Flatten_ver11_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
@@ -1854,7 +1733,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis",
             "Indicate up to which input dimensions "
             "(exclusive) should be flattened to the outer dimension of the output. "
-            "The value for axis must be in the range [0, R], where R is the rank of the input tensor. "
+            "The value for axis must be in the range [-r, r], where r is the rank of the input tensor. "
+            "Negative value means counting dimensions from the back. "
             "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
             "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
             AttributeProto::INT,
@@ -1866,6 +1746,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = getInputShape(ctx, 0);
           int rank = static_cast<int>(input_shape.dim_size());
           int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          if (axis < 0) {
+            axis += rank;
+          }
           if (axis > rank || axis < 0) {
             fail_shape_inference(
                 "Invalid value(", axis, ") for attribute 'axis'");

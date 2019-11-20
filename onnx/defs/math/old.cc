@@ -6,6 +6,77 @@
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+
+std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(
+    const char* name,
+    const char* description) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+The operator computes the {name} ({description}) values for each layer in the batch
+ of the given input. The input is a 2-D tensor (Tensor<float>) of size
+(batch_size x input_feature_dimensions). The output tensor has the same shape
+and contains the {name} values of the corresponding input.
+
+Input does not need to explicitly be a 2D vector; rather, it will be
+coerced into one. For an arbitrary n-dimensional tensor
+input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+the axis provided, then input will be coerced into a 2-dimensional tensor with
+dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+case where axis=1, this means the input tensor will be coerced into a 2D tensor
+of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+Each of these dimensions must be matched correctly, or else the operator
+will throw errors.
+)DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{description}", description);
+    schema.SetDoc(doc);
+    schema.Attr(
+        "axis",
+        "Describes the axis of the inputs when coerced "
+        "to 2D; defaults to one because the 0th axis most likely describes "
+        "the batch_size",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
+    schema.Input(
+        0,
+        "input",
+        "The input tensor that's coerced into a 2D matrix of size (NxD) "
+        "as described above.",
+        "T");
+    schema.Output(
+        0,
+        "output",
+        "The output values with the same "
+        "shape as input tensor (the original size without coercion).",
+        "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Softmax,
+    1,
+    OpSchema().FillUsing(
+        SoftmaxFamilyDocGenerator_opset1("softmax", "normalized exponential")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LogSoftmax,
+    1,
+    OpSchema().FillUsing(
+        SoftmaxFamilyDocGenerator_opset1("logsoftmax", "log of softmax")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Hardmax,
+    1,
+    OpSchema().FillUsing(SoftmaxFamilyDocGenerator_opset1(
+        "hardmax",
+        "1 for the first maximum value, and 0 for all others")));
+
 const char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
@@ -1043,10 +1114,108 @@ ONNX_OPERATOR_SET_SCHEMA(
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2)
+            if (first_input_shape.dim_size() != 2) {
               fail_shape_inference("First input does not have rank 2");
-            if (second_input_shape.dim_size() != 2)
+            }
+            if (second_input_shape.dim_size() != 2) {
               fail_shape_inference("Second input does not have rank 2");
+            }
+            updateOutputShape(
+                ctx,
+                0,
+                {first_input_shape.dim(transA ? 1 : 0),
+                 second_input_shape.dim(transB ? 0 : 1)});
+          }
+        }));
+
+static const char* Gemm_ver9_doc = R"DOC(General Matrix multiplication:
+https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+
+A' = transpose(A) if transA else A
+
+B' = transpose(B) if transB else B
+
+Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+and output tensor Y has shape (M, N). A will be transposed before doing the
+computation if attribute transA is non-zero, same for B and transB.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Gemm,
+    9,
+    OpSchema()
+        .SetDoc(
+            Gemm_ver9_doc +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+        .Input(
+            0,
+            "A",
+            "Input tensor A. "
+            "The shape of A should be (M, K) if transA is 0, "
+            "or (K, M) if transA is non-zero.",
+            "T")
+        .Input(
+            1,
+            "B",
+            "Input tensor B. "
+            "The shape of B should be (K, N) if transB is 0, "
+            "or (N, K) if transB is non-zero.",
+            "T")
+        .Input(
+            2,
+            "C",
+            "Input tensor C. "
+            "The shape of C should be unidirectional broadcastable to (M, N).",
+            "T")
+        .Output(0, "Y", "Output tensor of shape (M, N).", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
+        .Attr(
+            "transA",
+            "Whether A should be transposed",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "transB",
+            "Whether B should be transposed",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "alpha",
+            "Scalar multiplier for the product of input tensors A * B.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Attr(
+            "beta",
+            "Scalar multiplier for input tensor C.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2)) {
+            auto transAAttr = ctx.getAttribute("transA");
+            bool transA =
+                transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+            auto transBAttr = ctx.getAttribute("transB");
+            bool transB =
+                transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
+            if (first_input_shape.dim_size() != 2) {
+              fail_shape_inference("First input does not have rank 2");
+            }
+            if (second_input_shape.dim_size() != 2) {
+              fail_shape_inference("Second input does not have rank 2");
+            }
             updateOutputShape(
                 ctx,
                 0,
