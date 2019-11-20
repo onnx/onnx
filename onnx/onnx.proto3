@@ -348,7 +348,7 @@ message TensorProto {
 
     // 64-bit signed integer that carries POSIX time
     // number of seconds since 00:00:00 UTC on 1 January 1970
-    POSIX_DATETIME = 17;
+    DATETIME = 17;
 
     // Future extensions go here.
   }

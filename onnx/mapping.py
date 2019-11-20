@@ -22,7 +22,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
     int(TensorProto.UINT32): np.dtype('uint32'),
     int(TensorProto.UINT64): np.dtype('uint64'),
-    int(TensorProto.POSIX_DATETIME): np.dtype('int64'),
+    int(TensorProto.DATETIME): np.dtype('int64'),
     int(TensorProto.STRING): np.dtype(np.object)
 }
 
@@ -36,7 +36,7 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.INT16): int(TensorProto.INT32),
     int(TensorProto.INT32): int(TensorProto.INT32),
     int(TensorProto.INT64): int(TensorProto.INT64),
-    int(TensorProto.POSIX_DATETIME): int(TensorProto.INT64),
+    int(TensorProto.DATETIME): int(TensorProto.INT64),
     int(TensorProto.BOOL): int(TensorProto.INT32),
     int(TensorProto.FLOAT16): int(TensorProto.UINT16),
     int(TensorProto.BFLOAT16): int(TensorProto.UINT16),
