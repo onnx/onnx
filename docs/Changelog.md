@@ -10284,8 +10284,8 @@ This version of the operator has been deprecated since version 10 of the default
 ### <a name="ArgMax-11"></a>**ArgMax-11**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
 #### Version
@@ -10325,8 +10325,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMin-11"></a>**ArgMin-11**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
 #### Version
@@ -13874,10 +13874,11 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMax-12"></a>**ArgMax-12**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   If select_last_index is True (default False), the index of the last occurence of the max 
-  is selected if the max appears more than once in the input. 
+  is selected if the max appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
@@ -13919,10 +13920,11 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="ArgMin-12"></a>**ArgMin-12**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   If select_last_index is True (default False), the index of the last occurence of the min 
-  is selected if the min appears more than once in the input. 
+  is selected if the min appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version

@@ -210,8 +210,8 @@ std::function<void(OpSchema&)> ArgReduceDocGenerator_opset11(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the 
-provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
 The type of the output tensor is integer.)DOC";
     ReplaceAll(doc, "{name}", name);
     schema.SetDoc(doc.c_str());

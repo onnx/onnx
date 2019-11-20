@@ -557,10 +557,11 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   If select_last_index is True (default False), the index of the last occurence of the max 
-  is selected if the max appears more than once in the input. 
+  is selected if the max appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
@@ -817,10 +818,11 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   If select_last_index is True (default False), the index of the last occurence of the min 
-  is selected if the min appears more than once in the input. 
+  is selected if the min appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
