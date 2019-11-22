@@ -709,6 +709,19 @@ class OpSet_Onnx_ver11 {
   }
 };
 
+// Forward declarations for ai.onnx version 12
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMin);
+
+// Iterate over schema from ai.onnx version 12
+class OpSet_Onnx_ver12 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMin)>());
+  }
+};
+
   inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -721,6 +734,7 @@ class OpSet_Onnx_ver11 {
   RegisterOpSetSchema<OpSet_Onnx_ver9>();
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
   RegisterOpSetSchema<OpSet_Onnx_ver11>();
+  RegisterOpSetSchema<OpSet_Onnx_ver12>();
 }
 
 } // namespace ONNX_NAMESPACE
