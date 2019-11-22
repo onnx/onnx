@@ -31,7 +31,7 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
       ONNX_ASSERT(t1[i] < static_cast<int64_t>(t2.size()));
       ONNX_ASSERT(
           t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
-      ret.push_back(t2[static_cast<size_t>(t1[i])]);
+      ret.push_back(t1[static_cast<size_t>(t2[i])]);
     }
     return ret;
   }
