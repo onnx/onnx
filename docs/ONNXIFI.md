@@ -39,11 +39,12 @@ ONNXIFI is a cross-platform API for loading and executing ONNX graphs on optimiz
 The minimum functionality an ONNXIFI implementation must provide is the following:
 
 - Support ONNX 1.0 model format.
-  - There is no minimum list of Operators a backed has to support.
+  - There is no minimum list of Operators a backend has to support.
 - Support graph inputs / outputs in CPU memory.
 - Support graph inputs / outputs with fixed shape, specified in GraphProto message.
 
 ### Discovery
+
 Vendor-provided libraries should adhere to some rules to ensure discovery by ONNX-supported frameworks and applications:
 
 1. The libraries must be installed in the following directories:
@@ -60,4 +61,4 @@ Vendor-provided libraries should adhere to some rules to ensure discovery by ONN
 
 Hardware vendors are welcome to add their own extensions to ONNX backend interface. The backend interface offers several extension mechanisms:
 - Experimental, exotic, or vendor-specific operators can be supported in a private domain using NodeProto.domain attribute.
-- Vendor-provided ONNXIFI implementation can expose additional functions
+- Vendor-provided ONNXIFI implementation can expose additional functions.
