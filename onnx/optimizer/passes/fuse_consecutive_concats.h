@@ -56,6 +56,10 @@ struct FuseConsecutiveConcats final : public PredicateBasedPass {
           cur_input_node->hasAttribute(kaxis) &&
           cur_input_node->i(kaxis) == concat_node->i(kaxis)) {
         transform_ran = true;
+        // Inserts n inputs of cur_input_node at index i+1~i+1+(n-1), 
+        // and remove cur_input_node at index i. 
+        // As a result, cur_input_node is replaced by its inputs inplace, 
+        // instead of always appending its inputs at the end.
         for (size_t j = 0; j < cur_input_node->inputs().size(); j++) {
           Value* value = cur_input_node->input(j);
           insertInput(concat_node, i + 1 + j, value);
