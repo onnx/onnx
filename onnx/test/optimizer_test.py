@@ -388,7 +388,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_concats(self):  # type: () -> None
         nodes = [helper.make_node("Concat", ["A", "B", "C"], ["X"], axis=0),
                  helper.make_node("Concat", ["D", "E", "F"], ["Y"], axis=0),
-                 helper.make_node("Concat", ["X", "Y"], ["Z"], axis=0)]
+                 helper.make_node("Concat", ["X", "G", "Y"], ["Z"], axis=0)]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -397,13 +397,16 @@ class TestOptimizer(unittest.TestCase):
             helper.make_tensor_value_info("C", TensorProto.FLOAT, (2, 3, 4)),
             helper.make_tensor_value_info("D", TensorProto.FLOAT, (4, 3, 4)),
             helper.make_tensor_value_info("E", TensorProto.FLOAT, (2, 3, 4)),
-            helper.make_tensor_value_info("F", TensorProto.FLOAT, (4, 3, 4))],
+            helper.make_tensor_value_info("F", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("G", TensorProto.FLOAT, (4, 3, 4))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (18, 3, 4))])
         optimized_model = self._optimized(
             graph, ["fuse_consecutive_concats"], True)  # two passes are needed to simplify the graph to its simplest state.
 
         assert len(optimized_model.graph.node) == 1
-        assert len(optimized_model.graph.node[0].input) == 6
+        assert len(optimized_model.graph.node[0].input) == 7
+        assert optimized_model.graph.node[0].input == [
+                "A", "B", "C", "G", "D", "E", "F"]
         assert optimized_model.graph.node[0].op_type == "Concat"
 
     def test_fuse_concats_different_axis(self):  # type: () -> None
