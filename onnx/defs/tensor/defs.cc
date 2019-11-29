@@ -1237,7 +1237,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Squeeze_ver11_doc = R"DOC(
+static const char* Squeeze_ver12_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
@@ -1246,7 +1246,7 @@ the shape. If an axis is selected with shape entry not equal to one, an error is
 
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
-    11,
+    12,
     OpSchema()
         .Attr(
             "axes",
@@ -1254,7 +1254,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INTS,
             OPTIONAL)
-        .SetDoc(Squeeze_ver11_doc)
+        .SetDoc(Squeeze_ver12_doc)
         .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
         .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
         .TypeConstraint(
@@ -1287,23 +1287,18 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return axis < 0 ? axis + input_ndim : axis;
               });
 
-          for (int i = 0, j = 0; i < input_ndim; ++i) {
-            if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
-              if (input_shape.dim(i).has_dim_value() &&
-                  input_shape.dim(i).dim_value() != 1) {
-                fail_shape_inference(
-                    "Dimension of input ",
-                    i,
-                    " must be 1 instead of ",
-                    input_shape.dim(i).dim_value());
-              }
-              ++j;
-            } else {
-              *ctx.getOutputType(0)
-                   ->mutable_tensor_type()
-                   ->mutable_shape()
-                   ->add_dim() = input_shape.dim(i);
+          for (int i = 0; i < input_ndim; ++i) {
+            // only squeeze the axis when it is specified in `axes` and
+            // has_dim_value() and dim_value() == 1
+            if (std::find(axes.begin(), axes.end(), i) != axes.end() &&
+                input_shape.dim(i).has_dim_value() &&
+                input_shape.dim(i).dim_value() == 1) {
+              continue;
             }
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() = input_shape.dim(i);
           }
         }));
 

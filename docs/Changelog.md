@@ -13963,3 +13963,42 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+### <a name="Squeeze-12"></a>**Squeeze-12**</a>
+
+  Remove single-dimensional entries from the shape of a tensor.
+  Takes a  parameter `axes` with a list of axes to squeeze.
+  If `axes` is not provided, all the single dimensions will be removed from
+  the shape. If an axis is selected with shape entry not equal to one, an error is raised.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensors with at least max(dims) dimensions.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>squeezed</tt> : T</dt>
+<dd>Reshaped tensor with same data as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+

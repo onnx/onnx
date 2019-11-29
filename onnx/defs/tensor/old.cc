@@ -1213,6 +1213,76 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Squeeze_ver11_doc = R"DOC(
+Remove single-dimensional entries from the shape of a tensor.
+Takes a  parameter `axes` with a list of axes to squeeze.
+If `axes` is not provided, all the single dimensions will be removed from
+the shape. If an axis is selected with shape entry not equal to one, an error is raised.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Squeeze,
+    11,
+    OpSchema()
+        .Attr(
+            "axes",
+            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .SetDoc(Squeeze_ver11_doc)
+        .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
+        .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          std::vector<int64_t> axes;
+          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+            return;
+          }
+
+          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+            return;
+          }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_ndim = input_shape.dim_size();
+          std::transform(
+              axes.begin(),
+              axes.end(),
+              axes.begin(),
+              [&](int64_t axis) -> int64_t {
+                return axis < 0 ? axis + input_ndim : axis;
+              });
+
+          for (int i = 0, j = 0; i < input_ndim; ++i) {
+            if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
+              if (input_shape.dim(i).has_dim_value() &&
+                  input_shape.dim(i).dim_value() != 1) {
+                fail_shape_inference(
+                    "Dimension of input ",
+                    i,
+                    " must be 1 instead of ",
+                    input_shape.dim(i).dim_value());
+              }
+              ++j;
+            } else {
+              *ctx.getOutputType(0)
+                   ->mutable_tensor_type()
+                   ->mutable_shape()
+                   ->add_dim() = input_shape.dim(i);
+            }
+          }
+        }));
+
 static const char* Unsqueeze_ver1_doc = R"DOC(
 Insert single-dimensional entries to the shape of a tensor.
 Takes one required argument `axes`, a list of dimensions that will be inserted.

@@ -17242,9 +17242,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>
+Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>, <a href="Changelog.md#Squeeze-11">Squeeze-11</a>
 
 #### Attributes
 
@@ -17292,6 +17292,25 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+
+
+<details>
+<summary>squeeze_axes_not_one</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Squeeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_squeeze_negative_axes_not_one')
 ```
 
 </details>

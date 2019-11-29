@@ -38,3 +38,16 @@ class Squeeze(Base):
         y = np.squeeze(x, axis=-2)
         expect(node, inputs=[x], outputs=[y],
                name='test_squeeze_negative_axes')
+
+    @staticmethod
+    def export_squeeze_axes_not_one():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Squeeze',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[1],
+        )
+        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        y = x
+        expect(node, inputs=[x], outputs=[y],
+               name='test_squeeze_negative_axes_not_one')
