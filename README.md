@@ -1,5 +1,3 @@
-The next ONNX Community Workshop will be held on November 18 in Shanghai! This is a great opportunity to meet with and hear from people working with ONNX from many companies. You’ll also have opportunities to participate in technical breakout sessions. Due to limited space, please submit a proposal for a short talk if you would like to attend. [Submit your proposal](https://aka.ms/onnx-shanghai).
-
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/travis/onnx/onnx/master.svg?label=Linux)](https://travis-ci.org/onnx/onnx)
