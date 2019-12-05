@@ -28,10 +28,10 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
     std::vector<int64_t> ret;
     ret.reserve(t1.size());
     for (size_t i = 0; i < t1.size(); i++) {
-      ONNX_ASSERT(t1[i] < static_cast<int64_t>(t2.size()));
+      ONNX_ASSERT(t2[i] < static_cast<int64_t>(t1.size()));
       ONNX_ASSERT(
-          t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
-      ret.push_back(t2[static_cast<size_t>(t1[i])]);
+          t1[static_cast<size_t>(t2[i])] < static_cast<int64_t>(t1.size()));
+      ret.push_back(t1[static_cast<size_t>(t2[i])]);
     }
     return ret;
   }

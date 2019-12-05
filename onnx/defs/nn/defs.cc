@@ -778,6 +778,8 @@ a quantized filter, its scale and zero point, and output's scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
 It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
 Each input or output and its related zero point must have same type.
+When bias is present it must be quantized using scale = input scale * weight scale and 
+zero point as 0.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -849,7 +851,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             8,
             "B",
-            "Optional 1D bias to be added to the convolution, has size of M.",
+            "Optional 1D bias to be added to the convolution, has size of M. "
+            "Bias must be quantized using scale = x_scale * w_scale and zero_point = 0",
             "T4",
             OpSchema::Optional)
         .Output(
