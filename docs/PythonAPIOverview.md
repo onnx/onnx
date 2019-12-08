@@ -64,8 +64,12 @@ from onnx import AttributeProto, TensorProto, GraphProto
 # https://github.com/onnx/onnx/blob/master/onnx/onnx.proto
 
 
-# Create one input (ValueInfoProto)
+# Create inputs (ValueInfoProto)
 X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [1, 2])
+
+# Create initializer with static pads and constant value
+pads = helper.make_tensor('pads', TensorProto.INT64, [4], [0, 1, 0, 1])
+value = helper.make_tensor('pad_value', TensorProto.FLOAT, [1], [1.5])
 
 # Create one output (ValueInfoProto)
 Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 4])
@@ -73,19 +77,18 @@ Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 4])
 # Create a node (NodeProto)
 node_def = helper.make_node(
     'Pad', # node name
-    ['X'], # inputs
+    ['X', 'pads', 'pad_value'], # inputs
     ['Y'], # outputs
-    mode='constant', # attributes
-    value=1.5,
-    pads=[0, 1, 0, 1],
+    mode='constant' # attributes
 )
 
 # Create the graph (GraphProto)
 graph_def = helper.make_graph(
-    [node_def],
-    'test-model',
-    [X],
-    [Y],
+    [node_def], # nodes
+    'test-model', # graph name
+    [X], # graph inputs
+    [Y], # graph outputs
+    [pads, value]  # initializers
 )
 
 # Create the model (ModelProto)
