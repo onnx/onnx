@@ -70,6 +70,7 @@ pads = helper.make_tensor_value_info('pads', TensorProto.FLOAT, [1, 4])
 
 value = helper.make_tensor_value_info('value', AttributeProto.FLOAT, [1])
 
+
 # Create one output (ValueInfoProto)
 Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [3, 4])
 
