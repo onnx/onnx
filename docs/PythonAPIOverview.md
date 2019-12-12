@@ -65,26 +65,28 @@ from onnx import AttributeProto, TensorProto, GraphProto
 
 
 # Create one input (ValueInfoProto)
-X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [1, 2])
+X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [3, 2])
+pads = helper.make_tensor_value_info('pads', TensorProto.FLOAT, [1, 4])
+
+value = helper.make_tensor_value_info('value', AttributeProto.FLOAT, [1])
+
 
 # Create one output (ValueInfoProto)
-Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 4])
+Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [3, 4])
 
-# Create a node (NodeProto)
+# Create a node (NodeProto) - This is based on Pad-11
 node_def = helper.make_node(
     'Pad', # node name
-    ['X'], # inputs
+    ['X', 'pads', 'value'], # inputs
     ['Y'], # outputs
     mode='constant', # attributes
-    value=1.5,
-    pads=[0, 1, 0, 1],
 )
 
 # Create the graph (GraphProto)
 graph_def = helper.make_graph(
     [node_def],
     'test-model',
-    [X],
+    [X, pads, value],
     [Y],
 )
 
