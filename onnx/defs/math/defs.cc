@@ -1738,10 +1738,10 @@ void einsumRankInference(
       }
     }
     // then the indices that occur exactly once in alphabetic order
-    left_equation.erase(std::remove(left_equation.begin(), left_equation.end(), '.'), left_equation.end());
-    left_equation.erase(std::remove(left_equation.begin(), left_equation.end(), ','), left_equation.end());
     for (size_t i = 0; i < left_equation.size();  i++) {
-      num_letter_occurrences[left_equation.at(i) - 'a']++;
+      if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
+        num_letter_occurrences[left_equation.at(i) - 'a']++;
+      }
     }
     for (size_t idx = 0; idx < number_of_letters; idx++) {
       if (num_letter_occurrences[idx] == 1) {
