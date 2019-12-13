@@ -37,6 +37,7 @@
   * <a href="#Det">Det</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
+  * <a href="#Einsum">Einsum</a>
   * <a href="#Elu">Elu</a>
   * <a href="#Equal">Equal</a>
   * <a href="#Erf">Erf</a>
@@ -4392,6 +4393,142 @@ Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
        name='test_dynamicquantizelinear_min_adjusted')
+```
+
+</details>
+
+
+### <a name="Einsum"></a><a name="einsum">**Einsum**</a>
+
+  The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>Equation</tt> : tensor(string)</dt>
+<dd>A 0-D tensor of UTF-8 string Einsum expression</dd>
+<dt><tt>Inputs</tt> (variadic) : T</dt>
+<dd>Operands</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>einsum_batch_diagonal</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['...ii->...i', 'x'],
+    outputs=['y'],
+)
+
+Eqn = np.array([u'...ii->...i']).astype(np.object)
+X = np.random.randn(3, 5, 5)
+Y = einsum_batch_diagonal_reference_implementation(X)
+
+expect(node, inputs=[Eqn, X], outputs=[Y],
+       name='test_einsum_batch_diagonal')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_batch_matmul</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['bij,bjk->bik', 'x', 'y'],
+    outputs=['z'],
+)
+
+Eqn = np.array([u'bij,bjk->bik']).astype(np.object)
+X = np.random.randn(5, 2, 3)
+Y = np.random.randn(5, 3, 4)
+Z = einsum_batch_matmul_reference_implementation(X, Y)
+
+expect(node, inputs=[Eqn, X, Y], outputs=[Z],
+       name='test_einsum_batch_matmul')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_inner_prod</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['i,i', 'x', 'y'],
+    outputs=['z'],
+)
+
+Eqn = np.array([u'i,i']).astype(np.object)
+X = np.random.randn(5)
+Y = np.random.randn(5)
+Z = einsum_inner_prod_reference_implementation(X, Y)
+
+expect(node, inputs=[Eqn, X, Y], outputs=[Z],
+       name='test_einsum_inner_prod')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_sum</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['ij->i', 'x'],
+    outputs=['y'],
+)
+
+Eqn = np.array([u'ij->i']).astype(np.object)
+X = np.random.randn(3, 4)
+Y = einsum_sum_reference_implementation(X)
+
+expect(node, inputs=[Eqn, X], outputs=[Y],
+       name='test_einsum_sum')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_transpose</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['ij->ji', 'x'],
+    outputs=['y'],
+)
+
+Eqn = np.array([u'ij->ji']).astype(np.object)
+X = np.random.randn(3, 4)
+Y = einsum_transpose_reference_implementation(X)
+
+expect(node, inputs=[Eqn, X], outputs=[Y],
+       name='test_einsum_transpose')
 ```
 
 </details>

@@ -1,0 +1,1 @@
+2bij,bjk->bikBbij,bjk->bik

@@ -2723,6 +2723,63 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])  # type: ignore
 
+    def test_einsum_transpose(self):  # type: () -> None
+        graph = self._make_graph(
+            [('equation', TensorProto.STRING, ()),
+             ('x', TensorProto.FLOAT, (3, 4))],
+            [make_node('Einsum', ['equation', 'x'], ['y'])],
+            [],
+            initializer=[make_tensor('equation', TensorProto.STRING, (),
+                                     vals=np.array([u'ij->ji'], dtype='a6'), raw=False)])
+
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])
+
+    def test_einsum_sum_along_dim(self):  # type: () -> None
+        graph = self._make_graph(
+            [('equation', TensorProto.STRING, ()),
+             ('x', TensorProto.FLOAT, (3, 4))],
+            [make_node('Einsum', ['equation', 'x'], ['y'])],
+            [],
+            initializer=[make_tensor('equation', TensorProto.STRING, (),
+                                     vals=np.array([u'ij->i'], dtype='a5'), raw=False)])
+
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, ))])
+
+    def test_einsum_ellipsis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('equation', TensorProto.STRING, ()),
+             ('x', TensorProto.FLOAT, (3, 4))],
+            [make_node('Einsum', ['equation', 'x'], ['y'])],
+            [],
+            initializer=[make_tensor('equation', TensorProto.STRING, (),
+                                     vals=np.array([u'...ii->...i'], dtype='a11'), raw=False)])
+
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])
+
+    def test_einsum_batch_matmul(self):  # type: () -> None
+        graph = self._make_graph(
+            [('equation', TensorProto.STRING, ()),
+             ('x', TensorProto.FLOAT, (5, 2, 3)),
+             ('y', TensorProto.FLOAT, (5, 3, 4))],
+            [make_node('Einsum', ['equation', 'x', 'y'], ['z'])],
+            [],
+            initializer=[make_tensor('equation', TensorProto.STRING, (),
+                                     vals=np.array([u'bij,bjk->bik'], dtype='a12'), raw=False)])
+
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None, None, None))])
+
+    def test_einsum_left_hand_eqn(self):  # type: () -> None
+        graph = self._make_graph(
+            [('equation', TensorProto.STRING, ()),
+             ('x', TensorProto.FLOAT, (2, 3)),
+             ('y', TensorProto.FLOAT, (3, 4))],
+            [make_node('Einsum', ['equation', 'x', 'y'], ['z'])],
+            [],
+            initializer=[make_tensor('equation', TensorProto.STRING, (),
+                                     vals=np.array([u'ij,kl'], dtype='a5'), raw=False)])
+
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None, None, None, None))])
+
 
 if __name__ == '__main__':
     unittest.main()

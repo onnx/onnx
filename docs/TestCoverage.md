@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
+Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2605,6 +2605,102 @@ Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
        name='test_dynamicquantizelinear_min_adjusted')
+```
+
+</details>
+
+
+### Einsum
+There are 5 test cases, listed as following:
+<details>
+<summary>einsum_batch_diagonal</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['...ii->...i', 'x'],
+    outputs=['y'],
+)
+
+Eqn = np.array([u'...ii->...i']).astype(np.object)
+X = np.random.randn(3, 5, 5)
+Y = einsum_batch_diagonal_reference_implementation(X)
+
+expect(node, inputs=[Eqn, X], outputs=[Y],
+       name='test_einsum_batch_diagonal')
+```
+
+</details>
+<details>
+<summary>einsum_batch_matmul</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['bij,bjk->bik', 'x', 'y'],
+    outputs=['z'],
+)
+
+Eqn = np.array([u'bij,bjk->bik']).astype(np.object)
+X = np.random.randn(5, 2, 3)
+Y = np.random.randn(5, 3, 4)
+Z = einsum_batch_matmul_reference_implementation(X, Y)
+
+expect(node, inputs=[Eqn, X, Y], outputs=[Z],
+       name='test_einsum_batch_matmul')
+```
+
+</details>
+<details>
+<summary>einsum_inner_prod</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['i,i', 'x', 'y'],
+    outputs=['z'],
+)
+
+Eqn = np.array([u'i,i']).astype(np.object)
+X = np.random.randn(5)
+Y = np.random.randn(5)
+Z = einsum_inner_prod_reference_implementation(X, Y)
+
+expect(node, inputs=[Eqn, X, Y], outputs=[Z],
+       name='test_einsum_inner_prod')
+```
+
+</details>
+<details>
+<summary>einsum_sum</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['ij->i', 'x'],
+    outputs=['y'],
+)
+
+Eqn = np.array([u'ij->i']).astype(np.object)
+X = np.random.randn(3, 4)
+Y = einsum_sum_reference_implementation(X)
+
+expect(node, inputs=[Eqn, X], outputs=[Y],
+       name='test_einsum_sum')
+```
+
+</details>
+<details>
+<summary>einsum_transpose</summary>
+
+```python
+node = onnx.helper.make_node('Einsum',
+    inputs=['ij->ji', 'x'],
+    outputs=['y'],
+)
+
+Eqn = np.array([u'ij->ji']).astype(np.object)
+X = np.random.randn(3, 4)
+Y = einsum_transpose_reference_implementation(X)
+
+expect(node, inputs=[Eqn, X], outputs=[Y],
+       name='test_einsum_transpose')
 ```
 
 </details>

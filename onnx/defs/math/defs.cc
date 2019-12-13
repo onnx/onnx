@@ -1665,4 +1665,131 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+void einsumRankInference(
+    ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
+
+	const size_t numInputs = ctx.getNumInputs();
+  // First input is the equation string. Other input tensors should have shape info
+  if (numInputs < 2 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+    return;
+  }
+
+  auto* output_shape = getOutputShape(ctx, 0);
+  std::string  left_equation;
+
+  auto mid_index = equation.find("->");
+  if (mid_index != std::string::npos) {
+    // Separate right and left hand sides of the equation
+    left_equation = equation.substr(0, mid_index);
+  } else {
+    // No right hand side
+    left_equation = equation;
+  }
+
+  std::string term;
+  int64_t num_operands = 0;
+  int64_t num_ellipsis = 0;
+  int64_t num_ellipsis_indices = 0;
+  std::stringstream str(left_equation);
+
+  while(std::getline(str, term, ',')) {
+    auto ellipsis_idx = term.find("...");
+    if (ellipsis_idx != std::string::npos) {
+	    // if there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
+	    int64_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+
+	    if (num_ellipsis == 0) {
+	      num_ellipsis_indices = rank - term.size() + 3;
+	    } else { // ellipsis has been seen before. Check that if dimensions are compatible
+	      if (num_ellipsis_indices != rank - term.size() + 3) {
+	        fail_shape_inference("Ellipsis represents incompatible dimensions.");
+	      }
+	    }
+	    num_ellipsis++;
+    }
+    num_operands++;
+  }
+
+  if (numInputs-1 != num_operands) {
+    fail_shape_inference("Number of input tensors does not match the operand in the equation.");
+  }
+
+  constexpr size_t number_of_letters = 26;
+  std::array<std::int64_t, number_of_letters> num_letter_occurrences;
+  num_letter_occurrences.fill(0);
+  int64_t num_output_dims = 0;
+  if (mid_index != std::string::npos) {  // parse the user provided right hand side
+    std::string right_equation = equation.substr(mid_index+2);
+    auto right_ellipsis_idx = right_equation.find("...");
+    if (right_ellipsis_idx != std::string::npos) { // right hand side contains ellipsis
+      for (int64_t i = 0; i < num_ellipsis; ++i) {
+        output_shape->add_dim();
+      }
+    }
+    right_equation.erase(std::remove(right_equation.begin(), right_equation.end(), '.'), right_equation.end());
+    for (char c: right_equation) { // add a dimension per each character in right hand equation
+      output_shape->add_dim();
+    }
+  } else { // create an inferred right hand side
+    // the ellipsis (if in the lhs) comes first
+    if (num_ellipsis_indices >= 0) {
+      for (int64_t i = 0; i < num_ellipsis_indices; ++i) {
+        output_shape->add_dim();
+      }
+    }
+    // then the indices that occur exactly once in alphabetic order
+    left_equation.erase(std::remove(left_equation.begin(), left_equation.end(), '.'), left_equation.end());
+    left_equation.erase(std::remove(left_equation.begin(), left_equation.end(), ','), left_equation.end());
+    for (int i = 0; i < left_equation.size();  i++) {
+      num_letter_occurrences[left_equation.at(i) - 'a']++;
+    }
+    for (size_t idx = 0; idx < number_of_letters; idx++) {
+      if (num_letter_occurrences[idx] == 1) {
+        output_shape->add_dim();
+      }
+    }
+  }
+}
+
+static const char* Einsum_ver11_doc = R"DOC(
+The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Einsum,
+    12,
+    OpSchema()
+        .SetDoc(Einsum_ver11_doc)
+        .Input(0, "Equation", "A 0-D tensor of UTF-8 string Einsum expression", "tensor(string)")
+        .Input(1,
+            "Inputs",
+            "Operands",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+
+          const TensorProto* equationInitializer = ctx.getInputData(0);
+          if (!equationInitializer) {
+            return;
+          }
+
+          if (equationInitializer->has_raw_data()) {
+            // Cannot use raw_data to store string
+            return;
+          } else {
+            std::vector<std::string> equation;
+            const auto& data = equationInitializer->string_data();
+            equation.insert(equation.end(), data.begin(), data.end());
+						einsumRankInference(ctx,equation[0]);
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
