@@ -1730,15 +1730,13 @@ void einsumRankInference(
         output_shape->add_dim();
       }
     }
-  } else { // create an inferred right hand side
-    // the ellipsis (if in the lhs) comes first
-    if (num_ellipsis_indices >= 0) {
+  } else { // infer the dimension for right hand side of the equation
+    if (num_ellipsis_indices >= 0) { // if there's an ellipsis, add it's corresponding dimensions
       for (int64_t i = 0; i < num_ellipsis_indices; ++i) {
         output_shape->add_dim();
       }
     }
-    // then the indices that occur exactly once in alphabetic order
-    for (size_t i = 0; i < left_equation.size();  i++) {
+    for (size_t i = 0; i < left_equation.size();  i++) { // count chars that appear exactly once on left hand side
       if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
         num_letter_occurrences[left_equation.at(i) - 'a']++;
       }
