@@ -13977,7 +13977,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>Equation</tt> : tensor(string)</dt>
-<dd>A 0-D tensor of UTF-8 string Einsum expression</dd>
+<dd>A 0-D tensor holding Einsum expression in UTF-8 String</dd>
 <dt><tt>Inputs</tt> (variadic) : T</dt>
 <dd>Operands</dd>
 </dl>

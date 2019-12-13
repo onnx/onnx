@@ -1760,7 +1760,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Einsum_ver11_doc)
-        .Input(0, "Equation", "A 0-D tensor of UTF-8 string Einsum expression", "tensor(string)")
+        .Input(0, "Equation", "A 0-D tensor holding Einsum expression in UTF-8 String", "tensor(string)")
         .Input(1,
             "Inputs",
             "Operands",
