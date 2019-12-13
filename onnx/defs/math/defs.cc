@@ -1717,7 +1717,6 @@ void einsumRankInference(
   constexpr size_t number_of_letters = 26;
   std::array<std::int64_t, number_of_letters> num_letter_occurrences;
   num_letter_occurrences.fill(0);
-  int64_t num_output_dims = 0;
   if (mid_index != std::string::npos) {  // parse the user provided right hand side
     std::string right_equation = equation.substr(mid_index+2);
     auto right_ellipsis_idx = right_equation.find("...");
@@ -1726,9 +1725,10 @@ void einsumRankInference(
         output_shape->add_dim();
       }
     }
-    right_equation.erase(std::remove(right_equation.begin(), right_equation.end(), '.'), right_equation.end());
     for (char c: right_equation) { // add a dimension per each character in right hand equation
-      output_shape->add_dim();
+      if (c != '.') {
+        output_shape->add_dim();
+      }
     }
   } else { // create an inferred right hand side
     // the ellipsis (if in the lhs) comes first
@@ -1740,7 +1740,7 @@ void einsumRankInference(
     // then the indices that occur exactly once in alphabetic order
     left_equation.erase(std::remove(left_equation.begin(), left_equation.end(), '.'), left_equation.end());
     left_equation.erase(std::remove(left_equation.begin(), left_equation.end(), ','), left_equation.end());
-    for (int i = 0; i < left_equation.size();  i++) {
+    for (size_t i = 0; i < left_equation.size();  i++) {
       num_letter_occurrences[left_equation.at(i) - 'a']++;
     }
     for (size_t idx = 0; idx < number_of_letters; idx++) {
