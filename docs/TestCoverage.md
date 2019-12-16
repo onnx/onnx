@@ -2616,16 +2616,17 @@ There are 5 test cases, listed as following:
 <summary>einsum_batch_diagonal</summary>
 
 ```python
-node = onnx.helper.make_node('Einsum',
+node = onnx.helper.make_node(
+    'Einsum',
     inputs=['...ii->...i', 'x'],
     outputs=['y'],
 )
 
 Eqn = np.array([u'...ii->...i']).astype(np.object)
 X = np.random.randn(3, 5, 5)
-Y = einsum_batch_diagonal_reference_implementation(X)
+Z = einsum_reference_implementation(Eqn, (X,))
 
-expect(node, inputs=[Eqn, X], outputs=[Y],
+expect(node, inputs=[Eqn, X], outputs=[Z],
        name='test_einsum_batch_diagonal')
 ```
 
@@ -2634,7 +2635,8 @@ expect(node, inputs=[Eqn, X], outputs=[Y],
 <summary>einsum_batch_matmul</summary>
 
 ```python
-node = onnx.helper.make_node('Einsum',
+node = onnx.helper.make_node(
+    'Einsum',
     inputs=['bij,bjk->bik', 'x', 'y'],
     outputs=['z'],
 )
@@ -2642,7 +2644,7 @@ node = onnx.helper.make_node('Einsum',
 Eqn = np.array([u'bij,bjk->bik']).astype(np.object)
 X = np.random.randn(5, 2, 3)
 Y = np.random.randn(5, 3, 4)
-Z = einsum_batch_matmul_reference_implementation(X, Y)
+Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[Eqn, X, Y], outputs=[Z],
        name='test_einsum_batch_matmul')
@@ -2653,7 +2655,8 @@ expect(node, inputs=[Eqn, X, Y], outputs=[Z],
 <summary>einsum_inner_prod</summary>
 
 ```python
-node = onnx.helper.make_node('Einsum',
+node = onnx.helper.make_node(
+    'Einsum',
     inputs=['i,i', 'x', 'y'],
     outputs=['z'],
 )
@@ -2661,7 +2664,7 @@ node = onnx.helper.make_node('Einsum',
 Eqn = np.array([u'i,i']).astype(np.object)
 X = np.random.randn(5)
 Y = np.random.randn(5)
-Z = einsum_inner_prod_reference_implementation(X, Y)
+Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[Eqn, X, Y], outputs=[Z],
        name='test_einsum_inner_prod')
@@ -2672,16 +2675,17 @@ expect(node, inputs=[Eqn, X, Y], outputs=[Z],
 <summary>einsum_sum</summary>
 
 ```python
-node = onnx.helper.make_node('Einsum',
+node = onnx.helper.make_node(
+    'Einsum',
     inputs=['ij->i', 'x'],
     outputs=['y'],
 )
 
 Eqn = np.array([u'ij->i']).astype(np.object)
 X = np.random.randn(3, 4)
-Y = einsum_sum_reference_implementation(X)
+Z = einsum_reference_implementation(Eqn, (X,))
 
-expect(node, inputs=[Eqn, X], outputs=[Y],
+expect(node, inputs=[Eqn, X], outputs=[Z],
        name='test_einsum_sum')
 ```
 
@@ -2690,14 +2694,15 @@ expect(node, inputs=[Eqn, X], outputs=[Y],
 <summary>einsum_transpose</summary>
 
 ```python
-node = onnx.helper.make_node('Einsum',
+node = onnx.helper.make_node(
+    'Einsum',
     inputs=['ij->ji', 'x'],
     outputs=['y'],
 )
 
 Eqn = np.array([u'ij->ji']).astype(np.object)
 X = np.random.randn(3, 4)
-Y = einsum_transpose_reference_implementation(X)
+Y = einsum_reference_implementation(Eqn, (X,))
 
 expect(node, inputs=[Eqn, X], outputs=[Y],
        name='test_einsum_transpose')
