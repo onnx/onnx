@@ -1720,7 +1720,7 @@ void einsumRankInference(
     std::string right_equation = equation.substr(mid_index+2);
     auto right_ellipsis_idx = right_equation.find("...");
     if (right_ellipsis_idx != std::string::npos) { // right hand side contains ellipsis
-      for (int64_t i = 0; i < num_ellipsis; ++i) {
+      for (size_t i = 0; i < num_ellipsis; ++i) {
         output_shape->add_dim();
       }
     }
@@ -1731,7 +1731,7 @@ void einsumRankInference(
     }
   } else { // infer the dimension for right hand side of the equation
     if (num_ellipsis_indices >= 0) { // if there's an ellipsis, add it's corresponding dimensions
-      for (int64_t i = 0; i < num_ellipsis_indices; ++i) {
+      for (size_t i = 0; i < num_ellipsis_indices; ++i) {
         output_shape->add_dim();
       }
     }
