@@ -11,27 +11,27 @@ from ..base import Base
 from . import expect
 
 
-def einsum_transpose_reference_implementation(X):
+def einsum_transpose_reference_implementation(X):  # type: (np.ndarray) -> np.ndarray
+    Y = np.transpose(X)
+    return Y
+
+
+def einsum_sum_reference_implementation(X):  # type: (np.ndarray) -> np.ndarray
     Y = np.sum(X, axis=1)
     return Y
 
 
-def einsum_sum_reference_implementation(X):
-    Y = np.sum(X, axis=1)
-    return Y
-
-
-def einsum_batch_diagonal_reference_implementation(X):
+def einsum_batch_diagonal_reference_implementation(X):  # type: (np.ndarray) -> np.ndarray
     Y = np.diagonal(X, axis1=2)
     return Y
 
 
-def einsum_inner_prod_reference_implementation(X, Y):
+def einsum_inner_prod_reference_implementation(X, Y):  # type: (np.ndarray, np.ndarray) -> np.ndarray
     Z = np.inner(X, Y)
     return Z
 
 
-def einsum_batch_matmul_reference_implementation(X, Y):
+def einsum_batch_matmul_reference_implementation(X, Y):  # type: (np.ndarray, np.ndarray) -> np.ndarray
     Z = np.matmul(X, Y)
     return Z
 
