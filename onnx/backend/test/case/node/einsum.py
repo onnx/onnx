@@ -9,7 +9,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-
+from typing import List
 
 def einsum_reference_implementation(Eqn, Operands):  # type: (np.ndarray, List[np.ndarray]) -> np.ndarray
     Z = np.einsum(Eqn[0], *Operands)
