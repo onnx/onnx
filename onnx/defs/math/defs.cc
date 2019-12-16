@@ -1668,7 +1668,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 void einsumRankInference(
     ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
 
-	const size_t numInputs = ctx.getNumInputs();
+  const size_t numInputs = ctx.getNumInputs();
   // First input is the equation string. Other input tensors should have shape info
   if (numInputs < 2 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
     return;
@@ -1687,30 +1687,29 @@ void einsumRankInference(
   }
 
   std::string term;
-  int64_t num_operands = 0;
-  int64_t num_ellipsis = 0;
-  int64_t num_ellipsis_indices = 0;
+  size_t num_operands = 0;
+  size_t num_ellipsis = 0;
+  size_t num_ellipsis_indices = 0;
   std::stringstream str(left_equation);
 
   while(std::getline(str, term, ',')) {
     auto ellipsis_idx = term.find("...");
     if (ellipsis_idx != std::string::npos) {
-	    // if there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
-	    int64_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
-
-	    if (num_ellipsis == 0) {
-	      num_ellipsis_indices = rank - term.size() + 3;
-	    } else { // ellipsis has been seen before. Check that if dimensions are compatible
-	      if (num_ellipsis_indices != rank - term.size() + 3) {
-	        fail_shape_inference("Ellipsis represents incompatible dimensions.");
-	      }
-	    }
-	    num_ellipsis++;
+      // If there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
+      int64_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+      if (num_ellipsis == 0) {
+        num_ellipsis_indices = rank - term.size() + 3;
+      } else { // ellipsis has been seen before. Check that if dimensions are compatible
+        if (num_ellipsis_indices != rank - term.size() + 3) {
+          fail_shape_inference("Ellipsis represents incompatible dimensions.");
+        }
+      }
+      num_ellipsis++;
     }
     num_operands++;
   }
 
-  if (numInputs-1 != num_operands) {
+  if (numInputs - 1 != num_operands) {
     fail_shape_inference("Number of input tensors does not match the operand in the equation.");
   }
 
