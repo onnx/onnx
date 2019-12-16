@@ -1696,7 +1696,7 @@ void einsumRankInference(
     auto ellipsis_index = term.find("...");
     if (ellipsis_index != std::string::npos) {
       // If there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
-      int64_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+      size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
       if (num_ellipsis == 0) {
         num_ellipsis_indices = rank - term.size() + 3;
       } else { // ellipsis has been seen before. Check that if dimensions are compatible
@@ -1713,8 +1713,8 @@ void einsumRankInference(
     fail_shape_inference("Number of input tensors does not match the operand in the equation.");
   }
 
-  constexpr size_t number_of_letters = 26;
-  std::array<std::int64_t, number_of_letters> num_letter_occurrences;
+  const size_t number_of_letters = 26;
+  std::array<size_t, number_of_letters> num_letter_occurrences;
   num_letter_occurrences.fill(0);
   if (mid_index != std::string::npos) {  // parse the user provided right hand side
     std::string right_equation = equation.substr(mid_index+2);
@@ -1731,10 +1731,10 @@ void einsumRankInference(
     }
   } else { // infer the dimension for right hand side of the equation
     // If there's an ellipsis, add it's corresponding dimensions
-    for (size_t i = 0; i < num_ellipsis_indices; ++i) {
+    for (size_t i = 0; i < num_ellipsis_indices; i++) {
       output_shape->add_dim();
     }
-    for (size_t i = 0; i < left_equation.size();  i++) { // count chars that appear exactly once on left hand side
+    for (size_t i = 0; i < left_equation.size(); i++) { // count chars that appear exactly once on left hand side
       if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
         num_letter_occurrences[left_equation.at(i) - 'a']++;
       }
