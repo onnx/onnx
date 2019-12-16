@@ -9,10 +9,10 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import List
+from typing import Tuple
 
 
-def einsum_reference_implementation(Eqn, Operands):  # type: (np.ndarray, List[np.ndarray]) -> np.ndarray
+def einsum_reference_implementation(Eqn, Operands):  # type: (np.ndarray, Tuple[np.ndarray]) -> np.ndarray
     Z = np.einsum(Eqn[0], *Operands)
     return Z
 
