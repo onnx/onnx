@@ -1,11 +1,7 @@
-backend-test:o
-
-ij->ji
-xy"Einsumtest_einsum_transposeZ
-ij->ji
-
-
-Z
+backend-test:h
+%
+xy"Einsum*
+equation"ij->ji test_einsum_transposeZ
 x
 
 

@@ -13967,17 +13967,22 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Einsum-12"></a>**Einsum-12**</a>
 
-  The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.).
+  The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.
 
 #### Version
 
 This version of the operator has been available since version 12 of the default ONNX operator set.
 
-#### Inputs (2 - &#8734;)
+#### Attributes
 
 <dl>
-<dt><tt>Equation</tt> : tensor(string)</dt>
-<dd>A 0-D tensor holding Einsum expression in UTF-8 String</dd>
+<dt><tt>equation</tt> : string (required)</dt>
+<dd>Einsum expression in UTF-8 String.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
 <dt><tt>Inputs</tt> (variadic) : T</dt>
 <dd>Operands</dd>
 </dl>

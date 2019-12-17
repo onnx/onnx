@@ -1669,8 +1669,7 @@ void einsumRankInference(
     ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
 
   const size_t numInputs = ctx.getNumInputs();
-  // First input is the equation string. Other input tensors should have shape info
-  if (numInputs < 2 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+  if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
     return;
   }
 
@@ -1709,7 +1708,7 @@ void einsumRankInference(
     num_operands++;
   }
 
-  if (numInputs - 1 != num_operands) {
+  if (numInputs != num_operands) {
     fail_shape_inference("Number of input tensors does not match the operand in the equation.");
   }
 
@@ -1747,17 +1746,20 @@ void einsumRankInference(
   }
 }
 
-static const char* Einsum_ver11_doc = R"DOC(
-The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.).
+static const char* Einsum_ver12_doc = R"DOC(
+The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Einsum,
     12,
     OpSchema()
-        .SetDoc(Einsum_ver11_doc)
-        .Input(0, "Equation", "A 0-D tensor holding Einsum expression in UTF-8 String", "tensor(string)")
-        .Input(1,
+        .SetDoc(Einsum_ver12_doc)
+        .Attr(
+            "equation",
+            "Einsum expression in UTF-8 String.",
+            AttributeProto::STRING)
+        .Input(0,
             "Inputs",
             "Operands",
             "T",
@@ -1769,23 +1771,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-
-          propagateElemTypeFromInputToOutput(ctx, 1, 0);
-
-          const TensorProto* equationInitializer = ctx.getInputData(0);
-          if (!equationInitializer) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          std::string equation = getAttribute(ctx, "equation", "");
+          if (equation.compare("") == 0) {
             return;
           }
-
-          if (equationInitializer->has_raw_data()) {
-            // Cannot use raw_data to store string
-            return;
-          } else {
-            std::vector<std::string> equation;
-            const auto& data = equationInitializer->string_data();
-            equation.insert(equation.end(), data.begin(), data.end());
-						einsumRankInference(ctx,equation[0]);
-          }
+					einsumRankInference(ctx,equation);
         }));
 
 } // namespace ONNX_NAMESPACE

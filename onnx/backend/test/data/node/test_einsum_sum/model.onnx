@@ -1,11 +1,7 @@
-backend-test:c
-
-ij->i
-xy"Einsumtest_einsum_sumZ
-ij->i
-
-
-Z
+backend-test:]
+$
+xy"Einsum*
+equation"ij->i test_einsum_sumZ
 x
 
 
