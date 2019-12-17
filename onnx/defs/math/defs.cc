@@ -1713,8 +1713,7 @@ void einsumRankInference(
   }
 
   const size_t number_of_letters = 26;
-  std::array<size_t, number_of_letters> num_letter_occurrences;
-  num_letter_occurrences.fill(0);
+  size_t num_letter_occurrences[number_of_letters] = {0};
   if (mid_index != std::string::npos) {  // parse the user provided right hand side
     std::string right_equation = equation.substr(mid_index+2);
     auto right_ellipsis_index = right_equation.find("...");
