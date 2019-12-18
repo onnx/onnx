@@ -8192,7 +8192,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
-   The output of each pooling window is maximum number of elements exclude pad. In case of 8 bit data types the output and input scales and zero points need to be same.
+   The output of each pooling window is maximum number of elements exclude pad. 
    
 
 #### Version

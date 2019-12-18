@@ -323,8 +323,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
             "max",
-            "The output of each pooling window is maximum number of elements exclude pad. "
-            "In case of 8 bit data types the output and input scales and zero points need to be same.",
+            "The output of each pooling window is maximum number of elements exclude pad. ",
             true,
             true))
         .Attr(
