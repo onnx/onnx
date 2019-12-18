@@ -19,7 +19,7 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit)
     return OpSchema::numeric_types_for_math_reduction();
 }
 
-std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false, const char* additionalDescription = "") {
+std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
@@ -27,9 +27,8 @@ tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, 
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
-False instead of True.{additionalDescription})DOC";
+False instead of True.)DOC";
     ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axes",
@@ -99,12 +98,12 @@ False instead of True.{additionalDescription})DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMax,
     12,
-    OpSchema().FillUsing(ReduceDocGenerator("max", true, "\n\nIn case of 8 bit inputs the scale and zero points for input and output stays the same.")));
+    OpSchema().FillUsing(ReduceDocGenerator("max", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMin,
     12,
-    OpSchema().FillUsing(ReduceDocGenerator("min", true, "\n\nIn case of 8 bit inputs the scale and zero points for input and output stays the same.")));
+    OpSchema().FillUsing(ReduceDocGenerator("min", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,

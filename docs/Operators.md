@@ -12329,8 +12329,6 @@ expect(node, inputs=[data], outputs=[reduced],
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
-  
-  In case of 8 bit inputs the scale and zero points for input and output stays the same.
 
 #### Version
 
@@ -12692,8 +12690,6 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_a
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
-  
-  In case of 8 bit inputs the scale and zero points for input and output stays the same.
 
 #### Version
 

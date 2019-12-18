@@ -13973,8 +13973,6 @@ This version of the operator has been available since version 12 of the default 
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
-  
-  In case of 8 bit inputs the scale and zero points for input and output stays the same.
 
 #### Version
 
@@ -14018,8 +14016,6 @@ This version of the operator has been available since version 12 of the default 
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
-  
-  In case of 8 bit inputs the scale and zero points for input and output stays the same.
 
 #### Version
 
