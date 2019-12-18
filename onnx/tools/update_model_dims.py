@@ -83,7 +83,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
     return model
 
 
-def partial_update_dims(model, input_dim: Dict[int, Union[int, str]] = None, output_dim: Dict[int, Union[int, str]] = None) -> ModelProto:
+def partial_update_dims(model, input_dim = None, output_dim = None):  # type: (ModelProto, Dict[int, Union[int, Text]], Dict[int, Union[int, Text]]) -> ModelProto
     """
     This function updates the dimension sizes of the model's inputs and outputs to the values
     provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
