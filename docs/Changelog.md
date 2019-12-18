@@ -13965,3 +13965,93 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
+
+  Computes the max of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+  
+  In case of 8 bit inputs the scale and zero points for input and output stays the same.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+</dl>
+
+### <a name="ReduceMin-12"></a>**ReduceMin-12**</a>
+
+  Computes the min of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+  
+  In case of 8 bit inputs the scale and zero points for input and output stays the same.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+</dl>
+

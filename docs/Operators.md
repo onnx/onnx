@@ -12329,12 +12329,14 @@ expect(node, inputs=[data], outputs=[reduced],
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
+  
+  In case of 8 bit inputs the scale and zero points for input and output stays the same.
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>, <a href="Changelog.md#ReduceMax-11">ReduceMax-11</a>
 
 #### Attributes
 
@@ -12362,8 +12364,8 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 
@@ -12690,12 +12692,14 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_a
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
+  
+  In case of 8 bit inputs the scale and zero points for input and output stays the same.
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>, <a href="Changelog.md#ReduceMin-11">ReduceMin-11</a>
 
 #### Attributes
 
@@ -12723,8 +12727,8 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 

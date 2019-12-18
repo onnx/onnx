@@ -6,7 +6,20 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
+
+std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit){
+    if (supports8bit) {
+        auto data_types = OpSchema::numeric_types_for_math_reduction();
+        data_types.push_back("tensor(uint8)");
+        data_types.push_back("tensor(int8)");
+
+        return data_types;
+    }
+
+    return OpSchema::numeric_types_for_math_reduction();
+}
+
+std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false, const char* additionalDescription = "") {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
@@ -14,8 +27,9 @@ tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, 
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
-False instead of True.)DOC";
+False instead of True.{additionalDescription})DOC";
     ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axes",
@@ -32,7 +46,9 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::numeric_types_for_math_reduction(),
+        GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
+        supports_8bit_datatypes ? 
+        "Constrain input and output types to high-precision and 8 bit numeric tensors." :
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -82,13 +98,13 @@ False instead of True.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMax,
-    11,
-    OpSchema().FillUsing(ReduceDocGenerator("max")));
+    12,
+    OpSchema().FillUsing(ReduceDocGenerator("max", true, "\n\nIn case of 8 bit inputs the scale and zero points for input and output stays the same.")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMin,
-    11,
-    OpSchema().FillUsing(ReduceDocGenerator("min")));
+    12,
+    OpSchema().FillUsing(ReduceDocGenerator("min", true, "\n\nIn case of 8 bit inputs the scale and zero points for input and output stays the same.")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,
