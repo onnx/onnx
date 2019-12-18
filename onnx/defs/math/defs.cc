@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <functional>
+#include <algorithm>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
