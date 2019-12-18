@@ -134,7 +134,7 @@ def partial_update_dims(model, input_dim=None, output_dim=None):  # type: (Model
         input = [j for j in model.graph.input if j.name == i][0]
         dimensions = input.type.tensor_type.shape.dim
 
-        ls = []
+        ls = []  # type: List[Union[int, Text]]
 
         if len(input_dim) == 0:
             break
