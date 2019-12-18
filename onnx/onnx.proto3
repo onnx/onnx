@@ -288,6 +288,11 @@ message GraphProto {
   // Initializers (see above) stored in sparse format.
   repeated SparseTensorProto sparse_initializer = 15;
 
+  // A list of named Graphs, used to initialize Tensors for training.
+  // Each GraphProto entry must have a distinct name (within that list) that
+  // MAY also appear in the input list.
+  repeated GraphProto graph_initializer = 16;
+
   // A human-readable documentation for this graph. Markdown is allowed.
   string doc_string = 10;
 
