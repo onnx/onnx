@@ -157,6 +157,8 @@ Graphs have the following properties:
 name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
 initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value.
+sparse_initializer|SparseTensor[]|A list of initializer tensor values that are represented by sparse tensors.
+graph_initializer|Graph[]|A list of tensor initializers that are represented by graphs, which indicate the computation that initializes the tensor with the matching name.
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
