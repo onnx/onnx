@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from six import string_types
-from typing import Any, List, Text, Dict, Set, Union
+from typing import Any, Dict, List, Optional, Set, Text, Union
 from onnx import ModelProto, ValueInfoProto
 
 import onnx.checker
@@ -83,7 +83,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
     return model
 
 
-def partial_update_dims(model, input_dim=None, output_dim=None):  # type: (ModelProto, Dict[int, Union[int, Text]], Dict[int, Union[int, Text]]) -> ModelProto
+def partial_update_dims(model, input_dim=None, output_dim=None):  # type: (ModelProto, Optional[Dict[int, Union[int, Text]]], Optional[Dict[int, Union[int, Text]]]) -> ModelProto
     """
     This function updates the dimension sizes of the model's inputs and outputs to the values
     provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
@@ -131,8 +131,8 @@ def partial_update_dims(model, input_dim=None, output_dim=None):  # type: (Model
     inp = {}
     for i in inputs:
         # Gather input i, inputs only contains strings
-        i = [j for j in model.graph.input if j.name == i][0]
-        dimensions = i.type.tensor_type.shape.dim
+        input = [j for j in model.graph.input if j.name == i][0]
+        dimensions = input.type.tensor_type.shape.dim
 
         ls = []
 
@@ -146,15 +146,15 @@ def partial_update_dims(model, input_dim=None, output_dim=None):  # type: (Model
                 ls.append(d.dim_value)
 
         # Only change graph_input dimensions
-        if i.name in graph_inputs:
+        if input.name in graph_inputs:
             # Throw error in case specified dimension is too large (does not exist in inputs)
             if len(ls) <= max(input_dim.keys()):
-                ValueError('Input {} has only {} dimensions, less than {} that are given'.format(i.name, len(ls),
+                ValueError('Input {} has only {} dimensions, less than {} that are given'.format(input.name, len(ls),
                                                                                                  max(input_dim.keys())))
             for k in input_dim.keys():
                 ls[k] = input_dim[k]
 
-        inp[i.name] = ls
+        inp[input.name] = ls
 
     # Create complete dictionary of output dimensions. All outputs are considered to be Graph outputs
     out = {}
