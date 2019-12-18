@@ -83,16 +83,16 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
     return model
 
 
-def partial_update_dims(model, input_dim = None, output_dim = None):  # type: (ModelProto, Dict[int, Union[int, Text]], Dict[int, Union[int, Text]]) -> ModelProto
+def partial_update_dims(model, input_dim=None, output_dim=None):  # type: (ModelProto, Dict[int, Union[int, Text]], Dict[int, Union[int, Text]]) -> ModelProto
     """
     This function updates the dimension sizes of the model's inputs and outputs to the values
     provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
     will be set for that dimension.
-    
+
     The difference with update_inputs_outputs_dims is that only the dimensions that should be changed need
-    to be provided. This simplifies making models symbolic (e.g., with respect to batch or length parameters) or 
+    to be provided. This simplifies making models symbolic (e.g., with respect to batch or length parameters) or
     instantiating them.
-    
+
         Example. if we have the following shape for inputs and outputs:
                 shape(input_1) = (128, 'l', 64, 64)
                 shape(input_2) = (128, 'w')
@@ -109,7 +109,7 @@ def partial_update_dims(model, input_dim = None, output_dim = None):  # type: (M
                 shape(input_1) = ('b', 20, 64, 64)
                 shape(input_2) = ('b', 20)
                 and shape(output)  = ('output.0', 'c', 5)
-                
+
     :param model: Onnx Protobuf model to be modified
     :param input_dim: Dictionary of zero-based dimension indices and corresponding values (int or string) to be set. -1 for unique string
     :param output_dim: Dictionary of zero-based dimension indices and corresponding values (int or string) to be set. -1 for unique string
