@@ -13967,7 +13967,17 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Einsum-12"></a>**Einsum-12**</a>
 
-  The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.
+  The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+  convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
+  an operand tensor, and the characters within the terms correspond to operands dimensions.
+  This sequence may be followed by a '->' to separate the left and right hand side of the equation.
+  If the equation contains '->' followed by the right-hand side, the explicit (not classical) form of Einstein summation
+  is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+  output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
+  equation.
+  The equation may contain ellipsis ('...') to indicate a fixed number of dimensions. The right-hand
+  side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the beginning of the output.
+  The equation string may contain whitespaces.
 
 #### Version
 
@@ -13977,7 +13987,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>equation</tt> : string (required)</dt>
-<dd>Einsum expression in UTF-8 String.</dd>
+<dd>Einsum expression string.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)

@@ -9,10 +9,10 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import Tuple
+from typing import Tuple, Text
 
 
-def einsum_reference_implementation(Eqn, Operands):  # type: (str, Tuple[np.ndarray, ...]) -> np.ndarray
+def einsum_reference_implementation(Eqn, Operands):  # type: (Text, Tuple[np.ndarray, ...]) -> np.ndarray
     Z = np.einsum(Eqn, *Operands)
     return Z
 
@@ -51,7 +51,7 @@ class Einsum(Base):
 
     @staticmethod
     def export_einsum_batch_diagonal():  # type: () -> None
-        Eqn = '...ii->...i'
+        Eqn = '...ii -> ...i'
         node = onnx.helper.make_node(
             'Einsum',
             inputs=['x'],
@@ -82,7 +82,7 @@ class Einsum(Base):
 
     @staticmethod
     def export_einsum_batch_matmul():  # type: () -> None
-        Eqn = 'bij,bjk->bik'
+        Eqn = 'bij, bjk -> bik'
         node = onnx.helper.make_node(
             'Einsum',
             inputs=['x', 'y'],

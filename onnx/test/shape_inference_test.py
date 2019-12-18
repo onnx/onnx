@@ -2733,14 +2733,14 @@ class TestShapeInference(unittest.TestCase):
     def test_einsum_sum_along_dim(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4))],
-            [make_node('Einsum', ['x'], ['y'], equation='ij->i')],
+            [make_node('Einsum', ['x'], ['y'], equation='i j->i ')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, ))])  # type: ignore
 
     def test_einsum_ellipsis(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4))],
-            [make_node('Einsum', ['x'], ['y'], equation='...ii->...i')],
+            [make_node('Einsum', ['x'], ['y'], equation='... ii ->... i')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])  # type: ignore
 
@@ -2748,7 +2748,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 2, 3)),
              ('y', TensorProto.FLOAT, (5, 3, 4))],
-            [make_node('Einsum', ['x', 'y'], ['z'], equation='bij,bjk->bik')],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation='bij , b jk-> bik')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None, None, None))])  # type: ignore
 

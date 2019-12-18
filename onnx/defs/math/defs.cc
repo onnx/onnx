@@ -1676,6 +1676,7 @@ void einsumRankInference(
   auto* output_shape = getOutputShape(ctx, 0);
   std::string  left_equation;
 
+  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end()); // Remove whitespaces
   auto mid_index = equation.find("->");
   if (mid_index != std::string::npos) {
     // Separate right and left hand sides of the equation
@@ -1689,8 +1690,9 @@ void einsumRankInference(
   size_t num_operands = 0;
   size_t num_ellipsis = 0;
   size_t num_ellipsis_indices = 0;
-  std::stringstream str(left_equation);
 
+  // Parse the left-hand side
+  std::stringstream str(left_equation);
   while(std::getline(str, term, ',')) {
     auto ellipsis_index = term.find("...");
     if (ellipsis_index != std::string::npos) {
@@ -1714,25 +1716,26 @@ void einsumRankInference(
 
   const size_t number_of_letters = 26;
   size_t num_letter_occurrences[number_of_letters] = {0};
-  if (mid_index != std::string::npos) {  // parse the user provided right hand side
-    std::string right_equation = equation.substr(mid_index+2);
+  // Parse the provided right-hand side
+  if (mid_index != std::string::npos) {
+    std::string right_equation = equation.substr(mid_index + 2);
     auto right_ellipsis_index = right_equation.find("...");
-    if (right_ellipsis_index != std::string::npos) { // right hand side contains ellipsis
+    if (right_ellipsis_index != std::string::npos) { // Right-hand side contains ellipsis
       for (size_t i = 0; i < num_ellipsis; ++i) {
         output_shape->add_dim();
       }
     }
-    for (char c: right_equation) { // add a dimension per each character in right hand equation
+    for (char c: right_equation) { // Add a dimension per each character in right hand equation
       if (c != '.') {
         output_shape->add_dim();
       }
     }
-  } else { // infer the dimension for right hand side of the equation
+  } else { // Infer the dimension for right-hand side
     // If there's an ellipsis, add it's corresponding dimensions
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
       output_shape->add_dim();
     }
-    for (size_t i = 0; i < left_equation.size(); i++) { // count chars that appear exactly once on left hand side
+    for (size_t i = 0; i < left_equation.size(); i++) { // Count chars that appear exactly once on left hand side
       if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
         num_letter_occurrences[left_equation.at(i) - 'a']++;
       }
@@ -1746,7 +1749,17 @@ void einsumRankInference(
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
-The Einsum operator evaluates algebraic tensor operations on the operands, using the Einstein summation convention.
+The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
+an operand tensor, and the characters within the terms correspond to operands dimensions.
+This sequence may be followed by a '->' to separate the left and right hand side of the equation.
+If the equation contains '->' followed by the right-hand side, the explicit (not classical) form of Einstein summation
+is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
+equation.
+The equation may contain ellipsis ('...') to indicate a fixed number of dimensions. The right-hand
+side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the beginning of the output.
+The equation string may contain whitespaces.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1756,7 +1769,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Einsum_ver12_doc)
         .Attr(
             "equation",
-            "Einsum expression in UTF-8 String.",
+            "Einsum expression string.",
             AttributeProto::STRING)
         .Input(0,
             "Inputs",

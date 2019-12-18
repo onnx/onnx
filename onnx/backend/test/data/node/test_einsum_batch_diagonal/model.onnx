@@ -1,7 +1,7 @@
-backend-test:v
-*
-xy"Einsum*
-equation"...ii->...i test_einsum_batch_diagonalZ
+backend-test:x
+,
+xy"Einsum*
+equation"...ii -> ...i test_einsum_batch_diagonalZ
 x
 
 
