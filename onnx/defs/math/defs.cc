@@ -1669,7 +1669,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 // The operator can be replaced by a function but this function
 // is different for every supported metric.
 static const char* CDist_ver12_doc = R"DOC(
-Compute pair-wise distances between two 2D tensors sharing the same number of columns.
+Compute pair-wise distances between two 2D tensors
+sharing the same number of columns.
 
 Example:
 ```
@@ -1689,14 +1690,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "X",
-            "Input tensor X. "
-            "The shape of X should be (M, K).",
+            "Input tensor X. The shape of X should be (M, K).",
             "T")
         .Input(
             1,
             "Y",
-            "Input tensor B. "
-            "The shape of Y should be (N, K).",
+            "Input tensor B. The shape of Y should be (N, K).",
             "T")
         .Output(0, "Z", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
@@ -1707,13 +1706,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .Attr(
             "metric",
-            "Whether A should be transposed",
+            "Metric to use to compute distances, it can be euclidean, "
+            "sqeuclidean, manhattan, minkowski.",
             AttributeProto::STRING,
             static_cast<std::string>('euclidean'))
         .Attr(
             "p",
-            "Power for Minkokwski metric.",
-            AttributeProto::INT32,
+            "Power for Minkowski metric.",
+            AttributeProto::INT,
             2)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
