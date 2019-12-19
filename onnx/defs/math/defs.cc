@@ -1685,52 +1685,31 @@ ONNX_OPERATOR_SET_SCHEMA(
     CDist,
     12,
     OpSchema()
-        .SetDoc(
-            CDist_ver12_doc)
-        .Input(
-            0,
-            "X",
-            "Input tensor X. The shape of X should be (M, K).",
-            "T")
-        .Input(
-            1,
-            "Y",
-            "Input tensor B. The shape of Y should be (N, K).",
-            "T")
+        .SetDoc(CDist_ver12_doc)
+        .Input(0, "X", "Input tensor X. Shape of X should be (M, K).", "T")
+        .Input(1, "Y", "Input tensor B. Shape of Y should be (N, K).", "T")
         .Output(0, "Z", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
-            "T",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
+            "T", {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .Attr(
-            "metric",
-            "Metric to use to compute distances, it can be euclidean, "
-            "sqeuclidean, manhattan, minkowski.",
-            AttributeProto::STRING,
-            static_cast<std::string>('euclidean'))
-        .Attr(
-            "p",
-            "Power for Minkowski metric.",
-            AttributeProto::INT,
-            2)
+        .Attr("metric",
+              "Metric to use to compute distances, it can be euclidean, "
+              "sqeuclidean, manhattan, minkowski.",
+              AttributeProto::STRING,
+              std::string('euclidean'))
+        .Attr("p", "Power for Minkowski metric.", AttributeProto::INT, 2)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
-            auto& first_input_shape = getInputShape(ctx, 0);
-            auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2) {
+            auto& first_shape = getInputShape(ctx, 0);
+            auto& second_shape = getInputShape(ctx, 1);
+            if (first_shape.dim_size() != 2) {
               fail_shape_inference("First input does not have rank 2");
             }
-            if (second_input_shape.dim_size() != 2) {
+            if (second_shape.dim_size() != 2) {
               fail_shape_inference("Second input does not have rank 2");
             }
-            updateOutputShape(
-                ctx,
-                0,
-                {first_input_shape.dim(0),
-                 second_input_shape.dim(0)});
+            updateOutputShape(ctx, 0, {first_shape.dim(0), second_shape.dim(0)});
           }
         }));
 
