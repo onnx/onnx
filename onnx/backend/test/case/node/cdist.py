@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def np_cdist(x, y, metric='euclidean', p=2):
+def np_cdist(x, y, metric='euclidean', p=2):  # type: (np.ndarray, np.ndarray, Text) -> (np.ndarray)
     if metric == 'sqeuclidean':
         z = np.empty((x.shape[0], y.shape[0]))
         for i in range(x.shape[0]):
