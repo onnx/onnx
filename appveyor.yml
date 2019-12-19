@@ -17,19 +17,19 @@ environment:
     ONNX_NAMESPACE: ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
   matrix:
-  #- CONDA_PREFIX: C:\Miniconda35-x64
-  #  ONNX_VERIFY_PROTO3: 1
+  - CONDA_PREFIX: C:\Miniconda35-x64
+    ONNX_VERIFY_PROTO3: 1
 
-  #- CONDA_PREFIX: C:\Miniconda36-x64
-  #  ONNX_VERIFY_PROTO3: 1
+  - CONDA_PREFIX: C:\Miniconda36-x64
+    ONNX_VERIFY_PROTO3: 1
 
-  #- CONDA_PREFIX: C:\Miniconda36
+  - CONDA_PREFIX: C:\Miniconda36
 
-  #- CONDA_PREFIX: C:\Miniconda35
+  - CONDA_PREFIX: C:\Miniconda35
 
   - CONDA_PREFIX: C:\Miniconda37-x64
 
-  #- CONDA_PREFIX: C:\Miniconda37
+  - CONDA_PREFIX: C:\Miniconda37
 
 install:
 - cmd: git submodule update --init --recursive
