@@ -14,7 +14,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
     if metric == 'sqeuclidean':
         z = np.empty((x.shape[0], y.shape[0]))
         for i in range(x.shape[0]):
-            for y in range(y.shape[0]):
+            for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = d @ d
         return z
@@ -22,7 +22,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
     if metric == 'euclidean':
         z = np.empty((x.shape[0], y.shape[0]))
         for i in range(x.shape[0]):
-            for y in range(y.shape[0]):
+            for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = (d @ d) ** 0.5
         return z
@@ -30,7 +30,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
     if metric in ('manhattan', 'cityblock'):
         z = np.empty((x.shape[0], y.shape[0]))
         for i in range(x.shape[0]):
-            for y in range(y.shape[0]):
+            for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = np.sum(np.abs(d))
         return z
@@ -38,7 +38,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
     if metric in ('minkowski'):
         z = np.empty((x.shape[0], y.shape[0]))
         for i in range(x.shape[0]):
-            for y in range(y.shape[0]):
+            for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = np.sum(np.pow(d, p)) ** (1. / p)
         return z
