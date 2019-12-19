@@ -1665,4 +1665,73 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+// Is this operator should be a function? (see https://github.com/onnx/onnx/pull/2242)
+// The operator can be replaced by a function but this function
+// is different for every supported metric.
+static const char* CDist_ver12_doc = R"DOC(
+Compute pair-wise distances between two 2D tensors sharing the same number of columns.
+
+Example:
+```
+input_x = [[1, 2, 3], [4, 5, 6]]
+input_y = [[7, 8, 9]]
+metric = 'sqeuclidean'
+output = [[108], [27]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    CDist,
+    12,
+    OpSchema()
+        .SetDoc(
+            CDist_ver12_doc)
+        .Input(
+            0,
+            "X",
+            "Input tensor X. "
+            "The shape of X should be (M, K).",
+            "T")
+        .Input(
+            1,
+            "Y",
+            "Input tensor B. "
+            "The shape of Y should be (N, K).",
+            "T")
+        .Output(0, "Z", "Output tensor of shape (M, N).", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "metric",
+            "Whether A should be transposed",
+            AttributeProto::STRING,
+            static_cast<std::string>('euclidean'))
+        .Attr(
+            "p",
+            "Power for Minkokwski metric.",
+            AttributeProto::INT32,
+            2)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2)) {
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
+            if (first_input_shape.dim_size() != 2) {
+              fail_shape_inference("First input does not have rank 2");
+            }
+            if (second_input_shape.dim_size() != 2) {
+              fail_shape_inference("Second input does not have rank 2");
+            }
+            updateOutputShape(
+                ctx,
+                0,
+                {first_input_shape.dim(0),
+                 second_input_shape.dim(0)});
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE

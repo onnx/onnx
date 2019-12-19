@@ -2723,6 +2723,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])  # type: ignore
 
+    def test_cdist(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (10, 4)),
+             ('y', TensorProto.FLOAT, (12, 4))],
+            [make_node('CDist', ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (10, 12))])
+
 
 if __name__ == '__main__':
     unittest.main()
