@@ -17,7 +17,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = d @ d
-        return z
+        return z.astype(x.dtype)
 
     if metric == 'euclidean':
         z = np.empty((x.shape[0], y.shape[0]))
@@ -25,7 +25,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = (d @ d) ** 0.5
-        return z
+        return z.astype(x.dtype)
 
     if metric in ('manhattan', 'cityblock'):
         z = np.empty((x.shape[0], y.shape[0]))
@@ -33,7 +33,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = np.sum(np.abs(d))
-        return z
+        return z.astype(x.dtype)
 
     if metric in ('minkowski'):
         z = np.empty((x.shape[0], y.shape[0]))
@@ -41,7 +41,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
                 z[i, j] = np.sum(np.power(d, p)) ** (1. / p)
-        return z
+        return z.astype(x.dtype)
 
     raise NotImplementedError("Metric '%s' is not supported." % metric)
 
