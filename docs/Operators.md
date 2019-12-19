@@ -18,6 +18,7 @@
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
   * <a href="#BitShift">BitShift</a>
+  * <a href="#CDist">CDist</a>
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
@@ -2144,6 +2145,94 @@ y = np.array([1, 2, 3]).astype(np.uint8)
 z = x >> y  # expected output [8, 1, 0]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_bitshift_right_uint8')
+```
+
+</details>
+
+
+### <a name="CDist"></a><a name="cdist">**CDist**</a>
+
+  Compute pair-wise distances between two 2D tensors
+  sharing the same number of columns.
+  
+  Example:
+  ```
+  input_x = [[1, 2, 3], [4, 5, 6]]
+  input_y = [[7, 8, 9]]
+  metric = 'sqeuclidean'
+  output = [[108], [27]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>metric</tt> : string (default is euclidean)</dt>
+<dd>Metric to use to compute distances, it can be euclidean, sqeuclidean, manhattan, minkowski.</dd>
+<dt><tt>p</tt> : int (default is 2)</dt>
+<dd>Power for Minkowski metric.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor X. Shape of X should be (M, K).</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Input tensor B. Shape of Y should be (N, K).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor of shape (M, N).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cdist</summary>
+
+```python
+for metric in ['sqeuclidean', 'euclidean', 'manhattan', 'minkowski']:
+    node = onnx.helper.make_node(
+        'CDist',
+        inputs=['x', 'y'],
+        outputs=['z'],
+        metric=metric,
+    )
+    x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+    y = np.array([[7, 8, 9]]).astype(np.float32)
+    z = np_cdist(x, y, metric)  # expected output [[108.], [27.]] for sqeuclidean
+    expect(node, inputs=[x, y], outputs=[z],
+           name='test_cdist_%s_example' % metric)
+
+for metric in ['minkowski']:
+    for p in [3]:
+        node = onnx.helper.make_node(
+            'CDist',
+            inputs=['x', 'y'],
+            outputs=['z'],
+            metric=metric,
+            p=p,
+        )
+        x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+        y = np.array([[7, 8, 9]]).astype(np.float32)
+        z = np_cdist(x, y, metric)
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_cdist_%s_%d_dexample' % (metric, p))
 ```
 
 </details>
