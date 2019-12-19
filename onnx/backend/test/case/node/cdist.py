@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from typing import Text
 import numpy as np  # type: ignore
 
 import onnx
@@ -10,7 +11,7 @@ from ..base import Base
 from . import expect
 
 
-def np_cdist(x, y, metric='euclidean', p=2):  # type: (np.ndarray, np.ndarray, str, int) -> (np.ndarray)
+def np_cdist(x, y, metric='euclidean', p=2):  # type: (np.ndarray, np.ndarray, Text, int) -> (np.ndarray)
     if metric == 'sqeuclidean':
         z = np.empty((x.shape[0], y.shape[0]))
         for i in range(x.shape[0]):
