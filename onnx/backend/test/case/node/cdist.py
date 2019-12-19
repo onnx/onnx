@@ -40,7 +40,7 @@ def np_cdist(x, y, metric='euclidean', p=2):
         for i in range(x.shape[0]):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
-                z[i, j] = np.sum(np.pow(d, p)) ** (1. / p)
+                z[i, j] = np.sum(np.power(d, p)) ** (1. / p)
         return z
 
     raise NotImplementedError("Metric '%s' is not supported." % metric)
