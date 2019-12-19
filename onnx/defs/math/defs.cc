@@ -1696,8 +1696,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               "Metric to use to compute distances, it can be euclidean, "
               "sqeuclidean, manhattan, minkowski.",
               AttributeProto::STRING,
-              std::string('euclidean'))
-        .Attr("p", "Power for Minkowski metric.", AttributeProto::INT, 2)
+              std::string("euclidean"))
+        .Attr("p", "Power for Minkowski metric.", AttributeProto::INT,
+              static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
