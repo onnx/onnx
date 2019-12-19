@@ -17,7 +17,7 @@ def np_cdist(x, y, metric='euclidean', p=2):  # type: (np.ndarray, np.ndarray, T
         for i in range(x.shape[0]):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
-                z[i, j] = d @ d
+                z[i, j] = np.dot(d, d)
         return z.astype(x.dtype)
 
     if metric == 'euclidean':
@@ -25,7 +25,7 @@ def np_cdist(x, y, metric='euclidean', p=2):  # type: (np.ndarray, np.ndarray, T
         for i in range(x.shape[0]):
             for j in range(y.shape[0]):
                 d = x[i, :] - y[j, :]
-                z[i, j] = (d @ d) ** 0.5
+                z[i, j] = np.dot(d, d) ** 0.5
         return z.astype(x.dtype)
 
     if metric in ('manhattan', 'cityblock'):
