@@ -78,4 +78,3 @@ class CDist(Base):
                 z = np_cdist(x, y, metric)
                 expect(node, inputs=[x, y], outputs=[z],
                        name='test_cdist_%s_%d_dexample' % (metric, p))
-
