@@ -64,16 +64,17 @@ class CDist(Base):
                    name='test_cdist_%s_example' % metric)
 
         for metric in ['minkowski']:
-            node = onnx.helper.make_node(
-                'CDist',
-                inputs=['x', 'y'],
-                outputs=['z'],
-                metric=metric,
-                p=3,
-            )
-            x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
-            y = np.array([[7, 8, 9]]).astype(np.float32)
-            z = np_cdist(x, y, metric)
-            expect(node, inputs=[x, y], outputs=[z],
-                   name='test_cdist_%s_%d_dexample' % (metric, p))
+            for p in [3]:
+                node = onnx.helper.make_node(
+                    'CDist',
+                    inputs=['x', 'y'],
+                    outputs=['z'],
+                    metric=metric,
+                    p=p,
+                )
+                x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+                y = np.array([[7, 8, 9]]).astype(np.float32)
+                z = np_cdist(x, y, metric)
+                expect(node, inputs=[x, y], outputs=[z],
+                       name='test_cdist_%s_%d_dexample' % (metric, p))
 
