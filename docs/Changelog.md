@@ -13968,7 +13968,8 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="CDist-12"></a>**CDist-12**</a>
 
   Compute pair-wise distances between two 2D tensors
-  sharing the same number of columns.
+  sharing the same number of columns. The output
+  is a 2D symmetric float matrix.
   
   Example:
   ```
