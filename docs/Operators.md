@@ -2153,7 +2153,8 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="CDist"></a><a name="cdist">**CDist**</a>
 
   Compute pair-wise distances between two 2D tensors
-  sharing the same number of columns.
+  sharing the same number of columns. The output
+  is a 2D symmetric float matrix.
   
   Example:
   ```
