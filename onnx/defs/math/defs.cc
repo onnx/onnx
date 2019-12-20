@@ -1670,7 +1670,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 // is different for every supported metric.
 static const char* CDist_ver12_doc = R"DOC(
 Compute pair-wise distances between two 2D tensors
-sharing the same number of columns.
+sharing the same number of columns. The output
+is a 2D symmetric float matrix.
 
 Example:
 ```
