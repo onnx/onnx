@@ -1677,7 +1677,7 @@ void einsumRankInference(
   auto* output_shape = getOutputShape(ctx, 0);
   std::string  left_equation;
 
-  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end()); // Remove whitespaces
+  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end()); // Remove space char
   auto mid_index = equation.find("->");
   if (mid_index != std::string::npos) {
     // Separate right and left hand sides of the equation
@@ -1750,17 +1750,22 @@ void einsumRankInference(
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
+An einsum of the form '''term1, term2, term3 -> output-term ''' produces an output tensor using the following equation
+
+'''output[i][j][k] = explicit-sum( input1[term1] * input2[term] * input3[term3] )'''
+
 The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
 convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
 an operand tensor, and the characters within the terms correspond to operands dimensions.
 This sequence may be followed by a '->' to separate the left and right hand side of the equation.
-If the equation contains '->' followed by the right-hand side, the explicit (not classical) form of Einstein summation
-is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+If the equation contains '->' followed by the right-hand side, the explicit (not classical) form of the Einstein
+summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
 output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
 equation.
-The equation may contain ellipsis ('...') to indicate a fixed number of dimensions. The right-hand
-side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the beginning of the output.
-The equation string may contain whitespaces.
+When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
+The equation may contain ellipsis ('...') to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
+beginning of the output. The equation string may contain space (U+0020) character.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
