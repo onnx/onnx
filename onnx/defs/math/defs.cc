@@ -1769,7 +1769,7 @@ equation.
 
 When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
-The equation may contain ellipsis ('...') to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
 The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
 beginning of the output. The equation string may contain space (U+0020) character.
 )DOC";
