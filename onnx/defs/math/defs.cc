@@ -1750,9 +1750,12 @@ void einsumRankInference(
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
-An einsum of the form '''term1, term2, term3 -> output-term ''' produces an output tensor using the following equation
+An einsum of the form '''term1, term2 -> output-term ''' produces an output tensor using the following equation
 
-'''output[i][j][k] = explicit-sum( input1[term1] * input2[term] * input3[term3] )'''
+'''output = reduce-sum( input1[term1] * input2[term] )'''
+
+where the reduce-sum performs a summation over all the indices occurring in in the input terms (term1, term2)
+that do not occur in the output-term.
 
 The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
 convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
