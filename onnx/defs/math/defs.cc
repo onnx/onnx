@@ -1761,8 +1761,8 @@ The Einsum operator evaluates algebraic tensor operations on a sequence of tenso
 convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
 an operand tensor, and the characters within the terms correspond to operands dimensions.
 
-This sequence may be followed by a '->' to separate the left and right hand side of the equation.
-If the equation contains '->' followed by the right-hand side, the explicit (not classical) form of the Einstein
+This sequence may be followed by "->" to separate the left and right hand side of the equation.
+If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
 summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
 output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
 equation.
