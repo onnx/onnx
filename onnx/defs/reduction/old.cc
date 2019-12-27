@@ -6,7 +6,9 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-std::function<void(OpSchema&)> ReduceDocGenerator_opset1(const char* name) {
+std::function<void(OpSchema&)> ReduceDocGenerator_opset1(
+    const char* name,
+    int opset = 1) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
@@ -19,6 +21,9 @@ False instead of True.)DOC";
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axes",
+        opset >= 11 ?
+        "A list of integers, along which to reduce. The default is to reduce over "
+        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data)." :
         "A list of integers, along which to reduce. The default is to reduce over "
         "all the dimensions of the input tensor.",
         AttributeProto::INTS,
@@ -125,6 +130,16 @@ ONNX_OPERATOR_SET_SCHEMA(
     ReduceL2,
     1,
     OpSchema().FillUsing(ReduceDocGenerator_opset1("L2 norm")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMax,
+    11,
+    OpSchema().FillUsing(ReduceDocGenerator_opset1("max", 11)));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMin,
+    11,
+    OpSchema().FillUsing(ReduceDocGenerator_opset1("min", 11)));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
