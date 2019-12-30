@@ -18,6 +18,7 @@ onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
   onnx_tensor.shape = shape_pool.back().data();
   onnx_tensor.buffer = (onnxPointer)proto_tensor.raw_data().data();
   return onnx_tensor;
+  return onnxPointer;
 }
 } // namespace testing
 } // namespace ONNX_NAMESPACE
