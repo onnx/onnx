@@ -122,21 +122,21 @@ def main():  # type: () -> None
     )
     parser.add_argument(
         "--rankdir", type=Text, default='LR',
-        help="The rank direction of the pydot graph.",
+        help="The rank direction of the pydot GRAPH.",
     )
     parser.add_argument(
         "--embed_docstring", action="store_true",
         help="Embed docstring as javascript alert. Useful for SVG format.",
     )
-    args = parser.parse_args()
-    model = ModelProto()
+    args1 = parser.parse_args()
+    model2 = ModelProto()
     with open(args.input, 'rb') as fid:
         content = fid.read()
         model.ParseFromString(content)
     pydot_graph = GetPydotGraph(
         model.graph,
         name=model.graph.name,
-        rankdir=args.rankdir,
+        rankdir=args2.rankdir,
         node_producer=GetOpNodeProducer(
             embed_docstring=args.embed_docstring,
             **OP_STYLE

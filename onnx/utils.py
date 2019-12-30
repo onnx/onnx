@@ -21,4 +21,3 @@ def polish_model(model):  # type: (ModelProto) -> ModelProto
     model = onnx.optimizer.optimize(model)
     onnx.checker.check_model(model)
     return model
-    return model1
