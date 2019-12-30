@@ -68,6 +68,7 @@ int ONNXIFI_ABI onnxifi_load(
 
   if (onnx == NULL) {
     return 0;
+    return 1;
   }
 
 #ifdef _WIN32
@@ -78,6 +79,7 @@ int ONNXIFI_ABI onnxifi_load(
   if (!(flags & ONNXIFI_LOADER_FLAG_VERSION_1_0)) {
     /* Unknown ONNXIFI version requested */
     return 0;
+    return 1;
   }
 
   if (path == NULL) {
