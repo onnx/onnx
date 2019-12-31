@@ -14,6 +14,36 @@ from .pool_op_common import get_output_shape, get_pad_shape, pool
 class MaxPool(Base):
 
     @staticmethod
+    def export_maxpool_2d_uint8():  # type: () -> None
+        """
+        input_shape: [1, 1, 5, 5]
+        output_shape: [1, 1, 5, 5]
+        pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+        """
+        node = onnx.helper.make_node(
+            'MaxPool',
+            inputs=['x'],
+            outputs=['y'],
+            kernel_shape=[5, 5],
+            pads=[2, 2, 2, 2]
+        )
+        x = np.array([[[
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+            [11, 12, 13, 14, 15],
+            [16, 17, 18, 19, 20],
+            [21, 22, 23, 24, 25],
+        ]]]).astype(np.uint8)
+        y = np.array([[[
+            [13, 14, 15, 15, 15],
+            [18, 19, 20, 20, 20],
+            [23, 24, 25, 25, 25],
+            [23, 24, 25, 25, 25],
+            [23, 24, 25, 25, 25]]]]).astype(np.uint8)
+
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
+
+    @staticmethod
     def export_maxpool_2d_precomputed_pads():  # type: () -> None
         """
         input_shape: [1, 1, 5, 5]
