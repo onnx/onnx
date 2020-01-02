@@ -290,6 +290,12 @@ message GraphProto {
   // Initializers (see above) stored in sparse format.
   repeated SparseTensorProto sparse_initializer = 15;
 
+  // A list of named graphs, used to specify how model inputs should be 
+  // initialized. Each GraphProto must have a name (distinct from any other
+  // initializer) and one output, which is of the same type and shape as the
+  // corresponding model input.
+  repeated GraphProto graph_initializer = 16;
+
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
 
