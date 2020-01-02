@@ -645,8 +645,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
-            if (!input_dim.has_dim_value())
+            if (!input_dim.has_dim_value()) {
+              // Clear any previously propagated dim_param and leave this dimension "empty",
+              // before moving on to the next dimension
+              ctx.getOutputType(0)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->mutable_dim(static_cast<int>(axis))
+                  ->clear_dim_param();     
               continue;
+            }
 
             const auto input_dim_value = input_dim.dim_value();
 
