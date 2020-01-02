@@ -29,7 +29,7 @@ Return:
 
 def infer_shapes(model, check_type=False):  # type: (ModelProto,bool) -> ModelProto
     if not isinstance(model, ModelProto):
-        raise ValueError('Shape inference only accepts ModelProto, '
+        raise TypeError('Shape inference only accepts ModelProto, '
                          'incorrect type: {}'.format(type(model)))
     model_str = model.SerializeToString()
     inferred_model_str = C.infer_shapes(model_str, check_type)
