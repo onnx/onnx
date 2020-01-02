@@ -13965,6 +13965,56 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+### <a name="CDist-12"></a>**CDist-12**</a>
+
+  Compute pair-wise distances between two 2D tensors
+  sharing the same number of columns. The output
+  is a 2D symmetric float matrix.
+  
+  Example:
+  ```
+  input_x = [[1, 2, 3], [4, 5, 6]]
+  input_y = [[7, 8, 9]]
+  metric = 'sqeuclidean'
+  output = [[108], [27]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>metric</tt> : string (default is euclidean)</dt>
+<dd>Metric to use to compute distances, it can be euclidean, sqeuclidean, manhattan, minkowski.</dd>
+<dt><tt>p</tt> : int (default is 2)</dt>
+<dd>Power for Minkowski metric.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor X. Shape of X should be (M, K).</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Input tensor B. Shape of Y should be (N, K).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor of shape (M, N).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
