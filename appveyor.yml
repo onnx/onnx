@@ -52,6 +52,12 @@ before_build:
   (
   set "PATH=%PATH%;%CONDA_PREFIX%\Library\bin"
   )
+
+  IF "%_prefix%"=="C:\Miniconda35"
+  (
+  pip install --quiet "ipython<7.10"
+  )
+
 - cmd: pip install --quiet pytest nbval numpy
 
 build_script:
