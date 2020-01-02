@@ -238,7 +238,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
     if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out
-                  ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+                  ${CMAKE_CURRENT_BINARY_DIR})
       if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
