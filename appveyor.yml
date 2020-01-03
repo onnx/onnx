@@ -55,8 +55,9 @@ before_build:
 
   IF "%_prefix%"=="C:\Miniconda35"
   (
-  conda install -y IPython==7.9 --no-deps
+  pip install --quiet "ipython<7.10"
   )
+
 - cmd: pip install --quiet pytest nbval numpy
 
 build_script:
