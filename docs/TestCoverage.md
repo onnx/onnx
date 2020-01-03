@@ -2616,7 +2616,7 @@ There are 5 test cases, listed as following:
 <summary>einsum_batch_diagonal</summary>
 
 ```python
-Eqn = '...ii -> ...i'
+Eqn = '...ii ->...i'
 node = onnx.helper.make_node(
     'Einsum',
     inputs=['x'],

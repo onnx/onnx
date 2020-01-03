@@ -51,7 +51,7 @@ class Einsum(Base):
 
     @staticmethod
     def export_einsum_batch_diagonal():  # type: () -> None
-        Eqn = '...ii -> ...i'
+        Eqn = '...ii ->...i'
         node = onnx.helper.make_node(
             'Einsum',
             inputs=['x'],

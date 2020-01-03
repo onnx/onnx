@@ -4462,7 +4462,7 @@ This version of the operator has been available since version 12 of the default 
 <summary>einsum_batch_diagonal</summary>
 
 ```python
-Eqn = '...ii -> ...i'
+Eqn = '...ii ->...i'
 node = onnx.helper.make_node(
     'Einsum',
     inputs=['x'],
