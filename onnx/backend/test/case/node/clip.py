@@ -65,7 +65,7 @@ class Clip(Base):
         for dtype in clip_dtypes:
             dtype_name = np.dtype(dtype).name
             min_bound = -np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).min
-            max_bound =  np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).max
+            max_bound = np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).max
 
             node = onnx.helper.make_node(
                 'Clip',
