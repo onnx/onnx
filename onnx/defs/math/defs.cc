@@ -1791,7 +1791,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Output", "Output tensor", "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_numeric_types(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
