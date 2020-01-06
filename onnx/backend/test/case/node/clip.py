@@ -14,46 +14,55 @@ class Clip(Base):
 
     @staticmethod
     def export():  # type: () -> None
-        node = onnx.helper.make_node(
-            'Clip',
-            inputs=['x', 'min', 'max'],
-            outputs=['y'],
-        )
+        signed_clip_dtypes = [
+            np.int8, np.int16, np.int32, np.int64,
+            np.float16, np.float32, np.float64
+        ]
+        for dtype in signed_clip_dtypes:
+            dtype_name = np.dtype(dtype).name
+            min_bound = -np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).min
+            max_bound = np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).max
 
-        x = np.array([-2, 0, 2]).astype(np.float32)
-        min_val = np.float32(-1)
-        max_val = np.float32(1)
-        y = np.clip(x, min_val, max_val)  # expected output [-1., 0., 1.]
-        expect(node, inputs=[x, min_val, max_val], outputs=[y],
-               name='test_clip_example')
+            node = onnx.helper.make_node(
+                'Clip',
+                inputs=['x', 'min', 'max'],
+                outputs=['y'],
+            )
 
-        x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.clip(x, min_val, max_val)
-        expect(node, inputs=[x, min_val, max_val], outputs=[y],
-               name='test_clip')
-        node = onnx.helper.make_node(
-            'Clip',
-            inputs=['x', 'min', 'max'],
-            outputs=['y'],
-        )
+            x = np.array([-2, 0, 2]).astype(dtype)
+            min_val = dtype(-1)
+            max_val = dtype(1)
+            y = np.clip(x, min_val, max_val)  # expected output [-1., 0., 1.]
+            expect(node, inputs=[x, min_val, max_val], outputs=[y],
+                   name='test_clip_example_{0}'.format(dtype_name))
 
-        min_val = np.float32(-5)
-        max_val = np.float32(5)
+            x = np.random.randn(3, 4, 5).astype(dtype)
+            y = np.clip(x, min_val, max_val)
+            expect(node, inputs=[x, min_val, max_val], outputs=[y],
+                   name='test_clip_{0}'.format(dtype_name))
+            node = onnx.helper.make_node(
+                'Clip',
+                inputs=['x', 'min', 'max'],
+                outputs=['y'],
+            )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
-        y = np.array([-1, 0, 1]).astype(np.float32)
-        expect(node, inputs=[x, min_val, max_val], outputs=[y],
-               name='test_clip_inbounds')
+            min_val = dtype(-5)
+            max_val = dtype(5)
 
-        x = np.array([-6, 0, 6]).astype(np.float32)
-        y = np.array([-5, 0, 5]).astype(np.float32)
-        expect(node, inputs=[x, min_val, max_val], outputs=[y],
-               name='test_clip_outbounds')
+            x = np.array([-1, 0, 1]).astype(dtype)
+            y = np.array([-1, 0, 1]).astype(dtype)
+            expect(node, inputs=[x, min_val, max_val], outputs=[y],
+                   name='test_clip_inbounds_{0}'.format(dtype_name))
 
-        x = np.array([-1, 0, 6]).astype(np.float32)
-        y = np.array([-1, 0, 5]).astype(np.float32)
-        expect(node, inputs=[x, min_val, max_val], outputs=[y],
-               name='test_clip_splitbounds')
+            x = np.array([-6, 0, 6]).astype(dtype)
+            y = np.array([-5, 0, 5]).astype(dtype)
+            expect(node, inputs=[x, min_val, max_val], outputs=[y],
+                   name='test_clip_outbounds_{0}'.format(dtype_name))
+
+            x = np.array([-1, 0, 6]).astype(dtype)
+            y = np.array([-1, 0, 5]).astype(dtype)
+            expect(node, inputs=[x, min_val, max_val], outputs=[y],
+                   name='test_clip_splitbounds_{0}'.format(dtype_name))
 
     @staticmethod
     def export_clip_default():  # type: () -> None
@@ -76,7 +85,7 @@ class Clip(Base):
             x = np.random.randn(3, 4, 5).astype(dtype)
             y = np.clip(x, min_val, max_bound)
             expect(node, inputs=[x, min_val], outputs=[y],
-                   name=f'test_clip_default_min_{dtype_name}')
+                   name='test_clip_default_min_{0}'.format(dtype_name))
 
             no_min = ""  # optional input, not supplied
             node = onnx.helper.make_node(
@@ -88,7 +97,7 @@ class Clip(Base):
             x = np.random.randn(3, 4, 5).astype(dtype)
             y = np.clip(x, min_bound, max_val)
             expect(node, inputs=[x, max_val], outputs=[y],
-                   name=f'test_clip_default_max_{dtype_name}')
+                   name='test_clip_default_max_{0}'.format(dtype_name))
 
             no_max = ""  # optional input, not supplied
             node = onnx.helper.make_node(
@@ -97,7 +106,8 @@ class Clip(Base):
                 outputs=['y'],
             )
 
+            # Note negative values will wrap around for unsigned types.
             x = np.array([-1, 0, 1]).astype(dtype)
             y = np.array([-1, 0, 1]).astype(dtype)
             expect(node, inputs=[x], outputs=[y],
-                   name=f'test_clip_default_inbounds_{dtype_name}')
+                   name='test_clip_default_inbounds_{0}'.format(dtype_name))
