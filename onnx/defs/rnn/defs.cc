@@ -1,4 +1,4 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "input_forget",
-            "Couple the input and forget gates if 1, default 0.",
+            "Couple the input and forget gates if 1.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(

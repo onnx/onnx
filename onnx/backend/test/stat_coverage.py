@@ -5,10 +5,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
+import io
 
-from onnx import defs
+from onnx import defs, load, AttributeProto
 from onnx.backend.test.case import collect_snippets
-from typing import Any, IO, Sequence, Text
+from onnx.backend.test.runner import Runner
+from onnx.backend.test.loader import load_model_tests
+from typing import Any, IO, Sequence, Text, Dict, List
 
 
 def is_ml(schemas):  # type: (Sequence[defs.OpSchema]) -> bool
@@ -30,8 +33,14 @@ def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
     f.write('* [Overall Test Coverage](#overall-test-coverage)\n')
 
 
+common_covered = []  # type: Sequence[Text]
+experimental_covered = []  # type: Sequence[Text]
+
+
 def gen_node_test_coverage(schemas, f, ml):
     # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+    global common_covered
+    global experimental_covered
     generators = set({
         'Multinomial',
         'RandomNormal',
@@ -116,7 +125,94 @@ def gen_node_test_coverage(schemas, f, ml):
 def gen_model_test_coverage(schemas, f, ml):
     # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
     f.write('# Model Test Coverage\n')
-    f.write('## To be filled.\n')
+    # Process schemas
+    schema_dict = dict()
+    for schema in schemas:
+        schema_dict[schema.name] = schema
+    # Load models from each model test using Runner.prepare_model_data
+    # Need to grab associated nodes
+    attrs = dict()  # type: Dict[Text, Dict[Text, List[Any]]]
+    model_paths = []  # type: List[Any]
+    for rt in load_model_tests(kind='real'):
+        model_dir = Runner.prepare_model_data(rt)
+        model_paths.append(os.path.join(model_dir, 'model.onnx'))
+    model_paths.sort()
+    model_written = False
+    for model_pb_path in model_paths:
+        model = load(model_pb_path)
+        if ml:
+            ml_present = False
+            for opset in model.opset_import:
+                if opset.domain == 'ai.onnx.ml':
+                    ml_present = True
+            if not ml_present:
+                continue
+            else:
+                model_written = True
+        f.write('## {}\n'.format(model.graph.name))
+        # Deconstruct model
+        num_covered = 0
+        for node in model.graph.node:
+            if node.op_type in common_covered or node.op_type in experimental_covered:
+                num_covered += 1
+                # Add details of which nodes are/aren't covered
+                # Iterate through and store each node's attributes
+                for attr in node.attribute:
+                    if node.op_type not in attrs:
+                        attrs[node.op_type] = dict()
+                    if attr.name not in attrs[node.op_type]:
+                        attrs[node.op_type][attr.name] = []
+                    if attr.type == AttributeProto.FLOAT:
+                        if attr.f not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.f)
+                    elif attr.type == AttributeProto.INT:
+                        if attr.i not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.i)
+                    elif attr.type == AttributeProto.STRING:
+                        if attr.s not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.s)
+                    elif attr.type == AttributeProto.TENSOR:
+                        if attr.t not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.t)
+                    elif attr.type == AttributeProto.GRAPH:
+                        if attr.g not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.g)
+                    elif attr.type == AttributeProto.FLOATS:
+                        if attr.floats not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.floats)
+                    elif attr.type == AttributeProto.INTS:
+                        if attr.ints not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.ints)
+                    elif attr.type == AttributeProto.STRINGS:
+                        if attr.strings not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.strings)
+                    elif attr.type == AttributeProto.TENSORS:
+                        if attr.tensors not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.tensors)
+                    elif attr.type == AttributeProto.GRAPHS:
+                        if attr.graphs not in attrs[node.op_type][attr.name]:
+                            attrs[node.op_type][attr.name].append(attr.graphs)
+        f.write('\n{} has {} nodes. Of these, {} are covered by node tests ({}%)\n\n\n'.format(
+            model.graph.name, num_covered, len(model.graph.node), 100.0 * float(
+                num_covered) / float(len(model.graph.node))))
+        # Iterate through attrs, print
+        f.write('<details>\n')
+        f.write('<summary>nodes</summary>\n\n')
+        for op in sorted(attrs):
+            f.write('<details>\n')
+            # Get total number of attributes for node schema
+            f.write('<summary>{}: {} out of {} attributes covered</summary>\n\n'
+                    .format(op, len(attrs[op].keys()), len(schema_dict[op]
+                        .attributes)))
+            for attribute in sorted(schema_dict[op].attributes):
+                if attribute in attrs[op]:
+                    f.write('{}: {}\n'.format(attribute, len(attrs[op][attribute])))
+                else:
+                    f.write('{}: 0\n'.format(attribute))
+            f.write('</details>\n')
+        f.write('</details>\n\n\n')
+    if not model_written and ml:
+        f.write('No model tests present for selected domain\n')
 
 
 def gen_overall_test_coverage(schemas, f, ml):
@@ -132,17 +228,21 @@ def main():
     docs_dir = os.path.join(base_dir, 'docs')
     schemas = defs.get_all_schemas()
 
-    ml = is_ml(schemas)
-    if ml:
-        fname = os.path.join(docs_dir, 'TestCoverage-ml.md')
-    else:
-        fname = os.path.join(docs_dir, 'TestCoverage.md')
+    has_ml = is_ml(schemas)
+    fname = os.path.join(docs_dir, 'TestCoverage.md')
+    with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
+        gen_outlines(f, False)
+        gen_node_test_coverage(schemas, f, False)
+        gen_model_test_coverage(schemas, f, False)
+        gen_overall_test_coverage(schemas, f, False)
 
-    with open(fname, 'w+') as f:
-        gen_outlines(f, ml)
-        gen_node_test_coverage(schemas, f, ml)
-        gen_model_test_coverage(schemas, f, ml)
-        gen_overall_test_coverage(schemas, f, ml)
+    if has_ml:
+        fname = os.path.join(docs_dir, 'TestCoverage-ml.md')
+        with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
+            gen_outlines(f, True)
+            gen_node_test_coverage(schemas, f, True)
+            gen_model_test_coverage(schemas, f, True)
+            gen_overall_test_coverage(schemas, f, True)
 
 
 if __name__ == '__main__':

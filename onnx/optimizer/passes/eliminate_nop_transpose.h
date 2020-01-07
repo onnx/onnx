@@ -3,39 +3,41 @@
 
 #pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-struct EliminateNopTranspose final : public OptimizePass {
+struct EliminateNopTranspose final : public PredicateBasedPass {
   explicit EliminateNopTranspose()
-    : OptimizePass("eliminate_nop_transpose", API_TYPE::IR) {
+      : PredicateBasedPass(
+            PassType::Nop,
+            PassEfficiency::Complete,
+            PassOptimizationType::Compute) {}
+
+  std::string getPassName() const override {
+    return "eliminate_nop_transpose";
   }
 
-  static bool is_nop_transpose(const std::vector<int64_t> & perm) {
+  static bool is_nop_transpose(const std::vector<int64_t>& perm) {
     for (size_t i = 0; i < perm.size(); i++)
       if (perm[i] != (int)i)
         return false;
     return true;
   }
 
-  void eliminate_nop_transpose(Graph& graph) {
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(n, [this](Graph& g){eliminate_nop_transpose(g);});
-      if (n->kind() == kTranspose && n->hasAttribute(kperm)) {
-        if (is_nop_transpose(n->is(kperm))) {
-          n->output()->replaceAllUsesWith(n->input());
-          it.destroyCurrent();
-          continue;
-        }
-      }
-    }
+  bool patternMatchPredicate(Node* node) override {
+    return (node->kind() == kTranspose && node->hasAttribute(kperm)) &&
+        is_nop_transpose(node->is(kperm));
   }
 
-  void optimize(Graph& graph) override {
-    eliminate_nop_transpose(graph);
+  bool runTransform(Node* node, Graph&, NodeDestroyType& destroy_current)
+      override {
+    node->output()->replaceAllUsesWith(node->input());
+    destroy_current = NodeDestroyType::DestroyOne;
+    return true;
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE

@@ -6,32 +6,49 @@
 * ai.onnx (default)
   * <a href="#Abs">Abs</a>
   * <a href="#Acos">Acos</a>
+  * <a href="#Acosh">Acosh</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
   * <a href="#ArgMin">ArgMin</a>
   * <a href="#Asin">Asin</a>
+  * <a href="#Asinh">Asinh</a>
   * <a href="#Atan">Atan</a>
+  * <a href="#Atanh">Atanh</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
+  * <a href="#BitShift">BitShift</a>
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
+  * <a href="#Compress">Compress</a>
   * <a href="#Concat">Concat</a>
+  * <a href="#ConcatFromSequence">ConcatFromSequence</a>
   * <a href="#Constant">Constant</a>
+  * <a href="#ConstantOfShape">ConstantOfShape</a>
   * <a href="#Conv">Conv</a>
+  * <a href="#ConvInteger">ConvInteger</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
+  * <a href="#Cosh">Cosh</a>
+  * <a href="#CumSum">CumSum</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
+  * <a href="#DequantizeLinear">DequantizeLinear</a>
+  * <a href="#Det">Det</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
   * <a href="#Elu">Elu</a>
   * <a href="#Equal">Equal</a>
+  * <a href="#Erf">Erf</a>
   * <a href="#Exp">Exp</a>
+  * <a href="#Expand">Expand</a>
+  * <a href="#EyeLike">EyeLike</a>
   * <a href="#Flatten">Flatten</a>
   * <a href="#Floor">Floor</a>
   * <a href="#GRU">GRU</a>
   * <a href="#Gather">Gather</a>
+  * <a href="#GatherElements">GatherElements</a>
+  * <a href="#GatherND">GatherND</a>
   * <a href="#Gemm">Gemm</a>
   * <a href="#GlobalAveragePool">GlobalAveragePool</a>
   * <a href="#GlobalLpPool">GlobalLpPool</a>
@@ -40,29 +57,42 @@
   * <a href="#HardSigmoid">HardSigmoid</a>
   * <a href="#Hardmax">Hardmax</a>
   * <a href="#Identity">Identity</a>
+  * <a href="#If">If</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
+  * <a href="#IsInf">IsInf</a>
+  * <a href="#IsNaN">IsNaN</a>
   * <a href="#LRN">LRN</a>
   * <a href="#LSTM">LSTM</a>
   * <a href="#LeakyRelu">LeakyRelu</a>
   * <a href="#Less">Less</a>
   * <a href="#Log">Log</a>
   * <a href="#LogSoftmax">LogSoftmax</a>
+  * <a href="#Loop">Loop</a>
   * <a href="#LpNormalization">LpNormalization</a>
   * <a href="#LpPool">LpPool</a>
   * <a href="#MatMul">MatMul</a>
+  * <a href="#MatMulInteger">MatMulInteger</a>
   * <a href="#Max">Max</a>
   * <a href="#MaxPool">MaxPool</a>
   * <a href="#MaxRoiPool">MaxRoiPool</a>
+  * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
   * <a href="#Min">Min</a>
+  * <a href="#Mod">Mod</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
+  * <a href="#NonMaxSuppression">NonMaxSuppression</a>
+  * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
+  * <a href="#OneHot">OneHot</a>
   * <a href="#Or">Or</a>
   * <a href="#PRelu">PRelu</a>
   * <a href="#Pad">Pad</a>
   * <a href="#Pow">Pow</a>
+  * <a href="#QLinearConv">QLinearConv</a>
+  * <a href="#QLinearMatMul">QLinearMatMul</a>
+  * <a href="#QuantizeLinear">QuantizeLinear</a>
   * <a href="#RNN">RNN</a>
   * <a href="#RandomNormal">RandomNormal</a>
   * <a href="#RandomNormalLike">RandomNormalLike</a>
@@ -81,10 +111,27 @@
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
+  * <a href="#Resize">Resize</a>
+  * <a href="#ReverseSequence">ReverseSequence</a>
+  * <a href="#RoiAlign">RoiAlign</a>
+  * <a href="#Round">Round</a>
+  * <a href="#Scan">Scan</a>
+  * <a href="#Scatter">Scatter</a>
+  * <a href="#ScatterElements">ScatterElements</a>
+  * <a href="#ScatterND">ScatterND</a>
   * <a href="#Selu">Selu</a>
+  * <a href="#SequenceAt">SequenceAt</a>
+  * <a href="#SequenceConstruct">SequenceConstruct</a>
+  * <a href="#SequenceEmpty">SequenceEmpty</a>
+  * <a href="#SequenceErase">SequenceErase</a>
+  * <a href="#SequenceInsert">SequenceInsert</a>
+  * <a href="#SequenceLength">SequenceLength</a>
   * <a href="#Shape">Shape</a>
+  * <a href="#Shrink">Shrink</a>
   * <a href="#Sigmoid">Sigmoid</a>
+  * <a href="#Sign">Sign</a>
   * <a href="#Sin">Sin</a>
+  * <a href="#Sinh">Sinh</a>
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
@@ -92,33 +139,29 @@
   * <a href="#Softsign">Softsign</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
   * <a href="#Split">Split</a>
+  * <a href="#SplitToSequence">SplitToSequence</a>
   * <a href="#Sqrt">Sqrt</a>
   * <a href="#Squeeze">Squeeze</a>
+  * <a href="#StringNormalizer">StringNormalizer</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
   * <a href="#Tan">Tan</a>
   * <a href="#Tanh">Tanh</a>
+  * <a href="#TfIdfVectorizer">TfIdfVectorizer</a>
+  * <a href="#ThresholdedRelu">ThresholdedRelu</a>
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
+  * <a href="#Unique">Unique</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Upsample">Upsample</a>
+  * <a href="#Where">Where</a>
   * <a href="#Xor">Xor</a>
-  * <sub>experimental</sub> <a href="#ATen">ATen</a>
-  * <sub>experimental</sub> <a href="#Affine">Affine</a>
-  * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
-  * <sub>experimental</sub> <a href="#Crop">Crop</a>
-  * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
-  * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
-  * <sub>experimental</sub> <a href="#If">If</a>
-  * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
-  * <sub>experimental</sub> <a href="#Loop">Loop</a>
-  * <sub>experimental</sub> <a href="#LoopIndexTensor">LoopIndexTensor</a>
-  * <sub>experimental</sub> <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
-  * <sub>experimental</sub> <a href="#ParametricSoftplus">ParametricSoftplus</a>
-  * <sub>experimental</sub> <a href="#Scale">Scale</a>
-  * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
-  * <sub>experimental</sub> <a href="#ThresholdedRelu">ThresholdedRelu</a>
+
+  **Operators with function registered:**
+  * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
+  * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
+  * <a href="#Range">Range</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -167,10 +210,32 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
+y = abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
+```
+
+</details>
+
+
+#### Sample Implementation
+
+<details>
+<summary>Abs</summary>
+
+```python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import numpy as np  # type: ignore
+
+
+def abs(input):  # type: (np.ndarray) -> np.ndarray
+    return np.abs(input)
+
 ```
 
 </details>
@@ -227,6 +292,62 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### <a name="Acosh"></a><a name="acosh">**Acosh**</a>
+
+  Calculates the hyperbolic arccosine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arccosine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -436,21 +557,28 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+  If select_last_index is True (default False), the index of the last occurence of the max 
+  is selected if the max appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>, <a href="Changelog.md#ArgMax-11">ArgMax-11</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>The axis in which to compute the arg indices. Default is 0.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>select_last_index</tt> : int (default is 0)</dt>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
 
 #### Inputs
@@ -503,6 +631,32 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_ran
 
 
 <details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random_select_last_index')
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -523,6 +677,86 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 1, 4]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random_select_last_index')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axis_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -554,24 +788,58 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 </details>
 
 
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random_select_last_index')
+```
+
+</details>
+
+
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+  If select_last_index is True (default False), the index of the last occurence of the min 
+  is selected if the min appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>, <a href="Changelog.md#ArgMin-11">ArgMin-11</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>The axis in which to compute the arg indices. Default is 0.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>select_last_index</tt> : int (default is 0)</dt>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
 
 #### Inputs
@@ -610,7 +878,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     keepdims=keepdims)
 
-# result: [[0], [0]]
+# The content of result is : [[0], [0]]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
 
@@ -618,6 +886,32 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[0, 0]]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -636,7 +930,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1], [0]]
+# The content of result is : [[1], [0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
 
@@ -644,6 +938,86 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 1, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random_select_last_index')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axis_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# The content of result is : [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -662,7 +1036,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1, 0]]
+# The content of result is : [[1, 0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
 
@@ -670,6 +1044,33 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -731,6 +1132,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Asinh"></a><a name="asinh">**Asinh**</a>
+
+  Calculates the hyperbolic arcsine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arcsine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### <a name="Atan"></a><a name="atan">**Atan**</a>
 
   Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
@@ -787,6 +1244,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Atanh"></a><a name="atanh">**Atanh**</a>
+
+  Calculates the hyperbolic arctangent of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arctangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
+```
+
+</details>
+
+
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
@@ -796,7 +1309,14 @@ expect(node, inputs=[x], outputs=[y],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
   
+   ```
    * pad_shape[i] is sum of pads along axis i
    ```
   
@@ -814,23 +1334,25 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>, <a href="Changelog.md#AveragePool-7">AveragePool-7</a>, <a href="Changelog.md#AveragePool-10">AveragePool-10</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>count_include_pad</tt> : int</dt>
-<dd>Whether include pad pixels when calculating values for the edges.</dd>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>count_include_pad</tt> : int (default is 0)</dt>
+<dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -880,6 +1402,38 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [6, 7.5],
+    [12, 13.5]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_ceil')
 ```
 
 </details>
@@ -1128,7 +1682,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_stri
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -1164,7 +1718,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -1260,45 +1814,46 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>, <a href="Changelog.md#BatchNormalization-7">BatchNormalization-7</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float</dt>
-<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
-<dt><tt>momentum</tt> : float</dt>
-<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
-<dt><tt>spatial</tt> : int</dt>
-<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
 <dt><tt>scale</tt> : T</dt>
-<dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dd>Bias tensor of shape (C).</dd>
 <dt><tt>mean</tt> : T</dt>
-<dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
-<dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
 #### Outputs (1 - 5)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X.</dd>
+<dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
@@ -1374,25 +1929,259 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
 </details>
 
 
+### <a name="BitShift"></a><a name="bitshift">**BitShift**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+   attribute "direction" is "RIGHT", this operator moves its binary representation toward
+   the right side so that the input value is effectively decreased. If the attribute "direction"
+   is "LEFT", bits of binary representation moves toward the left side, which results the
+   increase of its actual value. The input X is the tensor to be shifted and another input
+   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+   
+   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+   not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>left_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>left_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint8')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>right_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint8')
+```
+
+</details>
+
+
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  NOTE: Casting to and from strings is not supported yet.
+  
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+  result 100. There are some string literals reserved for special floating-point values;
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+  Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+  this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+  to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+  
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>, <a href="Changelog.md#Cast-6">Cast-6</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>to</tt> : int (required)</dt>
-<dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
 #### Inputs
@@ -1412,10 +2201,10 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain input types. Casting from strings and complex are not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain output types. Casting to strings and complex are not supported.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
 
@@ -1433,21 +2222,38 @@ test_cases = [
     ('FLOAT16', 'DOUBLE'),
     ('DOUBLE', 'FLOAT'),
     ('DOUBLE', 'FLOAT16'),
+    ('FLOAT', 'STRING'),
+    ('STRING', 'FLOAT'),
 ]
 
 for from_type, to_type in test_cases:
-    input = np.random.random_sample(shape).astype(
-        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    if 'STRING' != from_type:
+        input = np.random.random_sample(shape).astype(
+            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            ss = []
+            for i in input.flatten():
+                s = str(i).encode('utf-8')
+                su = s.decode('utf-8')
+                ss.append(su)
+
+            output = np.array(ss).astype(np.object).reshape([3, 4])
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    else:
+        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-
     expect(node, inputs=[input], outputs=[output],
-           name='test_cast_' + from_type + '_to_' + to_type)
+               name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -1516,29 +2322,24 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Clip"></a><a name="clip">**Clip**</a>
 
   Clip operator limits the given input within an interval. The interval is
-  specified with arguments 'min' and 'max'. They default to
-  numeric_limits::lowest() and numeric_limits::max() respectively.
+  specified by the inputs 'min' and 'max'. They default to
+  numeric_limits::lowest() and numeric_limits::max(), respectively.
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>
 
-#### Attributes
-
-<dl>
-<dt><tt>max</tt> : float</dt>
-<dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float</dt>
-<dd>Minimum value, under which element is replaced by min</dd>
-</dl>
-
-#### Inputs
+#### Inputs (1 - 3)
 
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor whose elements to be clipped</dd>
+<dt><tt>min</tt> (optional) : T</dt>
+<dd>Minimum value, under which element is replaced by min. It must be a scalar(tensor of empty shape).</dd>
+<dt><tt>max</tt> (optional) : T</dt>
+<dd>Maximum value, above which element is replaced by max. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
 #### Outputs
@@ -1564,42 +2365,43 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 ```python
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', 'min', 'max'],
     outputs=['y'],
-    min=-1.0,
-    max=1.0
 )
 
 x = np.array([-2, 0, 2]).astype(np.float32)
-y = np.clip(x, -1, 1)  # expected output [-1., 0., 1.]
-expect(node, inputs=[x], outputs=[y],
+min_val = np.float32(-1)
+max_val = np.float32(1)
+y = np.clip(x, min_val, max_val)  # expected output [-1., 0., 1.]
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, -1.0, 1.0)
-expect(node, inputs=[x], outputs=[y],
+y = np.clip(x, min_val, max_val)
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip')
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', 'min', 'max'],
     outputs=['y'],
-    min=-5.0,
-    max=5.0,
 )
+
+min_val = np.float32(-5)
+max_val = np.float32(5)
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_inbounds')
 
 x = np.array([-6, 0, 6]).astype(np.float32)
 y = np.array([-5, 0, 5]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_outbounds')
 
 x = np.array([-1, 0, 6]).astype(np.float32)
 y = np.array([-1, 0, 5]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_splitbounds')
 ```
 
@@ -1612,28 +2414,31 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', 'min'],
     outputs=['y'],
-    min=0.0
 )
+min_val = np.float32(0)
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0.0, np.inf)
-expect(node, inputs=[x], outputs=[y],
+y = np.clip(x, min_val, np.inf)
+expect(node, inputs=[x, min_val], outputs=[y],
        name='test_clip_default_min')
 
+no_min = ""  # optional input, not supplied
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', no_min, 'max'],
     outputs=['y'],
-    max=0.0
 )
+max_val = np.float32(0)
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, -np.inf, 0.0)
-expect(node, inputs=[x], outputs=[y],
+y = np.clip(x, -np.inf, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
        name='test_clip_default_max')
+
+no_max = ""  # optional input, not supplied
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', no_min, no_max],
     outputs=['y'],
 )
 
@@ -1646,21 +2451,164 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="Concat"></a><a name="concat">**Concat**</a>
+### <a name="Compress"></a><a name="compress">**Compress**</a>
 
-  Concatenate a list of tensors into a single tensor
+  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+      In case axis is not provided, input is flattened before elements are selected.
+      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+      
 
 #### Version
 
-This version of the operator has been available since version 4 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
+Other versions of this operator: <a href="Changelog.md#Compress-9">Compress-9</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>condition</tt> : T1</dt>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length along the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+
+
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+
+
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
+```
+
+</details>
+
+
+<details>
+<summary>compress_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=-1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=-1)
+# print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_negative_axis')
+```
+
+</details>
+
+
+### <a name="Concat"></a><a name="concat">**Concat**</a>
+
+  Concatenate a list of tensors into a single tensor. All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>, <a href="Changelog.md#Concat-4">Concat-4</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on</dd>
+<dd>Which axis to concat on. A negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(inputs)..</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -1680,7 +2628,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
@@ -1713,23 +2661,84 @@ for test_case, values_ in test_cases.items():
         output = np.concatenate(values, i)
         expect(node, inputs=[v for v in values], outputs=[output],
                name='test_concat_' + test_case + '_axis_' + str(i))
+
+    for i in range(-len(values[0].shape), 0):
+        in_args = ['value' + str(k) for k in range(len(values))]
+        node = onnx.helper.make_node(
+            'Concat',
+            inputs=[s for s in in_args],
+            outputs=['output'],
+            axis=i
+        )
+        output = np.concatenate(values, i)
+        expect(node, inputs=[v for v in values], outputs=[output],
+               name='test_concat_' + test_case + '_axis_negative_' + str(abs(i)))
 ```
 
 </details>
 
 
-### <a name="Constant"></a><a name="constant">**Constant**</a>
+### <a name="ConcatFromSequence"></a><a name="concatfromsequence">**ConcatFromSequence**</a>
 
-  A constant tensor.
+  Concatenate a sequence of tensors into a single tensor.
+  All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
+  By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
+  When 'new_axis' is 1, the behavior is similar to numpy.stack.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
 #### Attributes
 
 <dl>
-<dt><tt>value</tt> : tensor (required)</dt>
+<dt><tt>axis</tt> : int (required)</dt>
+<dd>Which axis to concat on. Accepted range in `[-r, r - 1]`, where `r` is the rank of input tensors. When `new_axis` is 1, accepted range is `[-r - 1, r]`. </dd>
+<dt><tt>new_axis</tt> : int (default is 0)</dt>
+<dd>Insert and concatenate on a new axis or not, default 0 means do not insert new axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Sequence of tensors for concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>concat_result</tt> : T</dt>
+<dd>Concatenated tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain input types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain output types to any tensor type.</dd>
+</dl>
+
+
+### <a name="Constant"></a><a name="constant">**Constant**</a>
+
+  A constant tensor. Exactly one of the two attributes, either value or sparse_value,
+  must be specified.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a>, <a href="Changelog.md#Constant-9">Constant-9</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 
@@ -1746,8 +2755,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -1777,6 +2786,90 @@ expect(node, inputs=[], outputs=[values],
 </details>
 
 
+### <a name="ConstantOfShape"></a><a name="constantofshape">**ConstantOfShape**</a>
+
+  Generate a tensor with given value and shape.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types to be numerics.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>float_ones</summary>
+
+```python
+x = np.array([4, 3, 2]).astype(np.int64)
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+
+y = np.ones(x, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_float_ones')
+```
+
+</details>
+
+
+<details>
+<summary>int32_zeros</summary>
+
+```python
+x = np.array([10, 6]).astype(np.int64)
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [0])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_zeros')
+```
+
+</details>
+
+
 ### <a name="Conv"></a><a name="conv">**Conv**</a>
 
   The convolution operator consumes an input tensor and a filter, and
@@ -1784,23 +2877,25 @@ expect(node, inputs=[], outputs=[values],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
-<dt><tt>group</tt> : int</dt>
-<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults is 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -1809,7 +2904,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_IN_CHANNEL, FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].</dd>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
@@ -1948,18 +3043,112 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 </details>
 
 
+### <a name="ConvInteger"></a><a name="convinteger">**ConvInteger**</a>
+
+  The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
+  and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>number of groups input channels and output channels are divided into. default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input 'w'.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each axis.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>w</tt> : T2</dt>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
+<dt><tt>x_zero_point</tt> (optional) : T1</dt>
+<dd>Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>w_zero_point</tt> (optional) : T2</dt>
+<dd>Scale tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input x and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input w and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int32)</dt>
+<dd>Constrain output y data type to 32-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>convinteger</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.uint8(1)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
+
+# ConvInteger without padding
+convinteger_node = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'])
+
+expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_basic_convinteger')
+
+# ConvInteger with padding
+y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+
+
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output. 
+  and computes the output.
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
-    output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
+    output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
   
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
   
-    total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
+    total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
@@ -1967,45 +3156,47 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTranspose-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
-<dt><tt>group</tt> : int</dt>
-<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>output_padding</tt> : list of ints</dt>
-<dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks.</dd>
+<dd>Additional elements added to the side with higher coordinate indices in the output. Each padding value in "output_padding" must be less than the corresponding stride/dilation dimension. By default, this attribute is a zero vector. Note that this attribute doesn't directly affect the computed output values. It only controls the selection of the computed values, so changing this attribute only adds or removes output elements. If "output_shape" is explicitly provided, "output_padding" does not contribute additional size to "output_shape" but participates in the computation of the needed padding amount. This is also called adjs or adjustment in some frameworks.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel</dd>
+<dd>The weight tensor that will be used in the convolutions; has size (C x M/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M/group x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
+<dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, pad lengths and group count. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
 </dl>
 
 #### Type Constraints
@@ -2226,7 +3417,7 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
-                             output_shape=[1, 2, 10, 8])
+                             output_shape=[10, 8])
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
@@ -2244,6 +3435,30 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[x, W], outputs=[y],
        name='test_convtranspose_kernel_shape')
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_dilations</summary>
+
+```python
+x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
+                [9., 5., 7.],
+                [3., 2., 6.]]]]).astype(np.float32)
+W = np.array([[[[7., 2.],  # (1, 1, 2, 2)
+                [1., 9.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], dilations=[2, 2])
+
+y = np.array([[[[21., 56., 13., 16., 2.],  # [1, 1, 5, 5]
+                [63., 35., 67., 10., 14.],
+                [24., 22., 76., 76., 21.],
+                [9., 5., 88., 45., 63.],
+                [3., 2., 33., 18., 54.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_dilations')
 ```
 
 </details>
@@ -2346,22 +3561,305 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Cosh"></a><a name="cosh">**Cosh**</a>
+
+  Calculates the hyperbolic cosine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic cosine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
+```
+
+</details>
+
+
+### <a name="CumSum"></a><a name="cumsum">**CumSum**</a>
+
+  Performs cumulative sum of the input elements along the given axis.
+  By default, it will do the sum inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+  
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 3, 6]
+  exclusive=1
+  output = [0, 1, 3]
+  exclusive=0
+  reverse=1
+  output = [6, 5, 3]
+  exclusive=1
+  reverse=1
+  output = [5, 3, 0]
+  ```
+   
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the sums in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> : T2</dt>
+<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Input can be of any tensor type.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cumsum_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y']
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 3., 6., 10., 15.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_1d_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    exclusive=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([0., 1., 3., 6., 10.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_exclusive')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_1d_reverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([15., 14., 12., 9., 5.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_1d_reverse_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([14., 12., 9., 5., 0.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse_exclusive')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_0')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_1')
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([-1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_negative_axis')
+```
+
+</details>
+
+
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
 
   DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
   This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
   the input tensor where values from the depth dimension are moved in spatial blocks to the height
-  and width dimensions.
+  and width dimensions. By default, `mode` = `DCR`.
+  In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: depth, column, and then row. The output y is computed from the input x as below:
+  
+  b, c, h, w = x.shape
+  
+  tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+  
+  tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+  
+  y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+  
+  
+  In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: column, row, and the depth. The output y is computed from the input x as below:
+  
+  b, c, h, w = x.shape
+  
+  tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+  
+  tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+  
+  y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+  
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSpace-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
 </dl>
 
 #### Inputs
@@ -2381,38 +3879,15 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>depthtospace</summary>
-
-```python
-b, c, h, w = shape = (2, 8, 3, 3)
-blocksize = 2
-node = onnx.helper.make_node(
-    'DepthToSpace',
-    inputs=['x'],
-    outputs=['y'],
-    blocksize=blocksize,
-)
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace')
-```
-
-</details>
-
-
-<details>
-<summary>example</summary>
+<summary>crd_mode_example</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2420,25 +3895,218 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
     blocksize=2,
+    mode='CRD'
 )
 
-# (1, 4, 2, 3) input tensor
-x = np.array([[[[0, 1, 2],
-                [3, 4, 5]],
-               [[6, 7, 8],
-                [9, 10, 11]],
-               [[12, 13, 14],
-                [15, 16, 17]],
-               [[18, 19, 20],
-                [21, 22, 23]]]]).astype(np.float32)
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
 
-# (1, 1, 4, 6) output tensor
-y = np.array([[[[0, 6, 1, 7, 2, 8],
-                [12, 18, 13, 19, 14, 20],
-                [3, 9, 4, 10, 5, 11],
-                [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 9., 1., 10., 2., 11.],
+                [18., 27., 19., 28., 20., 29.],
+                [3., 12., 4., 13., 5., 14.],
+                [21., 30., 22., 31., 23., 32.]],
+               [[36., 45., 37., 46., 38., 47.],
+                [54., 63., 55., 64., 56., 65.],
+                [39., 48., 40., 49., 41., 50.],
+                [57., 66., 58., 67., 59., 68.]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace_crd_mode_example')
+```
+
+</details>
+
+
+<details>
+<summary>default_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+    mode='DCR'
+)
+
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
+
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 18., 1., 19., 2., 20.],
+                [36., 54., 37., 55., 38., 56.],
+                [3., 21., 4., 22., 5., 23.],
+                [39., 57., 40., 58., 41., 59.]],
+               [[9., 27., 10., 28., 11., 29.],
+                [45., 63., 46., 64., 47., 65.],
+                [12., 30., 13., 31., 14., 32.],
+                [48., 66., 49., 67., 50., 68.]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_depthtospace_example')
+```
+
+</details>
+
+
+### <a name="DequantizeLinear"></a><a name="dequantizelinear">**DequantizeLinear**</a>
+
+  The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
+  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+  'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
+  there's no zero point (zero point is supposed to be 0).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>N-D quantized input tensor to be de-quantized.</dd>
+<dt><tt>x_scale</tt> : tensor(float)</dt>
+<dd>Scale for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>x_zero_point</tt> (optional) : T</dt>
+<dd>Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization. It's optional. 0 is the default value when it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : tensor(float)</dt>
+<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32)</dt>
+<dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>dequantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DequantizeLinear',
+    inputs=['x', 'x_scale', 'x_zero_point'],
+    outputs=['y'],)
+
+# scalar zero point and scale
+x = np.array([0, 3, 128, 255]).astype(np.uint8)
+x_scale = np.float32(2)
+x_zero_point = np.uint8(128)
+y = np.array([-256, -250, 0, 254], dtype=np.float32)
+
+expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
+       name='test_dequantizelinear')
+```
+
+</details>
+
+
+### <a name="Det"></a><a name="det">**Det**</a>
+
+  Det calculates determinant of a square matrix or batches of square matrices.
+  Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+  and the inner-most 2 dimensions form square matrices.
+  The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+  e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>2d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Det',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.arange(4).reshape(2, 2).astype(np.float32)
+y = np.linalg.det(x)  # expect -2
+expect(node, inputs=[x], outputs=[y],
+       name='test_det_2d')
+```
+
+</details>
+
+
+<details>
+<summary>nd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Det',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([[[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]]]).astype(np.float32)
+y = np.linalg.det(x)  # expect array([-2., -3., -8.])
+expect(node, inputs=[x], outputs=[y],
+       name='test_det_nd')
 ```
 
 </details>
@@ -2530,24 +4198,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
-  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-  test mode or not, the output Y will either be a random dropout, or a simple
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>ratio</tt> : float</dt>
-<dd>(float, default 0.5) the ratio of random dropout</dd>
+<dt><tt>ratio</tt> : float (default is 0.5)</dt>
+<dd>The ratio of random dropout</dd>
 </dl>
 
 #### Inputs
@@ -2562,7 +4230,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T</dt>
+<dt><tt>mask</tt> (optional) : T1</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -2571,6 +4239,8 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
 
@@ -2615,6 +4285,118 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="DynamicQuantizeLinear"></a><a name="dynamicquantizelinear">**DynamicQuantizeLinear**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
+  Scale is calculated as:
+  ```
+   y_scale = (max(x) - min(x))/(qmax - qmin)
+   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+   * data range is adjusted to include 0.
+  ```
+  Zero point is calculated as:
+  ```
+  intermediate_zero_point = (qmin - min(x))/(qmax - qmin)
+  y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
+  * rounding to nearest ties to even.
+  ```
+  Data quantization formula is:
+  ```
+  y = saturate (round (x / y_scale) + y_zero_point)
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
+  * rounding to nearest ties to even.
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>Quantized output tensor</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> : T2</dt>
+<dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain 'x' to float tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+
+#### Examples
+
+<details>
+<summary>dynamicquantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DynamicQuantizeLinear',
+    inputs=['x'],
+    outputs=['y', 'y_scale', 'y_zero_point'],
+)
+
+# expected scale 0.0196078438 and zero point 153
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear')
+
+# expected scale 0.0156862754 and zero point 255
+X = np.array([-1.0, -2.1, -1.3, -2.5, -3.34, -4.0]).astype(np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear_max_adjusted')
+
+X = np.array([1, 2.1, 1.3, 2.5,
+              3.34, 4.0, 1.5, 2.6,
+              3.9, 4.0, 3.0, 2.345]).astype(np.float32).reshape((3, 4))
+
+# expected scale 0.0156862754 and zero point 0
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear_min_adjusted')
+```
+
+</details>
+
+
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
@@ -2631,8 +4413,8 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of ELU default to 1.0.</dd>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient of ELU.</dd>
 </dl>
 
 #### Inputs
@@ -2713,9 +4495,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>
+Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>, <a href="Changelog.md#Equal-7">Equal-7</a>
 
 #### Inputs
 
@@ -2736,8 +4518,8 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
-<dd>Constrains input to integral tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -2780,6 +4562,57 @@ y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal_bcast')
+```
+
+</details>
+
+
+### <a name="Erf"></a><a name="erf">**Erf**</a>
+
+  Computes the error function of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The error function of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>erf</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Erf',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+y = np.vectorize(math.erf)(x).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_erf')
 ```
 
 </details>
@@ -2843,6 +4676,215 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Expand"></a><a name="expand">**Expand**</a>
+
+  Broadcast the input tensor following the given shape and the broadcast rule.
+  The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
+  Dimensions are right alignment;
+  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  Also, this operator is similar to numpy.broadcast_to(input, shape),
+  but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
+  It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
+  or the shape.ndim < input.shape.ndim.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>shape</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>dim_changed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+new_shape = [2, 1, 6]
+expanded = data * np.ones(new_shape, dtype=np.float32)
+#print(expanded)
+#[[[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]],
+#
+# [[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_changed')
+```
+
+</details>
+
+
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
+```
+
+</details>
+
+
+### <a name="EyeLike"></a><a name="eyelike">**EyeLike**</a>
+
+  Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
+  tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
+  same as the input tensor. The data type can be specified by the 'dtype' argument. If
+  'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal
+  is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dt><tt>k</tt> : int (default is 0)</dt>
+<dd>(Optional) Index of the diagonal to be populated with ones. Default is 0. If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>2D input tensor to copy shape, and optionally, type information from.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, same shape as input tensor T1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>populate_off_main_diagonal</summary>
+
+```python
+shape = (4, 5)
+off_diagonal_offset = 1
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    k=off_diagonal_offset,
+    dtype=onnx.TensorProto.FLOAT,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], k=off_diagonal_offset, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_populate_off_main_diagonal')
+```
+
+</details>
+
+
+<details>
+<summary>with_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.float64)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>without_dtype</summary>
+
+```python
+shape = (4, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
+```
+
+</details>
+
+
 ### <a name="Flatten"></a><a name="flatten">**Flatten**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -2851,13 +4893,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Flatten-1">Flatten-1</a>, <a href="Changelog.md#Flatten-9">Flatten-9</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [0, R], where R is the rank of the input tensor. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [-r, r], where r is the rank of the input tensor. Negative value means counting dimensions from the back. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
 </dl>
 
 #### Inputs
@@ -2877,8 +4921,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output to all tensor types.</dd>
 </dl>
 
 
@@ -2903,6 +4947,30 @@ for i in range(len(shape)):
     b = np.reshape(a, new_shape)
     expect(node, inputs=[a], outputs=[b],
            name='test_flatten_axis' + str(i))
+```
+
+</details>
+
+
+<details>
+<summary>flatten_negative_axis</summary>
+
+```python
+shape = (2, 3, 4, 5)
+a = np.random.random_sample(shape).astype(np.float32)
+
+for i in range(-len(shape), 0):
+    node = onnx.helper.make_node(
+        'Flatten',
+        inputs=['a'],
+        outputs=['b'],
+        axis=i,
+    )
+
+    new_shape = (np.prod(shape[0:i]).astype(int), -1)
+    b = np.reshape(a, new_shape)
+    expect(node, inputs=[a], outputs=[b],
+           name='test_flatten_negative_axis' + str(abs(i)))
 ```
 
 </details>
@@ -3082,11 +5150,11 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
+<dt><tt>direction</tt> : string (default is forward)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>linear_before_reset</tt> : int</dt>
+<dt><tt>linear_before_reset</tt> : int (default is 0)</dt>
 <dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
 </dl>
 
@@ -3231,7 +5299,15 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  Example 1:
+  
+  axis = 0 :
+  
+  Let
+  k = indices[i_{0}, ..., i_{q-1}]
+  Then
+  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
+  
+  ```
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
@@ -3251,7 +5327,15 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.7],
         ],
     ]
-  Example 2:
+  ```
+  axis = 1 :
+  
+  Let
+  k = indices[i_{0}, ..., i_{q-1}]
+  Then
+  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+  
+  ```
     data = [
         [1.0, 1.2, 1.9],
         [2.3, 3.4, 3.9],
@@ -3268,16 +5352,19 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
             [4.5, 5.9],
         ],
     ]
+  ```
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>Which axis to gather on, defaults to 0. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Inputs
@@ -3286,7 +5373,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : Tind</dt>
-<dd>Tensor of int32/int64 indices, of any rank q.</dd>
+<dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
@@ -3299,7 +5386,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -3350,6 +5437,352 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 </details>
 
 
+<details>
+<summary>gather_negative_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=0,
+)
+data = np.arange(10).astype(np.float32)
+indices = np.array([0, -9, -10])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_negative_indices')
+```
+
+</details>
+
+
+### <a name="GatherElements"></a><a name="gatherelements">**GatherElements**</a>
+
+  GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
+  and an optional attribute `axis` that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). It is an indexing operation
+  that produces its output by indexing into the input data tensor at index
+  positions determined by elements of the `indices` tensor.
+  Its output shape is the same as the shape of `indices` and consists of one value
+  (gathered from the `data`) for each element in `indices`.
+  
+  For instance, in the 3-D case (r = 3), the output produced is determined
+  by the following equations: 
+  ```
+    out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+    out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+    out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+  ```
+  
+  This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
+  
+  Example 1:
+  ```
+    data = [
+        [1, 2],
+        [3, 4],
+    ]
+    indices = [
+        [0, 0],
+        [1, 0],
+    ]
+    axis = 1
+    output = [
+        [
+          [1, 1],
+          [4, 3],
+        ],
+    ]
+  ```
+  Example 2:
+  ```
+    data = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+    ]
+    indices = [
+        [1, 2, 0],
+        [2, 0, 0],
+    ]
+    axis = 0
+    output = [
+        [
+          [4, 8, 3],
+          [7, 2, 3],
+        ],
+    ]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of the same shape as indices.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gather_elements_0</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2],
+                 [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0],
+                    [1, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[1, 1],
+#  [4, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_0')
+```
+
+</details>
+
+
+<details>
+<summary>gather_elements_1</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[1, 2, 0],
+                    [2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[4, 8, 3],
+#  [7, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_1')
+```
+
+</details>
+
+
+<details>
+<summary>gather_elements_negative_indices</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[-1, -2, 0],
+                    [-2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[7, 5, 3],
+#  [4, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_negative_indices')
+```
+
+</details>
+
+
+### <a name="GatherND"></a><a name="gathernd">**GatherND**</a>
+
+  Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers 
+  slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
+  
+  `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
+  where each element defines a slice of `data`
+  
+  Some salient points about the inputs' rank and shape:
+   
+  1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
+  
+  2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
+  
+  3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+     It is an error if any of the index values are out of bounds.
+  
+  The output is computed as follows:
+  
+  The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
+   
+  1) If `indices_shape[-1] > r` => error condition
+  
+  2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+     containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
+     Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+     to form the `output` tensor (Example 1 below)
+  
+  3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+     containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
+     Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+     to form the `output` tensor (Examples 2, 3, and 4 below)
+  
+  This operator is the inverse of `ScatterND`.
+  
+  `Example 1`
+  
+    data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+  
+    indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  
+    output  = [0,3]           # output_shape = [2]
+  
+  `Example 2`
+  
+    data    = [[0,1],[2,3]]  # data_shape = [2, 2]
+  
+    indices = [[1],[0]]      # indices_shape = [2, 1]
+  
+    output  = [[2,3],[0,1]]  # output_shape = [2, 2]
+  
+  `Example 3`
+  
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+  
+    indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+  
+    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
+  
+  `Example 4`
+  
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+  
+    indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+  
+    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : tensor(int64)</dt>
+<dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_float32')
+```
+
+</details>
+
+
+<details>
+<summary>int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[0, 1], [2, 3]], dtype=np.int32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([0, 3], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32')
+```
+
+</details>
+
+
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
 
   General Matrix multiplication:
@@ -3364,35 +5797,36 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   and output tensor Y has shape (M, N). A will be transposed before doing the
   computation if attribute transA is non-zero, same for B and transB.
   This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>, <a href="Changelog.md#Gemm-9">Gemm-9</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Scalar multiplier for input tensor C, and the default value is 1.0.</dd>
-<dt><tt>transA</tt> : int</dt>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Scalar multiplier for the product of input tensors A * B.</dd>
+<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dd>Scalar multiplier for input tensor C.</dd>
+<dt><tt>transA</tt> : int (default is 0)</dt>
 <dd>Whether A should be transposed</dd>
-<dt><tt>transB</tt> : int</dt>
+<dt><tt>transB</tt> : int (default is 0)</dt>
 <dd>Whether B should be transposed</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>A</tt> : T</dt>
 <dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
-<dt><tt>C</tt> : T</dt>
-<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
+<dt><tt>C</tt> (optional) : T</dt>
+<dd>Optional input tensor C. If not specified, the computation is done as if C is a scalar 0. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
@@ -3405,54 +5839,235 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>notranspose</summary>
+<summary>all_attributes</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    alpha=0.5,
-    beta=0.5
+    alpha=0.25,
+    beta=0.35,
+    transA=1,
+    transB=1
 )
-a = np.random.ranf([3, 6]).astype(np.float32)
-b = np.random.ranf([6, 4]).astype(np.float32)
-c = np.random.ranf([3, 4]).astype(np.float32)
-y = 0.5 * np.dot(a, b) + 0.5 * c
+a = np.random.ranf([4, 3]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.random.ranf([1, 5]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transA=1, transB=1, alpha=0.25, beta=0.35)
 expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_nobroadcast')
+       name='test_gemm_all_attributes')
 ```
 
 </details>
 
 
 <details>
-<summary>transpose</summary>
+<summary>alpha</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    alpha=0.5,
-    beta=0.5,
-    transA=1,
-    transB=1
+    alpha=0.5
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, alpha=0.5)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_alpha')
+```
+
+</details>
+
+
+<details>
+<summary>beta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    beta=0.5
+)
+a = np.random.ranf([2, 7]).astype(np.float32)
+b = np.random.ranf([7, 4]).astype(np.float32)
+c = np.random.ranf([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, beta=0.5)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_beta')
+```
+
+</details>
+
+
+<details>
+<summary>default_matrix_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 6]).astype(np.float32)
+b = np.random.ranf([6, 4]).astype(np.float32)
+c = np.random.ranf([3, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_matrix_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_no_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 10]).astype(np.float32)
+b = np.random.ranf([10, 3]).astype(np.float32)
+y = gemm_reference_implementation(a, b)
+expect(node, inputs=[a, b], outputs=[y],
+       name='test_gemm_default_no_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_scalar_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 3]).astype(np.float32)
+b = np.random.ranf([3, 4]).astype(np.float32)
+c = np.array(3.14).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_scalar_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_single_elem_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 7]).astype(np.float32)
+b = np.random.ranf([7, 3]).astype(np.float32)
+c = np.random.ranf([1]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_single_elem_vector_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 7]).astype(np.float32)
+b = np.random.ranf([7, 4]).astype(np.float32)
+c = np.random.ranf([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_vector_bias')
+```
+
+</details>
+
+
+<details>
+<summary>default_zero_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_zero_bias')
+```
+
+</details>
+
+
+<details>
+<summary>transposeA</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    transA=1
 )
 a = np.random.ranf([6, 3]).astype(np.float32)
-b = np.random.ranf([4, 6]).astype(np.float32)
-c = np.random.ranf([1, 1]).astype(np.float32)
-y = 0.5 * np.dot(a.T, b.T) + 0.5 * c
+b = np.random.ranf([6, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transA=1)
 expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_broadcast')
+       name='test_gemm_transposeA')
+```
+
+</details>
+
+
+<details>
+<summary>transposeB</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    transB=1
+)
+a = np.random.ranf([3, 6]).astype(np.float32)
+b = np.random.ranf([4, 6]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transB=1)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_transposeB')
 ```
 
 </details>
@@ -3479,7 +6094,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -3549,8 +6164,8 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 #### Attributes
 
 <dl>
-<dt><tt>p</tt> : int</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
+<dt><tt>p</tt> : int (default is 2)</dt>
+<dd>p value of the Lp norm used to pool over the input data.</dd>
 </dl>
 
 #### Inputs
@@ -3564,7 +6179,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -3596,7 +6211,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+<dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -3661,9 +6276,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
+Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>, <a href="Changelog.md#Greater-7">Greater-7</a>
 
 #### Inputs
 
@@ -3684,8 +6299,8 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -3748,10 +6363,10 @@ Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoi
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha default to 0.2</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta default to 0.5</dd>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
+<dd>Value of alpha.</dd>
+<dt><tt>beta</tt> : float (default is 0.5)</dt>
+<dd>Value of beta.</dd>
 </dl>
 
 #### Inputs
@@ -3827,30 +6442,31 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   of the given input.
   
-  X does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then input will be coerced into a 2-dimensional tensor with
   dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  case where axis=1, this means the input tensor will be coerced into a 2D tensor
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the hardmax values of the corresponding input.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Hardmax-1">Hardmax-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -3864,7 +6480,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -3948,6 +6564,16 @@ node = onnx.helper.make_node(
 y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_2')
+
+node = onnx.helper.make_node(
+    'Hardmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardmax_negative_axis')
 ```
 
 </details>
@@ -3978,7 +6604,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -4007,6 +6633,49 @@ expect(node, inputs=[data], outputs=[data],
 </details>
 
 
+### <a name="If"></a><a name="if">**If**</a>
+
+  If conditional
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>else_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
+<dt><tt>then_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>cond</tt> : B</dt>
+<dd>Condition for the if</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Only bool</dd>
+</dl>
+
+
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
 
   Carries out instance normalization as described in the paper
@@ -4025,8 +6694,8 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float</dt>
-<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
 #### Inputs
@@ -4109,6 +6778,157 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 </details>
 
 
+### <a name="IsInf"></a><a name="isinf">**IsInf**</a>
+
+  Map infinity to true and other values to false.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>detect_negative</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map negative infinity to true. Default to 1 so that negative infinity induces true. Set this attribute to 0 if negative infinity should be mapped to false.</dd>
+<dt><tt>detect_positive</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether map positive infinity to true. Default to 1 so that positive infinity induces true. Set this attribute to 0 if positive infinity should be mapped to false.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>infinity</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             )
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf')
+```
+
+</details>
+
+
+<details>
+<summary>negative_infinity_only</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             detect_positive=0
+                             )
+
+x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isneginf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf_negative')
+```
+
+</details>
+
+
+<details>
+<summary>positive_infinity_only</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             detect_negative=0
+                             )
+
+x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isposinf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf_positive')
+```
+
+</details>
+
+
+### <a name="IsNaN"></a><a name="isnan">**IsNaN**</a>
+
+  Returns which elements of the input are NaN.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>isnan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IsNaN',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name='test_isnan')
+```
+
+</details>
+
+
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
@@ -4129,12 +6949,12 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Scaling parameter, default is 1e-4f.</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>The exponent, default is 0.75f</dd>
-<dt><tt>bias</tt> : float</dt>
-<dd>Default to 1.0f</dd>
+<dt><tt>alpha</tt> : float (default is 0.0001)</dt>
+<dd>Scaling parameter.</dd>
+<dt><tt>beta</tt> : float (default is 0.75)</dt>
+<dd>The exponent.</dd>
+<dt><tt>bias</tt> : float (default is 1.0)</dt>
+<dd></dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
@@ -4325,12 +7145,12 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
+<dt><tt>direction</tt> : string (default is forward)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>input_forget</tt> : int</dt>
-<dd>Couple the input and forget gates if 1, default 0.</dd>
+<dt><tt>input_forget</tt> : int (default is 0)</dt>
+<dd>Couple the input and forget gates if 1.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -4493,8 +7313,8 @@ Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1<
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of leakage default to 0.01.</dd>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
+<dd>Coefficient of leakage.</dd>
 </dl>
 
 #### Inputs
@@ -4575,9 +7395,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
+Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a href="Changelog.md#Less-7">Less-7</a>
 
 #### Inputs
 
@@ -4598,8 +7418,8 @@ Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -4708,30 +7528,31 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   of the given input.
   
-  X does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then input will be coerced into a 2-dimensional tensor with
   dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  case where axis=1, this means the input tensor will be coerced into a 2D tensor
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the logsoftmax values of the corresponding input.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">LogSoftmax-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -4745,7 +7566,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -4838,9 +7659,198 @@ node = onnx.helper.make_node(
 y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_axis_2')
+
+node = onnx.helper.make_node(
+    'LogSoftmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_logsoftmax_negative_axis')
 ```
 
 </details>
+
+
+### <a name="Loop"></a><a name="loop">**Loop**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+  
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first iteration and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+  
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+  
+      Operator inputs defined as (max_trip_count, condition_var).
+  
+      input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+  
+      input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+  
+      input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+  
+  
+  *Sample usage - cond as well as trip count*
+  
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+  
+      graph body-net (
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
+      ) {
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
+      }
+  
+  *Sample equivalent C code*
+  
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+  
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
+  
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out; 
+          bool b_in = b_out;
+  
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out; 
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+  
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+  
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
+      }
+  
+  There are several things of note in this code snippet:
+  
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
+  
+  Note that the semantics of this op support "diagonal" or "wavefront" execution.
+  (See Step 3 here for an example:
+  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
+  Frontends should emit multi-layer RNNs as a series of While operators (with
+  time being the inner looping dimension), with each successive layer consuming
+  the scan_outputs from the previous layer, possibly going through several
+  point-wise operators (e.g. dropout, residual connections, linear layer).
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Loop-1">Loop-1</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
+</dl>
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
+<dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
+<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final N loop carried dependency values then K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
+</dl>
 
 
 ### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
@@ -4854,10 +7864,10 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : int</dt>
-<dd>(int64, default 2) the order of the normalization, only 1 or 2 are supported.</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The axis on which to apply normalization, -1 mean last axis.</dd>
+<dt><tt>p</tt> : int (default is 2)</dt>
+<dd>The order of the normalization, only 1 or 2 are supported.</dd>
 </dl>
 
 #### Inputs
@@ -4892,23 +7902,23 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
+Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>, <a href="Changelog.md#LpPool-2">LpPool-2</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : int</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
+<dt><tt>p</tt> : int (default is 2)</dt>
+<dd>p value of the Lp norm used to pool over the input data.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 0 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -4939,7 +7949,9 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MatMul-1">MatMul-1</a>
 
 #### Inputs
 
@@ -4960,8 +7972,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
 
@@ -4997,6 +8009,82 @@ b = np.random.randn(1, 2, 4, 3).astype(np.float32)
 c = np.matmul(a, b)
 expect(node, inputs=[a, b], outputs=[c],
        name='test_matmul_4d')
+```
+
+</details>
+
+
+### <a name="MatMulInteger"></a><a name="matmulinteger">**MatMulInteger**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>A</tt> : T1</dt>
+<dd>N-dimensional matrix A</dd>
+<dt><tt>B</tt> : T2</dt>
+<dd>N-dimensional matrix B</dd>
+<dt><tt>a_zero_point</tt> (optional) : T1</dt>
+<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
+<dt><tt>b_zero_point</tt> (optional) : T2</dt>
+<dd>Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T3</dt>
+<dd>Matrix multiply results from A * B</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input A data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input B data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int32)</dt>
+<dd>Constrain output Y data type as 32-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>matmulinteger</summary>
+
+```python
+node = onnx.helper.make_node('MatMulInteger',
+    inputs=['A', 'B', 'a_zero_point', 'b_zero_point'],
+    outputs=['Y'],)
+
+A = np.array([[11, 7, 3],
+    [10, 6, 2],
+    [9, 5, 1],
+    [8, 4, 0], ], dtype=np.uint8)
+
+a_zero_point = np.array([12], dtype=np.uint8)
+
+B = np.array([[1, 4],
+    [2, 5],
+    [3, 6], ], dtype=np.uint8)
+
+b_zero_point = np.array([0], dtype=np.uint8)
+
+output = np.array([[-38, -83],
+    [-44, -98],
+    [-50, -113],
+    [-56, -128], ], dtype=np.int32)
+
+expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
+       name='test_matmulinteger')
 ```
 
 </details>
@@ -5083,42 +8171,53 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
   
+   ```
    * pad_shape[i] is sum of pads along axis i
    ```
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
-   The output of each pooling window is maximum number of elements exclude pad.
+   The output of each pooling window is maximum number of elements exclude pad. 
    
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>, <a href="Changelog.md#MaxPool-10">MaxPool-10</a>, <a href="Changelog.md#MaxPool-11">MaxPool-11</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
-<dt><tt>storage_order</tt> : int</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.</dd>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>storage_order</tt> : int (default is 0)</dt>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
 
 #### Inputs
@@ -5133,15 +8232,15 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
-<dt><tt>Indices</tt> (optional) : T</dt>
+<dt><tt>Indices</tt> (optional) : I</dt>
 <dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input and output types to float and 8 bit tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
@@ -5154,7 +8253,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 ```python
 """
-iutput_shape: [1, 3, 32]
+input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -5178,11 +8277,43 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
 
 
 <details>
+<summary>maxpool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_ceil')
+```
+
+</details>
+
+
+<details>
 <summary>maxpool_2d_default</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -5206,11 +8337,43 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
 
 
 <details>
+<summary>maxpool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[1, 1],
+    dilations=[2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_dilations')
+```
+
+</details>
+
+
+<details>
 <summary>maxpool_2d_pads</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 28, 28]
+input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -5225,10 +8388,7 @@ x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
-pad_bottom = 2
-pad_top = 2
-pad_right = 2
-pad_left = 2
+pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -5348,7 +8508,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_strides'
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -5384,7 +8544,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -5420,7 +8580,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -5445,11 +8605,47 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
 
 
 <details>
+<summary>maxpool_2d_uint8</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.uint8)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.uint8)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
+```
+
+</details>
+
+
+<details>
 <summary>maxpool_3d_default</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32, 32]
+input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -5472,6 +8668,82 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
 </details>
 
 
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+z = np.array([[[
+    [12, 13, 14, 14, 14],
+    [17, 18, 19, 19, 19],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    storage_order=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+z = np.array([[[[6, 16],
+                [8, 18]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
+```
+
+</details>
+
+
 ### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
@@ -5487,8 +8759,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
-<dt><tt>spatial_scale</tt> : float</dt>
-<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling, default is 1.0f.</dd>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
 </dl>
 
 #### Inputs
@@ -5513,6 +8785,126 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+### <a name="MaxUnpool"></a><a name="maxunpool">**MaxUnpool**</a>
+
+  MaxUnpool essentially computes the partial inverse of the MaxPool op.
+   The input information to this op is typically the the output information from a MaxPool op. The first
+   input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+   to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
+   The third (optional) input is a tensor that specifies the output size of the unpooling operation.
+  
+  MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
+   values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
+   the result of an unpooling operation should give back the original input to the unpooling op.
+  
+  MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
+   The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
+   known/predictable size.
+  
+  In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
+   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+   pooling op that the unpooling op is trying to invert.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">MaxUnpool-9</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor that has to be unpooled. This tensor is typically the first output of the MaxPool op.Dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non-image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>I</tt> : T2</dt>
+<dd>Input data tensor containing the indices corresponding to elements in the first input tensor X.This tensor is typically the second output of the MaxPool op.Dimensions must be the same as input tensor X. The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, assuming row-major storage. Also, the linear indices should not consider padding. So the values in indices are in the range [0, N x C x D1 x ... x Dn).</dd>
+<dt><tt>output_shape</tt> (optional) : T2</dt>
+<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, 'pads' values are ignored.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>Output data tensor that contains the result of the unpooling.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI', 'output_shape'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[5, 6],
+                 [7, 8]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0, 0],
+                [0, 5, 0, 6, 0],
+                [0, 0, 0, 0, 0],
+                [0, 7, 0, 8, 0],
+                [0, 0, 0, 0, 0]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
+```
+
+</details>
+
+
+<details>
+<summary>without_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[1, 2],
+                 [3, 4]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0],
+                [0, 1, 0, 2],
+                [0, 0, 0, 0],
+                [0, 3, 0, 4]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
+```
+
+</details>
 
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
@@ -5588,6 +8980,85 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
+
+  A MeanVarianceNormalization Function: Perform mean variance normalization
+        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+
+#### Examples
+
+<details>
+<summary>meanvariancenormalization</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MeanVarianceNormalization',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+# Calculate expected output data
+data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
+data_mean_squared = np.power(data_mean, 2)
+data_squared = np.power(input_data, 2)
+data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+std = np.sqrt(data_squared_mean - data_mean_squared)
+expected_output = (input_data - data_mean) / (std + 1e-9)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mvn')
+```
+
+</details>
+
+
 ### <a name="Min"></a><a name="min">**Min**</a>
 
   Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
@@ -5656,6 +9127,332 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+### <a name="Mod"></a><a name="mod">**Mod**</a>
+
+  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+      The sign of the remainder is the same as that of the Divisor.
+    
+      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  
+      If the input type is floating point, then `fmod` attribute must be set to 1.
+    
+      In case of dividend being zero, the results will be platform dependent.
+  
+    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>mod_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
+z
+#   array([[[0, 1, 2, 3, 4],
+#     [5, 6, 0, 1, 2]],
+
+#    [[3, 4, 5, 6, 0],
+#     [1, 2, 3, 4, 5]],
+
+#    [[6, 0, 1, 2, 3],
+#     [4, 5, 6, 0, 1]]], dtype=int32)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_broadcast')
+```
+
+</details>
+
+
+<details>
+<summary>mod_int64_fmod</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.fmod(x, y)  # expected output [ 0,  1,  5,  0, -1,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_fmod')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.fmod(x, y)  # expected output [-0.10156, 0.3984 , 5. , 0.10156, -0.3984 ,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float16')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.fmod(x, y)  # expected output [-0.10000038, 0.39999962, 5. , 0.10000038, -0.39999962, 3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float32')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float64')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int16)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int16)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int16')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int32)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int32)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int32')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int64')
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int8)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int8)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int8')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint16)
+y = np.array([2, 3, 8]).astype(np.uint16)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint16')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint32)
+y = np.array([2, 3, 8]).astype(np.uint32)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint32')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint64)
+y = np.array([2, 3, 8]).astype(np.uint64)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint64')
+```
+
+</details>
+
+
+<details>
+<summary>mod_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint8)
+y = np.array([2, 3, 8]).astype(np.uint8)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint8')
 ```
 
 </details>
@@ -5757,9 +9554,9 @@ This version of the operator has been available since version 7 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>dtype</tt> : int</dt>
+<dt><tt>dtype</tt> : int (default is 6)</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.</dd>
-<dt><tt>sample_size</tt> : int</dt>
+<dt><tt>sample_size</tt> : int (default is 1)</dt>
 <dd>Number of times to sample.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
@@ -5849,6 +9646,379 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="NonMaxSuppression"></a><a name="nonmaxsuppression">**NonMaxSuppression**</a>
+
+  Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+  Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
+  orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
+  result in the same boxes being selected by the algorithm.
+  The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+  The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#NonMaxSuppression-10">NonMaxSuppression-10</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>center_point_box</tt> : int (default is 0)</dt>
+<dd>Integer indicate the format of the box data. The default is 0. 0 - the box data is supplied as [y1, x1, y2, x2] where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners and the coordinates can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute. Mostly used for TF models. 1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.</dd>
+</dl>
+
+#### Inputs (2 - 5)
+
+<dl>
+<dt><tt>boxes</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.</dd>
+<dt><tt>scores</tt> : tensor(float)</dt>
+<dd>An input tensor with shape [num_batches, num_classes, spatial_dimension]</dd>
+<dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
+<dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
+<dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
+<dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
+<dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>selected_indices</tt> : tensor(int64)</dt>
+<dd>selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>nonmaxsuppression_center_point_box_format</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices'],
+    center_point_box=1
+)
+boxes = np.array([[
+    [0.5, 0.5, 1.0, 1.0],
+    [0.5, 0.6, 1.0, 1.0],
+    [0.5, 0.4, 1.0, 1.0],
+    [0.5, 10.5, 1.0, 1.0],
+    [0.5, 10.6, 1.0, 1.0],
+    [0.5, 100.5, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_center_point_box_format')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_flipped_coordinates</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [1.0, 1.0, 0.0, 0.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, 0.9, 1.0, -0.1],
+    [0.0, 10.0, 1.0, 11.0],
+    [1.0, 10.1, 0.0, 11.1],
+    [1.0, 101.0, 0.0, 100.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_flipped_coordinates')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_identical_boxes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_identical_boxes')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_limit_output_size</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_limit_output_size')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_single_box</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_single_box')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_suppress_by_IOU</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_suppress_by_IOU_and_scores</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.4]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU_and_scores')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_two_batches</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]],
+                  [[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]],
+                   [[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [1, 0, 3], [1, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_batches')
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_two_classes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
+                    [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 1, 3], [0, 1, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_classes')
+```
+
+</details>
+
+
+### <a name="NonZero"></a><a name="nonzero">**NonZero**</a>
+
+  Returns the indices of the elements that are non-zero
+      (in row-major order - by dimension).
+      NonZero behaves similar to numpy.nonzero:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
+```
+
+</details>
+
+
 ### <a name="Not"></a><a name="not">**Not**</a>
 
   Returns the negation of the input tensor element-wise.
@@ -5905,6 +10075,174 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 expect(node, inputs=[x], outputs=[np.logical_not(x)],
        name='test_not_4d')
+```
+
+</details>
+
+
+### <a name="OneHot"></a><a name="onehot">**OneHot**</a>
+
+  Produces a one-hot tensor based on inputs.
+      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+      are specified as part of required input argument 'values', which is a two-element tensor of format
+      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+      input tensor. The additional dimension is for one-hot representation. The additional dimension will
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
+      output tensor.
+  
+      when axis = 0:
+      output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+  
+      when axis = -1:
+      output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#OneHot-9">OneHot-9</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor. Negative value means counting dimensions from the back. Accepted range is [-r-1, r] where r = rank(indices).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>indices</tt> : T1</dt>
+<dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dt><tt>depth</tt> : T2</dt>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dt><tt>values</tt> : T3</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T3</dt>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_axis</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>with_negative_axis</summary>
+
+```python
+axisValue = -2
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_negative_axis')
+```
+
+</details>
+
+
+<details>
+<summary>with_negative_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([0, -7, -8], dtype=np.int64)
+
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
+```
+
+</details>
+
+
+<details>
+<summary>without_axis</summary>
+
+```python
+on_value = 5
+off_value = 2
+output_type = np.int32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y']
+)
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.float32(12)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>
@@ -6044,9 +10382,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>, <a href="Changelog.md#PRelu-6">PRelu-6</a>
+Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>, <a href="Changelog.md#PRelu-6">PRelu-6</a>, <a href="Changelog.md#PRelu-7">PRelu-7</a>
 
 #### Inputs
 
@@ -6067,8 +10405,8 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>, <a 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
 
@@ -6118,45 +10456,110 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given `data` tensor, pads, mode, and value.
-  Example:
+  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
+  a padded tensor (`output`) is generated.
+  
+  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  
+  1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
+  
+  2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+  
+  3) `edge` - pads with the edge values of array
+  
+  
+  Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
-    data = [
+  
+    data = 
+    [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
-    ]
+    ] 
+  
     pads = [0, 2, 0, 0]
-    output = [
+  
+    mode = 'constant'
+  
+    constant_value = 0.0
+  
+    output = 
+    [
         [
             [0.0, 0.0, 1.0, 1.2],
             [0.0, 0.0, 2.3, 3.4],
             [0.0, 0.0, 4.5, 5.7],
         ],
     ]
+  
+  
+  Example 2 (`reflect` mode):
+    data = 
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ] 
+  
+    pads = [0, 2, 0, 0]
+  
+    mode = 'reflect'
+  
+    output = 
+    [
+        [
+            [1.0, 1.2, 1.0, 1.2],
+            [2.3, 3.4, 2.3, 3.4],
+            [4.5, 5.7, 4.5, 5.7],
+        ],
+    ]
+  
+  
+  Example 3 (`edge` mode):
+    data = 
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ] 
+  
+    pads = [0, 2, 0, 0]
+  
+    mode = 'edge'
+  
+    output = 
+    [
+        [
+            [1.0, 1.0, 1.0, 1.2],
+            [2.3, 2.3, 2.3, 3.4],
+            [4.5, 4.5, 4.5, 5.7],
+        ],
+    ]
+  
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href="Changelog.md#Pad-2">Pad-2</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>mode</tt> : string</dt>
-<dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
-<dt><tt>value</tt> : float</dt>
-<dd>One float, indicates the value to be filled, default is 0</dd>
+<dt><tt>mode</tt> : string (default is constant)</dt>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
+<dt><tt>pads</tt> : tensor(int64)</dt>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
+<dt><tt>constant_value</tt> (optional) : T</dt>
+<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).</dd>
 </dl>
 
 #### Outputs
@@ -6169,8 +10572,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input and output to only numeric types.</dd>
 </dl>
 
 
@@ -6182,21 +10585,21 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 ```python
 node = onnx.helper.make_node(
     'Pad',
-    inputs=['x'],
+    inputs=['x', 'pads', 'value'],
     outputs=['y'],
-    mode='constant',
-    value=1.2,
-    pads=[0, 0, 1, 3, 0, 0, 2, 4],
+    mode='constant'
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-y = np.pad(
+pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+y = pad_impl(
     x,
-    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
-    mode='constant',
-    constant_values=1.2,
+    pads,
+    'constant',
+    1.2
 )
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
 ```
 
@@ -6210,19 +10613,19 @@ expect(node, inputs=[x], outputs=[y],
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
         'Pad',
-        inputs=['x'],
+        inputs=['x', 'pads'],
         outputs=['y'],
-        mode=mode,
-        pads=[0, 0, 1, 1, 0, 0, 1, 1]
+        mode=mode
     )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
+    x = np.random.randn(1, 3, 4, 5).astype(np.int32)
+    pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+    y = pad_impl(
         x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
+        pads,
+        mode
     )
 
-    expect(node, inputs=[x], outputs=[y],
+    expect(node, inputs=[x, pads], outputs=[y],
            name='test_{}_pad'.format(mode))
 ```
 
@@ -6326,6 +10729,310 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### <a name="QLinearConv"></a><a name="qlinearconv">**QLinearConv**</a>
+
+  The convolution operator consumes a quantized input tensor, its scale and zero point,
+  a quantized filter, its scale and zero point, and output's scale and zero point,
+  and computes the quantized output. Each scale and zero-point pair must have same shape.
+  It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
+  Each input or output and its related zero point must have same type.
+  When bias is present it must be quantized using scale = input scale * weight scale and 
+  zero point as 0.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>number of groups input channels and output channels are divided into. default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input 'w'.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0.The value represent the number of pixels added to the beginning and end part of the corresponding axis.`pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number ofpixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaultsto 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs (8 - 9)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>x_scale</tt> : tensor(float)</dt>
+<dd>Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>x_zero_point</tt> : T1</dt>
+<dd>Zero point tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>w</tt> : T2</dt>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
+<dt><tt>w_scale</tt> : tensor(float)</dt>
+<dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
+<dt><tt>w_zero_point</tt> : T2</dt>
+<dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> : T3</dt>
+<dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>B</tt> (optional) : T4</dt>
+<dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain filter type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain output type to 8-bit integer tensor.</dd>
+<dt><tt>T4</tt> : tensor(int32)</dt>
+<dd>Constrain bias type to 32-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>qlinearconv</summary>
+
+```python
+node = onnx.helper.make_node('QLinearConv',
+    inputs=['x', 'x_scale', 'x_zero_point', 'w', 'w_scale', 'w_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([[255, 174, 162, 25, 203, 168, 58],
+    [15, 59, 237, 95, 129, 0, 64],
+    [56, 242, 153, 221, 168, 12, 166],
+    [232, 178, 186, 195, 237, 162, 237],
+    [188, 39, 124, 77, 80, 102, 43],
+    [127, 230, 21, 83, 41, 40, 134],
+    [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+x_scale = np.float32(0.00369204697)
+x_zero_point = np.uint8(132)
+
+w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+
+w_scale = np.array([0.00172794575], dtype=np.float32)
+w_zero_point = np.array([255], dtype=np.uint8)
+
+y_scale = np.float32(0.00162681262)
+y_zero_point = np.uint8(123)
+
+output = np.array([[0, 81, 93, 230, 52, 87, 197],
+    [240, 196, 18, 160, 126, 255, 191],
+    [199, 13, 102, 34, 87, 243, 89],
+    [23, 77, 69, 60, 18, 93, 18],
+    [67, 216, 131, 178, 175, 153, 212],
+    [128, 25, 234, 172, 214, 215, 121],
+    [0, 101, 163, 114, 213, 107, 8], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+expect(node, inputs=[x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearconv')
+```
+
+</details>
+
+
+### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
+  The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
+  Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
+  They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
+  the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
+  and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+  Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>a</tt> : T1</dt>
+<dd>N-dimensional quantized matrix a</dd>
+<dt><tt>a_scale</tt> : tensor(float)</dt>
+<dd>scale of quantized input a</dd>
+<dt><tt>a_zero_point</tt> : T1</dt>
+<dd>zero point of quantized input a</dd>
+<dt><tt>b</tt> : T2</dt>
+<dd>N-dimensional quantized matrix b</dd>
+<dt><tt>b_scale</tt> : tensor(float)</dt>
+<dd>scale of quantized input b</dd>
+<dt><tt>b_zero_point</tt> : T2</dt>
+<dd>zero point of quantized input b</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>scale of quantized output y</dd>
+<dt><tt>y_zero_point</tt> : T3</dt>
+<dd>zero point of quantized output y</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>Quantized matrix multiply results from a * b</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>qlinearmatmul</summary>
+
+```python
+node = onnx.helper.make_node('QLinearMatMul',
+    inputs=['a', 'a_scale', 'a_zero_point', 'b', 'b_scale', 'b_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+#2D
+a = np.array([[208, 236, 0, 238],
+    [3, 214, 255, 29], ], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[168, 115, 255],
+    [1, 66, 151], ], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_2D')
+
+#3D
+a = np.array([[[208, 236, 0, 238],
+    [3, 214, 255, 29]],
+    [[208, 236, 0, 238],
+    [3, 214, 255, 29]]], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]],
+    [[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[[168, 115, 255],
+    [1, 66, 151]],
+    [[168, 115, 255],
+    [1, 66, 151]]], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_3D')
+```
+
+</details>
+
+
+### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
+
+  The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
+  The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+  For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>N-D full precision Input tensor to be quantized.</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> (optional) : T2</dt>
+<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is uint8 typed 0 if it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
+<dd>Constrain 'x' to float or int32 tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>quantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('QuantizeLinear',
+    inputs=['x', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = np.uint8(128)
+y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
+
+expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+       name='test_quantizelinear')
+```
+
+</details>
+
+
 ### <a name="RNN"></a><a name="rnn">**RNN**</a>
 
   Computes an one-layer simple RNN. This operator is usually supported
@@ -6403,11 +11110,11 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.For example with LeakyRelu, the default alpha is 0.01.</dd>
 <dt><tt>activation_beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
-<dt><tt>activations</tt> : list of strings</dt>
+<dt><tt>activations</tt> : list of strings (default is ['Tanh', 'Tanh'])</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
+<dt><tt>direction</tt> : string (default is forward)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
@@ -6564,12 +11271,12 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>dtype</tt> : int</dt>
+<dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
-<dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
-<dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
+<dt><tt>mean</tt> : float (default is 0.0)</dt>
+<dd>The mean of the normal distribution.</dd>
+<dt><tt>scale</tt> : float (default is 1.0)</dt>
+<dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -6596,11 +11303,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomNormalLike"></a><a name="randomnormallike">**RandomNormalLike**</a>
 
-  Generate a tensor with random values drawn from a normal distribution. 
-  The shape of the output tensor is copied from the shape of the input tensor, 
+  Generate a tensor with random values drawn from a normal distribution.
+  The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the normal distribution are specified by `mean` and `scale`.
   
-  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message, and be valid as an output type.
 
@@ -6613,10 +11320,10 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
-<dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
+<dt><tt>mean</tt> : float (default is 0.0)</dt>
+<dd>The mean of the normal distribution.</dd>
+<dt><tt>scale</tt> : float (default is 1.0)</dt>
+<dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -6638,7 +11345,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
@@ -6661,12 +11368,12 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>dtype</tt> : int</dt>
+<dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
-<dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
-<dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
+<dt><tt>high</tt> : float (default is 1.0)</dt>
+<dd>Upper boundary of the output values.</dd>
+<dt><tt>low</tt> : float (default is 0.0)</dt>
+<dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -6693,11 +11400,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomUniformLike"></a><a name="randomuniformlike">**RandomUniformLike**</a>
 
-  Generate a tensor with random values drawn from a uniform distribution. 
-  The shape of the output tensor is copied from the shape of the input tensor, 
+  Generate a tensor with random values drawn from a uniform distribution.
+  The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the uniform distribution are specified by `low` and `high`.
   
-  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
 
@@ -6710,10 +11417,10 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
-<dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
+<dt><tt>high</tt> : float (default is 1.0)</dt>
+<dd>Upper boundary of the output values.</dd>
+<dt><tt>low</tt> : float (default is 0.0)</dt>
+<dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -6735,11 +11442,119 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
+
+
+### <a name="Range"></a><a name="range">**Range**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  up to `limit` (exclusive).
+  
+  The number of elements in the output of range is computed as below-
+  
+  `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
+  
+  The pseudocode determining the contents of the output is shown below-
+  
+  `for(int i=0; i<number_of_elements; ++i)`
+  
+  `{`
+     
+  `    output[i] =  start + (i * delta);  ` 
+  
+  `}`	
+  
+  `Example 1`
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  
+  `Example 2`
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
+
+
+#### Examples
+
+<details>
+<summary>range_float_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.float32(1)
+limit = np.float32(5)
+delta = np.float32(2)
+
+output = np.arange(start, limit, delta, dtype=np.float32)  # expected output [1.0, 3.0]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_float_type_positive_delta')
+```
+
+</details>
+
+
+<details>
+<summary>range_int32_type_negative_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.int32(10)
+limit = np.int32(6)
+delta = np.int32(-3)
+
+output = np.arange(start, limit, delta, dtype=np.int32)  # expected output [10, 7]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_int32_type_negative_delta')
+```
+
+</details>
 
 
 ### <a name="Reciprocal"></a><a name="reciprocal">**Reciprocal**</a>
@@ -6813,14 +11628,16 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceL1-1">ReduceL1-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -6961,6 +11778,44 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-1]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceL1',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+# print(data)
+#[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
+
+reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[3.], [7.]], [[11.], [15.]], [[19.], [23.]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l1_negative_axes_keep_dims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l1_negative_axes_keep_dims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulted
@@ -6972,14 +11827,16 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceL2-1">ReduceL2-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7129,6 +11986,48 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-1]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceL2',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+# print(data)
+#[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
+
+reduced = np.sqrt(np.sum(
+    a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
+# print(reduced)
+#[[[2.23606798], [5.]]
+# [[7.81024968], [10.63014581]]
+# [[13.45362405], [16.2788206 ]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l2_negative_axes_keep_dims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sqrt(np.sum(
+    a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l2_negative_axes_keep_dims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
   Computes the log sum of the input tensor's element along the provided axes. The resulted
@@ -7140,14 +12039,16 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">ReduceLogSum-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7188,6 +12089,26 @@ data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, keepdims=True))
 expect(node, inputs=[data], outputs=[reduced],
        name='test_reduce_log_sum_default')
+```
+
+</details>
+
+
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReduceLogSum',
+    inputs=['data'],
+    outputs=["reduced"],
+    axes=[-2]
+)
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(-2), keepdims=True))
+# print(reduced)
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_negative_axes')
 ```
 
 </details>
@@ -7236,14 +12157,16 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">ReduceLogSumExp-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7392,6 +12315,48 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+node = onnx.helper.make_node(
+    'ReduceLogSumExp',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.array(
+    [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
+    dtype=np.float32)
+reduced = np.log(np.sum(np.exp(data),
+                        axis=tuple(axes),
+                        keepdims=keepdims == 1))
+# print(reduced)
+# [[[20., 2.31326175]]
+# [[40.00004578, 2.31326175]]
+# [[60.00671387, 2.31326175]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+      name='test_reduce_log_sum_exp_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.log(np.sum(np.exp(data),
+                        axis=tuple(axes),
+                        keepdims=keepdims == 1))
+
+expect(node, inputs=[data], outputs=[reduced],
+      name='test_reduce_log_sum_exp_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulted
@@ -7403,14 +12368,16 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>, <a href="Changelog.md#ReduceMax-11">ReduceMax-11</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7431,8 +12398,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 
@@ -7536,6 +12503,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMax',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[20., 2.]]
+# [[40., 2.]]
+# [[60., 2.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
   Computes the mean of the input tensor's element along the provided axes. The resulted
@@ -7547,14 +12548,16 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7681,6 +12684,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_r
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+# [[[12.5, 1.5]]
+# [[35., 1.5]]
+# [[57.5, 1.5]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulted
@@ -7692,14 +12729,16 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_r
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>, <a href="Changelog.md#ReduceMin-11">ReduceMin-11</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7720,8 +12759,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 
@@ -7825,6 +12864,39 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMin', inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[5., 1.]]
+# [[30., 1.]]
+# [[55., 1.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
   Computes the product of the input tensor's element along the provided axes. The resulted
@@ -7836,14 +12908,16 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceProd-1">ReduceProd-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -7967,6 +13041,39 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_keepdims_r
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceProd',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[3., 8.]]
+# [[35., 48.]]
+# [[99., 120.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
@@ -7978,14 +13085,16 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_keepdims_r
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceSum-1">ReduceSum-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -8112,6 +13221,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[4., 6.]]
+# [[12., 14.]]
+# [[20., 22.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's element along the provided axes. The resulted
@@ -8123,14 +13266,16 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">ReduceSumSquare-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -8257,6 +13402,40 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_keep
 </details>
 
 
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSumSquare',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[10., 20.s]]
+# [[74., 100.]]
+# [[202., 244.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
@@ -8346,8 +13525,8 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -8359,11 +13538,15 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
-    'reduced_dims': np.array([3, 8], dtype=np.int64),
-    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reordered_last_dims': np.array([2, 4, 3], dtype=np.int64),
+    'reduced_dims': np.array([2, 12], dtype=np.int64),
+    'extended_dims': np.array([2, 3, 2, 2], dtype=np.int64),
     'one_dim': np.array([24], dtype=np.int64),
-    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
+    'negative_dim': np.array([2, -1, 2], dtype=np.int64),
+    'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
+    'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
+    'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
@@ -8374,9 +13557,2146 @@ for test_name, shape in test_cases.items():
         outputs=['reshaped'],
     )
 
-    reshaped = np.reshape(data, shape)
+    reshaped = reshape_reference_implementation(data, shape)
+
     expect(node, inputs=[data, shape], outputs=[reshaped],
            name='test_reshape_' + test_name)
+```
+
+</details>
+
+
+### <a name="Resize"></a><a name="resize">**Resize**</a>
+
+  Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Resize-10">Resize-10</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
+<dd>
+This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
+
+The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example. 
+Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, length_original as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", scale = length_resized / length_original, <br/>
+
+if coordinate_transformation_mode is "half_pixel", <br/>
+x_original = (x_resized + 0.5) / scale - 0.5, <br/>
+
+if coordinate_transformation_mode is "pytorch_half_pixel", <br/>
+x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
+
+if coordinate_transformation_mode is "align_corners", <br/>
+x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
+
+if coordinate_transformation_mode is "asymmetric", <br/>
+x_original = x_resized / scale, <br/>
+
+if coordinate_transformation_mode is "tf_half_pixel_for_nn", <br/>
+x_original = (x_resized + 0.5) / scale, <br/>
+
+if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
+x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1).</dd>
+<dt><tt>cubic_coeff_a</tt> : float (default is -0.75)</dt>
+<dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75 (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. This attribute is valid only if "mode" is "cubic".</dd>
+<dt><tt>exclude_outside</tt> : int (default is 0)</dt>
+<dd>If set to 1, the weight of sampling locations outside the tensor will be set to 0 and the weight will be renormalized so that their sum is 1.0. The default value is 0.</dd>
+<dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
+<dd>When coordinate_transformation_mode is "tf_crop_and_resize" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.</dd>
+<dt><tt>mode</tt> : string (default is nearest)</dt>
+<dd>Three interpolation modes: nearest (default), linear and cubic. The "linear" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). The "cubic" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).</dd>
+<dt><tt>nearest_mode</tt> : string (default is round_prefer_floor)</dt>
+<dd>Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get "nearest" pixel in input tensor from x_original, so this attribute is valid only if "mode" is "nearest".</dd>
+</dl>
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>N-D tensor</dd>
+<dt><tt>roi</tt> : T2</dt>
+<dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
+<dt><tt>scales</tt> : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
+<dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
+<dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain roi type to float or double.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>resize_downsample_scales_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+# [[[[ 1.47119141  2.78125     4.08251953]
+#    [ 6.71142578  8.02148438  9.32275391]
+#    [11.91650391 13.2265625  14.52783203]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_cubic_A_n0p5_exclude_outside</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    cubic_coeff_a=-0.5,
+    exclude_outside=True
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+# [[[[ 1.36812675  2.6695014   4.0133367 ]
+#    [ 6.57362535  7.875       9.2188353 ]
+#    [11.94896657 13.25034122 14.59417652]]]]
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
+                        exclude_outside=True).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic_A_n0p5_exclude_outside')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_cubic_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+# [[[[ 1.          2.39519159  3.79038317]
+#    [ 6.58076634  7.97595793  9.37114951]
+#    [12.16153268 13.55672427 14.95191585]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[2.6666665 4.3333331]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_linear')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_linear_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[1.       3.142857]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_linear_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[1. 3.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 1.63078704  3.00462963  4.37847222]
+#    [ 7.12615741  8.5         9.87384259]
+#    [12.62152778 13.99537037 15.36921296]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_cubic')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_linear_pytorch_half_pixel</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='pytorch_half_pixel'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 1], dtype=np.int64)
+
+# [[[[ 1.6666666]
+#    [ 7.       ]
+#    [12.333333 ]]]]
+output = interpolate_nd(
+    data, linear_coeffs, output_size=sizes, coordinate_transformation_mode='pytorch_half_pixel').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_linear_pytorch_half_pixel')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 1, 3], dtype=np.int64)
+
+# [[[[1. 3.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_nearest_tf_half_pixel_for_nn</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='tf_half_pixel_for_nn'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 2], dtype=np.int64)
+
+# [[[[ 6.  8.]
+#    [10. 12.]
+#    [14. 16.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, output_size=sizes, coordinate_transformation_mode='tf_half_pixel_for_nn').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest_tf_half_pixel_for_nn')
+```
+
+</details>
+
+
+<details>
+<summary>resize_tf_crop_and_resize</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0, 0, 0.4, 0.6, 1, 1, 0.6, 0.8], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004  7.9        8.2      ]
+#    [ 8.8        9.1        9.400001 ]
+#    [10.        10.3       10.6      ]]]]
+output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize')
+```
+
+</details>
+
+
+<details>
+<summary>resize_tf_crop_and_resize_extrapolation_value</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize',
+    extrapolation_value=10.0
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0, 0, 0.4, 0.6, 1, 1, 1.2, 1.7], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004 10.        10.       ]
+#    [12.400001  10.        10.       ]
+#    [10.        10.        10.       ]]]]
+output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+                        coordinate_transformation_mode='tf_crop_and_resize', extrapolation_value=10.0).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[ 0.47265625  0.76953125  1.24609375  1.875       2.28125
+#      2.91015625  3.38671875  3.68359375]
+#    [ 1.66015625  1.95703125  2.43359375  3.0625      3.46875
+#      4.09765625  4.57421875  4.87109375]
+#    [ 3.56640625  3.86328125  4.33984375  4.96875     5.375
+#      6.00390625  6.48046875  6.77734375]
+#    [ 6.08203125  6.37890625  6.85546875  7.484375    7.890625
+#      8.51953125  8.99609375  9.29296875]
+#    [ 7.70703125  8.00390625  8.48046875  9.109375    9.515625
+#     10.14453125 10.62109375 10.91796875]
+#    [10.22265625 10.51953125 10.99609375 11.625      12.03125
+#     12.66015625 13.13671875 13.43359375]
+#    [12.12890625 12.42578125 12.90234375 13.53125    13.9375
+#     14.56640625 15.04296875 15.33984375]
+#    [13.31640625 13.61328125 14.08984375 14.71875    15.125
+#     15.75390625 16.23046875 16.52734375]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_cubic_A_n0p5_exclude_outside</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    cubic_coeff_a=-0.5,
+    exclude_outside=True
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[ 0.55882353  0.81494204  1.35698249  1.89705882  2.39705882
+#      2.93713516  3.47917561  3.73529412]
+#    [ 1.58329755  1.83941606  2.38145651  2.92153285  3.42153285
+#      3.96160918  4.50364964  4.75976814]
+#    [ 3.75145936  4.00757787  4.54961832  5.08969466  5.58969466
+#      6.12977099  6.67181144  6.92792995]
+#    [ 5.91176471  6.16788321  6.70992366  7.25        7.75
+#      8.29007634  8.83211679  9.08823529]
+#    [ 7.91176471  8.16788321  8.70992366  9.25        9.75
+#     10.29007634 10.83211679 11.08823529]
+#    [10.07207005 10.32818856 10.87022901 11.41030534 11.91030534
+#     12.45038168 12.99242213 13.24854064]
+#    [12.24023186 12.49635036 13.03839082 13.57846715 14.07846715
+#     14.61854349 15.16058394 15.41670245]
+#    [13.26470588 13.52082439 14.06286484 14.60294118 15.10294118
+#     15.64301751 16.18505796 16.44117647]]]]
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
+                        exclude_outside=True).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic_A_n0p5_exclude_outside')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_cubic_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[ 1.          1.34110787  1.80029155  2.32944606  2.67055394
+#      3.19970845  3.65889213  4.        ]
+#    [ 2.36443149  2.70553936  3.16472303  3.69387755  4.03498542
+#      4.56413994  5.02332362  5.36443149]
+#    [ 4.20116618  4.54227405  5.00145773  5.53061224  5.87172012
+#      6.40087464  6.86005831  7.20116618]
+#    [ 6.31778426  6.65889213  7.1180758   7.64723032  7.98833819
+#      8.51749271  8.97667638  9.31778426]
+#    [ 7.68221574  8.02332362  8.48250729  9.01166181  9.35276968
+#      9.8819242  10.34110787 10.68221574]
+#    [ 9.79883382 10.13994169 10.59912536 11.12827988 11.46938776
+#     11.99854227 12.45772595 12.79883382]
+#    [11.63556851 11.97667638 12.43586006 12.96501458 13.30612245
+#     13.83527697 14.29446064 14.63556851]
+#    [13.         13.34110787 13.80029155 14.32944606 14.67055394
+#     15.19970845 15.65889213 16.        ]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_cubic_asymmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    coordinate_transformation_mode='asymmetric'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+roi = np.array([], dtype=np.float32)
+
+# [[[[ 1.       1.40625  2.       2.5      3.       3.59375  4.
+#      4.09375]
+#    [ 2.625    3.03125  3.625    4.125    4.625    5.21875  5.625
+#      5.71875]
+#    [ 5.       5.40625  6.       6.5      7.       7.59375  8.
+#      8.09375]
+#    [ 7.       7.40625  8.       8.5      9.       9.59375 10.
+#     10.09375]
+#    [ 9.       9.40625 10.      10.5     11.      11.59375 12.
+#     12.09375]
+#    [11.375   11.78125 12.375   12.875   13.375   13.96875 14.375
+#     14.46875]
+#    [13.      13.40625 14.      14.5     15.      15.59375 16.
+#     16.09375]
+#    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
+#     16.46875]]]]
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
+                        coordinate_transformation_mode='asymmetric').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic_asymmetric')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[1.   1.25 1.75 2.  ]
+#    [1.5  1.75 2.25 2.5 ]
+#    [2.5  2.75 3.25 3.5 ]
+#    [3.   3.25 3.75 4.  ]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_linear')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_linear_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[1.         1.33333333 1.66666667 2.        ]
+#    [1.66666667 2.         2.33333333 2.66666667]
+#    [2.33333333 2.66666667 3.         3.33333333]
+#    [3.         3.33333333 3.66666667 4.        ]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_linear_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
+# [[[[1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 9, 10], dtype=np.int64)
+
+# [[[[ 0.45507922  0.64057922  0.97157922  1.42257922  1.90732922
+#      2.22332922  2.70807922  3.15907922  3.49007922  3.67557922]
+#    [ 1.39437963  1.57987963  1.91087963  2.36187963  2.84662963
+#      3.16262963  3.64737963  4.09837963  4.42937963  4.61487963]
+#    [ 2.95130693  3.13680693  3.46780693  3.91880693  4.40355693
+#      4.71955693  5.20430693  5.65530693  5.98630693  6.17180693]
+#    [ 5.20525069  5.39075069  5.72175069  6.17275069  6.65750069
+#      6.97350069  7.45825069  7.90925069  8.24025069  8.42575069]
+#    [ 6.88975     7.07525     7.40625     7.85725     8.342
+#      8.658       9.14275     9.59375     9.92475    10.11025   ]
+#    [ 8.57424931  8.75974931  9.09074931  9.54174931 10.02649931
+#     10.34249931 10.82724931 11.27824931 11.60924931 11.79474931]
+#    [10.82819307 11.01369307 11.34469307 11.79569307 12.28044307
+#     12.59644307 13.08119307 13.53219307 13.86319307 14.04869307]
+#    [12.38512037 12.57062037 12.90162037 13.35262037 13.83737037
+#     14.15337037 14.63812037 15.08912037 15.42012037 15.60562037]
+#    [13.32442078 13.50992078 13.84092078 14.29192078 14.77667078
+#     15.09267078 15.57742078 16.02842078 16.35942078 16.54492078]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_cubic')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 7, 8], dtype=np.int64)
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_ceil_half_pixel</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='half_pixel',
+    nearest_mode='ceil'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+# [[[[ 1.  2.  2.  3.  3.  4.  4.  4.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
+output = interpolate_nd(
+    data, lambda x: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_ceil_half_pixel')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_floor_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='align_corners',
+    nearest_mode='floor'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+# [[[[ 1.  1.  1.  2.  2.  3.  3.  4.]
+#    [ 1.  1.  1.  2.  2.  3.  3.  4.]
+#    [ 1.  1.  1.  2.  2.  3.  3.  4.]
+#    [ 5.  5.  5.  6.  6.  7.  7.  8.]
+#    [ 5.  5.  5.  6.  6.  7.  7.  8.]
+#    [ 9.  9.  9. 10. 10. 11. 11. 12.]
+#    [ 9.  9.  9. 10. 10. 11. 11. 12.]
+#    [13. 13. 13. 14. 14. 15. 15. 16.]]]]
+output = interpolate_nd(
+    data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_floor_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='asymmetric',
+    nearest_mode='round_prefer_ceil'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+# [[[[ 1.  2.  2.  3.  3.  4.  4.  4.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
+output = interpolate_nd(
+    data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'),
+    output_size=sizes, coordinate_transformation_mode='asymmetric').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric')
+```
+
+</details>
+
+
+### <a name="ReverseSequence"></a><a name="reversesequence">**ReverseSequence**</a>
+
+  Reverse batch of sequences having different lengths specified by `sequence_lens`.
+  
+  For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+  and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+  sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+  
+  Example 1:
+    input = [[0.0, 4.0, 8.0,  12.0],
+             [1.0, 5.0, 9.0,  13.0],
+             [2.0, 6.0, 10.0, 14.0],
+             [3.0, 7.0, 11.0, 15.0]]
+    sequence_lens = [4, 3, 2, 1]
+    time_axis = 0
+    batch_axis = 1
+  
+    output = [[3.0, 6.0, 9.0,  12.0],
+              [2.0, 5.0, 8.0,  13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]]
+  
+  Example 2:
+    input = [[0.0,  1.0,  2.0,  3.0 ],
+             [4.0,  5.0,  6.0,  7.0 ],
+             [8.0,  9.0,  10.0, 11.0],
+             [12.0, 13.0, 14.0, 15.0]]
+    sequence_lens = [1, 2, 3, 4]
+    time_axis = 1
+    batch_axis = 0
+  
+    output = [[0.0,  1.0,  2.0,  3.0 ],
+              [5.0,  4.0,  6.0,  7.0 ],
+              [10.0, 9.0,  8.0,  11.0],
+              [15.0, 14.0, 13.0, 12.0]]
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_axis</tt> : int (default is 1)</dt>
+<dd>(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.</dd>
+<dt><tt>time_axis</tt> : int (default is 0)</dt>
+<dd>(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 2.</dd>
+<dt><tt>sequence_lens</tt> : tensor(int64)</dt>
+<dd>Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape of input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>reversesequence_batch</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=1,
+    batch_axis=0,
+)
+x = np.array([[0.0, 1.0, 2.0, 3.0],
+              [4.0, 5.0, 6.0, 7.0],
+              [8.0, 9.0, 10.0, 11.0],
+              [12.0, 13.0, 14.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+
+y = np.array([[0.0, 1.0, 2.0, 3.0],
+              [5.0, 4.0, 6.0, 7.0],
+              [10.0, 9.0, 8.0, 11.0],
+              [15.0, 14.0, 13.0, 12.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_batch')
+```
+
+</details>
+
+
+<details>
+<summary>reversesequence_time</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=0,
+    batch_axis=1,
+)
+x = np.array([[0.0, 4.0, 8.0, 12.0],
+              [1.0, 5.0, 9.0, 13.0],
+              [2.0, 6.0, 10.0, 14.0],
+              [3.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([4, 3, 2, 1], dtype=np.int64)
+
+y = np.array([[3.0, 6.0, 9.0, 12.0],
+              [2.0, 5.0, 8.0, 13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_time')
+```
+
+</details>
+
+
+### <a name="RoiAlign"></a><a name="roialign">**RoiAlign**</a>
+
+  Region of Interest (RoI) align operation described in the
+  [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
+  RoiAlign consumes an input tensor X and region of interests (rois)
+  to apply pooling across each RoI; it produces a 4-D tensor of shape
+  (num_rois, C, output_height, output_width).
+  
+  RoiAlign is proposed to avoid the misalignment by removing
+  quantizations while converting from original image into feature
+  map and from feature map into RoI feature; in each ROI bin,
+  the value of the sampled locations are computed directly
+  through bilinear interpolation.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is avg)</dt>
+<dd>The pooling method. Two modes are supported: 'avg' and 'max'. Default is 'avg'.</dd>
+<dt><tt>output_height</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's height.</dd>
+<dt><tt>output_width</tt> : int (default is 1)</dt>
+<dd>default 1; Pooled output Y's width.</dd>
+<dt><tt>sampling_ratio</tt> : int (default is 0)</dt>
+<dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / output_width), and likewise for height). Default is 0.</dd>
+<dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T1</dt>
+<dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[x1, y1, x2, y2], ...]. The RoIs' coordinates are in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
+<dt><tt>batch_indices</tt> : T2</dt>
+<dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>RoI pooled output, 4-D tensor of shape (num_rois, C, output_height, output_width). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain types to int tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>roialign</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RoiAlign",
+    inputs=["X", "rois", "batch_indices"],
+    outputs=["Y"],
+    spatial_scale=1.0,
+    output_height=5,
+    output_width=5,
+    sampling_ratio=2,
+)
+
+X = np.array(
+    [
+        [
+            [
+                [
+                    0.2764,
+                    0.7150,
+                    0.1958,
+                    0.3416,
+                    0.4638,
+                    0.0259,
+                    0.2963,
+                    0.6518,
+                    0.4856,
+                    0.7250,
+                ],
+                [
+                    0.9637,
+                    0.0895,
+                    0.2919,
+                    0.6753,
+                    0.0234,
+                    0.6132,
+                    0.8085,
+                    0.5324,
+                    0.8992,
+                    0.4467,
+                ],
+                [
+                    0.3265,
+                    0.8479,
+                    0.9698,
+                    0.2471,
+                    0.9336,
+                    0.1878,
+                    0.4766,
+                    0.4308,
+                    0.3400,
+                    0.2162,
+                ],
+                [
+                    0.0206,
+                    0.1720,
+                    0.2155,
+                    0.4394,
+                    0.0653,
+                    0.3406,
+                    0.7724,
+                    0.3921,
+                    0.2541,
+                    0.5799,
+                ],
+                [
+                    0.4062,
+                    0.2194,
+                    0.4473,
+                    0.4687,
+                    0.7109,
+                    0.9327,
+                    0.9815,
+                    0.6320,
+                    0.1728,
+                    0.6119,
+                ],
+                [
+                    0.3097,
+                    0.1283,
+                    0.4984,
+                    0.5068,
+                    0.4279,
+                    0.0173,
+                    0.4388,
+                    0.0430,
+                    0.4671,
+                    0.7119,
+                ],
+                [
+                    0.1011,
+                    0.8477,
+                    0.4726,
+                    0.1777,
+                    0.9923,
+                    0.4042,
+                    0.1869,
+                    0.7795,
+                    0.9946,
+                    0.9689,
+                ],
+                [
+                    0.1366,
+                    0.3671,
+                    0.7011,
+                    0.6234,
+                    0.9867,
+                    0.5585,
+                    0.6985,
+                    0.5609,
+                    0.8788,
+                    0.9928,
+                ],
+                [
+                    0.5697,
+                    0.8511,
+                    0.6711,
+                    0.9406,
+                    0.8751,
+                    0.7496,
+                    0.1650,
+                    0.1049,
+                    0.1559,
+                    0.2514,
+                ],
+                [
+                    0.7012,
+                    0.4056,
+                    0.7879,
+                    0.3461,
+                    0.0415,
+                    0.2998,
+                    0.5094,
+                    0.3727,
+                    0.5482,
+                    0.0502,
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0, 0, 9, 9], [0, 5, 4, 9], [5, 5, 9, 9]], dtype=np.float32)
+# (num_rois, C, output_height, output_width)
+Y = np.array(
+    [
+        [
+            [
+                [0.4664, 0.4466, 0.3405, 0.5688, 0.6068],
+                [0.3714, 0.4296, 0.3835, 0.5562, 0.3510],
+                [0.2768, 0.4883, 0.5222, 0.5528, 0.4171],
+                [0.4713, 0.4844, 0.6904, 0.4920, 0.8774],
+                [0.6239, 0.7125, 0.6289, 0.3355, 0.3495],
+            ]
+        ],
+        [
+            [
+                [0.3022, 0.4305, 0.4696, 0.3978, 0.5423],
+                [0.3656, 0.7050, 0.5165, 0.3172, 0.7015],
+                [0.2912, 0.5059, 0.6476, 0.6235, 0.8299],
+                [0.5916, 0.7389, 0.7048, 0.8372, 0.8893],
+                [0.6227, 0.6153, 0.7097, 0.6154, 0.4585],
+            ]
+        ],
+        [
+            [
+                [0.2384, 0.3379, 0.3717, 0.6100, 0.7601],
+                [0.3767, 0.3785, 0.7147, 0.9243, 0.9727],
+                [0.5749, 0.5826, 0.5709, 0.7619, 0.8770],
+                [0.5355, 0.2566, 0.2141, 0.2796, 0.3600],
+                [0.4365, 0.3504, 0.2887, 0.3661, 0.2349],
+            ]
+        ],
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### <a name="Round"></a><a name="round">**Round**</a>
+
+  Round takes one input Tensor and rounds the values, element-wise, meaning
+  it finds the nearest integer for each value.
+  In case of halfs, the rule is to round them to the nearest even integer.
+  The output tensor has the same shape and type as the input.
+  
+  Examples:
+  ```
+  round([0.9]) = [1.0]
+  round([2.5]) = [2.0]
+  round([2.3]) = [2.0]
+  round([1.5]) = [2.0]
+  round([-4.5]) = [-4.0]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>round</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Round',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([0.1, 0.5, 0.9, 1.2, 1.5,
+            1.8, 2.3, 2.5, 2.7, -1.1,
+            -1.5, -1.9, -2.2, -2.5, -2.8]).astype(np.float32)
+y = np.array([0., 0., 1., 1., 2.,
+            2., 2., 2., 3., -1.,
+            -2., -2., -2., -2., -3.]).astype(np.float32)  # expected output
+expect(node, inputs=[x], outputs=[y],
+       name='test_round')
+```
+
+</details>
+
+
+### <a name="Scan"></a><a name="scan">**Scan**</a>
+
+  Scan can be used to iterate over one or more scan_input tensors,
+  constructing zero or more scan_output tensors. It combines ideas from general recurrences,
+  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  generalizations of RNN-like constructs for sequence-to-sequence processing.
+  Other tensors (referred to as state_variables here) can be used to carry a state
+  when iterating from one element to another (similar to hidden-state in RNNs, also referred
+  to as loop-carried dependences in the context of loops).
+  Many common usages involve a single scan_input tensor (where functionality
+  similar to scan, fold and map can be obtained). When more than one scan_input is used,
+  a behavior similar to zip is obtained.
+  
+  The attribute body must be a graph, specifying the computation to be performed in
+  every iteration. It takes as input the current values of the state_variables and
+  the current iterated element of the scan_inputs. It must return the (updated) values
+  of the state_variables and zero or more scan_output_element tensors. The values of the
+  scan_output_element tensors are concatenated over all the iterations to produce the
+  scan_output values of the scan construct (similar to the concatenated intermediate
+  hidden-state values of RNN-like constructs). All the output tensors (state_variables as
+  well as scan_output_element tensors) are required to have the same shape in each iteration
+  of the loop (a restriction imposed to enable efficient memory allocation).
+  
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+  
+  The scan operation returns the final values of the state_variables as well as the
+  scan_outputs.
+  
+  The optional attribute scan_input_directions specifies the direction (forward or backward)
+  for each scan input. If this attribute is omitted, all sequences are scanned in the forward
+  direction. A bidirectional scan may be performed by specifying the same tensor input twice
+  in the scan_inputs, once with a forward direction, and once with a backward direction.
+  
+  The scan_output of the operation is produced by concatenating the scan_output_element
+  values produced by the body in each iteration.  The optional attribute scan_output_directions
+  specifies the direction in which scan_output is constructed (by appending or prepending the
+  scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
+  is omitted, the scan_output_element is appended to the scan_output in each iteration.
+  
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
+  If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
+  batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
+  Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+  
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
+  
+  Note that because of the ONNX restriction that only the last parameter of an operator can
+  be variadic, the initial-states and scan-inputs are listed together as one input parameter.
+  Similarly, the final-states and scan-outputs are listed together as one output parameter.
+  The attribute num_scan_inputs indicates the number M of scan-inputs.
+  
+  The behavior of
+  
+      Scan <
+          num_scan_inputs = m,
+          body = loop-body,
+          scan_input_axes = [axis_1, ..., axis_m]
+      > (init_1, ..., init_n, scan_1, ..., scan_m)
+  
+  is equivalent to the following pseudo-code:
+  
+      // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
+      // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
+      sequence_length = scan_1.shape[axis_1];
+  
+      // initialize state-variables
+      st_1 = init_1; ... st_n = init_n;
+      // initialize scan-output variables: [] denotes an empty tensor
+      scan_out_1 = []; ...; scan_out_k = [];
+      // identify number of iterations:
+  
+      // execute loop
+      for (int t = 0; t < sequence_length; ++t) {
+          // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
+          // of rank one less than T obtained by indexing T at position t along axis k.
+          si_1 = scan_1<axis=axis_1>[t];
+          ... ;
+          si_m = scan_m<axis=axis_m>[t];
+          // execute loop-body
+          st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
+          // accumulate the scan-output elements
+          scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
+      }
+  
+      return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
+  
+  *Sample usage: Encoding RNN using a Scan*
+  
+  The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
+  recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
+  be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
+  %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
+  values are computed in the outer graph, they need to be passed in as extra state_variables.
+  
+      graph rnn-encoding {
+        %H_0 = ... 
+        %X = ...
+        %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
+        return %Y, %Y_h
+      }
+  
+      graph rnn-cell-1 (
+        %H_tminus1[FLOAT, tensor]
+        %X_t[FLOAT, tensor]
+      ) {
+        %Wi = ...
+        %Ri = ...
+        %Wbi = ...
+        %Rbi = ...
+        %t1 = X_t * (Wi^T)
+        %t2 = H_tminus1*(Ri^T)
+        %t3 = Add(%t1, %t2)
+        %t4 = Add(%t3, %Wbi)
+        %t5 = Add(%t4, %Rbi)
+        %Ht = Tanh(%t5)
+        %Accumulate = Identity(%Ht)
+        return %Ht, %Accumulate
+      }
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>, <a href="Changelog.md#Scan-9">Scan-9</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+<dt><tt>num_scan_inputs</tt> : int (required)</dt>
+<dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>scan_input_directions</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1].</dd>
+<dt><tt>scan_output_directions</tt> : list of ints</dt>
+<dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final values of the loop's N state variables followed by K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Int64 tensor</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>scan_8</summary>
+
+```python
+# Given an input sequence [x1, ..., xN], sum up its elements using a scan
+# returning the final state (x1+x2+...+xN) as well the scan_output
+# [x1, x1+x2, ..., x1+x2+...+xN]
+#
+# create graph to represent scan body
+sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['sum_in', 'next'],
+    outputs=['sum_out']
+)
+id_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['sum_out'],
+    outputs=['scan_out']
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node],
+    'scan_body',
+    [sum_in, next],
+    [sum_out, scan_out]
+)
+# create scan op node
+no_sequence_lens = ''   # optional input, not supplied
+node = onnx.helper.make_node(
+    'Scan',
+    inputs=[no_sequence_lens, 'initial', 'x'],
+    outputs=['y', 'z'],
+    num_scan_inputs=1,
+    body=scan_body
+)
+# create inputs for batch-size 1, sequence-length 3, inner dimension 2
+initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((1, 3, 2))
+# final state computed = [1 + 3 + 5, 2 + 4 + 6]
+y = np.array([9, 12]).astype(np.float32).reshape((1, 2))
+# scan-output computed
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((1, 3, 2))
+
+expect(node, inputs=[initial, x], outputs=[y, z],
+       name='test_scan_sum', opset_imports=[onnx.helper.make_opsetid("", 8)])
+```
+
+</details>
+
+
+<details>
+<summary>scan_9</summary>
+
+```python
+# Given an input sequence [x1, ..., xN], sum up its elements using a scan
+# returning the final state (x1+x2+...+xN) as well the scan_output
+# [x1, x1+x2, ..., x1+x2+...+xN]
+#
+# create graph to represent scan body
+sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['sum_in', 'next'],
+    outputs=['sum_out']
+)
+id_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['sum_out'],
+    outputs=['scan_out']
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node],
+    'scan_body',
+    [sum_in, next],
+    [sum_out, scan_out]
+)
+# create scan op node
+node = onnx.helper.make_node(
+    'Scan',
+    inputs=['initial', 'x'],
+    outputs=['y', 'z'],
+    num_scan_inputs=1,
+    body=scan_body
+)
+# create inputs for sequence-length 3, inner dimension 2
+initial = np.array([0, 0]).astype(np.float32).reshape((2,))
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((3, 2))
+# final state computed = [1 + 3 + 5, 2 + 4 + 6]
+y = np.array([9, 12]).astype(np.float32).reshape((2,))
+# scan-output computed
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((3, 2))
+
+expect(node, inputs=[initial, x], outputs=[y, z],
+       name='test_scan9_sum', opset_imports=[onnx.helper.make_opsetid("", 9)])
+```
+
+</details>
+
+
+### <a name="Scatter"></a><a name="scatter">**Scatter** (deprecated)</a>
+
+  This operator is deprecated. Please use ScatterElements, which provides the same functionality.
+  
+  Scatter takes three inputs `data`, `updates`, and `indices` of the same
+  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value
+  to values specified by `updates` at specific index positions specified by
+  `indices`. Its output shape is the same as the shape of `data`.
+  
+  For each entry in `updates`, the target index in `data` is obtained by combining
+  the corresponding entry in `indices` with the index of the entry itself: the
+  index-value for dimension = axis is obtained from the value of the corresponding
+  entry in `indices` and the index-value for dimension != axis is obtained from the
+  index of the entry itself.
+  
+  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
+  is performed as below:
+  ```
+    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  ```
+  
+  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+  
+  Example 1:
+  ```
+    data = [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+    ]
+    indices = [
+        [1, 0, 2],
+        [0, 2, 1],
+    ]
+    updates = [
+        [1.0, 1.1, 1.2],
+        [2.0, 2.1, 2.2],
+    ]
+    output = [
+        [2.0, 1.1, 0.0]
+        [1.0, 0.0, 2.2]
+        [0.0, 2.1, 1.2]
+    ]
+  ```
+  Example 2:
+  ```
+    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+    indices = [[1, 3]]
+    updates = [[1.1, 2.1]]
+    axis = 1
+    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
+
+#### Version
+
+This version of the operator has been deprecated since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Scatter-9">Scatter-9</a>
+
+
+#### Examples
+
+<details>
+<summary>scatter_with_axis</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter(data, indices, updates, axis=axis)
+# print(y) produces
+# [[1.0, 1.1, 3.0, 2.1, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+
+
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = scatter(data, indices, updates)
+# print(y) produces
+# [[2.0, 1.1, 0.0],
+#  [1.0, 0.0, 2.2],
+#  [0.0, 2.1, 1.2]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+
+
+### <a name="ScatterElements"></a><a name="scatterelements">**ScatterElements**</a>
+
+  ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
+  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value
+  to values specified by `updates` at specific index positions specified by
+  `indices`. Its output shape is the same as the shape of `data`.
+  
+  For each entry in `updates`, the target index in `data` is obtained by combining
+  the corresponding entry in `indices` with the index of the entry itself: the
+  index-value for dimension = axis is obtained from the value of the corresponding
+  entry in `indices` and the index-value for dimension != axis is obtained from the
+  index of the entry itself.
+  
+  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
+  is performed as below:
+  ```
+    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  ```
+  
+  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+  
+  Example 1:
+  ```
+    data = [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+    ]
+    indices = [
+        [1, 0, 2],
+        [0, 2, 1],
+    ]
+    updates = [
+        [1.0, 1.1, 1.2],
+        [2.0, 2.1, 2.2],
+    ]
+    output = [
+        [2.0, 1.1, 0.0]
+        [1.0, 0.0, 2.2]
+        [0.0, 2.1, 1.2]
+    ]
+  ```
+  Example 2:
+  ```
+    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+    indices = [[1, 3]]
+    updates = [[1.1, 2.1]]
+    axis = 1
+    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dt><tt>updates</tt> : T</dt>
+<dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r >= 1 (same rank as input).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>scatter_elements_with_axis</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 3.0, 2.1, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_with_negative_indices</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, -3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 2.1, 4.0, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_negative_indices')
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates)
+# print(y) produces
+# [[2.0, 1.1, 0.0],
+#  [1.0, 0.0, 2.2],
+#  [0.0, 2.1, 1.2]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_without_axis')
+```
+
+</details>
+
+
+### <a name="ScatterND"></a><a name="scatternd">**ScatterND**</a>
+
+  ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
+  and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value to values
+  specified by `updates` at specific index positions specified by `indices`. Its output shape
+  is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
+  That is, two or more `updates` for the same index-location is not supported.
+  
+  `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
+   `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+  Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
+  update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
+  update to a slice of the tensor.
+  
+  `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
+  first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
+  The remaining dimensions of `updates` correspond to the dimensions of the
+  replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
+  corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
+  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  of shapes.
+  
+  The `output` is calculated via the following equation:
+  
+      output = np.copy(data)
+      update_indices = indices.shape[:-1]
+      for idx in np.ndindex(update_indices):
+          output[indices[idx]] = updates[idx]
+  
+  The order of iteration in the above loop is not specified.
+  In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
+  This ensures that the output value does not depend on the iteration order.
+  
+  This operator is the inverse of GatherND.
+  
+  Example 1:
+  ```
+    data    = [1, 2, 3, 4, 5, 6, 7, 8]
+    indices = [[4], [3], [1], [7]]
+    updates = [9, 10, 11, 12]
+    output  = [1, 11, 3, 10, 9, 6, 7, 12]
+  ```
+  
+  Example 2:
+  ```
+    data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+    indices = [[0], [2]]
+    updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+    output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> : tensor(int64)</dt>
+<dd>Tensor of rank q >= 1.</dd>
+<dt><tt>updates</tt> : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>scatternd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterND',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.array(
+    [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+indices = np.array([[0], [2]], dtype=np.int64)
+updates = np.array(
+    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]], dtype=np.float32)
+# Expecting output as np.array(
+#    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates)
+expect(node, inputs=[data, indices, updates], outputs=[output],
+       name='test_scatternd')
 ```
 
 </details>
@@ -8398,9 +15718,9 @@ Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (default is 1.67326)</dt>
 <dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
-<dt><tt>gamma</tt> : float</dt>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
 <dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
@@ -8476,6 +15796,221 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="SequenceAt"></a><a name="sequenceat">**SequenceAt**</a>
+
+  Outputs a tensor copy from the tensor at 'position' in 'input_sequence'.
+  Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
+  Negative value means counting positions from the back.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>position</tt> : I</dt>
+<dd>Position of the tensor in the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>tensor</tt> : T</dt>
+<dd>Output tensor at the specified position in the input sequence.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+
+### <a name="SequenceConstruct"></a><a name="sequenceconstruct">**SequenceConstruct**</a>
+
+  Construct a tensor sequence containing 'inputs' tensors.
+  All tensors in 'inputs' must have the same data type.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>inputs</tt> (variadic) : T</dt>
+<dd>Tensors.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>Sequence enclosing the input tensors.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to any tensor type.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to any tensor type.</dd>
+</dl>
+
+
+### <a name="SequenceEmpty"></a><a name="sequenceempty">**SequenceEmpty**</a>
+
+  Construct an empty tensor sequence, with given data type.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type of the tensors in the output sequence. The default type is 'float'.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : S</dt>
+<dd>Empty sequence.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to any tensor type.</dd>
+</dl>
+
+
+### <a name="SequenceErase"></a><a name="sequenceerase">**SequenceErase**</a>
+
+  Outputs a tensor sequence that removes the tensor at 'position' from 'input_sequence'.
+  Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
+  Negative value means counting positions from the back.
+  'position' is optional, by default it erases the last tensor from 'input_sequence'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>position</tt> (optional) : I</dt>
+<dd>Position of the tensor in the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>Output sequence that has the tensor at the specified position removed.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+
+### <a name="SequenceInsert"></a><a name="sequenceinsert">**SequenceInsert**</a>
+
+  Outputs a tensor sequence that inserts 'tensor' into 'input_sequence' at 'position'.
+  'tensor' must have the same data type as 'input_sequence'.
+  Accepted range for 'position' is in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'.
+  Negative value means counting positions from the back.
+  'position' is optional, by default it inserts 'tensor' to the back of 'input_sequence'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>tensor</tt> : T</dt>
+<dd>Input tensor to be inserted into the input sequence.</dd>
+<dt><tt>position</tt> (optional) : I</dt>
+<dd>Position in the sequence where the new tensor is inserted. It is optional and default is to insert to the back of the sequence. Negative value means counting positions from the back. Accepted range in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'. It is an error if any of the index values are out of bounds. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>Output sequence that contains the inserted tensor at given position.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+
+### <a name="SequenceLength"></a><a name="sequencelength">**SequenceLength**</a>
+
+  Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>length</tt> : I</dt>
+<dd>Length of input sequence. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor type.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain output to integral tensor. It must be a scalar(tensor of empty shape).</dd>
+</dl>
+
+
 ### <a name="Shape"></a><a name="shape">**Shape**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
@@ -8501,10 +16036,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor.</dd>
+<dd>Constrain output to int64 tensor.</dd>
 </dl>
 
 
@@ -8536,6 +16071,89 @@ y = np.array(x.shape).astype(np.int64)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_shape')
+```
+
+</details>
+
+
+### <a name="Shrink"></a><a name="shrink">**Shrink**</a>
+
+  Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+  having same datatype and shape with input. It has two attributes, lambd and
+  bias. The formula of this operator is: If x < -lambd, y = x + bias;
+  If x > lambd, y = x - bias; Otherwise, y = 0.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bias</tt> : float (default is 0.0)</dt>
+<dd>The bias value added to output. Default is 0.</dd>
+<dt><tt>lambd</tt> : float (default is 0.5)</dt>
+<dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>hard_shrink</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shrink',
+    inputs=['x'],
+    outputs=['y'],
+    lambd=1.5,
+)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
+Y = np.array([-2, 0, 0, 0, 2], dtype=np.float32)
+expect(node, inputs=[X], outputs=[Y],
+       name='test_shrink_hard')
+```
+
+</details>
+
+
+<details>
+<summary>soft_shrink</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shrink',
+    inputs=['x'],
+    outputs=['y'],
+    lambd=1.5,
+    bias=1.5,
+)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
+Y = np.array([-0.5, 0, 0, 0, 0.5], dtype=np.float32)
+expect(node, inputs=[X], outputs=[Y],
+       name='test_shrink_soft')
 ```
 
 </details>
@@ -8601,6 +16219,58 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sign"></a><a name="sign">**Sign**</a>
+
+  Calculate the sign of the given input tensor element-wise.
+  If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The sign of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sign',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array(range(-5, 6)).astype(np.float32)
+y = np.sign(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sign')
+```
+
+</details>
+
+
 ### <a name="Sin"></a><a name="sin">**Sin**</a>
 
   Calculates the sine of the given input tensor, element-wise.
@@ -8657,6 +16327,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sinh"></a><a name="sinh">**Sinh**</a>
+
+  Calculates the hyperbolic sine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic sine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
+```
+
+</details>
+
+
 ### <a name="Size"></a><a name="size">**Size**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
@@ -8682,10 +16408,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
+<dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 
@@ -8724,14 +16450,18 @@ expect(node, inputs=[x], outputs=[y],
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
-  dimension for each axis in the list of axes, it uses this information to
+  Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
+  dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
+  start or end indices, it represents number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+  when sclicing forward and 'INT_MIN' when slicing backward.
+  If a negative value is passed for step, it represents slicing backward. 
+  However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
     data = [
         [1, 2, 3, 4],
@@ -8740,8 +16470,9 @@ expect(node, inputs=[x], outputs=[y],
     axes = [0, 1]
     starts = [1, 0]
     ends = [2, 3]
+    steps = [1, 2]
     result = [
-        [5, 6, 7],
+        [5, 7],
     ]
   Example 2:
     data = [
@@ -8756,24 +16487,23 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-#### Attributes
+Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a href="Changelog.md#Slice-10">Slice-10</a>
 
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., len(`starts`) - 1].</dd>
-<dt><tt>ends</tt> : list of ints (required)</dt>
-<dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
-<dt><tt>starts</tt> : list of ints (required)</dt>
-<dd>Starting indices of corresponding axis in `axes`</dd>
-</dl>
-
-#### Inputs
+#### Inputs (3 - 5)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
+<dt><tt>axes</tt> (optional) : Tind</dt>
+<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>steps</tt> (optional) : Tind</dt>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
@@ -8786,8 +16516,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -8799,17 +16531,18 @@ This version of the operator has been available since version 1 of the default O
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.int64)
+ends = np.array([3, 10], dtype=np.int64)
+axes = np.array([0, 1], dtype=np.int64)
+steps = np.array([1, 1], dtype=np.int64)
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice')
 ```
 
@@ -8822,17 +16555,40 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends'],
     outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
 y = x[:, :, 3:4]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends], outputs=[y],
        name='test_slice_default_axes')
+```
+
+</details>
+
+
+<details>
+<summary>slice_default_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_default_steps')
 ```
 
 </details>
@@ -8844,17 +16600,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_end_out_of_bounds')
 ```
 
@@ -8867,18 +16624,66 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.int64)
+ends = np.array([-1], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 0:-1]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_neg')
+```
+
+</details>
+
+
+<details>
+<summary>slice_neg_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([20, 10, 4], dtype=np.int64)
+ends = np.array([0, 0, 1], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -3, -2])
+y = x[20:0:-1, 10:0:-3, 4:1:-2]
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_neg_steps')
+```
+
+</details>
+
+
+<details>
+<summary>slice_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, -2, -1], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_negative_axes')
 ```
 
 </details>
@@ -8890,17 +16695,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1000],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1000:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_start_out_of_bounds')
 ```
 
@@ -8910,30 +16716,31 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   of the given input.
   
-  X does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then input will be coerced into a 2-dimensional tensor with
   dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  case where axis=1, this means the input tensor will be coerced into a 2D tensor
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the softmax values of the corresponding input.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Softmax-1">Softmax-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs
@@ -8947,7 +16754,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -9040,6 +16847,16 @@ node = onnx.helper.make_node(
 y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_axis_2')
+
+node = onnx.helper.make_node(
+    'Softmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_softmax_negative_axis')
 ```
 
 </details>
@@ -9193,8 +17010,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -9268,15 +17085,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
+Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a href="Changelog.md#Split-2">Split-2</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>Which axis to split on (defaults to 0)</dd>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -9298,8 +17115,8 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -9402,6 +17219,60 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 </details>
 
 
+### <a name="SplitToSequence"></a><a name="splittosequence">**SplitToSequence**</a>
+
+  Split a tensor into a sequence of tensors, along the specified
+  'axis'. Lengths of the parts can be specified using argument 'split'.
+  'split' must contain only positive numbers.
+  'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
+  If 'split' is a scalar, then 'input' will be split into equally sized chunks(if possible).
+  Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
+  by 'split'.
+  Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
+  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
+  dimension size of input tensor on 'axis'.
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the split dimension or not. Default 1, which means we keep split dimension. If input 'split' is specified, this attribute is ignored.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional) : I</dt>
+<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be positive. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>One or more outputs forming a sequence of tensors after splitting</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to all tensor types.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain split size to integral tensor.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to all tensor types.</dd>
+</dl>
+
+
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
@@ -9471,13 +17342,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>List of positive integers, indicate the dimensions to squeeze.</dd>
+<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Inputs
@@ -9497,8 +17370,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -9519,6 +17392,206 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+
+
+<details>
+<summary>squeeze_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Squeeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[-2],
+)
+x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+y = np.squeeze(x, axis=-2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_squeeze_negative_axes')
+```
+
+</details>
+
+
+### <a name="StringNormalizer"></a><a name="stringnormalizer">**StringNormalizer**</a>
+
+  StringNormalization performs string operations for basic cleaning.
+  This operator has only one input (denoted by X) and only one output
+  (denoted by Y). This operator first examines the elements in the X,
+  and removes elements specified in "stopwords" attribute.
+  After removing stop words, the intermediate result can be further lowercased,
+  uppercased, or just returned depending the "case_change_action" attribute.
+  This operator only accepts [C]- and [1, C]-tensor.
+  If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
+  if input shape is [C] and shape [1, 1] if input shape is [1, C].
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>case_change_action</tt> : string (default is NONE)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE". Default is "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (default is 0)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive. Default is false</dd>
+<dt><tt>locale</tt> : string</dt>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent as decided by the implementation.</dd>
+<dt><tt>stopwords</tt> : list of strings</dt>
+<dd>List of stop words. If not set, no word would be removed from X.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : tensor(string)</dt>
+<dd>UTF-8 strings to normalize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(string)</dt>
+<dd>UTF-8 Normalized strings</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>monday_casesensintive_lower</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='LOWER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_lower')
+```
+
+</details>
+
+
+<details>
+<summary>monday_casesensintive_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_nochangecase')
+```
+
+</details>
+
+
+<details>
+<summary>monday_casesensintive_upper</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper')
+```
+
+</details>
+
+
+<details>
+<summary>monday_empty_output</summary>
+
+```python
+input = np.array([u'monday', u'monday']).astype(np.object)
+output = np.array([u'']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
+```
+
+</details>
+
+
+<details>
+<summary>monday_insensintive_upper_twodim</summary>
+
+```python
+input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape([1, 6])
+
+# It does upper case cecedille, accented E
+# and german umlaut but fails
+# with german eszett
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape([1, 4])
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_twodim')
+```
+
+</details>
+
+
+<details>
+<summary>nostopwords_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday']).astype(np.object)
+output = input
+
+# No stopwords. This is a NOOP
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwords_nochangecase')
 ```
 
 </details>
@@ -9795,6 +17868,377 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="TfIdfVectorizer"></a><a name="tfidfvectorizer">**TfIdfVectorizer**</a>
+
+  This transform extracts n-grams from the input sequence and save them as a vector. Input can
+  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
+  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
+  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
+  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
+  
+  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
+  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
+  If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
+  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2.
+  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
+  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
+  indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
+  
+  The output vector (denoted by Y) stores the count of each n-gram;
+  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
+  between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
+  ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
+  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
+  Note that we may consider all skips up to S when generating the n-grams.
+  
+  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
+  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
+  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
+  
+  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
+  If pool_strings is set, the input must be a string tensor.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>max_gram_length</tt> : int (required)</dt>
+<dd>Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.</dd>
+<dt><tt>max_skip_count</tt> : int (required)</dt>
+<dd>Maximum number of items (integers/strings) to be skipped when constructing an n-gram from X. If max_skip_count=1, min_gram_length=2, max_gram_length=3, this operator may generate 2-grams with skip_count=0 and skip_count=1, and 3-grams with skip_count=0 and skip_count=1</dd>
+<dt><tt>min_gram_length</tt> : int (required)</dt>
+<dd>Minimum n-gram length. If this value is 2 and max_gram_length is 3, output may contain counts of 2-grams and 3-grams.</dd>
+<dt><tt>mode</tt> : string (required)</dt>
+<dd>The weighting criteria. It can be one of "TF" (term frequency), "IDF" (inverse document frequency), and "TFIDF" (the combination of TF and IDF)</dd>
+<dt><tt>ngram_counts</tt> : list of ints (required)</dt>
+<dd>The starting indexes of 1-grams, 2-grams, and so on in pool. It is useful when determining the boundary between two consecutive collections of n-grams. For example, if ngram_counts is [0, 17, 36], the first index (zero-based) of 1-gram/2-gram/3-gram in pool are 0/17/36. This format is essentially identical to CSR (or CSC) sparse matrix format, and we choose to use this due to its popularity.</dd>
+<dt><tt>ngram_indexes</tt> : list of ints (required)</dt>
+<dd>list of int64s (type: AttributeProto::INTS). This list is parallel to the specified 'pool_*' attribute. The i-th element in ngram_indexes indicate the coordinate of the i-th n-gram in the output tensor.</dd>
+<dt><tt>pool_int64s</tt> : list of ints</dt>
+<dd>List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
+<dt><tt>pool_strings</tt> : list of strings</dt>
+<dd>List of strings n-grams learned from the training set. Either this or pool_int64s attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
+<dt><tt>weights</tt> : list of floats</dt>
+<dd>list of floats. This attribute stores the weight of each n-gram in pool. The i-th element in weights is the weight of the i-th n-gram in pool. Its length equals to the size of ngram_indexes. By default, weights is an all-one tensor.This attribute is used when mode is "IDF" or "TFIDF" to scale the associated word counts.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input for n-gram extraction</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Ngram results</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
+<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>1-D tensor of floats</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tf_batch_onlybigrams_skip0</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 0., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip0')
+```
+
+</details>
+
+
+<details>
+<summary>tf_batch_onlybigrams_skip5</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 1., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip5')
+```
+
+</details>
+
+
+<details>
+<summary>tf_batch_uniandbigrams_skip5</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 3., 0., 0., 0., 0., 0.], [0., 0., 1., 0., 1., 1., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=1,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_uniandbigrams_skip5')
+```
+
+</details>
+
+
+<details>
+<summary>tf_only_bigrams_skip0</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 0., 0., 0., 1., 1., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_only_bigrams_skip0')
+```
+
+</details>
+
+
+<details>
+<summary>tf_onlybigrams_levelempty</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([1., 1., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 0]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2]).astype(np.int64)
+pool_int64s = np.array([    # unigrams none
+                       5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_levelempty')
+```
+
+</details>
+
+
+<details>
+<summary>tf_onlybigrams_skip5</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 0., 0., 0., 1., 3., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_skip5')
+```
+
+</details>
+
+
+<details>
+<summary>tf_uniandbigrams_skip5</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 3., 1., 0., 1., 3., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=1,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uniandbigrams_skip5')
+```
+
+</details>
+
+
+### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**ThresholdedRelu**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+default_alpha = 1.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y']
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, default_alpha, np.inf)
+y[y == default_alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_default')
+```
+
+</details>
+
+
+<details>
+<summary>thresholdedrelu</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=alpha
+)
+
+x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, alpha, np.inf)
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu')
+```
+
+</details>
+
+
 ### <a name="Tile"></a><a name="tile">**Tile**</a>
 
   Constructs a tensor by tiling a given tensor.
@@ -9826,8 +18270,8 @@ Other versions of this operator: <a href="Changelog.md#Tile-1">Tile-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output's types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
@@ -9895,7 +18339,7 @@ expect(node,
 
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
-  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
     -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
       which contains the values of the top k elements along the specified axis
@@ -9903,20 +18347,28 @@ expect(node,
      contains the indices of the top k elements (original indices from the input
      tensor).
   
-  Given two equivalent values, this operator uses the indices along the axis  as
+  If "largest" is 1 (the default value) then the k largest elements are returned.
+  If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+  
+  Given two equivalent values, this operator uses the indices along the axis as
    a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#TopK-1">TopK-1</a>, <a href="Changelog.md#TopK-10">TopK-10</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>Dimension on which to do the sort. Default -1, which indicates the last axis</dd>
-<dt><tt>k</tt> : int (required)</dt>
-<dd>Number of top elements to retrieve</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Dimension on which to do the sort. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>largest</tt> : int (default is 1)</dt>
+<dd>Whether to return the top-K largest or smallest elements.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>Whether to return the elements in sorted order.</dd>
 </dl>
 
 #### Inputs
@@ -9924,6 +18376,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dt><tt>K</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
 
 #### Outputs
@@ -9938,8 +18392,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
@@ -9951,30 +18405,115 @@ This version of the operator has been available since version 1 of the default O
 <summary>top_k</summary>
 
 ```python
+axis = 1
+largest = 1
+
+k = 3
 node = onnx.helper.make_node(
     'TopK',
-    inputs=['x'],
+    inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    k=3
+    axis=axis
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
-values_ref = np.array([
-    [3, 2, 1],
-    [7, 6, 5],
-    [11, 10, 9],
-], dtype=np.float32)
-indices_ref = np.array([
-    [3, 2, 1],
-    [3, 2, 1],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
-expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+#print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+#print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
+```
+
+</details>
+
+
+<details>
+<summary>top_k_negative_axis</summary>
+
+```python
+axis = -1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis
+)
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [8, 9, 10, 11],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+# print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_negative_axis')
+```
+
+</details>
+
+
+<details>
+<summary>top_k_smallest</summary>
+
+```python
+axis = 1
+largest = 0
+sorted = 1
+k = 3
+
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis,
+    largest=largest,
+    sorted=sorted
+)
+
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [11, 10, 9, 8],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 0.  1.  2.]
+# [ 4.  5.  6.]
+# [ 8.  9. 10.]]
+#print(indices_ref)
+#[[0 1 2]
+# [0 1 2]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_smallest')
 ```
 
 </details>
@@ -10014,8 +18553,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -10065,23 +18604,305 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
-### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
+### <a name="Unique"></a><a name="unique">**Unique**</a>
 
-  Insert single-dimensional entries to the shape of a tensor.
-  Takes one required argument `axes`, a list of dimensions that will be inserted.
-  Dimension indices in `axes` are as seen in the output tensor. For example:
-    Given a tensor such that tensor with shape [3, 4, 5], then
-    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
+  Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
+  
+  This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
+  The first output tensor 'Y' contains all unique values or subtensors of the input. 
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
+  The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+  
+  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input. 
+  
+  https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
+  
+  Example 1:
+    input_X = [2, 1, 1, 3, 4, 3]
+    attribute_sorted = 0
+    attribute_axis = None
+    output_Y = [2, 1, 3, 4]
+    output_indices = [0, 1, 3, 4]
+    output_inverse_indices = [0, 1, 1, 2, 3, 2]
+    output_counts = [1, 2, 2, 1]
+  
+  Example 2:
+    input_X = [[1, 3], [2, 3]]
+    attribute_sorted = 1
+    attribute_axis = None
+    output_Y = [1, 2, 3]
+    output_indices = [0, 2, 1]
+    output_inverse_indices = [0, 2, 1, 2]
+    output_counts = [1, 1, 2]
+  
+  Example 3:
+    input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+    attribute_sorted = 1
+    attribute_axis = 0
+    output_Y = [[1, 0, 0], [2, 3, 4]]
+    output_indices = [0, 2]
+    output_inverse_indices = [0, 0, 1]
+    output_counts = [2, 1]
+  
+  Example 4:
+    input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]], 
+               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+    attribute_sorted = 1
+    attribute_axis = 1
+  
+    intermediate data are presented below for better understanding: 
+    
+    there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+    A: [[1, 1], [1, 1]], 
+       [[0, 1], [0, 1]], 
+       [[2, 1], [2, 1]], 
+       [[0, 1], [0, 1]].
+    
+    there are 3 unique subtensors: 
+    [[1, 1], [1, 1]], 
+    [[0, 1], [0, 1]], 
+    [[2, 1], [2, 1]].
+    
+    sorted unique subtensors:
+    B: [[0, 1], [0, 1]], 
+       [[1, 1], [1, 1]], 
+       [[2, 1], [2, 1]].
+    
+    output_Y is constructed from B:
+    [[[0. 1.], [1. 1.], [2. 1.]], 
+     [[0. 1.], [1. 1.], [2. 1.]]]
+  
+    output_indices is to map from B to A:
+    [1, 0, 2]
+    
+    output_inverse_indices is to map from A to B:
+    [1, 0, 2, 0]
+  
+    output_counts = [2 1 1]
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>A N-D input tensor that is to be processed.</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
+<dt><tt>indices</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dt><tt>inverse_indices</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
+<dt><tt>counts</tt> (optional) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing the count of each element of 'Y' in input 'X'</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input can be of any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>not_sorted_without_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=0
+)
+# numpy unique does not retain original order (it sorts the output unique values)
+# https://github.com/numpy/numpy/issues/8621
+# we need to recover unsorted output and indices
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+
+# prepare index mapping from sorted to unsorted
+argsorted_indices = np.argsort(indices)
+inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
+
+indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
+inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
+counts = counts[argsorted_indices]
+# print(y)
+# [2.0, 1.0, 3.0, 4.0]
+# print(indices)
+# [0 1 3 4]
+# print(inverse_indices)
+# [0, 1, 1, 2, 3, 2]
+# print(counts)
+# [1, 2, 2, 1]
+
+expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
+```
+
+</details>
+
+
+<details>
+<summary>sorted_with_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=0
+)
+
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+# print(y)
+# [[1. 0. 0.]
+#  [2. 3. 4.]]
+# print(indices)
+# [0 2]
+# print(inverse_indices)
+# [0 0 1]
+# print(counts)
+# [2 1]
+
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>sorted_with_axis_3d</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=1
+)
+
+x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+# print(y)
+# [[[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]
+# [[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]]
+# print(indices)
+# [1 0 2]
+# print(inverse_indices)
+# [1 0 2 0]
+# print(counts)
+# [2 1 1]
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis_3d')
+```
+
+</details>
+
+
+<details>
+<summary>sorted_with_negative_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=-1
+)
+
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 3]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
+# print(y)
+# [[0. 1.]
+#  [0. 1.]
+#  [3. 2.]]
+# print(indices)
+# [1 0]
+# print(inverse_indices)
+# [1 0 0]
+# print(counts)
+# [2 1]
+
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_negative_axis')
+```
+
+</details>
+
+
+<details>
+<summary>sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts']
+)
+
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
+```
+
+</details>
+
+
+### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
+
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  
+  For example:
+    Given an input tensor (`data`) of shape [3, 4, 5], then
+    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  
+  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
+  
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of positive integers, indicate the dimensions to be inserted</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Inputs
@@ -10101,34 +18922,123 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>squeeze</summary>
+<summary>unsqueeze_negative_axes</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Unsqueeze',
     inputs=['x'],
     outputs=['y'],
-    axes=[0],
+    axes=[-2],
 )
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.expand_dims(x, axis=0)
-
+x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+y = np.expand_dims(x, axis=-2)
 expect(node, inputs=[x], outputs=[y],
-       name='test_unsqueeze')
+       name='test_unsqueeze_negative_axes')
 ```
 
 </details>
 
 
-### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+<details>
+<summary>unsqueeze_one_axis</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+for i in range(x.ndim):
+    node = onnx.helper.make_node(
+        'Unsqueeze',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[i],
+    )
+    y = np.expand_dims(x, axis=i)
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_unsqueeze_axis_' + str(i))
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_three_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[2, 4, 5],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_three_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_two_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1, 4],
+)
+y = np.expand_dims(x, axis=1)
+y = np.expand_dims(y, axis=4)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_two_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
+```
+
+</details>
+
+
+### <a name="Upsample"></a><a name="upsample">**Upsample** (deprecated)</a>
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -10136,37 +19046,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>mode</tt> : string</dt>
-<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
-<dt><tt>scales</tt> : list of floats (required)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>N-D tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>N-D tensor after resizing</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input/output types to all tensor types.</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>, <a href="Changelog.md#Upsample-9">Upsample-9</a>
 
 
 #### Examples
@@ -10177,9 +19059,8 @@ This version of the operator has been available since version 7 of the default O
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -10188,6 +19069,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -10195,8 +19078,91 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
-       name='test_upsample_nearest')
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_upsample_nearest', opset_imports=[helper.make_opsetid("", 9)])
+```
+
+</details>
+
+
+### <a name="Where"></a><a name="where">**Where**</a>
+
+  Return elements, either from X or Y, depending on condition
+      (with Numpy-style broadcasting support).
+      Where behaves like numpy.where with three parameters:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>condition</tt> : B</dt>
+<dd>When True (nonzero), yield X, otherwise yield Y</dd>
+<dt><tt>X</tt> : T</dt>
+<dd>values selected at indices where condition is True</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>values selected at indices where condition is False</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of shape equal to the broadcasted shape of condition, X, and Y.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain to boolean tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>long</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Where',
+    inputs=['condition', 'x', 'y'],
+    outputs=['z'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+x = np.array([[1, 2], [3, 4]], dtype=np.int64)
+y = np.array([[9, 8], [7, 6]], dtype=np.int64)
+z = np.where(condition, x, y)  # expected output [[1, 8], [3, 4]]
+expect(node, inputs=[condition, x, y], outputs=[z],
+       name='test_where_long_example')
+```
+
+</details>
+
+
+<details>
+<summary>where</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Where',
+    inputs=['condition', 'x', 'y'],
+    outputs=['z'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+x = np.array([[1, 2], [3, 4]], dtype=np.float32)
+y = np.array([[9, 8], [7, 6]], dtype=np.float32)
+z = np.where(condition, x, y)  # expected output [[1, 8], [3, 4]]
+expect(node, inputs=[condition, x, y], outputs=[z],
+       name='test_where_example')
 ```
 
 </details>
@@ -10322,809 +19288,6 @@ y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast4v4d')
-```
-
-</details>
-
-
-### <sub>experimental</sub> <a name="ATen"></a><a name="aten">**ATen**</a>
-
-  Experimental allowing ATen operations to be accessed directly from Caffe2
-  to allow for quick prototyping when ONNX is missing standard versions of
-  and op
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>input</tt> (variadic) : T</dt>
-<dd>Arbitrary input</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>output</tt> (variadic) : T</dt>
-<dd>Arbitrary output</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Affine"></a><a name="affine">**Affine**</a>
-
-  Affine takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the affine function, y = alpha * x + beta,
-  is applied to the tensor elementwise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ConstantFill"></a><a name="constantfill">**ConstantFill**</a>
-
-  The operator fills the elements of the output tensor with a constant value
-  specified by the 'value' attribute.
-  
-  The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message. If the 'dtype' attribute is not provided, the data type of
-  'value' is used.
-  
-  The output tensor shape is specified by the 'shape' attribute. If the number of
-  input is 1, the shape will be identical to that of the input at run time with
-  optional additional dimensions appended at the end as specified by 'extra_shape'
-  attribute. In that case the 'shape' attribute should not be set.
-  
-  If input_as_shape is set to true, then the input should be a 1D tensor
-  containing the desired output shape (the dimensions specified in extra_shape
-  will also be appended)
-  
-  NOTE: Currently, it supports data type of float, int32, int64, and bool.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.Strictly must be one of the types from DataType enum in TensorProto.</dd>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd>The additional dimensions appended at the end of the shape indicatedby the input blob.Cannot set the extra_shape argument when there is no input blob.</dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
-<dt><tt>value</tt> : float</dt>
-<dd>The value for the elements of the output tensor. Default is 0.</dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>input</tt> (optional) : T1</dt>
-<dd>Input tensor (optional) to provide shape information.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T2</dt>
-<dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain input types to float, int32, int64, bool tensors.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain output types to float, int32, int64, bool tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Crop"></a><a name="crop">**Crop**</a>
-
-  Crop and image to the specified spatial dimensions. If scale is given,
-  then optionally start the crop offset by the left/top border amounts.
-  If scale is not provided, crop the borders as provided.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>border</tt> : list of ints</dt>
-<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
-<dt><tt>scale</tt> : list of ints</dt>
-<dd>A 1-D values of (height, width).</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="GRUUnit"></a><a name="gruunit">**GRUUnit**</a>
-
-  GRUUnit computes the activations of a standard GRU,
-  in a sequence-length aware fashion.
-  Concretely, given the (fused) inputs X (TxNxD), the previous hidden
-  state (NxD), and the sequence lengths (N), computes the GRU
-  activations, avoiding computation if the input is invalid (as in, the
-  value at X[t][n] >= seqLengths[n].
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>drop_states</tt> : int</dt>
-<dd>Bool to determine if hidden state is zeroes or passed along for timesteps past the given sequence_length.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>hidden_prev</tt> : T</dt>
-<dd>The previous GRU hidden state.</dd>
-<dt><tt>gates</tt> : T</dt>
-<dd>Unactivated gate outputs from forget, update, and output gates, pre-activation.</dd>
-<dt><tt>seq_lengths</tt> : T</dt>
-<dd>Array of sequence lengths.  len(seq_lengths) should equal batch size N.</dd>
-<dt><tt>t</tt> : T</dt>
-<dd>The timestep for this operation.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>hidden</tt> : T</dt>
-<dd>The new GRU hidden state calculated by this op.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="GivenTensorFill"></a><a name="giventensorfill">**GivenTensorFill**</a>
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd></dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>values</tt> : list of floats</dt>
-<dd></dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>shape</tt> (optional) : T</dt>
-<dd>The shape of filled tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>The filled tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="If"></a><a name="if">**If**</a>
-
-  If conditional
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>else_branch</tt> : graph (required)</dt>
-<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
-<dt><tt>then_branch</tt> : graph (required)</dt>
-<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>outputs</tt> (variadic) : V</dt>
-<dd>Values that are live-out to the enclosing scope.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>All Tensor types</dd>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Only bool</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ImageScaler"></a><a name="imagescaler">**ImageScaler**</a>
-
-  Scale and bias the input image. Bias values are stored in
-  the same ordering as the image pixel format.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>bias</tt> : list of floats</dt>
-<dd>Bias applied to each channel, same size as C.</dd>
-<dt><tt>scale</tt> : float</dt>
-<dd>(float, default 1.0) the scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Loop"></a><a name="loop">**Loop**</a>
-
-  Generic Looping construct. This loop has multiple termination conditions:
-  
-  1) Trip count. Iteration count specified at runtime. Set by
-     specifying the input M. Optional. Set to empty string to omit.
-     Note that a static trip count (specified at graph construction time) can be
-     specified by passing in a constant node for input M.
-  2) Loop termination condition. This is an input to the op that determines
-     whether to run the first iteration and also a loop-carried dependency for
-     the body graph. The body graph must yield a value for the condition variable,
-     whether this input is provided or not.
-  
-  This table summarizes the operating modes of this operator with equivalent
-  C-style code:
-  
-      Operator inputs defined as (max_trip_count, condition_var).
-  
-      input ("", ""):
-          for (int i=0; ; ++i) {
-            cond = ... // Note this value is ignored, but is required in the body
-          }
-  
-      input ("", cond) // Note this is analogous to a while loop
-          bool cond = ...;
-          for (int i=0; cond; ++i) {
-            cond = ...;
-          }
-  
-      input ("", 1) // Note this is analogous to a do-while loop
-          bool cond = true
-          for (int i=0; cond; ++i) {
-            cond = ...;
-          }
-  
-      input (trip_count, "") // Note this is analogous to a for loop
-          int trip_count = ...
-          for (int i=0; i < trip_count; ++i) {
-            cond = ...; // ignored
-          }
-  
-      input (trip_count, cond)
-          int trip_count = ...;
-          bool cond = ...;
-          for (int i=0; i < trip_count && cond; ++i) {
-            cond = ...;
-          }
-  
-  
-  *Sample usage - cond as well as trip count*
-  
-      graph predict-net {
-        %a = Constant[value = <Scalar Tensor [3]>]()
-        %b = Constant[value = <Scalar Tensor [6]>]()
-        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
-        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
-        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
-        return
-      }
-  
-      graph body-net (
-        %i[INT32, scalar]
-        %keepgoing[BOOL, scalar]
-        %b[INT32, scalar]
-      ) {
-        %my_local = Add(%a, %b)
-        %b_out = Sub(%a, %b)
-        %keepgoing_out = Greater(%my_local, %b_out)
-        %user_defined_vals = Add(%b, %b)
-        return %keepgoing_out, %b_out, %user_defined_vals
-      }
-  
-  *Sample equivalent C code*
-  
-      {
-        /* User-defined code (enclosing scope) */
-        int a = 3, b = 6;
-        bool keepgoing = true; // Analogous to input cond
-        /* End user-defined code */
-  
-        /* Implicitly-defined code */
-        const int max_trip_count = 10; // Analogous to input M
-        int user_defined_vals[]; // Imagine this is resizable
-        /* End implicitly-defined code */
-        for (int i=0; i < max_trip_count && keepgoing; ++i) {
-          /* User-defined code (loop body) */
-          int my_local = a + b; // Reading values in the enclosing scope is fine
-          b = a - b; // writes fine if we specify b as a loop-carried dependency
-          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-          user_defined_vals[i] = b + b;
-          /* End user-defined code */
-        }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
-  
-        // These below values are live-out from the loop and therefore accessible
-        b_out; user_defined_vals; keepgoing_out;
-      }
-  
-  There are several things of note in this code snippet:
-  
-  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
-     be referenced in the inputs of the loop.
-  2) Any variables which you wish to make available in the enclosing scope (i.e.
-     the variables b and keepgoing) must be declared as either loop-carried
-     dependencies (both at the op inputs and output and at the body net input and
-     output) or scan_outputs.
-  3) Values created in the body cannot be accessed in the enclosing scope.
-  
-  Note that the semantics of this op support "diagonal" or "wavefront" execution.
-  (See Step 3 here for an example:
-  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
-  Frontends should emit multi-layer RNNs as a series of While operators (with
-  time being the inner looping dimension), with each successive layer consuming
-  the scan_outputs from the previous layer, possibly going through several
-  point-wise operators (e.g. dropout, residual connections, linear layer).
-  Concretely, the (possibly transformed) scan_outputs are referenced by the
-  subsequent layer as a LoopIndexTensor operating on a value in scope, not
-  necessarily a loop-carried dependency. Backends can recognize this pattern and
-  are permitted to schedule the execution of the multi-layer network in a
-  pipelined/"wavefront" fashion.
-  
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>body</tt> : graph (required)</dt>
-<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
-</dl>
-
-#### Inputs (3 - &#8734;)
-
-<dl>
-<dt><tt>M</tt> : I</dt>
-<dd>A maximum trip-count for the loop specified at runtime. Optional. pass empty string to skip.</dd>
-<dt><tt>cond</tt> : B</dt>
-<dd>A boolean termination condition. Pass empty string to skip.</dd>
-<dt><tt>v_initial</tt> (variadic) : V</dt>
-<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>v_final_and_scan_outputs</tt> (variadic) : V</dt>
-<dd>Final N loop carried dependency values then K scan_outputs</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>All Tensor types</dd>
-<dt><tt>I</tt> : int64</dt>
-<dd>Only int64</dd>
-<dt><tt>B</tt> : bool</dt>
-<dd>Only bool</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="LoopIndexTensor"></a><a name="loopindextensor">**LoopIndexTensor**</a>
-
-  This is a special operator only valid inside the loop that supports the common case behavior of accessing the correct element of the input sequence in an RNN. This operator MUST be directly given the passed-in iteration number to the body of a Loop graph. This signals to back-ends that this is a direct indexing operation, with no transforms applied to the index.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>Axis on which to index</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>T</tt> : T</dt>
-<dd>Tensor to be indexed (has N dimensions)</dd>
-<dt><tt>loop_idx</tt> : I</dt>
-<dd>Loop index provided as input to the body graph</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>O</tt> : T</dt>
-<dd>Tensor of N - 1 dims that is a sub tensor of T</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>All Tensor types</dd>
-<dt><tt>I</tt> : int32</dt>
-<dd>Indices</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
-
-  Perform mean variance normalization.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>across_channels</tt> : int</dt>
-<dd>If 1, mean and variance are computed across channels. Default is 0.</dd>
-<dt><tt>normalize_variance</tt> : int</dt>
-<dd>If 0, normalize the mean only.  Default is 1.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**ParametricSoftplus**</a>
-
-  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
-  the tensor elementwise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Scale"></a><a name="scale">**Scale**</a>
-
-  Scale takes one input data (Tensor<float>) and produces one output data
-  (Tensor<float>) whose value is the input data tensor scaled element-wise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>scale</tt> : float</dt>
-<dd>(float, default 1.0) the scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input data to be scaled</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output data after scaling</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
-
-  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). 
-      
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Scaling value</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Scaling value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**ThresholdedRelu**</a>
-
-  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
-  is applied to the tensor elementwise.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Threshold value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>default</summary>
-
-```python
-default_alpha = 1.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y']
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, default_alpha, np.inf)
-y[y == default_alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_default')
-```
-
-</details>
-
-
-<details>
-<summary>thresholdedrelu</summary>
-
-```python
-alpha = 2.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y'],
-    alpha=alpha
-)
-
-x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
-y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_example')
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, alpha, np.inf)
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu')
 ```
 
 </details>

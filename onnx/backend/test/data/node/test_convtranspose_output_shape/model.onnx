@@ -1,8 +1,8 @@
-backend-test:¿
-E
+backend-test:»
+A
 X
-WY"ConvTranspose*
-output_shape@@@
+WY"ConvTranspose*
+output_shape@
 @ *
 strides@@ test_convtranspose_output_shapeZ
 X
@@ -23,4 +23,4 @@ E
 
 
 
-B
+B	

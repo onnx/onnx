@@ -5,9 +5,9 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 90/95 (94.74%, 5 generators excluded) common operators.
+Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
 
-Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
+Node tests have covered 0/0 (N/A) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -27,7 +27,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
+y = abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
@@ -57,6 +57,32 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### Acosh
+There are 1 test cases, listed as following:
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -185,7 +211,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### ArgMax
-There are 3 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -206,6 +232,30 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmax_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+```
+
+</details>
+<details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -234,6 +284,80 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random'
 
 </details>
 <details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random_select_last_index')
+```
+
+</details>
+<details>
+<summary>negative_axis_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random')
+```
+
+</details>
+<details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random_select_last_index')
+```
+
+</details>
+<details>
 <summary>no_keepdims</summary>
 
 ```python
@@ -257,10 +381,35 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 ```
 
 </details>
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random_select_last_index')
+```
+
+</details>
 
 
 ### ArgMin
-There are 3 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -273,7 +422,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     keepdims=keepdims)
 
-# result: [[0], [0]]
+# The content of result is : [[0], [0]]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
 
@@ -281,6 +430,30 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+<details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[0, 0]]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -297,7 +470,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1], [0]]
+# The content of result is : [[1], [0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
 
@@ -305,6 +478,80 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 1, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+<details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random_select_last_index')
+```
+
+</details>
+<details>
+<summary>negative_axis_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# The content of result is : [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random')
+```
+
+</details>
+<details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -321,7 +568,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[1, 0]]
+# The content of result is : [[1, 0]]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
 
@@ -329,6 +576,31 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -360,6 +632,32 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Asinh
+There are 1 test cases, listed as following:
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### Atan
 There are 1 test cases, listed as following:
 <details>
@@ -386,8 +684,34 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Atanh
+There are 1 test cases, listed as following:
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
+```
+
+</details>
+
+
 ### AveragePool
-There are 12 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -411,6 +735,36 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+```
+
+</details>
+<details>
+<summary>averagepool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [6, 7.5],
+    [12, 13.5]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_ceil')
 ```
 
 </details>
@@ -643,7 +997,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_stri
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -677,7 +1031,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -818,6 +1172,162 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
 </details>
 
 
+### BitShift
+There are 8 test cases, listed as following:
+<details>
+<summary>left_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint16')
+```
+
+</details>
+<details>
+<summary>left_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint32')
+```
+
+</details>
+<details>
+<summary>left_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint64')
+```
+
+</details>
+<details>
+<summary>left_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_left_uint8')
+```
+
+</details>
+<details>
+<summary>right_unit16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint16)
+y = np.array([1, 2, 3]).astype(np.uint16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint16')
+```
+
+</details>
+<details>
+<summary>right_unit32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint32)
+y = np.array([1, 2, 3]).astype(np.uint32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint32')
+```
+
+</details>
+<details>
+<summary>right_unit64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint64)
+y = np.array([1, 2, 3]).astype(np.uint64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint64')
+```
+
+</details>
+<details>
+<summary>right_unit8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BitShift',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.uint8)
+y = np.array([1, 2, 3]).astype(np.uint8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_bitshift_right_uint8')
+```
+
+</details>
+
+
 ### Cast
 There are 1 test cases, listed as following:
 <details>
@@ -832,21 +1342,38 @@ test_cases = [
     ('FLOAT16', 'DOUBLE'),
     ('DOUBLE', 'FLOAT'),
     ('DOUBLE', 'FLOAT16'),
+    ('FLOAT', 'STRING'),
+    ('STRING', 'FLOAT'),
 ]
 
 for from_type, to_type in test_cases:
-    input = np.random.random_sample(shape).astype(
-        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    if 'STRING' != from_type:
+        input = np.random.random_sample(shape).astype(
+            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            ss = []
+            for i in input.flatten():
+                s = str(i).encode('utf-8')
+                su = s.decode('utf-8')
+                ss.append(su)
+
+            output = np.array(ss).astype(np.object).reshape([3, 4])
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    else:
+        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-
     expect(node, inputs=[input], outputs=[output],
-           name='test_cast_' + from_type + '_to_' + to_type)
+               name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -886,42 +1413,43 @@ There are 2 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', 'min', 'max'],
     outputs=['y'],
-    min=-1.0,
-    max=1.0
 )
 
 x = np.array([-2, 0, 2]).astype(np.float32)
-y = np.clip(x, -1, 1)  # expected output [-1., 0., 1.]
-expect(node, inputs=[x], outputs=[y],
+min_val = np.float32(-1)
+max_val = np.float32(1)
+y = np.clip(x, min_val, max_val)  # expected output [-1., 0., 1.]
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, -1.0, 1.0)
-expect(node, inputs=[x], outputs=[y],
+y = np.clip(x, min_val, max_val)
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip')
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', 'min', 'max'],
     outputs=['y'],
-    min=-5.0,
-    max=5.0,
 )
+
+min_val = np.float32(-5)
+max_val = np.float32(5)
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_inbounds')
 
 x = np.array([-6, 0, 6]).astype(np.float32)
 y = np.array([-5, 0, 5]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_outbounds')
 
 x = np.array([-1, 0, 6]).astype(np.float32)
 y = np.array([-1, 0, 5]).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
        name='test_clip_splitbounds')
 ```
 
@@ -932,28 +1460,31 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', 'min'],
     outputs=['y'],
-    min=0.0
 )
+min_val = np.float32(0)
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0.0, np.inf)
-expect(node, inputs=[x], outputs=[y],
+y = np.clip(x, min_val, np.inf)
+expect(node, inputs=[x, min_val], outputs=[y],
        name='test_clip_default_min')
 
+no_min = ""  # optional input, not supplied
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', no_min, 'max'],
     outputs=['y'],
-    max=0.0
 )
+max_val = np.float32(0)
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, -np.inf, 0.0)
-expect(node, inputs=[x], outputs=[y],
+y = np.clip(x, -np.inf, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
        name='test_clip_default_max')
+
+no_max = ""  # optional input, not supplied
 node = onnx.helper.make_node(
     'Clip',
-    inputs=['x'],
+    inputs=['x', no_min, no_max],
     outputs=['y'],
 )
 
@@ -961,6 +1492,97 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+### Compress
+There are 4 test cases, listed as following:
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
+```
+
+</details>
+<details>
+<summary>compress_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=-1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=-1)
+# print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_negative_axis')
 ```
 
 </details>
@@ -994,6 +1616,18 @@ for test_case, values_ in test_cases.items():
         output = np.concatenate(values, i)
         expect(node, inputs=[v for v in values], outputs=[output],
                name='test_concat_' + test_case + '_axis_' + str(i))
+
+    for i in range(-len(values[0].shape), 0):
+        in_args = ['value' + str(k) for k in range(len(values))]
+        node = onnx.helper.make_node(
+            'Concat',
+            inputs=[s for s in in_args],
+            outputs=['output'],
+            axis=i
+        )
+        output = np.concatenate(values, i)
+        expect(node, inputs=[v for v in values], outputs=[output],
+               name='test_concat_' + test_case + '_axis_negative_' + str(abs(i)))
 ```
 
 </details>
@@ -1020,6 +1654,49 @@ node = onnx.helper.make_node(
 
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
+```
+
+</details>
+
+
+### ConstantOfShape
+There are 2 test cases, listed as following:
+<details>
+<summary>float_ones</summary>
+
+```python
+x = np.array([4, 3, 2]).astype(np.int64)
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+
+y = np.ones(x, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_float_ones')
+```
+
+</details>
+<details>
+<summary>int32_zeros</summary>
+
+```python
+x = np.array([10, 6]).astype(np.int64)
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [0])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_zeros')
 ```
 
 </details>
@@ -1142,8 +1819,44 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 </details>
 
 
+### ConvInteger
+There are 1 test cases, listed as following:
+<details>
+<summary>convinteger</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.uint8(1)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([12, 16, 24, 28]).astype(np.int32).reshape(1, 1, 2, 2)
+
+# ConvInteger without padding
+convinteger_node = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'])
+
+expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_basic_convinteger')
+
+# ConvInteger with padding
+y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+
+
 ### ConvTranspose
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>convtranspose</summary>
 
@@ -1346,7 +2059,7 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
-                             output_shape=[1, 2, 10, 8])
+                             output_shape=[10, 8])
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
@@ -1364,6 +2077,28 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[x, W], outputs=[y],
        name='test_convtranspose_kernel_shape')
+```
+
+</details>
+<details>
+<summary>convtranspose_dilations</summary>
+
+```python
+x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
+                [9., 5., 7.],
+                [3., 2., 6.]]]]).astype(np.float32)
+W = np.array([[[[7., 2.],  # (1, 1, 2, 2)
+                [1., 9.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], dilations=[2, 2])
+
+y = np.array([[[[21., 56., 13., 16., 2.],  # [1, 1, 5, 5]
+                [63., 35., 67., 10., 14.],
+                [24., 22., 76., 76., 21.],
+                [9., 5., 88., 45., 63.],
+                [3., 2., 33., 18., 54.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_dilations')
 ```
 
 </details>
@@ -1434,31 +2169,162 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### DepthToSpace
-There are 2 test cases, listed as following:
+### Cosh
+There are 1 test cases, listed as following:
 <details>
-<summary>depthtospace</summary>
+<summary>cosh</summary>
 
 ```python
-b, c, h, w = shape = (2, 8, 3, 3)
-blocksize = 2
 node = onnx.helper.make_node(
-    'DepthToSpace',
+    'Cosh',
     inputs=['x'],
     outputs=['y'],
-    blocksize=blocksize,
 )
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
 expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace')
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
+```
+
+</details>
+
+
+### CumSum
+There are 7 test cases, listed as following:
+<details>
+<summary>cumsum_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y']
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 3., 6., 10., 15.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d')
 ```
 
 </details>
 <details>
-<summary>example</summary>
+<summary>cumsum_1d_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    exclusive=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([0., 1., 3., 6., 10.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_exclusive')
+```
+
+</details>
+<details>
+<summary>cumsum_1d_reverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([15., 14., 12., 9., 5.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse')
+```
+
+</details>
+<details>
+<summary>cumsum_1d_reverse_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+    reverse=1
+)
+x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
+axis = np.array([0]).astype(np.int32)
+y = np.array([14., 12., 9., 5., 0.]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_1d_reverse_exclusive')
+```
+
+</details>
+<details>
+<summary>cumsum_2d_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([0]).astype(np.int32)
+y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_0')
+```
+
+</details>
+<details>
+<summary>cumsum_2d_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_axis_1')
+```
+
+</details>
+<details>
+<summary>cumsum_2d_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CumSum',
+    inputs=['x', 'axis'],
+    outputs=['y'],
+)
+x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
+axis = np.array([-1]).astype(np.int32)
+y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y],
+       name='test_cumsum_2d_negative_axis')
+```
+
+</details>
+
+
+### DepthToSpace
+There are 2 test cases, listed as following:
+<details>
+<summary>crd_mode_example</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -1466,25 +2332,143 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
     blocksize=2,
+    mode='CRD'
 )
 
-# (1, 4, 2, 3) input tensor
-x = np.array([[[[0, 1, 2],
-                [3, 4, 5]],
-               [[6, 7, 8],
-                [9, 10, 11]],
-               [[12, 13, 14],
-                [15, 16, 17]],
-               [[18, 19, 20],
-                [21, 22, 23]]]]).astype(np.float32)
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
 
-# (1, 1, 4, 6) output tensor
-y = np.array([[[[0, 6, 1, 7, 2, 8],
-                [12, 18, 13, 19, 14, 20],
-                [3, 9, 4, 10, 5, 11],
-                [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 9., 1., 10., 2., 11.],
+                [18., 27., 19., 28., 20., 29.],
+                [3., 12., 4., 13., 5., 14.],
+                [21., 30., 22., 31., 23., 32.]],
+               [[36., 45., 37., 46., 38., 47.],
+                [54., 63., 55., 64., 56., 65.],
+                [39., 48., 40., 49., 41., 50.],
+                [57., 66., 58., 67., 59., 68.]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace_crd_mode_example')
+```
+
+</details>
+<details>
+<summary>default_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+    mode='DCR'
+)
+
+# (1, 8, 2, 3) input tensor
+x = np.array([[[[0., 1., 2.],
+                [3., 4., 5.]],
+               [[9., 10., 11.],
+                [12., 13., 14.]],
+               [[18., 19., 20.],
+                [21., 22., 23.]],
+               [[27., 28., 29.],
+                [30., 31., 32.]],
+               [[36., 37., 38.],
+                [39., 40., 41.]],
+               [[45., 46., 47.],
+                [48., 49., 50.]],
+               [[54., 55., 56.],
+                [57., 58., 59.]],
+               [[63., 64., 65.],
+                [66., 67., 68.]]]]).astype(np.float32)
+
+# (1, 2, 4, 6) output tensor
+y = np.array([[[[0., 18., 1., 19., 2., 20.],
+                [36., 54., 37., 55., 38., 56.],
+                [3., 21., 4., 22., 5., 23.],
+                [39., 57., 40., 58., 41., 59.]],
+               [[9., 27., 10., 28., 11., 29.],
+                [45., 63., 46., 64., 47., 65.],
+                [12., 30., 13., 31., 14., 32.],
+                [48., 66., 49., 67., 50., 68.]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_depthtospace_example')
+```
+
+</details>
+
+
+### DequantizeLinear
+There are 1 test cases, listed as following:
+<details>
+<summary>dequantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DequantizeLinear',
+    inputs=['x', 'x_scale', 'x_zero_point'],
+    outputs=['y'],)
+
+# scalar zero point and scale
+x = np.array([0, 3, 128, 255]).astype(np.uint8)
+x_scale = np.float32(2)
+x_zero_point = np.uint8(128)
+y = np.array([-256, -250, 0, 254], dtype=np.float32)
+
+expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
+       name='test_dequantizelinear')
+```
+
+</details>
+
+
+### Det
+There are 2 test cases, listed as following:
+<details>
+<summary>2d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Det',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.arange(4).reshape(2, 2).astype(np.float32)
+y = np.linalg.det(x)  # expect -2
+expect(node, inputs=[x], outputs=[y],
+       name='test_det_2d')
+```
+
+</details>
+<details>
+<summary>nd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Det',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([[[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]]]).astype(np.float32)
+y = np.linalg.det(x)  # expect array([-2., -3., -8.])
+expect(node, inputs=[x], outputs=[y],
+       name='test_det_nd')
 ```
 
 </details>
@@ -1575,6 +2559,57 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### DynamicQuantizeLinear
+There are 1 test cases, listed as following:
+<details>
+<summary>dynamicquantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('DynamicQuantizeLinear',
+    inputs=['x'],
+    outputs=['y', 'y_scale', 'y_zero_point'],
+)
+
+# expected scale 0.0196078438 and zero point 153
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear')
+
+# expected scale 0.0156862754 and zero point 255
+X = np.array([-1.0, -2.1, -1.3, -2.5, -3.34, -4.0]).astype(np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear_max_adjusted')
+
+X = np.array([1, 2.1, 1.3, 2.5,
+              3.34, 4.0, 1.5, 2.6,
+              3.9, 4.0, 3.0, 2.345]).astype(np.float32).reshape((3, 4))
+
+# expected scale 0.0156862754 and zero point 0
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
+       name='test_dynamicquantizelinear_min_adjusted')
+```
+
+</details>
+
+
 ### Elu
 There are 2 test cases, listed as following:
 <details>
@@ -1660,6 +2695,27 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### Erf
+There are 1 test cases, listed as following:
+<details>
+<summary>erf</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Erf',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+y = np.vectorize(math.erf)(x).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_erf')
+```
+
+</details>
+
+
 ### Exp
 There are 1 test cases, listed as following:
 <details>
@@ -1686,8 +2742,125 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Flatten
+### Expand
 There are 2 test cases, listed as following:
+<details>
+<summary>dim_changed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+new_shape = [2, 1, 6]
+expanded = data * np.ones(new_shape, dtype=np.float32)
+#print(expanded)
+#[[[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]],
+#
+# [[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_changed')
+```
+
+</details>
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
+```
+
+</details>
+
+
+### EyeLike
+There are 3 test cases, listed as following:
+<details>
+<summary>populate_off_main_diagonal</summary>
+
+```python
+shape = (4, 5)
+off_diagonal_offset = 1
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    k=off_diagonal_offset,
+    dtype=onnx.TensorProto.FLOAT,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], k=off_diagonal_offset, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_populate_off_main_diagonal')
+```
+
+</details>
+<details>
+<summary>with_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.float64)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
+```
+
+</details>
+<details>
+<summary>without_dtype</summary>
+
+```python
+shape = (4, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
+```
+
+</details>
+
+
+### Flatten
+There are 3 test cases, listed as following:
 <details>
 <summary>flatten</summary>
 
@@ -1707,6 +2880,28 @@ for i in range(len(shape)):
     b = np.reshape(a, new_shape)
     expect(node, inputs=[a], outputs=[b],
            name='test_flatten_axis' + str(i))
+```
+
+</details>
+<details>
+<summary>flatten_negative_axis</summary>
+
+```python
+shape = (2, 3, 4, 5)
+a = np.random.random_sample(shape).astype(np.float32)
+
+for i in range(-len(shape), 0):
+    node = onnx.helper.make_node(
+        'Flatten',
+        inputs=['a'],
+        outputs=['b'],
+        axis=i,
+    )
+
+    new_shape = (np.prod(shape[0:i]).astype(int), -1)
+    b = np.reshape(a, new_shape)
+    expect(node, inputs=[a], outputs=[b],
+           name='test_flatten_negative_axis' + str(abs(i)))
 ```
 
 </details>
@@ -1854,7 +3049,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
 
 ### Gather
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>gather_0</summary>
 
@@ -1893,49 +3088,359 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 ```
 
 </details>
-
-
-### Gemm
-There are 2 test cases, listed as following:
 <details>
-<summary>notranspose</summary>
+<summary>gather_negative_indices</summary>
 
 ```python
 node = onnx.helper.make_node(
-    'Gemm',
-    inputs=['a', 'b', 'c'],
+    'Gather',
+    inputs=['data', 'indices'],
     outputs=['y'],
-    alpha=0.5,
-    beta=0.5
+    axis=0,
 )
-a = np.random.ranf([3, 6]).astype(np.float32)
-b = np.random.ranf([6, 4]).astype(np.float32)
-c = np.random.ranf([3, 4]).astype(np.float32)
-y = 0.5 * np.dot(a, b) + 0.5 * c
-expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_nobroadcast')
+data = np.arange(10).astype(np.float32)
+indices = np.array([0, -9, -10])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_negative_indices')
+```
+
+</details>
+
+
+### GatherElements
+There are 3 test cases, listed as following:
+<details>
+<summary>gather_elements_0</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2],
+                 [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0],
+                    [1, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[1, 1],
+#  [4, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_0')
 ```
 
 </details>
 <details>
-<summary>transpose</summary>
+<summary>gather_elements_1</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[1, 2, 0],
+                    [2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[4, 8, 3],
+#  [7, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_1')
+```
+
+</details>
+<details>
+<summary>gather_elements_negative_indices</summary>
+
+```python
+axis = 0
+node = onnx.helper.make_node(
+    'GatherElements',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]], dtype=np.float32)
+indices = np.array([[-1, -2, 0],
+                    [-2, 0, 0]], dtype=np.int32)
+
+y = gather_elements(data, indices, axis)
+# print(y) produces
+# [[7, 5, 3],
+#  [4, 2, 3]]
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_elements_negative_indices')
+```
+
+</details>
+
+
+### GatherND
+There are 2 test cases, listed as following:
+<details>
+<summary>float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
+indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_float32')
+```
+
+</details>
+<details>
+<summary>int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+)
+
+data = np.array([[0, 1], [2, 3]], dtype=np.int32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+output = gather_nd_impl(data, indices)
+expected_output = np.array([0, 3], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32')
+```
+
+</details>
+
+
+### Gemm
+There are 11 test cases, listed as following:
+<details>
+<summary>all_attributes</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Gemm',
     inputs=['a', 'b', 'c'],
     outputs=['y'],
-    alpha=0.5,
-    beta=0.5,
+    alpha=0.25,
+    beta=0.35,
     transA=1,
     transB=1
 )
-a = np.random.ranf([6, 3]).astype(np.float32)
-b = np.random.ranf([4, 6]).astype(np.float32)
-c = np.random.ranf([1, 1]).astype(np.float32)
-y = 0.5 * np.dot(a.T, b.T) + 0.5 * c
+a = np.random.ranf([4, 3]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.random.ranf([1, 5]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transA=1, transB=1, alpha=0.25, beta=0.35)
 expect(node, inputs=[a, b, c], outputs=[y],
-       name='test_gemm_broadcast')
+       name='test_gemm_all_attributes')
+```
+
+</details>
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    alpha=0.5
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, alpha=0.5)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_alpha')
+```
+
+</details>
+<details>
+<summary>beta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    beta=0.5
+)
+a = np.random.ranf([2, 7]).astype(np.float32)
+b = np.random.ranf([7, 4]).astype(np.float32)
+c = np.random.ranf([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, beta=0.5)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_beta')
+```
+
+</details>
+<details>
+<summary>default_matrix_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 6]).astype(np.float32)
+b = np.random.ranf([6, 4]).astype(np.float32)
+c = np.random.ranf([3, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_matrix_bias')
+```
+
+</details>
+<details>
+<summary>default_no_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 10]).astype(np.float32)
+b = np.random.ranf([10, 3]).astype(np.float32)
+y = gemm_reference_implementation(a, b)
+expect(node, inputs=[a, b], outputs=[y],
+       name='test_gemm_default_no_bias')
+```
+
+</details>
+<details>
+<summary>default_scalar_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 3]).astype(np.float32)
+b = np.random.ranf([3, 4]).astype(np.float32)
+c = np.array(3.14).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_scalar_bias')
+```
+
+</details>
+<details>
+<summary>default_single_elem_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 7]).astype(np.float32)
+b = np.random.ranf([7, 3]).astype(np.float32)
+c = np.random.ranf([1]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_single_elem_vector_bias')
+```
+
+</details>
+<details>
+<summary>default_vector_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 7]).astype(np.float32)
+b = np.random.ranf([7, 4]).astype(np.float32)
+c = np.random.ranf([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_vector_bias')
+```
+
+</details>
+<details>
+<summary>default_zero_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y']
+)
+a = np.random.ranf([3, 5]).astype(np.float32)
+b = np.random.ranf([5, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_default_zero_bias')
+```
+
+</details>
+<details>
+<summary>transposeA</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    transA=1
+)
+a = np.random.ranf([6, 3]).astype(np.float32)
+b = np.random.ranf([6, 4]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transA=1)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_transposeA')
+```
+
+</details>
+<details>
+<summary>transposeB</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b', 'c'],
+    outputs=['y'],
+    transB=1
+)
+a = np.random.ranf([3, 6]).astype(np.float32)
+b = np.random.ranf([4, 6]).astype(np.float32)
+c = np.zeros([1, 4]).astype(np.float32)
+y = gemm_reference_implementation(a, b, c, transB=1)
+expect(node, inputs=[a, b, c], outputs=[y],
+       name='test_gemm_transposeB')
 ```
 
 </details>
@@ -2183,6 +3688,16 @@ node = onnx.helper.make_node(
 y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_2')
+
+node = onnx.helper.make_node(
+    'Hardmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardmax_negative_axis')
 ```
 
 </details>
@@ -2261,6 +3776,80 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
+```
+
+</details>
+
+
+### IsInf
+There are 3 test cases, listed as following:
+<details>
+<summary>infinity</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             )
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf')
+```
+
+</details>
+<details>
+<summary>negative_infinity_only</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             detect_positive=0
+                             )
+
+x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isneginf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf_negative')
+```
+
+</details>
+<details>
+<summary>positive_infinity_only</summary>
+
+```python
+node = onnx.helper.make_node('IsInf',
+                             inputs=['x'],
+                             outputs=['y'],
+                             detect_negative=0
+                             )
+
+x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf],
+             dtype=np.float32)
+y = np.isposinf(x)
+expect(node, inputs=[x], outputs=[y], name='test_isinf_positive')
+```
+
+</details>
+
+
+### IsNaN
+There are 1 test cases, listed as following:
+<details>
+<summary>isnan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IsNaN',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name='test_isnan')
 ```
 
 </details>
@@ -2617,6 +4206,16 @@ node = onnx.helper.make_node(
 y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_axis_2')
+
+node = onnx.helper.make_node(
+    'LogSoftmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_logsoftmax_negative_axis')
 ```
 
 </details>
@@ -2654,6 +4253,41 @@ b = np.random.randn(1, 2, 4, 3).astype(np.float32)
 c = np.matmul(a, b)
 expect(node, inputs=[a, b], outputs=[c],
        name='test_matmul_4d')
+```
+
+</details>
+
+
+### MatMulInteger
+There are 1 test cases, listed as following:
+<details>
+<summary>matmulinteger</summary>
+
+```python
+node = onnx.helper.make_node('MatMulInteger',
+    inputs=['A', 'B', 'a_zero_point', 'b_zero_point'],
+    outputs=['Y'],)
+
+A = np.array([[11, 7, 3],
+    [10, 6, 2],
+    [9, 5, 1],
+    [8, 4, 0], ], dtype=np.uint8)
+
+a_zero_point = np.array([12], dtype=np.uint8)
+
+B = np.array([[1, 4],
+    [2, 5],
+    [3, 6], ], dtype=np.uint8)
+
+b_zero_point = np.array([0], dtype=np.uint8)
+
+output = np.array([[-38, -83],
+    [-44, -98],
+    [-50, -113],
+    [-56, -128], ], dtype=np.int32)
+
+expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
+       name='test_matmulinteger')
 ```
 
 </details>
@@ -2699,13 +4333,13 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MaxPool
-There are 10 test cases, listed as following:
+There are 15 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 32]
+input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -2727,11 +4361,41 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
 
 </details>
 <details>
+<summary>maxpool_2d_ceil</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    ceil_mode=True
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_ceil')
+```
+
+</details>
+<details>
 <summary>maxpool_2d_default</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -2753,11 +4417,41 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
 
 </details>
 <details>
+<summary>maxpool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[1, 1],
+    dilations=[2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]]).astype(np.float32)
+y = np.array([[[
+    [11, 12],
+    [15, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_dilations')
+```
+
+</details>
+<details>
 <summary>maxpool_2d_pads</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 28, 28]
+input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -2772,10 +4466,7 @@ x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
-pad_bottom = 2
-pad_top = 2
-pad_right = 2
-pad_left = 2
+pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -2887,7 +4578,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_strides'
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -2921,7 +4612,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -2955,7 +4646,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -2978,11 +4669,45 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
 
 </details>
 <details>
+<summary>maxpool_2d_uint8</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.uint8)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.uint8)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
+```
+
+</details>
+<details>
 <summary>maxpool_3d_default</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32, 32]
+input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -3000,6 +4725,130 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
+```
+
+</details>
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+z = np.array([[[
+    [12, 13, 14, 14, 14],
+    [17, 18, 19, 19, 19],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
+```
+
+</details>
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    storage_order=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+z = np.array([[[[6, 16],
+                [8, 18]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
+```
+
+</details>
+
+
+### MaxUnpool
+There are 2 test cases, listed as following:
+<details>
+<summary>with_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI', 'output_shape'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[5, 6],
+                 [7, 8]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0, 0],
+                [0, 5, 0, 6, 0],
+                [0, 0, 0, 0, 0],
+                [0, 7, 0, 8, 0],
+                [0, 0, 0, 0, 0]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
+```
+
+</details>
+<details>
+<summary>without_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[1, 2],
+                 [3, 4]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0],
+                [0, 1, 0, 2],
+                [0, 0, 0, 0],
+                [0, 3, 0, 4]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
 ```
 
 </details>
@@ -3044,6 +4893,43 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### MeanVarianceNormalization
+There are 1 test cases, listed as following:
+<details>
+<summary>meanvariancenormalization</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MeanVarianceNormalization',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+# Calculate expected output data
+data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
+data_mean_squared = np.power(data_mean, 2)
+data_squared = np.power(input_data, 2)
+data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+std = np.sqrt(data_squared_mean - data_mean_squared)
+expected_output = (input_data - data_mean) / (std + 1e-9)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mvn')
+```
+
+</details>
+
+
 ### Min
 There are 1 test cases, listed as following:
 <details>
@@ -3078,6 +4964,257 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+### Mod
+There are 13 test cases, listed as following:
+<details>
+<summary>mod_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.arange(0, 30).reshape([3, 2, 5])
+y = np.array([7])
+z = np.mod(x, y)
+z
+#   array([[[0, 1, 2, 3, 4],
+#     [5, 6, 0, 1, 2]],
+
+#    [[3, 4, 5, 6, 0],
+#     [1, 2, 3, 4, 5]],
+
+#    [[6, 0, 1, 2, 3],
+#     [4, 5, 6, 0, 1]]], dtype=int32)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_broadcast')
+```
+
+</details>
+<details>
+<summary>mod_int64_fmod</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.fmod(x, y)  # expected output [ 0,  1,  5,  0, -1,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_int64_fmod')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.fmod(x, y)  # expected output [-0.10156, 0.3984 , 5. , 0.10156, -0.3984 ,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float16')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_float32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.fmod(x, y)  # expected output [-0.10000038, 0.39999962, 5. , 0.10000038, -0.39999962, 3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float32')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_float64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    fmod=1
+)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_float64')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int16)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int16)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int16')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int32)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int32)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int32')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int64)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int64)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int64')
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([-4, 7, 5, 4, -7, 8]).astype(np.int8)
+y = np.array([2, -3, 8, -2, 3, 5]).astype(np.int8)
+z = np.mod(x, y)  # expected output [ 0, -2,  5,  0,  2,  3]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_mixed_sign_int8')
+```
+
+</details>
+<details>
+<summary>mod_uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint16)
+y = np.array([2, 3, 8]).astype(np.uint16)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint16')
+```
+
+</details>
+<details>
+<summary>mod_uint32</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint32)
+y = np.array([2, 3, 8]).astype(np.uint32)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint32')
+```
+
+</details>
+<details>
+<summary>mod_uint64</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint64)
+y = np.array([2, 3, 8]).astype(np.uint64)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint64')
+```
+
+</details>
+<details>
+<summary>mod_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mod',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([4, 7, 5]).astype(np.uint8)
+y = np.array([2, 3, 8]).astype(np.uint8)
+z = np.mod(x, y)  # expected output [0, 1, 5]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mod_uint8')
 ```
 
 </details>
@@ -3155,6 +5292,281 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### NonMaxSuppression
+There are 9 test cases, listed as following:
+<details>
+<summary>nonmaxsuppression_center_point_box_format</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices'],
+    center_point_box=1
+)
+boxes = np.array([[
+    [0.5, 0.5, 1.0, 1.0],
+    [0.5, 0.6, 1.0, 1.0],
+    [0.5, 0.4, 1.0, 1.0],
+    [0.5, 10.5, 1.0, 1.0],
+    [0.5, 10.6, 1.0, 1.0],
+    [0.5, 100.5, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_center_point_box_format')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_flipped_coordinates</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [1.0, 1.0, 0.0, 0.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, 0.9, 1.0, -0.1],
+    [0.0, 10.0, 1.0, 11.0],
+    [1.0, 10.1, 0.0, 11.1],
+    [1.0, 101.0, 0.0, 100.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_flipped_coordinates')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_identical_boxes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_identical_boxes')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_limit_output_size</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_limit_output_size')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_single_box</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_single_box')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_suppress_by_IOU</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 0, 5]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_suppress_by_IOU_and_scores</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.4]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU_and_scores')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_two_batches</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]],
+                  [[0.0, 0.0, 1.0, 1.0],
+                   [0.0, 0.1, 1.0, 1.1],
+                   [0.0, -0.1, 1.0, 0.9],
+                   [0.0, 10.0, 1.0, 11.0],
+                   [0.0, 10.1, 1.0, 11.1],
+                   [0.0, 100.0, 1.0, 101.0]]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]],
+                   [[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [1, 0, 3], [1, 0, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_batches')
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_two_classes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonMaxSuppression',
+    inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
+    outputs=['selected_indices']
+)
+boxes = np.array([[
+    [0.0, 0.0, 1.0, 1.0],
+    [0.0, 0.1, 1.0, 1.1],
+    [0.0, -0.1, 1.0, 0.9],
+    [0.0, 10.0, 1.0, 11.0],
+    [0.0, 10.1, 1.0, 11.1],
+    [0.0, 100.0, 1.0, 101.0]
+]]).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3],
+                    [0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([2]).astype(np.int64)
+iou_threshold = np.array([0.5]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0], [0, 1, 3], [0, 1, 0]]).astype(np.int64)
+
+expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_classes')
+```
+
+</details>
+
+
+### NonZero
+There are 1 test cases, listed as following:
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
+```
+
+</details>
+
+
 ### Not
 There are 1 test cases, listed as following:
 <details>
@@ -3181,6 +5593,103 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 expect(node, inputs=[x], outputs=[np.logical_not(x)],
        name='test_not_4d')
+```
+
+</details>
+
+
+### OneHot
+There are 4 test cases, listed as following:
+<details>
+<summary>with_axis</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+<details>
+<summary>with_negative_axis</summary>
+
+```python
+axisValue = -2
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_negative_axis')
+```
+
+</details>
+<details>
+<summary>with_negative_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([0, -7, -8], dtype=np.int64)
+
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
+```
+
+</details>
+<details>
+<summary>without_axis</summary>
+
+```python
+on_value = 5
+off_value = 2
+output_type = np.int32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y']
+)
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.float32(12)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>
@@ -3320,21 +5829,21 @@ There are 2 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Pad',
-    inputs=['x'],
+    inputs=['x', 'pads', 'value'],
     outputs=['y'],
-    mode='constant',
-    value=1.2,
-    pads=[0, 0, 1, 3, 0, 0, 2, 4],
+    mode='constant'
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-y = np.pad(
+pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+y = pad_impl(
     x,
-    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
-    mode='constant',
-    constant_values=1.2,
+    pads,
+    'constant',
+    1.2
 )
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
 ```
 
@@ -3346,19 +5855,19 @@ expect(node, inputs=[x], outputs=[y],
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
         'Pad',
-        inputs=['x'],
+        inputs=['x', 'pads'],
         outputs=['y'],
-        mode=mode,
-        pads=[0, 0, 1, 1, 0, 0, 1, 1]
+        mode=mode
     )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
+    x = np.random.randn(1, 3, 4, 5).astype(np.int32)
+    pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+    y = pad_impl(
         x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
+        pads,
+        mode
     )
 
-    expect(node, inputs=[x], outputs=[y],
+    expect(node, inputs=[x, pads], outputs=[y],
            name='test_{}_pad'.format(mode))
 ```
 
@@ -3418,6 +5927,142 @@ y = np.array([1, 2, 3]).astype(np.float32)
 z = np.power(x, y).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_array')
+```
+
+</details>
+
+
+### QLinearConv
+There are 1 test cases, listed as following:
+<details>
+<summary>qlinearconv</summary>
+
+```python
+node = onnx.helper.make_node('QLinearConv',
+    inputs=['x', 'x_scale', 'x_zero_point', 'w', 'w_scale', 'w_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([[255, 174, 162, 25, 203, 168, 58],
+    [15, 59, 237, 95, 129, 0, 64],
+    [56, 242, 153, 221, 168, 12, 166],
+    [232, 178, 186, 195, 237, 162, 237],
+    [188, 39, 124, 77, 80, 102, 43],
+    [127, 230, 21, 83, 41, 40, 134],
+    [255, 154, 92, 141, 42, 148, 247], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+x_scale = np.float32(0.00369204697)
+x_zero_point = np.uint8(132)
+
+w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+
+w_scale = np.array([0.00172794575], dtype=np.float32)
+w_zero_point = np.array([255], dtype=np.uint8)
+
+y_scale = np.float32(0.00162681262)
+y_zero_point = np.uint8(123)
+
+output = np.array([[0, 81, 93, 230, 52, 87, 197],
+    [240, 196, 18, 160, 126, 255, 191],
+    [199, 13, 102, 34, 87, 243, 89],
+    [23, 77, 69, 60, 18, 93, 18],
+    [67, 216, 131, 178, 175, 153, 212],
+    [128, 25, 234, 172, 214, 215, 121],
+    [0, 101, 163, 114, 213, 107, 8], ], dtype=np.uint8).reshape((1, 1, 7, 7))
+
+expect(node, inputs=[x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearconv')
+```
+
+</details>
+
+
+### QLinearMatMul
+There are 1 test cases, listed as following:
+<details>
+<summary>qlinearmatmul</summary>
+
+```python
+node = onnx.helper.make_node('QLinearMatMul',
+    inputs=['a', 'a_scale', 'a_zero_point', 'b', 'b_scale', 'b_zero_point', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+#2D
+a = np.array([[208, 236, 0, 238],
+    [3, 214, 255, 29], ], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[168, 115, 255],
+    [1, 66, 151], ], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_2D')
+
+#3D
+a = np.array([[[208, 236, 0, 238],
+    [3, 214, 255, 29]],
+    [[208, 236, 0, 238],
+    [3, 214, 255, 29]]], dtype=np.uint8)
+
+a_scale = np.array([0.0066], dtype=np.float32)
+a_zero_point = np.array([113], dtype=np.uint8)
+
+b = np.array([[[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]],
+    [[152, 51, 244],
+    [60, 26, 255],
+    [0, 127, 246],
+    [127, 254, 247]]], dtype=np.uint8)
+
+b_scale = np.array([0.00705], dtype=np.float32)
+b_zero_point = np.array([114], dtype=np.uint8)
+
+y_scale = np.array([0.0107], dtype=np.float32)
+y_zero_point = np.array([118], dtype=np.uint8)
+
+output = np.array([[[168, 115, 255],
+    [1, 66, 151]],
+    [[168, 115, 255],
+    [1, 66, 151]]], dtype=np.uint8)
+
+expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point], outputs=[output],
+       name='test_qlinearmatmul_3D')
+```
+
+</details>
+
+
+### QuantizeLinear
+There are 1 test cases, listed as following:
+<details>
+<summary>quantizelinear</summary>
+
+```python
+node = onnx.helper.make_node('QuantizeLinear',
+    inputs=['x', 'y_scale', 'y_zero_point'],
+    outputs=['y'],)
+
+x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = np.uint8(128)
+y = np.array([128, 129, 130, 255, 1, 0]).astype(np.uint8)
+
+expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+       name='test_quantizelinear')
 ```
 
 </details>
@@ -3517,6 +6162,50 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 </details>
 
 
+### Range
+There are 2 test cases, listed as following:
+<details>
+<summary>range_float_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.float32(1)
+limit = np.float32(5)
+delta = np.float32(2)
+
+output = np.arange(start, limit, delta, dtype=np.float32)  # expected output [1.0, 3.0]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_float_type_positive_delta')
+```
+
+</details>
+<details>
+<summary>range_int32_type_negative_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Range',
+    inputs=['start', 'limit', 'delta'],
+    outputs=['output'],
+)
+
+start = np.int32(10)
+limit = np.int32(6)
+delta = np.int32(-3)
+
+output = np.arange(start, limit, delta, dtype=np.int32)  # expected output [10, 7]
+expect(node, inputs=[start, limit, delta], outputs=[output],
+       name='test_range_int32_type_negative_delta')
+```
+
+</details>
+
+
 ### Reciprocal
 There are 1 test cases, listed as following:
 <details>
@@ -3544,7 +6233,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### ReduceL1
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3652,10 +6341,46 @@ expect(node, inputs=[data], outputs=[reduced],
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-1]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceL1',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+# print(data)
+#[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
+
+reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[3.], [7.]], [[11.], [15.]], [[19.], [23.]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l1_negative_axes_keep_dims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l1_negative_axes_keep_dims_random')
+```
+
+</details>
 
 
 ### ReduceL2
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3772,10 +6497,50 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_ra
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-1]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceL2',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+# print(data)
+#[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
+
+reduced = np.sqrt(np.sum(
+    a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
+# print(reduced)
+#[[[2.23606798], [5.]]
+# [[7.81024968], [10.63014581]]
+# [[13.45362405], [16.2788206 ]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l2_negative_axes_keep_dims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sqrt(np.sum(
+    a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
+
+expect(node, inputs=[data], outputs=[reduced],
+    name='test_reduce_l2_negative_axes_keep_dims_random')
+```
+
+</details>
 
 
 ### ReduceLogSum
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>keepdims</summary>
 
@@ -3789,6 +6554,24 @@ data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, keepdims=True))
 expect(node, inputs=[data], outputs=[reduced],
        name='test_reduce_log_sum_default')
+```
+
+</details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReduceLogSum',
+    inputs=['data'],
+    outputs=["reduced"],
+    axes=[-2]
+)
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(-2), keepdims=True))
+# print(reduced)
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_negative_axes')
 ```
 
 </details>
@@ -3825,7 +6608,7 @@ expect(node, inputs=[data], outputs=[reduced],
 
 
 ### ReduceLogSumExp
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3941,10 +6724,50 @@ expect(node, inputs=[data], outputs=[reduced],
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+node = onnx.helper.make_node(
+    'ReduceLogSumExp',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims
+)
+
+data = np.array(
+    [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
+    dtype=np.float32)
+reduced = np.log(np.sum(np.exp(data),
+                        axis=tuple(axes),
+                        keepdims=keepdims == 1))
+# print(reduced)
+# [[[20., 2.31326175]]
+# [[40.00004578, 2.31326175]]
+# [[60.00671387, 2.31326175]]]
+
+expect(node, inputs=[data], outputs=[reduced],
+      name='test_reduce_log_sum_exp_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.log(np.sum(np.exp(data),
+                        axis=tuple(axes),
+                        keepdims=keepdims == 1))
+
+expect(node, inputs=[data], outputs=[reduced],
+      name='test_reduce_log_sum_exp_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### ReduceMax
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4037,10 +6860,42 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMax',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[20., 2.]]
+# [[40., 2.]]
+# [[60., 2.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### ReduceMean
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4134,10 +6989,42 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_r
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+# [[[12.5, 1.5]]
+# [[35., 1.5]]
+# [[57.5, 1.5]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### ReduceMin
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4230,10 +7117,41 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_ra
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMin', inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[5., 1.]]
+# [[30., 1.]]
+# [[55., 1.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### ReduceProd
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4324,10 +7242,41 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_keepdims_r
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceProd',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[3., 8.]]
+# [[35., 48.]]
+# [[99., 120.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### ReduceSum
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4421,10 +7370,42 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[4., 6.]]
+# [[12., 14.]]
+# [[20., 22.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### ReduceSumSquare
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4518,6 +7499,38 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_keep
 ```
 
 </details>
+<details>
+<summary>negative_axes_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+axes = [-2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSumSquare',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+# print(reduced)
+#[[[10., 20.s]]
+# [[74., 100.]]
+# [[202., 244.]]]
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_random')
+```
+
+</details>
 
 
 ### Relu
@@ -4549,11 +7562,15 @@ There are 1 test cases, listed as following:
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
-    'reduced_dims': np.array([3, 8], dtype=np.int64),
-    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reordered_last_dims': np.array([2, 4, 3], dtype=np.int64),
+    'reduced_dims': np.array([2, 12], dtype=np.int64),
+    'extended_dims': np.array([2, 3, 2, 2], dtype=np.int64),
     'one_dim': np.array([24], dtype=np.int64),
-    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
+    'negative_dim': np.array([2, -1, 2], dtype=np.int64),
+    'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
+    'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
+    'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
@@ -4564,9 +7581,1417 @@ for test_name, shape in test_cases.items():
         outputs=['reshaped'],
     )
 
-    reshaped = np.reshape(data, shape)
+    reshaped = reshape_reference_implementation(data, shape)
+
     expect(node, inputs=[data, shape], outputs=[reshaped],
            name='test_reshape_' + test_name)
+```
+
+</details>
+
+
+### Resize
+There are 24 test cases, listed as following:
+<details>
+<summary>resize_downsample_scales_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+# [[[[ 1.47119141  2.78125     4.08251953]
+#    [ 6.71142578  8.02148438  9.32275391]
+#    [11.91650391 13.2265625  14.52783203]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic')
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_cubic_A_n0p5_exclude_outside</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    cubic_coeff_a=-0.5,
+    exclude_outside=True
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+# [[[[ 1.36812675  2.6695014   4.0133367 ]
+#    [ 6.57362535  7.875       9.2188353 ]
+#    [11.94896657 13.25034122 14.59417652]]]]
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
+                        exclude_outside=True).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic_A_n0p5_exclude_outside')
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_cubic_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
+
+# [[[[ 1.          2.39519159  3.79038317]
+#    [ 6.58076634  7.97595793  9.37114951]
+#    [12.16153268 13.55672427 14.95191585]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic_align_corners')
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[2.6666665 4.3333331]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_linear')
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_linear_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[1.       3.142857]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_linear_align_corners')
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[1. 3.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_downsample_scales_nearest')
+```
+
+</details>
+<details>
+<summary>resize_downsample_sizes_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 1.63078704  3.00462963  4.37847222]
+#    [ 7.12615741  8.5         9.87384259]
+#    [12.62152778 13.99537037 15.36921296]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_cubic')
+```
+
+</details>
+<details>
+<summary>resize_downsample_sizes_linear_pytorch_half_pixel</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='pytorch_half_pixel'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 1], dtype=np.int64)
+
+# [[[[ 1.6666666]
+#    [ 7.       ]
+#    [12.333333 ]]]]
+output = interpolate_nd(
+    data, linear_coeffs, output_size=sizes, coordinate_transformation_mode='pytorch_half_pixel').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_linear_pytorch_half_pixel')
+```
+
+</details>
+<details>
+<summary>resize_downsample_sizes_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 1, 3], dtype=np.int64)
+
+# [[[[1. 3.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest')
+```
+
+</details>
+<details>
+<summary>resize_downsample_sizes_nearest_tf_half_pixel_for_nn</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='tf_half_pixel_for_nn'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 2], dtype=np.int64)
+
+# [[[[ 6.  8.]
+#    [10. 12.]
+#    [14. 16.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, output_size=sizes, coordinate_transformation_mode='tf_half_pixel_for_nn').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest_tf_half_pixel_for_nn')
+```
+
+</details>
+<details>
+<summary>resize_tf_crop_and_resize</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0, 0, 0.4, 0.6, 1, 1, 0.6, 0.8], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004  7.9        8.2      ]
+#    [ 8.8        9.1        9.400001 ]
+#    [10.        10.3       10.6      ]]]]
+output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize')
+```
+
+</details>
+<details>
+<summary>resize_tf_crop_and_resize_extrapolation_value</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize',
+    extrapolation_value=10.0
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0, 0, 0.4, 0.6, 1, 1, 1.2, 1.7], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004 10.        10.       ]
+#    [12.400001  10.        10.       ]
+#    [10.        10.        10.       ]]]]
+output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+                        coordinate_transformation_mode='tf_crop_and_resize', extrapolation_value=10.0).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[ 0.47265625  0.76953125  1.24609375  1.875       2.28125
+#      2.91015625  3.38671875  3.68359375]
+#    [ 1.66015625  1.95703125  2.43359375  3.0625      3.46875
+#      4.09765625  4.57421875  4.87109375]
+#    [ 3.56640625  3.86328125  4.33984375  4.96875     5.375
+#      6.00390625  6.48046875  6.77734375]
+#    [ 6.08203125  6.37890625  6.85546875  7.484375    7.890625
+#      8.51953125  8.99609375  9.29296875]
+#    [ 7.70703125  8.00390625  8.48046875  9.109375    9.515625
+#     10.14453125 10.62109375 10.91796875]
+#    [10.22265625 10.51953125 10.99609375 11.625      12.03125
+#     12.66015625 13.13671875 13.43359375]
+#    [12.12890625 12.42578125 12.90234375 13.53125    13.9375
+#     14.56640625 15.04296875 15.33984375]
+#    [13.31640625 13.61328125 14.08984375 14.71875    15.125
+#     15.75390625 16.23046875 16.52734375]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_cubic_A_n0p5_exclude_outside</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    cubic_coeff_a=-0.5,
+    exclude_outside=True
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[ 0.55882353  0.81494204  1.35698249  1.89705882  2.39705882
+#      2.93713516  3.47917561  3.73529412]
+#    [ 1.58329755  1.83941606  2.38145651  2.92153285  3.42153285
+#      3.96160918  4.50364964  4.75976814]
+#    [ 3.75145936  4.00757787  4.54961832  5.08969466  5.58969466
+#      6.12977099  6.67181144  6.92792995]
+#    [ 5.91176471  6.16788321  6.70992366  7.25        7.75
+#      8.29007634  8.83211679  9.08823529]
+#    [ 7.91176471  8.16788321  8.70992366  9.25        9.75
+#     10.29007634 10.83211679 11.08823529]
+#    [10.07207005 10.32818856 10.87022901 11.41030534 11.91030534
+#     12.45038168 12.99242213 13.24854064]
+#    [12.24023186 12.49635036 13.03839082 13.57846715 14.07846715
+#     14.61854349 15.16058394 15.41670245]
+#    [13.26470588 13.52082439 14.06286484 14.60294118 15.10294118
+#     15.64301751 16.18505796 16.44117647]]]]
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
+                        exclude_outside=True).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic_A_n0p5_exclude_outside')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_cubic_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[ 1.          1.34110787  1.80029155  2.32944606  2.67055394
+#      3.19970845  3.65889213  4.        ]
+#    [ 2.36443149  2.70553936  3.16472303  3.69387755  4.03498542
+#      4.56413994  5.02332362  5.36443149]
+#    [ 4.20116618  4.54227405  5.00145773  5.53061224  5.87172012
+#      6.40087464  6.86005831  7.20116618]
+#    [ 6.31778426  6.65889213  7.1180758   7.64723032  7.98833819
+#      8.51749271  8.97667638  9.31778426]
+#    [ 7.68221574  8.02332362  8.48250729  9.01166181  9.35276968
+#      9.8819242  10.34110787 10.68221574]
+#    [ 9.79883382 10.13994169 10.59912536 11.12827988 11.46938776
+#     11.99854227 12.45772595 12.79883382]
+#    [11.63556851 11.97667638 12.43586006 12.96501458 13.30612245
+#     13.83527697 14.29446064 14.63556851]
+#    [13.         13.34110787 13.80029155 14.32944606 14.67055394
+#     15.19970845 15.65889213 16.        ]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic_align_corners')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_cubic_asymmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    coordinate_transformation_mode='asymmetric'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+roi = np.array([], dtype=np.float32)
+
+# [[[[ 1.       1.40625  2.       2.5      3.       3.59375  4.
+#      4.09375]
+#    [ 2.625    3.03125  3.625    4.125    4.625    5.21875  5.625
+#      5.71875]
+#    [ 5.       5.40625  6.       6.5      7.       7.59375  8.
+#      8.09375]
+#    [ 7.       7.40625  8.       8.5      9.       9.59375 10.
+#     10.09375]
+#    [ 9.       9.40625 10.      10.5     11.      11.59375 12.
+#     12.09375]
+#    [11.375   11.78125 12.375   12.875   13.375   13.96875 14.375
+#     14.46875]
+#    [13.      13.40625 14.      14.5     15.      15.59375 16.
+#     16.09375]
+#    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
+#     16.46875]]]]
+output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
+                        coordinate_transformation_mode='asymmetric').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_cubic_asymmetric')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[1.   1.25 1.75 2.  ]
+#    [1.5  1.75 2.25 2.5 ]
+#    [2.5  2.75 3.25 3.5 ]
+#    [3.   3.25 3.75 4.  ]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_linear')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_linear_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='align_corners'
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+# [[[[1.         1.33333333 1.66666667 2.        ]
+#    [1.66666667 2.         2.33333333 2.66666667]
+#    [2.33333333 2.66666667 3.         3.33333333]
+#    [3.         3.33333333 3.66666667 4.        ]]]]
+output = interpolate_nd(
+    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_linear_align_corners')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
+# [[[[1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales], outputs=[output],
+       name='test_resize_upsample_scales_nearest')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_cubic</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='cubic',
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 9, 10], dtype=np.int64)
+
+# [[[[ 0.45507922  0.64057922  0.97157922  1.42257922  1.90732922
+#      2.22332922  2.70807922  3.15907922  3.49007922  3.67557922]
+#    [ 1.39437963  1.57987963  1.91087963  2.36187963  2.84662963
+#      3.16262963  3.64737963  4.09837963  4.42937963  4.61487963]
+#    [ 2.95130693  3.13680693  3.46780693  3.91880693  4.40355693
+#      4.71955693  5.20430693  5.65530693  5.98630693  6.17180693]
+#    [ 5.20525069  5.39075069  5.72175069  6.17275069  6.65750069
+#      6.97350069  7.45825069  7.90925069  8.24025069  8.42575069]
+#    [ 6.88975     7.07525     7.40625     7.85725     8.342
+#      8.658       9.14275     9.59375     9.92475    10.11025   ]
+#    [ 8.57424931  8.75974931  9.09074931  9.54174931 10.02649931
+#     10.34249931 10.82724931 11.27824931 11.60924931 11.79474931]
+#    [10.82819307 11.01369307 11.34469307 11.79569307 12.28044307
+#     12.59644307 13.08119307 13.53219307 13.86319307 14.04869307]
+#    [12.38512037 12.57062037 12.90162037 13.35262037 13.83737037
+#     14.15337037 14.63812037 15.08912037 15.42012037 15.60562037]
+#    [13.32442078 13.50992078 13.84092078 14.29192078 14.77667078
+#     15.09267078 15.57742078 16.02842078 16.35942078 16.54492078]]]]
+output = interpolate_nd(
+    data, cubic_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_cubic')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 7, 8], dtype=np.int64)
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, nearest_coeffs, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest_ceil_half_pixel</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='half_pixel',
+    nearest_mode='ceil'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+# [[[[ 1.  2.  2.  3.  3.  4.  4.  4.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
+output = interpolate_nd(
+    data, lambda x: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_ceil_half_pixel')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest_floor_align_corners</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='align_corners',
+    nearest_mode='floor'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+# [[[[ 1.  1.  1.  2.  2.  3.  3.  4.]
+#    [ 1.  1.  1.  2.  2.  3.  3.  4.]
+#    [ 1.  1.  1.  2.  2.  3.  3.  4.]
+#    [ 5.  5.  5.  6.  6.  7.  7.  8.]
+#    [ 5.  5.  5.  6.  6.  7.  7.  8.]
+#    [ 9.  9.  9. 10. 10. 11. 11. 12.]
+#    [ 9.  9.  9. 10. 10. 11. 11. 12.]
+#    [13. 13. 13. 14. 14. 15. 15. 16.]]]]
+output = interpolate_nd(
+    data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, coordinate_transformation_mode='align_corners').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_floor_align_corners')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', 'scales', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    coordinate_transformation_mode='asymmetric',
+    nearest_mode='round_prefer_ceil'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+roi = np.array([], dtype=np.float32)
+scales = np.array([], dtype=np.float32)
+sizes = np.array([1, 1, 8, 8], dtype=np.int64)
+
+# [[[[ 1.  2.  2.  3.  3.  4.  4.  4.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 5.  6.  6.  7.  7.  8.  8.  8.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [ 9. 10. 10. 11. 11. 12. 12. 12.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]
+#    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
+output = interpolate_nd(
+    data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'),
+    output_size=sizes, coordinate_transformation_mode='asymmetric').astype(np.float32)
+
+expect(node, inputs=[data, roi, scales, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric')
+```
+
+</details>
+
+
+### ReverseSequence
+There are 2 test cases, listed as following:
+<details>
+<summary>reversesequence_batch</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=1,
+    batch_axis=0,
+)
+x = np.array([[0.0, 1.0, 2.0, 3.0],
+              [4.0, 5.0, 6.0, 7.0],
+              [8.0, 9.0, 10.0, 11.0],
+              [12.0, 13.0, 14.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+
+y = np.array([[0.0, 1.0, 2.0, 3.0],
+              [5.0, 4.0, 6.0, 7.0],
+              [10.0, 9.0, 8.0, 11.0],
+              [15.0, 14.0, 13.0, 12.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_batch')
+```
+
+</details>
+<details>
+<summary>reversesequence_time</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReverseSequence',
+    inputs=['x', 'sequence_lens'],
+    outputs=['y'],
+    time_axis=0,
+    batch_axis=1,
+)
+x = np.array([[0.0, 4.0, 8.0, 12.0],
+              [1.0, 5.0, 9.0, 13.0],
+              [2.0, 6.0, 10.0, 14.0],
+              [3.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+sequence_lens = np.array([4, 3, 2, 1], dtype=np.int64)
+
+y = np.array([[3.0, 6.0, 9.0, 12.0],
+              [2.0, 5.0, 8.0, 13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]], dtype=np.float32)
+
+expect(node, inputs=[x, sequence_lens], outputs=[y],
+       name='test_reversesequence_time')
+```
+
+</details>
+
+
+### RoiAlign
+There are 1 test cases, listed as following:
+<details>
+<summary>roialign</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RoiAlign",
+    inputs=["X", "rois", "batch_indices"],
+    outputs=["Y"],
+    spatial_scale=1.0,
+    output_height=5,
+    output_width=5,
+    sampling_ratio=2,
+)
+
+X = np.array(
+    [
+        [
+            [
+                [
+                    0.2764,
+                    0.7150,
+                    0.1958,
+                    0.3416,
+                    0.4638,
+                    0.0259,
+                    0.2963,
+                    0.6518,
+                    0.4856,
+                    0.7250,
+                ],
+                [
+                    0.9637,
+                    0.0895,
+                    0.2919,
+                    0.6753,
+                    0.0234,
+                    0.6132,
+                    0.8085,
+                    0.5324,
+                    0.8992,
+                    0.4467,
+                ],
+                [
+                    0.3265,
+                    0.8479,
+                    0.9698,
+                    0.2471,
+                    0.9336,
+                    0.1878,
+                    0.4766,
+                    0.4308,
+                    0.3400,
+                    0.2162,
+                ],
+                [
+                    0.0206,
+                    0.1720,
+                    0.2155,
+                    0.4394,
+                    0.0653,
+                    0.3406,
+                    0.7724,
+                    0.3921,
+                    0.2541,
+                    0.5799,
+                ],
+                [
+                    0.4062,
+                    0.2194,
+                    0.4473,
+                    0.4687,
+                    0.7109,
+                    0.9327,
+                    0.9815,
+                    0.6320,
+                    0.1728,
+                    0.6119,
+                ],
+                [
+                    0.3097,
+                    0.1283,
+                    0.4984,
+                    0.5068,
+                    0.4279,
+                    0.0173,
+                    0.4388,
+                    0.0430,
+                    0.4671,
+                    0.7119,
+                ],
+                [
+                    0.1011,
+                    0.8477,
+                    0.4726,
+                    0.1777,
+                    0.9923,
+                    0.4042,
+                    0.1869,
+                    0.7795,
+                    0.9946,
+                    0.9689,
+                ],
+                [
+                    0.1366,
+                    0.3671,
+                    0.7011,
+                    0.6234,
+                    0.9867,
+                    0.5585,
+                    0.6985,
+                    0.5609,
+                    0.8788,
+                    0.9928,
+                ],
+                [
+                    0.5697,
+                    0.8511,
+                    0.6711,
+                    0.9406,
+                    0.8751,
+                    0.7496,
+                    0.1650,
+                    0.1049,
+                    0.1559,
+                    0.2514,
+                ],
+                [
+                    0.7012,
+                    0.4056,
+                    0.7879,
+                    0.3461,
+                    0.0415,
+                    0.2998,
+                    0.5094,
+                    0.3727,
+                    0.5482,
+                    0.0502,
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+batch_indices = np.array([0, 0, 0], dtype=np.int64)
+rois = np.array([[0, 0, 9, 9], [0, 5, 4, 9], [5, 5, 9, 9]], dtype=np.float32)
+# (num_rois, C, output_height, output_width)
+Y = np.array(
+    [
+        [
+            [
+                [0.4664, 0.4466, 0.3405, 0.5688, 0.6068],
+                [0.3714, 0.4296, 0.3835, 0.5562, 0.3510],
+                [0.2768, 0.4883, 0.5222, 0.5528, 0.4171],
+                [0.4713, 0.4844, 0.6904, 0.4920, 0.8774],
+                [0.6239, 0.7125, 0.6289, 0.3355, 0.3495],
+            ]
+        ],
+        [
+            [
+                [0.3022, 0.4305, 0.4696, 0.3978, 0.5423],
+                [0.3656, 0.7050, 0.5165, 0.3172, 0.7015],
+                [0.2912, 0.5059, 0.6476, 0.6235, 0.8299],
+                [0.5916, 0.7389, 0.7048, 0.8372, 0.8893],
+                [0.6227, 0.6153, 0.7097, 0.6154, 0.4585],
+            ]
+        ],
+        [
+            [
+                [0.2384, 0.3379, 0.3717, 0.6100, 0.7601],
+                [0.3767, 0.3785, 0.7147, 0.9243, 0.9727],
+                [0.5749, 0.5826, 0.5709, 0.7619, 0.8770],
+                [0.5355, 0.2566, 0.2141, 0.2796, 0.3600],
+                [0.4365, 0.3504, 0.2887, 0.3661, 0.2349],
+            ]
+        ],
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
+```
+
+</details>
+
+
+### Round
+There are 1 test cases, listed as following:
+<details>
+<summary>round</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Round',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([0.1, 0.5, 0.9, 1.2, 1.5,
+            1.8, 2.3, 2.5, 2.7, -1.1,
+            -1.5, -1.9, -2.2, -2.5, -2.8]).astype(np.float32)
+y = np.array([0., 0., 1., 1., 2.,
+            2., 2., 2., 3., -1.,
+            -2., -2., -2., -2., -3.]).astype(np.float32)  # expected output
+expect(node, inputs=[x], outputs=[y],
+       name='test_round')
+```
+
+</details>
+
+
+### Scan
+There are 2 test cases, listed as following:
+<details>
+<summary>scan_8</summary>
+
+```python
+# Given an input sequence [x1, ..., xN], sum up its elements using a scan
+# returning the final state (x1+x2+...+xN) as well the scan_output
+# [x1, x1+x2, ..., x1+x2+...+xN]
+#
+# create graph to represent scan body
+sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['sum_in', 'next'],
+    outputs=['sum_out']
+)
+id_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['sum_out'],
+    outputs=['scan_out']
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node],
+    'scan_body',
+    [sum_in, next],
+    [sum_out, scan_out]
+)
+# create scan op node
+no_sequence_lens = ''   # optional input, not supplied
+node = onnx.helper.make_node(
+    'Scan',
+    inputs=[no_sequence_lens, 'initial', 'x'],
+    outputs=['y', 'z'],
+    num_scan_inputs=1,
+    body=scan_body
+)
+# create inputs for batch-size 1, sequence-length 3, inner dimension 2
+initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((1, 3, 2))
+# final state computed = [1 + 3 + 5, 2 + 4 + 6]
+y = np.array([9, 12]).astype(np.float32).reshape((1, 2))
+# scan-output computed
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((1, 3, 2))
+
+expect(node, inputs=[initial, x], outputs=[y, z],
+       name='test_scan_sum', opset_imports=[onnx.helper.make_opsetid("", 8)])
+```
+
+</details>
+<details>
+<summary>scan_9</summary>
+
+```python
+# Given an input sequence [x1, ..., xN], sum up its elements using a scan
+# returning the final state (x1+x2+...+xN) as well the scan_output
+# [x1, x1+x2, ..., x1+x2+...+xN]
+#
+# create graph to represent scan body
+sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['sum_in', 'next'],
+    outputs=['sum_out']
+)
+id_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['sum_out'],
+    outputs=['scan_out']
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node],
+    'scan_body',
+    [sum_in, next],
+    [sum_out, scan_out]
+)
+# create scan op node
+node = onnx.helper.make_node(
+    'Scan',
+    inputs=['initial', 'x'],
+    outputs=['y', 'z'],
+    num_scan_inputs=1,
+    body=scan_body
+)
+# create inputs for sequence-length 3, inner dimension 2
+initial = np.array([0, 0]).astype(np.float32).reshape((2,))
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((3, 2))
+# final state computed = [1 + 3 + 5, 2 + 4 + 6]
+y = np.array([9, 12]).astype(np.float32).reshape((2,))
+# scan-output computed
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((3, 2))
+
+expect(node, inputs=[initial, x], outputs=[y, z],
+       name='test_scan9_sum', opset_imports=[onnx.helper.make_opsetid("", 9)])
+```
+
+</details>
+
+
+### Scatter
+There are 2 test cases, listed as following:
+<details>
+<summary>scatter_with_axis</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter(data, indices, updates, axis=axis)
+# print(y) produces
+# [[1.0, 1.1, 3.0, 2.1, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_with_axis', opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = scatter(data, indices, updates)
+# print(y) produces
+# [[2.0, 1.1, 0.0],
+#  [1.0, 0.0, 2.2],
+#  [0.0, 2.1, 1.2]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+
+
+### ScatterElements
+There are 3 test cases, listed as following:
+<details>
+<summary>scatter_elements_with_axis</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 3.0, 2.1, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_negative_indices</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, -3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis)
+# print(y) produces
+# [[1.0, 1.1, 2.1, 4.0, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_with_negative_indices')
+```
+
+</details>
+<details>
+<summary>scatter_elements_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates)
+# print(y) produces
+# [[2.0, 1.1, 0.0],
+#  [1.0, 0.0, 2.2],
+#  [0.0, 2.1, 1.2]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_elements_without_axis')
+```
+
+</details>
+
+
+### ScatterND
+There are 1 test cases, listed as following:
+<details>
+<summary>scatternd</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterND',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.array(
+    [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+indices = np.array([[0], [2]], dtype=np.int64)
+updates = np.array(
+    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]], dtype=np.float32)
+# Expecting output as np.array(
+#    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates)
+expect(node, inputs=[data, indices, updates], outputs=[output],
+       name='test_scatternd')
 ```
 
 </details>
@@ -4653,6 +9078,45 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Shrink
+There are 2 test cases, listed as following:
+<details>
+<summary>hard_shrink</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shrink',
+    inputs=['x'],
+    outputs=['y'],
+    lambd=1.5,
+)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
+Y = np.array([-2, 0, 0, 0, 2], dtype=np.float32)
+expect(node, inputs=[X], outputs=[Y],
+       name='test_shrink_hard')
+```
+
+</details>
+<details>
+<summary>soft_shrink</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shrink',
+    inputs=['x'],
+    outputs=['y'],
+    lambd=1.5,
+    bias=1.5,
+)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
+Y = np.array([-0.5, 0, 0, 0, 0.5], dtype=np.float32)
+expect(node, inputs=[X], outputs=[Y],
+       name='test_shrink_soft')
+```
+
+</details>
+
+
 ### Sigmoid
 There are 1 test cases, listed as following:
 <details>
@@ -4679,6 +9143,27 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Sign
+There are 1 test cases, listed as following:
+<details>
+<summary>sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sign',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array(range(-5, 6)).astype(np.float32)
+y = np.sign(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sign')
+```
+
+</details>
+
+
 ### Sin
 There are 1 test cases, listed as following:
 <details>
@@ -4700,6 +9185,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.sin(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_sin')
+```
+
+</details>
+
+
+### Sinh
+There are 1 test cases, listed as following:
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
 ```
 
 </details>
@@ -4737,24 +9248,25 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Slice
-There are 5 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>slice</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.int64)
+ends = np.array([3, 10], dtype=np.int64)
+axes = np.array([0, 1], dtype=np.int64)
+steps = np.array([1, 1], dtype=np.int64)
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice')
 ```
 
@@ -4765,17 +9277,38 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends'],
     outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
 y = x[:, :, 3:4]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends], outputs=[y],
        name='test_slice_default_axes')
+```
+
+</details>
+<details>
+<summary>slice_default_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_default_steps')
 ```
 
 </details>
@@ -4785,17 +9318,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_end_out_of_bounds')
 ```
 
@@ -4806,18 +9340,62 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.int64)
+ends = np.array([-1], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 0:-1]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_neg')
+```
+
+</details>
+<details>
+<summary>slice_neg_steps</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([20, 10, 4], dtype=np.int64)
+ends = np.array([0, 0, 1], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -3, -2])
+y = x[20:0:-1, 10:0:-3, 4:1:-2]
+
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
+       name='test_slice_neg_steps')
+```
+
+</details>
+<details>
+<summary>slice_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
+axes = np.array([0, -2, -1], dtype=np.int64)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_slice_negative_axes')
 ```
 
 </details>
@@ -4827,17 +9405,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Slice',
-    inputs=['x'],
+    inputs=['x', 'starts', 'ends', 'axes', 'steps'],
     outputs=['y'],
-    axes=[1],
-    starts=[1000],
-    ends=[1000],
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
+steps = np.array([1], dtype=np.int64)
 y = x[:, 1000:1000]
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
        name='test_slice_start_out_of_bounds')
 ```
 
@@ -4924,6 +9503,16 @@ node = onnx.helper.make_node(
 y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_axis_2')
+
+node = onnx.helper.make_node(
+    'Softmax',
+    inputs=['x'],
+    outputs=['y'],
+    axis=-1,
+)
+y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+expect(node, inputs=[x], outputs=[y],
+       name='test_softmax_negative_axis')
 ```
 
 </details>
@@ -5103,7 +9692,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Squeeze
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>squeeze</summary>
 
@@ -5119,6 +9708,147 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+<details>
+<summary>squeeze_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Squeeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[-2],
+)
+x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+y = np.squeeze(x, axis=-2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_squeeze_negative_axes')
+```
+
+</details>
+
+
+### StringNormalizer
+There are 6 test cases, listed as following:
+<details>
+<summary>monday_casesensintive_lower</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='LOWER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_lower')
+```
+
+</details>
+<details>
+<summary>monday_casesensintive_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_nochangecase')
+```
+
+</details>
+<details>
+<summary>monday_casesensintive_upper</summary>
+
+```python
+input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper')
+```
+
+</details>
+<details>
+<summary>monday_empty_output</summary>
+
+```python
+input = np.array([u'monday', u'monday']).astype(np.object)
+output = np.array([u'']).astype(np.object)
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    is_case_sensitive=1,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
+```
+
+</details>
+<details>
+<summary>monday_insensintive_upper_twodim</summary>
+
+```python
+input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape([1, 6])
+
+# It does upper case cecedille, accented E
+# and german umlaut but fails
+# with german eszett
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape([1, 4])
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    case_change_action='UPPER',
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_twodim')
+```
+
+</details>
+<details>
+<summary>nostopwords_nochangecase</summary>
+
+```python
+input = np.array([u'monday', u'tuesday']).astype(np.object)
+output = input
+
+# No stopwords. This is a NOOP
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    is_case_sensitive=1,
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwords_nochangecase')
 ```
 
 </details>
@@ -5261,6 +9991,243 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### TfIdfVectorizer
+There are 7 test cases, listed as following:
+<details>
+<summary>tf_batch_onlybigrams_skip0</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 0., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip0')
+```
+
+</details>
+<details>
+<summary>tf_batch_onlybigrams_skip5</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 1., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip5')
+```
+
+</details>
+<details>
+<summary>tf_batch_uniandbigrams_skip5</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 3., 0., 0., 0., 0., 0.], [0., 0., 1., 0., 1., 1., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=1,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_uniandbigrams_skip5')
+```
+
+</details>
+<details>
+<summary>tf_only_bigrams_skip0</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 0., 0., 0., 1., 1., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_only_bigrams_skip0')
+```
+
+</details>
+<details>
+<summary>tf_onlybigrams_levelempty</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([1., 1., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 0]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2]).astype(np.int64)
+pool_int64s = np.array([    # unigrams none
+                       5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_levelempty')
+```
+
+</details>
+<details>
+<summary>tf_onlybigrams_skip5</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 0., 0., 0., 1., 3., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_skip5')
+```
+
+</details>
+<details>
+<summary>tf_uniandbigrams_skip5</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 3., 1., 0., 1., 3., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=1,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uniandbigrams_skip5')
+```
+
+</details>
+
+
+### ThresholdedRelu
+There are 2 test cases, listed as following:
+<details>
+<summary>default</summary>
+
+```python
+default_alpha = 1.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y']
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, default_alpha, np.inf)
+y[y == default_alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_default')
+```
+
+</details>
+<details>
+<summary>thresholdedrelu</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    'ThresholdedRelu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=alpha
+)
+
+x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, alpha, np.inf)
+y[y == alpha] = 0
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu')
+```
+
+</details>
+
+
 ### Tile
 There are 2 test cases, listed as following:
 <details>
@@ -5320,35 +10287,116 @@ expect(node,
 
 
 ### TopK
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>top_k</summary>
 
 ```python
+axis = 1
+largest = 1
+
+k = 3
 node = onnx.helper.make_node(
     'TopK',
-    inputs=['x'],
+    inputs=['x', 'k'],
     outputs=['values', 'indices'],
-    k=3
+    axis=axis
 )
 X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
 ], dtype=np.float32)
-values_ref = np.array([
-    [3, 2, 1],
-    [7, 6, 5],
-    [11, 10, 9],
-], dtype=np.float32)
-indices_ref = np.array([
-    [3, 2, 1],
-    [3, 2, 1],
-    [3, 2, 1],
-], dtype=np.int64)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
-expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+#print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+#print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
        name='test_top_k')
+```
+
+</details>
+<details>
+<summary>top_k_negative_axis</summary>
+
+```python
+axis = -1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis
+)
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [8, 9, 10, 11],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+#[[ 3.  2.  1.]
+# [ 7.  6.  5.]
+# [11. 10.  9.]]
+# print(indices_ref)
+#[[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_negative_axis')
+```
+
+</details>
+<details>
+<summary>top_k_smallest</summary>
+
+```python
+axis = 1
+largest = 0
+sorted = 1
+k = 3
+
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x', 'k'],
+    outputs=['values', 'indices'],
+    axis=axis,
+    largest=largest,
+    sorted=sorted
+)
+
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [11, 10, 9, 8],
+], dtype=np.float32)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+#print(values_ref)
+#[[ 0.  1.  2.]
+# [ 4.  5.  6.]
+# [ 8.  9. 10.]]
+#print(indices_ref)
+#[[0 1 2]
+# [0 1 2]
+# [3 2 1]]
+
+expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+       name='test_top_k_smallest')
 ```
 
 </details>
@@ -5398,23 +10446,250 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
-### Unsqueeze
-There are 1 test cases, listed as following:
+### Unique
+There are 5 test cases, listed as following:
 <details>
-<summary>squeeze</summary>
+<summary>not_sorted_without_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=0
+)
+# numpy unique does not retain original order (it sorts the output unique values)
+# https://github.com/numpy/numpy/issues/8621
+# we need to recover unsorted output and indices
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+
+# prepare index mapping from sorted to unsorted
+argsorted_indices = np.argsort(indices)
+inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
+
+indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
+inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
+counts = counts[argsorted_indices]
+# print(y)
+# [2.0, 1.0, 3.0, 4.0]
+# print(indices)
+# [0 1 3 4]
+# print(inverse_indices)
+# [0, 1, 1, 2, 3, 2]
+# print(counts)
+# [1, 2, 2, 1]
+
+expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
+```
+
+</details>
+<details>
+<summary>sorted_with_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=0
+)
+
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+# print(y)
+# [[1. 0. 0.]
+#  [2. 3. 4.]]
+# print(indices)
+# [0 2]
+# print(inverse_indices)
+# [0 0 1]
+# print(counts)
+# [2 1]
+
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
+```
+
+</details>
+<details>
+<summary>sorted_with_axis_3d</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=1
+)
+
+x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+# print(y)
+# [[[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]
+# [[0. 1.]
+#  [1. 1.]
+#  [2. 1.]]]
+# print(indices)
+# [1 0 2]
+# print(inverse_indices)
+# [1 0 2 0]
+# print(counts)
+# [2 1 1]
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis_3d')
+```
+
+</details>
+<details>
+<summary>sorted_with_negative_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts'],
+    sorted=1,
+    axis=-1
+)
+
+x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 3]], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
+# print(y)
+# [[0. 1.]
+#  [0. 1.]
+#  [3. 2.]]
+# print(indices)
+# [1 0]
+# print(inverse_indices)
+# [1 0 0]
+# print(counts)
+# [2 1]
+
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_negative_axis')
+```
+
+</details>
+<details>
+<summary>sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    'Unique',
+    inputs=['X'],
+    outputs=['Y', 'indices', 'inverse_indices', 'counts']
+)
+
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
+```
+
+</details>
+
+
+### Unsqueeze
+There are 5 test cases, listed as following:
+<details>
+<summary>unsqueeze_negative_axes</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Unsqueeze',
     inputs=['x'],
     outputs=['y'],
-    axes=[0],
+    axes=[-2],
 )
+x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+y = np.expand_dims(x, axis=-2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_unsqueeze_negative_axes')
+```
+
+</details>
+<details>
+<summary>unsqueeze_one_axis</summary>
+
+```python
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.expand_dims(x, axis=0)
+
+for i in range(x.ndim):
+    node = onnx.helper.make_node(
+        'Unsqueeze',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[i],
+    )
+    y = np.expand_dims(x, axis=i)
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_unsqueeze_axis_' + str(i))
+```
+
+</details>
+<details>
+<summary>unsqueeze_three_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[2, 4, 5],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
 
 expect(node, inputs=[x], outputs=[y],
-       name='test_unsqueeze')
+        name='test_unsqueeze_three_axes')
+```
+
+</details>
+<details>
+<summary>unsqueeze_two_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1, 4],
+)
+y = np.expand_dims(x, axis=1)
+y = np.expand_dims(y, axis=4)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_two_axes')
+```
+
+</details>
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>
@@ -5428,9 +10703,8 @@ There are 1 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -5439,6 +10713,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -5446,8 +10722,50 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
-       name='test_upsample_nearest')
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_upsample_nearest', opset_imports=[helper.make_opsetid("", 9)])
+```
+
+</details>
+
+
+### Where
+There are 2 test cases, listed as following:
+<details>
+<summary>long</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Where',
+    inputs=['condition', 'x', 'y'],
+    outputs=['z'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+x = np.array([[1, 2], [3, 4]], dtype=np.int64)
+y = np.array([[9, 8], [7, 6]], dtype=np.int64)
+z = np.where(condition, x, y)  # expected output [[1, 8], [3, 4]]
+expect(node, inputs=[condition, x, y], outputs=[z],
+       name='test_where_long_example')
+```
+
+</details>
+<details>
+<summary>where</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Where',
+    inputs=['condition', 'x', 'y'],
+    outputs=['z'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+x = np.array([[1, 2], [3, 4]], dtype=np.float32)
+y = np.array([[9, 8], [7, 6]], dtype=np.float32)
+z = np.where(condition, x, y)  # expected output [[1, 8], [3, 4]]
+expect(node, inputs=[condition, x, y], outputs=[z],
+       name='test_where_example')
 ```
 
 </details>
@@ -5540,7 +10858,16 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
+### ConcatFromSequence (call for test cases)
+
+
 ### GlobalLpPool (call for test cases)
+
+
+### If (call for test cases)
+
+
+### Loop (call for test cases)
 
 
 ### LpNormalization (call for test cases)
@@ -5567,111 +10894,743 @@ expect(node, inputs=[x, y], outputs=[z],
 ### RandomUniformLike (random generator operator)
 
 
+### SequenceAt (call for test cases)
+
+
+### SequenceConstruct (call for test cases)
+
+
+### SequenceEmpty (call for test cases)
+
+
+### SequenceErase (call for test cases)
+
+
+### SequenceInsert (call for test cases)
+
+
+### SequenceLength (call for test cases)
+
+
 ### SpaceToDepth (call for test cases)
+
+
+### SplitToSequence (call for test cases)
 
 
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
-### ThresholdedRelu
-There are 2 test cases, listed as following:
-<details>
-<summary>default</summary>
-
-```python
-default_alpha = 1.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y']
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, default_alpha, np.inf)
-y[y == default_alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_default')
-```
-
-</details>
-<details>
-<summary>thresholdedrelu</summary>
-
-```python
-alpha = 2.0
-node = onnx.helper.make_node(
-    'ThresholdedRelu',
-    inputs=['x'],
-    outputs=['y'],
-    alpha=alpha
-)
-
-x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
-y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu_example')
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, alpha, np.inf)
-y[y == alpha] = 0
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_thresholdedrelu')
-```
-
-</details>
-
-
 <br/>
 
 ## &#x1F494;No Cover Experimental Operators
-### ATen (call for test cases)
-
-
-### Affine (call for test cases)
-
-
-### ConstantFill (call for test cases)
-
-
-### Crop (call for test cases)
-
-
-### GRUUnit (call for test cases)
-
-
-### GivenTensorFill (call for test cases)
-
-
-### If (call for test cases)
-
-
-### ImageScaler (call for test cases)
-
-
-### Loop (call for test cases)
-
-
-### LoopIndexTensor (call for test cases)
-
-
-### MeanVarianceNormalization (call for test cases)
-
-
-### ParametricSoftplus (call for test cases)
-
-
-### Scale (call for test cases)
-
-
-### ScaledTanh (call for test cases)
-
-
 <br/>
 
 # Model Test Coverage
-## To be filled.
+## bvlc_alexnet
+
+bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 2
+storage_order: 0
+strides: 1
+</details>
+</details>
+
+
+## densenet121
+
+densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 1
+pads: 1
+strides: 1
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v1
+
+inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 2
+pads: 2
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v2
+
+inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## resnet50
+
+resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## shufflenet
+
+shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## squeezenet_old
+
+squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## vgg19
+
+vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## zfnet512
+
+zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 6 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 2
+beta: 1
+bias: 2
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 7 attributes covered</summary>
+
+auto_pad: 0
+ceil_mode: 0
+dilations: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
 # Overall Test Coverage
 ## To be filled.

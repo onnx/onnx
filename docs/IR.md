@@ -39,7 +39,7 @@ Nothing in this specification should be construed as advocating one implementati
 
 ## ONNX Versioning
 
-Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
+Versioning features in several places in ONNX -- the IR (Intermediate Representation) specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
 Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
@@ -55,7 +55,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator.
+Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators and their semantics at a particular point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -65,7 +65,7 @@ More details on conventions and best practices for versioning of IR, operator se
 
 ONNX specifies the portable, serialized format of a computation graph. It does not have to be the form a framework chooses to use and manipulate the computation internally. For example, an implementation may represent the model differently in memory if it is more efficient to manipulate during optimization passes.
 
-An implementation MAY extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
+An implementation MAY extend ONNX by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
 
 ### Models
 
@@ -115,7 +115,7 @@ Name|Type|Description
 magic|string|The value ‘ONNXOPSET’
 ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
-ir_build_metadata|string|The symbolic identifier of the operator to invoke.
+ir_build_metadata|string|The build metadata of this version of the operator set.
 domain|string|The domain of the operator set. Must be unique among all sets.
 opset_version|int64|The version of the set of operators. 
 doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
@@ -156,19 +156,22 @@ Graphs have the following properties:
 |---|---|---|
 name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
-initializer|Tensor[]|A list of named tensor values, used to specify default values for some of the inputs of the graph. Each initializer value is associated with an input by name matching.
+initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value.
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
-value_info|ValueInfo|Used to store the type and shape information of values that are not inputs or outputs.
+value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
 
-Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
+Each main (top-level) graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
 Name|Type|Description
 |---|---|---|
 name|string|The name of the value/parameter.
 type|Type|The type of the value.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
+
+Nested subgraphs (specified as attribute values) MUST define the names of its inputs and outputs
+and MAY define the types of its inputs and outputs.
 
 Each graph MUST specify a name.
 
@@ -180,7 +183,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 All names MUST adhere to C identifier syntax rules.
 
-Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. 
+Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
 The namespaces are:
 
@@ -205,18 +208,24 @@ They have the following properties:
 Name|Type|Description
 |---|---|---|
 name|string|An optional name of the node, used for diagnostic purposes only.
-input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
+input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a graph initializer or a node output.
 output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a  value in the graph or refers to a graph output.
 op_type|string|The symbolic identifier of the operator to invoke.
 domain|string|The domain of the operator set that contains the operator named by the op_type.
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
+A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, or a graph initializer, or as a node output is said to be a definition (site) and the occurrence of a name as a node input or as a graph output is said to be a use (site).
+
+A value name used in a graph must have a unique definition site, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
+
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
+ 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
+The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name MUST be distinct from the names from the outer scopes that are visible in the nested subgraph.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 
@@ -234,7 +243,7 @@ Input and output values are found as graph inputs, outputs, and initializers, an
 
 #### Attributes
 
-Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their values are determined when a model graph is constructed and therfore not computed at runtime. A common use for attributes is to represent coefficients established during model training.
+Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their values are determined when a model graph is constructed and therefore not computed at runtime. A common use for attributes is to represent coefficients established during model training.
 
 Attributes have the following properties:
 
@@ -245,7 +254,7 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
 f|float|A 32-bit floating-point value.
 i|int64|A 64-bit integer value.
-S|byte[]|UTF-8 string.
+s|byte[]|UTF-8 string.
 t|Tensor|A tensor value.
 g|Graph|A graph.
 floats|float[]|A list of 32-bit floating-point values.
@@ -259,9 +268,9 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 #### Variadic Inputs and Outputs
  
-The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values. A variadic operator has an associated minimum arity, which specifies the minimum number of operands that must be specified.
 
-For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. 
+For each variadic operator input, N or more node inputs must be specified where N is the minimum arity of the operator. For each variadic operator output, N or more node outputs must be specified where N is the minimum arity of the operator. 
 
 #### Optional Inputs and Outputs
 
@@ -293,7 +302,7 @@ Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for
 Unsigned Integer Types|uint8, uint16|Unsigned integers of 8 or 16 bits are supported.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
-Other|bool|Boolean value represent data with only two values, typically true and false.
+Other|bool|Boolean values represent data with only two values, typically true and false.
 
 ### Input / Output Data Types
 
@@ -302,16 +311,16 @@ The following types are used to define the types of graph and node inputs and ou
 |Variant | Type | Description | 
 |---|---|---|
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
-ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
-ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
+ONNX|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
+ONNX|map|Maps represent associative tables, defined by a key type and a value type.
 
 ONNX currently does not define a sparse tensor type.
 
-#### Tensor shapes
+#### Static tensor shapes
 
-In addition to element type, tensors have shape. A tensor shape is a list of records that define whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
+In addition to element type, tensor types have a **static** shape. The static shape of a tensor variable is related to, but different from, the runtime (dynamic) shape of a tensor value. A static tensor shape is a list of records that indicates whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
 
-The shape record is defined by 'TensorShapeProto':
+The static shape is defined by 'TensorShapeProto':
 
 ```
 message TensorShapeProto {
@@ -335,19 +344,25 @@ Which is referenced by the Tensor type message:
 
 The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
 
-Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
+Each size in the list MAY be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. A dimension MAY have neither dim_value nor dim_param set. Such a dimension represents an unknown dimension unrelated to other unknown dimensions.
 
 For example, a NxM matrix would have the shape list [N,M].
 
 The name of each dimension variable MUST adhere to C identifier syntax.
 
-Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. Dimension variables appearing in a graph's 'value_info' record are scoped to each value, allowing each value to have its shape defined independently. 
+Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
+
+ONNXML supports richer types such as Sequences of Tensors. The global scoping of dimension variables means that a variable with type "Sequence<Tensor<float, [M,N]>" represents a sequence of tensors that *all have the same shape*. The dimension variables M or N must be omitted from the above type if that dimension does not have a fixed size across all tensors in the sequence. The entire shape must be omitted from the type if different tensors in the sequence may have different ranks.
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
-The emptry string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
-
 Shapes MAY be defined using a combination of integers and variables.
+
+_Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
+* The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set. 
+* The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
+* A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
+* ONNXML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables local to a type may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
 
 ### Attribute Types
 

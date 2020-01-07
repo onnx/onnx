@@ -97,7 +97,7 @@ class Runner(object):
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():
-                item.func = pytest.mark.onnx_coverage(item.proto)(item.func)
+                item.func = pytest.mark.onnx_coverage(item.proto, category)(item.func)
         return self
 
     @property
@@ -106,8 +106,8 @@ class Runner(object):
         for category, items_map in self._test_items.items():
             filtered[category] = {}
             for name, item in items_map.items():
-                if (self._include_patterns and
-                    (not any(include.search(name)
+                if (self._include_patterns
+                    and (not any(include.search(name)
                              for include in self._include_patterns))):
                     item.func = unittest.skip(
                         'no matched include pattern'
@@ -163,19 +163,23 @@ class Runner(object):
                 setattr(tests, name, item.func)
         return tests
 
-    @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs):  # type: (Sequence[Any], Sequence[Any]) -> None
+    @classmethod
+    def assert_similar_outputs(cls, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
             np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
-            np.testing.assert_allclose(
-                ref_outputs[i],
-                outputs[i],
-                rtol=1e-3,
-                atol=1e-7)
+            if ref_outputs[i].dtype == np.object:
+                np.testing.assert_array_equal(ref_outputs[i], outputs[i])
+            else:
+                np.testing.assert_allclose(
+                    ref_outputs[i],
+                    outputs[i],
+                    rtol=rtol,
+                    atol=atol)
 
+    @classmethod
     @retry_excute(3)
-    def _download_model(self, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+    def download_model(cls, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
         download_file = tempfile.NamedTemporaryFile(delete=False)
@@ -195,7 +199,8 @@ class Runner(object):
         finally:
             os.remove(download_file.name)
 
-    def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
+    @classmethod
+    def prepare_model_data(cls, model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
@@ -212,7 +217,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            self._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
+            cls.download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
@@ -260,7 +265,7 @@ class Runner(object):
 
         def run(test_self, device):  # type: (Any, Text) -> None
             if model_test.model_dir is None:
-                model_dir = self._prepare_model_data(model_test)
+                model_dir = self.prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')
@@ -280,7 +285,9 @@ class Runner(object):
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
-                self._assert_similar_outputs(ref_outputs, outputs)
+                self.assert_similar_outputs(ref_outputs, outputs,
+                                            rtol=model_test.rtol,
+                                            atol=model_test.atol)
 
             for test_data_dir in glob.glob(
                     os.path.join(model_dir, "test_data_set*")):
@@ -301,6 +308,8 @@ class Runner(object):
                         tensor.ParseFromString(f.read())
                     ref_outputs.append(numpy_helper.to_array(tensor))
                 outputs = list(prepared_model.run(inputs))
-                self._assert_similar_outputs(ref_outputs, outputs)
+                self.assert_similar_outputs(ref_outputs, outputs,
+                                            rtol=model_test.rtol,
+                                            atol=model_test.atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)

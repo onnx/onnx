@@ -35,6 +35,8 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                 json.dump({
                     'url': case.url,
                     'model_name': case.model_name,
+                    'rtol': case.rtol,
+                    'atol': case.atol,
                 }, fi, sort_keys=True)
         else:
             with open(os.path.join(output_dir, 'model.onnx'), 'wb') as f:

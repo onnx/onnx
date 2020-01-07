@@ -2,6 +2,8 @@
 
 # Don't source setup.sh here, because the virtualenv might not be set up yet
 
+set -o xtrace
+
 export NUMCORES=`grep -c ^processor /proc/cpuinfo`
 if [ ! -n "$NUMCORES" ]; then
   export NUMCORES=`sysctl -n hw.ncpu`
@@ -27,6 +29,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
   install_protobuf
 
 elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
+  brew update
   brew install ccache protobuf
   if [ "${PYTHON_VERSION}" == "python3" ]; then
     brew upgrade python
@@ -39,14 +42,12 @@ fi
 # TODO consider using "python3.6 -m venv"
 # which is recommended by python3.6 and may make some difference
 if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-  pip install virtualenv
+  pip install --quiet virtualenv
   virtualenv -p "${PYTHON_VERSION}" "${HOME}/virtualenv"
   source "${HOME}/virtualenv/bin/activate"
 fi
 
 # Update all existing python packages
-pip install -U pip setuptools
+pip install --quiet -U pip setuptools
 
-pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U
-
-pip install pytest-cov nbval
+pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U --quiet

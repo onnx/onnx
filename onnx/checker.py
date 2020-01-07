@@ -13,6 +13,7 @@ import functools
 from onnx import (ValueInfoProto,
                   AttributeProto,
                   TensorProto,
+                  SparseTensorProto,
                   NodeProto,
                   ModelProto,
                   GraphProto,
@@ -20,7 +21,9 @@ from onnx import (ValueInfoProto,
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 from google.protobuf.message import Message
-from typing import TypeVar, Callable, Any, Type, cast
+from typing import TypeVar, Callable, Any, Type, cast, Union, Text
+from six import string_types
+import onnx.shape_inference
 
 
 # TODO: This thing where we reserialize the protobuf back into the
@@ -78,8 +81,19 @@ def check_graph(graph, ctx=DEFAULT_CONTEXT):  # type: (GraphProto, C.CheckerCont
     pass
 
 
-def check_model(model):  # type: (ModelProto) -> None
-    C.check_model(model.SerializeToString())
+def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProto, C.CheckerContext) -> None
+    C.check_sparse_tensor(sparse.SerializeToString(), ctx)
+
+
+def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], bool) -> None
+    if isinstance(model, string_types):
+        C.check_model_path(model)
+        if full_check:
+            onnx.shape_inference.infer_shapes(onnx.load(model), True)
+    else:
+        C.check_model(model.SerializeToString())
+        if full_check:
+            onnx.shape_inference.infer_shapes(model, True)
 
 
 ValidationError = C.ValidationError

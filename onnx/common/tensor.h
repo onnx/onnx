@@ -18,7 +18,7 @@ private:
   int64_t segment_end_;
   bool has_name_;
   std::string name_;
-  ONNX_NAMESPACE::TensorProto_DataType elem_type_;
+  int32_t elem_type_;
   std::vector<int64_t> sizes_;
 
   std::vector<float> float_data_;
@@ -65,11 +65,11 @@ private:
     return std::accumulate(sizes_.begin() + dim, sizes_.end(), (int64_t)1, std::multiplies<int64_t>{});
   }
 
-  ONNX_NAMESPACE::TensorProto_DataType elem_type() const {
+  int32_t elem_type() const {
     return elem_type_;
   }
 
-  ONNX_NAMESPACE::TensorProto_DataType& elem_type() {
+  int32_t& elem_type() {
     return elem_type_;
   }
 

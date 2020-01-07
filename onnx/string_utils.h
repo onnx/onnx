@@ -12,7 +12,17 @@ std::string to_string(T value) {
   os << value;
   return os.str();
 }
+
+inline int stoi(const std::string& str) {
+  std::stringstream ss;
+  int n = 0;
+  ss << str;
+  ss >> n;
+  return n;
+}
+
 #else
+using std::stoi;
 using std::to_string;
 #endif // defined(__ANDROID__)
 

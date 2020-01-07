@@ -41,7 +41,11 @@ extras_require = {}
 # Global variables for controlling the build variant
 ################################################################################
 
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+# Default value is set to TRUE\1 to keep the settings same as the current ones.
+# However going forward the recomemded way to is to set this to False\0
+USE_MSVC_STATIC_RUNTIME = bool(os.getenv('USE_MSVC_STATIC_RUNTIME', '1') == '1')
+ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
+ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 
@@ -148,6 +152,7 @@ class cmake_build(setuptools.Command):
             os.makedirs(CMAKE_BUILD_DIR)
 
         with cd(CMAKE_BUILD_DIR):
+            build_type = 'Release'
             # configure
             cmake_args = [
                 CMAKE,
@@ -163,21 +168,25 @@ class cmake_build(setuptools.Command):
             if COVERAGE or DEBUG:
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
-                cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
+                build_type = 'Debug'
+            cmake_args.append('-DCMAKE_BUILD_TYPE=%s' % build_type)
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
                     # passing python version to window in order to
                     # find python in cmake
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
-                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
                 ])
+                if USE_MSVC_STATIC_RUNTIME:
+                    cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI
                     # TODO: need a better way to determine generator
                     cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
+            if ONNX_VERIFY_PROTO3:
+                cmake_args.append('-DONNX_VERIFY_PROTO3=1')
             if ONNX_BUILD_TESTS:
                 cmake_args.append('-DONNX_BUILD_TESTS=ON')
             if 'CMAKE_ARGS' in os.environ:
@@ -191,6 +200,7 @@ class cmake_build(setuptools.Command):
 
             build_args = [CMAKE, '--build', os.curdir]
             if WINDOWS:
+                build_args.extend(['--config', build_type])
                 build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
             else:
                 build_args.extend(['--', '-j', str(self.jobs)])
@@ -283,7 +293,7 @@ install_requires.extend([
     'protobuf',
     'numpy',
     'six',
-    'typing>=3.6.4',
+    'typing>=3.6.4; python_version < "3.5"',
     'typing-extensions>=3.6.2.1',
 ])
 
@@ -292,11 +302,9 @@ install_requires.extend([
 ################################################################################
 
 setup_requires.append('pytest-runner')
-tests_require.append('pytest-cov')
+tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
-tests_require.append('typing')
-tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2

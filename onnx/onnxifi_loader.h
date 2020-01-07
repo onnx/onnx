@@ -2,8 +2,13 @@
 #define ONNXIFI_LOADER_H 1
 
 #include "onnx/onnxifi.h"
+#include "onnx/onnxifi_ext.h"
 
-#define ONNXIFI_LOADER_FUNCTION_COUNT 14
+#ifdef ONNXIFI_ENABLE_EXT
+#define ONNXIFI_LOADER_FUNCTION_COUNT 16
+#else
+#define ONNXIFI_LOADER_FUNCTION_COUNT 15
+#endif
 
 #define ONNXIFI_LOADER_FLAG_VERSION_MASK 0xFF
 #define ONNXIFI_LOADER_FLAG_VERSION_1_0 0x01
@@ -41,12 +46,16 @@ struct onnxifi_library {
       onnxReleaseBackendFunction onnxReleaseBackend;
       onnxInitEventFunction onnxInitEvent;
       onnxSignalEventFunction onnxSignalEvent;
+      onnxGetEventStateFunction onnxGetEventState;
       onnxWaitEventFunction onnxWaitEvent;
       onnxReleaseEventFunction onnxReleaseEvent;
       onnxInitGraphFunction onnxInitGraph;
       onnxSetGraphIOFunction onnxSetGraphIO;
       onnxRunGraphFunction onnxRunGraph;
       onnxReleaseGraphFunction onnxReleaseGraph;
+#ifdef ONNXIFI_ENABLE_EXT
+      onnxGetExtensionFunctionAddressFunction onnxGetExtensionFunctionAddress;
+#endif
     };
     void* functions[ONNXIFI_LOADER_FUNCTION_COUNT];
   };

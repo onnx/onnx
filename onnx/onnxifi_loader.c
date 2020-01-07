@@ -42,12 +42,17 @@ static const char onnxifi_function_names[] =
     "onnxReleaseBackend\0"
     "onnxInitEvent\0"
     "onnxSignalEvent\0"
+    "onnxGetEventState\0"
     "onnxWaitEvent\0"
     "onnxReleaseEvent\0"
     "onnxInitGraph\0"
     "onnxSetGraphIO\0"
     "onnxRunGraph\0"
-    "onnxReleaseGraph\0";
+    "onnxReleaseGraph\0"
+#ifdef ONNXIFI_ENABLE_EXT
+    "onnxGetExtensionFunctionAddress\0"
+#endif
+    ;
 
 int ONNXIFI_ABI onnxifi_load(
   uint32_t flags,

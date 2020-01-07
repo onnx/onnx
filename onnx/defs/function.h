@@ -1,83 +1,98 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
 #pragma once
 
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+#include "attr_proto_util.h"
+#include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx-operators_pb.h"
+#include "tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
+// Helper function to expand a function node given the function proto
+void FunctionExpandHelper(
+    const NodeProto& node,
+    const FunctionProto& func,
+    GraphProto& g,
+    const std::string& node_prefix = "");
 
-typedef Common::Status (*BuildFunction)(std::unique_ptr<FunctionProto>*);
-
-class FunctionBuilder {
+class FunctionBodyHelper {
  public:
-  FunctionBuilder& SetDomain(const std::string& domain);
-  const std::string& GetDomain() const;
-  FunctionBuilder& SetBuildFunction(BuildFunction build_func);
-  BuildFunction GetBuildFunction() const;
+  struct AttributeProtoWrapper {
+    AttributeProto proto;
 
- private:
-  std::string domain_;
-  BuildFunction build_func_;
+    AttributeProtoWrapper() {}
+
+    AttributeProtoWrapper(const AttributeProto& attr_prot) {
+      proto = attr_prot;
+    }
+
+    template <typename T>
+    AttributeProtoWrapper(const std::string& attr_name, T value) {
+      proto = MakeAttribute(attr_name, value);
+    }
+  };
+
+  struct NodeDef {
+    NodeDef(
+        const std::vector<std::string>& outputs,
+        const std::string& op_type,
+        const std::vector<std::string>& inputs)
+        : outputs(outputs), op_type(op_type), inputs(inputs) {}
+
+    NodeDef(
+        const std::vector<std::string>& outputs,
+        const std::string& op_type,
+        const std::vector<std::string>& inputs,
+        const std::vector<AttributeProtoWrapper>& attributes)
+        : outputs(outputs),
+          op_type(op_type),
+          inputs(inputs),
+          attributes(attributes) {}
+
+    std::vector<std::string> outputs;
+    std::string op_type;
+    std::vector<std::string> inputs;
+    std::vector<AttributeProtoWrapper> attributes;
+  };
+
+  /*
+  BuildNodes() is an utility function for easily define a Function Body.
+
+  To build a simple node:
+    {{"Z"}, "Add", {"X", "Y"}} represents Z = Add(X,Y)
+
+  To build a node with attribute:
+    {{"Y"}, "Concat", {"X1", "X2", "X3"}, {{"axis", 1}}}
+      represents Y = Concat(X1,X2,X3) with axis = 1
+    The attribute type are infered from the attribute value's c++ type
+    Supported value types are
+      int64_t -> int, vector<int64_t> -> ints
+      float -> float, vector<float> -> floats
+      string -> string, vector<string> ->strings
+    For refering an attribute from parent, use:
+      {MakeRefAttribute("axes", AttributeProto::INTS)}}
+
+  For more examples, please find the references of this function
+  */
+  static std::vector<NodeProto> BuildNodes(
+      const std::vector<NodeDef>& node_defs);
+
+  template <typename T>
+  static NodeDef Const(const std::string& name, const T& value) {
+    return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(value)}}};
+  }
+
+  template <typename T>
+  static NodeDef Const(const std::string& name, const std::vector<T>& values) {
+    return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(values)}}};
+  }
 };
-
-class FunctionBuilderRegistry {
- public:
-  FunctionBuilderRegistry() = default;
-
-  Status Register(const FunctionBuilder& function_builder);
-
-  // Get functions for specific domain.
-  Status GetFunctions(
-      const std::string& domain,
-      /*out*/
-      std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-      const;
-
-  static FunctionBuilderRegistry& OnnxInstance();
-
- private:
-  std::vector<FunctionBuilder> function_builders;
-  std::mutex mutex_;
-};
-
-#define ONNX_FUNCTION(function_builder) \
-  ONNX_FUNCTION_UNIQ_HELPER(__COUNTER__, function_builder)
-
-#define ONNX_FUNCTION_UNIQ_HELPER(counter, function_builder) \
-  ONNX_FUNCTION_UNIQ(counter, function_builder)
-
-#define ONNX_FUNCTION_UNIQ(counter, function_builder)         \
-  static Common::Status function_builder_##counter##_status = \
-      FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
-
-// Example to register a function.
-// Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
-//  if (nullptr == func_proto) {
-//    return Status(
-//        Common::CHECKER,
-//        Common::INVALID_ARGUMENT,
-//        "func_proto should not be nullptr.");
-//  }
-//
-//  func_proto->reset(new FunctionProto);
-//  auto& func = **func_proto;
-//  func.set_name("FC");
-//   set function inputs.
-//   set function outputs.
-//   set function attributes.
-//   set function description.
-//   set function body (nodes).
-//
-//  return Status::OK();
-//}
-//
-// ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
 
 } // namespace ONNX_NAMESPACE
