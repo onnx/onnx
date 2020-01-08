@@ -1241,7 +1241,8 @@ static const char* Squeeze_ver12_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
-the shape. If an axis is selected with shape entry not equal to one, an error is raised.
+the shape. If an axis is selected with shape entry not equal to one, 
+this axis will remain unchanged.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
