@@ -406,7 +406,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node) == 1
         assert len(optimized_model.graph.node[0].input) == 7
         assert optimized_model.graph.node[0].input == [
-                "A", "B", "C", "G", "D", "E", "F"]
+            "A", "B", "C", "G", "D", "E", "F"]
         assert optimized_model.graph.node[0].op_type == "Concat"
 
     def test_fuse_concats_different_axis(self):  # type: () -> None
