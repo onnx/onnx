@@ -2363,55 +2363,46 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a hr
 <summary>clip</summary>
 
 ```python
-signed_clip_dtypes = [
-    np.int8, np.int16, np.int32, np.int64,
-    np.float16, np.float32, np.float64
-]
-for dtype in signed_clip_dtypes:
-    dtype_name = np.dtype(dtype).name
-    min_bound = -np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).min
-    max_bound = np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).max
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min', 'max'],
+    outputs=['y'],
+)
 
-    node = onnx.helper.make_node(
-        'Clip',
-        inputs=['x', 'min', 'max'],
-        outputs=['y'],
-    )
+x = np.array([-2, 0, 2]).astype(np.float32)
+min_val = np.float32(-1)
+max_val = np.float32(1)
+y = np.clip(x, min_val, max_val)  # expected output [-1., 0., 1.]
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
+       name='test_clip_example')
 
-    x = np.array([-2, 0, 2]).astype(dtype)
-    min_val = dtype(-1)
-    max_val = dtype(1)
-    y = np.clip(x, min_val, max_val)  # expected output [-1., 0., 1.]
-    expect(node, inputs=[x, min_val, max_val], outputs=[y],
-           name='test_clip_example_{0}'.format(dtype_name))
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, min_val, max_val)
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
+       name='test_clip')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min', 'max'],
+    outputs=['y'],
+)
 
-    x = np.random.randn(3, 4, 5).astype(dtype)
-    y = np.clip(x, min_val, max_val)
-    expect(node, inputs=[x, min_val, max_val], outputs=[y],
-           name='test_clip_{0}'.format(dtype_name))
-    node = onnx.helper.make_node(
-        'Clip',
-        inputs=['x', 'min', 'max'],
-        outputs=['y'],
-    )
+min_val = np.float32(-5)
+max_val = np.float32(5)
 
-    min_val = dtype(-5)
-    max_val = dtype(5)
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
+       name='test_clip_inbounds')
 
-    x = np.array([-1, 0, 1]).astype(dtype)
-    y = np.array([-1, 0, 1]).astype(dtype)
-    expect(node, inputs=[x, min_val, max_val], outputs=[y],
-           name='test_clip_inbounds_{0}'.format(dtype_name))
+x = np.array([-6, 0, 6]).astype(np.float32)
+y = np.array([-5, 0, 5]).astype(np.float32)
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
+       name='test_clip_outbounds')
 
-    x = np.array([-6, 0, 6]).astype(dtype)
-    y = np.array([-5, 0, 5]).astype(dtype)
-    expect(node, inputs=[x, min_val, max_val], outputs=[y],
-           name='test_clip_outbounds_{0}'.format(dtype_name))
-
-    x = np.array([-1, 0, 6]).astype(dtype)
-    y = np.array([-1, 0, 5]).astype(dtype)
-    expect(node, inputs=[x, min_val, max_val], outputs=[y],
-           name='test_clip_splitbounds_{0}'.format(dtype_name))
+x = np.array([-1, 0, 6]).astype(np.float32)
+y = np.array([-1, 0, 5]).astype(np.float32)
+expect(node, inputs=[x, min_val, max_val], outputs=[y],
+       name='test_clip_splitbounds')
 ```
 
 </details>
@@ -2421,51 +2412,83 @@ for dtype in signed_clip_dtypes:
 <summary>clip_default</summary>
 
 ```python
-clip_dtypes = [
-    np.int8, np.int16, np.int32, np.int64,
-    np.uint8, np.uint16, np.uint32, np.uint64,
-    np.float16, np.float32, np.float64
-]
-for dtype in clip_dtypes:
-    dtype_name = np.dtype(dtype).name
-    min_bound = -np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).min
-    max_bound = np.inf if np.issubdtype(dtype, np.floating) else np.iinfo(dtype).max
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.float32(0)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, min_val, np.inf)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_min')
 
-    node = onnx.helper.make_node(
-        'Clip',
-        inputs=['x', 'min'],
-        outputs=['y'],
-    )
-    min_val = dtype(0)
-    x = np.random.randn(3, 4, 5).astype(dtype)
-    y = np.clip(x, min_val, max_bound)
-    expect(node, inputs=[x, min_val], outputs=[y],
-           name='test_clip_default_min_{0}'.format(dtype_name))
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.float32(0)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, -np.inf, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_max')
 
-    no_min = ""  # optional input, not supplied
-    node = onnx.helper.make_node(
-        'Clip',
-        inputs=['x', no_min, 'max'],
-        outputs=['y'],
-    )
-    max_val = dtype(0)
-    x = np.random.randn(3, 4, 5).astype(dtype)
-    y = np.clip(x, min_bound, max_val)
-    expect(node, inputs=[x, max_val], outputs=[y],
-           name='test_clip_default_max_{0}'.format(dtype_name))
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
 
-    no_max = ""  # optional input, not supplied
-    node = onnx.helper.make_node(
-        'Clip',
-        inputs=['x', no_min, no_max],
-        outputs=['y'],
-    )
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_inbounds')
+```
 
-    # Note negative values will wrap around for unsigned types.
-    x = np.array([-1, 0, 1]).astype(dtype)
-    y = np.array([-1, 0, 1]).astype(dtype)
-    expect(node, inputs=[x], outputs=[y],
-           name='test_clip_default_inbounds_{0}'.format(dtype_name))
+</details>
+
+
+<details>
+<summary>clip_default_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, min_val, np.iinfo(np.int8).max)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_int8_min')
+
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, np.iinfo(np.int8).min, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_int8_max')
+
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.int8)
+y = np.array([-1, 0, 1]).astype(np.int8)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_int8_inbounds')
 ```
 
 </details>
