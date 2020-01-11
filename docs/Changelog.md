@@ -14019,7 +14019,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
