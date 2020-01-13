@@ -117,6 +117,9 @@ class LexicalScopeContext final {
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
 void check_tensor(const TensorProto& tensor, const CheckerContext&);
+void check_sparse_tensor(
+    const SparseTensorProto& sparse_tensor,
+    const CheckerContext&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,

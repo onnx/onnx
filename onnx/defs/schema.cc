@@ -94,6 +94,63 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
   return &instance;
 }
 
+void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
+  std::unordered_map<std::string, std::string> type_constraints;
+  // check all input types
+  for (size_t in_idx = 0; in_idx < ctx.getNumInputs() && in_idx < inputs_.size(); ++in_idx) {
+    const auto& param      = inputs_[in_idx];
+    const auto& type_str   = param.GetTypeStr();
+    const auto& param_type = ctx.getInputType(in_idx);
+    const auto& all_types  = param.GetTypes();
+    if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      continue;
+    } else if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+      fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", *Utils::DataTypeUtils::ToType(*param_type));
+    }
+    if (param.GetIsHomogeneous()) {
+      const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
+      if (type_constraints.find(type_str) == type_constraints.end()) {
+        type_constraints[type_str] = *type_proto;
+      } else if (type_constraints[type_str] != *type_proto) {
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
+      }
+    }
+  }//for inputs
+  //check all output types
+  for (size_t out_idx = 0; out_idx < ctx.getNumOutputs() && out_idx < outputs_.size(); ++out_idx) {
+    const auto& param      = outputs_[out_idx];
+    const auto& type_str   = param.GetTypeStr();
+    const auto& param_type = ctx.getOutputType(out_idx);
+    const auto& all_types  = param.GetTypes();
+    bool output_type_found = true;
+    //infer type if necessary
+    if (param_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      if (all_types.size() == 1) {
+        *param_type = Utils::DataTypeUtils::ToTypeProto(*all_types.begin());
+      } else if (type_constraints.find(type_str) != type_constraints.end()) {
+        auto data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
+        *param_type = Utils::DataTypeUtils::ToTypeProto(data_type);
+      } else {
+        output_type_found = false;
+      } 
+    }
+    if (!output_type_found) {
+      continue;
+    }
+    if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
+      fail_check(param.GetName(), " has unsupported type ", *Utils::DataTypeUtils::ToType(*param_type));
+    }
+    if (param.GetIsHomogeneous()) {
+      const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
+      if (type_constraints.find(type_str) == type_constraints.end()) {
+        type_constraints[type_str] = *type_proto;
+      } else if (type_constraints[type_str] != *type_proto) {
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
+      }
+    }//else
+  }//for outputs
+}
+
 void OpSchema::Verify(const NodeProto& node) const {
   if (deprecated_) {
     fail_check(
@@ -231,33 +288,38 @@ void OpSchema::Verify(const NodeProto& node) const {
           "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
-    if (attr_proto.has_ref_attr_name()) {
-      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
-        fail_check(
-            "Mismatched attribute type in '", node.name() + " : " + name, "'");
-      }
+   // Type would be UNDEFINED if not set
+    if (attr_proto.type() != expected_type) {
+      fail_check(
+          "Mismatched attribute type in '", node.name() + " : " + name, "'");
+    }
+
+    // ref_attr_name is only valid when non-empty
+    // we simply read default value if not present
+    if (!attr_proto.ref_attr_name().empty()) {
       continue;
     }
 
     switch (expected_type) {
+      // if attr_proto().type() != UNDEFINED
+      // we consider primitive types to be set even
+      // if proto3 did not output default values into the stream
+      // in which case we will read the default
       case AttributeProto::FLOAT:
-        if (!attr_proto.has_f()) {
-          fail_check("Attribute '", name, "' is expected to have field 'f'");
-        }
-        break;
       case AttributeProto::INT:
-        if (!attr_proto.has_i()) {
-          fail_check("Attribute '", name, "' is expected to have field 'i'");
-        }
-        break;
       case AttributeProto::STRING:
-        if (!attr_proto.has_s()) {
-          fail_check("Attribute '", name, "' is expected to have field 's'");
-        }
         break;
       case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
           fail_check("Attribute '", name, "' is expected to have field 't'");
+        }
+        break;
+      case AttributeProto::SPARSE_TENSOR:
+        if (!attr_proto.has_sparse_tensor()) {
+          fail_check(
+              "Attribute '",
+              name,
+              "' is expected to have field 'sparse_tensor'");
         }
         break;
       case AttributeProto::GRAPH:
@@ -287,6 +349,11 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check(
               "Attribute '", name, "' is expected to have field 'tensors'");
         }
+        break;
+      case AttributeProto::SPARSE_TENSORS:
+        // Not adding check ... we should likely delete the check in all other
+        // cases, which will not allow us to have an empty list as a valid value
+        // for an attribute and this seems undesirable.
         break;
       case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {

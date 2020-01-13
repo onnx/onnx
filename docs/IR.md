@@ -162,13 +162,16 @@ input|ValueInfo[]|The input “parameters” of the graph, possibly initialized 
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
 
-Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
+Each main (top-level) graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
 Name|Type|Description
 |---|---|---|
 name|string|The name of the value/parameter.
 type|Type|The type of the value.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
+
+Nested subgraphs (specified as attribute values) MUST define the names of its inputs and outputs
+and MAY define the types of its inputs and outputs.
 
 Each graph MUST specify a name.
 
@@ -205,7 +208,7 @@ They have the following properties:
 Name|Type|Description
 |---|---|---|
 name|string|An optional name of the node, used for diagnostic purposes only.
-input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
+input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a graph initializer or a node output.
 output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a  value in the graph or refers to a graph output.
 op_type|string|The symbolic identifier of the operator to invoke.
 domain|string|The domain of the operator set that contains the operator named by the op_type.
@@ -216,7 +219,7 @@ A name belonging to the Value namespace may appear in multiple places, namely as
 
 A value name used in a graph must have a unique definition site, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
 
-When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
  
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
@@ -265,9 +268,9 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 #### Variadic Inputs and Outputs
  
-The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values. A variadic operator has an associated minimum arity, which specifies the minimum number of operands that must be specified.
 
-For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. 
+For each variadic operator input, N or more node inputs must be specified where N is the minimum arity of the operator. For each variadic operator output, N or more node outputs must be specified where N is the minimum arity of the operator. 
 
 #### Optional Inputs and Outputs
 
@@ -308,8 +311,8 @@ The following types are used to define the types of graph and node inputs and ou
 |Variant | Type | Description | 
 |---|---|---|
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
-ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
-ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
+ONNX|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
+ONNX|map|Maps represent associative tables, defined by a key type and a value type.
 
 ONNX currently does not define a sparse tensor type.
 
@@ -349,6 +352,8 @@ The name of each dimension variable MUST adhere to C identifier syntax.
 
 Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
 
+ONNXML supports richer types such as Sequences of Tensors. The global scoping of dimension variables means that a variable with type "Sequence<Tensor<float, [M,N]>" represents a sequence of tensors that *all have the same shape*. The dimension variables M or N must be omitted from the above type if that dimension does not have a fixed size across all tensors in the sequence. The entire shape must be omitted from the type if different tensors in the sequence may have different ranks.
+
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
 Shapes MAY be defined using a combination of integers and variables.
@@ -356,7 +361,8 @@ Shapes MAY be defined using a combination of integers and variables.
 _Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
 * The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set. 
 * The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
-* ONNXML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
+* A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
+* ONNXML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables local to a type may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
 
 ### Attribute Types
 

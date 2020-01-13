@@ -4,6 +4,7 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <string>
 
 namespace ONNX_NAMESPACE {
