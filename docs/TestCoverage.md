@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
+Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -211,7 +211,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### ArgMax
-There are 8 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -232,30 +232,6 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmax_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
-```
-
-</details>
-<details>
-<summary>default_axes_keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-keepdims = 1
-node = onnx.helper.make_node(
-    'ArgMax',
-    inputs=['data'],
-    outputs=['result'],
-    keepdims=keepdims,
-    select_last_index=True)
-
-# result: [[1, 1]]
-result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [1, 3, 4]
-result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -284,31 +260,6 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random'
 
 </details>
 <details>
-<summary>keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-axis = 1
-keepdims = 1
-node = onnx.helper.make_node(
-    'ArgMax',
-    inputs=['data'],
-    outputs=['result'],
-    axis=axis,
-    keepdims=keepdims,
-    select_last_index=True)
-# result: [[1], [1]]
-result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [2, 1, 4]
-result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random_select_last_index')
-```
-
-</details>
-<details>
 <summary>negative_axis_keepdims</summary>
 
 ```python
@@ -329,31 +280,6 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 3, 1]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random')
-```
-
-</details>
-<details>
-<summary>negative_axis_keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-axis = -1
-keepdims = 1
-node = onnx.helper.make_node(
-    'ArgMax',
-    inputs=['data'],
-    outputs=['result'],
-    axis=axis,
-    keepdims=keepdims,
-    select_last_index=True)
-# result: [[1], [1]]
-result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [2, 3, 1]
-result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -381,35 +307,10 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 ```
 
 </details>
-<details>
-<summary>no_keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-axis = 1
-keepdims = 0
-node = onnx.helper.make_node(
-    'ArgMax',
-    inputs=['data'],
-    outputs=['result'],
-    axis=axis,
-    keepdims=keepdims,
-    select_last_index=True)
-# result: [[1, 1]]
-result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [2, 4]
-result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random_select_last_index')
-```
-
-</details>
 
 
 ### ArgMin
-There are 8 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -430,30 +331,6 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
-```
-
-</details>
-<details>
-<summary>default_axes_keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-keepdims = 1
-node = onnx.helper.make_node(
-    'ArgMin',
-    inputs=['data'],
-    outputs=['result'],
-    keepdims=keepdims,
-    select_last_index=True)
-
-# result: [[0, 0]]
-result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [1, 3, 4]
-result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -482,31 +359,6 @@ expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random'
 
 </details>
 <details>
-<summary>keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-axis = 1
-keepdims = 1
-node = onnx.helper.make_node(
-    'ArgMin',
-    inputs=['data'],
-    outputs=['result'],
-    axis=axis,
-    keepdims=keepdims,
-    select_last_index=True)
-# result: [[1], [0]]
-result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [2, 1, 4]
-result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random_select_last_index')
-```
-
-</details>
-<details>
 <summary>negative_axis_keepdims</summary>
 
 ```python
@@ -531,31 +383,6 @@ expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_ke
 
 </details>
 <details>
-<summary>negative_axis_keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-axis = -1
-keepdims = 1
-node = onnx.helper.make_node(
-    'ArgMin',
-    inputs=['data'],
-    outputs=['result'],
-    axis=axis,
-    keepdims=keepdims,
-    select_last_index=True)
-# result: [[1], [0]]
-result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [2, 3, 1]
-result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random_select_last_index')
-```
-
-</details>
-<details>
 <summary>no_keepdims</summary>
 
 ```python
@@ -576,31 +403,6 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
-```
-
-</details>
-<details>
-<summary>no_keepdims_select_last_index</summary>
-
-```python
-data = np.array([[2, 2], [3, 10]], dtype=np.float32)
-axis = 1
-keepdims = 0
-node = onnx.helper.make_node(
-    'ArgMin',
-    inputs=['data'],
-    outputs=['result'],
-    axis=axis,
-    keepdims=keepdims,
-    select_last_index=True)
-# result: [[1, 0]]
-result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example_select_last_index')
-
-data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
-# result's shape: [2, 4]
-result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
-expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -2610,107 +2412,6 @@ expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
 </details>
 
 
-### Einsum
-There are 5 test cases, listed as following:
-<details>
-<summary>einsum_batch_diagonal</summary>
-
-```python
-Eqn = '...ii ->...i'
-node = onnx.helper.make_node(
-    'Einsum',
-    inputs=['x'],
-    outputs=['y'],
-    equation=Eqn
-)
-
-X = np.random.randn(3, 5, 5)
-Z = einsum_reference_implementation(Eqn, (X,))
-
-expect(node, inputs=[X], outputs=[Z], name='test_einsum_batch_diagonal')
-```
-
-</details>
-<details>
-<summary>einsum_batch_matmul</summary>
-
-```python
-Eqn = 'bij, bjk -> bik'
-node = onnx.helper.make_node(
-    'Einsum',
-    inputs=['x', 'y'],
-    outputs=['z'],
-    equation=Eqn
-)
-
-X = np.random.randn(5, 2, 3)
-Y = np.random.randn(5, 3, 4)
-Z = einsum_reference_implementation(Eqn, (X, Y))
-
-expect(node, inputs=[X, Y], outputs=[Z], name='test_einsum_batch_matmul')
-```
-
-</details>
-<details>
-<summary>einsum_inner_prod</summary>
-
-```python
-Eqn = 'i,i'
-node = onnx.helper.make_node(
-    'Einsum',
-    inputs=['x', 'y'],
-    outputs=['z'],
-    equation=Eqn
-)
-
-X = np.random.randn(5)
-Y = np.random.randn(5)
-Z = einsum_reference_implementation(Eqn, (X, Y))
-
-expect(node, inputs=[X, Y], outputs=[Z], name='test_einsum_inner_prod')
-```
-
-</details>
-<details>
-<summary>einsum_sum</summary>
-
-```python
-Eqn = 'ij->i'
-node = onnx.helper.make_node(
-    'Einsum',
-    inputs=['x'],
-    outputs=['y'],
-    equation=Eqn
-)
-
-X = np.random.randn(3, 4)
-Z = einsum_reference_implementation(Eqn, (X,))
-
-expect(node, inputs=[X], outputs=[Z], name='test_einsum_sum')
-```
-
-</details>
-<details>
-<summary>einsum_transpose</summary>
-
-```python
-Eqn = 'ij->ji'
-node = onnx.helper.make_node(
-    'Einsum',
-    inputs=['x'],
-    outputs=['y'],
-    equation=Eqn
-)
-
-X = np.random.randn(3, 4)
-Y = einsum_reference_implementation(Eqn, (X,))
-
-expect(node, inputs=[X], outputs=[Y], name='test_einsum_transpose')
-```
-
-</details>
-
-
 ### Elu
 There are 2 test cases, listed as following:
 <details>
@@ -4434,7 +4135,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MaxPool
-There are 15 test cases, listed as following:
+There are 14 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -4766,40 +4467,6 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
-```
-
-</details>
-<details>
-<summary>maxpool_2d_uint8</summary>
-
-```python
-"""
-input_shape: [1, 1, 5, 5]
-output_shape: [1, 1, 5, 5]
-pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
-"""
-node = onnx.helper.make_node(
-    'MaxPool',
-    inputs=['x'],
-    outputs=['y'],
-    kernel_shape=[5, 5],
-    pads=[2, 2, 2, 2]
-)
-x = np.array([[[
-    [1, 2, 3, 4, 5],
-    [6, 7, 8, 9, 10],
-    [11, 12, 13, 14, 15],
-    [16, 17, 18, 19, 20],
-    [21, 22, 23, 24, 25],
-]]]).astype(np.uint8)
-y = np.array([[[
-    [13, 14, 15, 15, 15],
-    [18, 19, 20, 20, 20],
-    [23, 24, 25, 25, 25],
-    [23, 24, 25, 25, 25],
-    [23, 24, 25, 25, 25]]]]).astype(np.uint8)
-
-expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
 ```
 
 </details>
@@ -8448,8 +8115,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='half_pixel',
-    nearest_mode='ceil'
+    coordinate_transformation_mode='half_pixel'
 )
 
 data = np.array([[[
@@ -8488,8 +8154,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='align_corners',
-    nearest_mode='floor'
+    coordinate_transformation_mode='align_corners'
 )
 
 data = np.array([[[
@@ -8528,8 +8193,7 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='asymmetric',
-    nearest_mode='round_prefer_ceil'
+    coordinate_transformation_mode='asymmetric'
 )
 
 data = np.array([[[
@@ -10569,8 +10233,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 argsorted_indices = np.argsort(indices)
 inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-indices = indices[argsorted_indices]
 y = np.take(x, indices, axis=0)
+indices = indices[argsorted_indices]
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
 # print(y)
