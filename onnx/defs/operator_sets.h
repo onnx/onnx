@@ -632,6 +632,9 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SequenceLength);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SplitToSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ConcatFromSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gemm);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression);
 
 // Iterate over schema from ai.onnx version 11
 class OpSet_Onnx_ver11 {
@@ -700,6 +703,28 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, SplitToSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ConcatFromSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gemm)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 12
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin);
+
+// Iterate over schema from ai.onnx version 12
+class OpSet_Onnx_ver12 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin)>());
   }
 };
 
@@ -715,6 +740,7 @@ class OpSet_Onnx_ver11 {
   RegisterOpSetSchema<OpSet_Onnx_ver9>();
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
   RegisterOpSetSchema<OpSet_Onnx_ver11>();
+  RegisterOpSetSchema<OpSet_Onnx_ver12>();
 }
 
 } // namespace ONNX_NAMESPACE

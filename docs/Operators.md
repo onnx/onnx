@@ -557,15 +557,18 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+  If select_last_index is True (default False), the index of the last occurence of the max 
+  is selected if the max appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>
+Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>, <a href="Changelog.md#ArgMax-11">ArgMax-11</a>
 
 #### Attributes
 
@@ -574,6 +577,8 @@ Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>select_last_index</tt> : int (default is 0)</dt>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
 
 #### Inputs
@@ -626,6 +631,32 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_ran
 
 
 <details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random_select_last_index')
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -646,6 +677,33 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 1, 4]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -678,6 +736,33 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_ke
 
 
 <details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random_select_last_index')
+```
+
+</details>
+
+
+<details>
 <summary>no_keepdims</summary>
 
 ```python
@@ -703,18 +788,48 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 </details>
 
 
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random_select_last_index')
+```
+
+</details>
+
+
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+  If select_last_index is True (default False), the index of the last occurence of the min 
+  is selected if the min appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
   The type of the output tensor is integer.
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>
+Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>, <a href="Changelog.md#ArgMin-11">ArgMin-11</a>
 
 #### Attributes
 
@@ -723,6 +838,8 @@ Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>select_last_index</tt> : int (default is 0)</dt>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
 
 #### Inputs
@@ -775,6 +892,32 @@ expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_ran
 
 
 <details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[0, 0]]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random_select_last_index')
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -795,6 +938,33 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 1, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -827,6 +997,33 @@ expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_ke
 
 
 <details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random_select_last_index')
+```
+
+</details>
+
+
+<details>
 <summary>no_keepdims</summary>
 
 ```python
@@ -847,6 +1044,33 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -2948,7 +3172,7 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTran
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>output_padding</tt> : list of ints</dt>
-<dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks.</dd>
+<dd>Additional elements added to the side with higher coordinate indices in the output. Each padding value in "output_padding" must be less than the corresponding stride/dilation dimension. By default, this attribute is a zero vector. Note that this attribute doesn't directly affect the computed output values. It only controls the selection of the computed values, so changing this attribute only adds or removes output elements. If "output_shape" is explicitly provided, "output_padding" does not contribute additional size to "output_shape" but participates in the computation of the needed padding amount. This is also called adjs or adjustment in some frameworks.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -5221,7 +5445,7 @@ node = onnx.helper.make_node(
     'Gather',
     inputs=['data', 'indices'],
     outputs=['y'],
-    axis=1,
+    axis=0,
 )
 data = np.arange(10).astype(np.float32)
 indices = np.array([0, -9, -10])
@@ -5573,12 +5797,13 @@ expect(node, inputs=[data, indices], outputs=[output],
   and output tensor Y has shape (M, N). A will be transposed before doing the
   computation if attribute transA is non-zero, same for B and transB.
   This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>, <a href="Changelog.md#Gemm-9">Gemm-9</a>
 
 #### Attributes
 
@@ -5593,15 +5818,15 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 <dd>Whether B should be transposed</dd>
 </dl>
 
-#### Inputs
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>A</tt> : T</dt>
 <dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
-<dt><tt>C</tt> : T</dt>
-<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
+<dt><tt>C</tt> (optional) : T</dt>
+<dd>Optional input tensor C. If not specified, the computation is done as if C is a scalar 0. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
@@ -5708,6 +5933,25 @@ expect(node, inputs=[a, b, c], outputs=[y],
 
 
 <details>
+<summary>default_no_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gemm',
+    inputs=['a', 'b'],
+    outputs=['y']
+)
+a = np.random.ranf([2, 10]).astype(np.float32)
+b = np.random.ranf([10, 3]).astype(np.float32)
+y = gemm_reference_implementation(a, b)
+expect(node, inputs=[a, b], outputs=[y],
+       name='test_gemm_default_no_bias')
+```
+
+</details>
+
+
+<details>
 <summary>default_scalar_bias</summary>
 
 ```python
@@ -5718,7 +5962,7 @@ node = onnx.helper.make_node(
 )
 a = np.random.ranf([2, 3]).astype(np.float32)
 b = np.random.ranf([3, 4]).astype(np.float32)
-c = np.array(3.14)
+c = np.array(3.14).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y],
        name='test_gemm_default_scalar_bias')
@@ -6198,11 +6442,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -6211,7 +6453,8 @@ expect(node, inputs=[x], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the hardmax values of the corresponding input.
 
 #### Version
 
@@ -6396,7 +6639,9 @@ expect(node, inputs=[data], outputs=[data],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 
 #### Attributes
 
@@ -6418,7 +6663,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -7283,11 +7528,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -7296,7 +7539,8 @@ expect(node, inputs=[x], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the logsoftmax values of the corresponding input.
 
 #### Version
 
@@ -7491,15 +7735,15 @@ expect(node, inputs=[x], outputs=[y],
       }
   
       graph body-net (
-        %i[INT32, scalar]
-        %keepgoing[BOOL, scalar]
-        %b[INT32, scalar]
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
       ) {
-        %my_local = Add(%a, %b)
-        %b_out = Sub(%a, %b)
-        %keepgoing_out = Greater(%my_local, %b_out)
-        %user_defined_vals = Add(%b, %b)
-        return %keepgoing_out, %b_out, %user_defined_vals
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
       }
   
   *Sample equivalent C code*
@@ -7514,29 +7758,49 @@ expect(node, inputs=[x], outputs=[y],
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
         /* End implicitly-defined code */
-        for (int i=0; i < max_trip_count && keepgoing; ++i) {
-          /* User-defined code (loop body) */
-          int my_local = a + b; // Reading values in the enclosing scope is fine
-          b = a - b; // writes fine if we specify b as a loop-carried dependency
-          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-          user_defined_vals[i] = b + b;
-          /* End user-defined code */
-        }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
   
-        // These below values are live-out from the loop and therefore accessible
-        b_out; user_defined_vals; keepgoing_out;
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out; 
+          bool b_in = b_out;
+  
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out; 
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+  
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+  
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
       }
   
   There are several things of note in this code snippet:
   
-  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
-  2) Any variables which you wish to make available in the enclosing scope (i.e.
-     the variables b and keepgoing) must be declared as either loop-carried
-     dependencies (both at the op inputs and output and at the body net input and
-     output) or scan_outputs.
-  3) Values created in the body cannot be accessed in the enclosing scope.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
   
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
@@ -7928,14 +8192,14 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
-   The output of each pooling window is maximum number of elements exclude pad.
+   The output of each pooling window is maximum number of elements exclude pad. 
    
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>, <a href="Changelog.md#MaxPool-10">MaxPool-10</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>, <a href="Changelog.md#MaxPool-8">MaxPool-8</a>, <a href="Changelog.md#MaxPool-10">MaxPool-10</a>, <a href="Changelog.md#MaxPool-11">MaxPool-11</a>
 
 #### Attributes
 
@@ -7975,8 +8239,8 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input and output types to float and 8 bit tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
@@ -8335,6 +8599,42 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_uint8</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.uint8)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.uint8)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
 ```
 
 </details>
@@ -9358,7 +9658,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#NonMaxSuppression-10">NonMaxSuppression-10</a>
 
 #### Attributes
 
@@ -9685,7 +9987,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>output (always 2D tensor)</dd>
+<dd>output</dd>
 </dl>
 
 #### Type Constraints
@@ -10434,6 +10736,8 @@ expect(node, inputs=[x, y], outputs=[z],
   and computes the quantized output. Each scale and zero-point pair must have same shape.
   It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
   Each input or output and its related zero point must have same type.
+  When bias is present it must be quantized using scale = input scale * weight scale and 
+  zero point as 0.
 
 #### Version
 
@@ -10476,7 +10780,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>y_zero_point</tt> : T3</dt>
 <dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>B</tt> (optional) : T4</dt>
-<dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
+<dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
 </dl>
 
 #### Outputs
@@ -12064,9 +12368,9 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>, <a href="Changelog.md#ReduceMax-11">ReduceMax-11</a>
 
 #### Attributes
 
@@ -12094,8 +12398,8 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 
@@ -12425,9 +12729,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_a
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>, <a href="Changelog.md#ReduceMin-11">ReduceMin-11</a>
 
 #### Attributes
 
@@ -12455,8 +12759,8 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 
@@ -13234,11 +13538,15 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
-    'reduced_dims': np.array([3, 8], dtype=np.int64),
-    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reordered_last_dims': np.array([2, 4, 3], dtype=np.int64),
+    'reduced_dims': np.array([2, 12], dtype=np.int64),
+    'extended_dims': np.array([2, 3, 2, 2], dtype=np.int64),
     'one_dim': np.array([24], dtype=np.int64),
-    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
+    'negative_dim': np.array([2, -1, 2], dtype=np.int64),
+    'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
+    'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
+    'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
@@ -13249,7 +13557,8 @@ for test_name, shape in test_cases.items():
         outputs=['reshaped'],
     )
 
-    reshaped = np.reshape(data, shape)
+    reshaped = reshape_reference_implementation(data, shape)
+
     expect(node, inputs=[data, shape], outputs=[reshaped],
            name='test_reshape_' + test_name)
 ```
@@ -14137,7 +14446,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='half_pixel'
+    coordinate_transformation_mode='half_pixel',
+    nearest_mode='ceil'
 )
 
 data = np.array([[[
@@ -14178,7 +14488,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='align_corners'
+    coordinate_transformation_mode='align_corners',
+    nearest_mode='floor'
 )
 
 data = np.array([[[
@@ -14219,7 +14530,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='asymmetric'
+    coordinate_transformation_mode='asymmetric',
+    nearest_mode='round_prefer_ceil'
 )
 
 data = np.array([[[
@@ -16141,11 +16453,13 @@ expect(node, inputs=[x], outputs=[y],
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
+  start or end indices, it represents number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If a negative value is passed for step, it represents slicing backward.
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+  when sclicing forward and 'INT_MIN' when slicing backward.
+  If a negative value is passed for step, it represents slicing backward. 
+  However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
@@ -16189,7 +16503,7 @@ Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a 
 <dt><tt>axes</tt> (optional) : Tind</dt>
 <dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
@@ -16402,11 +16716,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
-  (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   of the given input.
   
-  Input does not need to explicitly be a 2D vector; rather, it will be
+  The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
   the axis provided, then input will be coerced into a 2-dimensional tensor with
@@ -16415,7 +16727,8 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
+  will throw errors. The output tensor has the same shape
+  and contains the softmax values of the corresponding input.
 
 #### Version
 
@@ -18370,8 +18683,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 argsorted_indices = np.argsort(indices)
 inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-y = np.take(x, indices, axis=0)
 indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
 # print(y)
@@ -18504,11 +18817,18 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
 ### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
 
-  Insert single-dimensional entries to the shape of a tensor.
-  Takes one required argument `axes`, a list of dimensions that will be inserted.
-  Dimension indices in `axes` are as seen in the output tensor. For example:
-    Given a tensor such that tensor with shape [3, 4, 5], then
-    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  
+  For example:
+    Given an input tensor (`data`) of shape [3, 4, 5], then
+    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  
+  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
+  The order of values in `axes` does not matter and can come in any order. 
+  
 
 #### Version
 
@@ -18520,7 +18840,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1<
 
 <dl>
 <dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Inputs
@@ -18628,6 +18948,29 @@ y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x], outputs=[y],
         name='test_unsqueeze_two_axes')
+```
+
+</details>
+
+
+<details>
+<summary>unsqueeze_unsorted_axes</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[5, 4, 2],
+)
+y = np.expand_dims(x, axis=2)
+y = np.expand_dims(y, axis=4)
+y = np.expand_dims(y, axis=5)
+
+expect(node, inputs=[x], outputs=[y],
+        name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

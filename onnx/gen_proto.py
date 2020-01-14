@@ -8,6 +8,8 @@ import argparse
 import io
 import os
 import re
+import glob
+import subprocess
 from textwrap import dedent
 
 autogen_header = """\
@@ -106,6 +108,13 @@ def convert_to_proto3(lines):  # type: (Iterable[Text]) -> Iterable[Text]
         yield line
 
 
+def gen_proto3_code(protoc_path, proto3_path, include_path, cpp_out, python_out):  # type: (Text, Text, Text, Text, Text) -> None
+    print("Generate pb3 code using {}".format(protoc_path))
+    build_args = [protoc_path, proto3_path, '-I', include_path]
+    build_args.extend(['--cpp_out', cpp_out, '--python_out', python_out])
+    subprocess.check_call(build_args)
+
+
 def translate(source, proto, onnx_ml, package_name):  # type: (Text, int, bool, Text) -> Text
     lines = source.splitlines()  # type: Iterable[Text]
     lines = process_ifs(lines, onnx_ml=onnx_ml)
@@ -121,7 +130,7 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
     return os.path.join(pardir, f)
 
 
-def convert(stem, package_name, output, do_onnx_ml=False, lite=False):  # type: (Text, Text, Text, bool, bool) -> None
+def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     if do_onnx_ml:
@@ -146,6 +155,15 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False):  # type: 
             fout.write(translate(source, proto=3, onnx_ml=do_onnx_ml, package_name=package_name))
             if lite:
                 fout.write(LITE_OPTION)
+        if protoc_path:
+            porto3_dir = os.path.dirname(proto3)
+            base_dir = os.path.dirname(porto3_dir)
+            gen_proto3_code(protoc_path, proto3, base_dir, base_dir, base_dir)
+            pb3_files = glob.glob(os.path.join(porto3_dir, '*.proto3.*'))
+            for pb3_file in pb3_files:
+                print("Removing {}".format(pb3_file))
+                os.remove(pb3_file)
+
         if need_rename:
             if do_onnx_ml:
                 proto_header = qualify("{}-ml.pb.h".format(stem), pardir=output)
@@ -193,6 +211,9 @@ def main():  # type: () -> None
     parser.add_argument('-o', '--output',
                         default=os.path.realpath(os.path.dirname(__file__)),
                         help='output directory (default: %(default)s)')
+    parser.add_argument('--protoc_path',
+                        default='',
+                        help='path to protoc for proto3 file validation')
     parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
@@ -206,7 +227,8 @@ def main():  # type: () -> None
                 package_name=args.package,
                 output=args.output,
                 do_onnx_ml=args.ml,
-                lite=args.lite)
+                lite=args.lite,
+                protoc_path=args.protoc_path)
 
 
 if __name__ == '__main__':
