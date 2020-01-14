@@ -332,6 +332,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += rank;
           }
 
+          if (numInputs == 1) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+            return;
+          }
+
           bool all_lengths_known = true;
           int total_length = 0;
 
