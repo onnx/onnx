@@ -482,15 +482,15 @@ C-style code:
     }
 
     graph body-net (
-      %i[INT32, scalar]
-      %keepgoing[BOOL, scalar]
-      %b[INT32, scalar]
+      %i[INT32, scalar]           // iteration number
+      %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+      %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
     ) {
-      %my_local = Add(%a, %b)
-      %b_out = Sub(%a, %b)
-      %keepgoing_out = Greater(%my_local, %b_out)
-      %user_defined_vals = Add(%b, %b)
-      return %keepgoing_out, %b_out, %user_defined_vals
+      %my_local = Add(%a, %b_in)
+      %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+      %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+      %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+      return %keepgoing_out, %b_out, %user_defined_val
     }
 
 *Sample equivalent C code*
@@ -505,29 +505,49 @@ C-style code:
       const int max_trip_count = 10; // Analogous to input M
       int user_defined_vals[]; // Imagine this is resizable
       /* End implicitly-defined code */
-      for (int i=0; i < max_trip_count && keepgoing; ++i) {
-        /* User-defined code (loop body) */
-        int my_local = a + b; // Reading values in the enclosing scope is fine
-        b = a - b; // writes fine if we specify b as a loop-carried dependency
-        keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-        user_defined_vals[i] = b + b;
-        /* End user-defined code */
-      }
-      // my_local = 123; // Can't do this. my_local was defined in the the body
+      /* initialize loop-carried variables and scan-output variables */
+      bool keepgoing_out = keepgoing
+      int b_out = b
 
-      // These below values are live-out from the loop and therefore accessible
-      b_out; user_defined_vals; keepgoing_out;
+      for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+        /* Implicitly-defined code: bind actual parameter values
+           to formal parameter variables of loop-body */
+        bool keepgoing_in = keepgoing_out; 
+        bool b_in = b_out;
+
+        /* User-defined code (loop body) */
+        int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+        b_out = a - b_in;
+        keepgoing_out = my_local > b_out; 
+        user_defined_val = b_in + b_in; // b_in and b_out are different variables
+        /* End user-defined code */
+
+        /* Implicitly defined-code */
+        user_defined_vals[i] = user_defined_val // accumulate scan-output values
+      }
+      // int t = my_local; // Can't do this. my_local is not accessible here.
+
+      // The values below are bound to the output variables of the loop and therefore accessible
+      // b_out; user_defined_vals; keepgoing_out;
     }
 
 There are several things of note in this code snippet:
 
-1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
    be referenced in the inputs of the loop.
-2) Any variables which you wish to make available in the enclosing scope (i.e.
-   the variables b and keepgoing) must be declared as either loop-carried
-   dependencies (both at the op inputs and output and at the body net input and
-   output) or scan_outputs.
-3) Values created in the body cannot be accessed in the enclosing scope.
+2) Any values computed in the loop body that needs to be used in a subsequent
+   iteration or after the loop are modelled using a pair of variables in the loop-body,
+   consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+   These are referred to as loop-carried dependences. The loop operation node
+   supplies the input value of the input variable for the first iteration, and
+   returns the output value of the output variable produced by the final
+   iteration.
+3) Scan_output variables are used to implicitly concatenate values computed across
+   all the iterations. In the above example, the value of user_defined_val computed
+   over all iterations are concatenated and returned as the value of user_defined_vals
+   after the loop.
+4) Values created in the body cannot be accessed in the enclosing scope,
+   except using the mechanism described above.
 
 Note that the semantics of this op support "diagonal" or "wavefront" execution.
 (See Step 3 here for an example:

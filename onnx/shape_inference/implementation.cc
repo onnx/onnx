@@ -139,6 +139,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
+    bool check_type,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
@@ -214,6 +215,9 @@ static void InferShapesImpl(
 	}
 
     try {
+      if (check_type) {
+        schema->CheckInputOutputType(ctx);
+      }
       for (int i = 0; i < n.output_size(); ++i) {
         const auto* inferredType = ctx.getOutputType(i);
         if (!inferredType->has_tensor_type() &&
@@ -263,17 +267,20 @@ static void InferShapesImpl(
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
+    bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
+      check_type,
       schema_registry);
 }
 
 void InferShapes(
     ModelProto& m,
+    bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   std::unordered_map<std::string, int> opset_imports;
@@ -286,6 +293,7 @@ void InferShapes(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
+      check_type,
       schema_registry);
 }
 
@@ -432,6 +440,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
+      false,
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
