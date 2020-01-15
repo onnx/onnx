@@ -1,6 +1,6 @@
 ## Deprecated Experimental Operators
 
-The following deprecated operators should be removed from models, either substituted with newer superseding operators or decomposed:
+The following experimental operators were deprecated and removed from ONNX. They should be removed from models, either substituted with newer superseding operators or decomposed into functionally equivalent operators:
 
 Old operator        |New Operator
 --------------------|--------------------------
