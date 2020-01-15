@@ -1697,7 +1697,7 @@ void einsumRankInference(
   while(std::getline(str, term, ',')) {
     auto ellipsis_index = term.find("...");
     if (ellipsis_index != std::string::npos) {
-      if (numInputs < num_operands) {
+      if (numInputs =< num_operands) {
         fail_shape_inference("Number of input tensors does not match the operands in the equation.");
       }
       // If there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
