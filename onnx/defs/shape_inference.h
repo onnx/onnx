@@ -318,6 +318,9 @@ inline void propagateShapeFromInputToOutput(
         ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
   }
 
+  if (!hasInputShape(ctx, inputIndex)) {
+    return;
+  }
   *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
       ctx.getInputType(inputIndex)->tensor_type().shape();
 }
