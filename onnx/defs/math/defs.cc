@@ -1697,6 +1697,9 @@ void einsumRankInference(
   while(std::getline(str, term, ',')) {
     auto ellipsis_index = term.find("...");
     if (ellipsis_index != std::string::npos) {
+      if (numInputs < num_operands) {
+        fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+      }
       // If there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
       size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
       if (num_ellipsis == 0) {
@@ -1712,7 +1715,7 @@ void einsumRankInference(
   }
 
   if (numInputs != num_operands) {
-    fail_shape_inference("Number of input tensors does not match the operand in the equation.");
+    fail_shape_inference("Number of input tensors does not match the operands in the equation.");
   }
 
   const size_t number_of_letters = 26;
@@ -1752,7 +1755,7 @@ void einsumRankInference(
 static const char* Einsum_ver12_doc = R"DOC(
 An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
 
-```output = reduce-sum( input1[term1] * input2[term] )```
+```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
 
 where the reduce-sum performs a summation over all the indices occurring in in the input terms (term1, term2)
 that do not occur in the output-term.

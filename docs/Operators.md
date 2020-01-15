@@ -4402,7 +4402,7 @@ expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
 
   An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
   
-  ```output = reduce-sum( input1[term1] * input2[term] )```
+  ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
   
   where the reduce-sum performs a summation over all the indices occurring in in the input terms (term1, term2)
   that do not occur in the output-term.
