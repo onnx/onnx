@@ -138,7 +138,7 @@ The bounding box coordinates corresponding to the selected indices can then be o
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
-    10,
+    11,
     OpSchema()
         .Input(
             0,

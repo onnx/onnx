@@ -211,6 +211,9 @@ class OpSchema final {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
+  // Check if input and output types fall into valid set and match each other
+  void CheckInputOutputType(struct InferenceContext&) const;
+
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
@@ -685,7 +688,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 11);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 12);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 
