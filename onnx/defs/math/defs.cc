@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <functional>
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -1665,4 +1666,107 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* NllLoss_ver12_doc = R"DOC(
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NllLoss,
+    12,
+    OpSchema()
+        .SetDoc(NllLoss_ver12_doc)
+        .Input(0, "input", "Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).", "T")
+        .Input(1, "target", "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).", "Tind")
+        .Input(2, "weight", "Optional rescaling weight tensor. "
+            "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.", "T")
+        .Output(0, "loss", "The negative log likelihood loss", "T")
+        .Attr("reduction",
+            "Type of reduction to apply to loss: none, sum, mean(default). "
+            "'none': the output is the loss for each sample in the batch."
+            "'sum': the output will be summed. "
+            "'mean': the sum of the output will be divided by the batch_size.",
+            AttributeProto::STRING,
+            std::string("mean"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to floating-point tensors.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain labels to integer types")
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            // TODO: function body depends on reduction attribute and avaiablility of weight.
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"input_gather_element"},
+              "GatherElement",
+              {"input", "target"},
+              {MakeAttribute("axis", (int64_t)1)}},
+             {{"neg_input_gather_element"},
+              "Neg",
+              {"input_gather_element"}},
+             {{"weight_gather"},
+              "Gather",
+              {"weight", "target"}},
+             {{"loss"},
+              "Mul",
+             {"neg_input_gather_element", "weight_gather"}}
+            }))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& target_shape = ctx.getInputType(0)->tensor_type().shape();
+
+            const int input_rank = static_cast<int>(input_shape.dim_size());
+            const int target_rank = static_cast<int>(target_shape.dim_size());
+
+            if (input_rank < 2) {
+                fail_shape_inference("Input rank must be >= 2.")
+            }
+            if (target_rank != input_rank - 1) {
+                fail_shape_inference("Target rank must be 1 less than the input rank.")
+            }
+
+            // match input dimensions (N, C, d1, ..., dk) with target dimensions of (C, d1, ..., dk)
+            for (int dim = 0; dim < input_rank; dim++) {
+                const auto input_dim = input_shape.dim(dim);
+                const auto target_dim = dim == 0 ? target_shape.dim(dim) : target_shape.dim(dim + 1); 
+
+                if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
+                    input_dim.dim_value() != target_dim.dim_value())
+                        fail_shape_inference("Input and target dimension value mismatch.")
+            }
+
+            if (ctx.getNumInputs() == 3) {
+                const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+                if (weight_shape.dim_size() != 1)
+                    fail_shape_inference("Weight rank must be 1.")
+                const auto weight_dim = weight_shape.dim(0);
+                const auto input_dim_1 = weight_shape.dim(1);
+                if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
+                    weight_dim.dim_value() != input_dim_1.dim_value())
+                        fail_shape_inference("Input and weight dimension value mismatch.")
+            }
+
+            TensorShapeProto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+            if (ctx.getAttribute("num_scan_inputs")->s() == "none") {
+                // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute is "none".
+                for (int i = 0; i < input_rank - 1; i++) {
+                    auto* dim = output_shape->add_dim();
+                    if (i == 0)
+                        *dim = input_shape.dim(i);
+                    else
+                        *dim = input_shape.dim(i + 1);
+                }
+                    
+            } else  {
+                // otherwise output is of shape (1) i.e. rank 1 tensor with dimension = 1.
+                output_shape->add_dim()->set_dim_value(1);
+            }
+        }}));
 } // namespace ONNX_NAMESPACE
