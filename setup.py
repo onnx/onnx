@@ -41,6 +41,9 @@ extras_require = {}
 # Global variables for controlling the build variant
 ################################################################################
 
+# Default value is set to TRUE\1 to keep the settings same as the current ones.
+# However going forward the recomemded way to is to set this to False\0
+USE_MSVC_STATIC_RUNTIME = bool(os.getenv('USE_MSVC_STATIC_RUNTIME', '1') == '1')
 ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
@@ -173,8 +176,9 @@ class cmake_build(setuptools.Command):
                     # passing python version to window in order to
                     # find python in cmake
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
-                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
                 ])
+                if USE_MSVC_STATIC_RUNTIME:
+                    cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI
                     # TODO: need a better way to determine generator

@@ -8662,7 +8662,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>output (always 2D tensor)</dd>
+<dd>output</dd>
 </dl>
 
 #### Type Constraints
@@ -9735,6 +9735,8 @@ This version of the operator has been available since version 10 of the default 
   and computes the quantized output. Each scale and zero-point pair must have same shape.
   It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
   Each input or output and its related zero point must have same type.
+  When bias is present it must be quantized using scale = input scale * weight scale and 
+  zero point as 0.
 
 #### Version
 
@@ -9777,7 +9779,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>y_zero_point</tt> : T3</dt>
 <dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>B</tt> (optional) : T4</dt>
-<dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
+<dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
 </dl>
 
 #### Outputs
@@ -10284,8 +10286,8 @@ This version of the operator has been deprecated since version 10 of the default
 ### <a name="ArgMax-11"></a>**ArgMax-11**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
 #### Version
@@ -10325,8 +10327,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMin-11"></a>**ArgMin-11**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
 #### Version
@@ -11630,15 +11632,15 @@ This version of the operator has been available since version 11 of the default 
       }
   
       graph body-net (
-        %i[INT32, scalar]
-        %keepgoing[BOOL, scalar]
-        %b[INT32, scalar]
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
       ) {
-        %my_local = Add(%a, %b)
-        %b_out = Sub(%a, %b)
-        %keepgoing_out = Greater(%my_local, %b_out)
-        %user_defined_vals = Add(%b, %b)
-        return %keepgoing_out, %b_out, %user_defined_vals
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
       }
   
   *Sample equivalent C code*
@@ -11653,29 +11655,49 @@ This version of the operator has been available since version 11 of the default 
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
         /* End implicitly-defined code */
-        for (int i=0; i < max_trip_count && keepgoing; ++i) {
-          /* User-defined code (loop body) */
-          int my_local = a + b; // Reading values in the enclosing scope is fine
-          b = a - b; // writes fine if we specify b as a loop-carried dependency
-          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-          user_defined_vals[i] = b + b;
-          /* End user-defined code */
-        }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
   
-        // These below values are live-out from the loop and therefore accessible
-        b_out; user_defined_vals; keepgoing_out;
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out; 
+          bool b_in = b_out;
+  
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out; 
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+  
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+  
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
       }
   
   There are several things of note in this code snippet:
   
-  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
-  2) Any variables which you wish to make available in the enclosing scope (i.e.
-     the variables b and keepgoing) must be declared as either loop-carried
-     dependencies (both at the op inputs and output and at the body net input and
-     output) or scan_outputs.
-  3) Values created in the body cannot be accessed in the enclosing scope.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
   
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
@@ -13378,11 +13400,13 @@ This version of the operator has been available since version 11 of the default 
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represent number of elements before the end of that
+  start or end indices, it represents number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
-  If a negative value is passed for step, it represents slicing backward.
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+  when sclicing forward and 'INT_MIN' when slicing backward.
+  If a negative value is passed for step, it represents slicing backward. 
+  However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
   Example 1:
@@ -13424,7 +13448,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> (optional) : Tind</dt>
 <dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>steps</tt> (optional) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Default to 1. </dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
@@ -13846,5 +13870,264 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+## Version 12 of the default ONNX operator set
+### <a name="ArgMax-12"></a>**ArgMax-12**</a>
+
+  Computes the indices of the max elements of the input tensor's element along the 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+  If select_last_index is True (default False), the index of the last occurence of the max 
+  is selected if the max appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
+  The type of the output tensor is integer.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>select_last_index</tt> : int (default is 0)</dt>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dd>Reduced output tensor with integer data type.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+### <a name="ArgMin-12"></a>**ArgMin-12**</a>
+
+  Computes the indices of the min elements of the input tensor's element along the 
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+  If select_last_index is True (default False), the index of the last occurence of the min 
+  is selected if the min appears more than once in the input. Otherwise the index of the 
+  first occurence is selected.
+  The type of the output tensor is integer.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>select_last_index</tt> : int (default is 0)</dt>
+<dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dd>Reduced output tensor with integer data type.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+### <a name="MaxPool-12"></a>**MaxPool-12**</a>
+
+  MaxPool consumes an input tensor X and applies max pooling across
+   the tensor according to kernel sizes, stride sizes, and pad lengths.
+   max pooling consisting of computing the max on all values of a
+   subset of the input tensor according to the kernel size and downsampling the
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled
+  
+   ```
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+   ```
+   The output of each pooling window is maximum number of elements exclude pad. 
+   
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>storage_order</tt> : int (default is 0)</dt>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+<dt><tt>Indices</tt> (optional) : I</dt>
+<dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input and output types to float and 8 bit tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
+
+  Computes the max of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+</dl>
+
+### <a name="ReduceMin-12"></a>**ReduceMin-12**</a>
+
+  Computes the min of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 

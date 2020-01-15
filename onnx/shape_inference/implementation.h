@@ -184,12 +184,14 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
+    bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
+    bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
 

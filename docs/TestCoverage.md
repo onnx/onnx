@@ -211,7 +211,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### ArgMax
-There are 4 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -232,6 +232,30 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmax_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+```
+
+</details>
+<details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -260,6 +284,31 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random'
 
 </details>
 <details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random_select_last_index')
+```
+
+</details>
+<details>
 <summary>negative_axis_keepdims</summary>
 
 ```python
@@ -280,6 +329,31 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 3, 1]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random')
+```
+
+</details>
+<details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_negative_axis_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -307,10 +381,35 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 ```
 
 </details>
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 1]]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random_select_last_index')
+```
+
+</details>
 
 
 ### ArgMin
-There are 4 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -331,6 +430,30 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [1, 3, 4]
 result = argmin_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+<details>
+<summary>default_axes_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims,
+    select_last_index=True)
+
+# result: [[0, 0]]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy_select_last_index(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random_select_last_index')
 ```
 
 </details>
@@ -359,6 +482,31 @@ expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random'
 
 </details>
 <details>
+<summary>keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random_select_last_index')
+```
+
+</details>
+<details>
 <summary>negative_axis_keepdims</summary>
 
 ```python
@@ -383,6 +531,31 @@ expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_ke
 
 </details>
 <details>
+<summary>negative_axis_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = -1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1], [0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 3, 1]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_negative_axis_keepdims_random_select_last_index')
+```
+
+</details>
+<details>
 <summary>no_keepdims</summary>
 
 ```python
@@ -403,6 +576,31 @@ data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
 # result's shape: [2, 4]
 result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
+<details>
+<summary>no_keepdims_select_last_index</summary>
+
+```python
+data = np.array([[2, 2], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims,
+    select_last_index=True)
+# result: [[1, 0]]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example_select_last_index')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random_select_last_index')
 ```
 
 </details>
@@ -4135,7 +4333,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MaxPool
-There are 14 test cases, listed as following:
+There are 15 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -4467,6 +4665,40 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
+```
+
+</details>
+<details>
+<summary>maxpool_2d_uint8</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.uint8)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.uint8)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
 ```
 
 </details>
@@ -8115,7 +8347,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='half_pixel'
+    coordinate_transformation_mode='half_pixel',
+    nearest_mode='ceil'
 )
 
 data = np.array([[[
@@ -8154,7 +8387,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='align_corners'
+    coordinate_transformation_mode='align_corners',
+    nearest_mode='floor'
 )
 
 data = np.array([[[
@@ -8193,7 +8427,8 @@ node = onnx.helper.make_node(
     inputs=['X', 'roi', 'scales', 'sizes'],
     outputs=['Y'],
     mode='nearest',
-    coordinate_transformation_mode='asymmetric'
+    coordinate_transformation_mode='asymmetric',
+    nearest_mode='round_prefer_ceil'
 )
 
 data = np.array([[[
@@ -10233,8 +10468,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 argsorted_indices = np.argsort(indices)
 inverse_indices_map = {i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))}
 
-y = np.take(x, indices, axis=0)
 indices = indices[argsorted_indices]
+y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
 # print(y)
