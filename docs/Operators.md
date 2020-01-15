@@ -379,7 +379,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Add"></a><a name="add">**Add**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -456,7 +456,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
   Returns the tensor resulted from performing the `and` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -1338,11 +1338,11 @@ expect(node, inputs=[x], outputs=[y],
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -1353,7 +1353,7 @@ expect(node, inputs=[x], outputs=[y],
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-   
+
 
 #### Version
 
@@ -1834,10 +1834,10 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
   there are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-  
+
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -1962,7 +1962,11 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
    Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
    and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
    X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
    Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
    not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -2178,7 +2182,7 @@ expect(node, inputs=[x, y], outputs=[z],
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  
+
   Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
   (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
   result 100. There are some string literals reserved for special floating-point values;
@@ -2188,7 +2192,7 @@ expect(node, inputs=[x, y], outputs=[z],
   to string tensors, plain floating-point representation (such as "314.15926") would be used.
   Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
   of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
-  
+
   Conversion from a numerical type to any numerical type is always allowed.
   User must be aware of precision loss and value change caused by range difference between two types.
   For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
@@ -2383,7 +2387,11 @@ expect(node, inputs=[x], outputs=[y],
   Continuously Differentiable Exponential Linear Units:
   Perform the linear unit element-wise on the input tensor X
   using formula:
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   ```
   max(0,x) + min(0,alpha*(exp(x/alpha)-1))
   ```
@@ -2637,7 +2645,7 @@ expect(node, inputs=[x], outputs=[y],
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
       In case axis is not provided, input is flattened before elements are selected.
       Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-      
+
 
 #### Version
 
@@ -3388,18 +3396,18 @@ expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_wi
 
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
-  
+
   If the pads parameter is provided the shape of the output is calculated via the following equation:
-  
+
     output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
-  
+
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
-  
+
     total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
-  
-      
+
+
 
 #### Version
 
@@ -3907,7 +3915,7 @@ expect(node, inputs=[x], outputs=[y],
   By default, it will do the sum inclusively meaning the first element is copied as is.
   Through an `exclusive` attribute, this behavior can change to exclude the first element.
   It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
-  
+
   Example:
   ```
   input_x = [1, 2, 3]
@@ -3922,7 +3930,7 @@ expect(node, inputs=[x], outputs=[y],
   reverse=1
   output = [5, 3, 0]
   ```
-   
+
 
 #### Version
 
@@ -4112,27 +4120,27 @@ expect(node, inputs=[x, axis], outputs=[y],
   and width dimensions. By default, `mode` = `DCR`.
   In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: depth, column, and then row. The output y is computed from the input x as below:
-  
+
   b, c, h, w = x.shape
-  
+
   tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-  
+
   tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-  
+
   y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-  
-  
+
+
   In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: column, row, and the depth. The output y is computed from the input x as below:
-  
+
   b, c, h, w = x.shape
-  
+
   tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-  
+
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-  
+
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-  
+
 
 #### Version
 
@@ -4443,7 +4451,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Div"></a><a name="div">**Div**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -4950,24 +4958,24 @@ expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
 ### <a name="Einsum"></a><a name="einsum">**Einsum**</a>
 
   An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
-  
+
   ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
-  
+
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
   that do not occur in the output-term.
-  
+
   The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
   convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
   an operand tensor, and the characters within the terms correspond to operands dimensions.
-  
+
   This sequence may be followed by "->" to separate the left and right hand side of the equation.
   If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
   summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
   output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
   equation.
-  
+
   When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
-  
+
   The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
   Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
   The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
@@ -5120,7 +5128,7 @@ expect(node, inputs=[X], outputs=[Y], name='test_einsum_transpose')
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-  
+
 
 #### Version
 
@@ -5208,7 +5216,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -5783,75 +5791,75 @@ expect(node, inputs=[x], outputs=[y],
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `z` - update gate
-  
+
   `r` - reset gate
-  
+
   `h` - hidden gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-  
+
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-  
+
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-  
+
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-  
+
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-  
+
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-  
+
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-  
+
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh):
-  
+
     - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-  
+
     - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-  
+
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -6021,14 +6029,14 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  
+
   axis = 0 :
-  
+
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
   output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
-  
+
   ```
     data = [
         [1.0, 1.2],
@@ -6051,12 +6059,12 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
     ]
   ```
   axis = 1 :
-  
+
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
   output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
-  
+
   ```
     data = [
         [1.0, 1.2, 1.9],
@@ -6208,7 +6216,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   positions determined by elements of the `indices` tensor.
   Its output shape is the same as the shape of `indices` and consists of one value
   (gathered from the `data`) for each element in `indices`.
-  
+
   For instance, in the 3-D case (r = 3), the output produced is determined
   by the following equations:
   ```
@@ -6216,9 +6224,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
     out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
   ```
-  
+
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
-  
+
   Example 1:
   ```
     data = [
@@ -6388,6 +6396,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
+<<<<<<< HEAD
   
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
   where each element defines a slice of `data`
@@ -6397,86 +6406,126 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   Some salient points about the inputs' rank and shape:
   
+=======
+
+  `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
+  where each element defines a slice of `data`
+
+  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
+  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
+
+  Some salient points about the inputs' rank and shape:
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
-  
+
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
-  
+
   3) b < min(q, r) is to be honored.
+<<<<<<< HEAD
   
   4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
   
+=======
+
+  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
-  
+
   The output is computed as follows:
-  
+
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   1) If `indices_shape[-1] > r-b` => error condition
-  
+
   2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
      containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
      of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
      is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-  
+
   3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
      containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
      to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
      to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-  
+
   This operator is the inverse of `ScatterND`.
-  
+
   `Example 1`
-  
+
     batch_dims = 0
-  
+
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
-  
+
     indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-  
+
     output  = [0,3]           # output_shape = [2]
-  
+
   `Example 2`
-  
+
     batch_dims = 0
-  
+
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
-  
+
     indices = [[1],[0]]      # indices_shape = [2, 1]
-  
+
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-  
+
   `Example 3`
-  
+
     batch_dims = 0
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+<<<<<<< HEAD
   
     output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
   
+=======
+
+    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   `Example 4`
-  
+
     batch_dims = 0
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+<<<<<<< HEAD
   
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
   
+=======
+
+    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   `Example 5`
-  
+
     batch_dims = 1
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[1],[0]]             # indices_shape = [2, 1]
+<<<<<<< HEAD
   
     output  = [[2,3],[4,5]]             # output_shape = [2, 2]
   
   
+=======
+
+    output  = [[2,3],[4,5]]             # output_shape = [2, 2]
+
+
+>>>>>>> Add 'allowzero' flag to reshape operator
 
 #### Version
 
@@ -6588,11 +6637,11 @@ expect(node, inputs=[data, indices], outputs=[output],
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  
+
   A' = transpose(A) if transA else A
-  
+
   B' = transpose(B) if transB else B
-  
+
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
   and output tensor Y has shape (M, N). A will be transposed before doing the
@@ -7072,7 +7121,7 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7193,7 +7242,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Returns the tensor resulted from performing the `greater_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7320,9 +7369,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
   The operator computes the hardmax values for the given input:
-  
+
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
-  
+
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which Hardmax will be performed.
   The output tensor has the same shape
@@ -7693,10 +7742,10 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if_seq',
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
-  
+
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
   where mean and variance are computed per instance per channel.
-  
+
 
 #### Version
 
@@ -7951,10 +8000,10 @@ expect(node, inputs=[x], outputs=[y], name='test_isnan')
   The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
   of shape (N x C x D1 x D2, ..., Dk), its region is
   {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
-  
+
   square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
   where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
-  
+
   Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
 #### Version
@@ -8065,83 +8114,83 @@ expect(node, inputs=[x], outputs=[y],
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `o` - output gate
-  
+
   `f` - forget gate
-  
+
   `c` - cell gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-  
+
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-  
+
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-  
+
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-  
+
   `P[iof]`  - P peephole weight vector for input, output, and forget gates
-  
+
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-  
+
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-  
+
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-  
+
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-  
+
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
-  
+
     - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-  
+
     - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-  
+
     - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-  
+
     - Ct = ft (.) Ct-1 + it (.) ct
-  
+
     - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-  
+
     - Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -8407,7 +8456,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -8528,7 +8577,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Returns the tensor resulted from performing the `less_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -8622,9 +8671,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the log of softmax values for the given input:
-  
+
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
-  
+
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which LogSoftmax will be performed.
   The output tensor has the same shape
@@ -8767,7 +8816,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Loop"></a><a name="loop">**Loop**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
-  
+
   1) Trip count. Iteration count specified at runtime. Set by
      specifying the input M. Optional. Set to empty string to omit.
      Note that a static trip count (specified at graph construction time) can be
@@ -8776,45 +8825,45 @@ expect(node, inputs=[x], outputs=[y],
      whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
-  
+
   This table summarizes the operating modes of this operator with equivalent
   C-style code:
-  
+
       Operator inputs defined as (max_trip_count, condition_var).
-  
+
       input ("", ""):
           for (int i=0; ; ++i) {
             cond = ... // Note this value is ignored, but is required in the body
           }
-  
+
       input ("", cond) // Note this is analogous to a while loop
           bool cond = ...;
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input ("", 1) // Note this is analogous to a do-while loop
           bool cond = true
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input (trip_count, "") // Note this is analogous to a for loop
           int trip_count = ...
           for (int i=0; i < trip_count; ++i) {
             cond = ...; // ignored
           }
-  
+
       input (trip_count, cond)
           int trip_count = ...;
           bool cond = ...;
           for (int i=0; i < trip_count && cond; ++i) {
             cond = ...;
           }
-  
-  
+
+
   *Sample usage - cond as well as trip count*
-  
+
       graph predict-net {
         %a = Constant[value = <Scalar Tensor [3]>]()
         %b = Constant[value = <Scalar Tensor [6]>]()
@@ -8823,7 +8872,7 @@ expect(node, inputs=[x], outputs=[y],
         %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
         return
       }
-  
+
       graph body-net (
         %i[INT32, scalar]           // iteration number
         %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
@@ -8835,15 +8884,15 @@ expect(node, inputs=[x], outputs=[y],
         %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
         return %keepgoing_out, %b_out, %user_defined_val
       }
-  
+
   *Sample equivalent C code*
-  
+
       {
         /* User-defined code (enclosing scope) */
         int a = 3, b = 6;
         bool keepgoing = true; // Analogous to input cond
         /* End user-defined code */
-  
+
         /* Implicitly-defined code */
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
@@ -8851,31 +8900,31 @@ expect(node, inputs=[x], outputs=[y],
         /* initialize loop-carried variables and scan-output variables */
         bool keepgoing_out = keepgoing
         int b_out = b
-  
+
         for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
           /* Implicitly-defined code: bind actual parameter values
              to formal parameter variables of loop-body */
           bool keepgoing_in = keepgoing_out;
           bool b_in = b_out;
-  
+
           /* User-defined code (loop body) */
           int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
           b_out = a - b_in;
           keepgoing_out = my_local > b_out;
           user_defined_val = b_in + b_in; // b_in and b_out are different variables
           /* End user-defined code */
-  
+
           /* Implicitly defined-code */
           user_defined_vals[i] = user_defined_val // accumulate scan-output values
         }
         // int t = my_local; // Can't do this. my_local is not accessible here.
-  
+
         // The values below are bound to the output variables of the loop and therefore accessible
         // b_out; user_defined_vals; keepgoing_out;
       }
-  
+
   There are several things of note in this code snippet:
-  
+
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
@@ -8891,7 +8940,7 @@ expect(node, inputs=[x], outputs=[y],
      after the loop.
   4) Values created in the body cannot be accessed in the enclosing scope,
      except using the mechanism described above.
-  
+
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
   https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
@@ -8899,7 +8948,7 @@ expect(node, inputs=[x], outputs=[y],
   time being the inner looping dimension), with each successive layer consuming
   the scan_outputs from the previous layer, possibly going through several
   point-wise operators (e.g. dropout, residual connections, linear layer).
-  
+
   The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
 
 #### Version
@@ -9527,11 +9576,11 @@ for op_dtype in all_numeric_dtypes:
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
@@ -9541,8 +9590,8 @@ for op_dtype in all_numeric_dtypes:
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
-   The output of each pooling window is maximum number of elements exclude pad. 
-   
+   The output of each pooling window is maximum number of elements exclude pad.
+
 
 #### Version
 
@@ -10144,15 +10193,15 @@ This version of the operator has been available since version 1 of the default O
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
-  
+
   MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
    values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
    the result of an unpooling operation should give back the original input to the unpooling op.
-  
+
   MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
    The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
    known/predictable size.
-  
+
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
    which define the exact unpooling op. The attributes typically have the same values as the corrsponding
    pooling op that the unpooling op is trying to invert.
@@ -10503,16 +10552,24 @@ for op_dtype in all_numeric_dtypes:
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
       The sign of the remainder is the same as that of the Divisor.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
       Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
       (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
       This attribute is set to 0 by default causing the behavior to be like integer mod.
       Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
-  
+
       If the input type is floating point, then `fmod` attribute must be set to 1.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
       In case of dividend being zero, the results will be platform dependent.
-  
+
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -10830,7 +10887,7 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="Mul"></a><a name="mul">**Mul**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -11023,51 +11080,55 @@ expect(node, inputs=[x], outputs=[y],
   The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
   or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
   The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
-  
+
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
-  
+
   When an optional "weight" is provided, the sample loss is calculated as:
-  
+
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
-  
+
   loss is zero for the case when target-value equals ignore_index.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
       loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
-  
+
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
-  
+
       mean(loss), if "weight" is not provided,
-  
+
   or if weight is provided,
-  
+
       sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
-  
+
   If "reduction" attribute is set to "sum", the output is a scalar:
       sum(loss).
-  
+
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
-  
+
   Example 1:
-  
+
       // negative log likelihood loss, "none" reduction
       N, C, d1 = 2, 3, 2
       input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
                [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
-  
+
       loss = np.zeros((N, d1))
       for n in range(N):
           for d_1 in range(d1):
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1]
-  
+
       // print(loss)
       // [[-3. -2.]
       //  [-0. -2.]]
-  
+
   Example 2:
-  
+
       // weighted negative log likelihood loss, sum reduction
       N, C, d1 = 2, 3, 2
       input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
@@ -11079,13 +11140,13 @@ expect(node, inputs=[x], outputs=[y],
           for d_1 in range(d1):
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
-  
+
       loss = np.sum(loss)
       // print(loss)
       // -1.1
-  
+
   Example 3:
-  
+
       // weighted negative log likelihood loss, mean reduction
       N, C, d1 = 2, 3, 2
       input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
@@ -11099,7 +11160,7 @@ expect(node, inputs=[x], outputs=[y],
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
               weight_total = weight_total + weight[c]
-  
+
       loss = np.sum(loss) / weight_total
       // print(loss)
       // -1.57
@@ -12113,13 +12174,13 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
       the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
       output tensor.
-  
+
       when axis = 0:
       output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
-  
+
       when axis = -1:
       output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-  
+
 
 #### Version
 
@@ -12271,7 +12332,7 @@ expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_wit
 
   Returns the tensor resulted from performing the `or` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -12477,40 +12538,52 @@ expect(node, inputs=[x, slope], outputs=[y],
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
-  
+
   The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
-  
+
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
-  
+
   2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
-  
+
   3) `edge` - pads with the edge values of array
-  
-  
+
+
   Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     data =
     [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     pads = [0, 2, 0, 0]
-  
+
     mode = 'constant'
-  
+
     constant_value = 0.0
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     output =
     [
         [0.0, 0.0, 1.0, 1.2],
         [0.0, 0.0, 2.3, 3.4],
         [0.0, 0.0, 4.5, 5.7],
     ]
-  
-  
+
+
   Example 2 (`reflect` mode):
     data =
     [
@@ -12518,19 +12591,27 @@ expect(node, inputs=[x, slope], outputs=[y],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     pads = [0, 2, 0, 0]
-  
+
     mode = 'reflect'
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     output =
     [
         [1.0, 1.2, 1.0, 1.2],
         [2.3, 3.4, 2.3, 3.4],
         [4.5, 5.7, 4.5, 5.7],
     ]
-  
-  
+
+
   Example 3 (`edge` mode):
     data =
     [
@@ -12538,18 +12619,26 @@ expect(node, inputs=[x, slope], outputs=[y],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     pads = [0, 2, 0, 0]
-  
+
     mode = 'edge'
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     output =
     [
         [1.0, 1.0, 1.0, 1.2],
         [2.3, 2.3, 2.3, 3.4],
         [4.5, 4.5, 4.5, 5.7],
     ]
-  
+
 
 #### Version
 
@@ -13154,63 +13243,63 @@ expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `Wi` - W parameter weight matrix for input gate
-  
+
   `Ri` - R recurrence weight matrix for input gate
-  
+
   `Wbi` - W parameter bias vector for input gate
-  
+
   `Rbi` - R parameter bias vector for input gate
-  
+
   `WBi` - W parameter weight matrix for backward input gate
-  
+
   `RBi` - R recurrence weight matrix for backward input gate
-  
+
   `WBbi` - WR bias vectors for backward input gate
-  
+
   `RBbi` - RR bias vectors for backward input gate
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Tanh):
-  
+
     - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -13376,7 +13465,7 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is specified by the `shape` argument and the parameter of the normal distribution
   specified by `mean` and `scale`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -13423,7 +13512,7 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a normal distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the normal distribution are specified by `mean` and `scale`.
-  
+
   The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message, and be valid as an output type.
@@ -13473,7 +13562,7 @@ This version of the operator has been available since version 1 of the default O
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is specified by the `shape` argument and the range by `low` and `high`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -13520,7 +13609,7 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a uniform distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the uniform distribution are specified by `low` and `high`.
-  
+
   The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
@@ -13570,29 +13659,29 @@ This version of the operator has been available since version 1 of the default O
 
   Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
-  
+
   The number of elements in the output of range is computed as below-
-  
+
   `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
-  
+
   The pseudocode determining the contents of the output is shown below-
-  
+
   `for(int i=0; i<number_of_elements; ++i)`
-  
+
   `{`
-  
+
   `    output[i] =  start + (i * delta);  `
-  
+
   `}`
-  
+
   `Example 1`
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
-  
+
   `Example 2`
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
-  
+
 
 #### Version
 
@@ -13735,7 +13824,7 @@ expect(node, inputs=[x], outputs=[y],
   Computes the L1 norm of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -13934,7 +14023,7 @@ expect(node, inputs=[data], outputs=[reduced],
   Computes the L2 norm of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -14146,7 +14235,7 @@ expect(node, inputs=[data], outputs=[reduced],
   Computes the log sum of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -14264,7 +14353,7 @@ expect(node, inputs=[data], outputs=[reduced],
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -14475,7 +14564,7 @@ expect(node, inputs=[data], outputs=[reduced],
   Computes the max of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -14655,7 +14744,7 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_ax
   Computes the mean of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -14836,7 +14925,7 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_a
   Computes the min of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -15015,7 +15104,7 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_ax
   Computes the product of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -15192,7 +15281,7 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_a
   Computes the sum of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -15271,10 +15360,20 @@ expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_defau
 <details>
 <summary>do_not_keepdims</summary>
 
+<<<<<<< HEAD
 ```python
 shape = [3, 2, 2]
 axes = np.array([1], dtype=np.int64)
 keepdims = 0
+=======
+  Reshape the input tensor similar to numpy.reshape.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
+  At most one dimension of the new shape can be -1. In this case, the value is
+  inferred from the size of the tensor and the remaining dimensions. A dimension
+  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
+  from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
+  dimension will be set explicitly to zero (i.e. not taken from input tensor)
+>>>>>>> Add 'allowzero' flag to reshape operator
 
 node = onnx.helper.make_node(
     'ReduceSum',
@@ -15282,6 +15381,7 @@ node = onnx.helper.make_node(
     outputs=['reduced'],
     keepdims=keepdims)
 
+<<<<<<< HEAD
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
 reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 #print(reduced)
@@ -15290,6 +15390,18 @@ reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 # [20., 22.]]
 
 expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_example')
+=======
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>, <a href="Changelog.md#Reshape-5">Reshape-5</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>allowzero</tt> : int (default is 0)</dt>
+<dd>(Optional) By default, when any output dimension is equal to zero the desired dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any output dimension value is set to zero, the zero value is honored, similar to NumPy.</dd>
+</dl>
+>>>>>>> Add 'allowzero' flag to reshape operator
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
@@ -15408,7 +15520,7 @@ expect(node, inputs=[data, axes], outputs=[reduced],
   Computes the sum square of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
@@ -16645,11 +16757,11 @@ expect(node, inputs=[data, sizes], outputs=[output],
 ### <a name="ReverseSequence"></a><a name="reversesequence">**ReverseSequence**</a>
 
   Reverse batch of sequences having different lengths specified by `sequence_lens`.
-  
+
   For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
   and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
   sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
-  
+
   Example 1:
     input = [[0.0, 4.0, 8.0,  12.0],
              [1.0, 5.0, 9.0,  13.0],
@@ -16658,12 +16770,12 @@ expect(node, inputs=[data, sizes], outputs=[output],
     sequence_lens = [4, 3, 2, 1]
     time_axis = 0
     batch_axis = 1
-  
+
     output = [[3.0, 6.0, 9.0,  12.0],
               [2.0, 5.0, 8.0,  13.0],
               [1.0, 4.0, 10.0, 14.0],
               [0.0, 7.0, 11.0, 15.0]]
-  
+
   Example 2:
     input = [[0.0,  1.0,  2.0,  3.0 ],
              [4.0,  5.0,  6.0,  7.0 ],
@@ -16672,7 +16784,7 @@ expect(node, inputs=[data, sizes], outputs=[output],
     sequence_lens = [1, 2, 3, 4]
     time_axis = 1
     batch_axis = 0
-  
+
     output = [[0.0,  1.0,  2.0,  3.0 ],
               [5.0,  4.0,  6.0,  7.0 ],
               [10.0, 9.0,  8.0,  11.0],
@@ -16782,7 +16894,7 @@ expect(node, inputs=[x, sequence_lens], outputs=[y],
   RoiAlign consumes an input tensor X and region of interests (rois)
   to apply pooling across each RoI; it produces a 4-D tensor of shape
   (num_rois, C, output_height, output_width).
-  
+
   RoiAlign is proposed to avoid the misalignment by removing
   quantizations while converting from original image into feature
   map and from feature map into RoI feature; in each ROI bin,
@@ -17029,7 +17141,7 @@ expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign")
   it finds the nearest integer for each value.
   In case of halfs, the rule is to round them to the nearest even integer.
   The output tensor has the same shape and type as the input.
-  
+
   Examples:
   ```
   round([0.9]) = [1.0]
@@ -17102,7 +17214,7 @@ expect(node, inputs=[x], outputs=[y],
   Many common usages involve a single scan_input tensor (where functionality
   similar to scan, fold and map can be obtained). When more than one scan_input is used,
   a behavior similar to zip is obtained.
-  
+
   The attribute body must be a graph, specifying the computation to be performed in
   every iteration. It takes as input the current values of the state_variables and
   the current iterated element of the scan_inputs. It must return the (updated) values
@@ -17112,59 +17224,59 @@ expect(node, inputs=[x], outputs=[y],
   hidden-state values of RNN-like constructs). All the output tensors (state_variables as
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
-  
+
   Note that the iterated element passed to the body subgraph does not have a sequence
   axis. It will have a rank one less than the rank of the corresponding scan_input.
-  
+
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
-  
+
   The optional attribute scan_input_directions specifies the direction (forward or backward)
   for each scan input. If this attribute is omitted, all sequences are scanned in the forward
   direction. A bidirectional scan may be performed by specifying the same tensor input twice
   in the scan_inputs, once with a forward direction, and once with a backward direction.
-  
+
   The scan_output of the operation is produced by concatenating the scan_output_element
   values produced by the body in each iteration.  The optional attribute scan_output_directions
   specifies the direction in which scan_output is constructed (by appending or prepending the
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
-  
+
   The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
-  
+
   The optional attribute scan_output_axes specifies the axis along which the scan_outputs
   are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
   scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
   value of 1.
-  
+
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
   Similarly, the final-states and scan-outputs are listed together as one output parameter.
   The attribute num_scan_inputs indicates the number M of scan-inputs.
-  
+
   The behavior of
-  
+
       Scan <
           num_scan_inputs = m,
           body = loop-body,
           scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
-  
+
   is equivalent to the following pseudo-code:
-  
+
       // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
       // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
       sequence_length = scan_1.shape[axis_1];
-  
+
       // initialize state-variables
       st_1 = init_1; ... st_n = init_n;
       // initialize scan-output variables: [] denotes an empty tensor
       scan_out_1 = []; ...; scan_out_k = [];
       // identify number of iterations:
-  
+
       // execute loop
       for (int t = 0; t < sequence_length; ++t) {
           // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
@@ -17177,24 +17289,24 @@ expect(node, inputs=[x], outputs=[y],
           // accumulate the scan-output elements
           scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
       }
-  
+
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
-  
+
   *Sample usage: Encoding RNN using a Scan*
-  
+
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
   %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
   values are computed in the outer graph, they need to be passed in as extra state_variables.
-  
+
       graph rnn-encoding {
         %H_0 = ...
         %X = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
         return %Y, %Y_h
       }
-  
+
       graph rnn-cell-1 (
         %H_tminus1[FLOAT, tensor]
         %X_t[FLOAT, tensor]
@@ -17212,7 +17324,7 @@ expect(node, inputs=[x], outputs=[y],
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-  
+
 
 #### Version
 
@@ -17371,29 +17483,29 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 ### <a name="Scatter"></a><a name="scatter">**Scatter** (deprecated)</a>
 
   This operator is deprecated. Please use ScatterElements, which provides the same functionality.
-  
+
   Scatter takes three inputs `data`, `updates`, and `indices` of the same
   rank r >= 1 and an optional attribute axis that identifies an axis of `data`
   (by default, the outer-most axis, that is axis 0). The output of the operation
   is produced by creating a copy of the input `data`, and then updating its value
   to values specified by `updates` at specific index positions specified by
   `indices`. Its output shape is the same as the shape of `data`.
-  
+
   For each entry in `updates`, the target index in `data` is obtained by combining
   the corresponding entry in `indices` with the index of the entry itself: the
   index-value for dimension = axis is obtained from the value of the corresponding
   entry in `indices` and the index-value for dimension != axis is obtained from the
   index of the entry itself.
-  
+
   For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
   is performed as below:
   ```
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  
+
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
+
   Example 1:
   ```
     data = [
@@ -17493,22 +17605,22 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
   is produced by creating a copy of the input `data`, and then updating its value
   to values specified by `updates` at specific index positions specified by
   `indices`. Its output shape is the same as the shape of `data`.
-  
+
   For each entry in `updates`, the target index in `data` is obtained by combining
   the corresponding entry in `indices` with the index of the entry itself: the
   index-value for dimension = axis is obtained from the value of the corresponding
   entry in `indices` and the index-value for dimension != axis is obtained from the
   index of the entry itself.
-  
+
   For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
   is performed as below:
   ```
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  
+
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
+
   Example 1:
   ```
     data = [
@@ -17668,13 +17780,13 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
   specified by `updates` at specific index positions specified by `indices`. Its output shape
   is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
   That is, two or more `updates` for the same index-location is not supported.
-  
+
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
   update to a slice of the tensor.
-  
+
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
   The remaining dimensions of `updates` correspond to the dimensions of the
@@ -17682,20 +17794,20 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
   must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
   of shapes.
-  
+
   The `output` is calculated via the following equation:
-  
+
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
           output[indices[idx]] = updates[idx]
-  
+
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
   This ensures that the output value does not depend on the iteration order.
-  
+
   This operator is the inverse of GatherND.
-  
+
   Example 1:
   ```
     data    = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -17703,7 +17815,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
     updates = [9, 10, 11, 12]
     output  = [1, 11, 3, 10, 9, 6, 7, 12]
   ```
-  
+
   Example 2:
   ```
     data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
@@ -18843,9 +18955,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the normalized exponential values for the given input:
-  
-   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
-  
+
+   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1)
+
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which Softmax will be performed.
   The output tensor has the same shape
@@ -18993,25 +19105,25 @@ expect(node, inputs=[x], outputs=[y],
   If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
   the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
   After L is available, this operator can optionally do a reduction operator.
-  
+
   shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
   shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
-  
+
   The loss for one sample, l_i, can caculated as follows:
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
-  
+
   loss is zero for the case when label-value equals ignore_index.
       l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
-  
+
   where:
       p = Softmax(scores)
       y = Log(p)
       c = labels[i][d1][d2]...[dk]
-  
+
   Finally, L is optionally reduced:
   If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
   If reduction = 'sum', the output is scalar: Sum(L).
@@ -20778,7 +20890,7 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwo
 ### <a name="Sub"></a><a name="sub">**Sub**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -21053,7 +21165,7 @@ expect(node, inputs=[x], outputs=[y],
   For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
   More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
   If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
-  
+
   In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
   sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
   If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
@@ -21061,18 +21173,18 @@ expect(node, inputs=[x], outputs=[y],
   The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
   If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
   indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
-  
+
   The output vector (denoted by Y) stores the count of each n-gram;
   Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
   between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
   ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
   respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
   Note that we may consider all skips up to S when generating the n-grams.
-  
+
   The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
   the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
   this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
-  
+
   Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
   If pool_strings is set, the input must be a string tensor.
 
@@ -21524,11 +21636,11 @@ expect(node,
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
+
   If "largest" is 1 (the default value) then the k largest elements are returned.
   If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
   If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
-  
+
   Given two equivalent values, this operator uses the indices along the axis as
    a tiebreaker. That is, the element with the lower index will appear first.
 
@@ -21788,17 +21900,27 @@ expect(node, inputs=[data], outputs=[transposed],
 
   Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
   Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
   The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
   The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
+<<<<<<< HEAD
   
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
   
+=======
+
+  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
+
+>>>>>>> Add 'allowzero' flag to reshape operator
   https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
-  
+
   Example 1:
     input_X = [2, 1, 1, 3, 4, 3]
     attribute_sorted = 0
@@ -21807,7 +21929,7 @@ expect(node, inputs=[data], outputs=[transposed],
     output_indices = [0, 1, 3, 4]
     output_inverse_indices = [0, 1, 1, 2, 3, 2]
     output_counts = [1, 2, 2, 1]
-  
+
   Example 2:
     input_X = [[1, 3], [2, 3]]
     attribute_sorted = 1
@@ -21816,7 +21938,7 @@ expect(node, inputs=[data], outputs=[transposed],
     output_indices = [0, 2, 1]
     output_inverse_indices = [0, 2, 1, 2]
     output_counts = [1, 1, 2]
-  
+
   Example 3:
     input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
     attribute_sorted = 1
@@ -21825,41 +21947,63 @@ expect(node, inputs=[data], outputs=[transposed],
     output_indices = [0, 2]
     output_inverse_indices = [0, 0, 1]
     output_counts = [2, 1]
-  
+
   Example 4:
     input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
                [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
     attribute_sorted = 1
     attribute_axis = 1
+<<<<<<< HEAD
   
     intermediate data are presented below for better understanding:
   
+=======
+
+    intermediate data are presented below for better understanding:
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
     A: [[1, 1], [1, 1]],
        [[0, 1], [0, 1]],
        [[2, 1], [2, 1]],
        [[0, 1], [0, 1]].
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     there are 3 unique subtensors:
     [[1, 1], [1, 1]],
     [[0, 1], [0, 1]],
     [[2, 1], [2, 1]].
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     sorted unique subtensors:
     B: [[0, 1], [0, 1]],
        [[1, 1], [1, 1]],
        [[2, 1], [2, 1]].
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     output_Y is constructed from B:
     [[[0. 1.], [1. 1.], [2. 1.]],
      [[0. 1.], [1. 1.], [2. 1.]]]
-  
+
     output_indices is to map from B to A:
     [1, 0, 2]
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
     output_inverse_indices is to map from A to B:
     [1, 0, 2, 0]
-  
+
     output_counts = [2 1 1]
 
 #### Version
@@ -22061,16 +22205,20 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
-  
+
   For example:
     Given an input tensor (`data`) of shape [3, 4, 5], then
     Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
-  
+
   The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
 
 #### Version
 
@@ -22347,7 +22495,7 @@ expect(node, inputs=[condition, x, y], outputs=[z],
 
   Returns the tensor resulted from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -22473,16 +22621,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
-  
+
       Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
       some parameters:
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
        - The initial learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
        - A L2-norm regularization coefficient "norm_coefficient".
        - A learning-rate decay factor "decay_factor".
        - A small constant "epsilon" to avoid dividing-by-zero.
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
       At each ADAGRAD iteration, the optimized tensors are moved along a direction
       computed based on their estimated gradient and accumulated squared gradient. Assume
       that only a single tensor "X" is updated by this operator. We need the value of "X",
@@ -22492,32 +22648,32 @@ expect(node, inputs=[x, y], outputs=[z],
       corresponding output tensors are the new value of "X" (called "X_new"), and then
       the new accumulated squared gradient (called "H_new"). Those outputs are computed
       from the given inputs following the pseudo code below.
-  
+
       Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
       numpy-style broadcasting support. The pseudo code to compute those outputs is:
-  
+
         // Compute a scalar learning-rate factor. At the first update of X, T is generally
         // 0 (0-based update index) or 1 (1-based update index).
         r = R / (1 + T * decay_factor);
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
         G_regularized = norm_coefficient * X + G;
-  
+
         // Compute new accumulated squared gradient.
         H_new = H + G_regularized * G_regularized;
-  
+
         // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
         // computes element-wise square-root.
         H_adaptive = Sqrt(H_new) + epsilon
-  
+
         // Compute the new value of "X".
         X_new = X - r * G_regularized / H_adaptive;
-  
+
       If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
       pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
       concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
       be concatenated too) and then just reuse the entire pseudo code.
-  
+
       Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
       In that reference paper, this operator is a special case of the Figure 1's composite mirror
       descent update.
@@ -22659,63 +22815,79 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
-  
+
       Let's define the behavior of this operator. First of all, Adam requires
       some parameters:
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
        - The learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
        - A L2-norm regularization coefficient "norm_coefficient".
        - A small constant "epsilon" to avoid dividing-by-zero.
        - Two coefficients, "alpha" and "beta".
-  
+
       At each Adam iteration, the optimized tensors are moved along a direction
       computed based on their exponentially-averaged historical gradient and
       exponentially-averaged historical squared gradient. Assume that only a tensor
       "X" is being optimized. The rest of required information is
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
        - the value of "X",
        - "X"'s gradient (denoted by "G"),
        - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
        - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
-  
+
       Some of those parameters are passed into this operator as input tensors and others
       are stored as this operator's attributes. Specifically, this operator's input tensor
       list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
       the second input, and so on. Other parameters are given as attributes because they
       are constants. Moreover, the corresponding output tensors are
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
        - the new value of "X" (called "X_new"),
        - the new exponentially-averaged historical gradient (denoted by "V_new"), and
        - the new exponentially-averaged historical squared gradient (denoted by "H_new").
-  
+
       Those outputs are computed following the pseudo code below.
-  
+
       Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
       numpy-style broadcasting support. The pseudo code to compute those outputs is:
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
         G_regularized = norm_coefficient * X + G
-  
+
         // Update exponentially-averaged historical gradient.
         V_new = alpha * V + (1 - alpha) * G_regularized
-  
+
         // Update exponentially-averaged historical squared gradient.
         H_new = beta * H + (1 - beta) * G_regularized * G_regularized
-  
+
         // Compute the element-wise square-root of H_new. V_new will be element-wisely
         // divided by H_sqrt for a better update direction.
         H_sqrt = Sqrt(H_new) + epsilon
-  
+
         // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
         R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
-  
+
         // Compute new value of "X".
         X_new = X - R_adjusted * V_new / H_sqrt
-  
+
         // Post-update regularization.
         X_final = (1 - norm_coefficient_post) * X_new
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
       If there are multiple inputs to be optimized, the pseudo code will be applied
       independently to each of them.
 
@@ -22873,7 +23045,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
   algorithms. To illustrate its use, let's consider a computation graph,
-  
+
   ```
   X -----.
          |
@@ -22883,12 +23055,12 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
                         |
                         Z
   ```
-  
+
   , where W and Z are trainable tensors. Note that operators' attributes are
   omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
   Y with respect to W (Z). The user can compute gradient by inserting Gradient
   operator to form another graph shown below.
-  
+
   ```
   W --> Conv --> H --> Gemm --> Y
   |      ^              ^
@@ -22905,21 +23077,21 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
          |
          '---------------------------------------> dY/dZ (2nd output of Gradient)
   ```
-  
+
   By definition, the tensor "y" is a function of independent variables in "xs"
   and "zs". Since we only compute the gradient of "y" w.r.t. the differentiable
   variables in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
   cannot appear in "xs" and "zs". The reason is that "H" can be determined by
   tensors "W" and "X" and therefore "H" is not an independent variable.
-  
+
   All outputs are optional. If needed, for example, user can assign an empty
   string to the 1st output name of that Gradient to skip the generation of dY/dW.
   Note that the concept of optional outputs can also be found in ONNX's RNN, GRU,
   and LSTM.
-  
+
   Gradient operator can compute derivative against intermediate tensors. For
   example, the gradient of Y with respect to H can be done via
-  
+
   ```
   W --> Conv --> H --> Gemm --> Y
          ^       |      ^
@@ -22935,20 +23107,20 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
          |
          '---------------------------------------> dY/dZ (2nd output of Gradient)
   ```
-  
+
   It is possible to represent high-order differentiation using Gradient operators.
   For example, given the following linear model:
-  
+
   ```
   W --> Gemm --> Y --> Loss --> O
          ^              ^
          |              |
          X              L
   ```
-  
+
   To compute the 2nd order derivative of O with respect to W (denoted by
   d^2O/dW^2), one can do
-  
+
   ```
   W --> Gemm --> Y --> Loss --> O
   |      ^              ^
@@ -22966,20 +23138,20 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
          |
          '---> d^2O/dW^2 (2nd output of Gradient)
   ```
-  
+
   The tensors named in attributes "xs", "zs", and "y" define the differentiated
   computation graph, and the inputs to Gradient node define the values at
   which the gradient is computed. We can feed different tensors to the identified
   graph. For example, one can compute the gradient of Y with respect to H at
   a specific value of H, H_1, by providing that value as an input to the Gradient
   node.
-  
+
   ```
   W --> Conv --> H --> Gemm --> Y
          ^              ^
          |              |
          X              Z
-  
+
             Z_1 (2nd input of Gradient)
              |
              v
@@ -22987,12 +23159,12 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
              |
              '------------------------------> dY/dZ (2nd output of Gradient)
   ```
-  
+
   When the inputs of Gradient are the tensors named in "xs" and "zs", the
   computation can be optimized. More specifically, intermediate variables in
   forward pass can be reused if the gradient is computed via reverse-mode
   auto-differentiation.
-  
+
 
 #### Version
 
@@ -23141,10 +23313,14 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
-  
+
       Let's define the behavior of this operator. As you can imagine, SG with momentum requires
       several parameters:
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
        - The learning-rate "R".
        - The update count "T". That is, the number of conducted training iterations. It should
          be zero in the first training iteration.
@@ -23153,48 +23329,52 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
        - The scaling coefficient of current gradient "beta".
        - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
          be used.
-  
+
       For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
       Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
       Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
       momentum (called "V_new").
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> Add 'allowzero' flag to reshape operator
       This operator supports two different momentum algorithms. Set the attribute "mode" to
       "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
       "standard" to use standard momentum. Computation details are described subsequently.
-  
+
       Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
-  
+
       Pseudo code for SG with standard momentum:
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
         // values of all elements in X.
         G_regularized = norm_coefficient * X + G
-  
+
         // In the first training iteration, beta should always be 1.
         beta_adjusted = T > 0 ? beta : 1
-  
+
         // Compute the current momentum based on previous momentum and the current gradient.
         V_new = alpha * V + beta_adjusted * G_regularized
-  
+
         // Update X.
         X_new = X - R * V_new
-  
+
       Pseudo code for SG with Nesterov's momentum:
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
         // values of all elements in X.
         G_regularized = norm_coefficient * X + G;
-  
+
         // In the first training iteration, beta should always be 1.
         beta_adjusted = T > 0 ? beta : 1
-  
+
         // Compute the current momentum based on previous momentum and the current gradient.
         V_new = alpha * V + beta_adjusted * G_regularized;
-  
+
         // Compute final update direction and then update X.
         X_new = X - R * (G_regularized + alpha * V_new)
-  
+
       If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
       pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
       concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
