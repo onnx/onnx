@@ -2783,6 +2783,15 @@ class TestShapeInference(unittest.TestCase):
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None, None, None, None))])  # type: ignore
 
+    def test_einsum_incorrect_num_inputs(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3)),
+             ("y", TensorProto.FLOAT, (2, 3)),
+             ("z", TensorProto.FLOAT, (2, 3))],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation='i,...j, k, l-> i')],
+            [])
+        self.assertRaises(checker.ValidationError, self._inferred, graph)
+
 
 if __name__ == '__main__':
     unittest.main()

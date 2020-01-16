@@ -1803,7 +1803,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (equation.compare("") == 0) {
             return;
           }
-	einsumRankInference(ctx,equation);
+	        einsumRankInference(ctx, equation);
         }));
 
 } // namespace ONNX_NAMESPACE
