@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def reshape_reference_implementation(data, shape, allowzero = 0):  # type: (np.ndarray, np.ndarray) -> np.ndarray
+def reshape_reference_implementation(data, shape, allowzero=0):  # type: (np.ndarray, np.ndarray) -> np.ndarray
     # replace zeros with corresponding dim size
     # we need to do this because np.reshape doesn't support 0 by default unless 'allowzero' is set
     new_shape = np.copy(shape)
