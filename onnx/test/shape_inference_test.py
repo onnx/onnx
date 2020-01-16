@@ -234,6 +234,25 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 3, -1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 3, 4))])
 
+    def test_reshape_static_shape_zero(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (1, 0, 0)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Reshape", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 1, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (1, 1, 1))])
+
+    def test_reshape_static_shape_allowzero(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (1, 0, 0)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Reshape", ['x', 'shape'], ['y'], allowzero=1)],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 1, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (0, 1, 1))])
+
+
     def test_reshape_static_shape_constant(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4, 3))],
