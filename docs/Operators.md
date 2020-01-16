@@ -17167,7 +17167,7 @@ input = np.array([]).astype(np.float32)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
-    outputs=['output_1'],
+    outputs=['output_1', 'output_2', 'output_3'],
     split=[0, 0, 0]
 )
 
