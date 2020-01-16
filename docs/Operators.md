@@ -13496,15 +13496,15 @@ expect(node, inputs=[x], outputs=[y],
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   At most one dimension of the new shape can be -1. In this case, the value is
-  inferred from the size of the tensor and the remaining dimensions. A dimension
-  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor).
+  inferred from the size of the tensor and the remaining dimensions. If any dimension value is
+  0, it implies that input 'data' is an empty tensor to be reshaped to the output shape.
+  If any output dimension value is 0, other output dimension values cannot be -1.
 
 #### Version
 
-This version of the operator has been available since version 5 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>, <a href="Changelog.md#Reshape-5">Reshape-5</a>
 
 #### Inputs
 
@@ -13545,8 +13545,32 @@ test_cases = {
     'one_dim': np.array([24], dtype=np.int64),
     'negative_dim': np.array([2, -1, 2], dtype=np.int64),
     'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
-    'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
-    'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
+}
+data = np.random.random_sample(original_shape).astype(np.float32)
+
+for test_name, shape in test_cases.items():
+    node = onnx.helper.make_node(
+        'Reshape',
+        inputs=['data', 'shape'],
+        outputs=['reshaped'],
+    )
+
+    reshaped = reshape_reference_implementation(data, shape)
+
+    expect(node, inputs=[data, shape], outputs=[reshaped],
+           name='test_reshape_' + test_name)
+```
+
+</details>
+
+
+<details>
+<summary>reshape_zero</summary>
+
+```python
+original_shape = [0, 3, 4]
+test_cases = {
+    'zero_dim_reordered': np.array([3, 4, 0], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
