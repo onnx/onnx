@@ -7555,7 +7555,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Reshape
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>reshape</summary>
 
@@ -7569,8 +7569,30 @@ test_cases = {
     'one_dim': np.array([24], dtype=np.int64),
     'negative_dim': np.array([2, -1, 2], dtype=np.int64),
     'negative_extended_dims': np.array([-1, 2, 3, 4], dtype=np.int64),
-    'zero_dim': np.array([2, 0, 4, 1], dtype=np.int64),
-    'zero_and_negative_dim': np.array([2, 0, 1, -1], dtype=np.int64),
+}
+data = np.random.random_sample(original_shape).astype(np.float32)
+
+for test_name, shape in test_cases.items():
+    node = onnx.helper.make_node(
+        'Reshape',
+        inputs=['data', 'shape'],
+        outputs=['reshaped'],
+    )
+
+    reshaped = reshape_reference_implementation(data, shape)
+
+    expect(node, inputs=[data, shape], outputs=[reshaped],
+           name='test_reshape_' + test_name)
+```
+
+</details>
+<details>
+<summary>reshape_zero</summary>
+
+```python
+original_shape = [0, 3, 4]
+test_cases = {
+    'zero_dim_reordered': np.array([3, 4, 0], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
