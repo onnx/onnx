@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 136/151 (90.07%, 5 generators excluded) common operators.
+Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1323,6 +1323,44 @@ y = np.array([1, 2, 3]).astype(np.uint8)
 z = x >> y  # expected output [8, 1, 0]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_bitshift_right_uint8')
+```
+
+</details>
+
+
+### CDist
+There are 1 test cases, listed as following:
+<details>
+<summary>cdist</summary>
+
+```python
+for metric in ['sqeuclidean', 'euclidean', 'manhattan', 'minkowski']:
+    node = onnx.helper.make_node(
+        'CDist',
+        inputs=['x', 'y'],
+        outputs=['z'],
+        metric=metric,
+    )
+    x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+    y = np.array([[7, 8, 9]]).astype(np.float32)
+    z = np_cdist(x, y, metric)  # expected output [[108.], [27.]] for sqeuclidean
+    expect(node, inputs=[x, y], outputs=[z],
+           name='test_cdist_%s_example' % metric)
+
+for metric in ['minkowski']:
+    for p in [3]:
+        node = onnx.helper.make_node(
+            'CDist',
+            inputs=['x', 'y'],
+            outputs=['z'],
+            metric=metric,
+            p=p,
+        )
+        x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+        y = np.array([[7, 8, 9]]).astype(np.float32)
+        z = np_cdist(x, y, metric)
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_cdist_%s_%d_dexample' % (metric, p))
 ```
 
 </details>
