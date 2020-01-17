@@ -132,8 +132,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // TensorProto. If the target Shape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension.
           // We track the product of the dimensions we are setting outputShape
-          // in
-          // the outputProduct. The outputProduct will potentially be used for
+          // in the outputProduct. The outputProduct will potentially be used for
           // inferring a dimension marked -1.
           auto* outputShape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
