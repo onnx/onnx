@@ -13588,7 +13588,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
 <dt><tt>split</tt> (optional) : I</dt>
-<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be positive. </dd>
+<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. Values should be >= 0. All values must be positive. </dd>
 </dl>
 
 #### Outputs
