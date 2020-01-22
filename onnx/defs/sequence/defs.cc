@@ -578,8 +578,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("new_axis must be either 0 or 1");
           }
 
-          auto upper_bound = 1 == new_axis ? rank : rank - 1;
-          auto lower_bound = 1 == new_axis ? -rank - 1 : -rank;
+          auto upper_bound = 1 == new_axis ? rank : rank-1;
+          auto lower_bound = 1 == new_axis ? -rank-1 : -rank;
 
           if (axis < lower_bound || axis > upper_bound) {
             fail_shape_inference(
