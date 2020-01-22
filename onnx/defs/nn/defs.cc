@@ -184,11 +184,19 @@ void convPoolShapeInference(
   }
 }
 
+std::vector<std::string> GetSupportedDataTypesForPoolingOps(bool supports8bit){
+    if (supports8bit) {
+        return {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int8)", "tensor(uint8)"};
+    }
+    return {"tensor(float16)", "tensor(float)", "tensor(double)"};
+}
+
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
     const char* additionalDescription,
-    bool use_dilation) {
+    bool use_dilation,
+    bool supports8bit = false) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
@@ -274,8 +282,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T");
     schema.TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        GetSupportedDataTypesForPoolingOps(supports8bit),
+        supports8bit ? "Constrain input and output types to float and 8 bit tensors." 
+        : "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (ctx.getNumOutputs() > 1) {
@@ -299,6 +308,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "AveragePool",
             "average",
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
+            false,
             false))
         .Attr(
             "count_include_pad",
@@ -308,12 +318,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
-    11,
+    12,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
             "max",
-            "The output of each pooling window is maximum number of elements exclude pad.",
+            "The output of each pooling window is maximum number of elements exclude pad. ",
+            true,
             true))
         .Attr(
             "storage_order",
