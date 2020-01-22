@@ -25,6 +25,8 @@
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
+using FunctionBodyQueryFunction = std::function<bool(InferenceContext&)>;
+
 class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -621,6 +623,10 @@ class OpSchema final {
 
   const FunctionProto* GetFunction() const;
 
+  OpSchema& AddQueriedFunctionBody(FunctionBodyQueryFunction queryFunction, const std::vector<NodeProto>& func_nodes);
+  
+  const FunctionProto* GetQueriedFunction(InferenceContext& ctx) const;
+
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
@@ -632,7 +638,7 @@ class OpSchema final {
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 
   // Build function with information stored in opschema
-  void BuildFunction();
+  void BuildFunction(FunctionProto& function_body);
 
   std::string name_;
   std::string file_;
@@ -658,6 +664,7 @@ class OpSchema final {
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   FunctionProto function_body_;
+  std::vector<std::pair<FunctionBodyQueryFunction, FunctionProto>> queried_function_bodies_;
 };
 
 // Map type to store operator schemas. The format is,

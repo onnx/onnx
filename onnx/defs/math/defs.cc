@@ -1678,7 +1678,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(1, "target", "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).", "Tind")
         .Input(2, "weight", "Optional rescaling weight tensor. "
             "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.", "T")
-        .Output(0, "loss", "The negative log likelihood loss", "T")
+        .Output(0, "loss", "The negative log likelihood loss", "T", OpSchema::Optional)
         .Attr("reduction",
             "Type of reduction to apply to loss: none, sum, mean(default). "
             "'none': the output is the loss for each sample in the batch."
@@ -1694,8 +1694,53 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
             "Constrain labels to integer types")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            // TODO: function body depends on reduction attribute and avaiablility of weight.
+        .AddQueriedFunctionBody([](InferenceContext& ctx) { // no weight, reduction is "none"
+            return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none";}, 
+            FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"input_gather_element"},
+              "GatherElement",
+              {"input", "target"},
+              {MakeAttribute("axis", (int64_t)1)}},
+             {{"loss"},
+              "Neg",
+              {"input_gather_element"}},
+            }))
+        .AddQueriedFunctionBody([](InferenceContext& ctx) { // no weight, reduction is "mean"
+            return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "mean";}, 
+            FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"input_gather_element"},
+              "GatherElement",
+              {"input", "target"},
+              {MakeAttribute("axis", (int64_t)1)}},
+             {{"neg_input_gather_element"},
+              "Neg",
+              {"input_gather_element"}},
+             {{"loss"},
+              "ReduceMean",
+              {"neg_input_gather_element"},
+              {MakeAttribute("keepdims", (int64_t)0)}},
+            }))
+        .AddQueriedFunctionBody([](InferenceContext& ctx) { // no weight, reduction is "sum"
+            return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "sum";}, 
+            FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"input_gather_element"},
+              "GatherElement",
+              {"input", "target"},
+              {MakeAttribute("axis", (int64_t)1)}},
+             {{"neg_input_gather_element"},
+              "Neg",
+              {"input_gather_element"}},
+             {{"loss"},
+              "ReduceSum",
+              {"neg_input_gather_element"},
+              {MakeAttribute("keepdims", (int64_t)0)}},
+            }))
+        .AddQueriedFunctionBody([](InferenceContext& ctx) { // with weight, reduction is "none"
+            return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none";}, 
+            FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
               "GatherElement",
@@ -1710,6 +1755,57 @@ ONNX_OPERATOR_SET_SCHEMA(
              {{"loss"},
               "Mul",
              {"neg_input_gather_element", "weight_gather"}}
+            }))
+        .AddQueriedFunctionBody([](InferenceContext& ctx) { // with weight, reduction is "mean"
+            return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none";}, 
+            FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"input_gather_element"},
+              "GatherElement",
+              {"input", "target"},
+              {MakeAttribute("axis", (int64_t)1)}},
+             {{"neg_input_gather_element"},
+              "Neg",
+              {"input_gather_element"}},
+             {{"weight_gather"},
+              "Gather",
+              {"weight", "target"}},
+             {{"weighted_loss"},
+              "Mul",
+             {"neg_input_gather_element", "weight_gather"}},
+             {{"reduced_weighted_loss"},
+              "ReduceSum",
+             {"weighted_loss"},
+             {MakeAttribute("keepdims", (int64_t)0)}},
+             {{"reduced_weighted"},
+              "ReduceSum",
+             {"weight_gather"},
+             {MakeAttribute("keepdims", (int64_t)0)}},
+             {{"loss"},
+              "div",
+             {"reduced_weighted"}}
+            }))
+        .AddQueriedFunctionBody([](InferenceContext& ctx) { // with weight, reduction is "sum"
+            return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none";}, 
+            FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"input_gather_element"},
+              "GatherElement",
+              {"input", "target"},
+              {MakeAttribute("axis", (int64_t)1)}},
+             {{"neg_input_gather_element"},
+              "Neg",
+              {"input_gather_element"}},
+             {{"weight_gather"},
+              "Gather",
+              {"weight", "target"}},
+             {{"weighted_loss"},
+              "Mul",
+             {"neg_input_gather_element", "weight_gather"}},
+             {{"loss"},
+              "ReduceSum",
+             {"weighted_loss"},
+             {MakeAttribute("keepdims", (int64_t)0)}}
             }))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference

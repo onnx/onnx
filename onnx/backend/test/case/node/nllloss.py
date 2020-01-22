@@ -31,15 +31,17 @@ def compute_nll_loss(input, target, weight=None, reduction='mean'):  # type: ign
     if weight is not None:
         # Gather(input=weight, index=target)
         gather_weight = np.take(weight, target)
+        
         loss = gather_weight * loss
-
+        if reduction == 'mean':
+            return loss.sum() / gather_weight.sum()
+            
     if reduction == 'none':
         return loss
     elif reduction == 'mean':
         return np.mean(loss, keepdims=False)
     elif reduction == 'sum':
         return np.sum(loss, keepdims=False)
-
 
 class NllLoss(Base):
 

@@ -705,6 +705,24 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
+OpSchema& OpSchema::AddQueriedFunctionBody(FunctionBodyQueryFunction queryFunction, const std::vector<NodeProto>& func_nodes) {
+  FunctionProto function_body;
+  for (const auto node : func_nodes) {
+    auto new_node = function_body.add_node();
+    new_node->CopyFrom(node);
+  }
+  queried_function_bodies_.emplace(queried_function_bodies_.end(), std::make_pair(queryFunction, function_body));
+  return *this;
+}
+
+const FunctionProto* OpSchema::GetQueriedFunction(InferenceContext& ctx) const {
+  for (int i = 0; i < queried_function_bodies_.size(); i++) {
+    if (queried_function_bodies_[i].first(ctx))
+      return &queried_function_bodies_[i].second;
+  }
+  return nullptr;
+}
+
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
   for (const auto node : func_nodes) {
     auto new_node = function_body_.add_node();
@@ -724,19 +742,19 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction() {
-  function_body_.set_name(this->name_);
-  function_body_.set_doc_string(this->doc_);
-  function_body_.set_since_version(this->since_version_);
-  function_body_.set_status(OperatorStatus(1 - (int)this->support_));
+void OpSchema::BuildFunction(FunctionProto& function_body) {
+  function_body.set_name(this->name_);
+  function_body.set_doc_string(this->doc_);
+  function_body.set_since_version(this->since_version_);
+  function_body.set_status(OperatorStatus(1 - (int)this->support_));
   for (auto& i : inputs_) {
-    function_body_.add_input(i.GetName());
+    function_body.add_input(i.GetName());
   }
   for (auto& o : outputs_) {
-    function_body_.add_output(o.GetName());
+    function_body.add_output(o.GetName());
   }
   for (auto& a : attributes_) {
-    function_body_.add_attribute(a.first);
+    function_body.add_attribute(a.first);
   }
 }
 
@@ -805,7 +823,10 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&outputs_);
 
   if (this->HasFunction()) {
-    BuildFunction();
+    BuildFunction(function_body_);
+  } else {
+    for (int i = 0; i < queried_function_bodies_.size(); i++)
+      BuildFunction(queried_function_bodies_[i].second);
   }
 }
 
