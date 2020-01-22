@@ -623,6 +623,10 @@ class OpSchema final {
 
   const FunctionProto* GetFunction() const;
 
+  bool HasQueriedFunction() const {
+    return !queried_function_bodies_.empty();
+  }
+
   OpSchema& AddQueriedFunctionBody(FunctionBodyQueryFunction queryFunction, const std::vector<NodeProto>& func_nodes);
   
   const FunctionProto* GetQueriedFunction(InferenceContext& ctx) const;

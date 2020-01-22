@@ -16,12 +16,12 @@ def compute_nll_loss(input, target, weight=None, reduction='mean'):  # type: ign
     # GatherElement(-input, target)
     if len(input_shape) == 2:
         N, C = input_shape
-        neg_gather_element_input = np.zeros((N, ), dtype=np.float)
+        neg_gather_element_input = np.zeros((N, ), dtype=np.float32)
         for i in range(N):
             neg_gather_element_input[i] = -input[i][target[i]]
     else:
         N, C, dim1, dim2 = input_shape
-        neg_gather_element_input = np.zeros((N, dim1, dim2), dtype=np.float)
+        neg_gather_element_input = np.zeros((N, dim1, dim2), dtype=np.float32)
         for i in range(N):
             for d1 in range(dim1):
                 for d2 in range(dim2): 

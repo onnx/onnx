@@ -1677,8 +1677,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).", "T")
         .Input(1, "target", "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).", "Tind")
         .Input(2, "weight", "Optional rescaling weight tensor. "
-            "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.", "T")
-        .Output(0, "loss", "The negative log likelihood loss", "T", OpSchema::Optional)
+            "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.", "T", OpSchema::Optional)
+        .Output(0, "loss", "The negative log likelihood loss", "T")
         .Attr("reduction",
             "Type of reduction to apply to loss: none, sum, mean(default). "
             "'none': the output is the loss for each sample in the batch."
@@ -1699,7 +1699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
-              "GatherElement",
+              "GatherElements",
               {"input", "target"},
               {MakeAttribute("axis", (int64_t)1)}},
              {{"loss"},
@@ -1711,7 +1711,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
-              "GatherElement",
+              "GatherElements",
               {"input", "target"},
               {MakeAttribute("axis", (int64_t)1)}},
              {{"neg_input_gather_element"},
@@ -1727,7 +1727,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
-              "GatherElement",
+              "GatherElements",
               {"input", "target"},
               {MakeAttribute("axis", (int64_t)1)}},
              {{"neg_input_gather_element"},
@@ -1743,7 +1743,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
-              "GatherElement",
+              "GatherElements",
               {"input", "target"},
               {MakeAttribute("axis", (int64_t)1)}},
              {{"neg_input_gather_element"},
@@ -1761,7 +1761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
-              "GatherElement",
+              "GatherElements",
               {"input", "target"},
               {MakeAttribute("axis", (int64_t)1)}},
              {{"neg_input_gather_element"},
@@ -1790,7 +1790,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}
              {{"input_gather_element"},
-              "GatherElement",
+              "GatherElements",
               {"input", "target"},
               {MakeAttribute("axis", (int64_t)1)}},
              {{"neg_input_gather_element"},
@@ -1814,7 +1814,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape inference
           if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
             const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
 
             const int input_rank = static_cast<int>(input_shape.dim_size());
             const int target_rank = static_cast<int>(target_shape.dim_size());
