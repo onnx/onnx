@@ -139,7 +139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Iterate through targetShape, adding dimensions in the outputShape
-          // TensorProto. If the targertShape dimension is -1, we do not set the
+          // TensorProto. If the targetShape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension. If
           // targetShape dimension is 0, we attempt to propagate the dimension
           // value/param. If the value cannot be inferred, we set the flag in
