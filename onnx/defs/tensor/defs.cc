@@ -245,7 +245,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // that are not marked by unresolvedZeros. If not possible, set the
             // inputProductValid flag to false.
             if (!outputProduct) {
-              fail_shape_inference("Invalid Target shape product of 0. Product cannot be 0 in combination with -1.");
+              fail_shape_inference("Invalid Target shape product of 0. Product cannot be 0 in combination with -1");
             }
             int64_t inputProduct = 1;
             bool inputProductValid = true;
