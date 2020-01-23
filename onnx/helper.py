@@ -8,7 +8,7 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import TensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
@@ -176,6 +176,18 @@ def make_tensor(
     return tensor
 
 
+def make_sparse_tensor(
+    values,   # type: TensorProto
+    indices,   # type: TensorProto
+    dims   # type: Sequence[int]
+):  # type: (...) -> SparseTensorProto
+    sparse = SparseTensorProto()
+    sparse.values.CopyFrom(values)
+    sparse.indices.CopyFrom(indices)
+    sparse.dims.extend(dims)
+    return sparse
+
+
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.
 
@@ -217,13 +229,16 @@ def make_attribute(
         attr.i = cast(int, value)
         attr.type = AttributeProto.INT
     # string
-    elif bytes_or_false:
+    elif bytes_or_false is not False:
         assert isinstance(bytes_or_false, bytes)
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
         attr.type = AttributeProto.TENSOR
+    elif isinstance(value, SparseTensorProto):
+        attr.sparse_tensor.CopyFrom(value)
+        attr.type = AttributeProto.SPARSE_TENSOR
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
         attr.type = AttributeProto.GRAPH
@@ -237,12 +252,15 @@ def make_attribute(
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
-        elif all(byte_array):
+        elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
             attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
+        elif all(isinstance(v, SparseTensorProto) for v in value):
+            attr.sparse_tensors.extend(value)
+            attr.type = AttributeProto.SPARSE_TENSORS
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
@@ -251,31 +269,31 @@ def make_attribute(
                 "You passed in an iterable attribute but I cannot figure out "
                 "its applicable type.")
     else:
-        raise ValueError(
-            'Value "{}" is not valid attribute data type.'.format(value))
+        raise TypeError(
+            'value "{}" is not valid attribute data type.'.format(value))
     return attr
 
 
 def get_attribute_value(attr):  # type: (AttributeProto) -> Any
-    if attr.HasField('f'):
+    if attr.type == AttributeProto.FLOAT:
         return attr.f
-    elif attr.HasField('i'):
+    elif attr.type == AttributeProto.INT:
         return attr.i
-    elif attr.HasField('s'):
+    elif attr.type == AttributeProto.STRING:
         return attr.s
-    elif attr.HasField('t'):
+    elif attr.type == AttributeProto.TENSOR:
         return attr.t
-    elif attr.HasField('g'):
+    elif attr.type == AttributeProto.GRAPH:
         return attr.g
-    elif len(attr.floats):
+    elif attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
-    elif len(attr.ints):
+    elif attr.type == AttributeProto.INTS:
         return list(attr.ints)
-    elif len(attr.strings):
+    elif attr.type == AttributeProto.STRINGS:
         return list(attr.strings)
-    elif len(attr.tensors):
+    elif attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
-    elif len(attr.graphs):
+    elif attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
     else:
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))
@@ -336,6 +354,30 @@ def make_tensor_value_info(
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
+
+    return value_info_proto
+
+
+def make_sequence_value_info(
+        name,  # type: Text
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        doc_string="",  # type: Text
+        elem_shape_denotation=None,  # type: Optional[List[Text]]
+):  # type: (...) -> ValueInfoProto
+    """Makes a ValueInfoProto based on the data type and shape for Sequence."""
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+    if doc_string:
+        value_info_proto.doc_string = doc_string
+
+    sequence_type_proto = value_info_proto.type.sequence_type
+    sequence_type_proto.elem_type.tensor_type.elem_type = elem_type
+
+    tensor_value_info = make_tensor_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
+
+    if shape is not None:
+        sequence_type_proto.elem_type.tensor_type.shape.CopyFrom(tensor_value_info.type.tensor_type.shape)
 
     return value_info_proto
 
@@ -452,6 +494,18 @@ def printable_value_info(v):  # type: (ValueInfoProto) -> Text
     return s
 
 
+def printable_tensor_proto(t):  # type: (TensorProto) -> Text
+    s = '%{}['.format(t.name)
+    s += TensorProto.DataType.Name(t.data_type)
+    if t.dims is not None:
+        if len(t.dims):
+            s += str(', ' + 'x'.join(map(str, t.dims)))
+        else:
+            s += str(', scalar')
+    s += ']'
+    return s
+
+
 def printable_node(node, prefix='', subgraphs=False):  # type: (NodeProto, Text, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
     content = []
     if len(node.output):
@@ -488,16 +542,16 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
     indent = prefix + '  '
     # header
     header = ['graph', graph.name]
-    initialized = {t.name for t in graph.initializer}
+    initializers = {t.name for t in graph.initializer}
     if len(graph.input):
         header.append("(")
-        in_strs = []
-        init_strs = []
+        in_strs = []  # required inputs
+        in_with_init_strs = []  # optional inputs with initializer providing default value
         for inp in graph.input:
-            if inp.name not in initialized:
+            if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
             else:
-                init_strs.append(printable_value_info(inp))
+                in_with_init_strs.append(printable_value_info(inp))
         if in_strs:
             content.append(prefix + ' '.join(header))
             header = []
@@ -505,7 +559,20 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
                 content.append(prefix + '  ' + line)
         header.append(")")
 
-        if init_strs:
+        if in_with_init_strs:
+            header.append("optional inputs with matching initializers (")
+            content.append(prefix + ' '.join(header))
+            header = []
+            for line in in_with_init_strs:
+                content.append(prefix + '  ' + line)
+            header.append(")")
+
+        # from IR 4 onwards an initializer is not required to have a matching graph input
+        # so output the name, type and shape of those as well
+        if len(in_with_init_strs) < len(initializers):
+            graph_inputs = {i.name for i in graph.input}
+            init_strs = [printable_tensor_proto(i) for i in graph.initializer
+                         if i.name not in graph_inputs]
             header.append("initializers (")
             content.append(prefix + ' '.join(header))
             header = []

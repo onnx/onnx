@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import platform
 
 import numpy as np  # type: ignore
 from onnx import TensorProto
@@ -11,7 +12,7 @@ from onnx import mapping
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
-if sys.byteorder != 'little':
+if platform.system() != 'AIX' and sys.byteorder != 'little':
     raise RuntimeError(
         'Numpy helper for tensor/ndarray is not available on big endian '
         'systems yet.')
@@ -33,7 +34,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         raise ValueError(
             "Currently not supporting loading segments.")
     if tensor.data_type == TensorProto.UNDEFINED:
-        raise ValueError("The data type is not defined.")
+        raise TypeError("The element type in the input tensor is not defined.")
 
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
