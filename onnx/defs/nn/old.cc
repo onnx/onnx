@@ -1478,6 +1478,45 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Dropout_ver10_doc = R"DOC(
+Dropout takes one input floating tensor and produces two tensor outputs,
+output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+in test mode or not, the output Y will either be a random dropout, or a simple
+copy of the input. Note that our implementation of Dropout does scaling in
+the training phase, so during testing nothing needs to be done.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Dropout,
+    10,
+    OpSchema()
+        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
+        .Attr(
+            "ratio",
+            "The ratio of random dropout",
+            AttributeProto::FLOAT,
+            0.5f)
+        .Input(0, "data", "The input data as Tensor.", "T")
+        .Output(0, "output", "The output.", "T")
+        .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain output mask types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          if (ctx.getNumOutputs() == 2) {
+            updateOutputElemType(ctx, 1, TensorProto::BOOL);
+            if (hasNInputShapes(ctx, 1)) {
+              propagateShapeFromInputToOutput(ctx, 0, 1);
+            }
+          }
+        }));
+
 static const char* BatchNorm_ver6_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -1579,6 +1618,94 @@ ONNX_OPERATOR_SET_SCHEMA(
             "saved_var",
             "Saved variance used during training to speed up "
             "gradient computation. Should not be used for testing.",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          // TODO in training mode, it may be possible to infer some of
+          // the other outputs as well.
+        }));
+
+static const char* BatchNormalization_ver9_doc = R"DOC(
+Carries out batch normalization as described in the paper
+https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+there are multiple cases for the number of outputs, which we list below:
+
+Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+Output case #2: Y (test mode)
+
+For previous (depreciated) non-spatial cases, implementors are suggested
+to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BatchNormalization,
+    9,
+    OpSchema()
+        .NumOutputs({1, 5})
+        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero.",
+            AttributeProto::FLOAT,
+            1e-5f)
+        .Attr(
+            "momentum",
+            "Factor used in computing the running mean and variance."
+            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
+            AttributeProto::FLOAT,
+            0.9f)
+        .Input(
+            0,
+            "X",
+            "Input data tensor from the previous operator; "
+            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
+            "where N is the batch size, C is the number of channels. "
+            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
+            "T")
+        .Input(1, "scale", "Scale tensor of shape (C).", "T")
+        .Input(2, "B", "Bias tensor of shape (C).", "T")
+        .Input(
+            3,
+            "mean",
+            "running (training) or estimated (testing) mean tensor of shape (C).",
+            "T")
+        .Input(
+            4,
+            "var",
+            "running (training) or estimated (testing) variance tensor of shape (C).",
+            "T")
+        .Output(0, "Y", "The output tensor of the same shape as X", "T")
+        .Output(
+            1,
+            "mean",
+            "The running mean after the BatchNormalization operator.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "var",
+            "The running variance after the BatchNormalization operator.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            3,
+            "saved_mean",
+            "Saved mean used during training to speed up gradient "
+            "computation.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            4,
+            "saved_var",
+            "Saved variance used during training to speed up "
+            "gradient computation.",
             "T",
             OpSchema::Optional)
         .TypeConstraint(

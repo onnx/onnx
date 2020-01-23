@@ -13965,6 +13965,122 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+### <a name="BatchNormalization-12"></a>**BatchNormalization-12**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  there are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+  Output case #2: Y (test mode, where other outputs will not be populated)
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = saved_mean * momentum + mean * (1 - momentum).</dd>
+</dl>
+
+#### Inputs (5 - 6)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Bias tensor of shape (C).</dd>
+<dt><tt>mean</tt> : T</dt>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
+<dt><tt>var</tt> : T</dt>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+<dt><tt>training_mode</tt> (optional) : T1</dt>
+<dd>If set to true, run spatial batch normalization in training mode, default is false.</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>mean</tt> (optional) : T</dt>
+<dd>The running mean after the BatchNormalization operator.This output is populated only when training_mode is set to true.</dd>
+<dt><tt>var</tt> (optional) : T</dt>
+<dd>The running variance after the BatchNormalization operator.This output is populated only when training_mode is set to true.</dd>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dd>Saved mean used during training to speed up gradient computation.This output is populated only when training_mode is set to true.</dd>
+<dt><tt>saved_var</tt> (optional) : T</dt>
+<dd>Saved variance used during training to speed up gradient computation.This output is populated only when training_mode is set to true.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain input 'training_mode' types to boolean tensors.</dd>
+</dl>
+
+### <a name="Dropout-12"></a>**Dropout-12**</a>
+
+  Dropout takes one input floating tensor and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
+  in test mode or not, the output Y will either be a random dropout, or a simple
+  copy of the input. Note that our implementation of Dropout does scaling in
+  the training phase, so during testing nothing needs to be done.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>seed</tt> : int</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+<dt><tt>ratio</tt> (optional) : T1</dt>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of input, which is typically the case during training.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+<dt><tt>mask</tt> (optional) : T2</dt>
+<dd>The output mask.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain input 'ratio' types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output 'mask' types to boolean tensors.</dd>
+</dl>
+
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across

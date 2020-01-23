@@ -1813,7 +1813,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   there are multiple cases for the number of outputs, which we list below:
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode)
+  Output case #2: Y (test mode, where other outputs will not be populated)
   
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
@@ -1821,9 +1821,9 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>, <a href="Changelog.md#BatchNormalization-7">BatchNormalization-7</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>, <a href="Changelog.md#BatchNormalization-7">BatchNormalization-7</a>, <a href="Changelog.md#BatchNormalization-9">BatchNormalization-9</a>
 
 #### Attributes
 
@@ -1831,10 +1831,10 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
-<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = saved_mean * momentum + mean * (1 - momentum).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (5 - 6)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
@@ -1847,6 +1847,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+<dt><tt>training_mode</tt> (optional) : T1</dt>
+<dd>If set to true, run spatial batch normalization in training mode, default is false.</dd>
 </dl>
 
 #### Outputs (1 - 5)
@@ -1855,13 +1857,13 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the BatchNormalization operator.</dd>
+<dd>The running mean after the BatchNormalization operator.This output is populated only when training_mode is set to true.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the BatchNormalization operator.</dd>
+<dd>The running variance after the BatchNormalization operator.This output is populated only when training_mode is set to true.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation.</dd>
+<dd>Saved mean used during training to speed up gradient computation.This output is populated only when training_mode is set to true.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation.</dd>
+<dd>Saved variance used during training to speed up gradient computation.This output is populated only when training_mode is set to true.</dd>
 </dl>
 
 #### Type Constraints
@@ -1869,6 +1871,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain input 'training_mode' types to boolean tensors.</dd>
 </dl>
 
 
@@ -1903,7 +1907,7 @@ node = onnx.helper.make_node(
 
 # output size: (1, 2, 1, 3)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_example')
+       name='test_batchnorm_example_old')
 
 # input size: (2, 3, 4, 5)
 x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -1923,7 +1927,74 @@ node = onnx.helper.make_node(
 
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_epsilon')
+       name='test_batchnorm_epsilon_old')
+```
+
+</details>
+
+
+<details>
+<summary>train</summary>
+
+```python
+def _batchnorm_train_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    mean = mean.reshape(-1, *dim_ones)
+    var = var.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+training_mode = np.ones(1, dtype=bool)
+y = _batchnorm_train_mode(x, s, bias, mean, var).astype(np.float32)
+momentum = 0.1
+saved_mean = x.mean()
+saved_var = x.var()
+running_mean = saved_mean * momentum + mean * (1 - momentum)
+running_var = saved_var * momentum + var * (1 - momentum)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    outputs=['y', 'mean', 'var', 'saved_mean', 'saved_var'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+       name='train_batchnorm_example')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+training_mode = np.ones(1, dtype=bool)
+epsilon = 1e-2
+y = _batchnorm_train_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
+momentum = 0.1
+saved_mean = x.mean()
+saved_var = x.var()
+running_mean = saved_mean * momentum + mean * (1 - momentum)
+running_var = saved_var * momentum + var * (1 - momentum)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    outputs=['y', 'mean', 'var', 'saved_mean', 'saved_var'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+       name='train_batchnorm_epsilon')
 ```
 
 </details>
@@ -4207,22 +4278,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>, <a href="Changelog.md#Dropout-10">Dropout-10</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>ratio</tt> : float (default is 0.5)</dt>
-<dd>The ratio of random dropout</dd>
+<dt><tt>seed</tt> : int</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
+<dt><tt>ratio</tt> (optional) : T1</dt>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of input, which is typically the case during training.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -4230,7 +4303,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T1</dt>
+<dt><tt>mask</tt> (optional) : T2</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -4239,8 +4312,10 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output mask types to boolean tensors.</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain input 'ratio' types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output 'mask' types to boolean tensors.</dd>
 </dl>
 
 
@@ -4266,7 +4341,46 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
+<summary>default_old</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default_old',  opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+
+
+<details>
 <summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'ratio'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+ratio = np.random.randn(1)
+y = x
+expect(node, inputs=[x, ratio], outputs=[y],
+       name='test_dropout_random')
+```
+
+</details>
+
+
+<details>
+<summary>random_old</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -4279,7 +4393,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_random')
+       name='test_dropout_random_old',  opset_imports=[helper.make_opsetid("", 10)])
 ```
 
 </details>

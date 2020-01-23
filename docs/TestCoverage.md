@@ -1116,7 +1116,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 
 ### BatchNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>batchnormalization</summary>
 
@@ -1146,7 +1146,7 @@ node = onnx.helper.make_node(
 
 # output size: (1, 2, 1, 3)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_example')
+       name='test_batchnorm_example_old')
 
 # input size: (2, 3, 4, 5)
 x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -1166,7 +1166,72 @@ node = onnx.helper.make_node(
 
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_epsilon')
+       name='test_batchnorm_epsilon_old')
+```
+
+</details>
+<details>
+<summary>train</summary>
+
+```python
+def _batchnorm_train_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    mean = mean.reshape(-1, *dim_ones)
+    var = var.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+training_mode = np.ones(1, dtype=bool)
+y = _batchnorm_train_mode(x, s, bias, mean, var).astype(np.float32)
+momentum = 0.1
+saved_mean = x.mean()
+saved_var = x.var()
+running_mean = saved_mean * momentum + mean * (1 - momentum)
+running_var = saved_var * momentum + var * (1 - momentum)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    outputs=['y', 'mean', 'var', 'saved_mean', 'saved_var'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+       name='train_batchnorm_example')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+training_mode = np.ones(1, dtype=bool)
+epsilon = 1e-2
+y = _batchnorm_train_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
+momentum = 0.1
+saved_mean = x.mean()
+saved_var = x.var()
+running_mean = saved_mean * momentum + mean * (1 - momentum)
+running_var = saved_var * momentum + var * (1 - momentum)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    outputs=['y', 'mean', 'var', 'saved_mean', 'saved_var'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+       name='train_batchnorm_epsilon')
 ```
 
 </details>
@@ -2521,7 +2586,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Dropout
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -2540,7 +2605,42 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
+<summary>default_old</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default_old',  opset_imports=[helper.make_opsetid("", 10)])
+```
+
+</details>
+<details>
 <summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'ratio'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+ratio = np.random.randn(1)
+y = x
+expect(node, inputs=[x, ratio], outputs=[y],
+       name='test_dropout_random')
+```
+
+</details>
+<details>
+<summary>random_old</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2553,7 +2653,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_random')
+       name='test_dropout_random_old',  opset_imports=[helper.make_opsetid("", 10)])
 ```
 
 </details>
@@ -10948,7 +11048,7 @@ strides: 2
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 1
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11022,7 +11122,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 1
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11101,7 +11201,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11180,7 +11280,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11259,7 +11359,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11338,7 +11438,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11422,7 +11522,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11506,7 +11606,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11590,7 +11690,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>

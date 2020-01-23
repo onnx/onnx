@@ -1483,13 +1483,13 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
+static const char* BatchNormalization_ver12_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
+Output case #2: Y (test mode, where other outputs will not be populated)
 
 For previous (depreciated) non-spatial cases, implementors are suggested
 to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
@@ -1497,10 +1497,10 @@ to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    9,
+    12,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(BatchNormalization_ver12_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1509,7 +1509,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "momentum",
             "Factor used in computing the running mean and variance."
-            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
+            "e.g., running_mean = saved_mean * momentum + mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
         .Input(
@@ -1534,37 +1534,49 @@ ONNX_OPERATOR_SET_SCHEMA(
             "var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
+        .Input(
+            5,
+            "training_mode",
+            "If set to true, run spatial batch normalization in training mode, default is false.",
+            "T1",
+            OpSchema::Optional)
         .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
             "mean",
-            "The running mean after the BatchNormalization operator.",
+            "The running mean after the BatchNormalization operator."
+            "This output is populated only when training_mode is set to true.",
             "T",
             OpSchema::Optional)
         .Output(
             2,
             "var",
-            "The running variance after the BatchNormalization operator.",
+            "The running variance after the BatchNormalization operator."
+            "This output is populated only when training_mode is set to true.",
             "T",
             OpSchema::Optional)
         .Output(
             3,
             "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation.",
+            "Saved mean used during training to speed up gradient computation."
+            "This output is populated only when training_mode is set to true.",
             "T",
             OpSchema::Optional)
         .Output(
             4,
             "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation.",
+            "Saved variance used during training to speed up gradient computation."
+            "This output is populated only when training_mode is set to true.",
             "T",
             OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain input 'training_mode' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           // TODO in training mode, it may be possible to infer some of
@@ -1650,7 +1662,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* Dropout_ver10_doc = R"DOC(
+static const char* Dropout_ver12_doc = R"DOC(
 Dropout takes one input floating tensor and produces two tensor outputs,
 output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
 in test mode or not, the output Y will either be a random dropout, or a simple
@@ -1660,25 +1672,29 @@ the training phase, so during testing nothing needs to be done.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
-    10,
+    12,
     OpSchema()
-        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
-        .Attr(
-            "ratio",
-            "The ratio of random dropout",
-            AttributeProto::FLOAT,
-            0.5f)
+        .SetDoc(Dropout_ver12_doc + GenerateOptionalArgumentsDoc())
+        .Attr("seed", "(Optional) Seed to the random generator, if not specified we will auto generate one.", AttributeProto::INT, OPTIONAL)
         .Input(0, "data", "The input data as Tensor.", "T")
+        .Input(1, "ratio", "The ratio of random dropout, with value in [0, 1). If this input was not set, "
+                  "or if it was set to 0, the output would be a simple copy of the input. "
+                  "If it's non-zero, output will be a random dropout of input, which is typically "
+                  "the case during training.", "T1", OpSchema::Optional)
         .Output(0, "output", "The output.", "T")
-        .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
+        .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
             "T1",
+            {"tensor(float)"},
+            "Constrain input 'ratio' types to float tensors.")
+        .TypeConstraint(
+            "T2",
             {"tensor(bool)"},
-            "Constrain output mask types to boolean tensors.")
+            "Constrain output 'mask' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           if (ctx.getNumOutputs() == 2) {
