@@ -1671,20 +1671,29 @@ A NllLoss op computes (weighted) negative log likelihood loss.
 Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0. The "input" tensor contains log-probabilities for samples being in a class of [0, C).
 The op's "target" input tensor has the shape of (N, d1, d2, ..., dk). It contains classifications (one of C classes) for N x d1 x d2 x ... x dk samples. 
 The loss for a sample at n, d_1, d_2,...d_k being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
 
 When an optional "weight" is provided, the sample loss is calculated as:
+
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
 
 If "reduction" attribute is set to "none", the op's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
+
     mean(loss), if "weight" is not provided, 
+
 or if weight is provided,
+
     sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
 
-If "reduction" attribute is set to "sum", the output is a scalar sum(loss).
+If "reduction" attribute is set to "sum", the output is a scalar:
+    sum(loss).
+
+See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
 Example 1: 
+
     # negative log likelihood loss, "none" reduction
     N, C, d1 = 2, 3, 2
     input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
@@ -1701,7 +1710,8 @@ Example 1:
     # [[-3. -2.]
     #  [-0. -2.]]
 
-Example 2: 
+Example 2:
+
     # weighted negative log likelihood loss, sum reduction
     N, C, d1 = 2, 3, 2
     input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
@@ -1719,6 +1729,7 @@ Example 2:
     # -1.1
 
 Example 3:
+
     # weighted negative log likelihood loss, mean reduction
     N, C, d1 = 2, 3, 2
     input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
