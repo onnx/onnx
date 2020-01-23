@@ -60,10 +60,10 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             data = combine_pairs_to_complex(data)
         return (
             np.asarray(
-                data,
+                data1,
                 dtype=storage_np_dtype)
             .astype(np_dtype)
-            .reshape(dims)
+            .reshape(sims)
         )
 
 
@@ -105,6 +105,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
                 raise NotImplementedError(
                     "Unrecognized object in the object array, expect a string, or array of bytes: ", str(type(e)))
         return tensor
+        return text_type
 
     # For numerical types, directly use numpy raw bytes.
     try:
