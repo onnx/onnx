@@ -742,13 +742,27 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
+// only add input to the function body if it is used by a body's node.
+bool FilterFunctionBodyInputByName(const std::string& input_name, const FunctionProto& function_body)
+{
+  for (int i = 0; i< function_body.node_size(); i++)
+  {
+    auto node = function_body.node(i);
+    for (int j = 0; j < node.input_size(); j++)
+      if (node.input(j) == input_name)
+        return true;
+  }
+  return false;
+}
+
 void OpSchema::BuildFunction(FunctionProto& function_body) {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
   function_body.set_since_version(this->since_version_);
   function_body.set_status(OperatorStatus(1 - (int)this->support_));
   for (auto& i : inputs_) {
-    function_body.add_input(i.GetName());
+    if (FilterFunctionBodyInputByName(i.GetName(), function_body))
+      function_body.add_input(i.GetName());
   }
   for (auto& o : outputs_) {
     function_body.add_output(o.GetName());

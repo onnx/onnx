@@ -106,6 +106,47 @@ class NllLoss(Base):
             name='test_nll_loss_input_shape_is_NCd1d2_reduction_mean')
 
     @staticmethod
+    def export_input_shape_is_NCd1d2_reduction_sum():  # type: () -> None
+        reduction = 'sum'
+        node = onnx.helper.make_node(
+            'NllLoss',
+            inputs=['input', 'target'],
+            outputs=['loss'],
+            reduction=reduction
+        )
+
+        N, C, dim1, dim2 = 3, 5, 6, 6
+        np.random.seed(0)
+        input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+
+        nll_loss = compute_nll_loss(input, target, weight=None, reduction=reduction)
+
+        expect(node, inputs=[input, target], outputs=[nll_loss],
+            name='test_nll_loss_input_shape_is_NCd1d2_reduction_sum')
+
+    @staticmethod
+    def export_input_shape_is_NCd1d2_with_weight():  # type: () -> None
+        reduction = 'none'
+        node = onnx.helper.make_node(
+            'NllLoss',
+            inputs=['input', 'target', 'weight'],
+            outputs=['loss'],
+            reduction=reduction
+        )
+
+        N, C, dim1, dim2 = 3, 5, 6, 6
+        np.random.seed(0)
+        input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        weight = np.random.rand(C).astype(np.float32)
+
+        nll_loss = compute_nll_loss(input, target, weight=weight, reduction=reduction)
+
+        expect(node, inputs=[input, target, weight], outputs=[nll_loss],
+            name='test_nll_loss_input_shape_is_NCd1d2_with_weight')
+
+    @staticmethod
     def export_input_shape_is_NCd1d2_with_weight_reduction_mean():  # type: () -> None
         reduction = 'mean'
         node = onnx.helper.make_node(
@@ -125,3 +166,24 @@ class NllLoss(Base):
 
         expect(node, inputs=[input, target, weight], outputs=[nll_loss],
             name='test_nll_loss_input_shape_is_NCd1d2_with_weight_reduction_mean')
+
+    @staticmethod
+    def export_input_shape_is_NCd1d2_with_weight_reduction_sum():  # type: () -> None
+        reduction = 'sum'
+        node = onnx.helper.make_node(
+            'NllLoss',
+            inputs=['input', 'target', 'weight'],
+            outputs=['loss'],
+            reduction=reduction
+        )
+
+        N, C, dim1, dim2 = 3, 5, 6, 6
+        np.random.seed(0)
+        input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        weight = np.random.rand(C).astype(np.float32)
+
+        nll_loss = compute_nll_loss(input, target, weight=weight, reduction=reduction)
+
+        expect(node, inputs=[input, target, weight], outputs=[nll_loss],
+            name='test_nll_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')

@@ -1,0 +1,26 @@
+backend-test:à
+<
+input
+target
+weightloss"NllLoss*
+	reduction"none /test_nll_loss_input_shape_is_NCd1d2_with_weightZ
+input
+
+
+
+
+Z
+target
+
+
+
+Z
+weight
+
+
+b
+loss
+
+
+
+B
