@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 def compute_nll_loss(input, target, weight=None, reduction='mean'):  # type: ignore
     ''' Compute nll_loss '''
     input_shape = input.shape
@@ -24,24 +25,25 @@ def compute_nll_loss(input, target, weight=None, reduction='mean'):  # type: ign
         neg_gather_element_input = np.zeros((N, dim1, dim2), dtype=np.float32)
         for i in range(N):
             for d1 in range(dim1):
-                for d2 in range(dim2): 
+                for d2 in range(dim2):
                     neg_gather_element_input[i][d1][d2] = -input[i][target[i][d1][d2]][d1][d2]
 
     loss = neg_gather_element_input
     if weight is not None:
         # Gather(input=weight, index=target)
         gather_weight = np.take(weight, target)
-        
+
         loss = gather_weight * loss
         if reduction == 'mean':
             return loss.sum() / gather_weight.sum()
-            
+
     if reduction == 'none':
         return loss
     elif reduction == 'mean':
         return np.mean(loss, keepdims=False)
     elif reduction == 'sum':
         return np.sum(loss, keepdims=False)
+
 
 class NllLoss(Base):
 

@@ -1667,6 +1667,75 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* NllLoss_ver12_doc = R"DOC(
+A NllLoss op computes (weighted) negative log likelihood loss.
+Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0. The "input" tensor contains log-probabilities for samples being in a class of [0, C).
+The op's "target" input tensor has the shape of (N, d1, d2, ..., dk). It contains classifications (one of C classes) for N x d1 x d2 x ... x dk samples. 
+The loss for a sample at n, d_1, d_2,...d_k being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+
+When an optional "weight" is provided, the sample loss is calculated as:
+    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+
+If "reduction" attribute is set to "none", the op's output will be the above loss with shape (N, d1, d2, ..., dk).
+If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
+    mean(loss), if "weight" is not provided, 
+or if weight is provided,
+    sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+
+If "reduction" attribute is set to "sum", the output is a scalar sum(loss).
+
+Example 1: 
+    # negative log likelihood loss, "none" reduction
+    N, C, d1 = 2, 3, 2
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+    target = [[2, 1], [0, 2]]
+
+    loss = np.zeros((N, d1))
+    for n in range(N):
+        for d_1 in range(d1):
+            c = target[n][d_1]
+            loss[n][d_1] = -input[n][c][d_1]
+
+    # print(loss)
+    # [[-3. -2.]
+    #  [-0. -2.]]
+
+Example 2: 
+    # weighted negative log likelihood loss, sum reduction
+    N, C, d1 = 2, 3, 2
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+    target = [[2, 1], [0, 2]]
+    weight = [0.2, 0.3, 0.1]
+    loss = np.zeros((N, d1))
+    for n in range(N):
+        for d_1 in range(d1):
+            c = target[n][d_1]
+            loss[n][d_1] = -input[n][c][d_1] * weight[c]
+
+    loss = np.sum(loss)
+    # print(loss)
+    # -1.1
+
+Example 3:
+    # weighted negative log likelihood loss, mean reduction
+    N, C, d1 = 2, 3, 2
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+    target = [[2, 1], [0, 2]]
+    weight = [0.2, 0.3, 0.1]
+    loss = np.zeros((N, d1))
+    weight_total = 0
+    for n in range(N):
+        for d_1 in range(d1):
+            c = target[n][d_1]
+            loss[n][d_1] = -input[n][c][d_1] * weight[c]
+            weight_total = weight_total + weight[c]
+
+    loss = np.sum(loss) / weight_total
+    # print(loss)
+    # -1.57
 )DOC";
 
 TensorProto ToDimensionOneTensor(int32_t value) {
@@ -1709,13 +1778,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to floating-point tensors.")
+            "Constrain input, weight, and output types to floating-point tensors.")
         .TypeConstraint(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
-            "Constrain labels to integer types")
+            "Constrain target to integer types")
         .AddQueriedFunctionBody([](InferenceContext& ctx) { // no weight, reduction is "none"
-              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none";},
+              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1731,9 +1800,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 }))
         .AddQueriedFunctionBody(
             [](InferenceContext& ctx) { // no weight, reduction is "mean"
-              return !hasInputShape(ctx, 2) &&
-                  ctx.getAttribute("reduction")->s() == "mean";
-            },
+              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "mean"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1750,9 +1817,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }))
         .AddQueriedFunctionBody(
             [](InferenceContext& ctx) { // no weight, reduction is "sum"
-              return !hasInputShape(ctx, 2) &&
-                  ctx.getAttribute("reduction")->s() == "sum";
-            },
+              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "sum"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1769,9 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }))
         .AddQueriedFunctionBody(
             [](InferenceContext& ctx) { // with weight, reduction is "none"
-              return hasInputShape(ctx, 2) &&
-                  ctx.getAttribute("reduction")->s() == "none";
-            },
+              return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none"; },
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1789,9 +1852,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 }))
         .AddQueriedFunctionBody(
             [](InferenceContext& ctx) { // with weight, reduction is "mean"
-              return hasInputShape(ctx, 2) &&
-                  ctx.getAttribute("reduction")->s() == "mean";
-            },
+              return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "mean"; },
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1812,9 +1873,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 }))
         .AddQueriedFunctionBody(
             [](InferenceContext& ctx) { // with weight, reduction is "sum"
-              return hasInputShape(ctx, 2) &&
-                  ctx.getAttribute("reduction")->s() == "sum";
-            },
+              return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "sum"; },
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1832,63 +1891,63 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
                 }))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-  // Type inference
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            // Type inference
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-  // Shape inference
-  if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
-    const TensorShapeProto& input_shape =
-        ctx.getInputType(0)->tensor_type().shape();
-    const TensorShapeProto& target_shape =
-        ctx.getInputType(1)->tensor_type().shape();
+            // Shape inference
+            if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+                const TensorShapeProto& input_shape =
+                    ctx.getInputType(0)->tensor_type().shape();
+                const TensorShapeProto& target_shape =
+                    ctx.getInputType(1)->tensor_type().shape();
 
-    const int input_rank = static_cast<int>(input_shape.dim_size());
-    const int target_rank = static_cast<int>(target_shape.dim_size());
+                const int input_rank = static_cast<int>(input_shape.dim_size());
+                const int target_rank = static_cast<int>(target_shape.dim_size());
 
-    if (input_rank < 2) {
-      fail_shape_inference("Input rank must be >= 2.")
-    }
-    if (target_rank != input_rank - 1) {
-      fail_shape_inference("Target rank must be 1 less than the input rank.")
-    }
+                if (input_rank < 2) {
+                fail_shape_inference("Input rank must be >= 2.")
+                }
+                if (target_rank != input_rank - 1) {
+                fail_shape_inference("Target rank must be 1 less than the input rank.")
+                }
 
-    // match input dimensions (N, C, d1, ..., dk) with target dimensions of (C,
-    // d1, ..., dk)
-    for (int dim = 0; dim < target_rank; dim++) {
-      const auto input_dim =
-          dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-      const auto target_dim = target_shape.dim(dim);
-      if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
-          input_dim.dim_value() != target_dim.dim_value())
-        fail_shape_inference("Input and target dimension value mismatch.")
-    }
+                // match input dimensions (N, C, d1, ..., dk) with target dimensions of (C,
+                // d1, ..., dk)
+                for (int dim = 0; dim < target_rank; dim++) {
+                const auto input_dim =
+                    dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+                const auto target_dim = target_shape.dim(dim);
+                if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
+                    input_dim.dim_value() != target_dim.dim_value())
+                    fail_shape_inference("Input and target dimension value mismatch.")
+                }
 
-    if (ctx.getNumInputs() == 3) {
-      const TensorShapeProto& weight_shape =
-          ctx.getInputType(2)->tensor_type().shape();
-      if (weight_shape.dim_size() != 1)
-        fail_shape_inference("Weight rank must be 1.") const auto weight_dim =
-            weight_shape.dim(0);
-      const auto input_dim_1 = weight_shape.dim(0);
-      if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
-          weight_dim.dim_value() != input_dim_1.dim_value())
-        fail_shape_inference("Input and weight dimension value mismatch.")
-    }
+                if (ctx.getNumInputs() == 3) {
+                const TensorShapeProto& weight_shape =
+                    ctx.getInputType(2)->tensor_type().shape();
+                if (weight_shape.dim_size() != 1)
+                    fail_shape_inference("Weight rank must be 1.") const auto weight_dim =
+                        weight_shape.dim(0);
+                const auto input_dim_1 = weight_shape.dim(0);
+                if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
+                    weight_dim.dim_value() != input_dim_1.dim_value())
+                    fail_shape_inference("Input and weight dimension value mismatch.")
+                }
 
-    TensorShapeProto* output_shape =
-        ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+                TensorShapeProto* output_shape =
+                    ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-    if (ctx.getAttribute("reduction")->s() == "none") {
-      // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute
-      // is "none".
-      for (int i = 0; i < input_rank - 1; i++) {
-        auto* dim = output_shape->add_dim();
-        if (i == 0)
-          *dim = input_shape.dim(i);
-        else
-          *dim = input_shape.dim(i + 1);
-      }
-    }
-      // otherwise output is a scaler.
-  }}));
+                if (ctx.getAttribute("reduction")->s() == "none") {
+                // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute
+                // is "none".
+                for (int i = 0; i < input_rank - 1; i++) {
+                    auto* dim = output_shape->add_dim();
+                    if (i == 0)
+                    *dim = input_shape.dim(i);
+                    else
+                    *dim = input_shape.dim(i + 1);
+                }
+                }
+                // otherwise output is a scaler.
+            }}));
 } // namespace ONNX_NAMESPACE
