@@ -45,7 +45,7 @@ class BatchNormalization(Base):
 
         # output size: (1, 2, 1, 3)
         expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
-               name='train_batchnorm_example')
+               name='test_batchnorm_example_training_mode')
 
         # input size: (2, 3, 4, 5)
         x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -71,7 +71,7 @@ class BatchNormalization(Base):
 
         # output size: (2, 3, 4, 5)
         expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
-               name='train_batchnorm_epsilon')
+               name='test_batchnorm_epsilon_training_mode')
     
     @staticmethod
     def export():  # type: () -> None
