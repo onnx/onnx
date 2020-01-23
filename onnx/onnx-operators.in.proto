@@ -84,7 +84,6 @@ message FunctionProto {
 //      this operator was initially declared in.
 //
 message OperatorProto {
-
   // The name of the operator within a domain.
   // This field MUST be present in this version of the IR.
   optional string op_type = 1;
@@ -168,3 +167,4 @@ message OperatorSetProto {
   // The (name, version) MUST be unique across all OperatorProtos/FunctionProtos in operator/functions
   repeated FunctionProto functions = 9;
 }
+

@@ -92,7 +92,15 @@ enum Version {
   // - Add support for sparse tensor constants stored in model.
   //   - Add message SparseTensorProto
   //   - Add sparse initializers
-  IR_VERSION = 0x0000000000000006;
+  IR_VERSION_2019_9_19 = 0x0000000000000006;
+
+  // IR VERSION 7 published on <TBD>
+  // - Add message TrainingInfoProto to store initialization
+  //   method and training algorithm.
+  // - Make inference graph callable from TrainingInfoProto.
+  // - Make inference graph's initializers visiable to
+  //   TrainingInfoProto.
+  IR_VERSION = 0x0000000000000007;
 }
 
 // Attributes
@@ -199,6 +207,83 @@ message NodeProto {
   optional string doc_string = 6;
 }
 
+// Training information
+// TrainingInfoProto defines a computation graph similar to the inference one
+// (i.e., ModelProto.graph) but represents a training algorithm. Each execution
+// of a TrainingInfoProto leads to the update of some initializers in its
+// TrainingInfoProto.algorithm.initializer and ModelProto.graph.initializer.
+//
+// If there are multiple TrainingInfoProto's, sequentially executing all of
+// them once constitutes a full training algorithm step. The initializer update
+// happens at the end of each TrainingInfoProto's execution. If the targeted
+// training algorithm contains consecutive update stages (such as block
+// coordinate descent methods), the user needs to create a TrainingInfoProto
+// for each stage.
+//
+// The execution of TrainingInfoProto has two modes. The user can choose to
+// execute either "algorithm" or "initialization". The computation specified in
+// "training" improves initializers based on the given training data. The
+// computation specified in "initialization" resets the model to its
+// initial state (as if no training data has been consumed).
+//
+// Sveral inference components are usable in TrainingInfoProto; the list
+// includes
+//   1. ModelProto.graph is a callble inside TrainingInfoProto.algorithm.
+//      Each call is a NodeProto in TrainingInfoProto.algorithm.node with
+//      NodeProto.op_type == "Graph" and
+//      NodeProto.name == ModelProto.graph.name.
+//   2. Initializers in ModelProto.graph.initializer can be referenced by
+//      nodes in TrainingInfoProto.algorithm.nodes and
+//      TrainingInfoProto.initialization.nodes. It implies that training
+//      nodes cannot produce values with names identical to inference
+//      initializers.
+message TrainingInfoProto {
+  // This field is a graph that describes a way to compute the initial tensors
+  // upon starting the training process. Initialization graph has no input
+  // and can have multiple outputs. Assigning those outputs to the associated
+  // initializers follows the relation defined by update_binding as if
+  // TrainingInfoProto.initialization is another training algorithm.
+  //
+  // By default, this field is an empty graph and its evaluation does not
+  // produce any output.
+  optional GraphProto initialization = 1;
+
+  // This field represents a training algorithm step. Given required inputs,
+  // it computes outputs to update initializers in either its own initializer
+  // list or in ModelProto.graph.initializer. In general, this graph contains
+  // loss node, gradient node, optimizer node, increment of iteration count,
+  // and calls to the inference graph.
+  //
+  // The field algorithm.node can invoke ModelProto.graph as a node.
+  // The initializers defined in ModelProto.graph.initializer are visible in
+  // the "algorithm".
+  //
+  // The field MUST be present.
+  optional GraphProto algorithm = 2;
+
+  // Gradient-based training is usually an iterative procedure. In one gradient
+  // descent iteration, we apply
+  //
+  // x = x - r * g
+  //
+  // where "x" is the optimized tensor, "r" stands for learning rate, and "g" is
+  // gradient of "x" with respect to a chosen loss. To avoid adding assignments
+  // into the training graph, the
+  // user needs to save "y = x - r * g" into a TrainingInfoProto.algorithm. To
+  // tell runtime that "y" should be assigned to "x", the field
+  // "update_binding" may contain a pair of strings, "y"
+  // (key of StringStringEntryProto) and "x" (value of StringStringEntryProto).
+  // Similarly, for a neural network which contains multiple tensors, there can
+  // be multiple key-value pairs in "update_binding".
+  //
+  // In general, the user can use "update_binding" to assign any output of
+  // "algorithm" and "initialization" to any initializer in
+  // ModelProto.graph.initializer and TrainingInfoProto.algorithm.initializer.
+  // One initializer can only be assigned up to once; it implies that the
+  // values in "update_binding" must be unique.
+  repeated StringStringEntryProto update_binding = 3;
+}
+
 // Models
 //
 // ModelProto is a top-level file/container format for bundling a ML model and
@@ -249,6 +334,10 @@ message ModelProto {
 
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
+
+  // Training-specific information. Sequentially executing all stored
+  // "TrainingInfoProto"s is one training iteration.
+  repeated TrainingInfoProto training_info = 21;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
@@ -593,7 +682,3 @@ message OperatorSetIdProto {
   // This field MUST be present in this version of the IR.
   optional int64 version = 2;
 }
-
-// For using protobuf-lite
-option optimize_for = LITE_RUNTIME;
-
