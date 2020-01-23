@@ -13532,7 +13532,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
 <dt><tt>split</tt> : list of ints</dt>
-<dd>length of each output</dd>
+<dd>length of each output. Values should be >= 0.</dd>
 </dl>
 
 #### Inputs
@@ -13588,7 +13588,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
 <dt><tt>split</tt> (optional) : I</dt>
-<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be positive. </dd>
+<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be >= 0. </dd>
 </dl>
 
 #### Outputs
