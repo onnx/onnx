@@ -206,7 +206,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 unresolvedZeros[i] = true;
                 if (dataInputTensorType.has_shape()) {
                   if (i >= dataInputTensorType.shape().dim_size()) {
-                    fail_shape_inference("Invalid position of 0");
+                    fail_shape_inference("Invalid position of 0.");
                   }
                   if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                     const auto& dim_value =
