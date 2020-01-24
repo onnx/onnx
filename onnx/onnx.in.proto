@@ -235,11 +235,15 @@ message NodeProto {
 //      nodes cannot produce values with names identical to inference
 //      initializers.
 message TrainingInfoProto {
-  // This field is a graph that describes a way to compute the initial tensors
+  // This field describes a graph to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
   // and can have multiple outputs. Assigning those outputs to the associated
   // initializers follows the relation defined by update_binding as if
-  // TrainingInfoProto.initialization is another training algorithm.
+  // TrainingInfoProto.initialization is another training algorithm. Usually,
+  // trainable tensors in neural networks are randomly initialized.
+  // To achieve that, for each tensor, the user can put a random operator such
+  // as RandomNormal or RandomUniform in TrainingInfoProto.initialization.node
+  // and assign its random output to the specific tensor using "update_binding".
   //
   // By default, this field is an empty graph and its evaluation does not
   // produce any output.
