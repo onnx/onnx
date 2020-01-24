@@ -32,7 +32,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MeanSquaredError,
     12,
     OpSchema()
-        .SetDoc(MSE_ver10_doc)
+        .SetDoc(MSE_ver12_doc)
         .Attr(
             "reduction",
             reduction_doc,
