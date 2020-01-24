@@ -9672,7 +9672,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Split
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>1d</summary>
 
@@ -9761,6 +9761,25 @@ node = onnx.helper.make_node(
 
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+```
+
+</details>
+<details>
+<summary>zero_size_splits</summary>
+
+```python
+input = np.array([]).astype(np.float32)
+
+# Split emtpy tensor to tensors of size zero
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3'],
+    split=[0, 0, 0]
+)
+
+expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
 ```
 
 </details>
