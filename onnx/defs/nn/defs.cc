@@ -1509,7 +1509,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "momentum",
             "Factor used in computing the running mean and variance."
-            "e.g., running_mean = saved_mean * momentum + mean * (1 - momentum).",
+            "e.g., running_mean = running_mean * momentum + saved_mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
         .Input(

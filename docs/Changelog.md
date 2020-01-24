@@ -13988,7 +13988,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
-<dd>Factor used in computing the running mean and variance.e.g., running_mean = saved_mean * momentum + mean * (1 - momentum).</dd>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + saved_mean * (1 - momentum).</dd>
 </dl>
 
 #### Inputs (5 - 6)
