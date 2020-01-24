@@ -22,7 +22,7 @@ enum PassType {
   // Class of optimizations that removes useless operations.
   Nop = 1,
   // Class of optimizations that includes some form of seperation.
-  Seperate = 2,
+  Separate = 2,
   // Immutable pass, also sometimes referred to as an analysis pass.
   Immutable = 3,
   // Other type of pass.
