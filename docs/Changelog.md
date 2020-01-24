@@ -13965,7 +13965,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-<<<<<<< HEAD
 ### <a name="BatchNormalization-12"></a>**BatchNormalization-12**</a>
 
   Carries out batch normalization as described in the paper
@@ -14041,7 +14040,47 @@ This version of the operator has been available since version 12 of the default 
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
-=======
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>seed</tt> : int</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+<dt><tt>ratio</tt> (optional) : T1</dt>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of input, which is typically the case during training.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+<dt><tt>mask</tt> (optional) : T2</dt>
+<dd>The output mask.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>Constrain input 'ratio' types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output 'mask' types to boolean tensors.</dd>
+</dl>
+
 ### <a name="Einsum-12"></a>**Einsum-12**</a>
 
   An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
@@ -14066,7 +14105,6 @@ This version of the operator has been available since version 12 of the default 
   The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
   The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
   beginning of the output. The equation string may contain space (U+0020) character.
->>>>>>> upstream/master
 
 #### Version
 
@@ -14075,28 +14113,6 @@ This version of the operator has been available since version 12 of the default 
 #### Attributes
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>seed</tt> : int</dt>
-<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-</dl>
-
-#### Inputs (1 - 2)
-
-<dl>
-<dt><tt>data</tt> : T</dt>
-<dd>The input data as Tensor.</dd>
-<dt><tt>ratio</tt> (optional) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of input, which is typically the case during training.</dd>
-</dl>
-
-#### Outputs (1 - 2)
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T2</dt>
-<dd>The output mask.</dd>
-=======
 <dt><tt>equation</tt> : string (required)</dt>
 <dd>Einsum expression string.</dd>
 </dl>
@@ -14113,23 +14129,13 @@ This version of the operator has been available since version 12 of the default 
 <dl>
 <dt><tt>Output</tt> : T</dt>
 <dd>Output tensor</dd>
->>>>>>> upstream/master
 </dl>
 
 #### Type Constraints
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(float)</dt>
-<dd>Constrain input 'ratio' types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Constrain output 'mask' types to boolean tensors.</dd>
-=======
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numerical tensor types.</dd>
->>>>>>> upstream/master
 </dl>
 
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
