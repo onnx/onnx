@@ -111,7 +111,7 @@ class Pass {
 
  protected:
   // Iterates through the elements in the graph and counts the number of times
-  // the transform is succesfully run.
+  // the transform is successfully run.
   unsigned int DescendOnGraphAttributesAndCount(
       Node* n,
       std::function<unsigned int(Graph&)> fn);
