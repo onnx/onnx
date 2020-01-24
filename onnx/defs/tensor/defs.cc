@@ -192,7 +192,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // this dimension to potentially be filled in later.
               if (negativeOneDim) {
                 fail_shape_inference(
-                    "Target shape may not have multiple -1 dimensions");
+                    "Target shape may not have multiple -1 dimensions.");
               }
               negativeOneDim = new_dim;
             } else if (targetShape[i] == 0) {
