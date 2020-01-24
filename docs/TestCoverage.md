@@ -2590,7 +2590,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_default_old',  opset_imports=[helper.make_opsetid("", 10)])
+       name='test_dropout_default_old',  opset_imports=[helper.make_opsetid("", 11)])
 ```
 
 </details>
@@ -2629,7 +2629,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_random_old',  opset_imports=[helper.make_opsetid("", 10)])
+       name='test_dropout_random_old',  opset_imports=[helper.make_opsetid("", 11)])
 ```
 
 </details>
