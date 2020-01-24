@@ -19,7 +19,7 @@ def batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
     var = var.reshape(-1, *dim_ones)
     return s * (x - mean) / np.sqrt(var + epsilon) + bias
 
-def batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):
+def batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):  # type: ignore
         y = batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5)
         momentum = 0.1
         saved_mean = x.mean()
