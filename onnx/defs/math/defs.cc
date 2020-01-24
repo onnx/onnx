@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <functional>
+#include <algorithm>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -1663,6 +1664,146 @@ ONNX_OPERATOR_SET_SCHEMA(
               *dim = input_shape.dim(i);
             }
           }
+        }));
+
+void einsumRankInference(
+    ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
+
+  const size_t numInputs = ctx.getNumInputs();
+  if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+    return;
+  }
+
+  auto* output_shape = getOutputShape(ctx, 0);
+  std::string  left_equation;
+
+  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end()); // Remove space char
+  auto mid_index = equation.find("->");
+  if (mid_index != std::string::npos) {
+    // Separate right and left hand sides of the equation
+    left_equation = equation.substr(0, mid_index);
+  } else {
+    // No right hand side
+    left_equation = equation;
+  }
+
+  std::string term;
+  size_t num_operands = 0;
+  size_t num_ellipsis = 0;
+  size_t num_ellipsis_indices = 0;
+
+  // Parse the left-hand side
+  std::stringstream str(left_equation);
+  while(std::getline(str, term, ',')) {
+    auto ellipsis_index = term.find("...");
+    if (ellipsis_index != std::string::npos) {
+      if (numInputs <= num_operands) {
+        fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+      }
+      // If there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
+      size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+      if (num_ellipsis == 0) {
+        num_ellipsis_indices = rank - term.size() + 3;
+      } else { // ellipsis has been seen before. Check that if dimensions are compatible
+        if (num_ellipsis_indices != rank - term.size() + 3) {
+          fail_shape_inference("Ellipsis represents incompatible dimensions.");
+        }
+      }
+      num_ellipsis++;
+    }
+    num_operands++;
+  }
+
+  if (numInputs != num_operands) {
+    fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+  }
+
+  const size_t number_of_letters = 26;
+  size_t num_letter_occurrences[number_of_letters] = {0};
+  // Parse the provided right-hand side
+  if (mid_index != std::string::npos) {
+    std::string right_equation = equation.substr(mid_index + 2);
+    auto right_ellipsis_index = right_equation.find("...");
+    if (right_ellipsis_index != std::string::npos) { // Right-hand side contains ellipsis
+      for (size_t i = 0; i < num_ellipsis; ++i) {
+        output_shape->add_dim();
+      }
+    }
+    for (char c: right_equation) { // Add a dimension per each character in right hand equation
+      if (c != '.') {
+        output_shape->add_dim();
+      }
+    }
+  } else { // Infer the dimension for right-hand side
+    // If there's an ellipsis, add it's corresponding dimensions
+    for (size_t i = 0; i < num_ellipsis_indices; i++) {
+      output_shape->add_dim();
+    }
+    for (size_t i = 0; i < left_equation.size(); i++) { // Count chars that appear exactly once on left hand side
+      if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
+        num_letter_occurrences[left_equation.at(i) - 'a']++;
+      }
+    }
+    for (size_t index = 0; index < number_of_letters; index++) {
+      if (num_letter_occurrences[index] == 1) {
+        output_shape->add_dim();
+      }
+    }
+  }
+}
+
+static const char* Einsum_ver12_doc = R"DOC(
+An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
+
+```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
+
+where the reduce-sum performs a summation over all the indices occurring in in the input terms (term1, term2)
+that do not occur in the output-term.
+
+The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
+an operand tensor, and the characters within the terms correspond to operands dimensions.
+
+This sequence may be followed by "->" to separate the left and right hand side of the equation.
+If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
+summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
+equation.
+
+When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
+
+The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
+beginning of the output. The equation string may contain space (U+0020) character.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Einsum,
+    12,
+    OpSchema()
+        .SetDoc(Einsum_ver12_doc)
+        .Attr(
+            "equation",
+            "Einsum expression string.",
+            AttributeProto::STRING)
+        .Input(0,
+            "Inputs",
+            "Operands",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "Output", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numerical tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          std::string equation = getAttribute(ctx, "equation", "");
+          if (equation.compare("") == 0) {
+            return;
+          }
+	        einsumRankInference(ctx, equation);
         }));
 
 } // namespace ONNX_NAMESPACE
