@@ -283,6 +283,12 @@ message TrainingInfoProto {
   // ModelProto.graph.initializer and TrainingInfoProto.algorithm.initializer.
   // One initializer can only be assigned up to once; it implies that the
   // values in "update_binding" must be unique.
+  //
+  // Whether an initializer is trainable is determined by the values of
+  // key-value pairs in "update_binding". If the name of an initializer
+  // cannot be found as a value in the "update_binding"s of all
+  // TrainingInfoProto's, that initializer is not trainable and therefore
+  // considered as a constant.
   repeated StringStringEntryProto update_binding = 3;
 }
 

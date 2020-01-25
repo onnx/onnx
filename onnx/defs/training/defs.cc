@@ -35,7 +35,8 @@ W --> Conv --> H --> Gemm --> Y
 |      X              Z
 |      |              |
 |      |   .----------'
-|      |   |  (W/Z/X is the 1st/2nd/3rd input of Gradient as shown in "xs")
+|      |   |  (W/Z/X is the 1st/2nd/3rd input of Gradient as shown in
+|      |   |   "xs" followed by "zs")
 |      v   v
 '---> Gradient(xs=["W", "Z"], zs=["X"], y="Y")
        |   |
@@ -136,8 +137,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     Gradient,
     12,
     OpSchema()
-        .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
-        .SetDomain("ai.onnx.training")
         .SetDoc(Gradient_ver12_doc)
         .Input(
             0,
