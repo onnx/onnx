@@ -561,9 +561,9 @@ expect(node, inputs=[x, y], outputs=[z],
   Computes the indices of the max elements of the input tensor's element along the 
   provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-  If select_last_index is True (default False), the index of the last occurence of the max 
+  If select_last_index is True (default False), the index of the last occurrence of the max 
   is selected if the max appears more than once in the input. Otherwise the index of the 
-  first occurence is selected.
+  first occurrence is selected.
   The type of the output tensor is integer.
 
 #### Version
@@ -822,9 +822,9 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
   Computes the indices of the min elements of the input tensor's element along the 
   provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-  If select_last_index is True (default False), the index of the last occurence of the min 
+  If select_last_index is True (default False), the index of the last occurrence of the min 
   is selected if the min appears more than once in the input. Otherwise the index of the 
-  first occurence is selected.
+  first occurrence is selected.
   The type of the output tensor is integer.
 
 #### Version
@@ -1346,7 +1346,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
-<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
 <dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
@@ -6933,7 +6933,7 @@ y = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]).astype(np
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_example')
 
-# For multiple occurrances of the maximal values, the first occurrence is selected for one-hot output
+# For multiple occurrences of the maximal values, the first occurrence is selected for one-hot output
 x = np.array([[3, 3, 3, 1]]).astype(np.float32)
 y = np.array([[1, 0, 0, 0]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
@@ -8632,7 +8632,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
-<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
