@@ -14024,7 +14024,7 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Gradient-12"></a>**Gradient-12**</a>
 
-  Gradient operator computes the partial derivatives of a specific tensor to
+  Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
   algorithms. To illustrate its use, let's consider a computation graph,
   
@@ -14062,7 +14062,7 @@ This version of the operator has been available since version 12 of the default 
   
   By definition, the tensor "y" is a function of independent variables in "xs"
   and "zs". Since we only compute the gradient of "y" w.r.t. the differentiable
-  tensors in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
+  variables in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
   cannot appear in "xs" and "zs". The reason is that "H" can be determined by
   tensors "W" and "X" and therefore "H" is not an independent variable.
   
@@ -14072,7 +14072,7 @@ This version of the operator has been available since version 12 of the default 
   and LSTM.
   
   Gradient operator can compute derivative against intermediate tensors. For
-  example, the gradient of Y with respect to H can be done in
+  example, the gradient of Y with respect to H can be done via
   
   ```
   W --> Conv --> H --> Gemm --> Y
@@ -14122,7 +14122,7 @@ This version of the operator has been available since version 12 of the default 
   ```
   
   The tensors named in attributes "xs", "zs", and "y" define the differentiated
-  computation graph, but the inputs to Gradient node define the values at
+  computation graph, and the inputs to Gradient node define the values at
   which the gradient is computed. We can feed different tensors to the identified
   graph. For example, one can compute the gradient of Y with respect to H at 
   a specific value of H, H_1, by providing that value as an input to the Gradient
@@ -14142,9 +14142,10 @@ This version of the operator has been available since version 12 of the default 
              '------------------------------> dY/dZ (2nd output of Gradient)
   ```
   
-  When the inputs of Gradient are the tensors named in "xs", the computation
-  can be optimized. More specifically, intermediate variables in forward pass can
-  be reused if the gradient is computed via reverse-mode auto-differentiation.
+  When the inputs of Gradient are the tensors named in "xs" and "zs", the
+  computation can be optimized. More specifically, intermediate variables in
+  forward pass can be reused if the gradient is computed via reverse-mode
+  auto-differentiation.
   
 
 #### Version
