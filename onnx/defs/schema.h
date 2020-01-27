@@ -690,6 +690,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 12);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
+      map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -888,6 +889,9 @@ OpSchema GetOpSchema();
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
+
+#define ONNX_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are

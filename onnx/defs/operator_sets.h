@@ -717,7 +717,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Einsum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Gradient);
 
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
@@ -729,7 +728,6 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Gradient)>());
   }
 };
 
@@ -746,6 +744,22 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
   RegisterOpSetSchema<OpSet_Onnx_ver11>();
   RegisterOpSetSchema<OpSet_Onnx_ver12>();
+}
+
+// Declare training operators.
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Gradient);
+
+// Iterate over schema from ai.onnx.training version 1
+class OpSet_OnnxTraining_ver1 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Gradient)>());
+  }
+};
+
+// Register training operators.
+inline void RegisterOnnxTrainingOperatorSetSchema() {
+  RegisterOpSetSchema<OpSet_OnnxTraining_ver1>();
 }
 
 } // namespace ONNX_NAMESPACE

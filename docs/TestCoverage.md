@@ -3643,6 +3643,7 @@ add_node = onnx.helper.make_node('Add',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dc_da', 'dc_db'], name='my_gradient',
+    domain='ai.onnx.training',
     xs=['a', 'b'], y='c')
 
 a = np.array(1.0).astype(np.float32)
@@ -3668,8 +3669,13 @@ graph = onnx.helper.make_graph(
                                            onnx.TensorProto.FLOAT, []),
         onnx.helper.make_tensor_value_info('dc_db',
                                            onnx.TensorProto.FLOAT, [])])
-
-model = onnx.helper.make_model(graph, producer_name='backend-test')
+opsets = [
+    onnx.helper.make_operatorsetid('', 12),
+    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+model = onnx.helper.make_model(
+    graph,
+    producer_name='backend-test',
+    opset_imports=opsets)
 expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
        name='test_gradient_of_add')
 ```
@@ -3686,6 +3692,7 @@ mul_node = onnx.helper.make_node('Mul',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dd_da', 'dd_db'], name='my_gradient',
+    domain='ai.onnx.training',
     xs=['a', 'b'], y='d')
 
 a = np.array(1.0).astype(np.float32)
@@ -3714,7 +3721,12 @@ graph = onnx.helper.make_graph(
         onnx.helper.make_tensor_value_info('dd_db',
                                            onnx.TensorProto.FLOAT, [])])
 
-model = onnx.helper.make_model(graph, producer_name='backend-test')
+opsets = [
+    onnx.helper.make_operatorsetid('', 12),
+    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+model = onnx.helper.make_model(graph,
+    producer_name='backend-test',
+    opset_imports=opsets)
 expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
        name='test_gradient_of_add_and_mul')
 ```

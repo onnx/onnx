@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Gradient_ver12_doc = R"DOC(
+static const char* Gradient_ver1_doc = R"DOC(
 Gradient operator computes the partial derivatives of a specific tensor w.r.t.
 some other tensors. This operator is widely used in gradient-based training
 algorithms. To illustrate its use, let's consider a computation graph,
@@ -134,11 +134,11 @@ auto-differentiation.
 
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(
+ONNX_TRAINING_OPERATOR_SET_SCHEMA(
     Gradient,
-    12,
+    1,
     OpSchema()
-        .SetDoc(Gradient_ver12_doc)
+        .SetDoc(Gradient_ver1_doc)
         .Input(
             0,
             "Inputs",

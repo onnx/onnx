@@ -895,6 +895,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       RegisterOnnxMLOperatorSetSchema();
 #endif
 
+      // Invoke register of training operators.
+      RegisterOnnxTrainingOperatorSetSchema();
+
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =
           GetRegisteredSchemaCount() - dbg_initial_schema_count;

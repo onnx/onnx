@@ -534,7 +534,7 @@ void check_node(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN ||
-        node.domain() == "ai.onnx") {
+        node.domain() == "ai.onnx" || node.domain() == "ai.onnx.training") {
       // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() +
