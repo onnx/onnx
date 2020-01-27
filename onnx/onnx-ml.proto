@@ -209,14 +209,23 @@ message NodeProto {
 
 // Training information
 // TrainingInfoProto stores information for training a model.
+// In particular, this defines two functionalities: an initialization-step
+// and a training-algorithm-step. The semantics of the initialization-step is
+// that all initializers (in ModelProto.graph and in all
+// TrainingInfoProto.algorithm) are first initialized as specified by the
+// initializers in the graph, and then by the "initialization_binding" in every
+// instance in ModelProto.training_info. The semantics of the
+// training-algorithm-step is that all the initializers are updated as
+// specified by the "update_binding" in every instance in training_info.
 //
-// The field "algorithm" defines a computation graph similar to the inference one
-// (i.e., ModelProto.graph) but represents a training algorithm. Each execution
-// of a TrainingInfoProto.algorithm leads to the update of some initializers in
-// its TrainingInfoProto.algorithm.initializer and ModelProto.graph.initializer.
+// The field "algorithm" defines a computation graph similar to the inference
+// one (i.e., ModelProto.graph) but represents a training algorithm's step.
+// Each execution of a TrainingInfoProto.algorithm leads to the update of some
+// initializers in its TrainingInfoProto.algorithm.initializer and
+// ModelProto.graph.initializer.
 //
 // If there are multiple TrainingInfoProto's, sequentially executing all of
-// them once constitutes a full training algorithm step. The initializer update
+// them once constitutes a full training algorithm. The initializer update
 // happens at the end of each TrainingInfoProto's execution. If the targeted
 // training algorithm contains consecutive update stages (such as block
 // coordinate descent methods), the user needs to create a TrainingInfoProto
@@ -257,8 +266,8 @@ message TrainingInfoProto {
   optional GraphProto initialization = 1;
 
   // This field represents a training algorithm step. Given required inputs,
-  // it computes outputs to update initializers in either its own initializer
-  // list or in ModelProto.graph.initializer. In general, this graph contains
+  // it computes outputs to update initializers in its own initializer
+  // list and ModelProto.graph.initializer. In general, this graph contains
   // loss node, gradient node, optimizer node, increment of iteration count,
   // and calls to the inference graph.
   //
