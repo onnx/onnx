@@ -3021,7 +3021,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use the data type of the input tensor.</dd>
 <dt><tt>mean</tt> : float (default is 0.0)</dt>
 <dd>The mean of the normal distribution.</dd>
 <dt><tt>scale</tt> : float (default is 1.0)</dt>
@@ -3116,7 +3116,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use the data type of the input tensor.</dd>
 <dt><tt>high</tt> : float (default is 1.0)</dt>
 <dd>Upper boundary of the output values.</dd>
 <dt><tt>low</tt> : float (default is 0.0)</dt>
