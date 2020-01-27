@@ -2853,7 +2853,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>int32_shape_zero</summary>
 
 ```python
-x = np.array([0,]).astype(np.int64)
+x = np.array([0, ]).astype(np.int64)
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
                                        [1], [0])
 node = onnx.helper.make_node(
