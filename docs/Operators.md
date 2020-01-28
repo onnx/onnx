@@ -37,6 +37,7 @@
   * <a href="#Det">Det</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
+  * <a href="#Einsum">Einsum</a>
   * <a href="#Elu">Elu</a>
   * <a href="#Equal">Equal</a>
   * <a href="#Erf">Erf</a>
@@ -559,9 +560,9 @@ expect(node, inputs=[x, y], outputs=[z],
   Computes the indices of the max elements of the input tensor's element along the 
   provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-  If select_last_index is True (default False), the index of the last occurence of the max 
+  If select_last_index is True (default False), the index of the last occurrence of the max 
   is selected if the max appears more than once in the input. Otherwise the index of the 
-  first occurence is selected.
+  first occurrence is selected.
   The type of the output tensor is integer.
 
 #### Version
@@ -820,9 +821,9 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
   Computes the indices of the min elements of the input tensor's element along the 
   provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-  If select_last_index is True (default False), the index of the last occurence of the min 
+  If select_last_index is True (default False), the index of the last occurrence of the min 
   is selected if the min appears more than once in the input. Otherwise the index of the 
-  first occurence is selected.
+  first occurrence is selected.
   The type of the output tensor is integer.
 
 #### Version
@@ -1344,7 +1345,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
-<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
 <dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
@@ -4297,7 +4298,7 @@ expect(node, inputs=[x], outputs=[y],
   ```
   Zero point is calculated as:
   ```
-  intermediate_zero_point = (qmin - min(x))/(qmax - qmin)
+  intermediate_zero_point = qmin - min(x)/y_scale
   y_zero_point = cast(round(saturate(itermediate_zero_point)))
   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
@@ -4392,6 +4393,173 @@ Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
        name='test_dynamicquantizelinear_min_adjusted')
+```
+
+</details>
+
+
+### <a name="Einsum"></a><a name="einsum">**Einsum**</a>
+
+  An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
+  
+  ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
+  
+  where the reduce-sum performs a summation over all the indices occurring in in the input terms (term1, term2)
+  that do not occur in the output-term.
+  
+  The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+  convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
+  an operand tensor, and the characters within the terms correspond to operands dimensions.
+  
+  This sequence may be followed by "->" to separate the left and right hand side of the equation.
+  If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
+  summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+  output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
+  equation.
+  
+  When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
+  
+  The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+  The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
+  beginning of the output. The equation string may contain space (U+0020) character.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>equation</tt> : string (required)</dt>
+<dd>Einsum expression string.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic) : T</dt>
+<dd>Operands</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Output</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numerical tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>einsum_batch_diagonal</summary>
+
+```python
+Eqn = '...ii ->...i'
+node = onnx.helper.make_node(
+    'Einsum',
+    inputs=['x'],
+    outputs=['y'],
+    equation=Eqn
+)
+
+X = np.random.randn(3, 5, 5)
+Z = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name='test_einsum_batch_diagonal')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_batch_matmul</summary>
+
+```python
+Eqn = 'bij, bjk -> bik'
+node = onnx.helper.make_node(
+    'Einsum',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    equation=Eqn
+)
+
+X = np.random.randn(5, 2, 3)
+Y = np.random.randn(5, 3, 4)
+Z = einsum_reference_implementation(Eqn, (X, Y))
+
+expect(node, inputs=[X, Y], outputs=[Z], name='test_einsum_batch_matmul')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_inner_prod</summary>
+
+```python
+Eqn = 'i,i'
+node = onnx.helper.make_node(
+    'Einsum',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    equation=Eqn
+)
+
+X = np.random.randn(5)
+Y = np.random.randn(5)
+Z = einsum_reference_implementation(Eqn, (X, Y))
+
+expect(node, inputs=[X, Y], outputs=[Z], name='test_einsum_inner_prod')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_sum</summary>
+
+```python
+Eqn = 'ij->i'
+node = onnx.helper.make_node(
+    'Einsum',
+    inputs=['x'],
+    outputs=['y'],
+    equation=Eqn
+)
+
+X = np.random.randn(3, 4)
+Z = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name='test_einsum_sum')
+```
+
+</details>
+
+
+<details>
+<summary>einsum_transpose</summary>
+
+```python
+Eqn = 'ij->ji'
+node = onnx.helper.make_node(
+    'Einsum',
+    inputs=['x'],
+    outputs=['y'],
+    equation=Eqn
+)
+
+X = np.random.randn(3, 4)
+Y = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Y], name='test_einsum_transpose')
 ```
 
 </details>
@@ -6508,7 +6676,7 @@ y = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]).astype(np
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_example')
 
-# For multiple occurrances of the maximal values, the first occurrence is selected for one-hot output
+# For multiple occurrences of the maximal values, the first occurrence is selected for one-hot output
 x = np.array([[3, 3, 3, 1]]).astype(np.float32)
 y = np.array([[1, 0, 0, 0]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
@@ -8207,7 +8375,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>,
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
-<dd>Wether to use ceil or floor (default) to compute the output shape.</dd>
+<dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
@@ -17057,7 +17225,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
 <dt><tt>split</tt> : list of ints</dt>
-<dd>length of each output</dd>
+<dd>length of each output. Values should be >= 0.</dd>
 </dl>
 
 #### Inputs
@@ -17181,6 +17349,27 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 </details>
 
 
+<details>
+<summary>zero_size_splits</summary>
+
+```python
+input = np.array([]).astype(np.float32)
+
+# Split emtpy tensor to tensors of size zero
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3'],
+    split=[0, 0, 0]
+)
+
+expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
+```
+
+</details>
+
+
 ### <a name="SplitToSequence"></a><a name="splittosequence">**SplitToSequence**</a>
 
   Split a tensor into a sequence of tensors, along the specified
@@ -17213,7 +17402,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
 <dt><tt>split</tt> (optional) : I</dt>
-<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be positive. </dd>
+<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be >= 0. </dd>
 </dl>
 
 #### Outputs
