@@ -13967,12 +13967,18 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="BatchNormalization-12"></a>**BatchNormalization-12**</a>
 
-  Carries out batch normalization as described in the paper
-  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  there are multiple cases for the number of outputs, which we list below:
+  Carries out batch normalization as described in the paper https://arxiv.org/abs/1502.03167.
+  There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
+  Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
+  and the running statistics in training mode (traning_mode=True).
+  There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
   
-  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode, where other outputs will not be populated)
+  The statistics are updated as follows:
+  ```
+  mean = running_mean * momentum + saved_mean * (1 - momentum)
+  var = running_var * momentum + saved_var * (1 - momentum)
+  ```
+  where 'saved_mean' and 'saved_var' are the observed mean and var per channel of the input X.
   
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
@@ -14014,13 +14020,13 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the BatchNormalization operator.This output is populated only when training_mode is set to true.</dd>
+<dd>The running mean after the BatchNormalization operator.Note that this output cannot be an input of any other operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the BatchNormalization operator.This output is populated only when training_mode is set to true.</dd>
+<dd>The running variance after the BatchNormalization operator.Note that this output cannot be an input of any other operator.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation.This output is populated only when training_mode is set to true.</dd>
+<dd>Saved mean used during training to speed up gradient computation.Note that this output cannot be an input of any non-training operator.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation.This output is populated only when training_mode is set to true.</dd>
+<dd>Saved variance used during training to speed up gradient computation.Note that this output cannot be an input of any non-training  operator.</dd>
 </dl>
 
 #### Type Constraints
@@ -14034,11 +14040,17 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Dropout-12"></a>**Dropout-12**</a>
 
-  Dropout takes one input floating tensor and produces two tensor outputs,
-  output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-  in test mode or not, the output Y will either be a random dropout, or a simple
-  copy of the input. Note that our implementation of Dropout does scaling in
-  the training phase, so during testing nothing needs to be done.
+  Dropout takes an input floating tensor and an input ratio (float scalar), and produces two tensor outputs,
+  output (floating tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+  Note that our implementation of Dropout does scaling in
+  the training phase, so during testing nothing needs to be done. The output is computed as :
+  ```
+  output_i = scale * input_i * mask_i,
+  ```
+  where
+  ```
+  scale = 1. / (1. - ratio).
+  ```
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -14058,7 +14070,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
 <dt><tt>ratio</tt> (optional) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of input, which is typically the case during training.</dd>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -14075,7 +14087,7 @@ This version of the operator has been available since version 12 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(float)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input 'ratio' types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output 'mask' types to boolean tensors.</dd>

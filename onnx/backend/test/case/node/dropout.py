@@ -11,6 +11,7 @@ from ..base import Base
 from . import expect
 from onnx import helper
 
+
 def dropout(x, ratio=0, seed=0):  # type: ignore
     np.random.seed(seed)
     total_nb_indices = x.size
@@ -45,7 +46,7 @@ class Dropout(Base):
             'Dropout',
             inputs=['x', 'ratio'],
             outputs=['y'],
-            seed = 0,
+            seed=0,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -67,7 +68,7 @@ class Dropout(Base):
         x = np.array([-1, 0, 1]).astype(np.float32)
         y = x
         expect(node, inputs=[x], outputs=[y],
-               name='test_dropout_default_old',  opset_imports=[helper.make_opsetid("", 11)])
+               name='test_dropout_default_old', opset_imports=[helper.make_opsetid("", 11)])
 
     @staticmethod
     def export_random_old():  # type: () -> None
@@ -81,4 +82,4 @@ class Dropout(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = x
         expect(node, inputs=[x], outputs=[y],
-               name='test_dropout_random_old',  opset_imports=[helper.make_opsetid("", 11)])
+               name='test_dropout_random_old', opset_imports=[helper.make_opsetid("", 11)])

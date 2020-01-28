@@ -10,6 +10,7 @@ from ..base import Base
 from . import expect
 from onnx import helper
 
+
 def batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
     dims_x = len(x.shape)
     dim_ones = (1,) * (dims_x - 2)
@@ -19,14 +20,18 @@ def batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
     var = var.reshape(-1, *dim_ones)
     return s * (x - mean) / np.sqrt(var + epsilon) + bias
 
+
 def batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):  # type: ignore
-        y = batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5)
-        momentum = 0.1
-        saved_mean = x.mean()
-        saved_var = x.var()
-        running_mean = mean * momentum + saved_mean * (1 - momentum)
-        running_var = var * momentum + saved_var * (1 - momentum)
-        return y.astype(np.float32), saved_mean, saved_var, running_mean, running_var
+    y = batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5)
+    axis = np.arange(len(x.shape))
+    np.delete(axis, 1)
+    axis = tuple(axis)
+    saved_mean = x.mean(axis=axis)
+    saved_var = x.var(axis=axis)
+    running_mean = mean * momentum + saved_mean * (1 - momentum)
+    running_var = var * momentum + saved_var * (1 - momentum)
+    return y.astype(np.float32), saved_mean, saved_var, running_mean, running_var
+
 
 class BatchNormalization(Base):
 
@@ -72,7 +77,7 @@ class BatchNormalization(Base):
         # output size: (2, 3, 4, 5)
         expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
                name='test_batchnorm_epsilon_training_mode')
-    
+
     @staticmethod
     def export():  # type: () -> None
         # input size: (1, 2, 1, 3)
