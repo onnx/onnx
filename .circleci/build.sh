@@ -26,7 +26,7 @@ if [[ "${CIRCLE_JOB}" =~ py((2|3)\.?[0-9]?\.?[0-9]?) ]]; then
 fi
 $PYTHON -m virtualenv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
-pip install -U pip setuptools
+pip install -U pip==19 setuptools
 
 # setup onnx as the submodule of pytorch
 PYTORCH_DIR=/tmp/pytorch
@@ -43,7 +43,7 @@ pip install ninja
 cd $PYTORCH_DIR
 ./scripts/onnx/install-develop.sh
 # install onnxruntime
-pip install -i https://test.pypi.org/simple/ ort-nightly==1.0.0.dev1123
+pip install -i https://test.pypi.org/simple/ ort-nightly==1.1.0.dev1228
 
 # report sccache hit/miss stats
 if hash sccache 2>/dev/null; then

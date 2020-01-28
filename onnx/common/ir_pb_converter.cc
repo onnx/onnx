@@ -1,6 +1,7 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
+#include <sstream>
 #include "onnx/common/ir_pb_converter.h"
 
 namespace ONNX_NAMESPACE {
@@ -281,6 +282,11 @@ std::unique_ptr<Graph> graphProtoToGraph(
         value_by_name_of[input] = undef->outputs()[0];
       }
 
+      if (!value_by_name_of.count(input)) {
+        std::ostringstream msg;
+        msg << "Input " << input << " is undefined!";
+        throw std::out_of_range(msg.str());
+      }
       n->addInput(value_by_name_of.at(input));
     }
   }

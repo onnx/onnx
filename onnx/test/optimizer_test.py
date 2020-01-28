@@ -87,7 +87,7 @@ class TestOptimizer(unittest.TestCase):
                         self._visit_all_nodes_recursive(gr, fn)
 
     def test_get_available_passes(self):  # type: () -> None
-        # FIXME does not garantees to be listing all
+        # FIXME does not guarantees to be listing all
         graph = helper.make_graph([], "dummy_graph", [], [])
         list_of_passes = onnx.optimizer.get_available_passes()
         assert isinstance(list_of_passes, (list)) and len(list_of_passes) > 0
