@@ -254,7 +254,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "ceil_mode",
-        "Wether to use ceil or floor (default) to compute the output shape.",
+        "Whether to use ceil or floor (default) to compute the output shape.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(
