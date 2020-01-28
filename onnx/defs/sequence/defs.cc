@@ -346,8 +346,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "split",
             "Length of each output. "
-            "It can be either a scalar(tensor of empty shape), or a 1-D tensor. "
-            "All values must be positive. ",
+            "It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be >= 0. ",
             "I",
             OpSchema::Optional)
         .Output(

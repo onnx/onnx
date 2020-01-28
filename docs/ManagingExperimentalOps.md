@@ -1,4 +1,22 @@
-## [Deprecated - as of v1.5 experimental ops are no longer supported]
+## Deprecated Experimental Operators
+
+The following experimental operators were deprecated and removed from ONNX. They should be removed from models, either substituted with newer superseding operators or decomposed into functionally equivalent operators:
+
+Old operator        |New Operator
+--------------------|--------------------------
+`ATen`              |NA
+`Affine`            |`Add(Mul(X, alpha), beta)`
+`ConstantFill`      |`ConstantOfShape`
+`Crop`              |`Slice-1`
+`DynamicSlice`      |`Slice-10`
+`GRUUnit`           |NA
+`GivenTensorFill`   |`Const` or `ConstantOfShape`
+`ImageScaler`       |`Add(Mul(X, scale), Unsqueeze(bias, axes=[0, 2, 3]))`
+`ParametricSoftplus`|`Mul(alpha, Softplus(Mul(beta, X)))`
+`Scale`             |`Mul(X, scale)`
+`ScaledTanh`        |`Mul(Tanh(Mul(X, beta)), alpha)`
+
+## Adding Experimental Operators [Deprecated - as of v1.5 experimental ops are no longer supported]
 
 The experimental flag in ONNX operator definitions indicates that a customer of ONNX may not be able to take a long term dependency on that op. Ops in the ONNX namespace (ai.onnx) in the _master_ branch, whether experimental or not, go through the regular review process. 
 
