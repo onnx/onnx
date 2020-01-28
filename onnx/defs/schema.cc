@@ -715,7 +715,7 @@ OpSchema& OpSchema::AddQueriedFunctionBody(FunctionBodyQueryFunction queryFuncti
   return *this;
 }
 
-const FunctionProto* OpSchema::GetQueriedFunction(InferenceContext& ctx) const {
+const FunctionProto* OpSchema::GetQueriedFunction(FunctionBodyQueryContext& ctx) const {
   for (size_t i = 0; i < queried_function_bodies_.size(); i++) {
     if (queried_function_bodies_[i].first(ctx))
       return &queried_function_bodies_[i].second;

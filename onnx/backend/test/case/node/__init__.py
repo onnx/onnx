@@ -73,9 +73,15 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op)
-    if not schema.has_function:  # type: ignore
+
+    if schema.has_function:    # type: ignore
+        function_proto = schema.function_body  # type: ignore
+    elif schema.has_queried_function:
+        function_proto_str = schema.get_queried_function(node.SerializeToString())
+        function_proto = FunctionProto()
+        function_proto.ParseFromString(function_proto_str)
+    else:
         return []
-    function_proto = schema.function_body  # type: ignore
 
     for attr in schema.attributes:
         if attr in [a.name for a in node.attribute]:

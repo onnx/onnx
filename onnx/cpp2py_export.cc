@@ -62,7 +62,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
         return py::bytes(bytes);
+      })
+      .def_property_readonly("has_queried_function", &OpSchema::HasQueriedFunction)
+      .def("get_queried_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+
+        std::string func_bytes = "";
+        if (op->HasQueriedFunction()) {
+          FunctionBodyQueryContextImpl ctx(proto);
+          const FunctionProto* func_body = op->GetQueriedFunction(ctx);
+          func_body->SerializeToString(&func_bytes);
+        }
+        return py::bytes(func_bytes);
       });
+;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)

@@ -1794,8 +1794,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
             "Constrain target to integer types")
-        .AddQueriedFunctionBody([](InferenceContext& ctx) { // no weight, reduction is "none"
-              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none"; },
+        .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1810,8 +1810,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}
                 }))
         .AddQueriedFunctionBody(
-            [](InferenceContext& ctx) { // no weight, reduction is "mean"
-              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "mean"; },
+            [](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1827,8 +1827,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
             }))
         .AddQueriedFunctionBody(
-            [](InferenceContext& ctx) { // no weight, reduction is "sum"
-              return !hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "sum"; },
+            [](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1844,8 +1844,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
             }))
         .AddQueriedFunctionBody(
-            [](InferenceContext& ctx) { // with weight, reduction is "none"
-              return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "none"; },
+            [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "none"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "none"; },
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1862,8 +1862,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}},
                 }))
         .AddQueriedFunctionBody(
-            [](InferenceContext& ctx) { // with weight, reduction is "mean"
-              return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "mean"; },
+            [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "mean"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},
@@ -1883,8 +1883,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}},
                 }))
         .AddQueriedFunctionBody(
-            [](InferenceContext& ctx) { // with weight, reduction is "sum"
-              return hasInputShape(ctx, 2) && ctx.getAttribute("reduction")->s() == "sum"; },
+            [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "sum"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 {{"input_shape"}, "Shape", {"input"}},

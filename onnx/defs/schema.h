@@ -25,7 +25,39 @@
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
-using FunctionBodyQueryFunction = std::function<bool(InferenceContext&)>;
+struct FunctionBodyQueryContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual size_t getNumInputs() const = 0;
+  virtual size_t getNumOutputs() const = 0;
+  ~FunctionBodyQueryContext() {}
+};
+
+struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
+  FunctionBodyQueryContextImpl(NodeProto& n) {
+    for (auto& attr : *n.mutable_attribute()) {
+      attributesByName_[attr.name()] = &attr;
+    }
+    input_count_ = n.input_size();
+    output_count_ = n.output_size();
+  }
+  virtual const AttributeProto* getAttribute(const std::string& name) const {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
+
+  virtual size_t getNumInputs() const {return input_count_;}
+  virtual size_t getNumOutputs() const {return output_count_;}
+
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  size_t input_count_;
+  size_t output_count_;
+};
+
+using FunctionBodyQueryFunction = std::function<bool(FunctionBodyQueryContext&)>;
 
 class SchemaError final : public std::runtime_error {
  public:
@@ -629,7 +661,7 @@ class OpSchema final {
 
   OpSchema& AddQueriedFunctionBody(FunctionBodyQueryFunction queryFunction, const std::vector<NodeProto>& func_nodes);
   
-  const FunctionProto* GetQueriedFunction(InferenceContext& ctx) const;
+  const FunctionProto* GetQueriedFunction(FunctionBodyQueryContext& ctx) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
