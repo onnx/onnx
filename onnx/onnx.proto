@@ -237,9 +237,9 @@ message NodeProto {
 // "initialization_binding" to assign the outputs of "initialization" to
 // ModelProto.graph.initializer and TrainingInfoProto.algorithm.initializer.
 // 
-// Sveral inference components are usable in TrainingInfoProto; the list
+// Several inference components are usable in TrainingInfoProto; the list
 // includes
-//   1. ModelProto.graph is a callble inside TrainingInfoProto.algorithm.
+//   1. ModelProto.graph is a callable inside TrainingInfoProto.algorithm.
 //      Each call is a NodeProto in TrainingInfoProto.algorithm.node with
 //      NodeProto.op_type == "Graph" and
 //      NodeProto.name == ModelProto.graph.name.
