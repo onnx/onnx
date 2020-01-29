@@ -1490,13 +1490,15 @@ Note that 'mean' and 'var' are expected to be the estimated statistics in infere
 and the running statistics in training mode (traning_mode=True).
 There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
 
-The statistics are updated as follows when training_mode=True:
+The output and statistics are updated as follows when training_mode=True:
 ```
 saved_mean = ReducedMean(X, axis=all_except_channel_index)
 saved_var =  ReducedVar(X, axis=all_except_channel_index)
 
 mean = mean * momentum + saved_mean * (1 - momentum)
 var = var * momentum + saved_var * (1 - momentum)
+
+Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
 ```
 
 When training_mode=False:
@@ -1506,6 +1508,8 @@ saved_var =  ReducedVar(X, axis=all_except_channel_index)
 
 mean = mean
 var = var
+
+Y = (X - mean) / sqrt(var + epsilon) * scale + B
 ```
 
 For previous (depreciated) non-spatial cases, implementors are suggested
@@ -1544,12 +1548,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "mean",
-            "running (training) or fixed (testing) mean tensor of shape (C).",
+            "running (training) or estimated (testing) mean tensor of shape (C).",
             "T")
         .Input(
             4,
             "var",
-            "running (training) or fixed (testing) variance tensor of shape (C).",
+            "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
         .Input(
             5,
@@ -1562,7 +1566,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "mean",
             "The running mean when training_mode=True, "
-            "or the fixed mean when training_mode=False (Tensor of shape (C))."
+            "or the estimated mean when training_mode=False (Tensor of shape (C))."
             "Note that this output cannot be an input of any other operator.",
             "T",
             OpSchema::Optional)
@@ -1570,7 +1574,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "var",
             "The running variance when training_mode=True, "
-            "or the fixed variance when training_mode=False (Tensor of shape (C))."
+            "or the estimated variance when training_mode=False (Tensor of shape (C))."
             "Note that this output cannot be an input of any other operator.",
             "T",
             OpSchema::Optional)
@@ -1729,14 +1733,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Dropout_ver12_doc = R"DOC(
 Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
 output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
-Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done. Under training mode, the output is computed as :
+Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
+the user can simply replace this Dropout with an Identity operator.
 ```
 output = scale * data * mask,
 ```
 where
 ```
-scale = 1. / (1. - ratio) if in training mode else 1.
+scale = 1. / (1. - ratio).
 ```
 )DOC";
 
@@ -1771,7 +1775,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.getNumInputs() > 1) {
             auto& ratio_input_shape = getInputShape(ctx, 1);
             if (ratio_input_shape.dim_size() != 0) {
-                fail_shape_inference("Ratio is not a scalar.");
+                fail_shape_inference("Ratio of Dropout must be a scalar.");
             }
           }
           if (ctx.getNumOutputs() == 2) {

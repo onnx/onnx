@@ -13973,13 +13973,15 @@ This version of the operator has been available since version 12 of the default 
   and the running statistics in training mode (traning_mode=True).
   There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
   
-  The statistics are updated as follows when training_mode=True:
+  The output and statistics are updated as follows when training_mode=True:
   ```
   saved_mean = ReducedMean(X, axis=all_except_channel_index)
   saved_var =  ReducedVar(X, axis=all_except_channel_index)
   
   mean = mean * momentum + saved_mean * (1 - momentum)
   var = var * momentum + saved_var * (1 - momentum)
+  
+  Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
   ```
   
   When training_mode=False:
@@ -13989,6 +13991,8 @@ This version of the operator has been available since version 12 of the default 
   
   mean = mean
   var = var
+  
+  Y = (X - mean) / sqrt(var + epsilon) * scale + B
   ```
   
   For previous (depreciated) non-spatial cases, implementors are suggested
@@ -14018,9 +14022,9 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>B</tt> : T</dt>
 <dd>Bias tensor of shape (C).</dd>
 <dt><tt>mean</tt> : T</dt>
-<dd>running (training) or fixed (testing) mean tensor of shape (C).</dd>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
-<dd>running (training) or fixed (testing) variance tensor of shape (C).</dd>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 <dt><tt>training_mode</tt> (optional) : T1</dt>
 <dd>If set to true, run spatial batch normalization in training mode, default is false.</dd>
 </dl>
@@ -14031,9 +14035,9 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean when training_mode=True, or the fixed mean when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
+<dd>The running mean when training_mode=True, or the estimated mean when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance when training_mode=True, or the fixed variance when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
+<dd>The running variance when training_mode=True, or the estimated variance when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation (Tensor of shape (C)).</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
@@ -14053,14 +14057,14 @@ This version of the operator has been available since version 12 of the default 
 
   Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
   output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
-  Note that our implementation of Dropout does scaling in
-  the training phase, so during testing nothing needs to be done. Under training mode, the output is computed as :
+  Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
+  the user can simply replace this Dropout with an Identity operator.
   ```
   output = scale * data * mask,
   ```
   where
   ```
-  scale = 1. / (1. - ratio) if in training mode else 1.
+  scale = 1. / (1. - ratio).
   ```
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
