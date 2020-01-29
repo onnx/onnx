@@ -1492,8 +1492,8 @@ There is one required output 'Y' and four optional outputs : 'mean', 'var', 'sav
 
 The statistics are updated as follows:
 ```
-mean = running_mean * momentum + saved_mean * (1 - momentum)
-var = running_var * momentum + saved_var * (1 - momentum)
+mean = mean * momentum + saved_mean * (1 - momentum)
+var = var * momentum + saved_var * (1 - momentum)
 ```
 where 'saved_mean' and 'saved_var' are the observed mean and var per channel of the input X.
 
@@ -1564,15 +1564,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             3,
             "saved_mean",
-            "Saved mean used during training to speed up gradient computation."
-            "Note that this output cannot be an input of any non-training operator.",
+            "Saved mean used during training to speed up gradient computation.",
             "T",
             OpSchema::Optional)
         .Output(
             4,
             "saved_var",
-            "Saved variance used during training to speed up gradient computation."
-            "Note that this output cannot be an input of any non-training  operator.",
+            "Saved variance used during training to speed up gradient computation.",
             "T",
             OpSchema::Optional)
         .TypeConstraint(
@@ -1721,7 +1719,7 @@ output (floating tensor) and mask (`Tensor<bool>`). The output Y will be a rando
 Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done. The output is computed as :
 ```
-output_i = scale * input_i * mask_i,
+output = scale * data * mask,
 ```
 where
 ```
