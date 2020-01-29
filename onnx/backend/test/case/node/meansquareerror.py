@@ -65,9 +65,6 @@ class MeanSquaredError(Base):
     def export_mean_square_error_sum():  # type: () -> None
         # Define operator attributes.
         reduction = 'sum'
-        shape = [2, 3]
-        axes = [1]
-        keepdims = 1
 
         # Create operator.
         node = onnx.helper.make_node('MeanSquaredError',
@@ -82,7 +79,7 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        mse = np.sum(l, axis=tuple(axes), keepdims=keepdims == 1)
+        mse = np.sum(l, axis=1)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_sum')
@@ -92,9 +89,6 @@ class MeanSquaredError(Base):
     def export_mean_square_error_mean():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
-        shape = [2, 3]
-        axes = [1]
-        keepdims = 1
 
         # Create operator.
         node = onnx.helper.make_node('MeanSquaredError',
@@ -109,19 +103,16 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        mse = np.mean(l, axis=tuple(axes), keepdims=keepdims == 1)
+        mse = np.mean(l, axis=1)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_mean')
 
 
     @staticmethod
-    def export_mean_square_error_mean_do_not_keepdims():  # type: () -> None
+    def export_mean_square_error_mean_3d():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
-        shape = [3, 2, 2]
-        axes = [1]
-        keepdims = 0
 
         # Create operator.
         node = onnx.helper.make_node('MeanSquaredError',
@@ -136,8 +127,7 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        mse = np.mean(l, axis=tuple(axes), keepdims=keepdims == 1)
+        mse = np.mean(l, axis=1)
 
         # Check results
-        expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_mean_do_not_keepdims')
-
+        expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_mean_3d')
