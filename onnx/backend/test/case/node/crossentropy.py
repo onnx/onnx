@@ -94,7 +94,7 @@ class SoftmaxCrossEntropy(Base):
 
 
     @staticmethod
-    def export_crossentropy_sum():
+    def export_crossentropy_mean():
         # Define operator attributes.
         reduction = 'mean'
 
