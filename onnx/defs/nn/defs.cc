@@ -1490,15 +1490,26 @@ Note that 'mean' and 'var' are expected to be the estimated statistics in infere
 and the running statistics in training mode (traning_mode=True).
 There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
 
-The statistics are updated as follows:
+The statistics are updated as follows when training_mode=True:
 ```
+saved_mean = ReducedMean(X, axis=all_except_channel_index)
+saved_var =  ReducedVar(X, axis=all_except_channel_index)
+
 mean = mean * momentum + saved_mean * (1 - momentum)
 var = var * momentum + saved_var * (1 - momentum)
 ```
-where 'saved_mean' and 'saved_var' are the observed mean and var per channel of the input X.
+
+When training_mode=False:
+```
+saved_mean = ReducedMean(X, axis=all_except_channel_index)
+saved_var =  ReducedVar(X, axis=all_except_channel_index)
+
+mean = mean
+var = var
+```
 
 For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization operator.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1515,7 +1526,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "momentum",
             "Factor used in computing the running mean and variance."
-            "e.g., running_mean = running_mean * momentum + saved_mean * (1 - momentum).",
+            "e.g., mean = mean * momentum + saved_mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
         .Input(
@@ -1533,12 +1544,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "mean",
-            "running (training) or estimated (testing) mean tensor of shape (C).",
+            "running (training) or fixed (testing) mean tensor of shape (C).",
             "T")
         .Input(
             4,
             "var",
-            "running (training) or estimated (testing) variance tensor of shape (C).",
+            "running (training) or fixed (testing) variance tensor of shape (C).",
             "T")
         .Input(
             5,
@@ -1550,27 +1561,29 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             1,
             "mean",
-            "The running mean after the BatchNormalization operator."
+            "The running mean when training_mode=True, "
+            "or the fixed mean when training_mode=False (Tensor of shape (C))."
             "Note that this output cannot be an input of any other operator.",
             "T",
             OpSchema::Optional)
         .Output(
             2,
             "var",
-            "The running variance after the BatchNormalization operator."
+            "The running variance when training_mode=True, "
+            "or the fixed variance when training_mode=False (Tensor of shape (C))."
             "Note that this output cannot be an input of any other operator.",
             "T",
             OpSchema::Optional)
         .Output(
             3,
             "saved_mean",
-            "Saved mean used during training to speed up gradient computation.",
+            "Saved mean used during training to speed up gradient computation (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .Output(
             4,
             "saved_var",
-            "Saved variance used during training to speed up gradient computation.",
+            "Saved variance used during training to speed up gradient computation (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .TypeConstraint(
@@ -1714,16 +1727,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Dropout_ver12_doc = R"DOC(
-Dropout takes an input floating tensor and an input ratio (float scalar), and produces two tensor outputs,
-output (floating tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
+output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
 Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done. The output is computed as :
+the training phase, so during testing nothing needs to be done. Under training mode, the output is computed as :
 ```
 output = scale * data * mask,
 ```
 where
 ```
-scale = 1. / (1. - ratio).
+scale = 1. / (1. - ratio) if in training mode else 1.
 ```
 )DOC";
 
