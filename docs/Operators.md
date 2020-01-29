@@ -1817,8 +1817,8 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   The statistics are updated as follows:
   ```
-  mean = running_mean * momentum + saved_mean * (1 - momentum)
-  var = running_var * momentum + saved_var * (1 - momentum)
+  mean = mean * momentum + saved_mean * (1 - momentum)
+  var = var * momentum + saved_var * (1 - momentum)
   ```
   where 'saved_mean' and 'saved_var' are the observed mean and var per channel of the input X.
   
@@ -1868,9 +1868,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>var</tt> (optional) : T</dt>
 <dd>The running variance after the BatchNormalization operator.Note that this output cannot be an input of any other operator.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation.Note that this output cannot be an input of any non-training operator.</dd>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation.Note that this output cannot be an input of any non-training  operator.</dd>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
@@ -4254,7 +4254,7 @@ expect(node, inputs=[x, y], outputs=[z],
   Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done. The output is computed as :
   ```
-  output_i = scale * input_i * mask_i,
+  output = scale * data * mask,
   ```
   where
   ```
