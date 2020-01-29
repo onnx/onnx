@@ -76,8 +76,8 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
 
     if schema.has_function:    # type: ignore
         function_proto = schema.function_body  # type: ignore
-    elif schema.has_queried_function:
-        function_proto_str = schema.get_queried_function(node.SerializeToString())
+    elif schema.has_queried_function:    # type: ignore
+        function_proto_str = schema.get_queried_function(node.SerializeToString())  # type: ignore
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:

@@ -29,7 +29,7 @@ struct FunctionBodyQueryContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual size_t getNumOutputs() const = 0;
-  ~FunctionBodyQueryContext() {}
+  virtual ~FunctionBodyQueryContext() {}
 };
 
 struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
@@ -40,7 +40,7 @@ struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
     input_count_ = n.input_size();
     output_count_ = n.output_size();
   }
-  virtual const AttributeProto* getAttribute(const std::string& name) const {
+  const AttributeProto* getAttribute(const std::string& name) const {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -49,8 +49,8 @@ struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
     }
   }
 
-  virtual size_t getNumInputs() const {return input_count_;}
-  virtual size_t getNumOutputs() const {return output_count_;}
+  size_t getNumInputs() const {return input_count_;}
+  size_t getNumOutputs() const {return output_count_;}
 
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   size_t input_count_;
