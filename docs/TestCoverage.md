@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
+Node tests have covered 138/153 (90.20%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -9614,6 +9614,122 @@ node = onnx.helper.make_node(
 y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_negative_axis')
+```
+
+</details>
+
+
+### SoftmaxCrossEntropy
+There are 4 test cases, listed as following:
+<details>
+<summary>crossentropy_mean</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropy',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs.
+x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
+labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropy
+p = softmax_2d(x)
+l = np.multiply(labels, p)
+r = np.mean(l, axis=1)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_mean')
+```
+
+</details>
+<details>
+<summary>crossentropy_none</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropy',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs.
+x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
+labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropy
+p = softmax_2d(x)
+l = np.multiply(labels, p)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none')
+```
+
+</details>
+<details>
+<summary>crossentropy_none_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+weights = [[0.9, 0.8, 0.9, 0.8], [0.9, 0.7, 0.8, 0.9]]
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropy',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs.
+x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
+labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropy
+p = softmax_2d(x)
+l = np.multiply(labels, p)
+l = np.multiply(weights, l)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none_weights')
+```
+
+</details>
+<details>
+<summary>crossentropy_sum</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropy',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs.
+x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
+labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropy
+p = softmax_2d(x)
+l = np.multiply(labels, p)
+r = np.sum(l, axis=1)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_sum')
 ```
 
 </details>
