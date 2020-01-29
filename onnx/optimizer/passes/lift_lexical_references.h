@@ -79,7 +79,7 @@ namespace optimization {
 struct LiftLexicalReferences : public FullGraphBasedPass {
   explicit LiftLexicalReferences()
       : FullGraphBasedPass(
-            PassType::Seperate,
+            PassType::Separate,
             PassEfficiency::Complete,
             PassOptimizationType::Memory) {}
 
