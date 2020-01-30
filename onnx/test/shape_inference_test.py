@@ -2996,7 +2996,7 @@ class TestShapeInference(unittest.TestCase):
     def test_celu_function_output_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16))],
-            [make_node('Celu', 'X', 'Y', alpha=2.0)],
+            [make_node('Celu', ['X'], ['Y'], alpha=2.0)],
             []
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
