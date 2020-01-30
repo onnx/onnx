@@ -15,9 +15,9 @@ and 'labels'.
 
 The loss can be described as:
     L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
-, where score and label are 1D vectors of size N, N is the batch size.
+, N is the batch size.
 
-score and label can be multi-dimensional vectors and L is of the same shape as score and label.
+score and label are vectors of arbitrary shapes with total of N elements each.
 
 If 'weights' is provided, it should be broadcastable to shape of 'scores'.
     L = Mul(weights, L)
@@ -26,7 +26,7 @@ If 'weights' is provided, it should be broadcastable to shape of 'scores'.
 Finally, L is reduced:
 L = ReduceSum(L), if reduction = 'sum';
     ReduceMean(L), if reduction = 'mean';
-    ReduceMean(L, axes=[0]), if reduction = 'none';
+    L, if reduction = 'none';
 
 .)DOC";
 
