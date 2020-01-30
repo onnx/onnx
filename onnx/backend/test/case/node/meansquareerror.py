@@ -29,7 +29,7 @@ class MeanSquaredError(Base):
         t = np.array([1.1, 2.6], dtype=np.float32)
 
         # Compute Mean Square Error
-        mse = (np.square(r - t)).mean(axis=0)
+        mse = (np.square(r - t))
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_none')
@@ -54,8 +54,7 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        l = np.multiply(weights, l)
-        mse = l.mean(axis=0)
+        mse = np.multiply(weights, l)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_none_weights')
@@ -79,7 +78,7 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        mse = np.sum(l, axis=1)
+        mse = np.sum(l)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_sum')
@@ -103,7 +102,7 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        mse = np.mean(l, axis=1)
+        mse = np.mean(l)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_mean')
@@ -127,7 +126,7 @@ class MeanSquaredError(Base):
 
         # Compute Mean Square Error
         l = np.square(r - t)
-        mse = np.mean(l, axis=1)
+        mse = np.mean(l)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[mse], name='test_mean_square_error_mean_3d')
