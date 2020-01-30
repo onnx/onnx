@@ -279,7 +279,7 @@ message TrainingInfoProto {
   // This field specifies the bindings from the outputs of "initialization" to
   // the initializers in "algorithm" and "ModelProto.graph". See
   // "update_binding" below for its format.
-  GraphProto initialization_binding = 3;
+  StringStringEntryProto initialization_binding = 3;
 
   // Gradient-based training is usually an iterative procedure. In one gradient
   // descent iteration, we apply
@@ -363,7 +363,12 @@ message ModelProto {
   repeated StringStringEntryProto metadata_props = 14;
 
   // Training-specific information. Sequentially executing all stored
-  // "TrainingInfoProto"s is one training iteration.
+  // `TrainingInfoProto.algorithm`s and assigning their outputs following
+  // the corresponding `TrainingInfoProto.update_binding`s. is one training
+  // iteration. Similarly, to initialize the model
+  // (as if training hasn't happened), the user should sequentially execute
+  // all stored `TrainingInfoProto.initialization`s with the associated
+  // `TrainingInfoProto.initialization_binding`s.
   repeated TrainingInfoProto training_info = 21;
 };
 
