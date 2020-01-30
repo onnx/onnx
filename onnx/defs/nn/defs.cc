@@ -2218,7 +2218,8 @@ ONNX_OPERATOR_SET_SCHEMA(
            {// nodes: {outputs, op, inputs, attributes}
             {{"X_alpha"},
              "Div",
-             {"X", "alpha"}
+             {"X"},
+             {MakeRefAttribute("alpha", AttributeProto::FLOAT)}
 	    },
             {{"Y"}, "Elu", {"X_alpha"}}})));
 
