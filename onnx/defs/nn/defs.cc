@@ -2213,7 +2213,7 @@ ONNX_OPERATOR_SET_SCHEMA(
        .TypeConstraint(
            "T",
            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-           "Constrain input and output types to all numeric tensors.")
+           "Constrain input and output types to floating-point tensors.")
        .FunctionBody(FunctionBodyHelper::BuildNodes(
            {// nodes: {outputs, op, inputs, attributes}
             {{"X_alpha"},
