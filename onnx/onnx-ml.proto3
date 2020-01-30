@@ -281,6 +281,9 @@ message TrainingInfoProto {
   // This field specifies the bindings from the outputs of "initialization" to
   // the initializers in "algorithm" and "ModelProto.graph". See
   // "update_binding" below for its format.
+  //
+  // By default, this field is empty and no initializer would be changed
+  // by the execution of "initialization".
   StringStringEntryProto initialization_binding = 3;
 
   // Gradient-based training is usually an iterative procedure. In one gradient
@@ -310,6 +313,8 @@ message TrainingInfoProto {
   // cannot be found as a key in the "update_binding"s of all
   // TrainingInfoProto's, that initializer is not trainable and therefore
   // considered as a constant.
+  //
+  // The field MUST be present.
   repeated StringStringEntryProto update_binding = 4;
 }
 
@@ -366,11 +371,13 @@ message ModelProto {
 
   // Training-specific information. Sequentially executing all stored
   // `TrainingInfoProto.algorithm`s and assigning their outputs following
-  // the corresponding `TrainingInfoProto.update_binding`s. is one training
+  // the corresponding `TrainingInfoProto.update_binding`s is one training
   // iteration. Similarly, to initialize the model
   // (as if training hasn't happened), the user should sequentially execute
   // all stored `TrainingInfoProto.initialization`s with the associated
   // `TrainingInfoProto.initialization_binding`s.
+  //
+  // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 21;
 };
 
