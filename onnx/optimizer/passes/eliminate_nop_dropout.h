@@ -30,7 +30,9 @@ struct EliminateNopDropout final : public PredicateBasedPass {
     for (size_t i = 0; i < node->outputs().size(); ++i) {
       node->outputs()[i]->replaceAllUsesWith(node->input());
     }
-    node->input()->copyMetadata(node->outputs()[0]);
+    if (node->outputs()[0]->has_sizes()) {
+        node->input()->setSizes(node->outputs()[0]->sizes());
+    }
     destroy_current = NodeDestroyType::DestroyOne;
     return true;
   }

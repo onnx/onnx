@@ -64,7 +64,9 @@ struct EliminateNopPad final : public PredicateBasedPass {
       override {
     if (!is_nop_pad(node, graph))
       return false;
-    node->input()->copyMetadata(node->outputs()[0]);
+    if (node->output()->has_sizes()) {
+        node->inputs()[0]->setSizes(node->output()->sizes());
+    }
     node->output()->replaceAllUsesWith(node->inputs()[0]);
     destroy_current = NodeDestroyType::DestroyOne;
     return true;

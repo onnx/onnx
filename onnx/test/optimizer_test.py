@@ -122,6 +122,21 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node[2].attribute[0].g.output) == 2
         assert optimized_model.graph.node[2].attribute[0].g.output[1].name == "_Y"
 
+    def test_eliminate_identity_graph_output(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["A"])
+        identity = helper.make_node("Identity", ["A"], ["B"])
+        graph = helper.make_graph(
+            [add, identity],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (5,))])
+        optimized_model = self._optimized(graph, ["eliminate_identity"])
+
+        for node in optimized_model.graph.node:
+            assert node.op_type != "Identity"
+        assert len(optimized_model.graph.node) == 1
+
     def test_eliminate_identity_multiple_uses(self):  # type: () -> None
         identity = helper.make_node("Identity", ["X"], ["Y"])
         add = helper.make_node("Add", ["Z", "Y"], ["A"])
