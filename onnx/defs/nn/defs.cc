@@ -2189,7 +2189,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
              {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
-static const char* celu_ver11_doc = R"DOC(
+static const char* celu_ver12_doc = R"DOC(
        Continuously Differentiable Exponential Linear Units:
        Perform the linear unit element-wise on the input tensor X
        using formula: <br/> ``` max(0,x) + min(0,α*(exp(x/α)−1)) ```
@@ -2199,9 +2199,9 @@ static float celu_default_alpha = 1.0;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
-    11,
+    12,
     OpSchema()
-       .SetDoc(celu_ver11_doc)
+       .SetDoc(celu_ver12_doc)
        .Input(0, "X", "Input tensor", "T")
        .Output(0, "Y", "Output tensor", "T")
        .Attr(
