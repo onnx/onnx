@@ -15,7 +15,9 @@ and 'labels'.
 
 The loss can be described as:
     L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
-, where N is the batch size.
+, where score and label are 1D vectors of size N, N is the batch size.
+
+score and label can be multi-dimensional vectors and L is of the same shape as score and label.
 
 If 'weights' is provided, it should be broadcastable to shape of 'scores'.
     L = Mul(weights, L)
