@@ -2218,7 +2218,7 @@ ONNX_OPERATOR_SET_SCHEMA(
            {// nodes: {outputs, op, inputs, attributes}
             {{"X_alpha"},
              "Div",
-             {"X", "alpha"},
+             {"X", "alpha"}
 	    },
             {{"Y"}, "Elu", {"X_alpha"}}})));
 
