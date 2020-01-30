@@ -2189,4 +2189,37 @@ ONNX_OPERATOR_SET_SCHEMA(
              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
              {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
+static const char* celu_ver11_doc = R"DOC(
+       Continuously Differentiable Exponential Linear Units:
+       Perform the linear unit element-wise on the input tensor X
+       using formula: <br/> ``` max(0,x) + min(0,α*(exp(x/α)−1)) ```
+)DOC";
+
+static float celu_default_alpha = 1.0;
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Celu,
+    11,
+    OpSchema()
+       .SetDoc(celu_ver11_doc)
+       .Input(0, "X", "Input tensor", "T")
+       .Output(0, "Y", "Output tensor", "T")
+       .Attr(
+           "alpha",
+           "The Alpha value in Celu formula which control the shape of "
+           "the unit. The default value is 1.0.",
+           AttributeProto::FLOAT,
+           celu_default_alpha)
+       .TypeConstraint(
+           "T",
+           {"tensor(float16)", "tensor(float)", "tensor(double)"},
+           "Constrain input and output types to all numeric tensors.")
+       .FunctionBody(FunctionBodyHelper::BuildNodes(
+           {// nodes: {outputs, op, inputs, attributes}
+            {{"X_alpha"},
+             "Div",
+             {"X", "alpha"},
+	    },
+            {{"Y"}, "Elu", {"X_alpha"}}})));
+
 } // namespace ONNX_NAMESPACE
