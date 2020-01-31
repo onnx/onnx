@@ -144,20 +144,20 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
             "Inputs",
             "The values fed into graph identified by the attributes. "
             "The i-th input is the value of the i-th tensor specified in the "
-            "concatenated list of attribute \"xs\" and attribute \"zs\". For "
-            "example, if xs=[\"A\", \"B\"] and zs=[\"C\"], the first input is "
-            "used as the value of symbol \"A\" and the 3rd input is "
-            "substituted for all the occurrences of \"C\".",
+            "concatenated list of the attribute \"xs\" and the attribute "
+            " \"zs\". For example, if xs=[\"A\", \"B\"] and zs=[\"C\"], the "
+            "first input is used as the value of symbol \"A\" and the 3rd "
+            "input is substituted for all the occurrences of \"C\".",
             "T1",
             OpSchema::Variadic,
             false)
         .Output(
             0,
             "Outputs",
-            "The gradient of the tensors specified in attribute \"y\" "
-            "with respect to \"xs\". The i-th output is the gradient "
-            "of \"y\" with respect to the i-th tensor specified in the "
-            "attribute \"xs\".",
+            "The gradient of the tensor specified by the attribute \"y\" "
+            "with respect to each of tensors specified in the "
+            "attribute \"xs\". The i-th output is the gradient of \"y\" with "
+            "respect to the i-th tensor specified in the attribute \"xs\".",
             "T2",
             OpSchema::Variadic,
             false)

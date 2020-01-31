@@ -241,8 +241,9 @@ message NodeProto {
 // includes
 //   1. ModelProto.graph is a callable inside TrainingInfoProto.algorithm.
 //      Each call is a NodeProto in TrainingInfoProto.algorithm.node with
-//      NodeProto.op_type == "Graph" and
-//      NodeProto.name == ModelProto.graph.name.
+//      NodeProto.op_type == "ModelProto.graph.name". Notice that the called
+//      graph cannot use any of LSTM, Conv, and other operator names in ONNX
+//      as its name.
 //   2. Initializers in ModelProto.graph.initializer can be referenced by
 //      nodes in TrainingInfoProto.algorithm.nodes and
 //      TrainingInfoProto.initialization.nodes. It implies that training

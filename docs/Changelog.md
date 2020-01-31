@@ -14335,14 +14335,14 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>Inputs</tt> (variadic, heterogeneous) : T1</dt>
-<dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of attribute "xs" and attribute "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
+<dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of the attribute "xs" and the attribute  "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
 <dt><tt>Outputs</tt> (variadic, heterogeneous) : T2</dt>
-<dd>The gradient of the tensors specified in attribute "y" with respect to "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
+<dd>The gradient of the tensor specified by the attribute "y" with respect to each of tensors specified in the attribute "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
 </dl>
 
 #### Type Constraints
