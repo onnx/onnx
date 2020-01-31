@@ -13971,15 +13971,15 @@ This version of the operator has been available since version 12 of the default 
   There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
   Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
   and the running statistics in training mode (traning_mode=True).
-  There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
+  There is one required output 'Y' and four optional outputs : 'output_mean', 'output_var', 'saved_mean', 'saved_var' used for training.
   
   The output and statistics are updated as follows when training_mode=True:
   ```
   saved_mean = ReducedMean(X, axis=all_except_channel_index)
   saved_var =  ReducedVar(X, axis=all_except_channel_index)
   
-  mean = mean * momentum + saved_mean * (1 - momentum)
-  var = var * momentum + saved_var * (1 - momentum)
+  output_mean = mean * momentum + saved_mean * (1 - momentum)
+  output_var = var * momentum + saved_var * (1 - momentum)
   
   Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
   ```
@@ -13989,8 +13989,8 @@ This version of the operator has been available since version 12 of the default 
   saved_mean = ReducedMean(X, axis=all_except_channel_index)
   saved_var =  ReducedVar(X, axis=all_except_channel_index)
   
-  mean = mean
-  var = var
+  output_mean = mean
+  output_var = var
   
   Y = (X - mean) / sqrt(var + epsilon) * scale + B
   ```
@@ -14009,7 +14009,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
-<dd>Factor used in computing the running mean and variance.e.g., mean = mean * momentum + saved_mean * (1 - momentum).</dd>
+<dd>Factor used in computing the running mean and variance.e.g., output_mean = mean * momentum + saved_mean * (1 - momentum).</dd>
 </dl>
 
 #### Inputs (5 - 6)
@@ -14034,10 +14034,10 @@ This version of the operator has been available since version 12 of the default 
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean when training_mode=True, or the estimated mean when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
-<dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance when training_mode=True, or the estimated variance when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
+<dt><tt>output_mean</tt> (optional) : T</dt>
+<dd>The running mean when training_mode=True, or the estimated mean when training_mode=False (Tensor of shape (C)).</dd>
+<dt><tt>output_var</tt> (optional) : T</dt>
+<dd>The running variance when training_mode=True, or the estimated variance when training_mode=False (Tensor of shape (C)).</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation (Tensor of shape (C)).</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>

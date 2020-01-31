@@ -1172,16 +1172,16 @@ bias = np.array([0, 1]).astype(np.float32)
 mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
 training_mode = np.ones(1, dtype=bool)
-y, saved_mean, saved_var, running_mean, running_var = batchnorm_training_mode(x, s, bias, mean, var)
+y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
     inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
-    outputs=['y', 'running_mean', 'running_var', 'saved_mean', 'saved_var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
 )
 
 # output size: (1, 2, 1, 3)
-expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_example_training_mode')
 
 # input size: (2, 3, 4, 5)
@@ -1193,17 +1193,17 @@ var = np.random.rand(3).astype(np.float32)
 training_mode = np.ones(1, dtype=bool)
 momentum = 0.9
 epsilon = 1e-2
-y, saved_mean, saved_var, running_mean, running_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
+y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
     inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
-    outputs=['y', 'running_mean', 'running_var', 'saved_mean', 'saved_var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
     epsilon=epsilon,
 )
 
 # output size: (2, 3, 4, 5)
-expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_epsilon_training_mode')
 ```
 

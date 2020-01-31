@@ -1488,15 +1488,15 @@ Carries out batch normalization as described in the paper https://arxiv.org/abs/
 There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
 Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (traning_mode=True).
-There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
+There is one required output 'Y' and four optional outputs : 'output_mean', 'output_var', 'saved_mean', 'saved_var' used for training.
 
 The output and statistics are updated as follows when training_mode=True:
 ```
 saved_mean = ReducedMean(X, axis=all_except_channel_index)
 saved_var =  ReducedVar(X, axis=all_except_channel_index)
 
-mean = mean * momentum + saved_mean * (1 - momentum)
-var = var * momentum + saved_var * (1 - momentum)
+output_mean = mean * momentum + saved_mean * (1 - momentum)
+output_var = var * momentum + saved_var * (1 - momentum)
 
 Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
 ```
@@ -1506,8 +1506,8 @@ When training_mode=False:
 saved_mean = ReducedMean(X, axis=all_except_channel_index)
 saved_var =  ReducedVar(X, axis=all_except_channel_index)
 
-mean = mean
-var = var
+output_mean = mean
+output_var = var
 
 Y = (X - mean) / sqrt(var + epsilon) * scale + B
 ```
@@ -1530,7 +1530,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "momentum",
             "Factor used in computing the running mean and variance."
-            "e.g., mean = mean * momentum + saved_mean * (1 - momentum).",
+            "e.g., output_mean = mean * momentum + saved_mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
         .Input(
@@ -1564,18 +1564,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
-            "mean",
+            "output_mean",
             "The running mean when training_mode=True, "
-            "or the estimated mean when training_mode=False (Tensor of shape (C))."
-            "Note that this output cannot be an input of any other operator.",
+            "or the estimated mean when training_mode=False (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .Output(
             2,
-            "var",
+            "output_var",
             "The running variance when training_mode=True, "
-            "or the estimated variance when training_mode=False (Tensor of shape (C))."
-            "Note that this output cannot be an input of any other operator.",
+            "or the estimated variance when training_mode=False (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .Output(

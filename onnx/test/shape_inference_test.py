@@ -1131,11 +1131,11 @@ class TestShapeInference(unittest.TestCase):
              ('mean', TensorProto.FLOAT, (4,)),
              ('var', TensorProto.FLOAT, (4,)),
              ('training_mode', TensorProto.BOOL, ())],
-            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var', 'training_mode'], ['out', 'running_mean', 'running_var', 'saved_mean', 'saved_var'])],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var', 'training_mode'], ['out', 'output_mean', 'output_var', 'saved_mean', 'saved_var'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
-                                      make_tensor_value_info('running_mean', TensorProto.FLOAT, (4,)),
-                                      make_tensor_value_info('running_var', TensorProto.FLOAT, (4,)),
+                                      make_tensor_value_info('output_mean', TensorProto.FLOAT, (4,)),
+                                      make_tensor_value_info('output_var', TensorProto.FLOAT, (4,)),
                                       make_tensor_value_info('saved_mean', TensorProto.FLOAT, (4,)),
                                       make_tensor_value_info('saved_var', TensorProto.FLOAT, (4,))
                                       ])

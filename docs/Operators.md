@@ -1813,15 +1813,15 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
   Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
   and the running statistics in training mode (traning_mode=True).
-  There is one required output 'Y' and four optional outputs : 'mean', 'var', 'saved_mean', 'saved_var' used for training.
+  There is one required output 'Y' and four optional outputs : 'output_mean', 'output_var', 'saved_mean', 'saved_var' used for training.
   
   The output and statistics are updated as follows when training_mode=True:
   ```
   saved_mean = ReducedMean(X, axis=all_except_channel_index)
   saved_var =  ReducedVar(X, axis=all_except_channel_index)
   
-  mean = mean * momentum + saved_mean * (1 - momentum)
-  var = var * momentum + saved_var * (1 - momentum)
+  output_mean = mean * momentum + saved_mean * (1 - momentum)
+  output_var = var * momentum + saved_var * (1 - momentum)
   
   Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
   ```
@@ -1831,8 +1831,8 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   saved_mean = ReducedMean(X, axis=all_except_channel_index)
   saved_var =  ReducedVar(X, axis=all_except_channel_index)
   
-  mean = mean
-  var = var
+  output_mean = mean
+  output_var = var
   
   Y = (X - mean) / sqrt(var + epsilon) * scale + B
   ```
@@ -1853,7 +1853,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
-<dd>Factor used in computing the running mean and variance.e.g., mean = mean * momentum + saved_mean * (1 - momentum).</dd>
+<dd>Factor used in computing the running mean and variance.e.g., output_mean = mean * momentum + saved_mean * (1 - momentum).</dd>
 </dl>
 
 #### Inputs (5 - 6)
@@ -1878,10 +1878,10 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean when training_mode=True, or the estimated mean when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
-<dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance when training_mode=True, or the estimated variance when training_mode=False (Tensor of shape (C)).Note that this output cannot be an input of any other operator.</dd>
+<dt><tt>output_mean</tt> (optional) : T</dt>
+<dd>The running mean when training_mode=True, or the estimated mean when training_mode=False (Tensor of shape (C)).</dd>
+<dt><tt>output_var</tt> (optional) : T</dt>
+<dd>The running variance when training_mode=True, or the estimated variance when training_mode=False (Tensor of shape (C)).</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation (Tensor of shape (C)).</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
@@ -1957,16 +1957,16 @@ bias = np.array([0, 1]).astype(np.float32)
 mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
 training_mode = np.ones(1, dtype=bool)
-y, saved_mean, saved_var, running_mean, running_var = batchnorm_training_mode(x, s, bias, mean, var)
+y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
     inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
-    outputs=['y', 'running_mean', 'running_var', 'saved_mean', 'saved_var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
 )
 
 # output size: (1, 2, 1, 3)
-expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_example_training_mode')
 
 # input size: (2, 3, 4, 5)
@@ -1978,17 +1978,17 @@ var = np.random.rand(3).astype(np.float32)
 training_mode = np.ones(1, dtype=bool)
 momentum = 0.9
 epsilon = 1e-2
-y, saved_mean, saved_var, running_mean, running_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
+y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
     inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
-    outputs=['y', 'running_mean', 'running_var', 'saved_mean', 'saved_var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
     epsilon=epsilon,
 )
 
 # output size: (2, 3, 4, 5)
-expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, running_mean, running_var, saved_mean, saved_var],
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_epsilon_training_mode')
 ```
 
