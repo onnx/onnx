@@ -14024,7 +14024,7 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Inverse-12"></a>**Inverse-12**</a>
 
-  Dalculates inverse of a square matrix or batches of square matrices.
+  Calculates inverse of a square matrix or batches of square matrices.
   Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
   and the inner-most 2 dimensions form square matrices.
   The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
