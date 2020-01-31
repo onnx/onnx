@@ -2216,11 +2216,14 @@ ONNX_OPERATOR_SET_SCHEMA(
            "Constrain input and output types to floating-point tensors.")
        .FunctionBody(FunctionBodyHelper::BuildNodes(
            {// nodes: {outputs, op, inputs, attributes}
+            //FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {{"value", 1.f}}},
+	    //FunctionBodyHelper::Const<float>("alpha", 1.0f),
+            //FunctionBodyHelper::Const<float>("Y", 1.0f),
+	    FunctionBodyHelper::NodeDef{{"Y"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::FLOAT, "alpha")}},
             {{"X_alpha"},
              "Div",
-             {"X"},
-             {MakeRefAttribute("alpha", AttributeProto::FLOAT)}
-	    },
-            {{"Y"}, "Elu", {"X_alpha"}}})));
+             {"X", "alpha"}
+            },
+            {{"U"}, "Elu", {"X_alpha"}}})));
 
 } // namespace ONNX_NAMESPACE
