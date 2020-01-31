@@ -7,8 +7,8 @@ from __future__ import unicode_literals
 import numpy as np  # type: ignore
 
 import onnx
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 def inverse_reference_implementation(Input):  # type: (np.ndarray) -> np.ndarray

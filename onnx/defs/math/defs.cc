@@ -1853,7 +1853,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ").");
             }
 
-            for (int i=0; i < rank - 2; ++i) {
+            for (int i=0; i < rank ; ++i) {
               auto* dim = output_shape->add_dim();
               *dim = input_shape.dim(i);
             }
