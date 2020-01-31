@@ -1600,53 +1600,70 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input 'training_mode' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
-
-          auto& x_input_shape = getInputShape(ctx, 0);
-          auto& scale_input_shape = getInputShape(ctx, 1);
-          auto& b_input_shape = getInputShape(ctx, 2);
-          auto& mean_input_shape = getInputShape(ctx, 3);
-          auto& var_input_shape = getInputShape(ctx, 4);
-
-          if (ctx.getNumInputs() > 5){
-            auto& mode_input_shape = getInputShape(ctx, 5);
-            if (mode_input_shape.dim_size() != 0) {
-                fail_shape_inference("Training_mode is not a scalar boolean.");
+          if(hasInputShape(ctx, 0)){
+            auto& x_input_shape = getInputShape(ctx, 0);
+            int c = 1;
+            if (x_input_shape.dim_size() > 1 && x_input_shape.dim(1).has_dim_value()) {
+                c = x_input_shape.dim(1).dim_value();
             }
-          }
+            int& num_channels = c;
 
-          int c = 1;
-          if (x_input_shape.dim_size() > 1 && x_input_shape.dim(1).has_dim_value()) {
-            c = x_input_shape.dim(1).dim_value();
-          }
-          int& num_channels = c;
-
-          if(scale_input_shape.dim_size() != 1 || !scale_input_shape.dim(0).has_dim_value() || scale_input_shape.dim(0).dim_value() != num_channels ||
-             b_input_shape.dim_size() != 1 || !b_input_shape.dim(0).has_dim_value() || b_input_shape.dim(0).dim_value() != num_channels ||
-             mean_input_shape.dim_size() != 1 || !mean_input_shape.dim(0).has_dim_value() || mean_input_shape.dim(0).dim_value() != num_channels ||
-             var_input_shape.dim_size() != 1 || !var_input_shape.dim(0).has_dim_value() || var_input_shape.dim(0).dim_value() != num_channels){
-              fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
-          }
-
-          if (ctx.getNumOutputs() > 1){
-            TensorShapeProto outputs_shape;
-            *outputs_shape.add_dim() = x_input_shape.dim(1); // channel
-
-            propagateElemTypeFromInputToOutput(ctx, 0, 1);
-            updateOutputShape(ctx, 1, outputs_shape);
-
-            if (ctx.getNumOutputs() > 2){
-              propagateElemTypeFromInputToOutput(ctx, 0, 2);
-              updateOutputShape(ctx, 2, outputs_shape);
+            if (hasInputShape(ctx, 1)) {
+                auto& scale_input_shape = getInputShape(ctx, 1);
+                if(scale_input_shape.dim_size() != 1 || !scale_input_shape.dim(0).has_dim_value() || scale_input_shape.dim(0).dim_value() != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
             }
 
-            if (ctx.getNumOutputs() > 3){
-              propagateElemTypeFromInputToOutput(ctx, 0, 3);
-              updateOutputShape(ctx, 3, outputs_shape);
+            if (hasInputShape(ctx, 2)) {
+                auto& b_input_shape = getInputShape(ctx, 2);
+                if(b_input_shape.dim_size() != 1 || !b_input_shape.dim(0).has_dim_value() || b_input_shape.dim(0).dim_value() != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
             }
 
-            if (ctx.getNumOutputs() > 4){
-              propagateElemTypeFromInputToOutput(ctx, 0, 4);
-              updateOutputShape(ctx, 4, outputs_shape);
+            if (hasInputShape(ctx, 3)) {
+                auto& mean_input_shape = getInputShape(ctx, 3);
+                if(mean_input_shape.dim_size() != 1 || !mean_input_shape.dim(0).has_dim_value() || mean_input_shape.dim(0).dim_value() != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
+            }
+
+            if (hasInputShape(ctx, 4)) {
+                auto& var_input_shape = getInputShape(ctx, 4);
+                if(var_input_shape.dim_size() != 1 || !var_input_shape.dim(0).has_dim_value() || var_input_shape.dim(0).dim_value() != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
+            }
+
+            if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
+                auto& mode_input_shape = getInputShape(ctx, 5);
+                if (mode_input_shape.dim_size() != 0) {
+                    fail_shape_inference("Training_mode is not a scalar boolean.");
+                }
+            }
+
+            if (ctx.getNumOutputs() > 1) {
+                TensorShapeProto outputs_shape;
+                *outputs_shape.add_dim() = x_input_shape.dim(1); // channel
+
+                propagateElemTypeFromInputToOutput(ctx, 0, 1);
+                updateOutputShape(ctx, 1, outputs_shape);
+
+                if (ctx.getNumOutputs() > 2){
+                    propagateElemTypeFromInputToOutput(ctx, 0, 2);
+                    updateOutputShape(ctx, 2, outputs_shape);
+                }
+
+                if (ctx.getNumOutputs() > 3){
+                    propagateElemTypeFromInputToOutput(ctx, 0, 3);
+                    updateOutputShape(ctx, 3, outputs_shape);
+                }
+
+                if (ctx.getNumOutputs() > 4){
+                    propagateElemTypeFromInputToOutput(ctx, 0, 4);
+                    updateOutputShape(ctx, 4, outputs_shape);
+                }
             }
           }
         }));
@@ -1770,9 +1787,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrain output 'mask' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeAndTypeFromFirstInput(ctx);
+          }
 
-          if (ctx.getNumInputs() > 1) {
+          if (ctx.getNumInputs() > 1 && hasInputShape(ctx, 1)) {
             auto& ratio_input_shape = getInputShape(ctx, 1);
             if (ratio_input_shape.dim_size() != 0) {
                 fail_shape_inference("Ratio of Dropout must be a scalar.");
