@@ -5,7 +5,7 @@ As described in the ONNX [governance](https://github.com/onnx/onnx/tree/master/c
 ## Joining a SIG
 If you are interested in participating, please [join the discussion](https://gitter.im/onnx) in the respective Gitter room. Details about any upcoming meetings will also be shared in the Gitter rooms. SIG artifacts can be found in the [sigs repository](https://github.com/onnx/sigs).
 
-You can find the schedule of SIG meetings at https://wiki.lfai.foundation/pages/viewpage.action?pageId=18481196
+You can find the schedule of SIG meetings on the [LF AI calendar](https://wiki.lfai.foundation/pages/viewpage.action?pageId=18481196)
 
 ## Current SIGs
 
