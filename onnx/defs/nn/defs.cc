@@ -2192,7 +2192,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* celu_ver12_doc = R"DOC(
        Continuously Differentiable Exponential Linear Units:
        Perform the linear unit element-wise on the input tensor X
-       using formula: <br/> ``` max(0,x) + min(0,α*(exp(x/α)−1)) ```
+       using formula: <br/> ``` max(0,x) + min(0,alpha*(exp(x/alpha)−1)) ```
 )DOC";
 
 static float celu_default_alpha = 1.0;
@@ -2216,14 +2216,19 @@ ONNX_OPERATOR_SET_SCHEMA(
            "Constrain input and output types to floating-point tensors.")
        .FunctionBody(FunctionBodyHelper::BuildNodes(
            {// nodes: {outputs, op, inputs, attributes}
-            //FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {{"value", 1.f}}},
-	    //FunctionBodyHelper::Const<float>("alpha", 1.0f),
-            //FunctionBodyHelper::Const<float>("Y", 1.0f),
-	    FunctionBodyHelper::NodeDef{{"Y"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::FLOAT, "alpha")}},
-            {{"X_alpha"},
-             "Div",
-             {"X", "alpha"}
-            },
-            {{"U"}, "Elu", {"X_alpha"}}})));
+	    // How can we create a constant node `alpha` containing the value of
+            // the attribute `alpha` as a Tensor and not a scalar?
+            // The following (commented) line do not work:
+	    // FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::FLOAT, "alpha")}},
+	    FunctionBodyHelper::Const<float>("alpha", 2.f),
+	    FunctionBodyHelper::Const<float>("zero", 0),
+            FunctionBodyHelper::Const<float>("one", 1.f),
+	    {{"Positive"}, "Max", {"zero", "X"}},
+	    {{"X_alpha"}, "Div", {"X", "alpha"}},
+	    {{"Exponential"}, "Exp", {"X_alpha"}},
+	    {{"A"}, "Sub", {"Exponential", "one"}},
+	    {{"B"}, "Mul", {"A", "alpha"}},
+	    {{"Negative"}, "Max", {"zero", "B"}},
+	    {{"Y"}, "Add", {"Negative", "Positive"}}})));
 
 } // namespace ONNX_NAMESPACE
