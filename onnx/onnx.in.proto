@@ -515,16 +515,7 @@ message SequenceProto {
   // shape of the underlying sequence
   repeated int64 dims = 2;
 
-  // Data type of the underlying sequence
-  enum DataType {
-    UNDEFINED = 0;
-    TENSOR = 1;
-    SEQUENCE = 2;
-    MAP = 3;
-  }
-
   // The data type of the sequence.
-  // This field MUST have a valid SequenceProto.DataType value
   optional TypeProto elem_type = 3;
 }
 
@@ -544,7 +535,7 @@ message MapProto {
       optional MapProto map_value = 3;
     };
   };
-  
+
   TypeProto value_type = 3;
   repeated MapElement value = 4;
 
