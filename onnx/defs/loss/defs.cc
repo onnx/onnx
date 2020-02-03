@@ -93,10 +93,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                 }))
 
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "none"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },                                                                                                                 FunctionBodyHelper::BuildNodes({
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
+	    FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
 		FunctionBodyHelper::Const<int>("Q_Pow", 2),                                                                                                           
-		{{"X_Sub"}, "Sub", {"scores", "labels"}},                                                                                                                                                 	     {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
+		{{"X_Sub"}, "Sub", {"scores", "labels"}},
+		{{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
                 {{"output"}, "Mul", {"weights", "X_Pow"}}
                 }))
 
@@ -125,7 +127,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
-	    if (reduction.compare("none") == 0) {
+	    if (reduction.compare("none") == 0 && hasInputShape(ctx, 0)) {
 	    	propagateShapeFromInputToOutput(ctx, 0, 0);
 	    }
 	}));
