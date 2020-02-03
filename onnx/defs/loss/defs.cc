@@ -63,7 +63,66 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
+	      return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
+	    FunctionBodyHelper::BuildNodes({
+	        // nodes: {outputs, op, inputs, attributes}
+	        FunctionBodyHelper::Const<int>("Q_Pow", 2), 
+	        {{"X_Sub"}, "Sub", {"scores", "labels"}},
+                {{"output"}, "Pow", {"X_Sub", "Q_Pow"}}
+	        }))
+
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; }, 
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                FunctionBodyHelper::Const<int>("Q_Pow", 2),
+                {{"X_Sub"}, "Sub", {"scores", "labels"}},
+                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
+		{{"output"}, "ReduceMean", {"X_Pow"}}
+                }))
+
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; }, 
+            FunctionBodyHelper::BuildNodes({ 
+                // nodes: {outputs, op, inputs, attributes}
+                FunctionBodyHelper::Const<int>("Q_Pow", 2),
+                {{"X_Sub"}, "Sub", {"scores", "labels"}}, 
+                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
+                {{"output"}, "ReduceSum", {"X_Pow"}}
+                }))
+
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "none"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },                                                                                                                 FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+		FunctionBodyHelper::Const<int>("Q_Pow", 2),                                                                                                           
+		{{"X_Sub"}, "Sub", {"scores", "labels"}},                                                                                                                                                 	     {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
+                {{"output"}, "Mul", {"weights", "X_Pow"}}
+                }))
+
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "mean"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                FunctionBodyHelper::Const<int>("Q_Pow", 2),
+                {{"X_Sub"}, "Sub", {"scores", "labels"}},
+                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
+                {{"X_Mul"}, "Mul", {"weights", "X_Pow"}},
+		{{"output"}, "ReduceMean", {"X_Mul"}}
+                }))
+
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "sum"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                FunctionBodyHelper::Const<int>("Q_Pow", 2),
+                {{"X_Sub"}, "Sub", {"scores", "labels"}},
+                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
+                {{"X_Mul"}, "Mul", {"weights", "X_Pow"}},
+		{{"output"}, "ReduceSum", {"X_Mul"}}
+                }))
+ 
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
 	    if (reduction.compare("none") == 0) {
