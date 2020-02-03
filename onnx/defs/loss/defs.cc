@@ -67,6 +67,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {}));
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+	    std::string reduction = getAttribute(ctx, "reduction", "mean");
+	    if (reduction.compare("none") == 0) {
+		propagateShapeFromInputToOutput(ctx, 0, 0);
+	    }
+
+	}));
 
 } // namespace ONNX_NAMESPACE
