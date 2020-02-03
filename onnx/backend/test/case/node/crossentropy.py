@@ -11,9 +11,9 @@ from . import expect
 
 
 def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
-            max_x = np.max(x, axis=1).reshape((-1, 1))
-            exp_x = np.exp(x - max_x)
-            return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
+    max_x = np.max(x, axis=1).reshape((-1, 1))
+    exp_x = np.exp(x - max_x)
+    return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
 
 
 class SoftmaxCrossEntropy(Base):
