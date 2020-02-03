@@ -505,9 +505,9 @@ message SequenceProto {
   // maps, or sequences themselves.
   message SequenceElement {
     oneof value {
-      optional TensorProto tensor_value = 1;
-      optional SequenceProto sequence_value = 2;
-      optional MapProto map_value = 3;
+      TensorProto tensor_value = 1;
+      SequenceProto sequence_value = 2;
+      MapProto map_value = 3;
     };
   };
   repeated SequenceElement values = 1;
@@ -523,20 +523,20 @@ message SequenceProto {
 //
 // Specifies an associative table, defined by a key type and a value type.
 message MapProto {
-  int32 key_type = 1;
+  optional int32 key_type = 1;
   optional int32 key = 2;
 
   // Map values are made of TypeProto elements, which can either be tensors,
   // sequences, or maps themselves.
   message MapElement {
     oneof value {
-      optional TensorProto tensor_value = 1;
-      optional SequenceProto sequence_value = 2;
-      optional MapProto map_value = 3;
+      TensorProto tensor_value = 1;
+      SequenceProto sequence_value = 2;
+      MapProto map_value = 3;
     };
   };
 
-  TypeProto value_type = 3;
+  optional TypeProto value_type = 3;
   repeated MapElement value = 4;
 
 }
