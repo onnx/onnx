@@ -1,6 +1,7 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
 const char* reduction_doc =
@@ -15,6 +16,12 @@ static const char* SoftmaxCrossEntropy_ver12_doc =
 between 'scores' and 'labels'.
 The loss can be described as:
     L = (l_1, l_2, ..., l_N), where N is the batch_size
+
+scores: (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
+	with K >= 1 in case of K-dimensional loss.
+labels: (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
+	with K >= 1 in case of K-dimensional loss.
+
 The loss for one sample, l_n, can caculated as follows
     let p = Softmax(scores)
     l_n = -sum(label_i * log(p_i)), where i is the index of classes.
@@ -67,6 +74,61 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+		{{"X_SM"}, "Softmax", {"scores"}},
+		{{"X_Log"}, "Log", {"X_SM"}},
+		{{"output"}, "Mul", {"labels", "X_Log"}}
+		}))
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                {{"X_SM"}, "Softmax", {"scores"}},
+                {{"X_Log"}, "Log", {"X_SM"}},
+                {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
+		{{"output"}, "ReduceSum", {"X_Mul"}}
+                }))
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                {{"X_SM"}, "Softmax", {"scores"}},
+                {{"X_Log"}, "Log", {"X_SM"}},
+                {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
+		{{"output"}, "ReduceMean", {"X_Mul"}}
+                }))
+	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "none"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "none"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                {{"X_SM"}, "Softmax", {"scores"}},
+                {{"X_Log"}, "Log", {"X_SM"}},
+                {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
+		{{"output"}, "Mul", {"weights", "X_Mul"}}
+                }))
+        .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "sum"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                {{"X_SM"}, "Softmax", {"scores"}},
+                {{"X_Log"}, "Log", {"X_SM"}},
+                {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
+		{"X_Mul2"}, "Mul", {"weights", "X_Mul"}},
+                {{"output"}, "ReduceSum", {"X_Mul2"}}
+                }))
+        .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
+              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+            FunctionBodyHelper::BuildNodes({
+                // nodes: {outputs, op, inputs, attributes}
+                {{"X_SM"}, "Softmax", {"scores"}},
+                {{"X_Log"}, "Log", {"X_SM"}},
+                {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
+		{{"X_Mul2"}, "Mul", {"weights", "X_Mul"}},
+                {{"output"}, "ReduceMean", {"X_Mul2"}}
+                }))
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
