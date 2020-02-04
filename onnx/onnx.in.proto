@@ -517,9 +517,6 @@ message SequenceProto {
 //
 // Specifies an associative table, defined by a key type and a value type.
 message MapProto {
-  optional int32 key_type = 1;
-  optional int32 key = 2;
-
   // Map values are made of TypeProto elements, which can either be tensors,
   // sequences, or maps themselves.
   message MapElement {
@@ -530,9 +527,13 @@ message MapProto {
     };
   };
 
-  optional TypeProto value_type = 3;
-  repeated MapElement value = 4;
+  // Key-Value pair element
+  message KeyValuePair {
+    required int32 key = 1;
+    required MapElement value = 2;
+  };
 
+  repeated KeyValuePair pairs = 1;
 }
 
 // Types
