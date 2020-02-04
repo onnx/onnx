@@ -640,12 +640,6 @@ message SequenceProto {
     };
   };
   repeated SequenceElement values = 1;
-
-  // shape of the underlying sequence
-  repeated int64 dims = 2;
-
-  // The data type of the sequence.
-  optional TypeProto elem_type = 3;
 }
 
 // Maps
