@@ -14044,7 +14044,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
+<dd>Output tensor of the same type as input.</dd>
 </dl>
 
 #### Type Constraints

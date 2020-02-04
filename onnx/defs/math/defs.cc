@@ -1819,7 +1819,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
         .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
+        .Output(0, "Y", "Output tensor of the same type as input.", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
