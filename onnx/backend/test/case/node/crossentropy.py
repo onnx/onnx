@@ -36,7 +36,7 @@ class SoftmaxCrossEntropy(Base):
         
         # Compute SoftmaxCrossEntropy
         p = softmax_2d(x)
-        l = np.multiply(labels, p)
+        l = np.multiply(labels, np.log(p))
 
         # Check results
         expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none')
@@ -61,7 +61,7 @@ class SoftmaxCrossEntropy(Base):
 
         # Compute SoftmaxCrossEntropy
         p = softmax_2d(x)
-        l = np.multiply(labels, p)
+        l = np.multiply(labels, np.log(p))
         l = np.multiply(weights, l)
 
         # Check results
@@ -86,8 +86,8 @@ class SoftmaxCrossEntropy(Base):
 
         # Compute SoftmaxCrossEntropy
         p = softmax_2d(x)
-        l = np.multiply(labels, p)
-        r = np.sum(l, axis=1)
+        l = np.multiply(labels, np.log(p))
+        r = np.sum(l)
 
         # Check results
         expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_sum')
@@ -111,8 +111,8 @@ class SoftmaxCrossEntropy(Base):
 
         # Compute SoftmaxCrossEntropy
         p = softmax_2d(x)
-        l = np.multiply(labels, p)
-        r = np.mean(l, axis=1)
+        l = np.multiply(labels, np.log(p))
+        r = np.mean(l)
 
         # Check results
         expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_mean')

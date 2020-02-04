@@ -17037,6 +17037,12 @@ expect(node, inputs=[x], outputs=[y],
   between 'scores' and 'labels'.
   The loss can be described as:
       L = (l_1, l_2, ..., l_N), where N is the batch_size
+  
+  scores: (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
+  	with K >= 1 in case of K-dimensional loss.
+  labels: (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
+  	with K >= 1 in case of K-dimensional loss.
+  
   The loss for one sample, l_n, can caculated as follows
       let p = Softmax(scores)
       l_n = -sum(label_i * log(p_i)), where i is the index of classes.
@@ -17106,8 +17112,8 @@ labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 
 
 # Compute SoftmaxCrossEntropy
 p = softmax_2d(x)
-l = np.multiply(labels, p)
-r = np.mean(l, axis=1)
+l = np.multiply(labels, np.log(p))
+r = np.mean(l)
 
 # Check results
 expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_mean')
@@ -17136,7 +17142,7 @@ labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 
 
 # Compute SoftmaxCrossEntropy
 p = softmax_2d(x)
-l = np.multiply(labels, p)
+l = np.multiply(labels, np.log(p))
 
 # Check results
 expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none')
@@ -17166,7 +17172,7 @@ labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 
 
 # Compute SoftmaxCrossEntropy
 p = softmax_2d(x)
-l = np.multiply(labels, p)
+l = np.multiply(labels, np.log(p))
 l = np.multiply(weights, l)
 
 # Check results
@@ -17196,8 +17202,8 @@ labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 
 
 # Compute SoftmaxCrossEntropy
 p = softmax_2d(x)
-l = np.multiply(labels, p)
-r = np.sum(l, axis=1)
+l = np.multiply(labels, np.log(p))
+r = np.sum(l)
 
 # Check results
 expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_sum')
