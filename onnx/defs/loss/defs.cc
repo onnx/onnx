@@ -134,7 +134,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 	    auto& scores_input_shape = getInputShape(ctx, 0);
 	    auto& labels_input_shape = getInputShape(ctx, 1);
 	    if (scores_input_shape.dim_size() != labels_input_shape.dim_size()) {
-	        fail_shape_inference("scores and labels must be of the same rank.");
+		fail_shape_inference("scores and labels must be of the same rank.");
 	    }
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
 	    if (reduction.compare("none") == 0 && hasInputShape(ctx, 0)) {
