@@ -470,6 +470,13 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('x_reshaped', TensorProto.FLOAT, None),
             make_tensor_value_info('y', TensorProto.FLOAT, None)])  # type: ignore
 
+    def test_eyelike_unknown_input_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input', TensorProto.FLOAT, None)],
+            [make_node("EyeLike", ['input'], ['output'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, None)])  # type: ignore
+
     def test_squeeze(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
