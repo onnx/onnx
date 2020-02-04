@@ -80,7 +80,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 // nodes: {outputs, op, inputs, attributes}
 		{{"X_SM"}, "Softmax", {"scores"}},
 		{{"X_Log"}, "Log", {"X_SM"}},
-		{{"output"}, "Mul", {"labels", "X_Log"}}
+                {{"output"}, "Mul", {"labels", "X_Log"}}
 		}))
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
               return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; },
@@ -89,7 +89,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"X_SM"}, "Softmax", {"scores"}},
                 {{"X_Log"}, "Log", {"X_SM"}},
                 {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
-		{{"output"}, "ReduceSum", {"X_Mul"}}
+                {{"output"}, "ReduceSum", {"X_Mul"}}
                 }))
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
               return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; },
@@ -98,7 +98,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"X_SM"}, "Softmax", {"scores"}},
                 {{"X_Log"}, "Log", {"X_SM"}},
                 {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
-		{{"output"}, "ReduceMean", {"X_Mul"}}
+                {{"output"}, "ReduceMean", {"X_Mul"}}
                 }))
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "none"
               return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "none"; },
@@ -107,7 +107,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"X_SM"}, "Softmax", {"scores"}},
                 {{"X_Log"}, "Log", {"X_SM"}},
                 {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
-		{{"output"}, "Mul", {"weights", "X_Mul"}}
+                {{"output"}, "Mul", {"weights", "X_Mul"}}
                 }))
         .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "sum"
               return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
@@ -131,6 +131,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 }))
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+	    auto& scores_input_shape = getInputShape(ctx, 0);
+	    auto& labels_input_shape = getInputShape(ctx, 1);
+	    if (scores_input_shape.dim_size() != labels_input_shape.dim_size()) {
+	        fail_shape_inference("scores and labels must be of the same rank.");
+	    }
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
 	    if (reduction.compare("none") == 0 && hasInputShape(ctx, 0)) {
 		propagateShapeFromInputToOutput(ctx, 0, 0);
