@@ -8184,7 +8184,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>input</tt> : T1</dt>
-<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
 </dl>
 
 #### Outputs
