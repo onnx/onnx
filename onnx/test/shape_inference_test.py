@@ -455,6 +455,21 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 5, 6))])  # type: ignore
 
+    def test_scatternd_noshape(self):  # type: () -> None
+        # The shape of 'x_reshaped' cannot be inferred, since it is the output of a dynamic reshape.
+        # Thus the shape of 'y' is also None.
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 5, 6)),
+             ('indices', TensorProto.INT64, (3, 3, 2)),
+             ('updates', TensorProto.FLOAT, (3, 3, 6)),
+             ('shape', TensorProto.UNDEFINED, (2,))],
+            [make_node("Reshape", ['x', 'shape'], ['x_reshaped']),
+             make_node("ScatterND", ['x_reshaped', 'indices', 'updates'], ['y'])],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('x_reshaped', TensorProto.FLOAT, None),
+            make_tensor_value_info('y', TensorProto.FLOAT, None)])  # type: ignore
+
     def test_squeeze(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
@@ -499,6 +514,17 @@ class TestShapeInference(unittest.TestCase):
                                       vals=np.array([1, 0], dtype='<i8').tobytes(), raw=True),  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
                          make_tensor('ends', TensorProto.INT64, (2, ), (2, 2))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2))])
+
+    def test_slice_with_input_shape_containing_dim_params(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 'a', 1)),
+             ('starts', TensorProto.INT64, (3,)),
+             ('ends', TensorProto.INT64, (3,))],
+            [make_node('Slice', ['x', 'starts', 'ends'], ['y'])],
+            [],
+            initializer=[make_tensor('starts', TensorProto.INT64, (3,), (0, 0, 0)),
+                            make_tensor('ends', TensorProto.INT64, (3,), (1, 1, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, None, 1))])  # type: ignore
 
     def test_slice_with_input_shape_steps(self):  # type: () -> None
         graph = self._make_graph(
@@ -1906,6 +1932,16 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.UINT8, (None, None, None))])  # type: ignore
+
+    def test_constantofshape_with_shape_zero(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (3,), (0,))),
+             make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.INT32, (1, ), (2, )))],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, (3,)),
+             make_tensor_value_info('y', TensorProto.INT32, (0,))])  # type: ignore
 
     def test_convinteger(self):  # type: () -> None
         graph = self._make_graph(
