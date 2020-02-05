@@ -14102,12 +14102,13 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="NllLoss-12"></a>**NllLoss-12**</a>
+### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**</a>
 
-  A NllLoss op computes (weighted) negative log likelihood loss.
-  Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0. The "input" tensor contains log-probabilities for samples being in a class of [0, C).
-  The op's "target" input tensor has the shape of (N, d1, d2, ..., dk). It contains classifications (one of C classes) for N x d1 x d2 x ... x dk samples. 
-  The loss for a sample at n, d_1, d_2,...d_k being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+  A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
+  Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
+  The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,...d_k] being in a class of [0, C).
+  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encode class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+  The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
   
@@ -14115,7 +14116,7 @@ This version of the operator has been available since version 12 of the default 
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
   
-  If "reduction" attribute is set to "none", the op's output will be the above loss with shape (N, d1, d2, ..., dk).
+  If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
       mean(loss), if "weight" is not provided, 
@@ -14193,7 +14194,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample.'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -14222,6 +14223,10 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain target to integer types</dd>
 </dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 ### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 

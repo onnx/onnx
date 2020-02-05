@@ -1667,11 +1667,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NllLoss_ver12_doc = R"DOC(
-A NllLoss op computes (weighted) negative log likelihood loss.
-Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0. The "input" tensor contains log-probabilities for samples being in a class of [0, C).
-The op's "target" input tensor has the shape of (N, d1, d2, ..., dk). It contains classifications (one of C classes) for N x d1 x d2 x ... x dk samples. 
-The loss for a sample at n, d_1, d_2,...d_k being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+static const char* NegativeLogLikelihoodLoss_ver12_doc = R"DOC(
+A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
+Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
+The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,...d_k] being in a class of [0, C).
+The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encode class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
 
@@ -1679,7 +1680,7 @@ When an optional "weight" is provided, the sample loss is calculated as:
 
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
 
-If "reduction" attribute is set to "none", the op's output will be the above loss with shape (N, d1, d2, ..., dk).
+If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
 
     mean(loss), if "weight" is not provided, 
@@ -1757,10 +1758,10 @@ TensorProto ToDimensionOneTensor(int32_t value) {
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
-    NllLoss,
+    NegativeLogLikelihoodLoss,
     12,
     OpSchema()
-        .SetDoc(NllLoss_ver12_doc)
+        .SetDoc(NegativeLogLikelihoodLoss_ver12_doc)
         .Input(
             0,
             "input",
@@ -1782,9 +1783,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "reduction",
             "Type of reduction to apply to loss: none, sum, mean(default). "
-            "'none': the output is the loss for each sample in the batch."
+            "'none': the output is the loss for each sample."
             "'sum': the output will be summed. "
-            "'mean': the sum of the output will be divided by the batch_size.",
+            "'mean': the sum of the output will be divided by the sum of applied weights.",
             AttributeProto::STRING,
             std::string("mean"))
         .TypeConstraint(

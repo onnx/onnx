@@ -1,21 +1,0 @@
-backend-test:¶
-4
-input
-targetloss"NllLoss*
-	reduction"none #test_nll_loss_input_shape_is_NCd1d2Z
-input
-
-
-
-
-Z
-target
-
-
-
-b
-loss
-
-
-
-B

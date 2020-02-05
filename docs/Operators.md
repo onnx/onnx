@@ -83,7 +83,6 @@
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
-  * <a href="#NllLoss">NllLoss</a>
   * <a href="#NonMaxSuppression">NonMaxSuppression</a>
   * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
@@ -163,6 +162,7 @@
   **Operators with function registered:**
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
+  * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
 
 ## ai.onnx (default)
@@ -9815,12 +9815,13 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="NllLoss"></a><a name="nllloss">**NllLoss**</a>
+### <a name="NegativeLogLikelihoodLoss"></a><a name="negativeloglikelihoodloss">**NegativeLogLikelihoodLoss**</a>
 
-  A NllLoss op computes (weighted) negative log likelihood loss.
-  Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0. The "input" tensor contains log-probabilities for samples being in a class of [0, C).
-  The op's "target" input tensor has the shape of (N, d1, d2, ..., dk). It contains classifications (one of C classes) for N x d1 x d2 x ... x dk samples. 
-  The loss for a sample at n, d_1, d_2,...d_k being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+  A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
+  Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
+  The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,...d_k] being in a class of [0, C).
+  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encode class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+  The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
   
@@ -9828,7 +9829,7 @@ expect(node, inputs=[x], outputs=[y],
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
   
-  If "reduction" attribute is set to "none", the op's output will be the above loss with shape (N, d1, d2, ..., dk).
+  If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
       mean(loss), if "weight" is not provided, 
@@ -9906,7 +9907,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample.'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -9936,6 +9937,10 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -9945,7 +9950,7 @@ This version of the operator has been available since version 12 of the default 
 ```python
 reduction = 'none'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target'],
     outputs=['loss'],
     reduction=reduction
@@ -9956,10 +9961,10 @@ np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, ))
 
-nll_loss = compute_nll_loss(input, target, weight=None, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
-expect(node, inputs=[input, target], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NC')
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NC')
 ```
 
 </details>
@@ -9971,7 +9976,7 @@ expect(node, inputs=[input, target], outputs=[nll_loss],
 ```python
 reduction = 'none'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target'],
     outputs=['loss'],
     reduction=reduction
@@ -9982,10 +9987,10 @@ np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 
-nll_loss = compute_nll_loss(input, target, weight=None, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
-expect(node, inputs=[input, target], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NCd1d2')
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2')
 ```
 
 </details>
@@ -9997,7 +10002,7 @@ expect(node, inputs=[input, target], outputs=[nll_loss],
 ```python
 reduction = 'mean'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target'],
     outputs=['loss'],
     reduction=reduction
@@ -10008,10 +10013,10 @@ np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 
-nll_loss = compute_nll_loss(input, target, weight=None, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
-expect(node, inputs=[input, target], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NCd1d2_reduction_mean')
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_reduction_mean')
 ```
 
 </details>
@@ -10023,7 +10028,7 @@ expect(node, inputs=[input, target], outputs=[nll_loss],
 ```python
 reduction = 'sum'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target'],
     outputs=['loss'],
     reduction=reduction
@@ -10034,10 +10039,10 @@ np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 
-nll_loss = compute_nll_loss(input, target, weight=None, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
-expect(node, inputs=[input, target], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NCd1d2_reduction_sum')
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_reduction_sum')
 ```
 
 </details>
@@ -10049,7 +10054,7 @@ expect(node, inputs=[input, target], outputs=[nll_loss],
 ```python
 reduction = 'none'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target', 'weight'],
     outputs=['loss'],
     reduction=reduction
@@ -10061,10 +10066,10 @@ input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 weight = np.random.rand(C).astype(np.float32)
 
-nll_loss = compute_nll_loss(input, target, weight=weight, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
-expect(node, inputs=[input, target, weight], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NCd1d2_with_weight')
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight')
 ```
 
 </details>
@@ -10076,7 +10081,7 @@ expect(node, inputs=[input, target, weight], outputs=[nll_loss],
 ```python
 reduction = 'mean'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target', 'weight'],
     outputs=['loss'],
     reduction=reduction
@@ -10088,10 +10093,10 @@ input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 weight = np.random.rand(C).astype(np.float32)
 
-nll_loss = compute_nll_loss(input, target, weight=weight, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
-expect(node, inputs=[input, target, weight], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NCd1d2_with_weight_reduction_mean')
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_mean')
 ```
 
 </details>
@@ -10103,7 +10108,7 @@ expect(node, inputs=[input, target, weight], outputs=[nll_loss],
 ```python
 reduction = 'sum'
 node = onnx.helper.make_node(
-    'NllLoss',
+    'NegativeLogLikelihoodLoss',
     inputs=['input', 'target', 'weight'],
     outputs=['loss'],
     reduction=reduction
@@ -10115,10 +10120,10 @@ input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
 target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 weight = np.random.rand(C).astype(np.float32)
 
-nll_loss = compute_nll_loss(input, target, weight=weight, reduction=reduction)
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
-expect(node, inputs=[input, target, weight], outputs=[nll_loss],
-    name='test_nll_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')
 ```
 
 </details>
