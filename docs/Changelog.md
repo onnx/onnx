@@ -14354,3 +14354,139 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Allow inputs to be any kind of floating-point tensor.</dd>
 </dl>
 
+### <a name="ai.onnx.training.GraphCall-1"></a>**ai.onnx.training.GraphCall-1**</a>
+
+  The GraphCall operator invokes a graph inside TrainingInfoProto's
+  algorithm field. GraphCall's inputs are mapped to the invoked graph's
+  input list by position. Assume that ModelProto's graph field has
+  
+  - name: MyInferenceGraph
+  - inputs: [X, W, Z]
+  - initializer: [W]
+  - outputs: Y
+  
+  as visualized bellow.
+  
+  ```
+  X -----.
+         |
+         v
+  W --> Conv --> H --> Gemm --> Y
+                        ^
+                        |
+                        Z
+  ```
+  
+  Assume that the training algorithm contains
+  
+  - inputs: [X_1, Z_1, L]
+  - outputs: [W_new]
+  
+  Inside the training algorithm graph, one can invoke the graph via adding
+  a GraphCall node with
+  
+  - inputs: [X_1, Z_1]
+  - outputs: [Y_1]
+  - an attribute graph_name="MyInferenceGraph",
+  - an attribute input_names=["X", "Z"]. It means the first input "X_1"
+    should be bound to "X" in the inference graph. Similarly, "Z_1" may
+    be bound to "Z" in the inference graph. Note that the value of "W" is
+    not needed because "W" is also an initializer in the inference graph.
+  - an attribute output_names=["Y"] which means the inference graph's
+    output "Y" should be used as "Y_1" in the training algorithm.
+  
+  A possible algorithm graph may contain something like
+  
+  ```
+  .---+---- W (declared in the inference graph's initializer list) 
+  |   |     '-----------.
+  |   |                 v
+  |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph",
+  |   | |            |  |      input_names=["X", "W", "Z"],
+  |   | |            |  |      output_names=["Y"])
+  |   | |   Z_1 -----'  |
+  |   | |    |          V
+  |   | |    |         Y_1 ---> Loss ---> O
+  |   | |    |                    ^
+  |   | |    |                    |
+  |   | `--. |                    L
+  |   |    | |                    |
+  |   |    | |   .----------------'
+  |   |    | |   |
+  |   |    v v   v
+  |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1"], y="O")
+  |        |
+  |        v
+  |      dO_dW (gradient of W)
+  |        |
+  |        v
+  `-----> Sub ----> W_new
+  ```
+  
+  where Loss is a dummy node which computes the minimized objective function.
+  
+  Because "W" is an initializer in the called graph, the user can omit it
+  in the input list of the GraphCall and generate the following training
+  graph.
+  
+  ```
+  .---+---- W (declared in the inference graph's initializer list)
+  |   |
+  |   |
+  |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph",
+  |   | |            |  |      input_names=["X", "Z"],
+  |   | |            |  |      output_names=["Y"])
+  |   | |   Z_1 -----'  |
+  |   | |    |          V
+  |   | |    |         Y_1 ---> Loss ---> O
+  |   | |    |                    ^
+  |   | |    |                    |
+  |   | `--. |                    L
+  |   |    | |                    |
+  |   |    | |   .----------------'
+  |   |    | |   |
+  |   |    v v   v
+  |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1"], y="O")
+  |        |
+  |        v
+  |      dO_dW (gradient of W)
+  |        |
+  |        v
+  `-----> Sub ----> W_new
+  ```
+  
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>input_names</tt> : list of strings (required)</dt>
+<dd>Input names of the called graph. Optional inputs of the called graph can be omitted in this field.</dd>
+<dt><tt>output_names</tt> : list of strings (required)</dt>
+<dd>Output names of the called graph. Only used outputs need to be specified in this field.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T</dt>
+<dd>The values fed into the graph specified by the "graph_name" attribute. The i-th input is bound to the input named "input_names[i]" in the called graph.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T</dt>
+<dd>The outputs produced by the called graph. Its i-th value is bound to the output named "output_names[i]" in the inference graph.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Allow outputs to be any kind of tensor.</dd>
+</dl>
+

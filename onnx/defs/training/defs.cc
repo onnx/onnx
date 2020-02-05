@@ -196,4 +196,144 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
              "tensor(double)"},
             "Allow inputs to be any kind of floating-point tensor."));
 
+
+static const char* GraphCall_ver1_doc = R"DOC(
+The GraphCall operator invokes a graph inside TrainingInfoProto's
+algorithm field. GraphCall's inputs are mapped to the invoked graph's
+input list by position. Assume that ModelProto's graph field has
+
+- name: MyInferenceGraph
+- inputs: [X, W, Z]
+- initializer: [W]
+- outputs: Y
+
+as visualized bellow.
+
+```
+X -----.
+       |
+       v
+W --> Conv --> H --> Gemm --> Y
+                      ^
+                      |
+                      Z
+```
+
+Assume that the training algorithm contains
+
+- inputs: [X_1, Z_1, L]
+- outputs: [W_new]
+
+Inside the training algorithm graph, one can invoke the graph via adding
+a GraphCall node with
+
+- inputs: [X_1, Z_1]
+- outputs: [Y_1]
+- an attribute graph_name="MyInferenceGraph",
+- an attribute input_names=["X", "Z"]. It means the first input "X_1"
+  should be bound to "X" in the inference graph. Similarly, "Z_1" may
+  be bound to "Z" in the inference graph. Note that the value of "W" is
+  not needed because "W" is also an initializer in the inference graph.
+- an attribute output_names=["Y"] which means the inference graph's
+  output "Y" should be used as "Y_1" in the training algorithm.
+
+A possible algorithm graph may contain something like
+
+```
+.---+---- W (declared in the inference graph's initializer list) 
+|   |     '-----------.
+|   |                 v
+|   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph",
+|   | |            |  |      input_names=["X", "W", "Z"],
+|   | |            |  |      output_names=["Y"])
+|   | |   Z_1 -----'  |
+|   | |    |          V
+|   | |    |         Y_1 ---> Loss ---> O
+|   | |    |                    ^
+|   | |    |                    |
+|   | `--. |                    L
+|   |    | |                    |
+|   |    | |   .----------------'
+|   |    | |   |
+|   |    v v   v
+|   `--> Gradient(xs=["W"], zs=["X_1", "Z_1"], y="O")
+|        |
+|        v
+|      dO_dW (gradient of W)
+|        |
+|        v
+`-----> Sub ----> W_new
+```
+
+where Loss is a dummy node which computes the minimized objective function.
+
+Because "W" is an initializer in the called graph, the user can omit it
+in the input list of the GraphCall and generate the following training
+graph.
+
+```
+.---+---- W (declared in the inference graph's initializer list)
+|   |
+|   |
+|   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph",
+|   | |            |  |      input_names=["X", "Z"],
+|   | |            |  |      output_names=["Y"])
+|   | |   Z_1 -----'  |
+|   | |    |          V
+|   | |    |         Y_1 ---> Loss ---> O
+|   | |    |                    ^
+|   | |    |                    |
+|   | `--. |                    L
+|   |    | |                    |
+|   |    | |   .----------------'
+|   |    | |   |
+|   |    v v   v
+|   `--> Gradient(xs=["W"], zs=["X_1", "Z_1"], y="O")
+|        |
+|        v
+|      dO_dW (gradient of W)
+|        |
+|        v
+`-----> Sub ----> W_new
+```
+
+)DOC";
+
+ONNX_TRAINING_OPERATOR_SET_SCHEMA(
+    GraphCall,
+    1,
+    OpSchema()
+        .SetDoc(GraphCall_ver1_doc)
+        .Input(
+            0,
+            "Inputs",
+            "The values fed into the graph specified by the \"graph_name\" attribute. "
+            "The i-th input is bound to the input named \"input_names[i]\" in the "
+            "called graph.",
+            "T",
+            OpSchema::Variadic,
+            false)
+        .Output(
+            0,
+            "Outputs",
+            "The outputs produced by the called graph. Its i-th value is bound to the "
+            "output named \"output_names[i]\" in the inference graph.",
+            "T",
+            OpSchema::Variadic,
+            false)
+        .Attr(
+            "input_names",
+            "Input names of the called graph. Optional inputs of the "
+            "called graph can be omitted in this field.",
+            AttributeProto::STRINGS)
+        .Attr(
+            "output_names",
+            "Output names of the called graph. Only used outputs need "
+            "to be specified in this field.",
+            AttributeProto::STRINGS)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Allow outputs to be any kind of tensor."));
+
 } // namespace ONNX_NAMESPACE
