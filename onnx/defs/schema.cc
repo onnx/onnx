@@ -97,58 +97,83 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // check all input types
-  for (size_t in_idx = 0; in_idx < ctx.getNumInputs() && in_idx < inputs_.size(); ++in_idx) {
-    const auto& param      = inputs_[in_idx];
-    const auto& type_str   = param.GetTypeStr();
+  for (size_t in_idx = 0;
+       in_idx < ctx.getNumInputs() && in_idx < inputs_.size();
+       ++in_idx) {
+    const auto& param = inputs_[in_idx];
+    const auto& type_str = param.GetTypeStr();
     const auto& param_type = ctx.getInputType(in_idx);
-    const auto& all_types  = param.GetTypes();
-    if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    const auto& all_types = param.GetTypes();
+    if (nullptr == param_type ||
+        param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       continue;
-    } else if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
-      fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", *Utils::DataTypeUtils::ToType(*param_type));
+    } else if (
+        !all_types.empty() &&
+        all_types.find(Utils::DataTypeUtils::ToType(*param_type)) ==
+            all_types.end()) {
+      fail_check(
+          param.GetName(),
+          " typestr: ",
+          type_str,
+          ", has unsupported type: ",
+          *Utils::DataTypeUtils::ToType(*param_type));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
       } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
+        fail_check(
+            param.GetName(),
+            " has inconsistent type ",
+            *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
-  }//for inputs
-  //check all output types
-  for (size_t out_idx = 0; out_idx < ctx.getNumOutputs() && out_idx < outputs_.size(); ++out_idx) {
-    const auto& param      = outputs_[out_idx];
-    const auto& type_str   = param.GetTypeStr();
+  } // for inputs
+  // check all output types
+  for (size_t out_idx = 0;
+       out_idx < ctx.getNumOutputs() && out_idx < outputs_.size();
+       ++out_idx) {
+    const auto& param = outputs_[out_idx];
+    const auto& type_str = param.GetTypeStr();
     const auto& param_type = ctx.getOutputType(out_idx);
-    const auto& all_types  = param.GetTypes();
+    const auto& all_types = param.GetTypes();
     bool output_type_found = true;
-    //infer type if necessary
+    // infer type if necessary
     if (param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       if (all_types.size() == 1) {
         *param_type = Utils::DataTypeUtils::ToTypeProto(*all_types.begin());
       } else if (type_constraints.find(type_str) != type_constraints.end()) {
-        auto data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
+        auto data_type =
+            Utils::DataTypeUtils::ToType(type_constraints[type_str]);
         *param_type = Utils::DataTypeUtils::ToTypeProto(data_type);
       } else {
         output_type_found = false;
-      } 
+      }
     }
     if (!output_type_found) {
       continue;
     }
-    if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
-      fail_check(param.GetName(), " has unsupported type ", *Utils::DataTypeUtils::ToType(*param_type));
+    if (!all_types.empty() &&
+        all_types.find(Utils::DataTypeUtils::ToType(*param_type)) ==
+            all_types.end()) {
+      fail_check(
+          param.GetName(),
+          " has unsupported type ",
+          *Utils::DataTypeUtils::ToType(*param_type));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
       } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
+        fail_check(
+            param.GetName(),
+            " has inconsistent type ",
+            *Utils::DataTypeUtils::ToType(*param_type));
       }
-    }//else
-  }//for outputs
+    } // else
+  } // for outputs
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
@@ -288,10 +313,27 @@ void OpSchema::Verify(const NodeProto& node) const {
           "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
-   // Type would be UNDEFINED if not set
+    // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
-      fail_check(
-          "Mismatched attribute type in '", node.name() + " : " + name, "'");
+      // Expected attribute type is "Tensor", in this case, "FLOAT", "FLOATS",
+      // "INT", "INTS", "STRING", "STRINGS" should be also OK.
+      if (AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR !=
+              expected_type ||
+          (AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT !=
+               attr_proto.type() &&
+           AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS !=
+               attr_proto.type() &&
+           AttributeProto_AttributeType::AttributeProto_AttributeType_INT !=
+               attr_proto.type() &&
+           AttributeProto_AttributeType::AttributeProto_AttributeType_INTS !=
+               attr_proto.type() &&
+           AttributeProto_AttributeType::AttributeProto_AttributeType_STRING !=
+               attr_proto.type() &&
+           AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS !=
+               attr_proto.type())) {
+        fail_check(
+            "Mismatched attribute type in '", node.name() + " : " + name, "'");
+      }
     }
 
     // ref_attr_name is only valid when non-empty
