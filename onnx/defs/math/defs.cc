@@ -1909,46 +1909,39 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // Shape inference
             if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
-                const TensorShapeProto& input_shape =
-                    ctx.getInputType(0)->tensor_type().shape();
-                const TensorShapeProto& target_shape =
-                    ctx.getInputType(1)->tensor_type().shape();
+                const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+                const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
 
                 const int input_rank = static_cast<int>(input_shape.dim_size());
                 const int target_rank = static_cast<int>(target_shape.dim_size());
 
                 if (input_rank < 2) {
-                fail_shape_inference("Input rank must be >= 2.")
+                    fail_shape_inference("Input rank must be >= 2.")
                 }
                 if (target_rank != input_rank - 1) {
-                fail_shape_inference("Target rank must be 1 less than the input rank.")
+                    fail_shape_inference("Target rank must be 1 less than the input rank.")
                 }
 
                 // match input dimensions (N, C, d1, ..., dk) with target dimensions of (C,
                 // d1, ..., dk)
                 for (int dim = 0; dim < target_rank; dim++) {
-                const auto input_dim =
-                    dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-                const auto target_dim = target_shape.dim(dim);
-                if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
-                    input_dim.dim_value() != target_dim.dim_value())
-                    fail_shape_inference("Input and target dimension value mismatch.")
+                    const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+                    const auto target_dim = target_shape.dim(dim);
+                    if (input_dim.has_dim_value() && target_dim.has_dim_value() && input_dim.dim_value() != target_dim.dim_value()) 
+                        fail_shape_inference("Input and target dimension value mismatch.")
                 }
 
                 if (ctx.getNumInputs() == 3) {
-                const TensorShapeProto& weight_shape =
-                    ctx.getInputType(2)->tensor_type().shape();
-                if (weight_shape.dim_size() != 1)
-                    fail_shape_inference("Weight rank must be 1.") const auto weight_dim =
-                        weight_shape.dim(0);
-                const auto input_dim_1 = weight_shape.dim(0);
-                if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
-                    weight_dim.dim_value() != input_dim_1.dim_value())
-                    fail_shape_inference("Input and weight dimension value mismatch.")
+                    const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+                    if (weight_shape.dim_size() != 1)
+                        fail_shape_inference("Weight rank must be 1.") 
+                    const auto weight_dim = weight_shape.dim(0);
+                    const auto input_dim_1 = weight_shape.dim(0);
+                    if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() && weight_dim.dim_value() != input_dim_1.dim_value())
+                        fail_shape_inference("Input and weight dimension value mismatch.")
                 }
 
-                TensorShapeProto* output_shape =
-                    ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+                TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
                 if (ctx.getAttribute("reduction")->s() == "none") {
                 // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute
@@ -1956,13 +1949,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                 for (int i = 0; i < input_rank - 1; i++) {
                     auto* dim = output_shape->add_dim();
                     if (i == 0)
-                    *dim = input_shape.dim(i);
+                        *dim = input_shape.dim(i);
                     else
-                    *dim = input_shape.dim(i + 1);
+                        *dim = input_shape.dim(i + 1);
                 }
                 }
                 // otherwise output is a scaler.
             }}));
+
 void einsumRankInference(
     ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
 
