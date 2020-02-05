@@ -85,7 +85,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "input",
-            "1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.",
+            "1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar."
+            " All values must be >= 0.",
             "T1")
         .Output(
             0,
@@ -171,7 +172,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto final_output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (const int64_t& targetShapeElem : targetShape) {
-            if (targetShapeElem > 0) {
+            if (targetShapeElem >= 0) {
               auto* new_dim = final_output_shape->add_dim();
               new_dim->set_dim_value(targetShapeElem);
             } else {
@@ -396,7 +397,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "dtype",
-            "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
+            "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
             OPTIONAL)
@@ -461,7 +462,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "dtype",
-            "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
+            "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
             OPTIONAL)
