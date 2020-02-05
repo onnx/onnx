@@ -19,7 +19,7 @@ from onnx import (ValueInfoProto,
                   GraphProto,
                   IR_VERSION)
 import onnx.onnx_cpp2py_export.checker as C
-import onnx.defs
+import onnx.doing
 from google.protobuf.message import Message
 from typing import TypeVar, Callable, Any, Type, cast, Union, Text
 from six import string_types
@@ -92,8 +92,8 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], boo
             onnx.shape_inference.infer_shapes(onnx.load(model), True)
     else:
         C.check_model(model.SerializeToString())
-        if full_check:
-            onnx.shape_inference.infer_shapes(model, True)
+        if full_checks:
+            onnx.shape_inference.infer_shapes(model, False)
 
 
 ValidationError = C.ValidationError

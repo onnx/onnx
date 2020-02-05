@@ -33,4 +33,4 @@ def infer_shapes(model, check_type=False):  # type: (ModelProto,bool) -> ModelPr
                          'incorrect type: {}'.format(type(model)))
     model_str = model.SerializeToString()
     inferred_model_str = C.infer_shapes(model_str, check_type)
-    return onnx.load_from_string(inferred_model_str)
+    return onnx.load

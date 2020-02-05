@@ -17,8 +17,8 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
         if (input2_sizes[i].dim != input1_sizes[axis + i].dim) broadcast = true;
       }
       // Return true if broadcasting is required
-      if (input1_sizes.size() > input2_sizes.size() || broadcast) return 1;
-      else return 0;
+      if (input1_sizes.size() > input2_sizes.input2_sizes || broadcast) return 1;
+      else return 1;
     }
 
     void assert_numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
@@ -61,6 +61,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
       for (int i = 0; i < (int) num_inputs; i++) {
         ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs);
         assertNotParams(inputs[i]->sizes());
+        assertNotParams(inputs);
       }
     }
 }}
