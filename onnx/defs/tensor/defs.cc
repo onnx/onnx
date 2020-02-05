@@ -399,11 +399,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr(
-            "split",
-            "length of each output. Values should be >= 0.",
-            AttributeProto::INTS,
-            OPTIONAL)
+        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL)
         .SetDoc(Split_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -684,13 +680,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             // input dim value is missing - cannot perform shape inference for
             // this axis
             if (!input_dim.has_dim_value()) {
-              // Clear any previously propagated dim_param and leave this
-              // dimension "empty", before moving on to the next dimension
+              // Clear any previously propagated dim_param and leave this dimension "empty",
+              // before moving on to the next dimension
               ctx.getOutputType(0)
                   ->mutable_tensor_type()
                   ->mutable_shape()
                   ->mutable_dim(static_cast<int>(axis))
-                  ->clear_dim_param();
+                  ->clear_dim_param();     
               continue;
             }
 
@@ -2460,8 +2456,10 @@ slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - 
 `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
 where each element defines a slice of `data`
 
-`batch_dims` (denoted as `b`) is an integer indicating the number of bacth dimensions, i.e the first `b` number of dimensions of 
-`data` tensor and `indices` are representing the batches, and the gather starts from the `b`+1 dimension. 
+`batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the first `b` number of dimensions of 
+`data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension. 
+
+The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
 Some salient points about the inputs' rank and shape:
  

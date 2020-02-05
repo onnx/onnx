@@ -2851,6 +2851,27 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
+<summary>int32_shape_zero</summary>
+
+```python
+x = np.array([0, ]).astype(np.int64)
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [0])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_shape_zero')
+```
+
+</details>
+
+
+<details>
 <summary>int32_zeros</summary>
 
 ```python
@@ -5975,29 +5996,6 @@ expected_output = np.array([0, 3], dtype=np.int32)
 assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example_int32')
-```
-
-</details>
-
-
-<details>
-<summary>int32_batchdim_1</summary>
-
-```python
-node = onnx.helper.make_node(
-    'GatherND',
-    inputs=['data', 'indices'],
-    outputs=['output'],
-    batch_dims =  1,
-)
-
-data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.int32)
-indices = np.array([[1], [0]], dtype=np.int64)
-output = gather_nd_impl(data, indices, 1)
-expected_output = np.array([[2, 3], [4, 5]], dtype=np.int32)
-assert (np.array_equal(output, expected_output))
-expect(node, inputs=[data, indices], outputs=[output],
-       name='test_gathernd_example_int32_batch_dim1')
 ```
 
 </details>

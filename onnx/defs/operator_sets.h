@@ -591,7 +591,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Resize);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Range);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Det);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScatterND);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GatherND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GatherND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gather);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, OneHot);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Slice);
@@ -662,7 +662,7 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Range)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Det)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScatterND)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GatherND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, GatherND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gather)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, OneHot)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Slice)>());
@@ -716,6 +716,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Einsum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GatherND);
 
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
@@ -727,6 +728,7 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GatherND)>());
   }
 };
 
