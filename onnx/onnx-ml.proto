@@ -285,7 +285,7 @@ message TrainingInfoProto {
   //
   // By default, this field is empty and no initializer would be changed
   // by the execution of "initialization".
-  optional StringStringEntryProto initialization_binding = 3;
+  repeated StringStringEntryProto initialization_binding = 3;
 
   // Gradient-based training is usually an iterative procedure. In one gradient
   // descent iteration, we apply
