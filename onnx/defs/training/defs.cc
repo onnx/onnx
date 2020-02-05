@@ -199,8 +199,9 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
 
 static const char* GraphCall_ver1_doc = R"DOC(
 The GraphCall operator invokes a graph inside TrainingInfoProto's
-algorithm field. GraphCall's inputs are mapped to the invoked graph's
-input list by position. Assume that ModelProto's graph field has
+algorithm field. The mapping from GraphCall inputs to the invoked graph's
+input list is determined by the attributes "input_names" and "output_names".
+Assume that ModelProto's graph field has
 
 - name: MyInferenceGraph
 - inputs: [X, W, Z]
@@ -321,6 +322,11 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::Variadic,
             false)
+        .Attr(
+            "graph_name",
+            "The invoked graph's name. "
+            "Currently, the only allowed value is \"ModelProto.graph.name\".",
+            AttributeProto::STRING)
         .Attr(
             "input_names",
             "Input names of the called graph. Optional inputs of the "

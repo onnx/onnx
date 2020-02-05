@@ -19696,8 +19696,9 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 ### <a name="ai.onnx.training.GraphCall"></a><a name="ai.onnx.training.graphcall">**ai.onnx.training.GraphCall**</a>
 
   The GraphCall operator invokes a graph inside TrainingInfoProto's
-  algorithm field. GraphCall's inputs are mapped to the invoked graph's
-  input list by position. Assume that ModelProto's graph field has
+  algorithm field. The mapping from GraphCall inputs to the invoked graph's
+  input list is determined by the attributes "input_names" and "output_names".
+  Assume that ModelProto's graph field has
   
   - name: MyInferenceGraph
   - inputs: [X, W, Z]
@@ -19802,6 +19803,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Attributes
 
 <dl>
+<dt><tt>graph_name</tt> : string (required)</dt>
+<dd>The invoked graph's name. Currently, the only allowed value is "ModelProto.graph.name".</dd>
 <dt><tt>input_names</tt> : list of strings (required)</dt>
 <dd>Input names of the called graph. Optional inputs of the called graph can be omitted in this field.</dd>
 <dt><tt>output_names</tt> : list of strings (required)</dt>
