@@ -3,6 +3,7 @@
 
 #include "onnx/defs/function.h"
 #include "onnx/string_utils.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 std::string InteralTensorNameGenerator(
@@ -48,6 +49,19 @@ void FunctionExpandHelper(
 
   for (auto& attr : node.attribute()) {
     attr_map[attr.name()] = attr;
+  }
+
+  const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
+  const auto schema = schema_registry->GetSchema(
+                    node.op_type(), static_cast<int>(9), node.domain());
+  std::map<std::string, OpSchema::Attribute> default_attrs = schema->attributes();
+
+  for(const auto& pair : default_attrs){
+    const auto& attr_name = pair.first;
+    const auto& attr = pair.second;
+     if (!attr_map.count(attr_name)) {
+        attr_map[attr_name] = attr.default_value;
+        }
   }
 
   for (auto& function_node : func.node()) {
