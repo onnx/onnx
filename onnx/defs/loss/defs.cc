@@ -9,8 +9,8 @@ const char* reduction_doc =
     "'sum': the output will be summed. "
     "'mean': the sum of the output will be divided by the batch_size.";
 
-static const char* MSE_ver12_doc = R"DOC(Loss function that measures the
-mean squared error (squared L2 norm) between each element in the 'scores'
+static const char* MSD_ver12_doc = R"DOC(Loss function that measures the
+mean squared distance (squared L2 norm) between each element in the 'scores'
 and 'labels'.
 
 The loss can be described as:
@@ -31,10 +31,10 @@ L = ReduceSum(L), if reduction = 'sum';
 .)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    MeanSquaredError,
+    MeanSquaredDistance,
     12,
     OpSchema()
-        .SetDoc(MSE_ver12_doc)
+        .SetDoc(MSD_ver12_doc)
         .Attr(
             "reduction",
             reduction_doc,
@@ -123,7 +123,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"X_Mul"}, "Mul", {"weights", "X_Pow"}},
 		{{"output"}, "ReduceSum", {"X_Mul"}}
                 }))
- 
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");

@@ -78,7 +78,7 @@
   * <a href="#MaxRoiPool">MaxRoiPool</a>
   * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
-  * <a href="#MeanSquaredError">MeanSquaredError</a>
+  * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
   * <a href="#Min">Min</a>
   * <a href="#Mod">Mod</a>
   * <a href="#Mul">Mul</a>
@@ -9149,15 +9149,17 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### <a name="MeanSquaredError"></a><a name="meansquarederror">**MeanSquaredError**</a>
+### <a name="MeanSquaredDistance"></a><a name="meansquareddistance">**MeanSquaredDistance**</a>
 
   Loss function that measures the
-  mean squared error (squared L2 norm) between each element in the 'scores'
+  mean squared distance (squared L2 norm) between each element in the 'scores'
   and 'labels'.
   
   The loss can be described as:
       L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
-  , where N is the batch size.
+  , N is the batch size.
+  
+  score and label are vectors of arbitrary shapes with total of N elements each.
   
   If 'weights' is provided, it should be broadcastable to shape of 'scores'.
       L = Mul(weights, L)
@@ -9166,7 +9168,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   Finally, L is reduced:
   L = ReduceSum(L), if reduction = 'sum';
       ReduceMean(L), if reduction = 'mean';
-      ReduceMean(L, axes=[0]), if reduction = 'none';
+      L, if reduction = 'none';
   
   .
 
@@ -9205,6 +9207,153 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>mean_square_distance_mean</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
+t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.mean(l)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_mean_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[[1.2, 2.5], [3.1, 1.3]], [[2.3, 3.4], [1.1, 2.2]], [[3.6, 1.7], [2.5, 3.8]]], dtype=np.float32)
+t = np.array([[[1.1, 2.6], [3.2, 1.4]], [[2.2, 3.3], [1.2, 2.1]], [[3.5, 1.6], [2.5, 3.9]]], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.mean(l)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_none</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([1.2, 2.5], dtype=np.float32)
+t = np.array([1.1, 2.6], dtype=np.float32)
+
+# Compute Mean Square Distance
+msd = (np.square(r - t))
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_none_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T', 'W'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([1.2, 2.5], dtype=np.float32)
+t = np.array([1.1, 2.6], dtype=np.float32)
+weights = np.array([0.8, 0.9], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.multiply(weights, l)
+
+# Check results
+expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_sum</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
+t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.sum(l)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')
+```
+
+</details>
 
 
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>

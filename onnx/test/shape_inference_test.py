@@ -2796,7 +2796,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
              ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node('MeanSquaredError', ['x', 'y'], ['z'], reduction='none')],
+            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='none')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])  # type: ignore
 
@@ -2804,7 +2804,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
              ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node('MeanSquaredError', ['x', 'y'], ['z'], reduction='mean')],
+            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None))])  # type: ignore
 

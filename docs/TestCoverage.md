@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
+Node tests have covered 138/153 (90.20%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4989,6 +4989,145 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_mean_two_inputs')
+```
+
+</details>
+
+
+### MeanSquaredDistance
+There are 5 test cases, listed as following:
+<details>
+<summary>mean_square_distance_mean</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
+t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.mean(l)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean')
+```
+
+</details>
+<details>
+<summary>mean_square_distance_mean_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[[1.2, 2.5], [3.1, 1.3]], [[2.3, 3.4], [1.1, 2.2]], [[3.6, 1.7], [2.5, 3.8]]], dtype=np.float32)
+t = np.array([[[1.1, 2.6], [3.2, 1.4]], [[2.2, 3.3], [1.2, 2.1]], [[3.5, 1.6], [2.5, 3.9]]], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.mean(l)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
+```
+
+</details>
+<details>
+<summary>mean_square_distance_none</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([1.2, 2.5], dtype=np.float32)
+t = np.array([1.1, 2.6], dtype=np.float32)
+
+# Compute Mean Square Distance
+msd = (np.square(r - t))
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
+```
+
+</details>
+<details>
+<summary>mean_square_distance_none_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T', 'W'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([1.2, 2.5], dtype=np.float32)
+t = np.array([1.1, 2.6], dtype=np.float32)
+weights = np.array([0.8, 0.9], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.multiply(weights, l)
+
+# Check results
+expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
+```
+
+</details>
+<details>
+<summary>mean_square_distance_sum</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
+t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
+
+# Compute Mean Square Distance
+l = np.square(r - t)
+msd = np.sum(l)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')
 ```
 
 </details>
@@ -10997,9 +11136,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### MaxRoiPool (call for test cases)
-
-
-### MeanSquaredError (call for test cases)
 
 
 ### Multinomial (random generator operator)

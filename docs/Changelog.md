@@ -14102,15 +14102,17 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="MeanSquaredError-12"></a>**MeanSquaredError-12**</a>
+### <a name="MeanSquaredDistance-12"></a>**MeanSquaredDistance-12**</a>
 
   Loss function that measures the
-  mean squared error (squared L2 norm) between each element in the 'scores'
+  mean squared distance (squared L2 norm) between each element in the 'scores'
   and 'labels'.
   
   The loss can be described as:
       L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
-  , where N is the batch size.
+  , N is the batch size.
+  
+  score and label are vectors of arbitrary shapes with total of N elements each.
   
   If 'weights' is provided, it should be broadcastable to shape of 'scores'.
       L = Mul(weights, L)
@@ -14119,7 +14121,7 @@ This version of the operator has been available since version 12 of the default 
   Finally, L is reduced:
   L = ReduceSum(L), if reduction = 'sum';
       ReduceMean(L), if reduction = 'mean';
-      ReduceMean(L, axes=[0]), if reduction = 'none';
+      L, if reduction = 'none';
   
   .
 
