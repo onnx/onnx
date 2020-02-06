@@ -72,7 +72,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")/*
+            "Constrain input and output types to float tensors.")
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
               return ctx.getNumInputs() == 2  && ctx.getAttribute("weights")->t() == nullptr
 	             && ctx.getAttribute("reduction")->s() == "none"; },
@@ -133,7 +133,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"X_Mul"}, "Mul", {"labels", "X_Log"}},
 		{{"X_Mul2"}, "Mul", {"weights", "X_Mul"}},
                 {{"output"}, "ReduceMean", {"X_Mul2"}}
-                }))*/
+                }))
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    auto& scores_input_shape = getInputShape(ctx, 0);
