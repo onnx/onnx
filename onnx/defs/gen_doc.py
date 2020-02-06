@@ -202,7 +202,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
         s += '</dl>\n'
 
     # Function Body
-    if schema.has_function or schema.has_queried_function:  # type: ignore
+    if schema.has_function or schema.has_context_dependent_function:  # type: ignore
         s += '\n#### Function\n'
         s += '\nThe Function can be represented as a function.\n'
 
@@ -288,7 +288,7 @@ def main(args):  # type: (Type[Args]) -> None
             function_ops = list()
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
-                    if schema.has_function or schema.has_queried_function:  # type: ignore
+                    if schema.has_function or schema.has_context_dependent_function:  # type: ignore
                         function_ops.append((n, schema, versions))
                         continue
                     s = '  * {}<a href="#{}">{}</a>\n'.format(

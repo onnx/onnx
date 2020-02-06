@@ -59,6 +59,9 @@ struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
 
 using FunctionBodyQueryFunction = std::function<bool(FunctionBodyQueryContext&)>;
 
+class OpSchema;
+using ContextDependentFunctionBodyBuilder = std::function<bool(const FunctionBodyQueryContext&, const OpSchema&, FunctionProto&)>;
+
 class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -655,13 +658,13 @@ class OpSchema final {
 
   const FunctionProto* GetFunction() const;
 
-  bool HasQueriedFunction() const {
-    return !queried_function_bodies_.empty();
+  bool HasContextDependentFunction() const {
+    return functionBuilder_ != nullptr;
   }
 
-  OpSchema& AddQueriedFunctionBody(FunctionBodyQueryFunction queryFunction, const std::vector<NodeProto>& func_nodes);
+  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder);
   
-  const FunctionProto* GetQueriedFunction(FunctionBodyQueryContext& ctx) const;
+  bool BuildContextDependentFunction(const FunctionBodyQueryContext& ctx, FunctionProto& functionProto) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -669,12 +672,12 @@ class OpSchema final {
   // efficiency.
   void Finalize();
 
+  // Build function with information stored in opschema
+  void BuildFunction(FunctionProto& function_body) const;
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-
-  // Build function with information stored in opschema
-  void BuildFunction(FunctionProto& function_body);
 
   std::string name_;
   std::string file_;
@@ -700,7 +703,7 @@ class OpSchema final {
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   FunctionProto function_body_;
-  std::vector<std::pair<FunctionBodyQueryFunction, FunctionProto>> queried_function_bodies_;
+  ContextDependentFunctionBodyBuilder functionBuilder_;
 };
 
 // Map type to store operator schemas. The format is,

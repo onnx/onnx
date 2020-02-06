@@ -1670,7 +1670,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* NegativeLogLikelihoodLoss_ver12_doc = R"DOC(
 A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
 Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
-The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,...d_k] being in a class of [0, C).
+The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
 The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encode class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
 The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
@@ -1757,6 +1757,55 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
+bool BuildContextDependentFunctionBody(const FunctionBodyQueryContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  body.push_back({{"input_shape"}, "Shape", {"input"}});
+  body.push_back({{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}});
+  body.push_back({{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+  body.push_back({{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}});
+  body.push_back({{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}});
+  body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}});
+  body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}});
+  body.push_back({{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}});
+
+  if (ctx.getNumInputs() == 2) {
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+    } else {
+      body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}); 
+      if(ctx.getAttribute("reduction")->s() == "mean") {
+        body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+      } else {
+        body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
+      }
+    } 
+  } else {  // ctx.getNumInputs() == 3
+    body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
+    body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+    } else {
+      body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      if(ctx.getAttribute("reduction")->s() == "mean") {
+        body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+      } else {
+        body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+      }
+    }
+  }
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
     12,
@@ -1796,113 +1845,114 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
             "Constrain target to integer types")
-        .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                {{"input_shape"}, "Shape", {"input"}},
-                {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
-                {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
-                {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
-                {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
-                {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
-                {{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}
-                }))
-        .AddQueriedFunctionBody(
-            [](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; },
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                {{"input_shape"}, "Shape", {"input"}},
-                {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
-                {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
-                {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
-                {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
-                {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
-                {{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
-            }))
-        .AddQueriedFunctionBody(
-            [](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; },
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                {{"input_shape"}, "Shape", {"input"}},
-                {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
-                {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
-                {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
-                {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
-                {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
-                {{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
-            }))
-        .AddQueriedFunctionBody(
-            [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "none"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "none"; },
-            FunctionBodyHelper::BuildNodes(
-                {// nodes: {outputs, op, inputs, attributes}
-                {{"input_shape"}, "Shape", {"input"}},
-                {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
-                {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
-                {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
-                {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
-                {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
-                {{"weight_gather"}, "Gather", {"weight", "target"}},
-                {{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}},
-                }))
-        .AddQueriedFunctionBody(
-            [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "mean"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
-            FunctionBodyHelper::BuildNodes(
-                {// nodes: {outputs, op, inputs, attributes}
-                {{"input_shape"}, "Shape", {"input"}},
-                {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
-                {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
-                {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
-                {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
-                {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
-                {{"weight_gather"}, "Gather", {"weight", "target"}},
-                {{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}},
-                {{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
-                {{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}},
-                {{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}},
-                }))
-        .AddQueriedFunctionBody(
-            [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "sum"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
-            FunctionBodyHelper::BuildNodes(
-                {// nodes: {outputs, op, inputs, attributes}
-                {{"input_shape"}, "Shape", {"input"}},
-                {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
-                {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
-                {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
-                {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
-                {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
-                {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
-                {{"weight_gather"}, "Gather", {"weight", "target"}},
-                {{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
-                {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}},
-                {{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
-                }))
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody)
+        // .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
+        //       return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
+        //     FunctionBodyHelper::BuildNodes({
+        //         // nodes: {outputs, op, inputs, attributes}
+        //         {{"input_shape"}, "Shape", {"input"}},
+        //         {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
+        //         {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
+        //         {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
+        //         {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
+        //         {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
+        //         {{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}
+        //         }))
+        // .AddQueriedFunctionBody(
+        //     [](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
+        //       return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+        //     FunctionBodyHelper::BuildNodes({
+        //         // nodes: {outputs, op, inputs, attributes}
+        //         {{"input_shape"}, "Shape", {"input"}},
+        //         {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
+        //         {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
+        //         {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
+        //         {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
+        //         {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
+        //         {{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
+        //     }))
+        // .AddQueriedFunctionBody(
+        //     [](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
+        //       return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+        //     FunctionBodyHelper::BuildNodes({
+        //         // nodes: {outputs, op, inputs, attributes}
+        //         {{"input_shape"}, "Shape", {"input"}},
+        //         {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
+        //         {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
+        //         {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
+        //         {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
+        //         {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
+        //         {{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
+        //     }))
+        // .AddQueriedFunctionBody(
+        //     [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "none"
+        //       return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "none"; },
+        //     FunctionBodyHelper::BuildNodes(
+        //         {// nodes: {outputs, op, inputs, attributes}
+        //         {{"input_shape"}, "Shape", {"input"}},
+        //         {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
+        //         {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
+        //         {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
+        //         {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
+        //         {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
+        //         {{"weight_gather"}, "Gather", {"weight", "target"}},
+        //         {{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}},
+        //         }))
+        // .AddQueriedFunctionBody(
+        //     [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "mean"
+        //       return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+        //     FunctionBodyHelper::BuildNodes(
+        //         {// nodes: {outputs, op, inputs, attributes}
+        //         {{"input_shape"}, "Shape", {"input"}},
+        //         {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
+        //         {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
+        //         {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
+        //         {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
+        //         {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
+        //         {{"weight_gather"}, "Gather", {"weight", "target"}},
+        //         {{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}},
+        //         {{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
+        //         {{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}},
+        //         {{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}},
+        //         }))
+        // .AddQueriedFunctionBody(
+        //     [](FunctionBodyQueryContext& ctx) { // with weight, reduction is "sum"
+        //       return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+        //     FunctionBodyHelper::BuildNodes(
+        //         {// nodes: {outputs, op, inputs, attributes}
+        //         {{"input_shape"}, "Shape", {"input"}},
+        //         {{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}},
+        //         {{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}},
+        //         {{"loss_NCdd"}, "Neg", {"input_gather_element"}},
+        //         {{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}},
+        //         {{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}},
+        //         {{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}},
+        //         {{"weight_gather"}, "Gather", {"weight", "target"}},
+        //         {{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}},
+        //         {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}},
+        //         {{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}},
+        //         }))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             // Type inference
             propagateElemTypeFromInputToOutput(ctx, 0, 0);

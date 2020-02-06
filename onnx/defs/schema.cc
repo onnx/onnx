@@ -705,22 +705,16 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
-OpSchema& OpSchema::AddQueriedFunctionBody(FunctionBodyQueryFunction queryFunction, const std::vector<NodeProto>& func_nodes) {
-  FunctionProto function_body;
-  for (const auto node : func_nodes) {
-    auto new_node = function_body.add_node();
-    new_node->CopyFrom(node);
-  }
-  queried_function_bodies_.emplace(queried_function_bodies_.end(), std::make_pair(queryFunction, function_body));
+OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder functionBuilder) {
+  functionBuilder_ = functionBuilder;
   return *this;
 }
 
-const FunctionProto* OpSchema::GetQueriedFunction(FunctionBodyQueryContext& ctx) const {
-  for (size_t i = 0; i < queried_function_bodies_.size(); i++) {
-    if (queried_function_bodies_[i].first(ctx))
-      return &queried_function_bodies_[i].second;
-  }
-  return nullptr;
+bool OpSchema::BuildContextDependentFunction(const FunctionBodyQueryContext& ctx, FunctionProto& functionProto) const {
+  if (functionBuilder_)
+    return functionBuilder_(ctx, *this, functionProto);
+  else
+    return false;
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
@@ -755,7 +749,7 @@ bool FilterFunctionBodyInputByName(const std::string& input_name, const Function
   return false;
 }
 
-void OpSchema::BuildFunction(FunctionProto& function_body) {
+void OpSchema::BuildFunction(FunctionProto& function_body) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
   function_body.set_since_version(this->since_version_);
@@ -838,9 +832,6 @@ void OpSchema::Finalize() {
 
   if (this->HasFunction()) {
     BuildFunction(function_body_);
-  } else {
-    for (size_t i = 0; i < queried_function_bodies_.size(); i++)
-      BuildFunction(queried_function_bodies_[i].second);
   }
 }
 
