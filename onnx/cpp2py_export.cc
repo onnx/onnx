@@ -64,7 +64,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return py::bytes(bytes);
       })
       .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
-      .def("get_queried_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
+      .def("get_context_dependent_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
         NodeProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
 
