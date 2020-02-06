@@ -43,9 +43,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             reduction_doc,
             AttributeProto::STRING,
             std::string("mean"))
+	.Attr(
+	    "weights",
+	    "A manual rescaling weight given to each class. If given, it has to "
+	    "be a 1D Tensor assigning weight to each of the classes. Otherwise, "
+	    "it is treated as if having all ones.",
+	    AttributeProto::TENSOR,
+	    OpSchema::Optional)
         .Input(
             0,
-            "scores",
+	    "scores",
             "The predicted outputs with shape [batch_size, class_size], or "
             "[batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.",
             "T")
@@ -55,14 +62,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The ground truth output tensor, same dimensions as 'scores'. "
             "Usualy, it's a one-hot representation of groud-truth class.",
             "T")
-        .Input(
-            2,
-            "weights",
-            "A manual rescaling weight given to each class. If given, it has to "
-            "be a 1D Tensor assigning weight to each of the classes. Otherwise, "
-            "it is treated as if having all ones.",
-            "T",
-            OpSchema::Optional)
         .Output(
             0,
             "output",
@@ -75,7 +74,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
+              return ctx.getNumInputs() == 2  && ctx.getAttribute("weights")->t() == nullptr
+	             && ctx.getAttribute("reduction")->s() == "none"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
 		{{"X_SM"}, "Softmax", {"scores"}},
@@ -83,7 +83,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"output"}, "Mul", {"labels", "X_Log"}}
 		}))
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("weights")->t() == nullptr
+	             && ctx.getAttribute("reduction")->s() == "sum"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"X_SM"}, "Softmax", {"scores"}},
@@ -92,7 +93,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"output"}, "ReduceSum", {"X_Mul"}}
                 }))
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("weights")->t() == nullptr
+	             && ctx.getAttribute("reduction")->s() == "mean"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"X_SM"}, "Softmax", {"scores"}},
@@ -101,7 +103,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"output"}, "ReduceMean", {"X_Mul"}}
                 }))
 	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "none"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "none"; },
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("weights")->t() != nullptr
+	             && ctx.getAttribute("reduction")->s() == "none"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"X_SM"}, "Softmax", {"scores"}},
@@ -110,7 +113,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"output"}, "Mul", {"weights", "X_Mul"}}
                 }))
         .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "sum"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("weights")->t() != nullptr
+	             && ctx.getAttribute("reduction")->s() == "sum"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"X_SM"}, "Softmax", {"scores"}},
@@ -120,7 +124,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"output"}, "ReduceSum", {"X_Mul2"}}
                 }))
         .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
+              return ctx.getNumInputs() == 2 && ctx.getAttribute("weights")->t() != nullptr
+	             && ctx.getAttribute("reduction")->s() == "mean"; },
             FunctionBodyHelper::BuildNodes({
                 // nodes: {outputs, op, inputs, attributes}
                 {{"X_SM"}, "Softmax", {"scores"}},
