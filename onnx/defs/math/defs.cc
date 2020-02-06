@@ -1764,6 +1764,7 @@ bool BuildContextDependentFunctionBody(const FunctionBodyQueryContext& ctx, cons
   body.push_back({{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
   body.push_back({{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}});
   body.push_back({{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}});
+  body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element"}});
   body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}});
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}});
   body.push_back({{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}});
