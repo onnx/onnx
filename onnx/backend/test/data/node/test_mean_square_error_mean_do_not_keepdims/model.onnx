@@ -1,19 +1,0 @@
-backend-test:§
-1
-R
-TX"MeanSquaredError*
-	reduction"mean +test_mean_square_error_mean_do_not_keepdimsZ
-R
-
-
-
-Z
-T
-
-
-
-b
-X
-
-
-B
