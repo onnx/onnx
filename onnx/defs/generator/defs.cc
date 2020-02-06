@@ -2,13 +2,15 @@
 // Licensed under the MIT license.
 
 #include <cmath>
+#include <numeric>
+#include <algorithm>
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver11_doc = R"DOC(
-A constant tensor. Exactly one of the two attributes, either value or sparse_value,
-must be specified.
+A constant tensor. Exactly one of the provided attributes, either value, sparse_value,
+or value_* must be specified.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -26,6 +28,36 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The value for the elements of the output tensor in sparse format.",
             AttributeProto::SPARSE_TENSOR,
             false)
+        .Attr(
+            "value_int",
+            "The value for the elements of the output tensor.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "value_ints",
+            "The value for the elements of the output tensor.",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "value_float",
+            "The value for the elements of the output tensor.",
+            AttributeProto::FLOAT,
+            false)
+        .Attr(
+            "value_floats",
+            "The value for the elements of the output tensor.",
+            AttributeProto::FLOATS,
+            false)
+        .Attr(
+            "value_string",
+            "The value for the elements of the output tensor.",
+            AttributeProto::STRING,
+            false)
+        .Attr(
+            "value_strings",
+            "The value for the elements of the output tensor.",
+            AttributeProto::STRINGS,
+            false)
         .Output(
             0,
             "output",
@@ -38,10 +70,26 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto* value = ctx.getAttribute("value");
           auto* sparse_value = ctx.getAttribute("sparse_value");
+          auto* value_int = ctx.getAttribute("value_int");
+          auto* value_ints = ctx.getAttribute("value_ints");
+          auto* value_float = ctx.getAttribute("value_float");
+          auto* value_floats = ctx.getAttribute("value_floats");
+          auto* value_string = ctx.getAttribute("value_string");
+          auto* value_strings = ctx.getAttribute("value_strings");
 
-          if ((nullptr != value) && (nullptr != sparse_value))
+          std::vector<int> non_null_attr = {
+            (nullptr != value),
+            (nullptr != sparse_value),
+            (nullptr != value_int),
+            (nullptr != value_ints),
+            (nullptr != value_float),
+            (nullptr != value_floats),
+            (nullptr != value_string),
+            (nullptr != value_strings)
+          };
+          if (std::count(non_null_attr.begin(), non_null_attr.end(), true) != 1)
             fail_shape_inference(
-                "Only one of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
+                "One and only one of the attributes 'value', 'value_*' or 'sparse_value' must be specified for a Constant node.");
 
           if (nullptr != value) {
             // OpSchema::Verify check ensures that the attribute value has_t():
@@ -561,7 +609,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Range_ver11_doc = R"DOC(
-Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
 up to `limit` (exclusive).
 
 The number of elements in the output of range is computed as below-
@@ -573,10 +621,10 @@ The pseudocode determining the contents of the output is shown below-
 `for(int i=0; i<number_of_elements; ++i)`
 
 `{`
-   
-`    output[i] =  start + (i * delta);  ` 
 
-`}`	
+`    output[i] =  start + (i * delta);  `
+
+`}`
 
 `Example 1`
 Inputs: start = 3, limit = 9, delta = 3
