@@ -14363,7 +14363,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   
   Assume that ModelProto's graph field has
   
-  - name: MyInferenceGraph
+  - name: "MyInferenceGraph"
   - inputs: ["X", "W", "Z"]
   - initializer: [W]
   - outputs: ["Y"]
@@ -14423,8 +14423,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   where Loss is a dummy node which computes the minimized objective function.
   
   The variable "W" is an optional input in the called graph. If the user omit it,
-  the input names of GraphCall becomes ["X_1", "", "Z_1"]. Notice that
-  this syntax sugar does NOT eliminate the edge connecting "W" and the GraphCall.
+  the input names of GraphCall becomes ["X_1", "", "Z_1"] and the current
+  initializer of "W" may be used.
   
 
 #### Version
@@ -14435,14 +14435,14 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>graph_name</tt> : string (required)</dt>
-<dd>The invoked graph's name. The only allowed value is "ModelProto.graph.name" in the ONNX model format.</dd>
+<dd>The invoked graph's name. The only allowed value is the name of inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>Inputs</tt> (variadic, heterogeneous) : T</dt>
-<dd>Inputs fet to the invoked graph. The i-th input here goes to the i-th input of the invoked graph. To omit an optional input in this field, the user can omit it or use an empty string.</dd>
+<dd>Inputs fed to the invoked graph. The i-th input here goes to the i-th input of the invoked graph. To omit an optional input in this field, the user can drop it or use an empty string.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -14456,6 +14456,6 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Allow outputs to be any kind of tensor.</dd>
+<dd>Allow inputs and outputs to be any kind of tensor.</dd>
 </dl>
 

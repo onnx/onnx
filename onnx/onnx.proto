@@ -211,8 +211,8 @@ message NodeProto {
 // and a training-algorithm-step. The semantics of the initialization-step is
 // that all initializers (in ModelProto.graph and in all
 // TrainingInfoProto.algorithm) are first initialized as specified by the
-// initializers in the graph, and then by the "initialization_binding" in every
-// instance in ModelProto.training_info. The semantics of the
+// initializers in the graph, and then updated by the "initialization_binding"
+// in every instance in ModelProto.training_info. The semantics of the
 // training-algorithm-step is that all the initializers are updated as
 // specified by the "update_binding" in every instance in training_info.
 //
@@ -239,16 +239,18 @@ message NodeProto {
 // 
 // Several inference components are usable in TrainingInfoProto; the list
 // includes
-//   1. ModelProto.graph is a callable inside TrainingInfoProto.algorithm.
-//      Each call is a NodeProto in TrainingInfoProto.algorithm.node with
-//      NodeProto.op_type == "ModelProto.graph.name". Notice that the called
-//      graph cannot use any of LSTM, Conv, and other operator names in ONNX
-//      as its name.
-//   2. Initializers in ModelProto.graph.initializer can be referenced by
-//      nodes in TrainingInfoProto.algorithm.nodes and
+//   1. The inference graph, ModelProto.graph, is a callable inside
+//      TrainingInfoProto.algorithm.
+//      Each call is represented by a GraphCall operator in 
+//      TrainingInfoProto.algorithm.node.
+//   2. Initializers in ModelProto.graph.initializer can be referenced as
+//      node inputs in TrainingInfoProto.algorithm.nodes and
 //      TrainingInfoProto.initialization.nodes. It implies that training
 //      nodes cannot produce values with names identical to inference
 //      initializers.
+//
+//  The use of operator GraphCall is only allowed in TrainingInfoProto's
+//  algorithm and GraphCall can only invoke the inference graph.
 message TrainingInfoProto {
   // This field describes a graph to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
@@ -270,7 +272,8 @@ message TrainingInfoProto {
   // loss node, gradient node, optimizer node, increment of iteration count,
   // and calls to the inference graph.
   //
-  // The field algorithm.node can invoke ModelProto.graph as a node.
+  // The field algorithm.node is the only place the user can use GraphCall
+  // operator. The only callable graph is the one stored in ModelProto.graph.
   // The initializers defined in ModelProto.graph.initializer are visible in
   // the "algorithm".
   //
@@ -363,6 +366,7 @@ message ModelProto {
   optional string doc_string = 6;
 
   // The parameterized graph that is evaluated to execute the model.
+  // This graph cannot include operators defined in ai.onnx.training.
   optional GraphProto graph = 7;
 
   // Named metadata values; keys should be distinct.
