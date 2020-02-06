@@ -966,7 +966,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 static const char* ScatterElements_ver11_doc = R"DOC(
