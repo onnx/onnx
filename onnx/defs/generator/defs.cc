@@ -48,69 +48,72 @@ ONNX_OPERATOR_SET_SCHEMA(
             switch (attr_type) {
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_FLOAT:
-                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
                     TensorProto::DataType::TensorProto_DataType_FLOAT);
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
                     ->clear_dim();
                 break;
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_INT:
-                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
                     TensorProto::DataType::TensorProto_DataType_INT32);
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
                     ->clear_dim();
                 break;
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_STRING:
-                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
                     TensorProto::DataType::TensorProto_DataType_STRING);
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
                     ->clear_dim();
                 break;
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_FLOATS:
-                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
                     TensorProto::DataType::TensorProto_DataType_FLOAT);
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
                     ->clear_dim();
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
-                    ->add_dim(value->floats_size());
+                    ->add_dim()
+                    ->set_dim_value(value->floats_size());
                 break;
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_INTS:
-                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
                     TensorProto::DataType::TensorProto_DataType_INT32);
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
                     ->clear_dim();
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
-                    ->add_dim(value->ints_size());
+                    ->add_dim()
+                    ->set_dim_value(value->ints_size());
                 break;
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_STRINGS:
-                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
                     TensorProto::DataType::TensorProto_DataType_STRING);
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
                     ->clear_dim();
-                ctx.getOutputType()
+                ctx.getOutputType(0)
                     ->mutable_tensor_type()
                     ->mutable_shape()
-                    ->add_dim(value->strings_size());
+                    ->add_dim()
+                    ->set_dim_value(value->strings_size());
                 break;
               case AttributeProto_AttributeType::
                   AttributeProto_AttributeType_TENSOR: {
