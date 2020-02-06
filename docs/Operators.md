@@ -9259,8 +9259,7 @@ r = np.array([[[1.2, 2.5], [3.1, 1.3]], [[2.3, 3.4], [1.1, 2.2]], [[3.6, 1.7], [
 t = np.array([[[1.1, 2.6], [3.2, 1.4]], [[2.2, 3.3], [1.2, 2.1]], [[3.5, 1.6], [2.5, 3.9]]], dtype=np.float32)
 
 # Compute Mean Square Distance
-l = np.square(r - t)
-msd = np.mean(l)
+msd = mean_squared_distance(r, t, reduction='mean')
 
 # Check results
 expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
@@ -9288,7 +9287,7 @@ r = np.array([1.2, 2.5], dtype=np.float32)
 t = np.array([1.1, 2.6], dtype=np.float32)
 
 # Compute Mean Square Distance
-msd = (np.square(r - t))
+msd = mean_squared_distance(r, t, reduction='none')
 
 # Check results
 expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
@@ -9317,8 +9316,7 @@ t = np.array([1.1, 2.6], dtype=np.float32)
 weights = np.array([0.8, 0.9], dtype=np.float32)
 
 # Compute Mean Square Distance
-l = np.square(r - t)
-msd = np.multiply(weights, l)
+msd = mean_squared_distance(r, t, reduction='none', w=weights)
 
 # Check results
 expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
@@ -9346,8 +9344,7 @@ r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
 t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
 
 # Compute Mean Square Distance
-l = np.square(r - t)
-msd = np.sum(l)
+msd = mean_squared_distance(r, t, reduction='sum')
 
 # Check results
 expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')

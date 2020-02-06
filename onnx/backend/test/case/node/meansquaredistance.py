@@ -9,6 +9,15 @@ import onnx
 from ..base import Base
 from . import expect
 
+def mean_squared_distance(input, target, reduction='mean', w=None):
+    out = np.square(input - target)
+    if w is not None:
+        out = np.multiply(out, w)
+    if reduction == 'mean':
+        out = np.mean(out)
+    elif reduction == 'sum':
+        out = np.sum(out)
+    return out
 
 class MeanSquaredDistance(Base):
 
@@ -29,7 +38,7 @@ class MeanSquaredDistance(Base):
         t = np.array([1.1, 2.6], dtype=np.float32)
 
         # Compute Mean Square Distance
-        msd = (np.square(r - t))
+        msd = mean_squared_distance(r, t, reduction='none')
 
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
@@ -53,8 +62,7 @@ class MeanSquaredDistance(Base):
         weights = np.array([0.8, 0.9], dtype=np.float32)
 
         # Compute Mean Square Distance
-        l = np.square(r - t)
-        msd = np.multiply(weights, l)
+        msd = mean_squared_distance(r, t, reduction='none', w=weights)
 
         # Check results
         expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
@@ -77,8 +85,7 @@ class MeanSquaredDistance(Base):
         t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
 
         # Compute Mean Square Distance
-        l = np.square(r - t)
-        msd = np.sum(l)
+        msd = mean_squared_distance(r, t, reduction='sum')
 
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')
@@ -125,8 +132,7 @@ class MeanSquaredDistance(Base):
         t = np.array([[[1.1, 2.6], [3.2, 1.4]], [[2.2, 3.3], [1.2, 2.1]], [[3.5, 1.6], [2.5, 3.9]]], dtype=np.float32)
 
         # Compute Mean Square Distance
-        l = np.square(r - t)
-        msd = np.mean(l)
+        msd = mean_squared_distance(r, t, reduction='mean')
 
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
