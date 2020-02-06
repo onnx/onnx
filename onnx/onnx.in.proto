@@ -497,40 +497,32 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 
+// Sequences and Maps are made of TypeProto elements, which can either be
+// tensors, maps, or sequences.
+message SequenceMapElement {
+  oneof value {
+    TensorProto tensor_value = 1;
+    SparseTensorProto sparse_tensor_value = 2;
+    SequenceProto sequence_value = 3;
+    MapProto map_value = 4;
+  };
+};
+
 // Sequences
 //
 // Defines a dense, ordered, collection of elements that are of homogeneous types.
 message SequenceProto {
-  // Sequences are made of TypeProto elements, which can either be tensors,
-  // maps, or sequences themselves.
-  message SequenceElement {
-    oneof value {
-      TensorProto tensor_value = 1;
-      SequenceProto sequence_value = 2;
-      MapProto map_value = 3;
-    };
-  };
-  repeated SequenceElement values = 1;
+  repeated SequenceMapElement values = 1;
 }
 
 // Maps
 //
 // Specifies an associative table, defined by a key type and a value type.
 message MapProto {
-  // Map values are made of TypeProto elements, which can either be tensors,
-  // sequences, or maps themselves.
-  message MapElement {
-    oneof value {
-      TensorProto tensor_value = 1;
-      SequenceProto sequence_value = 2;
-      MapProto map_value = 3;
-    };
-  };
-
   // Key-Value pair element
   message KeyValuePair {
     required int32 key = 1;
-    required MapElement value = 2;
+    required SequenceMapElement value = 2;
   };
 
   repeated KeyValuePair pairs = 1;
