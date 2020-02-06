@@ -44,10 +44,86 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Only one of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
 
           if (nullptr != value) {
-            // OpSchema::Verify check ensures that the attribute value has_t():
-            const TensorProto& tensor_proto = value->t();
-            updateOutputElemType(ctx, 0, tensor_proto.data_type());
-            updateOutputShape(ctx, 0, tensor_proto);
+            auto attr_type = value->type();
+            switch (attr_type) {
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_FLOAT:
+                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                    TensorProto::DataType::TensorProto_DataType_FLOAT);
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->clear_dim();
+                break;
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_INT:
+                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                    TensorProto::DataType::TensorProto_DataType_INT32);
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->clear_dim();
+                break;
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_STRING:
+                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                    TensorProto::DataType::TensorProto_DataType_STRING);
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->clear_dim();
+                break;
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_FLOATS:
+                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                    TensorProto::DataType::TensorProto_DataType_FLOAT);
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->clear_dim();
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->add_dim(value->floats_size());
+                break;
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_INTS:
+                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                    TensorProto::DataType::TensorProto_DataType_INT32);
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->clear_dim();
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->add_dim(value->ints_size());
+                break;
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_STRINGS:
+                ctx.getOutputType()->mutable_tensor_type()->set_elem_type(
+                    TensorProto::DataType::TensorProto_DataType_STRING);
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->clear_dim();
+                ctx.getOutputType()
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->add_dim(value->strings_size());
+                break;
+              case AttributeProto_AttributeType::
+                  AttributeProto_AttributeType_TENSOR: {
+                // OpSchema::Verify check ensures that the attribute value
+                // has_t():
+                const TensorProto& tensor_proto = value->t();
+                updateOutputElemType(ctx, 0, tensor_proto.data_type());
+                updateOutputShape(ctx, 0, tensor_proto);
+                break;
+              }
+              default:
+                break;
+            }
             return;
           }
 
