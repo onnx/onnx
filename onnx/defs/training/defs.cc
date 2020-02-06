@@ -205,12 +205,12 @@ is considered optional. All graph outputs are optional.
 
 Assume that ModelProto's graph field has
 
-- name: MyInferenceGraph
+- name: "MyInferenceGraph"
 - inputs: ["X", "W", "Z"]
 - initializer: [W]
 - outputs: ["Y"]
 
-as visualized bellow.
+as visualized below.
 
 ```
 X -----.
@@ -265,8 +265,8 @@ A possible algorithm graph may contain something like
 where Loss is a dummy node which computes the minimized objective function.
 
 The variable "W" is an optional input in the called graph. If the user omit it,
-the input names of GraphCall becomes ["X_1", "", "Z_1"]. Notice that
-this syntax sugar does NOT eliminate the edge connecting "W" and the GraphCall.
+the input names of GraphCall becomes ["X_1", "", "Z_1"] and the current value
+of "W" may be used.
 
 )DOC";
 
@@ -278,10 +278,10 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "Inputs",
-            "Inputs fet to the invoked graph. "
-            "The i-th input here goes to the i-th input of the "
-            "invoked graph. To omit an optional input in this field, "
-            "the user can omit it or use an empty string.",
+            "Inputs fed to the invoked graph. "
+            "The i-th input here goes to the i-th input of the invoked graph. "
+            "To omit an optional input in this field, "
+            "the user can drop it or use an empty string.",
             "T",
             OpSchema::Variadic,
             false)
@@ -297,12 +297,13 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
         .Attr(
             "graph_name",
             "The invoked graph's name. "
-            "The only allowed value is \"ModelProto.graph.name\" "
+            "The only allowed value is the name of the inference graph, "
+            "which is stored in \"ModelProto.graph.name\" "
             "in the ONNX model format.",
             AttributeProto::STRING)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Allow outputs to be any kind of tensor."));
+            "Allow inputs and outputs to be any kind of tensor."));
 
 } // namespace ONNX_NAMESPACE

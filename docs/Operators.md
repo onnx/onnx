@@ -19845,7 +19845,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   - initializer: [W]
   - outputs: ["Y"]
   
-  as visualized bellow.
+  as visualized below.
   
   ```
   X -----.
@@ -19900,8 +19900,8 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   where Loss is a dummy node which computes the minimized objective function.
   
   The variable "W" is an optional input in the called graph. If the user omit it,
-  the input names of GraphCall becomes ["X_1", "", "Z_1"] and the current
-  initializer of "W" may be used.
+  the input names of GraphCall becomes ["X_1", "", "Z_1"] and the current value
+  of "W" may be used.
   
 
 #### Version
@@ -19912,7 +19912,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>graph_name</tt> : string (required)</dt>
-<dd>The invoked graph's name. The only allowed value is the name of inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
+<dd>The invoked graph's name. The only allowed value is the name of the inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
