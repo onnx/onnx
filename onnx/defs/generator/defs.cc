@@ -99,6 +99,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          if (nullptr != value_int) {
+            // OpSchema::Verify check ensures that the attribute value has_i():
+            value->i();
+            updateOutputElemType(ctx, 0, TensorProto::INT32);
+            auto* output_shape = getOutputShape(ctx, 0);
+            appendDim(output_shape, 1);
+            return;
+          }
+
           if (nullptr != sparse_value) {
             // OpSchema::Verify check ensures that the attribute value
             // has_sparse_tensor():
