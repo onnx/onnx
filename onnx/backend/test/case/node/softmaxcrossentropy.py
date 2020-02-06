@@ -46,7 +46,8 @@ class SoftmaxCrossEntropy(Base):
     def export_softmaxcrossentropy_none_weights():
         # Define operator attributes.
         reduction = 'none'
-        weights = [[0.9, 0.8, 0.9, 0.8], [0.9, 0.7, 0.8, 0.9]]
+        w = np.array([0.9, 0.7, 0.8, 0.9], dtype=np.float32)
+        weights = onnx.helper.make_tensor("weights", onnx.TensorProto.FLOAT, [4], w)
 
         # Create operator.
         node = onnx.helper.make_node('SoftmaxCrossEntropy',
@@ -62,7 +63,7 @@ class SoftmaxCrossEntropy(Base):
 
         # Compute SoftmaxCrossEntropy
         l = softmaxcrossentropy_2d(x, labels)
-        l = np.multiply(weights, l)
+        l = np.multiply(w, l)
 
         # Check results
         expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none_weights')
