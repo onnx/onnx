@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver11_doc = R"DOC(
-A constant tensor. Exactly one of the provided attributes, either value, sparse_value,
+This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
 
