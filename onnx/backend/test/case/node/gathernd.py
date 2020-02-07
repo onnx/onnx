@@ -11,7 +11,7 @@ from . import expect
 
 
 def gather_nd_impl(data, indices, batch_dims):
-    # type: (np.ndarray, np.ndarray) -> np.ndarray 
+    # type: (np.ndarray, np.ndarray) -> np.ndarray
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 
@@ -31,8 +31,8 @@ def gather_nd_impl(data, indices, batch_dims):
 
     # Compute output of the op as below
     # Compute shape of output array
-    output_shape = batch_dims_shape + list(indices.shape)[batch_dims:-1] if (indices.shape[-1] == data_rank-batch_dims) \
-    else batch_dims_shape + list(indices.shape)[batch_dims:-1] + list(data.shape)[batch_dims + indices.shape[-1]:]
+    output_shape = batch_dims_shape + list(indices.shape)[batch_dims:-1] if (indices.shape[-1] == data_rank - batch_dims) \
+     else batch_dims_shape + list(indices.shape)[batch_dims:-1] + list(data.shape)[batch_dims + indices.shape[-1]:]
 
     # Placeholder for output data
     output_data_buffer = []
@@ -47,7 +47,7 @@ def gather_nd_impl(data, indices, batch_dims):
     for batch_dim in range(reshaped_indices.shape[0]):
         for outer_dim in range(reshaped_indices.shape[1]):
             gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
-            output_data_buffer.append(reshaped_data[(batch_dim,)+gather_index])
+            output_data_buffer.append(reshaped_data[(batch_dim,) + gather_index])
     return np.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape)
 
 
@@ -91,7 +91,7 @@ class GatherND(Base):
             'GatherND',
             inputs=['data', 'indices'],
             outputs=['output'],
-            batch_dims =  1,
+            batch_dims=1,
         )
 
         data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.int32)
