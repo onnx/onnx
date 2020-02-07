@@ -11,7 +11,7 @@ from . import expect
 
 
 def gather_nd_impl(data, indices, batch_dims):
-    # type: (np.ndarray, np.ndarray) -> np.ndarray
+    # type: (np.ndarray, np.ndarray, int) -> np.ndarray
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 
