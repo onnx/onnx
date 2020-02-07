@@ -152,6 +152,9 @@ class PkgWriter(object):
         line = self._write_line
         message_class = self._import("google.protobuf.message", "Message")
 
+        line = self._write_line
+        message_class = self._import("google.protobuf.message", "Message")
+
         for desc in messages:
             self.locals.add(desc.name)
             qualified_name = prefix + desc.name
