@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def gather_nd_impl(data, indices, batch_dims = 0):
+def gather_nd_impl(data, indices, batch_dims):
     # type: (np.ndarray, np.ndarray) -> np.ndarray 
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
@@ -63,7 +63,7 @@ class GatherND(Base):
 
         data = np.array([[0, 1], [2, 3]], dtype=np.int32)
         indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
-        output = gather_nd_impl(data, indices)
+        output = gather_nd_impl(data, indices, 0)
         expected_output = np.array([0, 3], dtype=np.int32)
         assert (np.array_equal(output, expected_output))
         expect(node, inputs=[data, indices], outputs=[output],
@@ -79,7 +79,7 @@ class GatherND(Base):
 
         data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
         indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
-        output = gather_nd_impl(data, indices)
+        output = gather_nd_impl(data, indices, 0)
         expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
         assert (np.array_equal(output, expected_output))
         expect(node, inputs=[data, indices], outputs=[output],
