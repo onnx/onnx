@@ -10045,7 +10045,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample.'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample. 'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
 
 #### Inputs (2 - 3)
