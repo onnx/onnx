@@ -1833,7 +1833,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "reduction",
             "Type of reduction to apply to loss: none, sum, mean (default). "
-            "'none': the output is the loss for each sample."
+            "'none': the output is the loss for each sample. "
             "'sum': the output will be summed. "
             "'mean': the sum of the output will be divided by the sum of applied weights.",
             AttributeProto::STRING,
