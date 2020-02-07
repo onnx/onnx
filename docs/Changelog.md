@@ -14250,7 +14250,7 @@ This version of the operator has been available since version 12 of the default 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
   Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
   The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
-  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encode class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
   The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
@@ -14337,7 +14337,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample.'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample.'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
 
 #### Inputs (2 - 3)
