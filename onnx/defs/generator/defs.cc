@@ -29,32 +29,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             false)
         .Attr(
             "value_int",
-            "The value for the elements of the output tensor.",
+            "The value for the sole element for the scalar, int64, output tensor.",
             AttributeProto::INT,
             false)
         .Attr(
             "value_ints",
-            "The value for the elements of the output tensor.",
+            "The values for the elements for the 1D, int64, output tensor.",
             AttributeProto::INTS,
             false)
         .Attr(
             "value_float",
-            "The value for the elements of the output tensor.",
+            "The value for the sole element for the scalar, float32, output tensor.",
             AttributeProto::FLOAT,
             false)
         .Attr(
             "value_floats",
-            "The value for the elements of the output tensor.",
+            "The values for the elements for the 1D, float32, output tensor.",
             AttributeProto::FLOATS,
             false)
         .Attr(
             "value_string",
-            "The value for the elements of the output tensor.",
+            "The value for the sole element for the scalar, UTF-8 string, output tensor.",
             AttributeProto::STRING,
             false)
         .Attr(
             "value_strings",
-            "The value for the elements of the output tensor.",
+            "The values for the elements for the 1D, UTF-8 string, output tensor.",
             AttributeProto::STRINGS,
             false)
         .Output(
@@ -103,7 +103,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!value_int->has_i())
               fail_shape_inference("Attribute 'value_int' expect an integer.")
             updateOutputElemType(ctx, 0, TensorProto::INT64);
-            appendDim(getOutputShape(ctx, 0), 1);
+            updateOutputShape(ctx, 0, TensorShapeProto());
             return;
           }
 
@@ -121,7 +121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!value_float->has_f())
               fail_shape_inference("Attribute 'value_float' expect a float.")
             updateOutputElemType(ctx, 0, TensorProto::FLOAT);
-            appendDim(getOutputShape(ctx, 0), 1);
+            updateOutputShape(ctx, 0, TensorShapeProto());
             return;
           }
 
@@ -139,7 +139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!value_string->has_s())
               fail_shape_inference("Attribute 'value_string' expect a string.")
             updateOutputElemType(ctx, 0, TensorProto::STRING);
-            appendDim(getOutputShape(ctx, 0), 1);
+            updateOutputShape(ctx, 0, TensorShapeProto());
             return;
           }
 
@@ -164,8 +164,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               appendDim(output_shape, sparse.dims(i));
             return;
           }
+
           fail_shape_inference(
-              "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.")
+              "TypeAndShapeInferenceFunction implementation incomplete: "
+              "this line should never be reached.")
         }));
 
 static const char* ConstantOfShape_ver9_doc = R"DOC(

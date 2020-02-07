@@ -2380,7 +2380,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             [make_node('Constant', [], ['y'], value_int=42)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, [1])])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, [])])
 
     def test_constant_value_ints(self):  # type: () -> None
         value_ints = [1, 2, 3]
@@ -2395,7 +2395,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             [make_node('Constant', [], ['y'], value_float=1.42)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [1])])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [])])
 
     def test_constant_value_floats(self):  # type: () -> None
         value_floats = [1.0, 1.1, 1.2]
@@ -2410,7 +2410,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             [make_node('Constant', [], ['y'], value_string="String value")],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.STRING, [1])])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.STRING, [])])
 
     def test_constant_value_strings(self):  # type: () -> None
         value_strings = ["o", "n", "n", "x"]
