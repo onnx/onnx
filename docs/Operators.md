@@ -136,7 +136,7 @@
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
-  * <a href="#SoftmaxCrossEntropy">SoftmaxCrossEntropy</a>
+  * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
@@ -17031,26 +17031,31 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### <a name="SoftmaxCrossEntropy"></a><a name="softmaxcrossentropy">**SoftmaxCrossEntropy**</a>
+### <a name="SoftmaxCrossEntropyLoss"></a><a name="softmaxcrossentropyloss">**SoftmaxCrossEntropyLoss**</a>
 
   Loss function that measures the softmax cross entropy
   between 'scores' and 'labels'.
   The loss can be described as:
       L = (l_1, l_2, ..., l_N), where N is the batch_size
   
-  scores: (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
+  shape(scores): (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
   	with K >= 1 in case of K-dimensional loss.
-  labels: (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
+  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
   	with K >= 1 in case of K-dimensional loss.
   
-  The loss for one sample, l_n, can caculated as follows
-      let p = Softmax(scores)
-      l_n = -sum(label_i * log(p_i)), where i is the index of classes.
+  The loss for one sample, l_i, can caculated as follows:
+      l_i = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
-      l_n = -sum(weight_i * label_i * log(p_i)), if 'weights' is provided.
+      l_i = -y[i][c][d1][d2]..[dk]*weights[c], if 'weights' is provided.
+  
+  where:
+      p = Softmax(scores)
+      y = log(p)
+      c = labels[i][d1][d2]...[dk]
+  
   Finally, L is reduced:
   L = ReduceSum(L), if reduction = 'sum';
-      ReduceMean(L), if reduction = 'mean';
+      ReduceMean(L), if reduction = 'mean'; if "weight" is provided, output is averaged by sum of weights.
       L, if reduction = 'none'
 
 #### Version
@@ -17070,7 +17075,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>scores</tt> : T</dt>
 <dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.</dd>
 <dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'scores'. Usualy, it's a one-hot representation of groud-truth class.</dd>
+<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, d1, d2 , ..., dk], where K is the number of dimensions.Usualy, it's a one-hot representation of groud-truth class.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
 </dl>
@@ -17093,120 +17098,142 @@ This version of the operator has been available since version 12 of the default 
 #### Examples
 
 <details>
-<summary>crossentropy_mean</summary>
+<summary>softmaxcrossentropy_mean</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'mean'
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
-r = np.mean(l)
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_mean')
+expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_mean')
 ```
 
 </details>
 
 
 <details>
-<summary>crossentropy_none</summary>
+<summary>softmaxcrossentropy_mean_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, weight=weights)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_none</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'none'
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none')
+expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none')
 ```
 
 </details>
 
 
 <details>
-<summary>crossentropy_none_weights</summary>
+<summary>softmaxcrossentropy_none_weights</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'none'
-weights = [[0.9, 0.8, 0.9, 0.8], [0.9, 0.7, 0.8, 0.9]]
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
-                             inputs=['x', 'y'],
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
-l = np.multiply(weights, l)
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none_weights')
+expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_none_weights')
 ```
 
 </details>
 
 
 <details>
-<summary>crossentropy_sum</summary>
+<summary>softmaxcrossentropy_sum</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'sum'
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
-r = np.sum(l)
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, reduction='sum')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_sum')
+expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_sum')
 ```
 
 </details>

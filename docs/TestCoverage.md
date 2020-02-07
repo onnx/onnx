@@ -9619,117 +9619,137 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### SoftmaxCrossEntropy
-There are 4 test cases, listed as following:
+### SoftmaxCrossEntropyLoss
+There are 5 test cases, listed as following:
 <details>
-<summary>crossentropy_mean</summary>
+<summary>softmaxcrossentropy_mean</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'mean'
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
-r = np.mean(l)
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_mean')
+expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_mean')
 ```
 
 </details>
 <details>
-<summary>crossentropy_none</summary>
+<summary>softmaxcrossentropy_mean_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, weight=weights)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_none</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'none'
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none')
+expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none')
 ```
 
 </details>
 <details>
-<summary>crossentropy_none_weights</summary>
+<summary>softmaxcrossentropy_none_weights</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'none'
-weights = [[0.9, 0.8, 0.9, 0.8], [0.9, 0.7, 0.8, 0.9]]
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
-                             inputs=['x', 'y'],
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
-l = np.multiply(weights, l)
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_cross_entropy_none_weights')
+expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_none_weights')
 ```
 
 </details>
 <details>
-<summary>crossentropy_sum</summary>
+<summary>softmaxcrossentropy_sum</summary>
 
 ```python
 # Define operator attributes.
 reduction = 'sum'
 
 # Create operator.
-node = onnx.helper.make_node('SoftmaxCrossEntropy',
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
                              outputs=['z'],
-                             reduction=reduction
-                             )
+                             reduction=reduction)
 
 # Define operator inputs.
-x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
 
-# Compute SoftmaxCrossEntropy
-p = softmax_2d(x)
-l = np.multiply(labels, np.log(p))
-r = np.sum(l)
+# Compute SoftmaxCrossEntropyLoss
+l = softmaxcrossentropy_2d(x, labels, reduction='sum')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[r], name='test_cross_entropy_sum')
+expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_sum')
 ```
 
 </details>
