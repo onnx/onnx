@@ -117,6 +117,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          if (nullptr != value_float) {
+            // OpSchema::Verify check ensures that the attribute value has_i():
+            if (!value_float->has_f())
+              fail_shape_inference("Attribute 'value_float' expect a float.")
+            updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+            appendDim(getOutputShape(ctx, 0), 1);
+            return;
+          }
+
+          if (nullptr != value_floats) {
+            // OpSchema::Verify check ensures that the attribute value has ints.
+            if (value_floats->floats_size() < 1)
+              fail_shape_inference("Attribute 'value_floats' expect a collection of floats.")
+            updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+            appendDim(getOutputShape(ctx, 0), value_floats->floats_size());
+            return;
+          }
+
           if (nullptr != sparse_value) {
             // OpSchema::Verify check ensures that the attribute value
             // has_sparse_tensor():

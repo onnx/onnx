@@ -2390,6 +2390,21 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, [len(value_ints)])])
 
+    def test_constant_value_float(self):  # type: () -> None
+        graph = self._make_graph(
+            [],
+            [make_node('Constant', [], ['y'], value_float=1.42)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [1])])
+
+    def test_constant_value_floats(self):  # type: () -> None
+        value_floats = [1.0, 1.1, 1.2]
+        graph = self._make_graph(
+            [],
+            [make_node('Constant', [], ['y'], value_floats=value_floats)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, [len(value_floats)])])
+
     def test_range(self):  # type: () -> None
         graph = self._make_graph(
             [('start', TensorProto.FLOAT, ()),
