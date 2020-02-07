@@ -135,6 +135,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          if (nullptr != value_string) {
+            // OpSchema::Verify check ensures that the attribute value has_i():
+            if (!value_string->has_s())
+              fail_shape_inference("Attribute 'value_string' expect a string.")
+            updateOutputElemType(ctx, 0, TensorProto::STRING);
+            appendDim(getOutputShape(ctx, 0), 1);
+            return;
+          }
+
+          if (nullptr != value_strings) {
+            // OpSchema::Verify check ensures that the attribute value has ints.
+            if (value_strings->strings_size() < 1)
+              fail_shape_inference("Attribute 'value_strings' expect a collection of strings.")
+            updateOutputElemType(ctx, 0, TensorProto::STRING);
+            appendDim(getOutputShape(ctx, 0), value_strings->strings_size());
+            return;
+          }
+
           if (nullptr != sparse_value) {
             // OpSchema::Verify check ensures that the attribute value
             // has_sparse_tensor():
