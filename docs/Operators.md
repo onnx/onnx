@@ -2806,7 +2806,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>input</tt> : T1</dt>
-<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
 </dl>
 
 #### Outputs
@@ -5838,16 +5838,20 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
   where each element defines a slice of `data`
   
-  `batch_dims` (denoted as `b`) is an integer indicating the number of bacth dimensions, i.e the first `b` number of dimensions of 
-  `data` tensor and `indices` are representing the batches, and the gather starts from the `b`+1 dimension. 
+  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of 
+  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension. 
   
   Some salient points about the inputs' rank and shape:
    
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
   
-  2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+  2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
   
-  3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  3) b < min(q, r) is to be hornored.
+  
+  3) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+  
+  4) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
   
   The output is computed as follows:
@@ -5857,7 +5861,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   1) If `indices_shape[-1] > r-b` => error condition
   
   2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-     containing 1-D tensors of dimension `r-b`. Where `N` is an integer equals to the production of 1 and all the elements in the batch dimensions 
+     containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions 
      of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]` 
      is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
   
@@ -5916,13 +5920,15 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
     indices = [[1],[0]]             # indices_shape = [2, 1]
   
-    output  = [[2,3],[4,5]]             # output_shape = [2, 1, 2] 
+    output  = [[2,3],[4,5]]             # output_shape = [2, 2] 
   
   
 
 #### Version
 
 This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GatherND-11">GatherND-11</a>
 
 #### Attributes
 
@@ -5996,6 +6002,29 @@ expected_output = np.array([0, 3], dtype=np.int32)
 assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example_int32')
+```
+
+</details>
+
+
+<details>
+<summary>int32_batchdim_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+    batch_dims =  1,
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.int32)
+indices = np.array([[1], [0]], dtype=np.int64)
+output = gather_nd_impl(data, indices, 1)
+expected_output = np.array([[2, 3], [4, 5]], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32_batch_dim1')
 ```
 
 </details>
