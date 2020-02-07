@@ -2795,16 +2795,16 @@ class TestShapeInference(unittest.TestCase):
     def test_cross_entropy_none(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
-             ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node('SoftmaxCrossEntropy', ['x', 'y'], ['z'], reduction='none')],
+             ("y", TensorProto.FLOAT, (2,))],
+            [make_node('SoftmaxCrossEntropyLoss', ['x', 'y'], ['z'], reduction='none')],
             [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,))])  # type: ignore
 
     def test_cross_entropy_mean(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
-             ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node('SoftmaxCrossEntropy', ['x', 'y'], ['z'], reduction='mean')],
+             ("y", TensorProto.FLOAT, (2,))],
+            [make_node('SoftmaxCrossEntropyLoss', ['x', 'y'], ['z'], reduction='mean')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None))])  # type: ignore
 
