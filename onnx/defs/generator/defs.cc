@@ -101,10 +101,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (nullptr != value_int) {
             // OpSchema::Verify check ensures that the attribute value has_i():
-            value->i();
-            updateOutputElemType(ctx, 0, TensorProto::INT32);
-            auto* output_shape = getOutputShape(ctx, 0);
-            appendDim(output_shape, 1);
+            if (!value_int->has_i())
+              fail_shape_inference("Attribute 'value_int' expect an integer.")
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
+            appendDim(getOutputShape(ctx, 0), 1);
+            return;
+          }
+
+          if (nullptr != value_ints) {
+            // OpSchema::Verify check ensures that the attribute value has ints.
+            if (value_ints->ints_size() < 1)
+              fail_shape_inference("Attribute 'value_ints' expect a collection of integers.")
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
+            appendDim(getOutputShape(ctx, 0), value_ints->ints_size());
             return;
           }
 
