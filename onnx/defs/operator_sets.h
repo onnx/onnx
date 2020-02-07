@@ -717,6 +717,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GatherND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Dropout);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization);
 
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
@@ -729,6 +731,8 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GatherND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Dropout)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization)>());
   }
 };
 
