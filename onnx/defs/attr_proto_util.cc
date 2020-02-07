@@ -41,6 +41,7 @@ ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
 ADD_BASIC_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INT, i)
 ADD_BASIC_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRING, s)
 ADD_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSOR, t)
+ADD_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPH, g)
 ADD_LIST_ATTR_IMPL(float, AttributeProto_AttributeType_FLOATS, floats)
 ADD_LIST_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INTS, ints)
 ADD_LIST_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRINGS, strings)
@@ -50,9 +51,16 @@ ADD_LIST_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPHS, graphs)
 AttributeProto MakeRefAttribute(
     const std::string& attr_name,
     AttributeProto_AttributeType type) {
+  return MakeRefAttribute(attr_name, attr_name, type);
+}
+
+AttributeProto MakeRefAttribute(
+    const std::string& attr_name,
+    const std::string& referred_attr_name,
+    AttributeProto_AttributeType type) {
   AttributeProto a;
   a.set_name(attr_name);
-  a.set_ref_attr_name(attr_name);
+  a.set_ref_attr_name(referred_attr_name);
   a.set_type(type);
   return a;
 }
