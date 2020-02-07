@@ -151,5 +151,5 @@ class SoftmaxCrossEntropyLoss(Base):
         l = softmaxcrossentropy_2d(x, labels, weight=weights)
 
         # Check results
-        expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean')
+        expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean_weight')
 
