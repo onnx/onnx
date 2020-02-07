@@ -10,14 +10,33 @@ from ..base import Base
 from . import expect
 
 
-def softmaxcrossentropy_2d(x, labels):  # type: (np.ndarray) -> np.ndarray
+def softmaxcrossentropy_2d(x, target, weight=None, reduction='mean'):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     p = exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
-    return np.multiply(labels, np.log(p))
+    inp = np.log(p)
+    input_shape = inp.shape
+    N, C = input_shape
+    neg_gather_element_input = np.zeros((N, ), dtype=np.float32)
+    for i in range(N):
+        neg_gather_element_input[i] = -inp[i][target[i]]
+    
+    loss = neg_gather_element_input
+    if weight is not None:
+        gather_weight = np.take(weight, target)
+        loss = gather_weight * loss
+        if reduction == 'mean':
+            return loss.sum() / gather_weight.sum()
+    
+    if reduction == 'mean':
+        loss = np.mean(loss)
+    if reduction == 'sum':
+        loss = np.sum(loss)
+    
+    return loss
 
 
-class SoftmaxCrossEntropy(Base):
+class SoftmaxCrossEntropyLoss(Base):
 
     @staticmethod
     def export_softmaxcrossentropy_none():
@@ -25,18 +44,18 @@ class SoftmaxCrossEntropy(Base):
         reduction = 'none'
 
         # Create operator.
-        node = onnx.helper.make_node('SoftmaxCrossEntropy',
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                      inputs=['x', 'y'],
                                      outputs=['z'],
-                                     reduction=reduction
-                                     )
+                                     reduction=reduction)
 
         # Define operator inputs.
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-        labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
-        
-        # Compute SoftmaxCrossEntropy
-        l = softmaxcrossentropy_2d(x, labels)
+        np.random.seed(0)
+        x = np.random.rand(3, 5).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, ))
+
+        # Compute SoftmaxCrossEntropyLoss
+        l = softmaxcrossentropy_2d(x, labels, reduction='none')
 
         # Check results
         expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none')
@@ -46,27 +65,24 @@ class SoftmaxCrossEntropy(Base):
     def export_softmaxcrossentropy_none_weights():
         # Define operator attributes.
         reduction = 'none'
-        w = np.array([0.9, 0.7, 0.8, 0.9], dtype=np.float32)
-        weights = onnx.helper.make_tensor("weights", onnx.TensorProto.FLOAT, [4], w)
 
         # Create operator.
-        node = onnx.helper.make_node('SoftmaxCrossEntropy',
-                                     inputs=['x', 'y'],
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                                     inputs=['x', 'y', 'w'],
                                      outputs=['z'],
-                                     reduction=reduction,
-                                     weights=weights
-                                     )
+                                     reduction=reduction)
 
         # Define operator inputs.
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-        labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+        np.random.seed(0)
+        x = np.random.rand(3, 5).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, ))
+        weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
-        # Compute SoftmaxCrossEntropy
-        l = softmaxcrossentropy_2d(x, labels)
-        l = np.multiply(w, l)
+        # Compute SoftmaxCrossEntropyLoss
+        l = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
 
         # Check results
-        expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none_weights')
+        expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_none_weights')
 
 
     @staticmethod
@@ -75,22 +91,21 @@ class SoftmaxCrossEntropy(Base):
         reduction = 'sum'
 
         # Create operator.
-        node = onnx.helper.make_node('SoftmaxCrossEntropy',
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                      inputs=['x', 'y'],
                                      outputs=['z'],
-                                     reduction=reduction
-                                     )
+                                     reduction=reduction)
 
         # Define operator inputs.
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-        labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+        np.random.seed(0)
+        x = np.random.rand(3, 5).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, ))
 
-        # Compute SoftmaxCrossEntropy
-        l = softmaxcrossentropy_2d(x, labels)
-        rs = np.sum(l)
+        # Compute SoftmaxCrossEntropyLoss
+        l = softmaxcrossentropy_2d(x, labels, reduction='sum')
 
         # Check results
-        expect(node, inputs=[x, labels], outputs=[rs], name='test_softmax_cross_entropy_sum')
+        expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_sum')
 
 
     @staticmethod
@@ -99,19 +114,42 @@ class SoftmaxCrossEntropy(Base):
         reduction = 'mean'
 
         # Create operator.
-        node = onnx.helper.make_node('SoftmaxCrossEntropy',
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                      inputs=['x', 'y'],
                                      outputs=['z'],
-                                     reduction=reduction
-                                     )
+                                     reduction=reduction)
 
         # Define operator inputs.
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]], dtype=np.float32)
-        labels = np.array([[0.0320586, 0.08714432, 0.23688284, 0.64391428], [0.0320586, 0.08714432, 0.23688284, 0.64391428]], dtype=np.float32)
+        np.random.seed(0)
+        x = np.random.rand(3, 5).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, ))
 
-        # Compute SoftmaxCrossEntropy
+        # Compute SoftmaxCrossEntropyLoss
         l = softmaxcrossentropy_2d(x, labels)
-        rm = np.mean(l)
 
         # Check results
-        expect(node, inputs=[x, labels], outputs=[rm], name='test_softmax_cross_entropy_mean')
+        expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_mean')
+
+    @staticmethod
+    def export_softmaxcrossentropy_mean_weights():
+        # Define operator attributes.
+        reduction = 'mean'
+
+        # Create operator.
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                                     inputs=['x', 'y', 'w'],
+                                     outputs=['z'],
+                                     reduction=reduction)
+
+        # Define operator inputs.
+        np.random.seed(0)
+        x = np.random.rand(3, 5).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, ))
+        weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+        # Compute SoftmaxCrossEntropyLoss
+        l = softmaxcrossentropy_2d(x, labels, weight=weights)
+
+        # Check results
+        expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean')
+

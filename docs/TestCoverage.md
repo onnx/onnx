@@ -9670,7 +9670,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 l = softmaxcrossentropy_2d(x, labels, weight=weights)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean')
+expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean_weight')
 ```
 
 </details>
