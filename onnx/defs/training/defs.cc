@@ -274,6 +274,7 @@ that
 
 From the view of computation graph, the Conv operators invoked by GraphCall's
 without specifying "W" as an input may be connected the global "W" variable.
+This rule applies to all optional inputs in the called graph.
 
 )DOC";
 
