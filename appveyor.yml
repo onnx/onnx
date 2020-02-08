@@ -54,7 +54,8 @@ build_script:
 - cmd: pip install %_wheel%
 - cmd: pytest
 - cmd: python onnx/defs/gen_doc.py
-- cmd: python onnx/gen_proto.py
+- cmd: python onnx/gen_proto.py -l
+- cmd: python onnx/gen_proto.py -l --ml
 # Run type checks
 - cmd: pip uninstall -y %_wheel%
 - cmd: rm -rf .setuptools-cmake-build

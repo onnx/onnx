@@ -2,10 +2,9 @@
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 set ONNX_ML=1
 
-cd onnx
-python gen_proto.py -l
-python gen_proto.py -l --ml
-cd ..
+python onnx\gen_proto.py -l
+
+python onnx\gen_proto.py -l --ml
 
 python setup.py develop
 
