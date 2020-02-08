@@ -1598,6 +1598,22 @@ class TestOptimizer(unittest.TestCase):
                                 assert optimized_model.graph == graph
 
     def test_eliminate_nop_dropout(self):  # type: () -> None
+        node = helper.make_node("Dropout", ["X"], ["Y"])
+        node1 = helper.make_node("Log", ["Y"], ["Z"])
+        graph = helper.make_graph(
+            [node, node1],
+            "test",
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 7))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7))])
+        optimized_model = self._optimized(
+            graph, ["eliminate_nop_dropout"], False)
+
+        # we don't want to eliminate the dropoutin opset 12,
+        # even when it';s an optional parameter (defaults to 0)
+        assert optimized_model.graph == graph
+
+    def test_eliminate_nop_dropout_opset11(self):  # type: () -> None
         for ratio in [0.0, 0.5]:
             node = helper.make_node("Dropout", ["X"], ["Y"], ratio=ratio)
             node1 = helper.make_node("Log", ["Y"], ["Z"])
@@ -1608,7 +1624,7 @@ class TestOptimizer(unittest.TestCase):
                     "X", TensorProto.FLOAT, (5, 7))],
                 [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7))])
             optimized_model = self._optimized(
-                graph, ["eliminate_nop_dropout"], False)
+                graph, ["eliminate_nop_dropout"], False, opset_imports=[helper.make_opsetid("", 11)])
 
             if ratio > 0.0:
                 assert optimized_model.graph == graph
