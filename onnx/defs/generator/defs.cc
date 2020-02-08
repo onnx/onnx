@@ -128,7 +128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_floats) {
             // OpSchema::Verify check ensures that the attribute value has ints.
             if (value_floats->floats_size() < 1)
-              fail_shape_inference("Attribute 'value_floats' expect a collection of floats.")
+              fail_shape_inference("Attribute 'value_floats' expect a list of floats.")
             updateOutputElemType(ctx, 0, TensorProto::FLOAT);
             appendDim(getOutputShape(ctx, 0), value_floats->floats_size());
             return;
