@@ -7,7 +7,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver11_doc = R"DOC(
+static const char* Constant_ver12_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
@@ -16,7 +16,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     12,
     OpSchema()
-        .SetDoc(Constant_ver11_doc)
+        .SetDoc(Constant_ver12_doc)
         .Attr(
             "value",
             "The value for the elements of the output tensor.",
