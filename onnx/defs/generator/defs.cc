@@ -146,7 +146,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_strings) {
             // OpSchema::Verify check ensures that the attribute value has ints.
             if (value_strings->strings_size() < 1)
-              fail_shape_inference("Attribute 'value_strings' expect a collection of strings.")
+              fail_shape_inference("Attribute 'value_strings' expect a list of strings.")
             updateOutputElemType(ctx, 0, TensorProto::STRING);
             appendDim(getOutputShape(ctx, 0), value_strings->strings_size());
             return;
