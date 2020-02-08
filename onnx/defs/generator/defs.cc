@@ -76,7 +76,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* value_string = ctx.getAttribute("value_string");
           auto* value_strings = ctx.getAttribute("value_strings");
 
-          std::vector<int> non_null_attr = {
+          std::vector<bool> non_null_attr = {
             (nullptr != value),
             (nullptr != sparse_value),
             (nullptr != value_int),
