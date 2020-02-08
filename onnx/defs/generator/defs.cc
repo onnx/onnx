@@ -110,7 +110,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_ints) {
             // OpSchema::Verify check ensures that the attribute value has ints.
             if (value_ints->ints_size() < 1)
-              fail_shape_inference("Attribute 'value_ints' expect a collection of integers.")
+              fail_shape_inference("Attribute 'value_ints' expect a list of integers.")
             updateOutputElemType(ctx, 0, TensorProto::INT64);
             appendDim(getOutputShape(ctx, 0), value_ints->ints_size());
             return;
