@@ -710,7 +710,7 @@ OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunct
   return *this;
 }
 
-bool OpSchema::BuildContextDependentFunction(const FunctionBodyQueryContext& ctx, FunctionProto& functionProto) const {
+bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const {
   if (functionBuilder_)
     return functionBuilder_(ctx, *this, functionProto);
   else

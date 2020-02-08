@@ -70,7 +70,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
         std::string func_bytes = "";
         if (op->HasContextDependentFunction()) {
-          FunctionBodyQueryContextImpl ctx(proto);
+          FunctionBodyBuildContextImpl ctx(proto);
           FunctionProto func_proto;
           op->BuildContextDependentFunction(ctx, func_proto);
           func_proto.SerializeToString(&func_bytes);

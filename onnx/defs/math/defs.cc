@@ -1757,19 +1757,16 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
-bool BuildContextDependentFunctionBody(const FunctionBodyQueryContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back({{"input_shape"}, "Shape", {"input"}});
-  body.push_back({{"zeros"}, "ConstantOfShape", {"input_shape"}, {MakeAttribute("value", ToDimensionOneTensor(0))}});
   body.push_back({{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-  body.push_back({{"expanded_broadcasted_target"}, "Add", {"expanded_target", "zeros"}});
-  body.push_back({{"input_gather_element"}, "GatherElements", {"input", "expanded_broadcasted_target"}, {MakeAttribute("axis", (int64_t)1)}});
+  body.push_back({{"input_gather_element"}, "GatherElements", {"input", "expanded_target"}, {MakeAttribute("axis", (int64_t)1)}});
   body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element"}});
   body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}});
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}});
   body.push_back({{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
-  if (ctx.getNumInputs() == 2) {
+  if (!ctx.hasInput(2)) {
     if (ctx.getAttribute("reduction")->s() == "none") {
       body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
     } else {
@@ -1780,7 +1777,7 @@ bool BuildContextDependentFunctionBody(const FunctionBodyQueryContext& ctx, cons
         body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
       }
     } 
-  } else {  // ctx.getNumInputs() == 3
+  } else {
     body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
     body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
     if (ctx.getAttribute("reduction")->s() == "none") {
@@ -1880,7 +1877,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     if (weight_shape.dim_size() != 1)
                         fail_shape_inference("Weight rank must be 1.") 
                     const auto weight_dim = weight_shape.dim(0);
-                    const auto input_dim_1 = weight_shape.dim(0);
+                    const auto input_dim_1 = input_shape.dim(0);
                     if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() && weight_dim.dim_value() != input_dim_1.dim_value())
                         fail_shape_inference("Input and weight dimension value mismatch.")
                 }
@@ -1888,17 +1885,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                 TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
                 if (ctx.getAttribute("reduction")->s() == "none") {
-                // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute
-                // is "none".
-                for (int i = 0; i < input_rank - 1; i++) {
-                    auto* dim = output_shape->add_dim();
-                    if (i == 0)
-                        *dim = input_shape.dim(i);
-                    else
-                        *dim = input_shape.dim(i + 1);
+                    // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute
+                    // is "none".
+                    for (int i = 0; i < input_rank - 1; i++) {
+                        auto* dim = output_shape->add_dim();
+                        if (i == 0)
+                            *dim = input_shape.dim(i);
+                        else
+                            *dim = input_shape.dim(i + 1);
+                    }
                 }
-                }
-                // otherwise output is a scaler.
+                // otherwise output is a scalar.
             }}));
 
 void einsumRankInference(

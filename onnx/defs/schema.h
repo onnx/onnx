@@ -25,21 +25,20 @@
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
-struct FunctionBodyQueryContext {
+struct FunctionBodyBuildContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-  virtual size_t getNumInputs() const = 0;
-  virtual size_t getNumOutputs() const = 0;
-  virtual ~FunctionBodyQueryContext() {}
+  virtual bool hasInput(int i) const = 0;
+  virtual bool hasOutput(int i) const  = 0;
+  virtual ~FunctionBodyBuildContext() {}
 };
 
-struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
-  FunctionBodyQueryContextImpl(NodeProto& n) {
-    for (auto& attr : *n.mutable_attribute()) {
+struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
+  FunctionBodyBuildContextImpl(NodeProto& node_proto) : node_proto_(node_proto) {
+    for (auto& attr : *node_proto.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
-    input_count_ = n.input_size();
-    output_count_ = n.output_size();
   }
+
   const AttributeProto* getAttribute(const std::string& name) const {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
@@ -49,18 +48,27 @@ struct FunctionBodyQueryContextImpl : public FunctionBodyQueryContext {
     }
   }
 
-  size_t getNumInputs() const {return input_count_;}
-  size_t getNumOutputs() const {return output_count_;}
+  bool hasInput(int i) const {
+    if (i >= node_proto_.input_size())
+      return false;
+    return node_proto_.input(i) != "";
+  }
+
+  bool hasOutput(int i) const {
+    if (i >= node_proto_.output_size())
+      return false;
+    return node_proto_.output(i) != "";
+  } 
 
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
-  size_t input_count_;
-  size_t output_count_;
+
+  NodeProto node_proto_;
 };
 
-using FunctionBodyQueryFunction = std::function<bool(FunctionBodyQueryContext&)>;
+using FunctionBodyQueryFunction = std::function<bool(FunctionBodyBuildContext&)>;
 
 class OpSchema;
-using ContextDependentFunctionBodyBuilder = std::function<bool(const FunctionBodyQueryContext&, const OpSchema&, FunctionProto&)>;
+using ContextDependentFunctionBodyBuilder = std::function<bool(const FunctionBodyBuildContext&, const OpSchema&, FunctionProto&)>;
 
 class SchemaError final : public std::runtime_error {
  public:
@@ -664,7 +672,7 @@ class OpSchema final {
 
   OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder);
   
-  bool BuildContextDependentFunction(const FunctionBodyQueryContext& ctx, FunctionProto& functionProto) const;
+  bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
