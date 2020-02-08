@@ -264,9 +264,16 @@ A possible algorithm graph may contain something like
 
 where Loss is a dummy node which computes the minimized objective function.
 
-The variable "W" is an optional input in the called graph. If the user omit it,
-the input names of GraphCall becomes ["X_1", "", "Z_1"] and the current value
-of "W" may be used.
+The variable "W" is an optional input in the called graph. If the user omits it,
+the input names of GraphCall becomes ["X_1", "", "Z_1"] and the initializer
+of "W" may be passed into the called graph by reference. Pass-by-reference means
+that
+
+- There is a global variable "W" (the initializer).
+- That global "W" is used whenever "W" is required but missing.
+
+From the view of computation graph, the Conv operators invoked by GraphCall's
+without specifying "W" as an input may be connected the global "W" variable.
 
 )DOC";
 

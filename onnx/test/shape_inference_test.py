@@ -2850,6 +2850,104 @@ class TestShapeInference(unittest.TestCase):
             [])
         self.assertRaises(checker.ValidationError, self._inferred, graph)
 
+    def test_negative_log_likehood_shape_is_NCdd(self):  # type: () -> None
+        N, C = 3, 4
+        graph = self._make_graph(
+            [('input', TensorProto.FLOAT, (N, C)),
+             ('target', TensorProto.INT64, (N,))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target'], ['loss'], reduction='none')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, (N, ))])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NC_with_weight(self):  # type: () -> None
+        N, C = 3, 4
+        graph = self._make_graph(
+            [('input', TensorProto.FLOAT, (N, C)),
+             ('target', TensorProto.INT64, (N,)),
+             ('weight', TensorProto.FLOAT, (C,))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='none')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, (N, ))])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NC_reduction_mean(self):  # type: () -> None
+        N, C = 3, 4
+        graph = self._make_graph(
+            [('input', TensorProto.FLOAT, (N, C)),
+             ('target', TensorProto.INT64, (N,))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target'], ['loss'], reduction='mean')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NC_with_weight_reduction_mean(self):  # type: () -> None
+        N, C = 3, 4
+        graph = self._make_graph(
+            [('input', TensorProto.FLOAT, (N, C)),
+             ('target', TensorProto.INT64, (N,)),
+             ('weight', TensorProto.FLOAT, (C,))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='mean')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NCd1d2(self):  # type: () -> None
+        N, C, d1, d2 = 3, 4, 5, 6
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (N, C, d1, d2)),
+             ("target", TensorProto.INT64, (N, d1, d2))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target'], ['loss'], reduction='none')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, (N, d1, d2))])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NCd1d2_with_weight(self):  # type: () -> None
+        N, C, d1, d2 = 3, 4, 5, 6
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (N, C, d1, d2)),
+             ("target", TensorProto.INT64, (N, d1, d2)),
+             ("weight", TensorProto.FLOAT, (C,))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='none')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, (N, d1, d2))])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NCd1d2_reduction_sum(self):  # type: () -> None
+        N, C, d1, d2 = 3, 4, 5, 6
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (N, C, d1, d2)),
+             ("target", TensorProto.INT64, (N, d1, d2))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target'], ['loss'], reduction='sum')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_negative_log_likehood_shape_is_NCd1d2_with_weight_reduction_mean(self):  # type: () -> None
+        N, C, d1, d2 = 3, 4, 5, 6
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (N, C, d1, d2)),
+             ("target", TensorProto.INT64, (N, d1, d2)),
+             ("weight", TensorProto.FLOAT, (C,))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='mean')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('loss', TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_negative_log_likehood_input_target_shape_mismatch(self):  # type: () -> None
+        N, C, d1, d2 = 3, 4, 5, 6
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (N, d1, d2)),
+             ("target", TensorProto.INT64, (N, d1 + 1, d2)),
+             ("weight", TensorProto.FLOAT, (C,)),
+             ("loss", TensorProto.FLOAT, ())],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='mean')],
+            [])
+        self.assertRaises(checker.ValidationError, self._inferred, graph)
+
+    def test_negative_log_likehood_input_weight_shape_mismatch(self):  # type: () -> None
+        N, C, d1, d2 = 3, 4, 5, 6
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (N, C, d1, d2)),
+             ("target", TensorProto.INT64, (N, d1, d2)),
+             ("weight", TensorProto.FLOAT, (C + 1,)),
+             ("loss", TensorProto.FLOAT, (N, d1, d2))],
+            [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='none')],
+            [])
+        self.assertRaises(checker.ValidationError, self._inferred, graph)
+
 
 if __name__ == '__main__':
     unittest.main()
