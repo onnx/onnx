@@ -14,7 +14,7 @@ or value_* must be specified.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    11,
+    12,
     OpSchema()
         .SetDoc(Constant_ver11_doc)
         .Attr(
