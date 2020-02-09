@@ -163,7 +163,5 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
    FAIL() << "During expanding MeanVarianceNormalization function, "
    << "the default attribute `axes` has not been assigned to ReduceMean op.";
   }	              
-
-
 } // namespace Test
 } // namespace ONNX_NAMESPACE

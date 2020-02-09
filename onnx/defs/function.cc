@@ -51,6 +51,7 @@ void FunctionExpandHelper(
     attr_map[attr.name()] = attr;
   }
 
+  //Add default attributes obtained from the schema of a function node.
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
   const auto schema = schema_registry->GetSchema(
                     node.op_type(), func.since_version(), node.domain());
