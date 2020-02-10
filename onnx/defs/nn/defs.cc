@@ -2216,19 +2216,9 @@ ONNX_OPERATOR_SET_SCHEMA(
            "Constrain input and output types to floating-point tensors.")
        .FunctionBody(FunctionBodyHelper::BuildNodes(
            {// nodes: {outputs, op, inputs, attributes}
-	    // How can we create a constant node `alpha` containing the value of
-            // the attribute `alpha` as a Tensor and not a scalar?
-            // The following (commented) line do not work:
-	    // FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {MakeRefAttribute("value", AttributeProto::FLOAT, "alpha")}},
-	    FunctionBodyHelper::Const<float>("alpha", 2.f),
-	    FunctionBodyHelper::Const<float>("zero", 0),
-            FunctionBodyHelper::Const<float>("one", 1.f),
-	    {{"Positive"}, "Max", {"zero", "X"}},
-	    {{"X_alpha"}, "Div", {"X", "alpha"}},
-	    {{"Exponential"}, "Exp", {"X_alpha"}},
-	    {{"A"}, "Sub", {"Exponential", "one"}},
-	    {{"B"}, "Mul", {"A", "alpha"}},
-	    {{"Negative"}, "Max", {"zero", "B"}},
-	    {{"Y"}, "Add", {"Negative", "Positive"}}})));
+            FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {MakeRefAttribute("value_float", "alpha", AttributeProto::FLOAT)}},
+            {{"X_alpha"}, "Div", {"X", "alpha"}},
+            {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
+            {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
 
 } // namespace ONNX_NAMESPACE
