@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 def mean_squared_distance(input, target, reduction='mean', w=None):
     out = np.square(input - target)
     if w is not None:
@@ -18,6 +19,7 @@ def mean_squared_distance(input, target, reduction='mean', w=None):
     elif reduction == 'sum':
         out = np.sum(out)
     return out
+
 
 class MeanSquaredDistance(Base):
 
@@ -43,7 +45,6 @@ class MeanSquaredDistance(Base):
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
 
-
     @staticmethod
     def export_mean_square_distance_none_weights():  # type: () -> None
         # Define operator attributes.
@@ -67,7 +68,6 @@ class MeanSquaredDistance(Base):
         # Check results
         expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
 
-
     @staticmethod
     def export_mean_square_distance_sum():  # type: () -> None
         # Define operator attributes.
@@ -90,7 +90,6 @@ class MeanSquaredDistance(Base):
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')
 
-
     @staticmethod
     def export_mean_square_distance_mean():  # type: () -> None
         # Define operator attributes.
@@ -108,12 +107,11 @@ class MeanSquaredDistance(Base):
         t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
 
         # Compute Mean Square Distance
-        l = np.square(r - t)
-        msd = np.mean(l)
+        sq = np.square(r - t)
+        msd = np.mean(sq)
 
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean')
-
 
     @staticmethod
     def export_mean_square_distance_mean_3d():  # type: () -> None
