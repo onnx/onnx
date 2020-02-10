@@ -1,7 +1,9 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+
 namespace ONNX_NAMESPACE {
 const char* reduction_doc =
     "Type of reduction to apply to loss: none, sum, mean(default). "
@@ -29,6 +31,46 @@ L = ReduceSum(L), if reduction = 'sum';
     L, if reduction = 'none';
 
 .)DOC";
+
+bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  body.push_back(FunctionBodyHelper::Const<int>("Q_Pow", 2));
+  body.push_back({{"X_Sub"}, "Sub", {"scores", "labels"}});
+
+  if (ctx.hasInput(2)) {
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"output"}, "Pow", {"X_Sub", "Q_Pow"}});
+    } else {
+      body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
+      if (ctx.getAttribute("reduction")->s() == "mean") {
+        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}});
+      } else {
+        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}});
+      }
+    }
+  } else {
+    body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"output"}, "Mul", {"weights", "X_Pow"}});
+    } else {
+      body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
+      if (ctx.getAttribute("reduction")->s() == "mean") {
+        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}});
+      } else {
+        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}});
+      }
+    }
+  }
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanSquaredDistance,
@@ -63,66 +105,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "none"
-	      return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
-	    FunctionBodyHelper::BuildNodes({
-	        // nodes: {outputs, op, inputs, attributes}
-	        FunctionBodyHelper::Const<int>("Q_Pow", 2), 
-	        {{"X_Sub"}, "Sub", {"scores", "labels"}},
-                {{"output"}, "Pow", {"X_Sub", "Q_Pow"}}
-	        }))
-
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "mean"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "mean"; }, 
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                FunctionBodyHelper::Const<int>("Q_Pow", 2),
-                {{"X_Sub"}, "Sub", {"scores", "labels"}},
-                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
-		{{"output"}, "ReduceMean", {"X_Pow"}}
-                }))
-
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight, reduction is "sum"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "sum"; }, 
-            FunctionBodyHelper::BuildNodes({ 
-                // nodes: {outputs, op, inputs, attributes}
-                FunctionBodyHelper::Const<int>("Q_Pow", 2),
-                {{"X_Sub"}, "Sub", {"scores", "labels"}}, 
-                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
-                {{"output"}, "ReduceSum", {"X_Pow"}}
-                }))
-
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "none"
-              return ctx.getNumInputs() == 2 && ctx.getAttribute("reduction")->s() == "none"; },
-	    FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-		FunctionBodyHelper::Const<int>("Q_Pow", 2),                                                                                                           
-		{{"X_Sub"}, "Sub", {"scores", "labels"}},
-		{{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
-                {{"output"}, "Mul", {"weights", "X_Pow"}}
-                }))
-
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "mean"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "mean"; },
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                FunctionBodyHelper::Const<int>("Q_Pow", 2),
-                {{"X_Sub"}, "Sub", {"scores", "labels"}},
-                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
-                {{"X_Mul"}, "Mul", {"weights", "X_Pow"}},
-		{{"output"}, "ReduceMean", {"X_Mul"}}
-                }))
-
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight, reduction is "sum"
-              return ctx.getNumInputs() > 2 && ctx.getAttribute("reduction")->s() == "sum"; },
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                FunctionBodyHelper::Const<int>("Q_Pow", 2),
-                {{"X_Sub"}, "Sub", {"scores", "labels"}},
-                {{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}},
-                {{"X_Mul"}, "Mul", {"weights", "X_Pow"}},
-		{{"output"}, "ReduceSum", {"X_Mul"}}
-                }))
+	.SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMSD)
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
