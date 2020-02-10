@@ -20,19 +20,19 @@ def softmaxcrossentropy_2d(x, target, weight=None, reduction='mean'):  # type: (
     neg_gather_element_input = np.zeros((N, ), dtype=np.float32)
     for i in range(N):
         neg_gather_element_input[i] = -inp[i][target[i]]
-    
+
     loss = neg_gather_element_input
     if weight is not None:
         gather_weight = np.take(weight, target)
         loss = gather_weight * loss
         if reduction == 'mean':
             return loss.sum() / gather_weight.sum()
-    
+
     if reduction == 'mean':
         loss = np.mean(loss)
     if reduction == 'sum':
         loss = np.sum(loss)
-    
+
     return loss
 
 
@@ -55,11 +55,10 @@ class SoftmaxCrossEntropyLoss(Base):
         labels = np.random.randint(0, high=5, size=(3, ))
 
         # Compute SoftmaxCrossEntropyLoss
-        l = softmaxcrossentropy_2d(x, labels, reduction='none')
+        sce = softmaxcrossentropy_2d(x, labels, reduction='none')
 
         # Check results
-        expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none')
-
+        expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
 
     @staticmethod
     def export_softmaxcrossentropy_none_weights():
@@ -79,11 +78,10 @@ class SoftmaxCrossEntropyLoss(Base):
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
-        l = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
+        sce = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
 
         # Check results
-        expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_none_weights')
-
+        expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_none_weights')
 
     @staticmethod
     def export_softmaxcrossentropy_sum():
@@ -102,11 +100,10 @@ class SoftmaxCrossEntropyLoss(Base):
         labels = np.random.randint(0, high=5, size=(3, ))
 
         # Compute SoftmaxCrossEntropyLoss
-        l = softmaxcrossentropy_2d(x, labels, reduction='sum')
+        sce = softmaxcrossentropy_2d(x, labels, reduction='sum')
 
         # Check results
-        expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_sum')
-
+        expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
 
     @staticmethod
     def export_softmaxcrossentropy_mean():
@@ -125,10 +122,10 @@ class SoftmaxCrossEntropyLoss(Base):
         labels = np.random.randint(0, high=5, size=(3, ))
 
         # Compute SoftmaxCrossEntropyLoss
-        l = softmaxcrossentropy_2d(x, labels)
+        sce = softmaxcrossentropy_2d(x, labels)
 
         # Check results
-        expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_mean')
+        expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean')
 
     @staticmethod
     def export_softmaxcrossentropy_mean_weights():
@@ -148,8 +145,7 @@ class SoftmaxCrossEntropyLoss(Base):
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
-        l = softmaxcrossentropy_2d(x, labels, weight=weights)
+        sce = softmaxcrossentropy_2d(x, labels, weight=weights)
 
         # Check results
-        expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean_weight')
-
+        expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight')
