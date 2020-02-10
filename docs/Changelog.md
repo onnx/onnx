@@ -14351,6 +14351,10 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 ### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**</a>
 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.

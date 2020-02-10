@@ -78,7 +78,6 @@
   * <a href="#MaxRoiPool">MaxRoiPool</a>
   * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
-  * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
   * <a href="#Min">Min</a>
   * <a href="#Mod">Mod</a>
   * <a href="#Mul">Mul</a>
@@ -162,6 +161,7 @@
 
   **Operators with function registered:**
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
+  * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
@@ -9358,6 +9358,10 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 
 #### Examples
