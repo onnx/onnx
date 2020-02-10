@@ -1,18 +1,22 @@
-backend-test:Í
-c
+backend-test:®
+;
 x
-yz"SoftmaxCrossEntropy*
-	reduction"none *-
-weights*"fff?333?ÍÌL?fff?Bweights 'test_softmax_cross_entropy_none_weightsZ
+y
+wz"SoftmaxCrossEntropyLoss*
+	reduction"none 'test_softmax_cross_entropy_none_weightsZ
 x
 
-
-Z
-y
-
-
-b
-z
-
-
-B
+
+Z
+y
+
+
+Z
+w
+
+
+b
+z
+
+
+B
