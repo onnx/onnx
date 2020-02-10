@@ -38,6 +38,26 @@ L = ReduceSum(L), if reduction = 'sum';
     L, if reduction = 'none'
 )DOC";
 
+bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  body.push_back({{"X_SM"}, "Softmax", {"scores"}});
+  body.push_back({{"X_Log"}, "Log", {"X_SM"}});
+  if (ctx.hasInput(2)) {
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels"}});
+  } else {
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels", "weights"}});
+  }
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     SoftmaxCrossEntropyLoss,
     12,
@@ -80,26 +100,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // no weight
-              return ctx.getNumInputs() == 2},
-	    FunctionBodyHelper::BuildNodes({
-		// nodes: {outputs, op, inputs, attributes}
-		{{"X_SM"}, "Softmax", {"scores"}},
-                {{"X_Log"}, "Log", {"X_SM"}},
-                {{"output"},
-                 "NegativeLogLikelihoodLoss",
-                 {"X_Log", "labels"},
-                 {MakeRefAttribute("reduction", AttributeProto::STRING)}}}))
-	.AddQueriedFunctionBody([](FunctionBodyQueryContext& ctx) { // weight
-              return ctx.getNumInputs() == 3},
-            FunctionBodyHelper::BuildNodes({
-                // nodes: {outputs, op, inputs, attributes}
-                {{"X_SM"}, "Softmax", {"scores"}},
-                {{"X_Log"}, "Log", {"X_SM"}},
-                {{"output"},
-                 "NegativeLogLikelihoodLoss",
-                 {"X_Log", "labels", "weight"},
-                 {MakeRefAttribute("reduction", AttributeProto::STRING)}}}))
+	.SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
