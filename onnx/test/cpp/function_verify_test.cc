@@ -162,4 +162,3 @@ TEST(FunctionVerification, VerifyRemovingFunNodeFunctionExpandHelper) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
-
