@@ -110,7 +110,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    std::string reduction = getAttribute(ctx, "reduction", "mean");
 	    if (reduction.compare("none") == 0 && hasInputShape(ctx, 0)) {
-	    	propagateShapeFromInputToOutput(ctx, 0, 0);
+		propagateShapeFromInputToOutput(ctx, 0, 0);
 	    }
 	}));
 
