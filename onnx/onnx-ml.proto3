@@ -322,7 +322,8 @@ message TrainingInfoProto {
   // TrainingInfoProto's, that initializer is not trainable and therefore
   // considered as a training-time constant.
   //
-  // The field MUST be present.
+  // By default, this field is empty and no initializer would be changed
+  // by the execution of "algorithm".
   repeated StringStringEntryProto update_binding = 4;
 }
 
