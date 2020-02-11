@@ -20226,18 +20226,28 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   
   where Loss is a dummy node which computes the minimized objective function.
   
-  The variable "W" is an optional input in the called graph. If the user omits it,
-  the input names of GraphCall becomes ["X_1", "", "Z_1"] and the initializer
-  of "W" may be passed into the called graph by reference. Pass-by-reference means
-  that
+  The variable "W" is an optional input in the invoked graph. However, because
+  its gradient "dO_dW" is needed, the user cannot abbreviate GraphCall's input
+  list to ["X_1", "", "Z_1"]. Otherwise, "dO_dW" may always be zero.
   
-  - There is a global variable "W" (the initializer).
-  - That global "W" is used whenever "W" is required but missing.
+  To explain this zero-gradient behavior, we assume that the user accidentally
+  omits "W" and feeds inputs ["X_1", "", "Z_1"] to the GraphCall. In this case,
+  the GraphCall operator semantically may do the following things.
+  
+  - A new tensor "W_duplicated" will be implicitly created and added into a
+    local (hidden) initializer list which is only visible to the computation
+    of this GraphCall.
+  - The value of "W_duplicated" is identical to the initializer "W" in the
+    current invoked graph.
+  - All uses of "W" in this call will be replaced by "W_duplicated."
+  - If "W" is missing in another GraphCall, another tensor "W_duplicated_1"
+    may be created and attached to that call's local initializer list.
   
   From the view of computation graph, the Conv operators invoked by GraphCall's
-  without specifying "W" as an input may be connected the global "W" variable.
-  This rule applies to all optional inputs in the called graph.
-  
+  without specifying "W" as an input is connected a local "W_duplicated"
+  variable. Thus, the backward propagation may propagate the gradient to
+  "W_duplicated" rather than "W". This behavior implies that all trainable
+  tensors should be added into the input list of the inference graph.
 
 #### Version
 

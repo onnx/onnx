@@ -382,6 +382,14 @@ message ModelProto {
   // all stored `TrainingInfoProto.initialization`s with the associated
   // `TrainingInfoProto.initialization_binding`s.
   //
+  // To use GraphCall and Gradient operators to generate gradient of trainable
+  // tensors, the user should put all trainable tensors to three places.
+  //  - inference graph's input list.
+  //  - inference graph's initializer list.
+  //  - update_binding(s) of the stored TrainingInfoProto.
+  // In addition, when using GraphCall, the user should also explicitly
+  // specify all trainable tensors in the input list of the GraphCall operator.
+  //
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 21;
 };
