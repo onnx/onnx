@@ -366,7 +366,7 @@ _Historical Notes_: The following extensions were considered early on, but were 
 
 ### Attribute Types
 
-The type system used for attributes is a superset of that used for of inputs and outputs. In addition to tensors, attribute values may be scalar numerical values, strings, and graphs. Sequences are available for attributes in both ONNX and ONNX-ML. Maps are not available for attributes in either variant. 
+The type system used for attributes is related to but slightly different from that used for of inputs and outputs. Attribute-values may be a dense tensor, or sparse tensor, or a scalar numerical value, or a string, or a graph, or repeated values of one of the abovementioned types.
 
 ## Other Specification Documents 
 
