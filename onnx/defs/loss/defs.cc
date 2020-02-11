@@ -42,10 +42,10 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
       body.push_back({{"output"}, "Pow", {"X_Sub", "Q_Pow"}});
     } else {
       body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
-      if (ctx.getAttribute("reduction")->s() == "mean") {
-        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}});
-      } else {
+      if (ctx.getAttribute("reduction")->s() == "sum") {
         body.push_back({{"output"}, "ReduceSum", {"X_Pow"}});
+      } else {
+        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}});
       }
     }
   } else {
@@ -54,10 +54,10 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
       body.push_back({{"output"}, "Mul", {"weights", "X_Pow"}});
     } else {
       body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
-      if (ctx.getAttribute("reduction")->s() == "mean") {
-        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}});
-      } else {
+      if (ctx.getAttribute("reduction")->s() == "sum") {
         body.push_back({{"output"}, "ReduceSum", {"X_Mul"}});
+      } else {
+        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}});
       }
     }
   }
