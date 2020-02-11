@@ -18,9 +18,9 @@ The loss can be described as:
     L = (l_1, l_2, ..., l_N), where N is the batch_size
 
 shape(scores): (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
-	with K >= 1 in case of K-dimensional loss.
+        with K >= 1 in case of K-dimensional loss.
 shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
-	with K >= 1 in case of K-dimensional loss.
+        with K >= 1 in case of K-dimensional loss.
 
 The loss for one sample, l_i, can caculated as follows:
     l_i = -y[i][c][d1][d2]..[dk], where i is the index of classes.
@@ -70,7 +70,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("mean"))
         .Input(
             0,
-	    "scores",
+            "scores",
             "The predicted outputs with shape [batch_size, class_size], or "
             "[batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.",
             "T")
@@ -78,17 +78,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "labels",
             "The ground truth output tensor, with shape [batch_size], or "
-	    "[batch_size, d1, d2 , ..., dk], where K is the number of dimensions."
+            "[batch_size, d1, d2 , ..., dk], where K is the number of dimensions."
             "Usualy, it's a one-hot representation of groud-truth class.",
             "T")
-	.Input(
-	    2,
-	    "weights",
+         .Input(
+            2,
+            "weights",
             "A manual rescaling weight given to each class. If given, it has to "
             "be a 1D Tensor assigning weight to each of the classes. Otherwise, "
             "it is treated as if having all ones.",
-	    "T",
-	    OpSchema::Optional)
+            "T",
+            OpSchema::Optional)
         .Output(
             0,
             "output",
@@ -100,14 +100,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-	.SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
-	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
-	    std::string reduction = getAttribute(ctx, "reduction", "mean");
-	    if (reduction.compare("none") == 0 && hasInputShape(ctx, 1)) {
-		propagateShapeFromInputToOutput(ctx, 1, 0);
-	    }
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            std::string reduction = getAttribute(ctx, "reduction", "mean");
+            if (reduction.compare("none") == 0 && hasInputShape(ctx, 1)) {
+                propagateShapeFromInputToOutput(ctx, 1, 0);
+            }
 
-	}));
+        }));
 
 } // namespace ONNX_NAMESPACE
