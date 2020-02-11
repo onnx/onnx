@@ -218,8 +218,8 @@ message NodeProto {
 // The field "algorithm" defines a computation graph similar to the inference
 // one (i.e., ModelProto.graph) but represents a training algorithm's step.
 // Each execution of a TrainingInfoProto.algorithm leads to the update of some
-// initializers in its TrainingInfoProto.algorithm.initializer and
-// ModelProto.graph.initializer.
+// initializers in its TrainingInfoProto.algorithm.initializer,
+// ModelProto.global_initializer, and ModelProto.global_sparse_initializer.
 //
 // If there are multiple TrainingInfoProto's, sequentially executing all of
 // them once constitutes a full training algorithm. The initializer update
@@ -234,22 +234,21 @@ message NodeProto {
 // computation graph in the "initialization" field. The execution of
 // "initialization" is similar to that of "algorithm". The user can use
 // "initialization_binding" to assign the outputs of "initialization" to
-// ModelProto.graph.initializer and TrainingInfoProto.algorithm.initializer.
+// ModelProto.global_initializer and the associated "algorithm.initializer"
+// in the same TrainingInfoProto.
 // 
-// Several inference components are usable in TrainingInfoProto; the list
+// Several components are useful in TrainingInfoProto; the list
 // includes
 //   1. The inference graph, ModelProto.graph, is a callable inside
 //      TrainingInfoProto.algorithm.
 //      Each call is represented by a GraphCall operator in 
 //      TrainingInfoProto.algorithm.node.
-//   2. Initializers in ModelProto.graph.initializer can be referenced as
+//   2. Initializers in ModelProto.global_initializer and
+//      ModelProto.global_sparse_initializer can be referenced as
 //      node inputs in TrainingInfoProto.algorithm.nodes and
 //      TrainingInfoProto.initialization.nodes. It implies that training
-//      nodes cannot produce values with names identical to inference
+//      nodes cannot produce values with names identical to any of those
 //      initializers.
-//
-//  The use of operator GraphCall is only allowed in TrainingInfoProto's
-//  algorithm and GraphCall can only invoke the inference graph.
 message TrainingInfoProto {
   // This field describes a graph to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
@@ -258,8 +257,9 @@ message TrainingInfoProto {
   // the user can put a random operator such as RandomNormal or
   // RandomUniform in TrainingInfoProto.initialization.node and assign its
   // random output to the specific tensor using "initialization_binding".
-  // This graph can also set the initializers in "algorithm"; a use case is
-  // resetting the number of training iteration to zero.
+  // This graph can also set the initializers in "algorithm" in the same
+  // TrainingInfoProto; a use case is resetting the number of training
+  // iteration to zero.
   //
   // By default, this field is an empty graph and its evaluation does not
   // produce any output.
@@ -267,21 +267,22 @@ message TrainingInfoProto {
 
   // This field represents a training algorithm step. Given required inputs,
   // it computes outputs to update initializers in its own initializer
-  // list and ModelProto.graph.initializer. In general, this graph contains
+  // list ModelProto.global_initializer, and
+  // ModelProto.global_sparse_initializer. In general, this graph contains
   // loss node, gradient node, optimizer node, increment of iteration count,
   // and calls to the inference graph.
   //
   // The field algorithm.node is the only place the user can use GraphCall
   // operator. The only callable graph is the one stored in ModelProto.graph.
-  // The initializers defined in ModelProto.graph.initializer are visible in
-  // the "algorithm".
   //
-  // The field MUST be present.
+  // By default, this field is an empty graph and its evaluation does not
+  // produce any output.
   optional GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
-  // the initializers in "algorithm" and "ModelProto.graph". See
-  // "update_binding" below for its format.
+  // the initializers in "algorithm", "ModelProto.global_initializer", and
+  // "ModelProto.global_sparse_initializer". See "update_binding" below for its
+  // format.
   //
   // By default, this field is empty and no initializer would be changed
   // by the execution of "initialization".
@@ -306,14 +307,17 @@ message TrainingInfoProto {
   // For a neural network with multiple trainable tensors, there can
   // be multiple key-value pairs in "update_binding".
   //
-  // One initializer can only be assigned up to once; it implies that the
-  // keys in "update_binding" must be unique.
+  // In "update_binding", the keys must be names of initializers in
+  // "algorithm.initializer", "ModelProto.global_initializer",
+  // or "ModelProto.global_sparse_initializer". The values must be output names
+  // of "algorithm". One initializer can only be assigned up to once; it
+  // implies that the keys in "update_binding" must be unique.
   //
   // Whether an initializer is trainable is determined by the keys of
   // key-value pairs in "update_binding". If the name of an initializer
   // cannot be found as a key in the "update_binding"s of all
   // TrainingInfoProto's, that initializer is not trainable and therefore
-  // considered as a constant.
+  // considered as a training-time constant.
   //
   // The field MUST be present.
   repeated StringStringEntryProto update_binding = 4;
@@ -379,16 +383,24 @@ message ModelProto {
   // all stored `TrainingInfoProto.initialization`s with the associated
   // `TrainingInfoProto.initialization_binding`s.
   //
-  // To use GraphCall and Gradient operators to generate gradient of trainable
-  // tensors, the user should put all trainable tensors to three places.
-  //  - inference graph's input list.
-  //  - inference graph's initializer list.
-  //  - update_binding(s) of the stored TrainingInfoProto.
-  // In addition, when using GraphCall, the user should also explicitly
-  // specify all trainable tensors in the input list of the GraphCall operator.
-  //
   // If this field is empty, the training behavior of the model is undefined.
-  repeated TrainingInfoProto training_info = 21;
+  repeated TrainingInfoProto training_info = 20;
+
+  // The following denote mutable global variables visible in ModelProto.graph as all as
+  // all graphs in TrainingInfoProto. These are initialized to the values specified
+  // in the initializer below, and then updated by initializer-bindings and
+  // update-bindings.
+  //
+  // If an input or initializer in a graph has the same name as a global variable,
+  // then the local variable in the graph will hide the global variable.
+  //
+  // This field usually stores trainable tensors of the model, because trainable
+  // tensors are used by both inference graph and training algorithm graph.
+  repeated TensorProto global_initializer = 30;
+
+  // Sparse initializers which are globally accessible.
+  // See the document of `global_initializer` for details.
+  repeated SparseTensorProto global_sparse_initializer = 31;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.

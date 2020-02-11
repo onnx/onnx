@@ -204,11 +204,13 @@ invoked graph by position. If a graph input has an initializer, that input
 is considered optional. All graph outputs are optional.
 
 Assume that ModelProto's graph field has
-
 - name: "MyInferenceGraph"
 - inputs: ["X", "W", "Z"]
-- initializer: [W]
 - outputs: ["Y"]
+
+with a model-level field
+
+- global_initializer: [W]
 
 as visualized below.
 
@@ -230,14 +232,14 @@ Assume that the training algorithm contains
 Inside the training algorithm graph, one can invoke the graph via adding
 a GraphCall node with
 
-- inputs: ["X_1", "W", "Z_1"]
+- inputs: ["X_1", "W", Z_1"]
 - outputs: ["Y_1"]
 - an attribute graph_name="MyInferenceGraph",
 
 A possible algorithm graph may contain something like
 
 ```
-.-------- W (declared in the inference graph's initializer list) 
+.-------- W (declared in the model's global initializer list) 
 |   .-----'-----------.
 |   |                 v
 |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph")
@@ -264,28 +266,10 @@ A possible algorithm graph may contain something like
 
 where Loss is a dummy node which computes the minimized objective function.
 
-The variable "W" is an optional input in the invoked graph. However, because
-its gradient "dO_dW" is needed, the user cannot abbreviate GraphCall's input
-list to ["X_1", "", "Z_1"]. Otherwise, "dO_dW" may always be zero.
-
-To explain this zero-gradient behavior, we assume that the user accidentally
-omits "W" and feeds inputs ["X_1", "", "Z_1"] to the GraphCall. In this case,
-the GraphCall operator semantically may do the following things.
-
-- A new tensor "W_duplicated" will be implicitly created and added into a
-  local (hidden) initializer list which is only visible to the computation
-  of this GraphCall.
-- The value of "W_duplicated" is identical to the initializer "W" in the
-  current invoked graph.
-- All uses of "W" in this call will be replaced by "W_duplicated."
-- If "W" is missing in another GraphCall, another tensor "W_duplicated_1"
-  may be created and attached to that call's local initializer list.
-
-From the view of computation graph, the Conv operators invoked by GraphCall's
-without specifying "W" as an input is connected a local "W_duplicated"
-variable. Thus, the backward propagation may propagate the gradient to
-"W_duplicated" rather than "W". This behavior implies that all trainable
-tensors should be added into the input list of the inference graph.
+The variable "W" is an optional input in the called graph.
+If the user omits it, the input names of GraphCall becomes ["X_1", "", "Z_1"].
+In this case, from the view of computation graph, the Conv operator invoked by
+GraphCall's may be connected the global "W" variable.
 )DOC";
 
 ONNX_TRAINING_OPERATOR_SET_SCHEMA(
