@@ -33,8 +33,8 @@ class Celu(Base):
         alpha = 2
 
         # Calculate expected output data
-        positive_input = np.max(0, input_data)
-        negative_input = np.min(0, alpha * (np.exp(input_data / alpha) - 1))
+        positive_input = np.maximum(0, input_data)
+        negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
         expected_output = positive_input + negative_input
 
         expect(node, inputs=[input_data], outputs=[expected_output],
