@@ -9385,8 +9385,8 @@ r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
 t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
 
 # Compute Mean Square Distance
-l = np.square(r - t)
-msd = np.mean(l)
+sq = np.square(r - t)
+msd = np.mean(sq)
 
 # Check results
 expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean')
