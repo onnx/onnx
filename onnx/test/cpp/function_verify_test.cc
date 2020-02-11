@@ -145,12 +145,12 @@ TEST(FunctionVerification, VerifyRemovingFunNodeFunctionExpandHelper) {
   GraphProto graph;
   NodeProto* new_node = graph.add_node();
   new_node->set_op_type("MeanVarianceNormalization");
-  new_node->add_output("Y");
-
+  auto fun_node = graph.node(0);
+  
   const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   const FunctionProto* func = schema->GetFunction();
 
-  FunctionExpandHelper(*new_node, *func, graph);
+  FunctionExpandHelper(fun_node, *func, graph);
 
   for (const auto& node : graph.node())
   {	            
