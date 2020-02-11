@@ -18,6 +18,7 @@ void FunctionExpandHelper(
     GraphProto& g,
     const std::string& node_prefix) {
   // Create a temporary unique node prefix for tensor names
+
   std::string uniq_prefix = node_prefix;
   if (uniq_prefix.empty()) {
     const void* address = static_cast<const void*>(&node);
@@ -80,6 +81,14 @@ void FunctionExpandHelper(
         AttributeProto* new_attr = new_node->add_attribute();
         new_attr->CopyFrom(attr);
       }
+    }
+  }
+  
+  for (int i = 0; i < g.node().size(); ++i){
+    auto fun_node = g.node(i);
+    if(fun_node.op_type()==node.op_type() && fun_node.output(0)==node.output(0)){
+      g.mutable_node()->erase(g.node().begin() + i);
+      break;
     }
   }
 }
