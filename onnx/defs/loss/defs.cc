@@ -43,9 +43,9 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_SM"}, "Softmax", {"scores"}});
   body.push_back({{"X_Log"}, "Log", {"X_SM"}});
   if (ctx.hasInput(2)) {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels"}});
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels"}, {MakeAttribute("reduction", "mean")}});
   } else {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels", "weights"}});
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels", "weights"}, {MakeAttribute("reduction", "mean")}});
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
