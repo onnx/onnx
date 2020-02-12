@@ -2467,11 +2467,11 @@ Some salient points about the inputs' rank and shape:
 
 2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
-3) b < min(q, r) is to be hornored.
+3) b < min(q, r) is to be honored.
 
-3) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
 
-4) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
    It is an error if any of the index values are out of bounds.
 
 The output is computed as follows:

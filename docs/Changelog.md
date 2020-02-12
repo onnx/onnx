@@ -12168,7 +12168,7 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Range-11"></a>**Range-11**</a>
 
-  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
   
   The number of elements in the output of range is computed as below-
@@ -12180,10 +12180,10 @@ This version of the operator has been available since version 11 of the default 
   `for(int i=0; i<number_of_elements; ++i)`
   
   `{`
-     
-  `    output[i] =  start + (i * delta);  ` 
   
-  `}`	
+  `    output[i] =  start + (i * delta);  `
+  
+  `}`
   
   `Example 1`
   Inputs: start = 3, limit = 9, delta = 3
@@ -14053,6 +14053,53 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input 'training_mode' types to boolean tensors.</dd>
 </dl>
 
+### <a name="Constant-12"></a>**Constant-12**</a>
+
+  This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
+  or value_* must be specified.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
+<dd>The value for the elements of the output tensor.</dd>
+<dt><tt>value_float</tt> : float</dt>
+<dd>The value for the sole element for the scalar, float32, output tensor.</dd>
+<dt><tt>value_floats</tt> : list of floats</dt>
+<dd>The values for the elements for the 1D, float32, output tensor.</dd>
+<dt><tt>value_int</tt> : int</dt>
+<dd>The value for the sole element for the scalar, int64, output tensor.</dd>
+<dt><tt>value_ints</tt> : list of ints</dt>
+<dd>The values for the elements for the 1D, int64, output tensor.</dd>
+<dt><tt>value_string</tt> : string</dt>
+<dd>The value for the sole element for the scalar, UTF-8 string, output tensor.</dd>
+<dt><tt>value_strings</tt> : list of strings</dt>
+<dd>The values for the elements for the 1D, UTF-8 string, output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor containing the same value of the provided tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="Dropout-12"></a>**Dropout-12**</a>
 
   Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
@@ -14182,11 +14229,11 @@ This version of the operator has been available since version 12 of the default 
   
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
   
-  3) b < min(q, r) is to be hornored.
+  3) b < min(q, r) is to be honored.
   
-  3) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
   
-  4) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
   
   The output is computed as follows:
@@ -14372,6 +14419,132 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
 </dl>
+
+### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**</a>
+
+  A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
+  Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
+  The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
+  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+  The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+  
+      loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+  
+  When an optional "weight" is provided, the sample loss is calculated as:
+  
+      loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+  
+  If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
+  If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
+  
+      mean(loss), if "weight" is not provided, 
+  
+  or if weight is provided,
+  
+      sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+  
+  If "reduction" attribute is set to "sum", the output is a scalar:
+      sum(loss).
+  
+  See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
+  
+  Example 1: 
+  
+      # negative log likelihood loss, "none" reduction
+      N, C, d1 = 2, 3, 2
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+      target = [[2, 1], [0, 2]]
+  
+      loss = np.zeros((N, d1))
+      for n in range(N):
+          for d_1 in range(d1):
+              c = target[n][d_1]
+              loss[n][d_1] = -input[n][c][d_1]
+  
+      # print(loss)
+      # [[-3. -2.]
+      #  [-0. -2.]]
+  
+  Example 2:
+  
+      # weighted negative log likelihood loss, sum reduction
+      N, C, d1 = 2, 3, 2
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+      target = [[2, 1], [0, 2]]
+      weight = [0.2, 0.3, 0.1]
+      loss = np.zeros((N, d1))
+      for n in range(N):
+          for d_1 in range(d1):
+              c = target[n][d_1]
+              loss[n][d_1] = -input[n][c][d_1] * weight[c]
+  
+      loss = np.sum(loss)
+      # print(loss)
+      # -1.1
+  
+  Example 3:
+  
+      # weighted negative log likelihood loss, mean reduction
+      N, C, d1 = 2, 3, 2
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+      target = [[2, 1], [0, 2]]
+      weight = [0.2, 0.3, 0.1]
+      loss = np.zeros((N, d1))
+      weight_total = 0
+      for n in range(N):
+          for d_1 in range(d1):
+              c = target[n][d_1]
+              loss[n][d_1] = -input[n][c][d_1] * weight[c]
+              weight_total = weight_total + weight[c]
+  
+      loss = np.sum(loss) / weight_total
+      # print(loss)
+      # -1.57
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample. 'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).</dd>
+<dt><tt>target</tt> : Tind</dt>
+<dd>Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).</dd>
+<dt><tt>weight</tt> (optional) : T</dt>
+<dd>Optional rescaling weight tensor. If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>loss</tt> : T</dt>
+<dd>The negative log likelihood loss</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input, weight, and output types to floating-point tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain target to integer types</dd>
+</dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 ### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 
