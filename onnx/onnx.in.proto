@@ -92,11 +92,12 @@ enum Version {
   IR_VERSION_2019_9_19 = 0x0000000000000006;
 
   // IR VERSION 7 published on <TBD>
+  // - Add global initializer lists in ModelProto. Global variables are visible
+  //   in all graphs of the stored models.
   // - Add message TrainingInfoProto to store initialization
-  //   method and training algorithm.
-  // - Make inference graph callable from TrainingInfoProto.
-  // - Make inference graph's initializers visiable to
-  //   TrainingInfoProto.
+  //   method and training algorithm. The execution of TrainingInfoProto
+  //   can modify the values of global variables.
+  // - Make inference graph callable from TrainingInfoProto via GraphCall operator.
   IR_VERSION = 0x0000000000000007;
 }
 
@@ -315,7 +316,7 @@ message TrainingInfoProto {
   //
   // Whether an initializer is trainable is determined by the keys of
   // key-value pairs in "update_binding". If the name of an initializer
-  // cannot be found as a key in the "update_binding"s of all
+  // cannot be found as a key in the "update_binding"s of any
   // TrainingInfoProto's, that initializer is not trainable and therefore
   // considered as a training-time constant.
   //
@@ -388,7 +389,7 @@ message ModelProto {
   repeated TrainingInfoProto training_info = 20;
 
   // The following denote mutable global variables visible in ModelProto.graph
-  // as all as all graphs in TrainingInfoProto. These variables are initialized
+  // as well as all graphs in TrainingInfoProto. These variables are initialized
   // to the values specified in the initializer list below, and then potentially
   // updated by "initializer_binding"s and "update_binding"s.
   //
