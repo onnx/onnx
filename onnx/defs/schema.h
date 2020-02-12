@@ -25,6 +25,51 @@
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
+struct FunctionBodyBuildContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual bool hasInput(int i) const = 0;
+  virtual bool hasOutput(int i) const  = 0;
+  virtual ~FunctionBodyBuildContext() {}
+};
+
+struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
+  FunctionBodyBuildContextImpl(NodeProto& node_proto) : node_proto_(node_proto) {
+    for (auto& attr : *node_proto.mutable_attribute()) {
+      attributesByName_[attr.name()] = &attr;
+    }
+  }
+
+  const AttributeProto* getAttribute(const std::string& name) const {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
+
+  bool hasInput(int i) const {
+    if (i >= node_proto_.input_size())
+      return false;
+    return node_proto_.input(i) != "";
+  }
+
+  bool hasOutput(int i) const {
+    if (i >= node_proto_.output_size())
+      return false;
+    return node_proto_.output(i) != "";
+  } 
+
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+
+  NodeProto node_proto_;
+};
+
+using FunctionBodyQueryFunction = std::function<bool(FunctionBodyBuildContext&)>;
+
+class OpSchema;
+using ContextDependentFunctionBodyBuilder = std::function<bool(const FunctionBodyBuildContext&, const OpSchema&, FunctionProto&)>;
+
 class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -621,18 +666,26 @@ class OpSchema final {
 
   const FunctionProto* GetFunction() const;
 
+  bool HasContextDependentFunction() const {
+    return functionBuilder_ != nullptr;
+  }
+
+  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder);
+  
+  bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const;
+
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
   // efficiency.
   void Finalize();
 
+  // Build function with information stored in opschema
+  void BuildFunction(FunctionProto& function_body) const;
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-
-  // Build function with information stored in opschema
-  void BuildFunction();
 
   std::string name_;
   std::string file_;
@@ -658,6 +711,7 @@ class OpSchema final {
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   FunctionProto function_body_;
+  ContextDependentFunctionBodyBuilder functionBuilder_;
 };
 
 // Map type to store operator schemas. The format is,
