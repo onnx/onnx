@@ -14079,10 +14079,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 ### <a name="Constant-12"></a>**Constant-12**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,

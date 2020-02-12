@@ -159,12 +159,8 @@
   * <a href="#Where">Where</a>
   * <a href="#Xor">Xor</a>
 
-<<<<<<< HEAD
   **Functions**
-=======
-  **Operators with function registered:**
   * <a href="#Celu">Celu</a>
->>>>>>> Udapte docs
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
@@ -2428,10 +2424,6 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 
 #### Examples
