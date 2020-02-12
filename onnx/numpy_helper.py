@@ -12,7 +12,7 @@ from onnx import mapping
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
-if platform.system() != 'AIX' and sys.byteorder != 'little':
+if (platform.system() != 'AIX' and platform.processor() != 's390x') and sys.byteorder != 'little':
     raise RuntimeError(
         'Numpy helper for tensor/ndarray is not available on big endian '
         'systems yet.')
@@ -43,6 +43,9 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
     storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
     dims = tensor.dims
 
+    np_dt = np_dtype.newbyteorder('<')
+    st_np_dt = storage_np_dtype.newbyteorder('<')
+
     if tensor.data_type == TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
         ss = list(s.decode('utf-8') for s in utf8_strings)
@@ -52,7 +55,8 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         # Raw_bytes support: using frombuffer.
         return np.frombuffer(
             tensor.raw_data,
-            dtype=np_dtype).reshape(dims)
+            dtype=np_dt).astype(np_dtype).reshape(dims)
+            # dtype=np_dtype).reshape(dims)
     else:
         data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
         if (tensor_dtype == TensorProto.COMPLEX64
@@ -61,7 +65,8 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         return (
             np.asarray(
                 data,
-                dtype=storage_np_dtype)
+                # dtype=storage_np_dtype)
+                dtype=st_np_dt)
             .astype(np_dtype)
             .reshape(dims)
         )
