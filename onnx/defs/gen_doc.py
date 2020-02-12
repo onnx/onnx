@@ -202,9 +202,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
         s += '</dl>\n'
 
     # Function Body
-    if schema.has_function or schema.has_context_dependent_function:  # type: ignore
-        s += '\n#### Function\n'
-        s += '\nThe Function can be represented as a function.\n'
+	# TODO: this should be refactored to show the function body graph's picture (DAG).
+    #if schema.has_function or schema.has_context_dependent_function:  # type: ignore
+    #    s += '\n#### Function\n'
+    #    s += '\nThe Function can be represented as a function.\n'
 
     return s
 
@@ -298,7 +299,7 @@ def main(args):  # type: (Type[Args]) -> None
                     fout.write(s)
             if len(function_ops):
                 fout.write('\n')
-                fout.write('  **Operators with function registered:**\n')
+                fout.write('  **Functions**\n')
                 for n, schema, versions in function_ops:
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
                         support_level_str(schema.support_level),
