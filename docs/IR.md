@@ -25,7 +25,7 @@ ONNX is an open specification that consists of the following components:
 
 3)  Definitions of built-in operators.
 
-Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this. Specifically, built-in operators are divided into a set of primitive operators and functions. A function refers to a composed operator which can be semantically represented by a sub-graph (called function body) with using primitive ops. Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
+Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
 
