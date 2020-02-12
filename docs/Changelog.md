@@ -8636,10 +8636,6 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 ### <a name="NonZero-9"></a>**NonZero-9**</a>
 
   Returns the indices of the elements that are non-zero
@@ -11012,10 +11008,6 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 ### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
@@ -12222,10 +12214,6 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 ### <a name="ReduceL1-11"></a>**ReduceL1-11**</a>
 
@@ -14541,10 +14529,6 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain target to integer types</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 ### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 
