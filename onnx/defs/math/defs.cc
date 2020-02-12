@@ -2085,10 +2085,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ").");
             }
 
-            for (int i=0; i < rank ; ++i) {
-              auto* dim = output_shape->add_dim();
-              *dim = input_shape.dim(i);
-            }
+            // Shape inference
+            propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         }));
 } // namespace ONNX_NAMESPACE
