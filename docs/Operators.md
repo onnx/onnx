@@ -136,7 +136,6 @@
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
-  * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
@@ -165,6 +164,7 @@
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
+  * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -17504,9 +17504,9 @@ expect(node, inputs=[x], outputs=[y],
       L = (l_1, l_2, ..., l_N), where N is the batch_size
   
   shape(scores): (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
-  	with K >= 1 in case of K-dimensional loss.
+          with K >= 1 in case of K-dimensional loss.
   shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
-  	with K >= 1 in case of K-dimensional loss.
+          with K >= 1 in case of K-dimensional loss.
   
   The loss for one sample, l_i, can caculated as follows:
       l_i = -y[i][c][d1][d2]..[dk], where i is the index of classes.
@@ -17559,6 +17559,10 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -17581,10 +17585,7 @@ x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels)
-
-# Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_mean')
+sce = softmaxcrossentropy_2d(x, labels)
 ```
 
 </details>
@@ -17610,10 +17611,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, weight=weights)
-
-# Check results
-expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean_weight')
+sce = softmaxcrossentropy_2d(x, labels, weight=weights)
 ```
 
 </details>
@@ -17638,10 +17636,7 @@ x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, reduction='none')
-
-# Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none')
+sce = softmaxcrossentropy_2d(x, labels, reduction='none')
 ```
 
 </details>
@@ -17667,10 +17662,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
-
-# Check results
-expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_none_weights')
+sce = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
 ```
 
 </details>
@@ -17695,10 +17687,7 @@ x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, reduction='sum')
-
-# Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_sum')
+sce = softmaxcrossentropy_2d(x, labels, reduction='sum')
 ```
 
 </details>
