@@ -202,7 +202,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
         s += '</dl>\n'
 
     # Function Body
-	# TODO: this should be refactored to show the function body graph's picture (DAG).
+    # TODO: this should be refactored to show the function body graph's picture (DAG).
     #if schema.has_function or schema.has_context_dependent_function:  # type: ignore
     #    s += '\n#### Function\n'
     #    s += '\nThe Function can be represented as a function.\n'
