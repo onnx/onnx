@@ -387,10 +387,10 @@ message ModelProto {
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
 
-  // The following denote mutable global variables visible in ModelProto.graph as all as
-  // all graphs in TrainingInfoProto. These are initialized to the values specified
-  // in the initializer below, and then updated by initializer-bindings and
-  // update-bindings.
+  // The following denote mutable global variables visible in ModelProto.graph
+  // as all as all graphs in TrainingInfoProto. These variables are initialized
+  // to the values specified in the initializer list below, and then potentially
+  // updated by "initializer_binding"s and "update_binding"s.
   //
   // If an input or initializer in a graph has the same name as a global variable,
   // then the local variable in the graph will hide the global variable.
