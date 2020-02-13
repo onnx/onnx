@@ -790,7 +790,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   }
   // By default, the function body graph is relying on the OperatorSet this
   // function belongs to.
-  auto relied_opset = function_body_.mutable_opset_import()->Add();
+  auto relied_opset = function_body.mutable_opset_import()->Add();
   relied_opset->set_domain(this->domain());
   relied_opset->set_version(this->SinceVersion());
 }
