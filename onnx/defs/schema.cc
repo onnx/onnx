@@ -705,6 +705,18 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
+OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder functionBuilder) {
+  functionBuilder_ = functionBuilder;
+  return *this;
+}
+
+bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const {
+  if (functionBuilder_)
+    return functionBuilder_(ctx, *this, functionProto);
+  else
+    return false;
+}
+
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
   for (const auto node : func_nodes) {
     auto new_node = function_body_.add_node();
@@ -724,19 +736,19 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction() {
-  function_body_.set_name(this->name_);
-  function_body_.set_doc_string(this->doc_);
-  function_body_.set_since_version(this->since_version_);
-  function_body_.set_status(OperatorStatus(1 - (int)this->support_));
+void OpSchema::BuildFunction(FunctionProto& function_body) const {
+  function_body.set_name(this->name_);
+  function_body.set_doc_string(this->doc_);
+  function_body.set_since_version(this->since_version_);
+  function_body.set_status(OperatorStatus(1 - (int)this->support_));
   for (auto& i : inputs_) {
-    function_body_.add_input(i.GetName());
+    function_body.add_input(i.GetName());
   }
   for (auto& o : outputs_) {
-    function_body_.add_output(o.GetName());
+    function_body.add_output(o.GetName());
   }
   for (auto& a : attributes_) {
-    function_body_.add_attribute(a.first);
+    function_body.add_attribute(a.first);
   }
 }
 
@@ -805,7 +817,7 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&outputs_);
 
   if (this->HasFunction()) {
-    BuildFunction();
+    BuildFunction(function_body_);
   }
 }
 
