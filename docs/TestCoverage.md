@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 138/153 (90.20%, 5 generators excluded) common operators.
+Node tests have covered 139/154 (90.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -9890,7 +9890,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### SoftmaxCrossEntropyLoss
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>softmaxcrossentropy_mean</summary>
 
@@ -9910,10 +9910,36 @@ x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels)
+sce = softmaxcrossentropy(x, labels)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_mean')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+y = np.random.randint(0, high=5, size=(3, 2))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, y)
+
+# Check results
+expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
 ```
 
 </details>
@@ -9937,10 +9963,10 @@ labels = np.random.randint(0, high=5, size=(3, ))
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, weight=weights)
+sce = softmaxcrossentropy(x, labels, weight=weights)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_mean_weight')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight')
 ```
 
 </details>
@@ -9963,10 +9989,10 @@ x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, reduction='none')
+sce = softmaxcrossentropy(x, labels, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_none')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
 ```
 
 </details>
@@ -9990,10 +10016,10 @@ labels = np.random.randint(0, high=5, size=(3, ))
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, weight=weights, reduction='none')
+sce = softmaxcrossentropy(x, labels, weight=weights, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[l], name='test_softmax_cross_entropy_none_weights')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_none_weights')
 ```
 
 </details>
@@ -10016,10 +10042,10 @@ x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
 
 # Compute SoftmaxCrossEntropyLoss
-l = softmaxcrossentropy_2d(x, labels, reduction='sum')
+sce = softmaxcrossentropy(x, labels, reduction='sum')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[l], name='test_softmax_cross_entropy_sum')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
 ```
 
 </details>

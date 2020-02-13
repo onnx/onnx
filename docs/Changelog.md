@@ -14508,25 +14508,28 @@ This version of the operator has been available since version 12 of the default 
 
   Loss function that measures the softmax cross entropy
   between 'scores' and 'labels'.
-  The loss can be described as:
-      L = (l_1, l_2, ..., l_N), where N is the batch_size
+  This operator first computes a loss tensor whose shape is identical to the labels input.
+  If the input is 2-D with shape (N, C), the loss tensor may be a N-element vector L = (l_1, l_2, ..., l_N).
+  If the input is N-D tensor with shape (N, C, d1, d2, ..., dk),
+  the loss tensor L may have (N, d1, d2, ..., dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
+  After L is available, this operator can optionally do a reduction operator.
   
-  shape(scores): (N, C) where C is the number of classes, or (N, C, d1, d2,..., dk),
-  	with K >= 1 in case of K-dimensional loss.
-  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, d1, d2,..., dk),
-  	with K >= 1 in case of K-dimensional loss.
+  shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+          with K >= 1 in case of K-dimensional loss.
+  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+          with K >= 1 in case of K-dimensional loss.
   
   The loss for one sample, l_i, can caculated as follows:
-      l_i = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
-      l_i = -y[i][c][d1][d2]..[dk]*weights[c], if 'weights' is provided.
+      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
   
   where:
       p = Softmax(scores)
       y = log(p)
       c = labels[i][d1][d2]...[dk]
   
-  Finally, L is reduced:
+  Finally, L is optionally reduced:
   L = ReduceSum(L), if reduction = 'sum';
       ReduceMean(L), if reduction = 'mean'; if "weight" is provided, output is averaged by sum of weights.
       L, if reduction = 'none'
@@ -14546,9 +14549,9 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>scores</tt> : T</dt>
-<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, d1, d2 , ..., dk], where K is the number of dimensions.</dd>
+<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, D1, D2 , ..., Dk], where K is the number of dimensions.</dd>
 <dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, d1, d2 , ..., dk], where K is the number of dimensions.Usualy, it's a one-hot representation of groud-truth class.</dd>
+<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.Usualy, it's a one-hot representation of ground-truth class.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
 </dl>
@@ -14557,7 +14560,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, d1, d2, ..., dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
+<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, D1, D2, ..., Dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
 </dl>
 
 #### Type Constraints
@@ -14566,4 +14569,8 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+#### Function
+
+The Function can be represented as a function.
 
