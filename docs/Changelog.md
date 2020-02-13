@@ -8636,10 +8636,6 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 ### <a name="NonZero-9"></a>**NonZero-9**</a>
 
   Returns the indices of the elements that are non-zero
@@ -11012,10 +11008,6 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 ### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
@@ -12168,7 +12160,7 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Range-11"></a>**Range-11**</a>
 
-  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta` 
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
   
   The number of elements in the output of range is computed as below-
@@ -12180,10 +12172,10 @@ This version of the operator has been available since version 11 of the default 
   `for(int i=0; i<number_of_elements; ++i)`
   
   `{`
-     
-  `    output[i] =  start + (i * delta);  ` 
   
-  `}`	
+  `    output[i] =  start + (i * delta);  `
+  
+  `}`
   
   `Example 1`
   Inputs: start = 3, limit = 9, delta = 3
@@ -12222,10 +12214,6 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 ### <a name="ReduceL1-11"></a>**ReduceL1-11**</a>
 
@@ -14053,6 +14041,53 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input 'training_mode' types to boolean tensors.</dd>
 </dl>
 
+### <a name="Constant-12"></a>**Constant-12**</a>
+
+  This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
+  or value_* must be specified.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
+<dd>The value for the elements of the output tensor.</dd>
+<dt><tt>value_float</tt> : float</dt>
+<dd>The value for the sole element for the scalar, float32, output tensor.</dd>
+<dt><tt>value_floats</tt> : list of floats</dt>
+<dd>The values for the elements for the 1D, float32, output tensor.</dd>
+<dt><tt>value_int</tt> : int</dt>
+<dd>The value for the sole element for the scalar, int64, output tensor.</dd>
+<dt><tt>value_ints</tt> : list of ints</dt>
+<dd>The values for the elements for the 1D, int64, output tensor.</dd>
+<dt><tt>value_string</tt> : string</dt>
+<dd>The value for the sole element for the scalar, UTF-8 string, output tensor.</dd>
+<dt><tt>value_strings</tt> : list of strings</dt>
+<dd>The values for the elements for the 1D, UTF-8 string, output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor containing the same value of the provided tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="Dropout-12"></a>**Dropout-12**</a>
 
   Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
@@ -14366,10 +14401,6 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain target to integer types</dd>
 </dl>
-
-#### Function
-
-The Function can be represented as a function.
 
 ### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 
