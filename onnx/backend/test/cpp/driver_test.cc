@@ -23,7 +23,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace testing {
-const float onnxifi_testdata_eps = ONNXIFI_TESTDATA_EPS;
+const float onnxifi_testdata_eps = static_cast<float>(ONNXIFI_TESTDATA_EPS);
 
 template <typename T>
 class CompareOnnxifiData {
@@ -72,7 +72,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
 
   uint64_t GetDescriptorSize(const onnxTensorDescriptorV1* t) {
     uint64_t d_size = 1;
-    for (int i = 0; i < t->dimensions; i++) {
+    for (int i = 0; i < static_cast<int>(t->dimensions); i++) {
       d_size *= t->shape[i];
     }
     return d_size;
@@ -278,7 +278,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
           std::vector<uint64_t> shape_values(
               output.dims().begin(), output.dims().end());
           shape_pool.emplace_back(std::move(shape_values));
-          result.dimensions = shape_pool.back().size();
+          result.dimensions = static_cast<uint32_t>(shape_pool.back().size());
           result.shape = shape_pool.back().data();
           std::vector<uint8_t> raw_data(output.raw_data().size(), 0);
           data_pool.emplace_back(std::move(raw_data));
@@ -288,9 +288,9 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
         ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
             lib.onnxSetGraphIO(
                 graph,
-                input_descriptor.size(),
+                static_cast<uint32_t>(input_descriptor.size()),
                 input_descriptor.data(),
-                result_descriptor.size(),
+                static_cast<uint32_t>(result_descriptor.size()),
                 result_descriptor.data()),
             &graph,
             lib));
