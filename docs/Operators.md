@@ -9356,10 +9356,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 
 #### Examples
 
