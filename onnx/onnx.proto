@@ -234,7 +234,8 @@ message NodeProto {
 //      TrainingInfoProto.algorithm.
 //      Each call is represented by a GraphCall operator in 
 //      TrainingInfoProto.algorithm.node.
-//   2. Initializers specified in ModelProto.mutable_initializer_names
+//   2. Initializers specified in
+//      ModelProto.global_mutable_initializer_names
 //      can be referenced as node inputs in
 //      TrainingInfoProto.algorithm.nodes and
 //      TrainingInfoProto.initialization.nodes. It implies that training
@@ -258,7 +259,7 @@ message TrainingInfoProto {
 
   // This field represents a training algorithm step. Given required inputs,
   // it computes outputs to update initializers in its own initializer and
-  // those specified by ModelProto.mutable_initializer_name. In general,
+  // those specified by ModelProto.global_mutable_initializer_name. In general,
   // this graph contains loss node, gradient node, optimizer node, increment
   // of iteration count, and calls to the inference graph.
   //
@@ -271,8 +272,8 @@ message TrainingInfoProto {
 
   // This field specifies the bindings from the outputs of "initialization" to
   // the initializers in "algorithm" and the initializers specified in
-  // "ModelProto.mutable_initializer_name". See "update_binding" below for its
-  // format.
+  // "ModelProto.global_mutable_initializer_name". See "update_binding" below
+  // for its format.
   //
   // By default, this field is empty and no initializer would be changed
   // by the execution of "initialization".
@@ -292,12 +293,12 @@ message TrainingInfoProto {
   //
   // The user needs to save "y = x - r * g" into TrainingInfoProto.algorithm. To
   // tell that "y" should be assigned to "x", the field "update_binding" may
-  // contain a pair of strings, "x" (key of StringStringEntryProto) and
-  // "y" (value of StringStringEntryProto).
-  // For a neural network with multiple trainable tensors, there can
+  // contain a key-value pair of strings, "x" (key of StringStringEntryProto)
+  // and "y" (value of StringStringEntryProto).
+  // For a neural network with multiple trainable (mutable) tensors, there can
   // be multiple key-value pairs in "update_binding".
   // The keys must be names of "TrainingInfoProto.algorithm.initializer" or
-  // be included in "ModelProto.mutable_initializer_name".
+  // be included in "ModelProto.global_mutable_initializer_name".
   // The values must be output names of "algorithm". One initializer can
   // only be assigned up to once; it implies that the keys in "update_binding"
   // must be unique.
@@ -389,7 +390,7 @@ message ModelProto {
   //
   // This field usually contains names of trainable tensors in
   // neural networks.
-  repeated string mutable_initializer_name = 30;
+  repeated string global_mutable_initializer_name = 30;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.

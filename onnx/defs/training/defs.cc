@@ -211,9 +211,9 @@ Assume that ModelProto's graph field has
 
 with a model-level field
 
-- global_initializer_name: ["W"]
+- global_mutable_initializer_name: ["W"]
 
-as visualized below.
+as visualized below for inference.
 
 ```
 X -----.
@@ -230,8 +230,8 @@ Assume that the training algorithm contains
 - inputs: ["X_1", "Z_1", "C"]
 - outputs: ["W_new"]
 
-Inside the training algorithm graph, one can invoke the graph via adding
-a GraphCall node with
+Inside the training algorithm graph, one can invoke the inference
+graph via adding a GraphCall node with
 
 - inputs: ["X_1", "W", Z_1"]
 - outputs: ["Y_1"]
@@ -240,8 +240,9 @@ a GraphCall node with
 A possible algorithm graph may contain something like
 
 ```
-.-------- W (declared in the model's global initializer list) 
+.-------- W (mutable variable from the inference graph) 
 |   .-----'-----------.
+|   |                 |
 |   |                 v
 |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph")
 |   | |            |  |
@@ -268,9 +269,9 @@ A possible algorithm graph may contain something like
 where Loss is a dummy node which computes the minimized objective function.
 
 The variable "W" is an optional input in the called graph.
-If the user omits it, the input names of GraphCall becomes ["X_1", "", "Z_1"].
+If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
 In this case, from the view of computation graph, the Conv operator invoked by
-GraphCall's may be connected the global "W" variable.
+GraphCall's may be still connected the mutable "W" variable.
 )DOC";
 
 ONNX_TRAINING_OPERATOR_SET_SCHEMA(
