@@ -95,11 +95,12 @@ enum Version {
   IR_VERSION_2019_9_19 = 0x0000000000000006;
 
   // IR VERSION 7 published on <TBD>
-  // - Add global initializer lists in ModelProto. Global variables are visible
-  //   in all graphs of the stored models.
+  // - Add a list to promote inference graph's initializers to global and
+  //   mutable variables. Global variables are visible in all graphs of the
+  //   stored models.
   // - Add message TrainingInfoProto to store initialization
   //   method and training algorithm. The execution of TrainingInfoProto
-  //   can modify the values of global variables.
+  //   can modify the values of mutable variables.
   // - Make inference graph callable from TrainingInfoProto via GraphCall operator.
   IR_VERSION = 0x0000000000000007;
 }
@@ -211,45 +212,33 @@ message NodeProto {
 // Training information
 // TrainingInfoProto stores information for training a model.
 // In particular, this defines two functionalities: an initialization-step
-// and a training-algorithm-step. The semantics of the initialization-step is
-// that all initializers (in ModelProto.graph and in all
-// TrainingInfoProto.algorithm) are first initialized as specified by the
-// initializers in the graph, and then updated by the "initialization_binding"
-// in every instance in ModelProto.training_info. The semantics of the
-// training-algorithm-step is that all the initializers are updated as
-// specified by the "update_binding" in every instance in training_info.
+// and a training-algorithm-step. Initialization resets the model
+// back to its original state as if no training has been consumed.
+// Training algorithm improves the model based on input data.
+//
+// The semantics of the initialization-step is that the initializers
+// in ModelProto.graph and in TrainingInfoProto.algorithm are first
+// initialized as specified by the initializers in the graph, and then
+// updated by the "initialization_binding" in every instance in
+// ModelProto.training_info.
 //
 // The field "algorithm" defines a computation graph similar to the inference
 // one (i.e., ModelProto.graph) but represents a training algorithm's step.
-// Each execution of a TrainingInfoProto.algorithm leads to the update of some
-// initializers in its TrainingInfoProto.algorithm.initializer,
-// ModelProto.global_initializer, and ModelProto.global_sparse_initializer.
+// After the execution of a TrainingInfoProto.algorithm, the initializers
+// specified by "update_binding" may be updated. If the targeted training
+// algorithm contains consecutive update stages
+// (such as block coordinate descent methods), the user needs to create a
+// TrainingInfoProto for each stage.
 //
-// If there are multiple TrainingInfoProto's, sequentially executing all of
-// them once constitutes a full training algorithm. The initializer update
-// happens at the end of each TrainingInfoProto's execution. If the targeted
-// training algorithm contains consecutive update stages (such as block
-// coordinate descent methods), the user needs to create a TrainingInfoProto
-// for each stage.
-//
-// In addition to training (improving the model based on input data),
-// TrainingInfoProto can store an initialization process (resetting the model
-// back to its original state as if no training has been consumed) as a
-// computation graph in the "initialization" field. The execution of
-// "initialization" is similar to that of "algorithm". The user can use
-// "initialization_binding" to assign the outputs of "initialization" to
-// ModelProto.global_initializer and the associated "algorithm.initializer"
-// in the same TrainingInfoProto.
-// 
 // Several components are useful in TrainingInfoProto; the list
 // includes
 //   1. The inference graph, ModelProto.graph, is a callable inside
 //      TrainingInfoProto.algorithm.
 //      Each call is represented by a GraphCall operator in 
 //      TrainingInfoProto.algorithm.node.
-//   2. Initializers in ModelProto.global_initializer and
-//      ModelProto.global_sparse_initializer can be referenced as
-//      node inputs in TrainingInfoProto.algorithm.nodes and
+//   2. Initializers specified in ModelProto.mutable_initializer_names
+//      can be referenced as node inputs in
+//      TrainingInfoProto.algorithm.nodes and
 //      TrainingInfoProto.initialization.nodes. It implies that training
 //      nodes cannot produce values with names identical to any of those
 //      initializers.
@@ -270,11 +259,10 @@ message TrainingInfoProto {
   GraphProto initialization = 1;
 
   // This field represents a training algorithm step. Given required inputs,
-  // it computes outputs to update initializers in its own initializer
-  // list ModelProto.global_initializer, and
-  // ModelProto.global_sparse_initializer. In general, this graph contains
-  // loss node, gradient node, optimizer node, increment of iteration count,
-  // and calls to the inference graph.
+  // it computes outputs to update initializers in its own initializer and
+  // those specified by ModelProto.mutable_initializer_name. In general,
+  // this graph contains loss node, gradient node, optimizer node, increment
+  // of iteration count, and calls to the inference graph.
   //
   // The field algorithm.node is the only place the user can use GraphCall
   // operator. The only callable graph is the one stored in ModelProto.graph.
@@ -284,8 +272,8 @@ message TrainingInfoProto {
   GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
-  // the initializers in "algorithm", "ModelProto.global_initializer", and
-  // "ModelProto.global_sparse_initializer". See "update_binding" below for its
+  // the initializers in "algorithm" and the initializers specified in
+  // "ModelProto.mutable_initializer_name". See "update_binding" below for its
   // format.
   //
   // By default, this field is empty and no initializer would be changed
@@ -310,12 +298,11 @@ message TrainingInfoProto {
   // "y" (value of StringStringEntryProto).
   // For a neural network with multiple trainable tensors, there can
   // be multiple key-value pairs in "update_binding".
-  //
-  // In "update_binding", the keys must be names of initializers in
-  // "algorithm.initializer", "ModelProto.global_initializer",
-  // or "ModelProto.global_sparse_initializer". The values must be output names
-  // of "algorithm". One initializer can only be assigned up to once; it
-  // implies that the keys in "update_binding" must be unique.
+  // The keys must be names of "TrainingInfoProto.algorithm.initializer" or
+  // be included in "ModelProto.mutable_initializer_name".
+  // The values must be output names of "algorithm". One initializer can
+  // only be assigned up to once; it implies that the keys in "update_binding"
+  // must be unique.
   //
   // Whether an initializer is trainable is determined by the keys of
   // key-value pairs in "update_binding". If the name of an initializer
@@ -333,7 +320,7 @@ message TrainingInfoProto {
 // ModelProto is a top-level file/container format for bundling a ML model and
 // associating its computation graph with metadata.
 //
-// The semantics of the model are described by the associated GraphProto.
+// The semantics of the model are described by the associated GraphProto's.
 message ModelProto {
   // The version of the IR this model targets. See Version enum above.
   // This field MUST be present.
@@ -391,21 +378,20 @@ message ModelProto {
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
 
-  // The following denote mutable global variables visible in ModelProto.graph
-  // as well as all graphs in TrainingInfoProto. These variables are initialized
-  // to the values specified in the initializer list below, and then potentially
-  // updated by "initializer_binding"s and "update_binding"s.
+  // The following list specifies globally-visible and multable variables in
+  // ModelProto.graph.initializer.
   //
-  // If an input or initializer in a graph has the same name as a global variable,
-  // then the local variable in the graph will hide the global variable.
+  // These variables are initialized to the values specified in
+  // ModelProto.graph.initializer, and then potentially updated by
+  // "initializer_binding"s and "update_binding"s in "TrainingInfoProto"s.
   //
-  // This field usually stores trainable tensors of the model, because trainable
-  // tensors are used by both inference graph and training algorithm graph.
-  repeated TensorProto global_initializer = 30;
-
-  // Sparse initializers which are globally accessible.
-  // See the document of `global_initializer` for details.
-  repeated SparseTensorProto global_sparse_initializer = 31;
+  // If an input or initializer in a graph has the same name as a global
+  // initializer, then the local variable in the graph will hide the global
+  // variable.
+  //
+  // This field usually contains names of trainable tensors in
+  // neural networks.
+  repeated string mutable_initializer_name = 30;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.

@@ -205,12 +205,13 @@ is considered optional. All graph outputs are optional.
 
 Assume that ModelProto's graph field has
 - name: "MyInferenceGraph"
-- inputs: ["X", "W", "Z"]
-- outputs: ["Y"]
+- input: ["X", "W", "Z"]
+- initializer: [W]
+- output: ["Y"]
 
 with a model-level field
 
-- global_initializer: [W]
+- global_initializer_name: ["W"]
 
 as visualized below.
 

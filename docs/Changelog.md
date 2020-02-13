@@ -14663,12 +14663,13 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   
   Assume that ModelProto's graph field has
   - name: "MyInferenceGraph"
-  - inputs: ["X", "W", "Z"]
-  - outputs: ["Y"]
+  - input: ["X", "W", "Z"]
+  - initializer: [W]
+  - output: ["Y"]
   
   with a model-level field
   
-  - global_initializer: [W]
+  - global_initializer_name: ["W"]
   
   as visualized below.
   
