@@ -30,6 +30,7 @@ def gather_nd_impl(data, indices, batch_dims):
         batch_dims_size *= indices.shape[i]
 
     # Compute output of the op as below
+
     # Compute shape of output array
     output_shape = batch_dims_shape + list(indices.shape)[batch_dims:-1] if (indices.shape[-1] == data_rank - batch_dims) \
      else batch_dims_shape + list(indices.shape)[batch_dims:-1] + list(data.shape)[batch_dims + indices.shape[-1]:]
