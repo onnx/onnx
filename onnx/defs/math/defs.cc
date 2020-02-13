@@ -2064,8 +2064,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             const TensorShapeProto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
-            TensorShapeProto* output_shape =
-                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
