@@ -2993,6 +2993,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self.assertRaises(checker.ValidationError, self._inferred, graph)
 
+    def test_mean_square_none_1D(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, )),
+             ("y", TensorProto.FLOAT, (2, ))],
+            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='none')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, ))])  # type: ignore
+
     def test_mean_square_none(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
@@ -3001,6 +3009,14 @@ class TestShapeInference(unittest.TestCase):
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])  # type: ignore
 
+    def test_mean_square_none_4D(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3, 4, 5)),
+             ("y", TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='none')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 4, 5))])  # type: ignore
+
     def test_mean_square_mean(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
@@ -3008,6 +3024,15 @@ class TestShapeInference(unittest.TestCase):
             [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None))])  # type: ignore
+
+    def test_mean_square_mean_4D(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3, 4, 5)),
+             ("y", TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None))])  # type: ignore
+
 
 
 if __name__ == '__main__':
