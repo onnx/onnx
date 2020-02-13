@@ -9310,13 +9310,14 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
       L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
   , N is the batch size.
   
-  score and label are vectors of arbitrary shapes with total of N elements each.
+  score and label are tensors of arbitrary shapes with total of N elements each,
+  and are of the same shape.
   
-  If 'weights' is provided, it should be broadcastable to shape of 'scores'.
+  If 'weights' is provided, it should be broadcastable to shape of 'L'.
       L = Mul(weights, L)
   , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
   
-  Finally, L is reduced:
+  Finally, L is optionally reduced:
   L = ReduceSum(L), if reduction = 'sum';
       ReduceMean(L), if reduction = 'mean';
       L, if reduction = 'none';
@@ -9331,7 +9332,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed into a scalar. 'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -9418,6 +9419,35 @@ msd = mean_squared_distance(r, t, reduction='mean')
 
 # Check results
 expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_mean_4d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+np.random.seed(0)
+r = np.random.rand(2,4,5,7)
+t = np.random.rand(2,4,5,7)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='mean')
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_4d')
 ```
 
 </details>

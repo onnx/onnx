@@ -5090,7 +5090,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MeanSquaredDistance
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>mean_square_distance_mean</summary>
 
@@ -5141,6 +5141,33 @@ msd = mean_squared_distance(r, t, reduction='mean')
 
 # Check results
 expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
+```
+
+</details>
+<details>
+<summary>mean_square_distance_mean_4d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+np.random.seed(0)
+r = np.random.rand(2,4,5,7)
+t = np.random.rand(2,4,5,7)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='mean')
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_4d')
 ```
 
 </details>

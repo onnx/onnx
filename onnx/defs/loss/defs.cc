@@ -8,8 +8,8 @@ namespace ONNX_NAMESPACE {
 const char* reduction_doc =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': the output is the loss for each sample in the batch."
-    "'sum': the output will be summed. "
-    "'mean': the sum of the output will be divided by the batch_size.";
+    "'sum': the output will be summed into a scalar. "
+    "'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`";
 
 static const char* MSD_ver12_doc = R"DOC(Loss function that measures the
 mean squared distance (squared L2 norm) between each element in the 'scores'
@@ -19,13 +19,14 @@ The loss can be described as:
     L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
 , N is the batch size.
 
-score and label are vectors of arbitrary shapes with total of N elements each.
+score and label are tensors of arbitrary shapes with total of N elements each,
+and are of the same shape.
 
-If 'weights' is provided, it should be broadcastable to shape of 'scores'.
+If 'weights' is provided, it should be broadcastable to shape of 'L'.
     L = Mul(weights, L)
 , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
 
-Finally, L is reduced:
+Finally, L is optionally reduced:
 L = ReduceSum(L), if reduction = 'sum';
     ReduceMean(L), if reduction = 'mean';
     L, if reduction = 'none';
@@ -112,6 +113,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (reduction.compare("none") == 0 && hasInputShape(ctx, 0)) {
                 propagateShapeFromInputToOutput(ctx, 0, 0);
             }
+	    // otherwise output is a scalar
         }));
 
 } // namespace ONNX_NAMESPACE

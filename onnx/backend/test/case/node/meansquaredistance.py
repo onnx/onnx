@@ -134,3 +134,26 @@ class MeanSquaredDistance(Base):
 
         # Check results
         expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
+
+    @staticmethod
+    def export_mean_square_distance_mean_4d():  # type: () -> None
+        # Define operator attributes.
+        reduction = 'mean'
+
+        # Create operator.
+        node = onnx.helper.make_node('MeanSquaredDistance',
+                                     inputs=['R', 'T'],
+                                     outputs=['X'],
+                                     reduction=reduction
+                                     )
+
+        # Define operator inputs
+        np.random.seed(0)
+        r = np.random.rand(2,4,5,7)
+        t = np.random.rand(2,4,5,7)
+
+        # Compute Mean Square Distance
+        msd = mean_squared_distance(r, t, reduction='mean')
+
+        # Check results
+        expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_4d')

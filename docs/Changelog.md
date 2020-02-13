@@ -14302,13 +14302,14 @@ This version of the operator has been available since version 12 of the default 
       L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
   , N is the batch size.
   
-  score and label are vectors of arbitrary shapes with total of N elements each.
+  score and label are tensors of arbitrary shapes with total of N elements each,
+  and are of the same shape.
   
-  If 'weights' is provided, it should be broadcastable to shape of 'scores'.
+  If 'weights' is provided, it should be broadcastable to shape of 'L'.
       L = Mul(weights, L)
   , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
   
-  Finally, L is reduced:
+  Finally, L is optionally reduced:
   L = ReduceSum(L), if reduction = 'sum';
       ReduceMean(L), if reduction = 'mean';
       L, if reduction = 'none';
@@ -14323,7 +14324,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed. 'mean': the sum of the output will be divided by the batch_size.</dd>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed into a scalar. 'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`</dd>
 </dl>
 
 #### Inputs (2 - 3)
