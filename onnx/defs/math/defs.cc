@@ -1696,7 +1696,7 @@ See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
 Example 1:
 
-    &sharp; negative log likelihood loss, "none" reduction
+    // negative log likelihood loss, "none" reduction
     N, C, d1 = 2, 3, 2
     input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
@@ -1708,13 +1708,13 @@ Example 1:
             c = target[n][d_1]
             loss[n][d_1] = -input[n][c][d_1]
 
-    &sharp; print(loss)
-    &sharp; [[-3. -2.]
-    &sharp;  [-0. -2.]]
+    // print(loss)
+    // [[-3. -2.]
+    //  [-0. -2.]]
 
 Example 2:
 
-    &sharp; weighted negative log likelihood loss, sum reduction
+    // weighted negative log likelihood loss, sum reduction
     N, C, d1 = 2, 3, 2
     input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
@@ -1727,12 +1727,12 @@ Example 2:
             loss[n][d_1] = -input[n][c][d_1] * weight[c]
 
     loss = np.sum(loss)
-    &sharp; print(loss)
-    &sharp; -1.1
+    // print(loss)
+    // -1.1
 
 Example 3:
 
-    &sharp; weighted negative log likelihood loss, mean reduction
+    // weighted negative log likelihood loss, mean reduction
     N, C, d1 = 2, 3, 2
     input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
@@ -1747,8 +1747,8 @@ Example 3:
             weight_total = weight_total + weight[c]
 
     loss = np.sum(loss) / weight_total
-    &sharp; print(loss)
-    &sharp; -1.57
+    // print(loss)
+    // -1.57
 )DOC";
 
 TensorProto ToDimensionOneTensor(int32_t value) {
