@@ -3023,7 +3023,7 @@ class TestShapeInference(unittest.TestCase):
              ("y", TensorProto.FLOAT, (2, 3))],
             [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
             [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
     def test_mean_square_mean_4D(self):  # type: () -> None
         graph = self._make_graph(
@@ -3031,7 +3031,7 @@ class TestShapeInference(unittest.TestCase):
              ("y", TensorProto.FLOAT, (2, 3, 4, 5))],
             [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
             [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
 
 
