@@ -13,8 +13,6 @@
 #include <dirent.h>
 #endif
 
-#pragma warning(disable : 4996)
-
 namespace ONNX_NAMESPACE {
 namespace testing {
 bool FileExists(const std::string& filename) {
@@ -181,10 +179,10 @@ void LoadSingleFile(const std::string& filename, std::string& filedata) {
       int fsize;
       char buff[1024] = {0};
       do {
-        fsize = static_cast<int>(fread(buff, sizeof(char), 1024, fp));
+        fsize = fread(buff, sizeof(char), 1024, fp);
         filedata += std::string(buff, buff + fsize);
       } while (fsize == 1024);
-    } catch (const std::exception& /*e*/) {
+    } catch (const std::exception& e) {
       fclose(fp);
       throw;
     }
