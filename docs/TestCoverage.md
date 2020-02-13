@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 139/154 (90.26%, 5 generators excluded) common operators.
+Node tests have covered 138/154 (89.61%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -6533,50 +6533,6 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 </details>
 
 
-### Range
-There are 2 test cases, listed as following:
-<details>
-<summary>range_float_type_positive_delta</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Range',
-    inputs=['start', 'limit', 'delta'],
-    outputs=['output'],
-)
-
-start = np.float32(1)
-limit = np.float32(5)
-delta = np.float32(2)
-
-output = np.arange(start, limit, delta, dtype=np.float32)  # expected output [1.0, 3.0]
-expect(node, inputs=[start, limit, delta], outputs=[output],
-       name='test_range_float_type_positive_delta')
-```
-
-</details>
-<details>
-<summary>range_int32_type_negative_delta</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Range',
-    inputs=['start', 'limit', 'delta'],
-    outputs=['output'],
-)
-
-start = np.int32(10)
-limit = np.int32(6)
-delta = np.int32(-3)
-
-output = np.arange(start, limit, delta, dtype=np.int32)  # expected output [10, 7]
-expect(node, inputs=[start, limit, delta], outputs=[output],
-       name='test_range_int32_type_negative_delta')
-```
-
-</details>
-
-
 ### Reciprocal
 There are 1 test cases, listed as following:
 <details>
@@ -11444,6 +11400,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### RandomUniformLike (random generator operator)
+
+
+### Range (call for test cases)
 
 
 ### SequenceAt (call for test cases)
