@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 137/152 (90.13%, 5 generators excluded) common operators.
+Node tests have covered 138/153 (90.20%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1116,27 +1116,18 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 
 ### BatchNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>batchnormalization</summary>
 
 ```python
-def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
-    dims_x = len(x.shape)
-    dim_ones = (1,) * (dims_x - 2)
-    s = s.reshape(-1, *dim_ones)
-    bias = bias.reshape(-1, *dim_ones)
-    mean = mean.reshape(-1, *dim_ones)
-    var = var.reshape(-1, *dim_ones)
-    return s * (x - mean) / np.sqrt(var + epsilon) + bias
-
 # input size: (1, 2, 1, 3)
 x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
 s = np.array([1.0, 1.5]).astype(np.float32)
 bias = np.array([0, 1]).astype(np.float32)
 mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
-y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
+y = batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
@@ -1146,7 +1137,7 @@ node = onnx.helper.make_node(
 
 # output size: (1, 2, 1, 3)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_example')
+       name='test_batchnorm_example_old')
 
 # input size: (2, 3, 4, 5)
 x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -1155,7 +1146,7 @@ bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
 epsilon = 1e-2
-y = _batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
+y = batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
@@ -1166,7 +1157,54 @@ node = onnx.helper.make_node(
 
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_epsilon')
+       name='test_batchnorm_epsilon_old')
+```
+
+</details>
+<details>
+<summary>train</summary>
+
+```python
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+training_mode = np.ones(1, dtype=bool)
+y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       name='test_batchnorm_example_training_mode')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+training_mode = np.ones(1, dtype=bool)
+momentum = 0.9
+epsilon = 1e-2
+y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       name='test_batchnorm_epsilon_training_mode')
 ```
 
 </details>
@@ -2540,7 +2578,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Dropout
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -2552,14 +2590,52 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = x
+y = dropout(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_dropout_default')
 ```
 
 </details>
 <details>
+<summary>default_old</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default_old', opset_imports=[helper.make_opsetid("", 11)])
+```
+
+</details>
+<details>
 <summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'ratio'],
+    outputs=['y'],
+    seed=0,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+ratio = np.array(random.uniform(0, 1))
+seed = 0
+y = dropout(x, ratio, seed)
+
+expect(node, inputs=[x, ratio], outputs=[y],
+       name='test_dropout_random')
+```
+
+</details>
+<details>
+<summary>random_old</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2572,7 +2648,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_random')
+       name='test_dropout_random_old', opset_imports=[helper.make_opsetid("", 11)])
 ```
 
 </details>
@@ -5407,6 +5483,181 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
+```
+
+</details>
+
+
+### NegativeLogLikelihoodLoss
+There are 7 test cases, listed as following:
+<details>
+<summary>input_shape_is_NC</summary>
+
+```python
+reduction = 'none'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C = 3, 5
+np.random.seed(0)
+input = np.random.rand(N, C).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, ))
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NC')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2</summary>
+
+```python
+reduction = 'none'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2_reduction_mean</summary>
+
+```python
+reduction = 'mean'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_reduction_mean')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2_reduction_sum</summary>
+
+```python
+reduction = 'sum'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_reduction_sum')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2_with_weight</summary>
+
+```python
+reduction = 'none'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target', 'weight'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+weight = np.random.rand(C).astype(np.float32)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2_with_weight_reduction_mean</summary>
+
+```python
+reduction = 'mean'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target', 'weight'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+weight = np.random.rand(C).astype(np.float32)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_mean')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2_with_weight_reduction_sum</summary>
+
+```python
+reduction = 'sum'
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target', 'weight'],
+    outputs=['loss'],
+    reduction=reduction
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+weight = np.random.rand(C).astype(np.float32)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')
 ```
 
 </details>
@@ -11087,7 +11338,7 @@ strides: 2
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 1
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11161,7 +11412,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 1
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11240,7 +11491,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11319,7 +11570,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11398,7 +11649,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11477,7 +11728,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11561,7 +11812,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11645,7 +11896,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
@@ -11729,7 +11980,7 @@ strides: 3
 <details>
 <summary>Dropout: 1 out of 1 attributes covered</summary>
 
-ratio: 2
+seed: 0
 </details>
 <details>
 <summary>Gemm: 1 out of 4 attributes covered</summary>
