@@ -59,7 +59,7 @@ class Expand(Base):
                name='test_expand_dim_unchanged')
 
     @staticmethod
-    def export_dim_negative():
+    def export_dim_negative():  # type: () -> None
         node = onnx.helper.make_node(
             'Expand',
             inputs=['data', 'new_shape'],
