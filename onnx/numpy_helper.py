@@ -43,9 +43,6 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
     storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
     dims = tensor.dims
 
-    np_dt = np_dtype.newbyteorder('<')
-    st_np_dt = storage_np_dtype.newbyteorder('<')
-
     if tensor.data_type == TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
         ss = list(s.decode('utf-8') for s in utf8_strings)
@@ -55,8 +52,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         # Raw_bytes support: using frombuffer.
         return np.frombuffer(
             tensor.raw_data,
-            dtype=np_dt).astype(np_dtype).reshape(dims)
-            # dtype=np_dtype).reshape(dims)
+            dtype=np_dtype).reshape(dims)
     else:
         data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
         if (tensor_dtype == TensorProto.COMPLEX64
@@ -65,8 +61,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         return (
             np.asarray(
                 data,
-                # dtype=storage_np_dtype)
-                dtype=st_np_dt)
+                dtype=storage_np_dtype)
             .astype(np_dtype)
             .reshape(dims)
         )
@@ -117,6 +112,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     except KeyError:
         raise RuntimeError(
             "Numpy data type not understood yet: {}".format(str(arr.dtype)))
+
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
 
