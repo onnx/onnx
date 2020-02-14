@@ -236,7 +236,7 @@ message NodeProto {
 //      TrainingInfoProto.algorithm.
 //      Each call is represented by a GraphCall operator in 
 //      TrainingInfoProto.algorithm.node.
-//   2. Initializers specified in
+//   2. All initializers specified in
 //      ModelProto.global_mutable_initializer_names
 //      can be referenced as node inputs in
 //      TrainingInfoProto.algorithm.nodes and
@@ -273,9 +273,8 @@ message TrainingInfoProto {
   GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
-  // the initializers in "algorithm" and the initializers specified in
-  // "ModelProto.global_mutable_initializer_name". See "update_binding" below
-  // for its format.
+  // some initializers specified in "ModelProto.global_mutable_initializer_name".
+  // See "update_binding" below for its format.
   //
   // By default, this field is empty and no initializer would be changed
   // by the execution of "initialization".
@@ -299,17 +298,10 @@ message TrainingInfoProto {
   // and "y" (value of StringStringEntryProto).
   // For a neural network with multiple trainable (mutable) tensors, there can
   // be multiple key-value pairs in "update_binding".
-  // The keys must be names of "TrainingInfoProto.algorithm.initializer" or
-  // be included in "ModelProto.global_mutable_initializer_name".
+  // The keys must appear in "ModelProto.global_mutable_initializer_name".
   // The values must be output names of "algorithm". One initializer can
   // only be assigned up to once; it implies that the keys in "update_binding"
   // must be unique.
-  //
-  // Whether an initializer is trainable is determined by the keys of
-  // key-value pairs in "update_binding". If the name of an initializer
-  // cannot be found as a key in the "update_binding"s of any
-  // TrainingInfoProto's, that initializer is not trainable and therefore
-  // considered as a training-time constant.
   //
   // By default, this field is empty and no initializer would be changed
   // by the execution of "algorithm".
@@ -379,19 +371,24 @@ message ModelProto {
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
 
-  // The following list specifies globally-visible and multable variables in
-  // ModelProto.graph.initializer.
+  // The following list specifies multable variables in
+  // ModelProto.graph.initializer and all stored
+  // TrainingInfoProto.algorithm.initializer's. The names of mutable variables
+  // must be unique.
   //
-  // These variables are initialized to the values specified in
-  // ModelProto.graph.initializer, and then potentially updated by
+  // Mutable variables are initialized to the values specified in the 
+  // corresponding initializer, and then potentially updated by
   // "initializer_binding"s and "update_binding"s in "TrainingInfoProto"s.
   //
+  // Mutable variables defined by this field are globally-visible.
   // If an input or initializer in a graph has the same name as a global
   // initializer, then the local variable in the graph will hide the global
   // variable.
   //
-  // This field usually contains names of trainable tensors in
-  // neural networks.
+  // This field usually contains names of trainable tensors
+  // (in ModelProto.graph), optimizer states such as momentums in advanced
+  // stochastic gradient methods (in TrainingInfoProto.graph),
+  // and number of training iterations (in TrainingInfoProto.graph).
   repeated string global_mutable_initializer_name = 30;
 };
 

@@ -14661,15 +14661,17 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   invoked graph by position. If a graph input has an initializer, that input
   is considered optional. All graph outputs are optional.
   
+  Below Python syntax is used for describing dictionary and list.
+  
   Assume that ModelProto's graph field has
   - name: "MyInferenceGraph"
   - input: ["X", "W", "Z"]
   - initializer: [W]
   - output: ["Y"]
   
-  with a model-level field
+  with a model-level attribute
   
-  - global_mutable_initializer_name: ["W"]
+  - global_mutable_initializer_name: ["W", "Iter"]
   
   as visualized below for inference.
   
@@ -14686,7 +14688,12 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   Assume that the training algorithm contains
   
   - inputs: ["X_1", "Z_1", "C"]
+  - initializer: [T]
   - outputs: ["W_new"]
+  
+  with a dictionary
+  
+  - update_binding: {"W": "W_new", "T": "T_new"}
   
   Inside the training algorithm graph, one can invoke the inference
   graph via adding a GraphCall node with
@@ -14718,8 +14725,11 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1", "C"], y="O")
   |        |
   |        v
-  |      dO_dW (gradient of W)
-  |        |
+  |      dO_dW (gradient of W)      1 (a scalar one)
+  |        |                        |
+  |        V                        v
+  |       Div <--- T ------------> Add ---> T_new
+  |        |    (T is the number of training iterations and mutable.)
   |        v
   `-----> Sub ----> W_new
   ```
@@ -14729,7 +14739,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   The variable "W" is an optional input in the called graph.
   If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
   In this case, from the view of computation graph, the Conv operator invoked by
-  GraphCall's may be still connected the mutable "W" variable.
+  GraphCall's may be still connected the mutable "W" variable and therefore the
+  structure of the computation graph is unchanged.
 
 #### Version
 
