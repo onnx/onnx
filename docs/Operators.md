@@ -10048,7 +10048,7 @@ expect(node, inputs=[x], outputs=[y],
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
-      mean(loss), if "weight" is not provided, 
+      mean(loss), if "weight" is not provided,
   
   or if weight is provided,
   
@@ -10059,11 +10059,11 @@ expect(node, inputs=[x], outputs=[y],
   
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
   
-  Example 1: 
+  Example 1:
   
-      # negative log likelihood loss, "none" reduction
+      // negative log likelihood loss, "none" reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
                [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
   
@@ -10073,15 +10073,15 @@ expect(node, inputs=[x], outputs=[y],
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1]
   
-      # print(loss)
-      # [[-3. -2.]
-      #  [-0. -2.]]
+      // print(loss)
+      // [[-3. -2.]
+      //  [-0. -2.]]
   
   Example 2:
   
-      # weighted negative log likelihood loss, sum reduction
+      // weighted negative log likelihood loss, sum reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -10092,14 +10092,14 @@ expect(node, inputs=[x], outputs=[y],
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
   
       loss = np.sum(loss)
-      # print(loss)
-      # -1.1
+      // print(loss)
+      // -1.1
   
   Example 3:
   
-      # weighted negative log likelihood loss, mean reduction
+      // weighted negative log likelihood loss, mean reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -10112,8 +10112,8 @@ expect(node, inputs=[x], outputs=[y],
               weight_total = weight_total + weight[c]
   
       loss = np.sum(loss) / weight_total
-      # print(loss)
-      # -1.57
+      // print(loss)
+      // -1.57
 
 #### Version
 
