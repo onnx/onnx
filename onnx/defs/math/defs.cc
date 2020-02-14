@@ -2143,8 +2143,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             propagateElemTypeFromInputToOutput(ctx, 0, 0);
             std::string reduction = getAttribute(ctx, "reduction", "mean");
-            if (reduction.compare("none") == 0 && hasInputShape(ctx, 0)) {
-                propagateShapeFromInputToOutput(ctx, 0, 0);
+            if (reduction.compare("none") == 0) {
+	        if (hasInputShape(ctx, 0)) {
+		    propagateShapeFromInputToOutput(ctx, 0, 0);
+		}
             } else {
                 updateOutputShape(ctx, 0, TensorShapeProto());
             }
