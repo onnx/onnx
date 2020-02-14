@@ -17440,8 +17440,8 @@ expect(node, inputs=[x], outputs=[y],
   between 'scores' and 'labels'.
   This operator first computes a loss tensor whose shape is identical to the labels input.
   If the input is 2-D with shape (N, C), the loss tensor may be a N-element vector L = (l_1, l_2, ..., l_N).
-  If the input is N-D tensor with shape (N, C, d1, d2, ..., dk),
-  the loss tensor L may have (N, d1, d2, ..., dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
+  If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
+  the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
   After L is available, this operator can optionally do a reduction operator.
   
   shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
@@ -17456,13 +17456,14 @@ expect(node, inputs=[x], outputs=[y],
   
   where:
       p = Softmax(scores)
-      y = log(p)
+      y = Log(p)
       c = labels[i][d1][d2]...[dk]
   
   Finally, L is optionally reduced:
-  L = ReduceSum(L), if reduction = 'sum';
-      ReduceMean(L), if reduction = 'mean'; if "weight" is provided, output is averaged by sum of weights.
-      L, if reduction = 'none'
+  If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+  If reduction = 'sum', the output is scalar: Sum(L).
+  If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
+  where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
 
 #### Version
 
