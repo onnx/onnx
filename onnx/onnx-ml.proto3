@@ -92,7 +92,11 @@ enum Version {
   // - Add support for sparse tensor constants stored in model.
   //   - Add message SparseTensorProto
   //   - Add sparse initializers
-  IR_VERSION = 0x0000000000000006;
+  IR_VERSION_2019_09_19 = 0x0000000000000006;
+
+  // IR VERSION 7 (will be published in ONNX 1.7)
+  // - Add support for allowing function body graph to rely on multiple external operator sets.
+  IR_VERSION = 0x0000000000000007;
 }
 
 // Attributes
