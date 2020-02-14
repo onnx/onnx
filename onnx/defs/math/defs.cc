@@ -1236,7 +1236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 
             TensorShapeProto second_shape;
-            for (int i = 0; i < shape_data.size(); i++) {
+            for (size_t i = 0; i < shape_data.size(); i++) {
               auto e = shape_data[i];
               if (e == -1) {
                 int offset = (shape_data.size() - input_shape.dim_size());
