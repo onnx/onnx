@@ -1,17 +1,11 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
-#include <algorithm>
-#include <google/protobuf/util/message_differencer.h>
 
 #include "onnx/defs/function.h"
+#include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-
-static bool operator==(const NodeProto& lhs, const NodeProto& rhs){
-  return google::protobuf::util::MessageDifferencer::Equals(lhs, rhs);
-}
-
 std::string InteralTensorNameGenerator(
     const std::string& node_name,
     const std::string& internal_name) {
@@ -89,13 +83,13 @@ void FunctionExpandHelper(
       }
     }
   }
-  
-  //Remove function node from graph
-  const auto nodes = g.mutable_node();
-  const auto node_iterator = std::find(nodes->begin(), nodes->end(), node);
 
-  if(node_iterator != nodes->end()){
-    nodes->erase(node_iterator);
+  // Remove function node from graph
+  for (int i = 0; i < g.node().size(); ++i) {
+    auto node_i = g.node(i);
+    if (nodes_equal(node, node_i)) {
+      g.mutable_node()->erase(g.node().begin() + i);
+    }
   }
 }
 

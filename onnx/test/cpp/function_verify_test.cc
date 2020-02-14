@@ -140,22 +140,22 @@ TEST(FunctionVerification, VerifyFunctionOps) {
 
 // Verify FunctionExpandHelper removes the node with a function after 
 // function expanding. 
-TEST(FunctionVerification, VerifyRemovingFunNodeFunctionExpandHelper) {
+TEST(FunctionVerification, VerifyFunctionExpandHelperRemovesFunctionNode) {
 
   GraphProto graph;
   NodeProto* new_node = graph.add_node();
   new_node->set_op_type("MeanVarianceNormalization");
-  auto fun_node = graph.node(0);
+  auto function_node = graph.node(0);
   
   const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
-  const FunctionProto* func = schema->GetFunction();
+  const FunctionProto* function_proto = schema->GetFunction();
 
-  FunctionExpandHelper(fun_node, *func, graph);
+  FunctionExpandHelper(function_node, *function_proto, graph);
 
   for (const auto& node : graph.node())
   {	            
     if (node.op_type()=="MeanVarianceNormalization"){
-      FAIL()<<"Function node has not been deleted after function expanding ";
+      FAIL() << "Function node has not been deleted after function expansion.";
     }
   }             
 } 
