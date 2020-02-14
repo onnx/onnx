@@ -4997,14 +4997,19 @@ expect(node, inputs=[x], outputs=[y],
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
   Dimensions are right alignment;
   Two corresponding dimension must have the same value, or one of them is equal to 1.
+  A dimension could also be -1, in which case the actual dimension value will remain unchanged
+  (i.e. taken from the input tensor).
   Also, this operator is similar to numpy.broadcast_to(input, shape),
   but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
+  Also, numpy.broadcast_to() does not allow does not allow -1 dimension.
   It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
   or the shape.ndim < input.shape.ndim.
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Expand-8">Expand-8</a>
 
 #### Inputs
 
@@ -5058,6 +5063,40 @@ expanded = data * np.ones(new_shape, dtype=np.float32)
 new_shape = np.array(new_shape, dtype=np.int64)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_changed')
+```
+
+</details>
+
+
+<details>
+<summary>dim_negative</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 3, 1]
+new_shape = [-1, 3, 6]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+# [[[1.], [2.], [3.]]
+#  [[4.], [5.], [6.]]]
+expanded = np.tile(data, 6)
+#print(expanded.shape)
+# [[[1. 1. 1. 1. 1. 1.]
+#  [2. 2. 2. 2. 2. 2.]
+#  [3. 3. 3. 3. 3. 3.]]
+# [[4. 4. 4. 4. 4. 4.]
+#  [5. 5. 5. 5. 5. 5.]
+#  [6. 6. 6. 6. 6. 6.]]
+# [[7. 7. 7. 7. 7. 7.]
+#  [8. 8. 8. 8. 8. 8.]
+#  [9. 9. 9. 9. 9. 9.]]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_negative')
 ```
 
 </details>

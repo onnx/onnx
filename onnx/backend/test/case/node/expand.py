@@ -57,3 +57,31 @@ class Expand(Base):
         new_shape = np.array(new_shape, dtype=np.int64)
         expect(node, inputs=[data, new_shape], outputs=[expanded],
                name='test_expand_dim_unchanged')
+
+    @staticmethod
+    def export_dim_negative():
+        node = onnx.helper.make_node(
+            'Expand',
+            inputs=['data', 'new_shape'],
+            outputs=['expanded'],
+        )
+        shape = [3, 3, 1]
+        new_shape = [-1, 3, 6]
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+        #print(data)
+        # [[[1.], [2.], [3.]]
+        #  [[4.], [5.], [6.]]]
+        expanded = np.tile(data, 6)
+        #print(expanded.shape)
+        # [[[1. 1. 1. 1. 1. 1.]
+        #  [2. 2. 2. 2. 2. 2.]
+        #  [3. 3. 3. 3. 3. 3.]]
+        # [[4. 4. 4. 4. 4. 4.]
+        #  [5. 5. 5. 5. 5. 5.]
+        #  [6. 6. 6. 6. 6. 6.]]
+        # [[7. 7. 7. 7. 7. 7.]
+        #  [8. 8. 8. 8. 8. 8.]
+        #  [9. 9. 9. 9. 9. 9.]]]
+        new_shape = np.array(new_shape, dtype=np.int64)
+        expect(node, inputs=[data, new_shape], outputs=[expanded],
+               name='test_expand_dim_negative')
