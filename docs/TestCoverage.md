@@ -2985,7 +2985,7 @@ data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 # [[[1.], [2.], [3.]]
 #  [[4.], [5.], [6.]]]
 expanded = np.tile(data, 6)
-#print(expanded.shape)
+#print(expanded)
 # [[[1. 1. 1. 1. 1. 1.]
 #  [2. 2. 2. 2. 2. 2.]
 #  [3. 3. 3. 3. 3. 3.]]

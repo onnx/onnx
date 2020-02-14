@@ -72,7 +72,7 @@ class Expand(Base):
         # [[[1.], [2.], [3.]]
         #  [[4.], [5.], [6.]]]
         expanded = np.tile(data, 6)
-        #print(expanded.shape)
+        #print(expanded)
         # [[[1. 1. 1. 1. 1. 1.]
         #  [2. 2. 2. 2. 2. 2.]
         #  [3. 3. 3. 3. 3. 3.]]
