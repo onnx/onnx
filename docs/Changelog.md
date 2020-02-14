@@ -14287,8 +14287,7 @@ This version of the operator has been available since version 12 of the default 
   and 'labels'.
   
   The loss can be described as:
-      L = (l_1, l_2, ..., l_N), l_n = (score_n - label_n)^2
-  , N is the batch size.
+      L = Pow(Sub(scores, labels), 2)
   
   score and label are tensors of arbitrary shapes with total of N elements each,
   and are of the same shape.
