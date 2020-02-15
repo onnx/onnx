@@ -4903,6 +4903,10 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -10417,6 +10421,10 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -13712,6 +13720,10 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -14637,15 +14649,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_default_axe
 </details>
 
 
-<<<<<<< HEAD
 <details>
 <summary>do_not_keepdims</summary>
-=======
-<dl>
-<dt><tt>allowzero</tt> : int (default is 0)</dt>
-<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any output dimension value is set to zero, the zero value is honored, similar to NumPy.</dd>
-</dl>
->>>>>>> PR feedback
 
 ```python
 shape = [3, 2, 2]
