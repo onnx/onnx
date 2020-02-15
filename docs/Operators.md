@@ -83,6 +83,7 @@
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
+  * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#NonMaxSuppression">NonMaxSuppression</a>
   * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
@@ -159,10 +160,9 @@
   * <a href="#Where">Where</a>
   * <a href="#Xor">Xor</a>
 
-  **Functions**
+  **Operators with function registered:**
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
-  * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
 
 ## ai.onnx (default)
@@ -4492,6 +4492,10 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T2</tt> : tensor(uint8)</dt>
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 
 #### Examples
@@ -9332,6 +9336,10 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+#### Function
+
+The Function can be represented as a function.
+
 
 #### Examples
 
@@ -12126,6 +12134,10 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
+
+#### Function
+
+The Function can be represented as a function.
 
 
 #### Examples
