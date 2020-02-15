@@ -14,6 +14,11 @@ else()
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
 endif()
 
+if(ONNX_USE_MSVC_STATIC_RUNTIME)
+  set(ONNX_USE_MSVC_SHARED_RUNTIME OFF)
+else()
+  set(ONNX_USE_MSVC_SHARED_RUNTIME ON)
+endif()
 ExternalProject_Add(googletest
     PREFIX googletest
     GIT_REPOSITORY ${googletest_URL}
@@ -26,6 +31,6 @@ ExternalProject_Add(googletest
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DBUILD_GMOCK:BOOL=OFF
         -DBUILD_GTEST:BOOL=ON
-        -Dgtest_force_shared_crt:BOOL=OFF
+        -Dgtest_force_shared_crt:BOOL=${ONNX_USE_MSVC_SHARED_RUNTIME}
     BUILD_BYPRODUCTS ${googletest_STATIC_LIBRARIES}
 )
