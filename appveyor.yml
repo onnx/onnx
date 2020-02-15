@@ -30,10 +30,12 @@ install:
 - cmd: git submodule update --init --recursive
 
 before_build:
-- cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
+#TODO:We should put libprotobuf.dll within onnx's package.
+#Then we don't need to add %CONDA_PREFIX%\Library\bin at here
+- cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%CONDA_PREFIX%\Library\bin;%PATH%
 - cmd: SET _prefix=%CONDA_PREFIX:~0,14%
 - cmd: SET _arch=%CONDA_PREFIX:~15,18%
-- cmd: conda install -y -c conda-forge libprotobuf=3.9.2
+- cmd: conda install -y libprotobuf=3.11.3 protobuf=3.11.3 numpy
 - >
 
   IF "%_prefix%"=="C:\Miniconda37"
@@ -47,7 +49,14 @@ build_script:
 # Build and test onnx.
 - cmd: cd c:\projects\onnx
 - cmd: set ONNX_BUILD_TESTS=1
-- cmd: set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+#The latest libprotobuf Windows packages in anaconda was built with          
+#        -Dprotobuf_BUILD_SHARED_LIBS=ON 
+#        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+#We must align with them. We must set USE_MSVC_STATIC_RUNTIME and 
+#ONNX_USE_PROTOBUF_SHARED_LIBS based on their config
+- cmd: set USE_MSVC_STATIC_RUNTIME=0
+# Don't put quotation marks in the following line
+- cmd: set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 - cmd: python setup.py --quiet bdist_wheel --universal --dist-dir .
 - cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
