@@ -190,7 +190,7 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
 struct SplitInit final : public FullGraphBasedPass {
   explicit SplitInit()
       : FullGraphBasedPass(
-            PassType::Seperate,
+            PassType::Separate,
             PassEfficiency::Complete,
             PassOptimizationType::Memory) {}
 
@@ -209,7 +209,7 @@ struct SplitInit final : public FullGraphBasedPass {
 struct SplitPredict final : public FullGraphBasedPass {
   explicit SplitPredict()
       : FullGraphBasedPass(
-            PassType::Seperate,
+            PassType::Separate,
             PassEfficiency::Complete,
             PassOptimizationType::Memory) {}
   std::string getPassName() const override {

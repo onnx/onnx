@@ -418,7 +418,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
+        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL)
         .SetDoc(Split_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -698,8 +698,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
-            if (!input_dim.has_dim_value())
+            if (!input_dim.has_dim_value()) {
+              // Clear any previously propagated dim_param and leave this dimension "empty",
+              // before moving on to the next dimension
+              ctx.getOutputType(0)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->mutable_dim(static_cast<int>(axis))
+                  ->clear_dim_param();     
               continue;
+            }
 
             const auto input_dim_value = input_dim.dim_value();
 
@@ -977,7 +985,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 static const char* ScatterElements_ver11_doc = R"DOC(
