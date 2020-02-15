@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def mean_squared_distance(input, target, reduction='mean', w=None):  # type: (np.ndarray) -> np.ndarray
+def mean_squared_distance(input, target, reduction='mean', w=None):  # type: (np.ndarray, np.ndarray) -> np.ndarray
     out = np.square(input - target)
     if w is not None:
         out = np.multiply(out, w)
