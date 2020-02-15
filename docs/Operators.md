@@ -20157,10 +20157,6 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   - initializer: [W]
   - output: ["Y"]
   
-  with a model-level attribute
-  
-  - global_mutable_initializer_name: ["W", "Iter"]
-  
   as visualized below for inference.
   
   ```
@@ -20190,10 +20186,16 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   - outputs: ["Y_1"]
   - an attribute graph_name="MyInferenceGraph",
   
-  A possible algorithm graph may contain something like
+  The initializers, "W" and "T" in this case, in update_binding
+  are considered globally-visible and mutable variables, which
+  can be used as inputs of operators in the training graph.
+  
+  An example training algorithm graph may look like
   
   ```
-  .-------- W (mutable variable from the inference graph) 
+  .-------- W (a global and mutable variable from
+  |         |  the inference graph)
+  |         |
   |   .-----'-----------.
   |   |                 |
   |   |                 v
@@ -20217,7 +20219,8 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   |        |                        |
   |        V                        v
   |       Div <--- T ------------> Add ---> T_new
-  |        |    (T is the number of training iterations and mutable.)
+  |        |    (T is the number of training iterations.
+  |        |     T is also globally visible and mutable.)
   |        v
   `-----> Sub ----> W_new
   ```
@@ -20227,7 +20230,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   The variable "W" is an optional input in the called graph.
   If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
   In this case, from the view of computation graph, the Conv operator invoked by
-  GraphCall's may be still connected the mutable "W" variable and therefore the
+  GraphCall's may be still connected the global "W" variable and therefore the
   structure of the computation graph is unchanged.
 
 #### Version
