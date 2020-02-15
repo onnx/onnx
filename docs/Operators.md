@@ -14637,8 +14637,15 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_default_axe
 </details>
 
 
+<<<<<<< HEAD
 <details>
 <summary>do_not_keepdims</summary>
+=======
+<dl>
+<dt><tt>allowzero</tt> : int (default is 0)</dt>
+<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any output dimension value is set to zero, the zero value is honored, similar to NumPy.</dd>
+</dl>
+>>>>>>> PR feedback
 
 ```python
 shape = [3, 2, 2]
@@ -15360,20 +15367,10 @@ expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_defau
 <details>
 <summary>do_not_keepdims</summary>
 
-<<<<<<< HEAD
 ```python
 shape = [3, 2, 2]
 axes = np.array([1], dtype=np.int64)
 keepdims = 0
-=======
-  Reshape the input tensor similar to numpy.reshape.
-  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
-  At most one dimension of the new shape can be -1. In this case, the value is
-  inferred from the size of the tensor and the remaining dimensions. A dimension
-  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
-  dimension will be set explicitly to zero (i.e. not taken from input tensor)
->>>>>>> Add 'allowzero' flag to reshape operator
 
 node = onnx.helper.make_node(
     'ReduceSum',
@@ -15381,7 +15378,6 @@ node = onnx.helper.make_node(
     outputs=['reduced'],
     keepdims=keepdims)
 
-<<<<<<< HEAD
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
 reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 #print(reduced)
@@ -15390,18 +15386,6 @@ reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 # [20., 22.]]
 
 expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_example')
-=======
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>, <a href="Changelog.md#Reshape-5">Reshape-5</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>allowzero</tt> : int (default is 0)</dt>
-<dd>(Optional) By default, when any output dimension is equal to zero the desired dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any output dimension value is set to zero, the zero value is honored, similar to NumPy.</dd>
-</dl>
->>>>>>> Add 'allowzero' flag to reshape operator
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)

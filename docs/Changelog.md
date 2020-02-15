@@ -19181,7 +19181,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>allowzero</tt> : int (default is 0)</dt>
-<dd>(Optional) By default, when any output dimension is equal to zero the desired dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any output dimension value is set to zero, the zero value is honored, similar to NumPy.</dd>
+<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any output dimension value is set to zero, the zero value is honored, similar to NumPy.</dd>
 </dl>
 
 #### Inputs
