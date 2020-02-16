@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
+#include "onnx/defs/operator_sets-training.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets-ml.h"
