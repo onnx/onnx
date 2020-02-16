@@ -14041,6 +14041,44 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input 'training_mode' types to boolean tensors.</dd>
 </dl>
 
+### <a name="Celu-12"></a>**Celu-12**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+         Perform the linear unit element-wise on the input tensor X
+         using formula: <br/> ``` max(0,x) + min(0,alpha*(exp(x/alpha)−1)) ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
 ### <a name="Constant-12"></a>**Constant-12**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
@@ -14297,7 +14335,7 @@ This version of the operator has been available since version 12 of the default 
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
-      mean(loss), if "weight" is not provided, 
+      mean(loss), if "weight" is not provided,
   
   or if weight is provided,
   
@@ -14308,11 +14346,11 @@ This version of the operator has been available since version 12 of the default 
   
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
   
-  Example 1: 
+  Example 1:
   
-      # negative log likelihood loss, "none" reduction
+      // negative log likelihood loss, "none" reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
                [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
   
@@ -14322,15 +14360,15 @@ This version of the operator has been available since version 12 of the default 
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1]
   
-      # print(loss)
-      # [[-3. -2.]
-      #  [-0. -2.]]
+      // print(loss)
+      // [[-3. -2.]
+      //  [-0. -2.]]
   
   Example 2:
   
-      # weighted negative log likelihood loss, sum reduction
+      // weighted negative log likelihood loss, sum reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -14341,14 +14379,14 @@ This version of the operator has been available since version 12 of the default 
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
   
       loss = np.sum(loss)
-      # print(loss)
-      # -1.1
+      // print(loss)
+      // -1.1
   
   Example 3:
   
-      # weighted negative log likelihood loss, mean reduction
+      // weighted negative log likelihood loss, mean reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -14361,8 +14399,8 @@ This version of the operator has been available since version 12 of the default 
               weight_total = weight_total + weight[c]
   
       loss = np.sum(loss) / weight_total
-      # print(loss)
-      # -1.57
+      // print(loss)
+      // -1.57
 
 #### Version
 
