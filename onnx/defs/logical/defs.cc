@@ -203,7 +203,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LessOrEqual,
     12,
     OpSchema()
-        .FillUsing(BinaryLogicDocGenerator("less_or_equal"))
+        .FillUsing(BinaryLogicDocGenerator("less_equal"))
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
@@ -223,7 +223,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     GreaterOrEqual,
     12,
     OpSchema()
-        .FillUsing(BinaryLogicDocGenerator("greater_or_equal"))
+        .FillUsing(BinaryLogicDocGenerator("greater_equal"))
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
