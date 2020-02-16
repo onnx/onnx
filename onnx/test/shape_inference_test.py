@@ -894,7 +894,7 @@ class TestShapeInference(unittest.TestCase):
         self._logical_binary_op('LessOrEqual', TensorProto.BOOL)
         self._logical_binary_op_with_broadcasting('LessOrEqual', TensorProto.BOOL)
 
-    def test_less_or_equal(self):  # type: () -> None
+    def test_greater_or_equal(self):  # type: () -> None
         self._logical_binary_op('GreaterOrEqual', TensorProto.BOOL)
         self._logical_binary_op_with_broadcasting('GreaterOrEqual', TensorProto.BOOL)
 
