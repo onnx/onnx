@@ -222,19 +222,18 @@ message NodeProto {
 // updated by the "initialization_binding" in every instance in
 // ModelProto.training_info.
 //
-// The field "algorithm" defines a computation graph similar to the inference
-// one (i.e., ModelProto.graph) but represents a training algorithm's step.
-// After the execution of a TrainingInfoProto.algorithm, the initializers
-// specified by "update_binding" may be updated. If the targeted training
-// algorithm contains consecutive update stages
-// (such as block coordinate descent methods), the user needs to create a
-// TrainingInfoProto for each stage.
+// The field "algorithm" defines a computation graph which represents a
+// training algorithm's step. After the execution of a
+// TrainingInfoProto.algorithm, the initializers specified by "update_binding"
+// may be immediately updated. If the targeted training algorithm contains
+// consecutive update stages (such as block coordinate descent methods),
+// the user needs to create a TrainingInfoProto for each stage.
 message TrainingInfoProto {
   // This field describes a graph to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
   // and can have multiple outputs. Usually, trainable tensors in neural
   // networks are randomly initialized. To achieve that, for each tensor,
-  // the user can put a random operator such as RandomNormal or
+  // the user can put a random number operator such as RandomNormal or
   // RandomUniform in TrainingInfoProto.initialization.node and assign its
   // random output to the specific tensor using "initialization_binding".
   // This graph can also set the initializers in "algorithm" in the same
@@ -259,7 +258,7 @@ message TrainingInfoProto {
   optional GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
-  // some initializers specified in "ModelProto.graph.initializer" and 
+  // some initializers in "ModelProto.graph.initializer" and 
   // the "algorithm.initializer" in the same TrainingInfoProto.
   // See "update_binding" below for details.
   //
@@ -287,11 +286,11 @@ message TrainingInfoProto {
   // be multiple key-value pairs in "update_binding".
   //
   // The initializers appears as keys in "update_binding" are considered
-  // mutable and globally-visible variables. This implies some restrictions
-  // and semantics as described below.
+  // mutable and globally-visible variables. This implies some behaviors
+  // as described below.
   //
   //  1. We have only unique keys in all "update_binding"s so that two global
-  //     variables may not have the same name. This also ensures that one
+  //     variables may not have the same name. This ensures that one
   //     global variable is assigned up to once.
   //  2. The keys must appear in names of "ModelProto.graph.initializer" or
   //     "TrainingInfoProto.algorithm.initializer".
@@ -374,8 +373,8 @@ message ModelProto {
   // the corresponding `TrainingInfoProto.update_binding`s is one training
   // iteration. Similarly, to initialize the model
   // (as if training hasn't happened), the user should sequentially execute
-  // all stored `TrainingInfoProto.initialization`s with the associated
-  // `TrainingInfoProto.initialization_binding`s.
+  // all stored `TrainingInfoProto.initialization`s and assigns their outputs
+  // using `TrainingInfoProto.initialization_binding`s.
   //
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
