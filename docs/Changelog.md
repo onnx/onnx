@@ -14240,7 +14240,7 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="GreaterOrEqual-12"></a>**GreaterOrEqual-12**</a>
 
-  Returns the tensor resulted from performing the `greater_or_equal` logical operation
+  Returns the tensor resulted from performing the `greater_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -14276,7 +14276,7 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
 
-  Returns the tensor resulted from performing the `less_or_equal` logical operation
+  Returns the tensor resulted from performing the `less_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
