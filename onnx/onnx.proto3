@@ -360,7 +360,6 @@ message ModelProto {
   string doc_string = 6;
 
   // The parameterized graph that is evaluated to execute the model.
-  // This graph cannot include operators defined in ai.onnx.training.
   GraphProto graph = 7;
 
   // Named metadata values; keys should be distinct.
