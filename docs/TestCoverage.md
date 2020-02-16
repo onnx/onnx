@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 139/154 (90.26%, 5 generators excluded) common operators.
+Node tests have covered 139/156 (89.10%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -11290,7 +11290,13 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GlobalLpPool (call for test cases)
 
 
+### GreaterOrEqual (call for test cases)
+
+
 ### If (call for test cases)
+
+
+### LessOrEqual (call for test cases)
 
 
 ### Loop (call for test cases)
