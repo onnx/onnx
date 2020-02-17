@@ -404,9 +404,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* celu_ver12_doc = R"DOC(
-       Continuously Differentiable Exponential Linear Units:
-       Perform the linear unit element-wise on the input tensor X
-       using formula: <br/> ``` max(0,x) + min(0,alpha*(exp(x/alpha)−1)) ```
+Continuously Differentiable Exponential Linear Units:
+Perform the linear unit element-wise on the input tensor X
+using formula: 
+
+```
+max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+```
 )DOC";
 
 static float celu_default_alpha = 1.0;
