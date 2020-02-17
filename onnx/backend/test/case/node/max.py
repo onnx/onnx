@@ -42,3 +42,16 @@ class Max(Base):
         )
         expect(node, inputs=[data_0, data_1], outputs=[result],
                name='test_max_two_inputs')
+
+    @staticmethod
+    def export_max_int8():  # type: () -> None
+        data_0 = np.array([ 3, 2,-1]).astype(np.int8)
+        data_1 = np.array([-1, 4,-4]).astype(np.int8)
+        result = np.array([ 3, 4,-1]).astype(np.int8)
+        node = onnx.helper.make_node(
+            'Max',
+            inputs=['data_0', 'data_1'],
+            outputs=['result'],
+        )
+        expect(node, inputs=[data_0, data_1], outputs=[result],
+               name='test_max_int8')
