@@ -64,6 +64,17 @@ message FunctionProto {
   repeated NodeProto node = 7;
   // A human-readable documentation for this function. Markdown is allowed.
   string doc_string = 8;
+
+  // The OperatorSets this function body (graph) relies on.
+  // A FunctionProto body (graph) may implicitly rely on the OperatorSet that
+  // this function belongs to. It can also explicitly rely on more OperatorSets
+  // with this field specified.
+  //
+  // All nodes in the function body (graph) will bind against the operator
+  // with the same-domain/same-op_type operator with the HIGHEST version
+  // in the referenced operator sets. This means at most one version can be relied
+  // for one domain.
+  repeated OperatorSetIdProto opset_import = 9;
 }
 
 // An OperatorProto represents the immutable specification of the signature
@@ -85,7 +96,6 @@ message FunctionProto {
 //      this operator was initially declared in.
 //
 message OperatorProto {
-
   // The name of the operator within a domain.
   // This field MUST be present in this version of the IR.
   string op_type = 1;
@@ -169,6 +179,7 @@ message OperatorSetProto {
   // The (name, version) MUST be unique across all OperatorProtos/FunctionProtos in operator/functions
   repeated FunctionProto functions = 9;
 }
+
 
 // For using protobuf-lite
 option optimize_for = LITE_RUNTIME;

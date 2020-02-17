@@ -25,7 +25,7 @@ ONNX is an open specification that consists of the following components:
 
 3)  Definitions of built-in operators.
 
-Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
+Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
 
@@ -55,7 +55,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators and their semantics at a particular point in time.
+Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators, and their semantics at a particular point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -102,7 +102,7 @@ model_license|string|Name or URL.|The well-known name or URL of the license unde
 
 ### Operator Sets
 
-Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
+Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators and their version. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
 
 Each operator set SHALL be defined in a separate document, also using protobuf as the serialization format. How operator set documents are found at runtime is implementation-dependent.
 
@@ -366,7 +366,7 @@ _Historical Notes_: The following extensions were considered early on, but were 
 
 ### Attribute Types
 
-The type system used for attributes is a superset of that used for of inputs and outputs. In addition to tensors, attribute values may be scalar numerical values, strings, and graphs. Sequences are available for attributes in both ONNX and ONNX-ML. Maps are not available for attributes in either variant. 
+The type system used for attributes is related to but slightly different from that used for of inputs and outputs. Attribute-values may be a dense tensor, or sparse tensor, or a scalar numerical value, or a string, or a graph, or repeated values of one of the above mentioned types.
 
 ## Other Specification Documents 
 
