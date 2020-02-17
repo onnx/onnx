@@ -14041,6 +14041,44 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input 'training_mode' types to boolean tensors.</dd>
 </dl>
 
+### <a name="Celu-12"></a>**Celu-12**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+         Perform the linear unit element-wise on the input tensor X
+         using formula: <br/> ``` max(0,x) + min(0,alpha*(exp(x/alpha)−1)) ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
 ### <a name="Constant-12"></a>**Constant-12**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,

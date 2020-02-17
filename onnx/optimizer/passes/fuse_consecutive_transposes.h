@@ -48,6 +48,9 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
       // One special case (two consecutive transposes with no perm,
       // since we do not have the shape information here, we have
       // to eliminate two transpose together.
+      if (n->output()->has_sizes()) {
+          origInput->node()->input()->setSizes(n->output()->sizes());
+      }
       n->replaceAllUsesWith(origInput->node()->input()->node());
       destroy_current = NodeDestroyType::DestroyTwo;
       return true;
