@@ -4628,7 +4628,7 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 
 ### Max
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>max</summary>
 
@@ -4661,6 +4661,23 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_max_two_inputs')
+```
+
+</details>
+<details>
+<summary>max_int8</summary>
+
+```python
+data_0 = np.array([ 3, 2,-1]).astype(np.int8)
+data_1 = np.array([-1, 4,-4]).astype(np.int8)
+result = np.array([ 3, 4,-1]).astype(np.int8)
+node = onnx.helper.make_node(
+    'Max',
+    inputs=['data_0', 'data_1'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1], outputs=[result],
+       name='test_max_int8')
 ```
 
 </details>
@@ -5265,7 +5282,7 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 
 ### Min
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>min</summary>
 
@@ -5298,6 +5315,23 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+<details>
+<summary>min_int8</summary>
+
+```python
+data_0 = np.array([ 3, 2,-1]).astype(np.int8)
+data_1 = np.array([-1, 4,-4]).astype(np.int8)
+result = np.array([-1, 2,-4]).astype(np.int8)
+node = onnx.helper.make_node(
+    'Max',
+    inputs=['data_0', 'data_1'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1], outputs=[result],
+       name='test_min_int8')
 ```
 
 </details>
