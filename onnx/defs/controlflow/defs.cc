@@ -809,4 +809,5 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+
 } // namespace ONNX_NAMESPACE
