@@ -13,7 +13,7 @@ fi
 export CMAKE_ARGS="${CMAKE_ARGS} -DONNXIFI_DUMMY_BACKEND=ON"
 export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
-if [ "${DEBUG_MODE}" == "1" ]; then
+if [ "${ONNX_DEBUG}" == "1" ]; then
   export DEBUG=1
 fi
 

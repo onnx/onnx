@@ -14,7 +14,7 @@ matrix:
       python: "3.6"
     - os: linux
       sudo: required
-      env: PYTHON_VERSION=python3 ONNX_ML=0 DEBUG_MODE=1
+      env: PYTHON_VERSION=python3 ONNX_ML=0 ONNX_DEBUG=1
       language: python
       python: "3.6"
     - os: osx
