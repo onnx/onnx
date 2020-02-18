@@ -1,1 +1,1 @@
-BresultJÿ
+BresultJ

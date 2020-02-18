@@ -4665,19 +4665,20 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 </details>
 <details>
-<summary>max_int8</summary>
+<summary>max_all_numeric_types</summary>
 
 ```python
-data_0 = np.array([ 3, 2,-1]).astype(np.int8)
-data_1 = np.array([-1, 4,-4]).astype(np.int8)
-result = np.array([ 3, 4,-1]).astype(np.int8)
-node = onnx.helper.make_node(
-    'Max',
-    inputs=['data_0', 'data_1'],
-    outputs=['result'],
-)
-expect(node, inputs=[data_0, data_1], outputs=[result],
-       name='test_max_int8')
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([3, 4, 4]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name=f'test_max_{np.dtype(op_dtype).name}')
 ```
 
 </details>
@@ -5319,19 +5320,20 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 </details>
 <details>
-<summary>min_int8</summary>
+<summary>min_all_numeric_types</summary>
 
 ```python
-data_0 = np.array([ 3, 2,-1]).astype(np.int8)
-data_1 = np.array([-1, 4,-4]).astype(np.int8)
-result = np.array([-1, 2,-4]).astype(np.int8)
-node = onnx.helper.make_node(
-    'Max',
-    inputs=['data_0', 'data_1'],
-    outputs=['result'],
-)
-expect(node, inputs=[data_0, data_1], outputs=[result],
-       name='test_min_int8')
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([1, 2, 1]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name=f'test_min_{np.dtype(op_dtype).name}')
 ```
 
 </details>
