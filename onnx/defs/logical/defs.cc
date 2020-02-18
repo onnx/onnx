@@ -215,8 +215,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(FunctionBodyHelper::BuildNodes({
             // nodes: {outputs, op, inputs, attributes}
-            {{"Z"}, "Greater", {"A", "B"}},
-            {{"C"}, "Not", {"Z"}}
+            {{"O1"}, "Greater", {"A", "B"}},
+            {{"O2"}, "Equal", {"A", "B"}},
+            {{"C"}, "Or", {"O1", "O2"}}
         })));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -235,8 +236,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(FunctionBodyHelper::BuildNodes({
             // nodes: {outputs, op, inputs, attributes}
-            {{"Z"}, "Less", {"A", "B"}},
-            {{"C"}, "Not", {"Z"}}
+            {{"O1"}, "Less", {"A", "B"}},
+            {{"O2"}, "Equal", {"A", "B"}},
+            {{"C"}, "Or", {"O1", "O2"}}
         })));
 
 } // namespace ONNX_NAMESPACE
