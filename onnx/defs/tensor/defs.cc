@@ -2588,7 +2588,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ctx.getInputType(1)->tensor_type().shape();
           const auto indices_rank = indices_shape.dim_size();
 
-		  int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
+        int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
           if (data_rank < 1 || indices_rank < 1) {
             fail_shape_inference(
                 "Both `data` and `indices` input tensors in GatherND op "
