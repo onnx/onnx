@@ -568,7 +568,8 @@ class OpSet_Onnx_ver10 {
            Onnx, 10, NonMaxSuppression)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 10, ReverseSequence)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, RoiAlign)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 10, RoiAlign)>());
   }
 };
 
@@ -740,7 +741,7 @@ class OpSet_Onnx_ver12 {
   }
 };
 
-  inline void RegisterOnnxOperatorSetSchema() {
+inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
