@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
+#include "onnx/defs/operator_sets-training.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets-ml.h"
@@ -97,58 +98,83 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // check all input types
-  for (size_t in_idx = 0; in_idx < ctx.getNumInputs() && in_idx < inputs_.size(); ++in_idx) {
-    const auto& param      = inputs_[in_idx];
-    const auto& type_str   = param.GetTypeStr();
+  for (size_t in_idx = 0;
+       in_idx < ctx.getNumInputs() && in_idx < inputs_.size();
+       ++in_idx) {
+    const auto& param = inputs_[in_idx];
+    const auto& type_str = param.GetTypeStr();
     const auto& param_type = ctx.getInputType(in_idx);
-    const auto& all_types  = param.GetTypes();
-    if (nullptr == param_type || param_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    const auto& all_types = param.GetTypes();
+    if (nullptr == param_type ||
+        param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       continue;
-    } else if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
-      fail_check(param.GetName(), " typestr: ", type_str, ", has unsupported type: ", *Utils::DataTypeUtils::ToType(*param_type));
+    } else if (
+        !all_types.empty() &&
+        all_types.find(Utils::DataTypeUtils::ToType(*param_type)) ==
+            all_types.end()) {
+      fail_check(
+          param.GetName(),
+          " typestr: ",
+          type_str,
+          ", has unsupported type: ",
+          *Utils::DataTypeUtils::ToType(*param_type));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
       } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
+        fail_check(
+            param.GetName(),
+            " has inconsistent type ",
+            *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
-  }//for inputs
-  //check all output types
-  for (size_t out_idx = 0; out_idx < ctx.getNumOutputs() && out_idx < outputs_.size(); ++out_idx) {
-    const auto& param      = outputs_[out_idx];
-    const auto& type_str   = param.GetTypeStr();
+  } // for inputs
+  // check all output types
+  for (size_t out_idx = 0;
+       out_idx < ctx.getNumOutputs() && out_idx < outputs_.size();
+       ++out_idx) {
+    const auto& param = outputs_[out_idx];
+    const auto& type_str = param.GetTypeStr();
     const auto& param_type = ctx.getOutputType(out_idx);
-    const auto& all_types  = param.GetTypes();
+    const auto& all_types = param.GetTypes();
     bool output_type_found = true;
-    //infer type if necessary
+    // infer type if necessary
     if (param_type->value_case() == TypeProto::VALUE_NOT_SET) {
       if (all_types.size() == 1) {
         *param_type = Utils::DataTypeUtils::ToTypeProto(*all_types.begin());
       } else if (type_constraints.find(type_str) != type_constraints.end()) {
-        auto data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
+        auto data_type =
+            Utils::DataTypeUtils::ToType(type_constraints[type_str]);
         *param_type = Utils::DataTypeUtils::ToTypeProto(data_type);
       } else {
         output_type_found = false;
-      } 
+      }
     }
     if (!output_type_found) {
       continue;
     }
-    if (!all_types.empty() && all_types.find(Utils::DataTypeUtils::ToType(*param_type)) == all_types.end()) {
-      fail_check(param.GetName(), " has unsupported type ", *Utils::DataTypeUtils::ToType(*param_type));
+    if (!all_types.empty() &&
+        all_types.find(Utils::DataTypeUtils::ToType(*param_type)) ==
+            all_types.end()) {
+      fail_check(
+          param.GetName(),
+          " has unsupported type ",
+          *Utils::DataTypeUtils::ToType(*param_type));
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       if (type_constraints.find(type_str) == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
       } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
+        fail_check(
+            param.GetName(),
+            " has inconsistent type ",
+            *Utils::DataTypeUtils::ToType(*param_type));
       }
-    }//else
-  }//for outputs
+    } // else
+  } // for outputs
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
@@ -288,7 +314,7 @@ void OpSchema::Verify(const NodeProto& node) const {
           "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
-   // Type would be UNDEFINED if not set
+    // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
       fail_check(
           "Mismatched attribute type in '", node.name() + " : " + name, "'");
@@ -705,12 +731,15 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
-OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder functionBuilder) {
+OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
+    ContextDependentFunctionBodyBuilder functionBuilder) {
   functionBuilder_ = functionBuilder;
   return *this;
 }
 
-bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const {
+bool OpSchema::BuildContextDependentFunction(
+    const FunctionBodyBuildContext& ctx,
+    FunctionProto& functionProto) const {
   if (functionBuilder_)
     return functionBuilder_(ctx, *this, functionProto);
   else
@@ -723,6 +752,16 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
     new_node->CopyFrom(node);
   }
   return *this;
+}
+
+OpSchema& OpSchema::FunctionBody(
+    const std::vector<NodeProto>& func_nodes,
+    const std::vector<OperatorSetIdProto>& relied_opsets) {
+  for (auto& relied_opset : relied_opsets) {
+    *(function_body_.mutable_opset_import()->Add()) = relied_opset;
+  }
+
+  return FunctionBody(func_nodes);
 }
 
 const FunctionProto* OpSchema::GetFunction() const {
@@ -750,6 +789,11 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   for (auto& a : attributes_) {
     function_body.add_attribute(a.first);
   }
+  // By default, the function body graph is relying on the OperatorSet this
+  // function belongs to.
+  auto relied_opset = function_body.mutable_opset_import()->Add();
+  relied_opset->set_domain(this->domain());
+  relied_opset->set_version(this->SinceVersion());
 }
 
 void OpSchema::Finalize() {
@@ -906,6 +950,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #ifdef ONNX_ML
       RegisterOnnxMLOperatorSetSchema();
 #endif
+
+      // Invoke register of training operators.
+      RegisterOnnxTrainingOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =
