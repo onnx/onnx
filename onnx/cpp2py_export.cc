@@ -62,7 +62,22 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
         return py::bytes(bytes);
+      })
+      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
+      .def("get_context_dependent_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+
+        std::string func_bytes = "";
+        if (op->HasContextDependentFunction()) {
+          FunctionBodyBuildContextImpl ctx(proto);
+          FunctionProto func_proto;
+          op->BuildContextDependentFunction(ctx, func_proto);
+          func_proto.SerializeToString(&func_bytes);
+        }
+        return py::bytes(func_bytes);
       });
+;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -294,14 +309,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
 
-  shape_inference.def("infer_shapes", [](const py::bytes& bytes) {
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
-    shape_inference::InferShapes(proto);
+    shape_inference::InferShapes(proto, check_type);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  });
+  }, "bytes"_a, "check_type"_a = false);
 }
 
 } // namespace ONNX_NAMESPACE

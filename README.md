@@ -1,4 +1,3 @@
-
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/travis/onnx/onnx/master.svg?label=Linux)](https://travis-ci.org/onnx/onnx)
@@ -59,6 +58,7 @@ conda install -c conda-forge onnx
 
 ## Source
 
+### Linux and MacOS
 You will need an install of protobuf and numpy to build ONNX.  One easy
 way to get these dependencies is via
 [Anaconda](https://www.anaconda.com/download/):
@@ -90,6 +90,65 @@ sudo apt-get install protobuf-compiler libprotoc-dev
 pip install onnx
 ```
 
+### Windows
+When building on Windows it is highly recommended that you also build protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static lib.
+
+#### Instructions to build protobuf and ONNX on windows
+Step 1 : Build protobuf locally
+```
+git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git checkout 3.9.x
+cd cmake
+# Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
+cmake -G "Visual Studio 15 2017 Win64" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
+msbuild protobuf.sln /m /p:Configuration=Release
+msbuild INSTALL.vcxproj /p:Configuration=Release
+```
+
+Step 2: Build ONNX
+```
+# Get ONNX
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
+
+# Set environment variables to find protobuf and turn off static linking of ONNX to runtime library.
+# Even better option is to add it to user\system PATH so this step can be performed only once.
+# For more details check https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=vs-2017
+set PATH=<protobuf_install_dir>\bin;%PATH%
+set USE_MSVC_STATIC_RUNTIME=0
+
+# Optional : Set environment variable `ONNX_ML=1` for onnx-ml
+
+# Build ONNX
+python setup.py install
+```
+
+If you do not want to build protobuf and instead want to use protobuf from conda forge then follow these instructions. 
+However please note : This method is just added as a convenience for users and there is very limited support from ONNX team when using this method.
+
+#### Instructions to build ONNX on windows in anaconda environment
+
+```
+# Use conda-forge protobuf
+conda install -c conda-forge protobuf=3.9.2 numpy
+
+# Get ONNX
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
+
+# Set environment variable for ONNX to use protobuf shared lib
+set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+
+# Build ONNX
+# Optional : Set environment variable `ONNX_ML=1` for onnx-ml
+
+python setup.py install
+```
+
+## Verify Installation
 After installation, run
 
 ```
