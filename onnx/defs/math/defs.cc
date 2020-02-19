@@ -2169,11 +2169,11 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_Exp"}, "Exp", {"X_Sub"}});
   body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
-  body.push_back({{"X_Log"}, "Log", {"X_Div"}});
+  body.push_back({{"log_prob"}, "Log", {"X_Div"}});
   if (ctx.hasInput(2)) {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels"}, {MakeAttribute("reduction", "mean")}});
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"}, {MakeAttribute("reduction", "mean")}});
   } else {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"X_Log", "labels", "weights"}, {MakeAttribute("reduction", "mean")}});
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"}, {MakeAttribute("reduction", "mean")}});
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
@@ -2224,6 +2224,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "shape of [batch_size], or [batch_size, D1, D2, ..., Dk] in case of "
             "K-dimensional loss. Otherwise, it is a scalar.",
             "T")
+	.Output(
+	    1,
+	    "log_prob",
+	    "Log probability tensor. If the output of softmax is prob, its value is log(prob).",
+	    "T",
+	    OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -2241,4 +2247,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
         }));
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPCE
