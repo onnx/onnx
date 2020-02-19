@@ -149,8 +149,8 @@ class MeanSquaredDistance(Base):
 
         # Define operator inputs
         np.random.seed(0)
-        r = np.random.rand(2,4,5,7)
-        t = np.random.rand(2,4,5,7)
+        r = np.random.rand(2, 4, 5, 7)
+        t = np.random.rand(2, 4, 5, 7)
 
         # Compute Mean Square Distance
         msd = mean_squared_distance(r, t, reduction='mean')
