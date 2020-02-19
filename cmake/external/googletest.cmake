@@ -19,6 +19,13 @@ if(ONNX_USE_MSVC_STATIC_RUNTIME)
 else()
   set(ONNX_USE_MSVC_SHARED_RUNTIME ON)
 endif()
+
+if(DEBUG)
+  set(ONNX_DEBUG_MODE Debug)
+else()
+  set(ONNX_DEBUG_MODE Release)
+endif()
+
 ExternalProject_Add(googletest
     PREFIX googletest
     GIT_REPOSITORY ${googletest_URL}
@@ -28,7 +35,7 @@ ExternalProject_Add(googletest
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --target gtest
     INSTALL_COMMAND ""
     CMAKE_CACHE_ARGS
-        -DCMAKE_BUILD_TYPE:STRING=Release
+        -DCMAKE_BUILD_TYPE:STRING=${ONNX_DEBUG_MODE}
         -DBUILD_GMOCK:BOOL=OFF
         -DBUILD_GTEST:BOOL=ON
         -Dgtest_force_shared_crt:BOOL=${ONNX_USE_MSVC_SHARED_RUNTIME}
