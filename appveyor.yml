@@ -58,7 +58,7 @@ build_script:
   (
   set "DEBUG=1"
   )
-  
+
 #The latest libprotobuf Windows packages in anaconda was built with
 #        -Dprotobuf_BUILD_SHARED_LIBS=ON
 #        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
@@ -67,6 +67,12 @@ build_script:
 - cmd: set USE_MSVC_STATIC_RUNTIME=0
 # Don't put quotation marks in the following line
 - cmd: set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+- >
+
+  if defined ONNX_DEBUG
+  (
+    set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DCMAKE_BUILD_TYPE=Debug
+  )
 - cmd: python setup.py --quiet bdist_wheel --universal --dist-dir .
 - cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
