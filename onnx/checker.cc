@@ -534,7 +534,7 @@ void check_node(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN ||
-        node.domain() == "ai.onnx") {
+        node.domain() == "ai.onnx" || node.domain() == AI_ONNX_TRAINING_DOMAIN) {
       // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() +
@@ -662,6 +662,15 @@ void check_function(
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
+  CheckerContext ctx_copy = ctx;
+  std::unordered_map<std::string, int> opsets;
+  for (auto& relied_opset : function.opset_import()) {
+    auto& domain = relied_opset.domain();
+    auto version = relied_opset.version();
+    opsets[domain] = static_cast<int>(version);
+  }
+  ctx_copy.set_opset_imports(opsets);
+
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& input : function.input()) {
@@ -714,7 +723,7 @@ void check_function(
       }
     }
 
-    check_node(node, ctx, lex_ctx);
+    check_node(node, ctx_copy, lex_ctx);
 
     // check for SSA form
     for (const auto& output : node.output()) {

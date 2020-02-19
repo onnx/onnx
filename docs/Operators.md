@@ -60,6 +60,7 @@
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
+  * <a href="#Inverse">Inverse</a>
   * <a href="#IsInf">IsInf</a>
   * <a href="#IsNaN">IsNaN</a>
   * <a href="#LRN">LRN</a>
@@ -160,10 +161,14 @@
   * <a href="#Xor">Xor</a>
 
   **Functions**
+  * <a href="#Celu">Celu</a>
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
+* ai.onnx.training
+  * <a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>
+  * <a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -2381,6 +2386,85 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.ceil(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_ceil')
+```
+
+</details>
+
+
+### <a name="Celu"></a><a name="celu">**Celu**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+  Perform the linear unit element-wise on the input tensor X
+  using formula: 
+  
+  ```
+  max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>celu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Celu',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+alpha = 2
+
+# Calculate expected output data
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+expected_output = positive_input + negative_input
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_celu')
 ```
 
 </details>
@@ -7093,6 +7177,79 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 </details>
 
 
+### <a name="Inverse"></a><a name="inverse">**Inverse**</a>
+
+  Calculates inverse of a square matrix or batches of square matrices.
+  Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+  and the inner-most 2 dimensions form square matrices.
+  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor of the same type as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numerical tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>inverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Inverse',
+    inputs=['x'],
+    outputs=['y']
+)
+
+X = np.random.randn(4, 4)
+Y = inverse_reference_implementation(X)
+
+expect(node, inputs=[X], outputs=[Y], name='test_inverse')
+```
+
+</details>
+
+
+<details>
+<summary>inverse_batched</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Inverse',
+    inputs=['x'],
+    outputs=['y']
+)
+
+X = np.random.randn(2, 3, 4, 4)
+Y = inverse_reference_implementation(X)
+
+expect(node, inputs=[X], outputs=[Y], name='test_inverse_batched')
+```
+
+</details>
+
+
 ### <a name="IsInf"></a><a name="isinf">**IsInf**</a>
 
   Map infinity to true and other values to false.
@@ -9974,7 +10131,7 @@ expect(node, inputs=[x], outputs=[y],
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
-      mean(loss), if "weight" is not provided, 
+      mean(loss), if "weight" is not provided,
   
   or if weight is provided,
   
@@ -9985,11 +10142,11 @@ expect(node, inputs=[x], outputs=[y],
   
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
   
-  Example 1: 
+  Example 1:
   
-      # negative log likelihood loss, "none" reduction
+      // negative log likelihood loss, "none" reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
                [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
   
@@ -9999,15 +10156,15 @@ expect(node, inputs=[x], outputs=[y],
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1]
   
-      # print(loss)
-      # [[-3. -2.]
-      #  [-0. -2.]]
+      // print(loss)
+      // [[-3. -2.]
+      //  [-0. -2.]]
   
   Example 2:
   
-      # weighted negative log likelihood loss, sum reduction
+      // weighted negative log likelihood loss, sum reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -10018,14 +10175,14 @@ expect(node, inputs=[x], outputs=[y],
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
   
       loss = np.sum(loss)
-      # print(loss)
-      # -1.1
+      // print(loss)
+      // -1.1
   
   Example 3:
   
-      # weighted negative log likelihood loss, mean reduction
+      // weighted negative log likelihood loss, mean reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -10038,8 +10195,8 @@ expect(node, inputs=[x], outputs=[y],
               weight_total = weight_total + weight[c]
   
       loss = np.sum(loss) / weight_total
-      # print(loss)
-      # -1.57
+      // print(loss)
+      // -1.57
 
 #### Version
 
@@ -19867,5 +20024,399 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+## ai.onnx.training
+### <a name="ai.onnx.training.Gradient"></a><a name="ai.onnx.training.gradient">**ai.onnx.training.Gradient**</a>
+
+  Gradient operator computes the partial derivatives of a specific tensor w.r.t.
+  some other tensors. This operator is widely used in gradient-based training
+  algorithms. To illustrate its use, let's consider a computation graph,
+  
+  ```
+  X -----.
+         |
+         v
+  W --> Conv --> H --> Gemm --> Y
+                        ^
+                        |
+                        Z
+  ```
+  
+  , where W and Z are trainable tensors. Note that operators' attributes are
+  omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
+  Y with respect to W (Z). The user can compute gradient by inserting Gradient
+  operator to form another graph shown below.
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+  |      ^              ^
+  |      |              |
+  |      X              Z
+  |      |              |
+  |      |   .----------'
+  |      |   |  (W/Z/X is the 1st/2nd/3rd input of Gradient as shown in
+  |      |   |   "xs" followed by "zs")
+  |      v   v
+  '---> Gradient(xs=["W", "Z"], zs=["X"], y="Y")
+         |   |
+         |   '-----------------------------------> dY/dW (1st output of Gradient)
+         |
+         '---------------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  By definition, the tensor "y" is a function of independent variables in "xs"
+  and "zs". Since we only compute the gradient of "y" w.r.t. the differentiable
+  variables in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
+  cannot appear in "xs" and "zs". The reason is that "H" can be determined by
+  tensors "W" and "X" and therefore "H" is not an independent variable.
+  
+  All outputs are optional. If needed, for example, user can assign an empty
+  string to the 1st output name of that Gradient to skip the generation of dY/dW.
+  Note that the concept of optional outputs can also be found in ONNX's RNN, GRU,
+  and LSTM.
+  
+  Gradient operator can compute derivative against intermediate tensors. For
+  example, the gradient of Y with respect to H can be done via
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+         ^       |      ^
+         |       |      |
+         X       |      Z
+         .-------'      |
+         |   .----------'
+         |   | (H/Z is the 1st/2nd input of Gradient as shown in "xs")
+         v   v
+        Gradient(xs=["H", "Z"], y="Y")
+         |   |
+         |   '-----------------------------------> dY/dH (1st output of Gradient)
+         |
+         '---------------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  It is possible to represent high-order differentiation using Gradient operators.
+  For example, given the following linear model:
+  
+  ```
+  W --> Gemm --> Y --> Loss --> O
+         ^              ^
+         |              |
+         X              L
+  ```
+  
+  To compute the 2nd order derivative of O with respect to W (denoted by
+  d^2O/dW^2), one can do
+  
+  ```
+  W --> Gemm --> Y --> Loss --> O
+  |      ^              ^
+  |      |              |
+  |      X .------------L
+  |      | |            |
+  |      | |            v
+  +------+-+> Gradient(xs=["X", "W"], zs=["L"], y="O") ---> dO/dX (1st output of Gradient)
+  |      | |    |
+  |      | |    '---> dO/dW (2nd output of Gradient)
+  |      v v
+  '---> Gradient(xs=["X", "W"], zs=["L"], y="dO/dW") ---> d(dO/dW)dX (1st output of
+         |                                                  Gradient)
+         |
+         |
+         '---> d^2O/dW^2 (2nd output of Gradient)
+  ```
+  
+  The tensors named in attributes "xs", "zs", and "y" define the differentiated
+  computation graph, and the inputs to Gradient node define the values at
+  which the gradient is computed. We can feed different tensors to the identified
+  graph. For example, one can compute the gradient of Y with respect to H at 
+  a specific value of H, H_1, by providing that value as an input to the Gradient
+  node.
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+         ^              ^
+         |              |
+         X              Z
+  
+            Z_1 (2nd input of Gradient)
+             |
+             v
+  H_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dH when H = H_1 and Y = Y_1.
+             |
+             '------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  When the inputs of Gradient are the tensors named in "xs" and "zs", the
+  computation can be optimized. More specifically, intermediate variables in
+  forward pass can be reused if the gradient is computed via reverse-mode
+  auto-differentiation.
+  
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>xs</tt> : list of strings (required)</dt>
+<dd>Input tensor names of the differentiated sub-graph. It contains only the necessary differentiated inputs of a (sub-)graph. Variables (usually called intermediate variables) that can be generated from inputs cannot be included in this attribute.</dd>
+<dt><tt>y</tt> : string (required)</dt>
+<dd>The targeted tensor. It can be viewed as the output of the differentiated function. The attribute "xs" and attribute "zs" are the minimal independent variable set that determines the value of "y".</dd>
+<dt><tt>zs</tt> : list of strings</dt>
+<dd>Input tensor names of the differentiated sub-graph. It contains only the necessary non-differentiated inputs of a (sub-)graph. Variables (usually called intermediate variables) that can be generated from inputs cannot be included in this attribute.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T1</dt>
+<dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of the attribute "xs" and the attribute  "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>The gradient of the tensor specified by the attribute "y" with respect to each of tensors specified in the attribute "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Allow outputs to be any kind of tensor.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Allow inputs to be any kind of floating-point tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gradient_scalar_add</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dc_da', 'dc_db'], name='my_gradient',
+    domain='ai.onnx.training',
+    xs=['a', 'b'], y='c')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# dc / da = d(a+b) / da = 1
+dc_da = np.array(1).astype(np.float32)
+# db / db = d(a+b) / db = 1
+dc_db = np.array(1).astype(np.float32)
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, gradient_node],
+    name='GradientOfAdd',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('c', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dc_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dc_db',
+                                           onnx.TensorProto.FLOAT, [])])
+opsets = [
+    onnx.helper.make_operatorsetid('', 12),
+    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+model = onnx.helper.make_model(
+    graph,
+    producer_name='backend-test',
+    opset_imports=opsets)
+expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
+       name='test_gradient_of_add')
+```
+
+</details>
+
+
+<details>
+<summary>gradient_scalar_add_and_mul</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+mul_node = onnx.helper.make_node('Mul',
+                                 ['c', 'a'], ['d'], name='my_mul')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dd_da', 'dd_db'], name='my_gradient',
+    domain='ai.onnx.training',
+    xs=['a', 'b'], y='d')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# d = a * c = a * (a + b)
+d = a * c
+# dd / da = d(a*a+a*b) / da = 2 * a + b
+dd_da = 2 * a + b
+# dd / db = d(a*a+a*b) / db = a
+dd_db = a
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, mul_node, gradient_node],
+    name='GradientOfTwoOperators',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('d', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dd_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dd_db',
+                                           onnx.TensorProto.FLOAT, [])])
+
+opsets = [
+    onnx.helper.make_operatorsetid('', 12),
+    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+model = onnx.helper.make_model(graph,
+    producer_name='backend-test',
+    opset_imports=opsets)
+expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
+       name='test_gradient_of_add_and_mul')
+```
+
+</details>
+
+
+### <a name="ai.onnx.training.GraphCall"></a><a name="ai.onnx.training.graphcall">**ai.onnx.training.GraphCall**</a>
+
+  The GraphCall operator invokes a graph inside TrainingInfoProto's
+  algorithm field. The GraphCall inputs and outputs are bound to those of
+  invoked graph by position. If a graph input has an initializer, that input
+  is considered optional. All graph outputs are optional.
+  
+  Below Python syntax is used for describing dictionary and list.
+  
+  Assume that ModelProto's graph field has
+  - name: "MyInferenceGraph"
+  - input: ["X", "W", "Z"]
+  - initializer: [W]
+  - output: ["Y"]
+  
+  as visualized below for inference.
+  
+  ```
+  X -----.
+         |
+         v
+  W --> Conv --> H --> Gemm --> Y
+                        ^
+                        |
+                        Z
+  ```
+  
+  Assume that the training algorithm contains
+  
+  - inputs: ["X_1", "Z_1", "C"]
+  - initializer: [T]
+  - outputs: ["W_new"]
+  
+  with a dictionary
+  
+  - update_binding: {"W": "W_new", "T": "T_new"}
+  
+  Inside the training algorithm graph, one can invoke the inference
+  graph via adding a GraphCall node with
+  
+  - inputs: ["X_1", "W", Z_1"]
+  - outputs: ["Y_1"]
+  - an attribute graph_name="MyInferenceGraph",
+  
+  The initializers, "W" and "T" in this case, in update_binding
+  are considered globally-visible and mutable variables, which
+  can be used as inputs of operators in the training graph.
+  
+  An example training algorithm graph may look like
+  
+  ```
+  .-------- W (a global and mutable variable from
+  |         |  the inference graph)
+  |         |
+  |   .-----'-----------.
+  |   |                 |
+  |   |                 v
+  |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph")
+  |   | |            |  |
+  |   | |            |  |
+  |   | |   Z_1 -----'  |
+  |   | |    |          V
+  |   | |    |         Y_1 ---> Loss ---> O
+  |   | |    |                    ^
+  |   | |    |                    |
+  |   | `--. |                    C
+  |   |    | |                    |
+  |   |    | |   .----------------'
+  |   |    | |   |
+  |   |    v v   v
+  |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1", "C"], y="O")
+  |        |
+  |        v
+  |      dO_dW (gradient of W)      1 (a scalar one)
+  |        |                        |
+  |        V                        v
+  |       Div <--- T ------------> Add ---> T_new
+  |        |    (T is the number of training iterations.
+  |        |     T is also globally visible and mutable.)
+  |        v
+  `-----> Sub ----> W_new
+  ```
+  
+  where Loss is a dummy node which computes the minimized objective function.
+  
+  The variable "W" is an optional input in the called graph.
+  If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
+  In this case, from the view of computation graph, the Conv operator invoked by
+  GraphCall's may be still connected the global "W" variable and therefore the
+  structure of the computation graph is unchanged.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>graph_name</tt> : string (required)</dt>
+<dd>The invoked graph's name. The only allowed value is the name of the inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T</dt>
+<dd>Inputs fed to the invoked graph. The i-th input here goes to the i-th input of the invoked graph. To omit an optional input in this field, the user can drop it or use an empty string.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T</dt>
+<dd>The outputs generated by the called graph. Its i-th value is bound to the i-th output of the called graph. Similar to the inputs, all outputs are optional.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Allow inputs and outputs to be any kind of tensor.</dd>
+</dl>
 
 
