@@ -403,6 +403,42 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* celu_ver12_doc = R"DOC(
+Continuously Differentiable Exponential Linear Units:
+Perform the linear unit element-wise on the input tensor X
+using formula: 
+
+```
+max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+```
+)DOC";
+
+static float celu_default_alpha = 1.0;
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Celu,
+    12,
+    OpSchema()
+       .SetDoc(celu_ver12_doc)
+       .Input(0, "X", "Input tensor", "T")
+       .Output(0, "Y", "Output tensor", "T")
+       .Attr(
+           "alpha",
+           "The Alpha value in Celu formula which control the shape of "
+           "the unit. The default value is 1.0.",
+           AttributeProto::FLOAT,
+           celu_default_alpha)
+       .TypeConstraint(
+           "T",
+           {"tensor(float16)", "tensor(float)", "tensor(double)"},
+           "Constrain input and output types to floating-point tensors.")
+       .FunctionBody(FunctionBodyHelper::BuildNodes(
+           {// nodes: {outputs, op, inputs, attributes}
+            FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {MakeRefAttribute("value_float", "alpha", AttributeProto::FLOAT)}},
+            {{"X_alpha"}, "Div", {"X", "alpha"}},
+            {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
+            {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
+
 static const char* Exp_ver6_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC";
@@ -1683,7 +1719,7 @@ When an optional "weight" is provided, the sample loss is calculated as:
 If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
 
-    mean(loss), if "weight" is not provided, 
+    mean(loss), if "weight" is not provided,
 
 or if weight is provided,
 
@@ -1694,11 +1730,11 @@ If "reduction" attribute is set to "sum", the output is a scalar:
 
 See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
-Example 1: 
+Example 1:
 
-    # negative log likelihood loss, "none" reduction
+    // negative log likelihood loss, "none" reduction
     N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
     target = [[2, 1], [0, 2]]
 
@@ -1708,15 +1744,15 @@ Example 1:
             c = target[n][d_1]
             loss[n][d_1] = -input[n][c][d_1]
 
-    # print(loss)
-    # [[-3. -2.]
-    #  [-0. -2.]]
+    // print(loss)
+    // [[-3. -2.]
+    //  [-0. -2.]]
 
 Example 2:
 
-    # weighted negative log likelihood loss, sum reduction
+    // weighted negative log likelihood loss, sum reduction
     N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
     target = [[2, 1], [0, 2]]
     weight = [0.2, 0.3, 0.1]
@@ -1727,14 +1763,14 @@ Example 2:
             loss[n][d_1] = -input[n][c][d_1] * weight[c]
 
     loss = np.sum(loss)
-    # print(loss)
-    # -1.1
+    // print(loss)
+    // -1.1
 
 Example 3:
 
-    # weighted negative log likelihood loss, mean reduction
+    // weighted negative log likelihood loss, mean reduction
     N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
     target = [[2, 1], [0, 2]]
     weight = [0.2, 0.3, 0.1]
@@ -1747,8 +1783,8 @@ Example 3:
             weight_total = weight_total + weight[c]
 
     loss = np.sum(loss) / weight_total
-    # print(loss)
-    # -1.57
+    // print(loss)
+    // -1.57
 )DOC";
 
 TensorProto ToDimensionOneTensor(int32_t value) {
@@ -2038,6 +2074,56 @@ ONNX_OPERATOR_SET_SCHEMA(
 	        einsumRankInference(ctx, equation);
         }));
 
+static const char* Inverse_ver12_doc = R"DOC(
+Calculates inverse of a square matrix or batches of square matrices.
+Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+and the inner-most 2 dimensions form square matrices.
+The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Inverse,
+    12,
+    OpSchema()
+        .SetDoc(Inverse_ver12_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor of the same type as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numerical tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const int rank = static_cast<int>(input_shape.dim_size());
+
+            if (rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+
+            const auto mat_w = input_shape.dim(rank - 1);
+            const auto mat_h = input_shape.dim(rank - 2);
+            if (mat_w.has_dim_value() &&
+                mat_h.has_dim_value() &&
+                (mat_w.dim_value() != mat_h.dim_value())) {
+              fail_shape_inference(
+                  "The inner-most 2 dimensions must have the same size (mat_w:",
+                  mat_w.dim_value(),
+                  " != mat_h:",
+                  mat_h.dim_value(),
+                  ").");
+            }
+
+            // Shape inference
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 const char* reduction_doc =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
@@ -2155,5 +2241,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
         }));
-
 } // namespace ONNX_NAMESPACE
