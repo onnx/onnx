@@ -4716,7 +4716,7 @@ for op_dtype in all_numeric_dtypes:
         outputs=['result'],
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
-           name=f'test_max_{np.dtype(op_dtype).name}')
+           name='test_max_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -5371,7 +5371,7 @@ for op_dtype in all_numeric_dtypes:
         outputs=['result'],
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
-           name=f'test_min_{np.dtype(op_dtype).name}')
+           name='test_min_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
