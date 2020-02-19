@@ -155,7 +155,7 @@ class SoftmaxCrossEntropyLoss(Base):
 
         # Check results
         expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
-    
+
     @staticmethod
     def export_softmaxcrossentropy_mean_weights():
         # Define operator attributes.
