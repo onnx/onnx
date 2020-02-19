@@ -56,4 +56,4 @@ class Max(Base):
                 outputs=['result'],
             )
             expect(node, inputs=[data_0, data_1], outputs=[result],
-                   name=f'test_max_{np.dtype(op_dtype).name}')
+                   name='test_max_{0}'.format(np.dtype(op_dtype).name))
