@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 def apply_adam(r, t, x, g, v, h, norm_coefficient, alpha, beta, epsilon):  # type: ignore
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
