@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def softmaxcrossentropy(x, target, weight=None, reduction='mean'):  # type: (np.ndarray) -> np.ndarray
+def softmaxcrossentropy(x, target, weight=None, reduction='mean'):  # type: ignore
     max_x = np.max(x, axis=1, keepdims=True)
     exp_x = np.exp(x - max_x)
     p = exp_x / np.sum(exp_x, axis=1, keepdims=True)
