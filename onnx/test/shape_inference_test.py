@@ -2992,7 +2992,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='none')],
             [])
         self.assertRaises(checker.ValidationError, self._inferred, graph)
-   
+
     def test_softmax_cross_entropy_none(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)),
@@ -3008,7 +3008,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SoftmaxCrossEntropyLoss', ['x', 'y'], ['z'], reduction='mean')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
-  
+
     def test_softmax_cross_entropy_none_NCD1D2(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3, 5, 8)),
@@ -3024,7 +3024,6 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SoftmaxCrossEntropyLoss', ['x', 'y'], ['z'], reduction='mean')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
-
 
     def test_celu_function_output_shape(self):  # type: () -> None
         graph = self._make_graph(
