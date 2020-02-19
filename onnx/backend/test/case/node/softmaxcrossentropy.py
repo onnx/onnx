@@ -46,7 +46,7 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean'):  # type: igno
 class SoftmaxCrossEntropyLoss(Base):
 
     @staticmethod
-    def export_softmaxcrossentropy_none():
+    def export_softmaxcrossentropy_none():  # type: () -> None
         # Define operator attributes.
         reduction = 'none'
 
@@ -68,7 +68,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
 
     @staticmethod
-    def export_softmaxcrossentropy_none_weights():
+    def export_softmaxcrossentropy_none_weights():  # type: () -> None
         # Define operator attributes.
         reduction = 'none'
 
@@ -91,7 +91,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_none_weights')
 
     @staticmethod
-    def export_softmaxcrossentropy_sum():
+    def export_softmaxcrossentropy_sum():  # type: () -> None
         # Define operator attributes.
         reduction = 'sum'
 
@@ -113,7 +113,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean():
+    def export_softmaxcrossentropy_mean():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
 
@@ -135,7 +135,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_3d():
+    def export_softmaxcrossentropy_mean_3d():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
 
@@ -157,7 +157,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights():
+    def export_softmaxcrossentropy_mean_weights():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
 
