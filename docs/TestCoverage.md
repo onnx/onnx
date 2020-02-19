@@ -4209,6 +4209,44 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 </details>
 
 
+### Inverse
+There are 2 test cases, listed as following:
+<details>
+<summary>inverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Inverse',
+    inputs=['x'],
+    outputs=['y']
+)
+
+X = np.random.randn(4, 4)
+Y = inverse_reference_implementation(X)
+
+expect(node, inputs=[X], outputs=[Y], name='test_inverse')
+```
+
+</details>
+<details>
+<summary>inverse_batched</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Inverse',
+    inputs=['x'],
+    outputs=['y']
+)
+
+X = np.random.randn(2, 3, 4, 4)
+Y = inverse_reference_implementation(X)
+
+expect(node, inputs=[X], outputs=[Y], name='test_inverse_batched')
+```
+
+</details>
+
+
 ### IsInf
 There are 3 test cases, listed as following:
 <details>
