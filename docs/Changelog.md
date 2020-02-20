@@ -14335,12 +14335,6 @@ This version of the operator has been available since version 12 of the default 
     output  = [[2,3],[4,5]]             # output_shape = [2, 2] 
   
   
-### <a name="Inverse-12"></a>**Inverse-12**</a>
-
-  Calculates inverse of a square matrix or batches of square matrices.
-  Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices.
-  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
 
 #### Version
 
@@ -14360,6 +14354,33 @@ This version of the operator has been available since version 12 of the default 
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> : tensor(int64)</dt>
 <dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+### <a name="Inverse-12"></a>**Inverse-12**</a>
+
+  Calculates inverse of a square matrix or batches of square matrices.
+  Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+  and the inner-most 2 dimensions form square matrices.
+  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
 #### Inputs
 
 <dl>
@@ -14370,8 +14391,6 @@ This version of the operator has been available since version 12 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output tensor of the same type as input.</dd>
 </dl>
@@ -14379,8 +14398,6 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
