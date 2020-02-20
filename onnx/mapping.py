@@ -8,8 +8,8 @@ from typing import Text, Any
 import numpy as np  # type: ignore
 
 TENSOR_TYPE_TO_NP_TYPE = {
-    int(TensorProto.FLOAT): np.dtype('float32'),
-    int(TensorProto.UINT8): np.dtype('uint8'),
+    int(TensorProto.FLOAT): np.dtype('float'),
+    int(TensorProto.UINT8): np.dtype('uint'),
     int(TensorProto.INT8): np.dtype('int8'),
     int(TensorProto.UINT16): np.dtype('uint16'),
     int(TensorProto.INT16): np.dtype('int16'),
