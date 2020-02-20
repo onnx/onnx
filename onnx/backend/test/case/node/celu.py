@@ -19,7 +19,7 @@ class Celu(Base):
             'Celu',
             inputs=['X'],
             outputs=['Y'],
-            alpha = alpha,
+            alpha=alpha,
         )
 
         input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
