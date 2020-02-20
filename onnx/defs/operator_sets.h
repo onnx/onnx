@@ -718,7 +718,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Reshape);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, NegativeLogLikelihoodLoss);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Inverse);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Dropout);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization);
@@ -737,7 +736,6 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ReduceMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Reshape)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, NegativeLogLikelihoodLoss)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Inverse)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Dropout)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization)>());
