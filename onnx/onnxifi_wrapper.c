@@ -67,11 +67,19 @@ struct onnxifi_event_wrapper {
   struct onnxifi_library* library;
 };
 
+struct onnxifi_event_wrapper {
+  uint32_t magic;
+  onnxEvent event;
+  struct onnxifi_library* library;
+};
+
 static struct onnxifi_library* libraries = NULL;
 static uint32_t num_libraries = 0;
 
 #ifdef _WIN32
 static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
+
+static INIT_TWICE init_guard = INIT_ONCE_STATIC_INIT;
 
 static BOOL CALLBACK load_all_windows_backends(
   PINIT_ONCE init_once,
