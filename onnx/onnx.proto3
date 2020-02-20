@@ -93,6 +93,7 @@ enum Version {
   IR_VERSION_2019_9_19 = 0x0000000000000006;
 
   // IR VERSION 7 published on <TBD>
+  // - Add support to allow function body graph to rely on multiple external opreator sets.
   // - Add a list to promote inference graph's initializers to global and
   //   mutable variables. Global variables are visible in all graphs of the
   //   stored models.
