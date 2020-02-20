@@ -14,7 +14,7 @@ class Celu(Base):
 
     @staticmethod
     def export():  # type: () -> None
-        alpha = 2
+        alpha = 2.0
         node = onnx.helper.make_node(
             'Celu',
             inputs=['X'],
