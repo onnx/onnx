@@ -2083,4 +2083,53 @@ ONNX_OPERATOR_SET_SCHEMA(
 	        einsumRankInference(ctx, equation);
         }));
 
+static const char* Inverse_ver12_doc = R"DOC(
+Calculates inverse of a square matrix or batches of square matrices.
+Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+and the inner-most 2 dimensions form square matrices.
+The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Inverse,
+    12,
+    OpSchema()
+        .SetDoc(Inverse_ver12_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor of the same type as input.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numerical tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const int rank = static_cast<int>(input_shape.dim_size());
+
+            if (rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+
+            const auto mat_w = input_shape.dim(rank - 1);
+            const auto mat_h = input_shape.dim(rank - 2);
+            if (mat_w.has_dim_value() &&
+                mat_h.has_dim_value() &&
+                (mat_w.dim_value() != mat_h.dim_value())) {
+              fail_shape_inference(
+                  "The inner-most 2 dimensions must have the same size (mat_w:",
+                  mat_w.dim_value(),
+                  " != mat_h:",
+                  mat_h.dim_value(),
+                  ").");
+            }
+
+            // Shape inference
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
 } // namespace ONNX_NAMESPACE
