@@ -59,6 +59,7 @@
   * <a href="#Hardmax">Hardmax</a>
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
+  * <a href="#ImageToCol">ImageToCol</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
   * <a href="#IsInf">IsInf</a>
   * <a href="#IsNaN">IsNaN</a>
@@ -7111,6 +7112,119 @@ Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
+
+
+### <a name="ImageToCol"></a><a name="imagetocol">**ImageToCol**</a>
+
+  The ImageToCol operator rearranges blocks from an input tensor into columns, and returns
+  the concatenated columns.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>block_shape</tt> : list of ints</dt>
+<dd>The size of the extracted blocks [H, W].</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from previous layer; Must be a 4-D tensor of size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>imagetocol</summary>
+
+```python
+
+x = np.array([[[[0., 1., 2., 3., 4.],
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+
+# ImageToCol with padding
+node_with_padding = onnx.helper.make_node(
+    'ImageToCol',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    pads=[1, 1, 1, 1],
+)
+# (1, 9, 25) output tensor
+y_with_padding = np.array([[[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,
+                             8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
+                            [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
+                             9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.],
+                            [0., 0., 0., 0., 0., 1., 2., 3., 4., 0., 6., 7., 8., 9.,
+                             0., 11., 12., 13., 14., 0., 16., 17., 18., 19., 0.],
+                            [0., 0., 1., 2., 3., 0., 5., 6., 7., 8., 0., 10., 11., 12.,
+                             3., 0., 15., 16., 17., 18., 0., 20., 21., 22., 23.],
+                            [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.,
+                             4., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24.],
+                            [1., 2., 3., 4., 0., 6., 7., 8., 9., 0., 11., 12., 13., 14.,
+                             0., 16., 17., 18., 19., 0., 21., 22., 23., 24., 0.],
+                            [0., 5., 6., 7., 8., 0., 10., 11., 12., 13., 0., 15., 16., 17.,
+                             8., 0., 20., 21., 22., 23., 0., 0., 0., 0., 0.],
+                            [5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18.,
+                             9., 20., 21., 22., 23., 24., 0., 0., 0., 0., 0.],
+                            [6., 7., 8., 9., 0., 11., 12., 13., 14., 0., 16., 17., 18., 19.,
+                             0., 21., 22., 23., 24., 0., 0., 0., 0., 0., 0.]]]).astype(np.float32)
+expect(node_with_padding, inputs=[x], outputs=[y_with_padding],
+       name='test_basic_imagetocol_with_padding')
+
+# ImageToCol without padding
+node_without_padding = onnx.helper.make_node(
+    'ImageToCol',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+    pads=[0, 0, 0, 0],
+)
+y_without_padding = np.array([[[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
+                               [1., 2., 3., 6., 7., 8., 11., 12., 13.],
+                               [2., 3., 4., 7., 8., 9., 12., 13., 14.],
+                               [5., 6., 7., 10., 11., 12., 15., 16., 17.],
+                               [6., 7., 8., 11., 12., 13., 16., 17., 18.],
+                               [7., 8., 9., 12., 13., 14., 17., 18., 19.],
+                               [10., 11., 12., 15., 16., 17., 20., 21., 22.],
+                               [11., 12., 13., 16., 17., 18., 21., 22., 23.],
+                               [12., 13., 14., 17., 18., 19., 22., 23., 24.]]]).astype(np.float32)
+expect(node_without_padding, inputs=[x], outputs=[y_without_padding],
+       name='test_basic_imagetocol_without_padding')
+```
+
+</details>
 
 
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
