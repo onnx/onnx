@@ -8,10 +8,10 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import List
+from typing import List, Tuple
 
 
-def im2col_2d_reference_implementation(x, shape, padding=(0, 0)):  # type: (np.ndarray, List[int], List[int]) -> np.ndarray
+def im2col_2d_reference_implementation(x, shape, padding=(0, 0)):  # type: (np.ndarray, List[int], Tuple[int]) -> np.ndarray
     x = np.pad(x, padding)
     s0, s1 = x.strides[-2:]
     nrows = x.shape[-2] - shape[0] + 1
