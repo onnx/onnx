@@ -4,16 +4,18 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
+
 import onnx
-from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node import expect
+from ..base import Base
+from . import expect
+from typing import Tuple
 
 
-def im2col_2d_sliding_strided(x, shape, padding=(0, 0)):
+def im2col_2d_reference_implementation(x, shape, padding=(0, 0)):  # type: (np.ndarray, Tuple, Tuple) -> np.ndarray
     x = np.pad(x, padding)
     s0, s1 = x.strides[-2:]
-    nrows = x.shape[-2]-shape[0]+1
-    ncols = x.shape[-1]-shape[1]+1
+    nrows = x.shape[-2] - shape[0] + 1
+    ncols = x.shape[-1] - shape[1] + 1
     new_shape = shape[0], shape[1], nrows, ncols
     view = np.lib.stride_tricks.as_strided(x, shape=new_shape, strides=(s0, s1, s0, s1))
     return view.reshape(shape[0] * shape[1], -1)[:, :]
@@ -37,7 +39,7 @@ class ImageToCol(Base):
             # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
             pads=[0, 0],
         )
-        y_without_padding = im2col_2d_sliding_strided(x[0], [3, 3])
+        y_without_padding = im2col_2d_reference_implementation(x[0], [3, 3])
         # expected [[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
         #           [1., 2., 3., 6., 7., 8., 11., 12., 13.],
         #           [2., 3., 4., 7., 8., 9., 12., 13., 14.],
@@ -60,7 +62,7 @@ class ImageToCol(Base):
             # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
             pads=[1, 1, 1, 1],
         )
-        y_with_padding = im2col_2d_sliding_strided(x[0], [3, 3], (1, 1,))
+        y_with_padding = im2col_2d_reference_implementation(x[0], [3, 3], (1, 1,))
         # expected [[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,
         #            8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
         #           [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
