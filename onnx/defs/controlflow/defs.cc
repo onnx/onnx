@@ -261,10 +261,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
             else_elem_type);
       }
 
-      // merge the 'else' shape information to check it's consistent and
-      // augment the 'if' output if possible
-      mergeInShapeInfo(
-          else_output->tensor_type(), *if_output->mutable_tensor_type());
+      UnionShapeInfo(
+          else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
     }
   }
 }
@@ -382,7 +380,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    1,
+    11,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
@@ -390,8 +388,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "outputs",
             "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same shape and same "
-            "data type.",
+            "the `then_branch` and `else_branch` must be of the same data type. "
+            "The `then_branch` and `else_branch` may produce tensors with the same "
+            "element type and different shapes. "
+            "If corresponding outputs from the then-branch and the else-branch have "
+            "static shapes S1 and S2, then the shape of the corresponding output "
+            "variable of the if-node (if present) must be compatible with both S1 "
+            "and S2 as it represents the union of both possible shapes."
+            "For example, if in a model file, the the first "
+            "output of `then_branch` is typed float tensor with shape [2] and the "
+            "first output of `else_branch` is another float tensor with shape [3], "
+            "If's first output should have (a) no shape set, or (b) "
+            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
+            "a shape of rank 1 with a unique `dim_param`. "
+            "In contrast, the first output cannot have the shape [2] since [2] and "
+            "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
             false)
@@ -471,15 +482,15 @@ C-style code:
     }
 
     graph body-net (
-      %i[INT32, scalar]
-      %keepgoing[BOOL, scalar]
-      %b[INT32, scalar]
+      %i[INT32, scalar]           // iteration number
+      %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+      %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
     ) {
-      %my_local = Add(%a, %b)
-      %b_out = Sub(%a, %b)
-      %keepgoing_out = Greater(%my_local, %b_out)
-      %user_defined_vals = Add(%b, %b)
-      return %keepgoing_out, %b_out, %user_defined_vals
+      %my_local = Add(%a, %b_in)
+      %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+      %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+      %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+      return %keepgoing_out, %b_out, %user_defined_val
     }
 
 *Sample equivalent C code*
@@ -494,29 +505,49 @@ C-style code:
       const int max_trip_count = 10; // Analogous to input M
       int user_defined_vals[]; // Imagine this is resizable
       /* End implicitly-defined code */
-      for (int i=0; i < max_trip_count && keepgoing; ++i) {
-        /* User-defined code (loop body) */
-        int my_local = a + b; // Reading values in the enclosing scope is fine
-        b = a - b; // writes fine if we specify b as a loop-carried dependency
-        keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-        user_defined_vals[i] = b + b;
-        /* End user-defined code */
-      }
-      // my_local = 123; // Can't do this. my_local was defined in the the body
+      /* initialize loop-carried variables and scan-output variables */
+      bool keepgoing_out = keepgoing
+      int b_out = b
 
-      // These below values are live-out from the loop and therefore accessible
-      b_out; user_defined_vals; keepgoing_out;
+      for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+        /* Implicitly-defined code: bind actual parameter values
+           to formal parameter variables of loop-body */
+        bool keepgoing_in = keepgoing_out; 
+        bool b_in = b_out;
+
+        /* User-defined code (loop body) */
+        int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+        b_out = a - b_in;
+        keepgoing_out = my_local > b_out; 
+        user_defined_val = b_in + b_in; // b_in and b_out are different variables
+        /* End user-defined code */
+
+        /* Implicitly defined-code */
+        user_defined_vals[i] = user_defined_val // accumulate scan-output values
+      }
+      // int t = my_local; // Can't do this. my_local is not accessible here.
+
+      // The values below are bound to the output variables of the loop and therefore accessible
+      // b_out; user_defined_vals; keepgoing_out;
     }
 
 There are several things of note in this code snippet:
 
-1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
    be referenced in the inputs of the loop.
-2) Any variables which you wish to make available in the enclosing scope (i.e.
-   the variables b and keepgoing) must be declared as either loop-carried
-   dependencies (both at the op inputs and output and at the body net input and
-   output) or scan_outputs.
-3) Values created in the body cannot be accessed in the enclosing scope.
+2) Any values computed in the loop body that needs to be used in a subsequent
+   iteration or after the loop are modelled using a pair of variables in the loop-body,
+   consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+   These are referred to as loop-carried dependences. The loop operation node
+   supplies the input value of the input variable for the first iteration, and
+   returns the output value of the output variable produced by the final
+   iteration.
+3) Scan_output variables are used to implicitly concatenate values computed across
+   all the iterations. In the above example, the value of user_defined_val computed
+   over all iterations are concatenated and returned as the value of user_defined_vals
+   after the loop.
+4) Values created in the body cannot be accessed in the enclosing scope,
+   except using the mechanism described above.
 
 Note that the semantics of this op support "diagonal" or "wavefront" execution.
 (See Step 3 here for an example:
@@ -779,154 +810,4 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
 
-static const char* Momentum_ver11_doc = R"DOC(
-    Compute one iteration of stochastic gradient update with momentum.
-    This operator can conduct the optimization of multiple tensor variables.
-
-    Let's define the behavior of this operator. As you can imagine, SG with momentum requires
-    several parameters:
-     
-     - The learning-rate "R".
-     - The update count "T". That is, the number of conducted training iterations. It should
-       be zero in the first training iteration.
-     - A L2-norm regularization coefficient "norm_coefficient".
-     - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
-     - The scaling coefficient of current gradient "beta".
-     - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
-       be used.
-
-    For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
-    Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
-    Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
-    momentum (called "V_new").
-    
-    This operator supports two different momentum algorithms. Set the attribute "mode" to
-    "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
-    "standard" to use standard momentum. Computation details are described subsequently.
-
-    Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
-
-    Pseudo code for SG with standard momentum:
-
-      // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-      // values of all elements in X.
-      G_regularized = norm_coefficient * X + G
-
-      // In the first training iteration, beta should always be 1.
-      beta_adjusted = T > 0 ? beta : 1
-
-      // Compute the current momentum based on previous momentum and the current gradient.
-      V_new = alpha * V + beta_adjusted * G_regularized
-
-      // Update X.
-      X_new = X - R * V_new
-
-    Pseudo code for SG with Nesterov's momentum:
-
-      // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-      // values of all elements in X.
-      G_regularized = norm_coefficient * X + G;
-
-      // In the first training iteration, beta should always be 1.
-      beta_adjusted = T > 0 ? beta : 1
-
-      // Compute the current momentum based on previous momentum and the current gradient.
-      V_new = alpha * V + beta_adjusted * G_regularized;
-
-      // Compute final update direction and then update X.
-      X_new = X - R * (G_regularized + alpha * V_new)
-
-    If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
-    pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
-    concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-    be concatenated too) and then our pseudo code becomes applicable.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Momentum,
-    11,
-    OpSchema()
-        .SetDoc(Momentum_ver11_doc)
-        .Input(0, "R", "The learning rate.", "T1")
-        .Input(1, "T", "Update count of \"X\". It should be a scalar.", "T2")
-        .Input(
-            2,
-            "inputs",
-            "It sequentially contains the current values of optimized tensors, then their "
-            "gradient tensors, and finally their momentum tensors. For example, if two tensors "
-            "\"X_1\" and \"X_2\" are optimized, The expected input list would be "
-            "[\"X_1\", \"X_2\", gradient of \"X_1\", gradient of \"X_2\", momentum of \"X_1\", momentum of \"X_2\"].",
-            "T3",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "outputs",
-            "It sequentially contains the new values of optimized tensors and then the new "
-            "values of their momentum tensors. For example, if two tensors \"X_1\" and \"X_2\" are "
-            "optimized, the output list would be [new value of \"X_1,\" new value of \"X_2\" "
-            "new momentum of \"X_1\", new momentum of \"X_2\"].",
-            "T3",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "alpha",
-            "The decay factor of momentum. It should be a scalar.",
-            AttributeProto::FLOAT)
-        .Attr(
-            "beta",
-            "The coefficient of gradient in computing new momentum. It should be a scalar.",
-            AttributeProto::FLOAT)
-        .Attr(
-            "norm_coefficient",
-            "Coefficient of 0.5 * norm_coefficient * ||X||^2.",
-            AttributeProto::FLOAT)
-        .Attr(
-            "mode",
-            "Its value should be either \"nesterov\" or \"standard\". The value \"nesterov\" leads "
-            "to the use of Nesterov's momentum while \"standard\" invokes stochastic gradient method "
-            "using standard momentum",
-            AttributeProto::STRING)
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float scalars.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(int64)"},
-            "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint(
-            "T3",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and
-            // output list is [X1_new, X2_new, V1_new, V2_new] for explaining
-            // the code below in a simpler way.
-
-            // The count of input tensors excluding "R" and "T".
-            auto num_adjustable_tensors = ctx.getNumInputs() - 2;
-
-            // Check number of (optimized tensor, gradient, momentum) tuples.
-            if (num_adjustable_tensors % 3 != 0)
-              fail_shape_inference(
-                  "The sum of optimized tensor count and momentum tensor count ",
-                  "should be a multiple of 2 in the input list of Momentum operator");
-
-            // The count of "X1" and "X2".
-            auto num_optimized_tensors = num_adjustable_tensors / 3;
-            for (size_t i = 0; i < num_optimized_tensors; ++i){
-              // Pass X1's/X2's shapes to X1_new/X2_new.
-              size_t i_in = 2 + i;
-              size_t i_out = i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
-
-              // Pass V1's/V2's shapes to V1_new/V2_new.
-              i_in = 2 + 2 * num_optimized_tensors + i;
-              i_out = i + num_optimized_tensors;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
-            }
-        }));
 } // namespace ONNX_NAMESPACE

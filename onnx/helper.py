@@ -229,7 +229,7 @@ def make_attribute(
         attr.i = cast(int, value)
         attr.type = AttributeProto.INT
     # string
-    elif bytes_or_false:
+    elif bytes_or_false is not False:
         assert isinstance(bytes_or_false, bytes)
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
@@ -252,7 +252,7 @@ def make_attribute(
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
-        elif all(byte_array):
+        elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
             attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
@@ -269,31 +269,31 @@ def make_attribute(
                 "You passed in an iterable attribute but I cannot figure out "
                 "its applicable type.")
     else:
-        raise ValueError(
-            'Value "{}" is not valid attribute data type.'.format(value))
+        raise TypeError(
+            'value "{}" is not valid attribute data type.'.format(value))
     return attr
 
 
 def get_attribute_value(attr):  # type: (AttributeProto) -> Any
-    if attr.HasField('f'):
+    if attr.type == AttributeProto.FLOAT:
         return attr.f
-    elif attr.HasField('i'):
+    elif attr.type == AttributeProto.INT:
         return attr.i
-    elif attr.HasField('s'):
+    elif attr.type == AttributeProto.STRING:
         return attr.s
-    elif attr.HasField('t'):
+    elif attr.type == AttributeProto.TENSOR:
         return attr.t
-    elif attr.HasField('g'):
+    elif attr.type == AttributeProto.GRAPH:
         return attr.g
-    elif len(attr.floats):
+    elif attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
-    elif len(attr.ints):
+    elif attr.type == AttributeProto.INTS:
         return list(attr.ints)
-    elif len(attr.strings):
+    elif attr.type == AttributeProto.STRINGS:
         return list(attr.strings)
-    elif len(attr.tensors):
+    elif attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
-    elif len(attr.graphs):
+    elif attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
     else:
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))

@@ -3,6 +3,7 @@
 
 #include "tensor_proto_util.h"
 #include <vector>
+#include "onnx/common/platform_helpers.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -27,13 +28,6 @@ namespace ONNX_NAMESPACE {
     return t;                                                   \
   }
 
-inline bool is_platform_little_endian() {
-  int num = 1;
-  if (*(char*)&num == 1)
-    return true;
-  return false;
-}
-
 #define DEFINE_PARSE_DATA(type, typed_data_fetch)                          \
   template <>                                                              \
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {     \
@@ -48,7 +42,7 @@ inline bool is_platform_little_endian() {
     /* okay to remove const qualifier as we have already made a copy */    \
     char* bytes = const_cast<char*>(raw_data.c_str());                     \
     /*onnx is little endian serialized always-tweak byte order if needed*/ \
-    if (!is_platform_little_endian()) {                                    \
+    if (!is_processor_little_endian()) {                                   \
       const size_t element_size = sizeof(type);                            \
       const size_t num_elements = raw_data.size() / element_size;          \
       for (size_t i = 0; i < num_elements; ++i) {                          \
