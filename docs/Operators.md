@@ -4903,10 +4903,6 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
 
-#### Function
-
-The Function can be represented as a function.
-
 
 #### Examples
 
