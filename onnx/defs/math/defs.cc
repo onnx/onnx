@@ -2124,7 +2124,121 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-const char* reduction_doc =
+const char* reduction_doc_mse =
+    "Type of reduction to apply to loss: none, sum, mean(default). "
+    "'none': the output is the loss for each sample in the batch."
+    "'sum': the output will be summed into a scalar. "
+    "'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`";
+
+static const char* MSD_ver12_doc = R"DOC(Loss function that measures the
+mean squared distance (squared L2 norm) between each element in the 'scores'
+and 'labels'.
+
+The loss can be described as:
+    L = Pow(Sub(scores, labels), 2)
+
+score and label are tensors of arbitrary shapes with total of N elements each,
+and are of the same shape.
+
+If 'weights' is provided, it should be broadcastable to shape of 'L'.
+    L = Mul(weights, L)
+, where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
+
+Finally, L is optionally reduced:
+L = ReduceSum(L), if reduction = 'sum';
+    ReduceMean(L), if reduction = 'mean';
+    L, if reduction = 'none';
+
+.)DOC";
+
+bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  body.push_back(FunctionBodyHelper::Const<int>("Q_Pow", 2));
+  body.push_back({{"X_Sub"}, "Sub", {"scores", "labels"}});
+
+  if (ctx.hasInput(2)) {
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"output"}, "Pow", {"X_Sub", "Q_Pow"}});
+    } else {
+      body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
+      if (ctx.getAttribute("reduction")->s() == "sum") {
+        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}});
+      } else {
+        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}});
+      }
+    }
+  } else {
+    body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"output"}, "Mul", {"weights", "X_Pow"}});
+    } else {
+      body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
+      if (ctx.getAttribute("reduction")->s() == "sum") {
+        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}});
+      } else {
+        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}});
+      }
+    }
+  }
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MeanSquaredDistance,
+    12,
+    OpSchema()
+        .SetDoc(MSD_ver12_doc)
+        .Attr(
+            "reduction",
+            reduction_doc_mse,
+            AttributeProto::STRING,
+            std::string("mean"))
+        .Input(0, "scores", "The predicted outputs.", "T")
+        .Input(
+            1,
+            "labels",
+            "The ground truth output tensor, same dimensions as 'scores'.",
+            "T")
+        .Input(
+            2,
+            "weights",
+            "Weights acts as a coefficient for the loss, it should be "
+            "broadcastable to shape of 'scores'.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "output",
+            "Weighted loss float Tensor. If reduction is none, this has the "
+            "shape of [batch_size]; otherwise, it is scalar.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMSD)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            std::string reduction = getAttribute(ctx, "reduction", "mean");
+            if (reduction.compare("none") == 0) {
+	        if (hasInputShape(ctx, 0)) {
+		    propagateShapeFromInputToOutput(ctx, 0, 0);
+		}
+            } else {
+                updateOutputShape(ctx, 0, TensorShapeProto());
+            }
+
+        }));
+
+const char* reduction_doc_sce =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
@@ -2193,7 +2307,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(SoftmaxCrossEntropyLoss_ver12_doc)
         .Attr(
             "reduction",
-            reduction_doc,
+            reduction_doc_sce,
             AttributeProto::STRING,
             std::string("mean"))
         .Input(
@@ -2247,4 +2361,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
         }));
-} // namespace ONNX_NAMESPCE
+} // namespace ONNX_NAMESPACE
