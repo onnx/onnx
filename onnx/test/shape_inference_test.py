@@ -2473,6 +2473,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (6,))])
 
+    def test_gathernd_batchdim_1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2, 2)),
+             ('indices', TensorProto.INT64, (2, 1))],
+            [make_node('GatherND', ['x', 'indices'], ['y'], batch_dims=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2))])
+
     def test_cumsum(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 3)),
