@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 142/158 (89.87%, 5 generators excluded) common operators.
+Node tests have covered 143/159 (89.94%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4079,7 +4079,7 @@ node_with_padding = onnx.helper.make_node(
     'ImageToCol',
     inputs=['x'],
     outputs=['y'],
-    kernel_shape=[3, 3],
+    block_shape=[3, 3],
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
     pads=[1, 1, 1, 1],
 )
@@ -4110,7 +4110,7 @@ node_without_padding = onnx.helper.make_node(
     'ImageToCol',
     inputs=['x'],
     outputs=['y'],
-    kernel_shape=[3, 3],
+    block_shape=[3, 3],
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
     pads=[0, 0, 0, 0],
 )
