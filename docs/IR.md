@@ -88,7 +88,7 @@ Each model has the following components:
 |doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
-|training_info|TrainingInfoProto|An optional extension that contains information for training.|
+|training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
 
