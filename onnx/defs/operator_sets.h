@@ -722,7 +722,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Expand);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Celu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ImageToCol);
 
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
@@ -740,7 +739,6 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Constant)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Expand)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Celu)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ImageToCol)>());
   }
 };
 

@@ -47,7 +47,7 @@ void convPoolShapeInference(
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
-  // Only MaxPool, and Conv support dilation. For
+  // Only MaxPool and Conv support dilation. For
   // simplicity of the code, we just treat the rest of them as having all-1s
   // dilation.
   std::vector<int64_t> dilations;
@@ -130,7 +130,7 @@ void convPoolShapeInference(
       }
     }
   }
-
+    
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -182,98 +182,6 @@ void convPoolShapeInference(
         ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
     second_output_shape->CopyFrom(*output_shape);
   }
-}
-
-void imageToColShapeInference(
-    InferenceContext& ctx) {
-  // we need the first input shape for this inference.
-  if (!hasInputShape(ctx, 0)) {
-    return;
-  }
-
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
-  }
-
-  // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
-
-  std::vector<int64_t> dilations;
-  if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    if (dilations.size() != n_input_dims) {
-      fail_shape_inference("Attribute dilations has incorrect size");
-    }
-  } else {
-    dilations.assign(n_input_dims, 1);
-  }
-
-  std::vector<int64_t> strides;
-  if (getRepeatedAttribute(ctx, "strides", strides)) {
-    if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");
-    }
-  } else {
-    strides.assign(n_input_dims, 1);
-  }
-
-  std::vector<int64_t> block_shape;
-  if (getRepeatedAttribute(ctx, "block_shape", block_shape)) {
-    if (block_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute size has incorrect size");
-    }
-  } else {
-    fail_shape_inference("Attribute block_shape must be specified");
-  }
-
-	size_t block_num_element = 1;
-  std::vector<int64_t> effective_block_shape = block_shape;
-  for (int i = 0; i < static_cast<int>(block_shape.size()); i++) {
-    // accounting for dilation, how big is the block in this dimension
-    effective_block_shape[i] = (effective_block_shape[i] - 1) * dilations[i] + 1;
-    block_num_element *= effective_block_shape[i];
-  }
-
-
-  std::vector<int64_t> pads;
-  if (getRepeatedAttribute(ctx, "pads", pads)) {
-    if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
-    }
-  } else {
-    pads.assign(n_input_dims * 2, 0);
-  }
-
-  auto output_shape =
-      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-  *output_shape->add_dim() = input_shape.dim(0);
-  output_shape->add_dim()->set_dim_value(block_num_element);
-
-  size_t last_dim_size = 1;
-  int block_shape_size = static_cast<int>(block_shape.size());
-  for (int i = 0; i < block_shape_size; ++i) {
-    if (!input_shape.dim(2 + i).has_dim_value()) {
-      continue;
-    }
-    // how big is the input, including padding
-    int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + block_shape_size];
-
-    // how many times we can move the kernel from it's initial position, based
-    // on the stride
-    int64_t strided_kernel_positions;
-    strided_kernel_positions =
-        (effective_input_size - effective_block_shape[i]) / strides[i];
-
-    // add in the initial position
-    last_dim_size *= (1 + strided_kernel_positions);
-  }
-
-  auto newdim = output_shape->add_dim();
-  newdim->set_dim_value(last_dim_size);
-
 }
 
 std::vector<std::string> GetSupportedDataTypesForPoolingOps(bool supports8bit){
@@ -375,7 +283,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForPoolingOps(supports8bit),
-        supports8bit ? "Constrain input and output types to float and 8 bit tensors."
+        supports8bit ? "Constrain input and output types to float and 8 bit tensors." 
         : "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -874,68 +782,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     Conv,
     11,
     OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
-
-std::function<void(OpSchema&)> ImageToColOpSchemaGenerator() {
-  return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
-The ImageToCol operator rearranges blocks from an input tensor into columns, and returns
-the concatenated columns.)DOC";
-    schema.SetDoc(doc);
-    schema.Input(
-        0,
-        "X",
-        "Input data tensor from previous layer; Must be a 4-D "
-        "tensor of size (N x C x H x W), where N is the batch size, "
-        "C is the number of channels, and H and W are the "
-        "height and width.",
-        "T");
-    schema.Output(
-        0,
-        "Y",
-        "Output data tensor that contains the result of the "
-        "convolution. The output dimensions are functions "
-        "of the kernel size, stride size, and pad lengths.",
-        "T");
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-    schema.Attr(
-        "block_shape",
-        "The size of the extracted blocks [H, W].",
-        AttributeProto::INTS,
-        OPTIONAL);
-    schema.Attr(
-        "dilations",
-        "Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
-    schema.Attr(
-        "strides",
-        "Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
-    schema.Attr(
-        "pads",
-        "Padding for the beginning and ending along each spatial axis, it can take any value greater "
-        "than or equal to 0. The value represent the number of pixels added to the beginning "
-        "and end part of the corresponding axis. `pads` format should be as follow "
-        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-        "the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      imageToColShapeInference(ctx);
-    });
-  };
-}
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ImageToCol,
-    12,
-    OpSchema().FillUsing(ImageToColOpSchemaGenerator()));
 
 static const char* QLinearConv_ver10_doc = R"DOC(
 The convolution operator consumes a quantized input tensor, its scale and zero point,
