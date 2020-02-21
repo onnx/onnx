@@ -1637,4 +1637,147 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
+static const char* GatherND_ver11_doc = R"DOC(
+Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers 
+slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
+
+`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
+where each element defines a slice of `data`
+
+Some salient points about the inputs' rank and shape:
+ 
+1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
+
+2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
+
+3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+   It is an error if any of the index values are out of bounds.
+
+The output is computed as follows:
+
+The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
+ 
+1) If `indices_shape[-1] > r` => error condition
+
+2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+   containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
+   Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+   to form the `output` tensor (Example 1 below)
+
+3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
+   containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
+   Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+   to form the `output` tensor (Examples 2, 3, and 4 below)
+
+This operator is the inverse of `ScatterND`.
+
+`Example 1`
+
+  data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+
+  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+
+  output  = [0,3]           # output_shape = [2]
+
+`Example 2`
+
+  data    = [[0,1],[2,3]]  # data_shape = [2, 2]
+
+  indices = [[1],[0]]      # indices_shape = [2, 1]
+
+  output  = [[2,3],[0,1]]  # output_shape = [2, 2]
+
+`Example 3`
+
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+
+  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
+
+`Example 4`
+
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+
+  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GatherND,
+    11,
+    OpSchema()
+        .SetDoc(GatherND_ver11_doc)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T")
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
+            "along axis of size s. It is an error if any of the index values are out of bounds.",
+            "tensor(int64)")
+        .Output(
+            0,
+            "output",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (!hasNInputShapes(ctx, 2)) {
+            // cannot proceed with shape or rank inference
+            return;
+          }
+
+          const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto data_rank = data_shape.dim_size();
+
+          const auto& indices_shape =
+              ctx.getInputType(1)->tensor_type().shape();
+          const auto indices_rank = indices_shape.dim_size();
+
+          if (data_rank < 1 || indices_rank < 1) {
+            fail_shape_inference(
+                "Both `data` and `indices` input tensors in GatherND op "
+                "need to have rank larger than 0.");
+          }
+
+          // cannot ascertain if the input shapes are valid if shape of
+          // `indices` is missing last dimension value so return at this point
+          if (!indices_shape.dim(indices_rank - 1).has_dim_value()) {
+            return;
+          }
+
+          const auto last_index_dimension =
+              indices_shape.dim(indices_rank - 1).dim_value();
+
+          if (last_index_dimension > data_rank) {
+            fail_shape_inference(
+                "Last dimension of `indices` input tensor in GatherND op "
+                "must not be larger than the rank of `data` tensor");
+          }
+
+          for (int i = 0; i < indices_rank - 1; ++i) {
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() = indices_shape.dim(i);
+          }
+
+          for (int i = static_cast<int>(last_index_dimension); i < data_rank;
+               ++i) {
+            *ctx.getOutputType(0)
+                 ->mutable_tensor_type()
+                 ->mutable_shape()
+                 ->add_dim() = data_shape.dim(i);
+          }
+        }));
 } // namespace ONNX_NAMESPACE
