@@ -62,7 +62,22 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
         return py::bytes(bytes);
+      })
+      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
+      .def("get_context_dependent_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+
+        std::string func_bytes = "";
+        if (op->HasContextDependentFunction()) {
+          FunctionBodyBuildContextImpl ctx(proto);
+          FunctionProto func_proto;
+          op->BuildContextDependentFunction(ctx, func_proto);
+          func_proto.SerializeToString(&func_bytes);
+        }
+        return py::bytes(func_bytes);
       });
+;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
