@@ -20,10 +20,10 @@ else()
   set(ONNX_USE_MSVC_SHARED_RUNTIME ON)
 endif()
 
-if(ONNX_DEBUG)
-  set(ONNX_DEBUG_MODE Debug)
+if(${DEBUG})
+  set(ONNX_DEBUG_MODE "Debug")
 else()
-  set(ONNX_DEBUG_MODE Release)
+  set(ONNX_DEBUG_MODE "Release")
 endif()
 
 ExternalProject_Add(googletest
