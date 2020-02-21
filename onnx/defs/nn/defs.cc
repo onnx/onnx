@@ -226,7 +226,7 @@ void imageToColShapeInference(
     fail_shape_inference("Attribute block_shape must be specified");
   }
 
-	size_t block_num_element = 1;
+	size_t block_num_element = input_shape.dim(1).dim_value();
   std::vector<int64_t> effective_block_shape = block_shape;
   for (int i = 0; i < static_cast<int>(block_shape.size()); i++) {
     // accounting for dilation, how big is the block in this dimension
