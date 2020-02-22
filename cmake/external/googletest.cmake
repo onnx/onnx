@@ -20,7 +20,7 @@ else()
   set(ONNX_USE_MSVC_SHARED_RUNTIME ON)
 endif()
 
-if(${DEBUG})
+if(ONNX_DEBUG)
   set(ONNX_DEBUG_MODE "Debug")
 else()
   set(ONNX_DEBUG_MODE "Release")
