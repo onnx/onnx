@@ -36,6 +36,7 @@ install_requires = []
 setup_requires = []
 tests_require = []
 extras_require = {}
+extend ={}
 
 ################################################################################
 # Global variables for controlling the build variant
@@ -51,6 +52,9 @@ ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 
 DEBUG = bool(os.getenv('DEBUG'))
 COVERAGE = bool(os.getenv('COVERAGE'))
+
+DEBUG1 = bool(os.getenv('DEBUG'))
+COVERAGE1 = bool(os.getenv('COVERAGE'))
 
 ################################################################################
 # Version
