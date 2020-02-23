@@ -383,6 +383,63 @@ void check_sparse_tensor(
     fail_check("Sparse tensor (", values.name(), ") has no index values.");
 }
 
+
+
+void check_sparse_tensor(
+    const SparseTensorProto& sparse_tensor_proto,
+    const CheckerContext& ctx) {
+  enforce_has_field(sparse_tensor_proto, values);
+
+  const TensorProto& values = sparse_tensor_proto.values();
+  check_tensor(values, ctx);
+
+  // values must be a tensor of shape [NNZ]
+  // Currently we restrict the value associated with a particular index-tuple
+  // to be a single value. In the future, if there is a requirement,
+  // we may extend this to permit the value to be a "sub-tensor", in which
+  // case values will have dimension > 1.
+  if (values.dims_size() != 1)
+    fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
+  size_t nnz = static_cast<size_t>(values.dims(0));
+
+  int dense_rank = sparse_tensor_proto.dims_size();
+  if (dense_rank == 0) {
+    // TODO: Should we add a name field for a sparse-tensor-proto?
+    // Currently, values has a name, but message may be a bit confusing.
+    fail_check(
+        "Sparse tensor (", values.name(), ") must have a dense-rank > 0");
+  }
+  for (int i = 0; i < dense_rank; ++i) {
+    if (sparse_tensor_proto.dims(i) <= 0)
+      fail_check(
+          "Sparse tensor (", values.name(), ") dimensions are not positive.");
+  }
+
+  if (sparse_tensor_proto.has_indices()) {
+    const TensorProto& indices = sparse_tensor_proto.indices();
+    check_tensor(indices, ctx);
+    if (indices.data_type() != TensorProto::INT64)
+      fail_check(
+          "Sparse tensor indices (", indices.name(), ") must have INT64 type.");
+    switch (indices.dims().size()) {
+      case 1:
+        // Indices in linearized format
+        check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz);
+        return;
+      case 2:
+        // Check COO-style index. E.g., an index for a 3D tensor is a 3-tuple.
+        check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz);
+        return;
+      default:
+        fail_check(
+            "Sparse tensor indices (",
+            indices.name(),
+            ") must have rank 1 or 2.");
+    }
+  } else if (nnz != 0)
+    fail_check("Sparse tensor (", values.name(), ") has no index values.");
+}
+
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(
