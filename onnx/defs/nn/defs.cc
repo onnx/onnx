@@ -1792,7 +1792,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.getNumInputs() > 1 && hasInputShape(ctx, 1)) {
             auto& ratio_input_shape = getInputShape(ctx, 1);
-            if (static_cast<int>(ratio_input_shape.dim_size()) != 0) {
+            if (static_cast<int>(ratio_input_shape.dim_size()) != 1) {
                 fail_shape_inference("Ratio of Dropout must be a scalar.");
             }
           }
