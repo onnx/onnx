@@ -2156,7 +2156,7 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
   body.push_back(FunctionBodyHelper::Const<int>("Q_Pow", 2));
   body.push_back({{"X_Sub"}, "Sub", {"scores", "labels"}});
 
-  if (ctx.hasInput(2)) {
+  if (!ctx.hasInput(2)) {
     if (ctx.getAttribute("reduction")->s() == "none") {
       body.push_back({{"output"}, "Pow", {"X_Sub", "Q_Pow"}});
     } else {
@@ -2284,7 +2284,7 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
-  if (ctx.hasInput(2)) {
+  if (!ctx.hasInput(2)) {
     body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"}, {MakeAttribute("reduction", "mean")}});
   } else {
     body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"}, {MakeAttribute("reduction", "mean")}});
