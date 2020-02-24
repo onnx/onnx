@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 143/159 (89.94%, 5 generators excluded) common operators.
+Node tests have covered 144/160 (90.00%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4103,7 +4103,7 @@ node_without_padding = onnx.helper.make_node(
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
     pads=[0, 0],
 )
-y_without_padding = im2col_2d_sliding_strided(x[0], [3, 3])
+y_without_padding = im2col_2d_reference_implementation(x[0], [3, 3])
 # expected [[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
 #           [1., 2., 3., 6., 7., 8., 11., 12., 13.],
 #           [2., 3., 4., 7., 8., 9., 12., 13., 14.],
@@ -4126,7 +4126,7 @@ node_without_padding = onnx.helper.make_node(
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
     pads=[1, 1, 1, 1],
 )
-y_with_padding = im2col_2d_sliding_strided(x[0], [3, 3], (1, 1,))
+y_with_padding = im2col_2d_reference_implementation(x[0], [3, 3], [1, 1])
 # expected [[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,
 #            8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
 #           [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
