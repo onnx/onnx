@@ -11,7 +11,7 @@ from . import expect
 from typing import List
 
 
-def im2col_2d_reference_implementation(x, shape, padding=(0, 0)):  # type: (np.ndarray, List[int], List[int]) -> np.ndarray
+def im2col_2d_reference_implementation(x, shape, padding=[0, 0]):  # type: (np.ndarray, List[int], List[int]) -> np.ndarray
     x = np.pad(x, padding)
     s0, s1 = x.strides[-2:]
     nrows = x.shape[-2] - shape[0] + 1
@@ -62,7 +62,7 @@ class ImageToCol(Base):
             # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
             pads=[1, 1, 1, 1],
         )
-        y_with_padding = im2col_2d_reference_implementation(x[0], [3, 3], (1, 1,))
+        y_with_padding = im2col_2d_reference_implementation(x[0], [3, 3], [1, 1])
         # expected [[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,
         #            8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
         #           [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
