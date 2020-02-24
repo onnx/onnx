@@ -12,7 +12,7 @@ from typing import List
 
 
 def im2col_2d_reference_implementation(x, shape, padding=[0, 0]):  # type: (np.ndarray, List[int], List[int]) -> np.ndarray
-    x = np.pad(x, padding)
+    x = np.pad(x, padding, 'constant')
     s0, s1 = x.strides[-2:]
     nrows = x.shape[-2] - shape[0] + 1
     ncols = x.shape[-1] - shape[1] + 1
