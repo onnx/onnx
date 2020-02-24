@@ -138,5 +138,36 @@ TEST(FunctionVerification, VerifyFunctionOps) {
             << function_counter << " Functions." << std::endl;
 }
 
+// Verify that FunctionExpandHelper obtains missing default attributes
+// from schema and adds them to ops in expanded subgraph.
+TEST(FunctionVerification, VerifyFunctionExpandHelper) {
+  GraphProto graph;
+  NodeProto* new_node = graph.add_node();
+  new_node->set_op_type("MeanVarianceNormalization");
+
+  const auto* schema =
+      OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
+  const FunctionProto* func = schema->GetFunction();
+  const auto default_axes_attribute =
+      schema->attributes().at("axes").default_value;
+
+  FunctionExpandHelper(*new_node, *func, graph);
+
+  for (const auto& node : graph.node()) {
+    if (node.op_type() == "ReduceMean") {
+      auto attr = node.attribute(0);
+      EXPECT_EQ(attr.name(), "axes");
+      EXPECT_EQ(attr.ints().size(), default_axes_attribute.ints().size());
+
+      for (int i = 0; i < default_axes_attribute.ints().size(); ++i) {
+        EXPECT_EQ(attr.ints(i), default_axes_attribute.ints(i));
+      }
+      return;
+    }
+  }
+  FAIL()
+      << "During expanding MeanVarianceNormalization function, "
+      << "the default attribute `axes` has not been assigned to ReduceMean op.";
+}
 } // namespace Test
 } // namespace ONNX_NAMESPACE

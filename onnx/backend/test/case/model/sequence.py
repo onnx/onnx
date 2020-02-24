@@ -328,3 +328,34 @@ class Sequence(Base):
             [pos_at])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x], outputs=[out], name="test_sequence_model7")
+
+        #8th testcase - split zero length
+        seq_split_node = onnx.helper.make_node('SplitToSequence', ['X'], ['seq_1'])
+        seq_len_node = onnx.helper.make_node('SequenceLength', ['seq_1'], ['len'])
+
+        tensor_shape = []  # type: ignore
+        len_shape = []  # type: ignore
+
+        x = np.array([]).astype(np.float32)
+        out_len = np.int64(0)
+
+        graph = onnx.helper.make_graph(
+            nodes=[seq_split_node, seq_len_node],
+            name='Sequence',
+            inputs=[
+                onnx.helper.make_tensor_value_info(
+                    'X',
+                    onnx.TensorProto.FLOAT,
+                    tensor_shape),  # type: ignore
+                onnx.helper.make_tensor_value_info(
+                    'Split',
+                    onnx.TensorProto.INT64,
+                    len_shape)],  # type: ignore
+            outputs=[
+                onnx.helper.make_tensor_value_info(
+                    'len',
+                    onnx.TensorProto.INT64,
+                    len_shape)])  # type: ignore
+
+        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        expect(model, inputs=[x], outputs=[out_len], name="test_sequence_model8")
