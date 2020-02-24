@@ -20841,7 +20841,7 @@ c = a + b
 # d = a * c = a * (a + b)
 d = a * c
 # dd / da = d(a*a+a*b) / da = 2 * a + b
-dd_da = 2 * a + b
+dd_da = (2 * a + b).astype(np.float32)
 # dd / db = d(a*a+a*b) / db = a
 dd_db = a
 
