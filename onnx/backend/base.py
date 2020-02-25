@@ -116,7 +116,7 @@ class Backend(object):
             onnx.checker.check_node(node, special_context)
         else:
             onnx.checker.check_node(node)
-        return None
+        return True
 
     @classmethod
     def supports_device(cls, device):  # type: (Text) -> bool
