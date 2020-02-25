@@ -14374,6 +14374,13 @@ This version of the operator has been available since version 12 of the default 
 
   The ImageToCol operator rearranges blocks from an input tensor into columns, and returns
   the concatenated columns.
+  For an input of size (N x C x D1 x D2 ... x Dn), output size is:
+  ```(N, C * reduce-mul(kernel_size), reduce-mul(block_size))```
+  Where
+  ```
+  input_spatial_size = [D1, D2, ..., Dn]
+  block_size[d] = floor((input_spatial_size[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  ```
 
 #### Version
 
@@ -14396,7 +14403,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; Must be a 4-D tensor of size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width.</dd>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). </dd>
 </dl>
 
 #### Outputs
