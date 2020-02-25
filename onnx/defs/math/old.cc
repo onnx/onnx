@@ -1605,4 +1605,56 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(
+    const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
+All inputs and outputs must have the same data type.
+{broadcast_doc}
+)DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "data_0",
+        "List of tensors for " + std::string(name) + ".",
+        "T",
+        OpSchema::Variadic);
+    schema.Output(0, name, "Output tensor.", "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      int num_inputs = static_cast<int>(ctx.getNumInputs());
+      std::vector<const TensorShapeProto*> shapes;
+      for (int i = 0; i < num_inputs; ++i) {
+        auto input_type = ctx.getInputType(i);
+        if (nullptr == input_type || !input_type->has_tensor_type() ||
+            !input_type->tensor_type().has_shape()) {
+          return;
+        }
+        shapes.push_back(&input_type->tensor_type().shape());
+      }
+
+      multidirectionalBroadcastShapeInference(
+          shapes,
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Max,
+    8,
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator_old("max")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Min,
+    8,
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator_old("min")));
+
 } // namespace ONNX_NAMESPACE
