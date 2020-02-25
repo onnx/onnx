@@ -1449,10 +1449,12 @@ There are 1 test cases, listed as following:
 <summary>celu</summary>
 
 ```python
+alpha = 2.0
 node = onnx.helper.make_node(
     'Celu',
     inputs=['X'],
-    outputs=['Y']
+    outputs=['Y'],
+    alpha=alpha,
 )
 
 input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
@@ -1464,8 +1466,6 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[[0.41356155], [0.9129373], [0.59330076]],
     [[0.81929934], [0.7862604], [0.11799799]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
-
-alpha = 2
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
