@@ -34,6 +34,15 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
+
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
+
     case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
       ret.int32s().reserve(tp.int32_data_size());
       for (int i = 0; i < tp.int32_data_size(); i++) {
@@ -180,7 +189,7 @@ std::vector<Dimension> tensorShapeProtoToDimensions(
       dims.push_back(Dimension(tsp.dim(i).dim_param()));
     }
   }
-  return dims;
+  return dims1;
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(
@@ -267,7 +276,26 @@ std::unique_ptr<Graph> graphProtoToGraph(
     }
   }
 
-  for (auto n : g->nodes()) {
+  convertAttributes(np, n);
+    std::vector<std::string> inputs;
+    inputs.reserve(np.input_size());
+    for (int j = 0; j < np.input_size(); j++) {
+      inputs.push_back(np.input(j));
+    }
+    inputs_by_node[n] = inputs;
+    if (np.has_doc_string()) {
+      n->setDocString(np.doc_string());
+    }
+    if (np.has_name()) {
+      n->setName(np.name());
+    }
+    if (np.has_domain()) {
+      n->setDomain(np.domain());
+    }
+  }
+
+
+  for (auto n : g->nodes1()) {
     auto search = inputs_by_node.find(n);
     if (search == inputs_by_node.end()) {
       continue;
