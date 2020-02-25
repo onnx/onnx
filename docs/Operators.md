@@ -169,6 +169,7 @@
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
+  * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
 * ai.onnx.training
   * <a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>
   * <a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>
@@ -2443,10 +2444,12 @@ This version of the operator has been available since version 12 of the default 
 <summary>celu</summary>
 
 ```python
+alpha = 2.0
 node = onnx.helper.make_node(
     'Celu',
     inputs=['X'],
-    outputs=['Y']
+    outputs=['Y'],
+    alpha=alpha,
 )
 
 input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
@@ -2458,8 +2461,6 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[[0.41356155], [0.9129373], [0.59330076]],
     [[0.81929934], [0.7862604], [0.11799799]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
-
-alpha = 2
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
@@ -6045,40 +6046,49 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 ### <a name="GatherND"></a><a name="gathernd">**GatherND**</a>
 
-  Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers 
-  slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
+  Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
+  slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
   
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
   where each element defines a slice of `data`
+  
+  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of 
+  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension. 
   
   Some salient points about the inputs' rank and shape:
    
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
   
-  2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
+  2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
   
-  3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  3) b < min(q, r) is to be honored.
+  
+  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+  
+  5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
   
   The output is computed as follows:
   
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
    
-  1) If `indices_shape[-1] > r` => error condition
+  1) If `indices_shape[-1] > r-b` => error condition
   
-  2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-     containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
-     Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
-     to form the `output` tensor (Example 1 below)
+  2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
+     containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions 
+     of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]` 
+     is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
   
-  3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-     containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
-     Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
-     to form the `output` tensor (Examples 2, 3, and 4 below)
+  3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
+     containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding 
+     to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor 
+     to form the `output` tensor (Examples 2, 3, 4 and 5 below)
   
   This operator is the inverse of `ScatterND`.
   
   `Example 1`
+  
+    batch_dims = 0
   
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
   
@@ -6088,6 +6098,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   `Example 2`
   
+    batch_dims = 0
+  
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
   
     indices = [[1],[0]]      # indices_shape = [2, 1]
@@ -6095,6 +6107,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
   
   `Example 3`
+  
+    batch_dims = 0
   
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
@@ -6104,16 +6118,38 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   `Example 4`
   
+    batch_dims = 0
+  
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
   
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
   
+  `Example 5`
+  
+    batch_dims = 1
+  
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+  
+    indices = [[1],[0]]             # indices_shape = [2, 1]
+  
+    output  = [[2,3],[4,5]]             # output_shape = [2, 2] 
+  
+  
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GatherND-11">GatherND-11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_dims</tt> : int (default is 0)</dt>
+<dd>The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]</dd>
+</dl>
 
 #### Inputs
 
@@ -6153,7 +6189,7 @@ node = onnx.helper.make_node(
 
 data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
 indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
-output = gather_nd_impl(data, indices)
+output = gather_nd_impl(data, indices, 0)
 expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
 assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
@@ -6175,11 +6211,34 @@ node = onnx.helper.make_node(
 
 data = np.array([[0, 1], [2, 3]], dtype=np.int32)
 indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
-output = gather_nd_impl(data, indices)
+output = gather_nd_impl(data, indices, 0)
 expected_output = np.array([0, 3], dtype=np.int32)
 assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example_int32')
+```
+
+</details>
+
+
+<details>
+<summary>int32_batchdim_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+    batch_dims=1,
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.int32)
+indices = np.array([[1], [0]], dtype=np.int64)
+output = gather_nd_impl(data, indices, 1)
+expected_output = np.array([[2, 3], [4, 5]], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32_batch_dim1')
 ```
 
 </details>
@@ -8727,9 +8786,9 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>, <a href="Changelog.md#Max-8">Max-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -8748,8 +8807,8 @@ Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -8787,6 +8846,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_max_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>max_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([3, 4, 4]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_max_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -9925,9 +10004,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>, <a href="Changelog.md#Min-8">Min-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -9946,8 +10025,8 @@ Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -9985,6 +10064,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>min_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([1, 2, 1]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_min_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -18026,6 +18125,248 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="SoftmaxCrossEntropyLoss"></a><a name="softmaxcrossentropyloss">**SoftmaxCrossEntropyLoss**</a>
+
+  Loss function that measures the softmax cross entropy
+  between 'scores' and 'labels'.
+  This operator first computes a loss tensor whose shape is identical to the labels input.
+  If the input is 2-D with shape (N, C), the loss tensor may be a N-element vector L = (l_1, l_2, ..., l_N).
+  If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
+  the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
+  After L is available, this operator can optionally do a reduction operator.
+  
+  shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+          with K >= 1 in case of K-dimensional loss.
+  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+          with K >= 1 in case of K-dimensional loss.
+  
+  The loss for one sample, l_i, can caculated as follows:
+      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+  or
+      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+  
+  where:
+      p = Softmax(scores)
+      y = Log(p)
+      c = labels[i][d1][d2]...[dk]
+  
+  Finally, L is optionally reduced:
+  If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+  If reduction = 'sum', the output is scalar: Sum(L).
+  If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
+  where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>scores</tt> : T</dt>
+<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, D1, D2 , ..., Dk], where K is the number of dimensions.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.Usualy, it's a one-hot representation of ground-truth class.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, D1, D2, ..., Dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
+<dt><tt>log_prob</tt> (optional) : T</dt>
+<dd>Log probability tensor. If the output of softmax is prob, its value is log(prob).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>softmaxcrossentropy_mean</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_mean_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+y = np.random.randint(0, high=5, size=(3, 2))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, y)
+
+# Check results
+expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_mean_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, weight=weights)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_none</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, reduction='none')
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_none_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, weight=weights, reduction='none')
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_none_weights')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_sum</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, reduction='sum')
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
+```
+
+</details>
+
+
 ### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
 
   Softplus takes one input data (Tensor<T>) and produces one output data
@@ -20653,7 +20994,7 @@ c = a + b
 # d = a * c = a * (a + b)
 d = a * c
 # dd / da = d(a*a+a*b) / da = 2 * a + b
-dd_da = 2 * a + b
+dd_da = (2 * a + b).astype(np.float32)
 # dd / db = d(a*a+a*b) / db = a
 dd_db = a
 
