@@ -2442,10 +2442,12 @@ This version of the operator has been available since version 12 of the default 
 <summary>celu</summary>
 
 ```python
+alpha = 2.0
 node = onnx.helper.make_node(
     'Celu',
     inputs=['X'],
-    outputs=['Y']
+    outputs=['Y'],
+    alpha=alpha,
 )
 
 input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
@@ -2457,8 +2459,6 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[[0.41356155], [0.9129373], [0.59330076]],
     [[0.81929934], [0.7862604], [0.11799799]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
-
-alpha = 2
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
@@ -8673,9 +8673,9 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>, <a href="Changelog.md#Max-8">Max-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -8694,8 +8694,8 @@ Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -8733,6 +8733,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_max_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>max_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([3, 4, 4]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_max_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -9871,9 +9891,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>, <a href="Changelog.md#Min-8">Min-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -9892,8 +9912,8 @@ Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -9931,6 +9951,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>min_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([1, 2, 1]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_min_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>

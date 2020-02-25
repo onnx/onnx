@@ -605,6 +605,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+// Generate opschema for element-wise ops. Leaves type constraint "T" unspecified.
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
     const char* name) {
   return [=](OpSchema& schema) {
@@ -623,10 +624,6 @@ All inputs and outputs must have the same data type.
         "T",
         OpSchema::Variadic);
     schema.Output(0, name, "Output tensor.", "T");
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       int num_inputs = static_cast<int>(ctx.getNumInputs());
@@ -649,23 +646,43 @@ All inputs and outputs must have the same data type.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
-    8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("max")));
+    12,
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("max"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Min,
-    8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("min")));
+    12,
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("min"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sum,
     8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("sum")));
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("sum"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mean,
     8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("mean")));
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("mean"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors."));
 
 static const char* Clip_ver12_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
