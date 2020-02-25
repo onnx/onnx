@@ -914,7 +914,7 @@ block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] *
         "Constrain input and output types to float tensors.");
     schema.Attr(
         "block_shape",
-        "The size of the extracted blocks [H, W].",
+        "The size of the extracted blocks [D1, D2, ..., Dn].",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
