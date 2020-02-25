@@ -2162,9 +2162,9 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
     } else {
       body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
       if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}});
+        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}, {MakeAttribute("keepdims", (int64_t)0)}});
       } else {
-        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}});
+        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}, {MakeAttribute("keepdims", (int64_t)0)}});
       }
     }
   } else {
@@ -2174,9 +2174,9 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
     } else {
       body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
       if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}});
+        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}, {MakeAttribute("keepdims", (int64_t)0)}});
       } else {
-        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}});
+        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}, {MakeAttribute("keepdims", (int64_t)0)}});
       }
     }
   }
