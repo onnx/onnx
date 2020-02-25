@@ -14372,7 +14372,7 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="ImageToCol-12"></a>**ImageToCol-12**</a>
 
-  The ImageToCol operator extracts sliding blocks from an input tensor into columns, and concatenates these blocks
+  The ImageToCol operator extracts sliding blocks from an input tensor, and concatenates these blocks
   in the last dimension.
   Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
   

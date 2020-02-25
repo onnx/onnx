@@ -7138,7 +7138,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 
 ### <a name="ImageToCol"></a><a name="imagetocol">**ImageToCol**</a>
 
-  The ImageToCol operator extracts sliding blocks from an input tensor into columns, and concatenates these blocks
+  The ImageToCol operator extracts sliding blocks from an input tensor, and concatenates these blocks
   in the last dimension.
   Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
   
