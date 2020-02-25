@@ -20,6 +20,14 @@ class DeviceType(object):
     CUDA = _Type(1)  # type: _Type
 
 
+class DeviceType(object):
+    _Type = NewType('_Type', int)
+    CPU = _Type(0)  # type: _Type
+    CUDA = _Type(1)  # type: _Type
+
+
+
+
 class Device(object):
     '''
     Describes device type and device id
