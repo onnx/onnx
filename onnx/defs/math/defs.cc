@@ -216,7 +216,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 
-ONNX_OPERATOR_SET_SCHEMA1(
+ONNX_OPERATOR_SET_SCHEMA2(
     Abs,
     6,
     OpSchema()
@@ -247,6 +247,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Floor_ver6_doc = R"DOC(
+Floor takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the floor is, y = floor(x), is applied to
+the tensor elementwise.
+)DOC";
+
 
 static const char* Floor_ver6_doc = R"DOC(
 Floor takes one input data (Tensor<T>) and produces one output data
