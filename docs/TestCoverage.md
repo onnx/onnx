@@ -4155,7 +4155,7 @@ node_without_padding = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
     block_shape=[3, 3],
-    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    # Default values for other attributes: dilations=[1, 1]
     pads=[2, 2, 2, 2],
     stride=[3, 3]
 )

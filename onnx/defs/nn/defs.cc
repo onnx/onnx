@@ -226,14 +226,13 @@ void imageToColShapeInference(
     fail_shape_inference("Attribute block_shape must be specified");
   }
 
-  size_t block_num_element = input_shape.dim(1).dim_value();
   std::vector<int64_t> effective_block_shape = block_shape;
+  size_t block_num_element = 1;
   for (int i = 0; i < static_cast<int>(block_shape.size()); i++) {
     // accounting for dilation, how big is the block in this dimension
     effective_block_shape[i] = (effective_block_shape[i] - 1) * dilations[i] + 1;
     block_num_element *= effective_block_shape[i];
   }
-
 
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
@@ -248,13 +247,18 @@ void imageToColShapeInference(
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *output_shape->add_dim() = input_shape.dim(0);
-  output_shape->add_dim()->set_dim_value(block_num_element);
+  auto newdim = output_shape->add_dim();
+  if (input_shape.dim(1).has_dim_value()) {
+	  block_num_element *= input_shape.dim(1).dim_value();
+	  newdim->set_dim_value(block_num_element);
+  }
 
   size_t last_dim_size = 1;
+  newdim = output_shape->add_dim();
   int block_shape_size = static_cast<int>(block_shape.size());
   for (int i = 0; i < block_shape_size; ++i) {
     if (!input_shape.dim(2 + i).has_dim_value()) {
-      continue;
+      return;
     }
     // how big is the input, including padding
     int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
@@ -270,8 +274,6 @@ void imageToColShapeInference(
     // add in the initial position
     last_dim_size *= (1 + strided_kernel_positions);
   }
-
-  auto newdim = output_shape->add_dim();
   newdim->set_dim_value(last_dim_size);
 
 }
@@ -878,14 +880,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 std::function<void(OpSchema&)> ImageToColOpSchemaGenerator() {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
-The ImageToCol operator rearranges blocks from an input tensor into columns, and returns
-the concatenated columns.
-For an input of size (N x C x D1 x D2 ... x Dn), output size is:
+The ImageToCol operator extracts sliding blocks from an input tensor into columns, and concatenates these blocks
+in the last dimension.
+Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
+
 ```(N, C * reduce-mul(kernel_size), reduce-mul(block_size))```
+<br/>
 Where
 ```
-input_spatial_size = [D1, D2, ..., Dn]
-block_size[d] = floor((input_spatial_size[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
 ```
 )DOC";
     schema.SetDoc(doc);

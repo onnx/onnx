@@ -14372,14 +14372,15 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="ImageToCol-12"></a>**ImageToCol-12**</a>
 
-  The ImageToCol operator rearranges blocks from an input tensor into columns, and returns
-  the concatenated columns.
-  For an input of size (N x C x D1 x D2 ... x Dn), output size is:
+  The ImageToCol operator extracts sliding blocks from an input tensor into columns, and concatenates these blocks
+  in the last dimension.
+  Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
+  
   ```(N, C * reduce-mul(kernel_size), reduce-mul(block_size))```
+  <br/>
   Where
   ```
-  input_spatial_size = [D1, D2, ..., Dn]
-  block_size[d] = floor((input_spatial_size[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
   ```
 
 #### Version

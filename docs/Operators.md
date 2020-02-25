@@ -7138,14 +7138,15 @@ Other versions of this operator: <a href="Changelog.md#If-1">If-1</a>
 
 ### <a name="ImageToCol"></a><a name="imagetocol">**ImageToCol**</a>
 
-  The ImageToCol operator rearranges blocks from an input tensor into columns, and returns
-  the concatenated columns.
-  For an input of size (N x C x D1 x D2 ... x Dn), output size is:
+  The ImageToCol operator extracts sliding blocks from an input tensor into columns, and concatenates these blocks
+  in the last dimension.
+  Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
+  
   ```(N, C * reduce-mul(kernel_size), reduce-mul(block_size))```
+  <br/>
   Where
   ```
-  input_spatial_size = [D1, D2, ..., Dn]
-  block_size[d] = floor((input_spatial_size[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
   ```
 
 #### Version
@@ -7260,7 +7261,7 @@ node_without_padding = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
     block_shape=[3, 3],
-    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    # Default values for other attributes: dilations=[1, 1]
     pads=[2, 2, 2, 2],
     stride=[3, 3]
 )
