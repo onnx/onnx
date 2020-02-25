@@ -7263,7 +7263,7 @@ node_without_padding = onnx.helper.make_node(
     block_shape=[3, 3],
     # Default values for other attributes: dilations=[1, 1]
     pads=[2, 2, 2, 2],
-    stride=[3, 3]
+    strides=[3, 3]
 )
 y_with_padding = im2col_2d_reference_implementation(x, shape=[3, 3], padding=[2, 2, 2, 2], stride=[3, 3])
 # expected [[[ 0.,  0.,  0.,  0.,  6.,  9.,  0., 21., 24.],  # (1, 9, 9) output tensor
