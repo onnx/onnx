@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 143/159 (89.94%, 5 generators excluded) common operators.
+Node tests have covered 143/161 (88.82%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3887,7 +3887,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
 
 ### Greater
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>greater</summary>
 
@@ -3907,6 +3907,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal')
+```
+
+</details>
+<details>
 <summary>greater_broadcast</summary>
 
 ```python
@@ -3921,6 +3939,24 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_bcast')
+```
+
+</details>
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal_bcast')
 ```
 
 </details>
@@ -4454,7 +4490,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Less
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>less</summary>
 
@@ -4474,6 +4510,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal')
+```
+
+</details>
+<details>
 <summary>less_broadcast</summary>
 
 ```python
@@ -4488,6 +4542,24 @@ y = np.random.randn(5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_less_bcast')
+```
+
+</details>
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal_bcast')
 ```
 
 </details>
@@ -11815,7 +11887,13 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GraphCall (call for test cases)
 
 
+### GreaterOrEqual (call for test cases)
+
+
 ### If (call for test cases)
+
+
+### LessOrEqual (call for test cases)
 
 
 ### Loop (call for test cases)
