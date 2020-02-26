@@ -16,7 +16,7 @@ NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Div
 Š
 QSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionlog_prob
 yz"NegativeLogLikelihoodLoss*
-	reduction"mean (test_softmax_cross_entropy_none_expandedZ
+	reduction"none (test_softmax_cross_entropy_none_expandedZ
 x
 
 
