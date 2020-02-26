@@ -19,6 +19,23 @@ struct FuseConsecutiveConcats final : public PredicateBasedPass {
     return "fuse_consecutive_concats";
   }
 
+  void insertInput(Node* node, size_t i, Value* value) {
+    const auto input_size = node->inputs().size();
+    if (i == input_size) {
+      node->addInput(value);
+    } else {
+      for (size_t j = input_size - 1; j >= i; j--) {
+        Value* cur_input = node->input(j);
+        if (j == input_size - 1) {
+          node->addInput(cur_input);
+        } else {
+          node->replaceInput(j + 1, cur_input);
+        }
+      }
+      node->replaceInput(i, value);
+    }
+  }
+
   bool patternMatchPredicate(Node* node) override {
     // we don't check if our concat node has inputs which are also concat nodes
     // because this requires a for loop through the inputs. If it turns out
@@ -39,8 +56,13 @@ struct FuseConsecutiveConcats final : public PredicateBasedPass {
           cur_input_node->hasAttribute(kaxis) &&
           cur_input_node->i(kaxis) == concat_node->i(kaxis)) {
         transform_ran = true;
-        for (auto value : cur_input_node->inputs()) {
-          concat_node->addInput(value);
+        // Inserts n inputs of cur_input_node at index i+1~i+1+(n-1), 
+        // and remove cur_input_node at index i. 
+        // As a result, cur_input_node is replaced by its inputs inplace, 
+        // instead of always appending its inputs at the end.
+        for (size_t j = 0; j < cur_input_node->inputs().size(); j++) {
+          Value* value = cur_input_node->input(j);
+          insertInput(concat_node, i + 1 + j, value);
         }
         concat_node->removeInput(i);
         cur_input_node->destroy();
