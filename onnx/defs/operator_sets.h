@@ -731,6 +731,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MeanSquaredDistance);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, LessOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GreaterOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, SoftmaxCrossEntropyLoss);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, FFT);
 
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
@@ -755,7 +756,7 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, MeanSquaredDistance)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, LessOrEqual)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, GreaterOrEqual)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, SoftmaxCrossEntropyLoss)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, FFT)>());
   }
 };
 

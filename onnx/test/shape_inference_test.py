@@ -3089,6 +3089,14 @@ class TestShapeInference(unittest.TestCase):
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
+    def test_fft_ndim_one(self):  # type: () -> None
+        input_shape = (1, 10, 2)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, input_shape)],
+            [make_node('FFT', ['x'], ['y'], signal_ndim=1)],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, input_shape)])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()
