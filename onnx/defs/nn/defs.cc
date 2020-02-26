@@ -877,16 +877,16 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
-std::function<void(OpSchema&)> ImageToColOpSchemaGenerator() {
+std::function<void(OpSchema&)> UnfoldToDepthOpSchemaGenerator() {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
-The ImageToCol operator extracts sliding blocks from an input tensor, and concatenates these blocks
+The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
 in the last dimension.
 Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
 
-```(N, C * reduce-mul(kernel_size), reduce-mul(block_size))```
+```(N, C * reduce-mul(block_size), reduce-mul(num_blocks))```
 <br/>
-Where
+Where number of blocks extracted from each spatial dimension d is:
 ```
 block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
 ```
@@ -945,9 +945,9 @@ block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] *
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
-    ImageToCol,
+    UnfoldToDepth,
     12,
-    OpSchema().FillUsing(ImageToColOpSchemaGenerator()));
+    OpSchema().FillUsing(UnfoldToDepthOpSchemaGenerator()));
 
 static const char* QLinearConv_ver10_doc = R"DOC(
 The convolution operator consumes a quantized input tensor, its scale and zero point,
