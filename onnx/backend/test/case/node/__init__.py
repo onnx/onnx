@@ -27,16 +27,15 @@ def function_expand_helper(node,  # type: NodeProto
                            op_prefix  # type:  Text
                            ):  # type:  (...) -> List[NodeProto]
     node_list = []
-    input_names_map = dict()
-    output_names_map = dict()
+    io_names_map = dict()
     attribute_map = dict((a.name, a) for a in node.attribute)
 
     for idx in range(len(function_proto.input)):
-        input_names_map[function_proto.input[idx]] = node.input[idx] \
+        io_names_map[function_proto.input[idx]] = node.input[idx] \
             if idx in range(len(node.input)) else ""
 
     for idx in range(len(function_proto.output)):
-        output_names_map[function_proto.output[idx]] = node.output[idx] \
+        io_names_map[function_proto.output[idx]] = node.output[idx] \
             if idx in range(len(node.output)) else ""
 
     for internal_node in function_proto.node:
@@ -46,13 +45,13 @@ def function_expand_helper(node,  # type: NodeProto
         new_node.ClearField("output")
         new_node.ClearField("attribute")
         for internal_name in internal_node.input:
-            if internal_name in input_names_map:
-                new_node.input.append(input_names_map[internal_name])
+            if internal_name in io_names_map:
+                new_node.input.append(io_names_map[internal_name])
             else:
                 new_node.input.append(op_prefix + internal_name)
         for internal_name in internal_node.output:
-            if internal_name in output_names_map:
-                new_node.output.append(output_names_map[internal_name])
+            if internal_name in io_names_map:
+                new_node.output.append(io_names_map[internal_name])
             else:
                 new_node.output.append(op_prefix + internal_name)
         for attr in internal_node.attribute:
