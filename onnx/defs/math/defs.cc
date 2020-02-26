@@ -2285,9 +2285,11 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
   if (!ctx.hasInput(2)) {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"}, {MakeAttribute("reduction", "mean")}});
+    body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
+        {MakeRefAttribute("reduction", AttributeProto::STRING)}});
   } else {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"}, {MakeAttribute("reduction", "mean")}});
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
+        {MakeRefAttribute("reduction", AttributeProto::STRING)}});
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
