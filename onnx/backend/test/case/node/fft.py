@@ -28,4 +28,4 @@ class FFT(Base):
         expected_output = np.stack([fft_result.real, fft_result.imag], axis=2)
 
         expect(node, inputs=[input_data], outputs=[expected_output],
-               name='test_celu')
+               name='test_fft_dim_one')
