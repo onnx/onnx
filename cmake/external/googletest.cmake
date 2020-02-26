@@ -32,10 +32,10 @@ ExternalProject_Add(googletest
     GIT_TAG ${googletest_TAG}
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --target gtest
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${ONNX_DEBUG_MODE} --target gtest
     INSTALL_COMMAND ""
     CMAKE_CACHE_ARGS
-        -DCMAKE_BUILD_TYPE:STRING=Debug
+        -DCMAKE_BUILD_TYPE:STRING=${ONNX_DEBUG_MODE}
         -DBUILD_GMOCK:BOOL=OFF
         -DBUILD_GTEST:BOOL=ON
         -Dgtest_force_shared_crt:BOOL=${ONNX_USE_MSVC_SHARED_RUNTIME}
