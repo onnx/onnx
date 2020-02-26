@@ -2379,7 +2379,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
         }));
 
-static float fft_signal_ndim_default = 1.;
+static int64_t fft_signal_ndim_default = 1;
 
 static const char* FFT_ver12_doc = R"DOC(
 Fast Fourier Trensform.
@@ -2394,11 +2394,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "signal_ndim",
             "The number of dimension of the input signal."
             "Values can be 1, 2 or 3.",
-            AttributeProto::FLOAT,
+            AttributeProto::INT,
             fft_signal_ndim_default)
-        .Input(0, "scores", "The predicted outputs.", "T")
         .Input(
-            1,
+            0,
             "input",
             "A complex signal of dimension signal_ndim."
             "The last dimension of the tensor should be 2,"
@@ -2418,7 +2417,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             propagateElemTypeFromInputToOutput(ctx, 0, 0);
-            auto signal_ndim = getAttribute(ctx, "signal_ndim", fft_signal_ndim_default);
+            const int signal_ndim = getAttribute(ctx, "signal_ndim", fft_signal_ndim_default);
         
             if (!hasInputShape(ctx, 0)) {
                 fail_shape_inference(
