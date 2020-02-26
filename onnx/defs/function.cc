@@ -43,6 +43,12 @@ void FunctionExpandHelper(
       throw std::runtime_error(
           "Output for function node " + node_name + " is out of bounds");
     }
+    // If the node output is missing, the corresponding function output should
+    // be treated as an internal value (not as missing) because it could also be
+    // an intermediate value.
+    if (node.output().Get(idx) == "") {
+      continue;
+    }
     io_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }
 

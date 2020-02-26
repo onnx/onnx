@@ -22,6 +22,7 @@ from onnx.onnx_pb import NodeProto, AttributeProto
 from onnx.onnx_operators_pb import FunctionProto
 
 
+# FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
 def function_expand_helper(node,  # type: NodeProto
                            function_proto,  # type: FunctionProto
                            op_prefix  # type:  Text
@@ -35,8 +36,14 @@ def function_expand_helper(node,  # type: NodeProto
             if idx in range(len(node.input)) else ""
 
     for idx in range(len(function_proto.output)):
-        io_names_map[function_proto.output[idx]] = node.output[idx] \
-            if idx in range(len(node.output)) else ""
+        # Even if the node has been created with optional outputs missing, we
+        # can't assume that the function body handles this correctly, such as in
+        # the case that output is also an intermediate value.
+        # So we only add a name mapping if the output is present. An internal
+        # name will be generated if the missing output is used, the same as any
+        # other internal tensor.
+        if idx in range(len(node.output)) and node.output[idx] != "":
+            io_names_map[function_proto.output[idx]] = node.output[idx]
 
     for internal_node in function_proto.node:
         new_node = NodeProto()
