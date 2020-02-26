@@ -23,7 +23,7 @@ class FFT(Base):
         input_data = np.array([[[1., 0], [0, 0], [0, 0]]], dtype=np.float64)
 
         # Convert to complex
-        input_data_complex = input_data.view(dtype=np.complex128)
+        input_data_complex = input_data.view(dtype=np.complex128)[:,:,0]
         fft_result = np.fft.fft(input_data_complex)
         expected_output = np.stack([fft_result.real, fft_result.imag], axis=2)
 
