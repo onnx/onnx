@@ -20,6 +20,9 @@ struct EliminateNopDropout final : public PredicateBasedPass {
   }
 
   bool patternMatchPredicate(Node* node) override {
+    // in opset 12, ratio is an input of Dropout rather than an attribute,
+    // however we don't want to to remove Dropout fro opset 12+, since it
+    // supports training-friendly models, for which the Dropout ops are required
     return (node->kind() == kDropout && node->hasAttribute(kratio)) &&
         node->f(kratio) == 0.0;
   }
@@ -29,6 +32,9 @@ struct EliminateNopDropout final : public PredicateBasedPass {
     // Don't assume that theres only one output.
     for (size_t i = 0; i < node->outputs().size(); ++i) {
       node->outputs()[i]->replaceAllUsesWith(node->input());
+    }
+    if (node->outputs()[0]->has_sizes()) {
+        node->input()->setSizes(node->outputs()[0]->sizes());
     }
     destroy_current = NodeDestroyType::DestroyOne;
     return true;

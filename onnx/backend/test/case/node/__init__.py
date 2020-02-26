@@ -60,6 +60,7 @@ def function_expand_helper(node,  # type: NodeProto
                 if attr.ref_attr_name in attribute_map:
                     new_attr = AttributeProto()
                     new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                    new_attr.name = attr.name
                     new_node.attribute.extend([new_attr])
             else:
                 new_attr = AttributeProto()
@@ -73,9 +74,15 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op)
-    if not schema.has_function:  # type: ignore
+
+    if schema.has_function:    # type: ignore
+        function_proto = schema.function_body  # type: ignore
+    elif schema.has_context_dependent_function:    # type: ignore
+        function_proto_str = schema.get_context_dependent_function(node.SerializeToString())  # type: ignore
+        function_proto = FunctionProto()
+        function_proto.ParseFromString(function_proto_str)
+    else:
         return []
-    function_proto = schema.function_body  # type: ignore
 
     for attr in schema.attributes:
         if attr in [a.name for a in node.attribute]:

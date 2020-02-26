@@ -21,7 +21,7 @@ flake8
 if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
   pip uninstall -y onnx
-  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
+  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install --no-use-pep517 -e .[mypy]
 
   time python setup.py --quiet typecheck
 
@@ -37,7 +37,8 @@ git diff --exit-code
 
 # check auto-gen files up-to-date
 python onnx/defs/gen_doc.py
-python onnx/gen_proto.py
+python onnx/gen_proto.py -l
+python onnx/gen_proto.py -l --ml
 python onnx/backend/test/stat_coverage.py
 backend-test-tools generate-data
 git status

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import os
 
+from .onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
@@ -66,7 +67,7 @@ def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) 
         result = proto.SerializeToString()
         return result
     else:
-        raise ValueError('No SerializeToString method is detected. '
+        raise TypeError('No SerializeToString method is detected. '
                          'neither proto is a str.\ntype is {}'.format(type(proto)))
 
 

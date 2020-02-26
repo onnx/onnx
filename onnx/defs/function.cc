@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -50,6 +51,22 @@ void FunctionExpandHelper(
     attr_map[attr.name()] = attr;
   }
 
+  // For undefined attributes of the function node
+  // add default values obtained from the function schema.
+  const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
+  const auto schema = schema_registry->GetSchema(
+      node.op_type(), func.since_version(), node.domain());
+  std::map<std::string, OpSchema::Attribute> default_attrs =
+      schema->attributes();
+
+  for (const auto& pair : default_attrs) {
+    const auto& attr_name = pair.first;
+    const auto& attr = pair.second;
+    if (!attr_map.count(attr_name)) {
+      attr_map[attr_name] = attr.default_value;
+    }
+  }
+
   for (auto& function_node : func.node()) {
     NodeProto* new_node = g.add_node();
     new_node->CopyFrom(function_node);
@@ -75,6 +92,7 @@ void FunctionExpandHelper(
         if (attr_map.count(attr.ref_attr_name())) {
           AttributeProto* new_attr = new_node->add_attribute();
           new_attr->CopyFrom(attr_map[attr.ref_attr_name()]);
+          new_attr->set_name(attr.name());
         }
       } else {
         AttributeProto* new_attr = new_node->add_attribute();
