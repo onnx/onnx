@@ -291,6 +291,9 @@ There are two ways to leave an optional input or output unspecified: the first, 
 
 Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
 
+#### External Tensor Data
+
+The raw data for large constant tensors, such as initializers, MAY be serialised in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
 
 ## Standard data types
 
