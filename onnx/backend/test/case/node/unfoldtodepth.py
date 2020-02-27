@@ -36,7 +36,7 @@ class UnfoldToDepth(Base):
             'UnfoldToDepth',
             inputs=['x'],
             outputs=['y'],
-            block_shape=[3, 3],
+            block_size=[3, 3],
             # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
             pads=[0, 0, 0, 0],
         )
@@ -59,7 +59,7 @@ class UnfoldToDepth(Base):
             'UnfoldToDepth',
             inputs=['x'],
             outputs=['y'],
-            block_shape=[3, 3],
+            block_size=[3, 3],
             # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
             pads=[1, 1, 1, 1],
         )
@@ -91,7 +91,7 @@ class UnfoldToDepth(Base):
             'UnfoldToDepth',
             inputs=['x'],
             outputs=['y'],
-            block_shape=[3, 3],
+            block_size=[3, 3],
             # Default values for other attributes: dilations=[1, 1]
             pads=[2, 2, 2, 2],
             strides=[3, 3]

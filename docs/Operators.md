@@ -20122,7 +20122,7 @@ expect(node, inputs=[data], outputs=[transposed],
   <br/>
   Where number of blocks extracted from each spatial dimension d is:
   ```
-  block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
   ```
 
 #### Version
@@ -20132,7 +20132,7 @@ This version of the operator has been available since version 12 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>block_shape</tt> : list of ints</dt>
+<dt><tt>block_size</tt> : list of ints</dt>
 <dd>The size of the extracted blocks [D1, D2, ..., Dn].</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>
@@ -20181,7 +20181,7 @@ node_without_padding = onnx.helper.make_node(
     'UnfoldToDepth',
     inputs=['x'],
     outputs=['y'],
-    block_shape=[3, 3],
+    block_size=[3, 3],
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
     pads=[0, 0, 0, 0],
 )
@@ -20204,7 +20204,7 @@ node_without_padding = onnx.helper.make_node(
     'UnfoldToDepth',
     inputs=['x'],
     outputs=['y'],
-    block_shape=[3, 3],
+    block_size=[3, 3],
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
     pads=[1, 1, 1, 1],
 )
@@ -20236,7 +20236,7 @@ node_without_padding = onnx.helper.make_node(
     'UnfoldToDepth',
     inputs=['x'],
     outputs=['y'],
-    block_shape=[3, 3],
+    block_size=[3, 3],
     # Default values for other attributes: dilations=[1, 1]
     pads=[2, 2, 2, 2],
     strides=[3, 3]

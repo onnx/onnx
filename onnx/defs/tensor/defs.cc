@@ -42,21 +42,21 @@ void unfoldToDepthShapeInference(
     strides.assign(n_input_dims, 1);
   }
 
-  std::vector<int64_t> block_shape;
-  if (getRepeatedAttribute(ctx, "block_shape", block_shape)) {
-    if (block_shape.size() != n_input_dims) {
+  std::vector<int64_t> block_size;
+  if (getRepeatedAttribute(ctx, "block_size", block_size)) {
+    if (block_size.size() != n_input_dims) {
       fail_shape_inference("Attribute size has incorrect size");
     }
   } else {
-    fail_shape_inference("Attribute block_shape must be specified");
+    fail_shape_inference("Attribute block_size must be specified");
   }
 
-  std::vector<int64_t> effective_block_shape = block_shape;
+  std::vector<int64_t> effective_block_size = block_size;
   size_t block_num_element = 1;
-  for (int i = 0; i < static_cast<int>(block_shape.size()); i++) {
+  for (int i = 0; i < static_cast<int>(block_size.size()); i++) {
     // accounting for dilation, how big is the block in this dimension
-    effective_block_shape[i] = (effective_block_shape[i] - 1) * dilations[i] + 1;
-    block_num_element *= effective_block_shape[i];
+    effective_block_size[i] = (effective_block_size[i] - 1) * dilations[i] + 1;
+    block_num_element *= effective_block_size[i];
   }
 
   std::vector<int64_t> pads;
@@ -80,21 +80,21 @@ void unfoldToDepthShapeInference(
 
   size_t last_dim_size = 1;
   newdim = output_shape->add_dim();
-  int effective_block_shape_size = static_cast<int>(effective_block_shape.size());
-  for (int i = 0; i < effective_block_shape_size; ++i) {
+  int effective_block_size_dims = static_cast<int>(effective_block_size.size());
+  for (int i = 0; i < effective_block_size_dims; ++i) {
     if (!input_shape.dim(2 + i).has_dim_value()) {
       return;
     }
     // how big is the input, including padding
     int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
     effective_input_size += pads[i];
-    effective_input_size += pads[i + effective_block_shape_size];
+    effective_input_size += pads[i + effective_block_size_dims];
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
     int64_t strided_kernel_positions;
     strided_kernel_positions =
-        (effective_input_size - effective_block_shape[i]) / strides[i];
+        (effective_input_size - effective_block_size[i]) / strides[i];
 
     // add in the initial position
     last_dim_size *= (1 + strided_kernel_positions);
@@ -114,7 +114,7 @@ Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor
 <br/>
 Where number of blocks extracted from each spatial dimension d is:
 ```
-block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
 ```
 )DOC";
     schema.SetDoc(doc);
@@ -140,7 +140,7 @@ block_size[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] *
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.Attr(
-        "block_shape",
+        "block_size",
         "The size of the extracted blocks [D1, D2, ..., Dn].",
         AttributeProto::INTS,
         OPTIONAL);
