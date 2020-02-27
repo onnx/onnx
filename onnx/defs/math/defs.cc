@@ -2339,8 +2339,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "labels",
             "The ground truth output tensor, with shape [batch_size], or "
-            "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions."
-            "Usualy, it's a one-hot representation of ground-truth class.",
+            "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions.",
             "T")
          .Input(
             2,
