@@ -1100,6 +1100,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 1))])
 
+    def test_reduce_op_shape_no_axes_do_not_keep_dims(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceL1', 'x', 'y', keepdims=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, tuple())])
+
     def test_reduce_op_shape_negative_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
