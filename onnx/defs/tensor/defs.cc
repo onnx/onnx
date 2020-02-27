@@ -136,9 +136,9 @@ num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] *
         "pad lengths.",
         "T");
     schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+         "T",
+         OpSchema::all_numeric_types(),
+         "Constrain input and output types to numeric tensors.");
     schema.Attr(
         "block_size",
         "The size of the extracted blocks [D1, D2, ..., Dn].",
