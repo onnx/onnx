@@ -66,6 +66,7 @@ def function_expand_helper(node,  # type: NodeProto
                 if attr.ref_attr_name in attribute_map:
                     new_attr = AttributeProto()
                     new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                    new_attr.name = attr.name
                     new_node.attribute.extend([new_attr])
             else:
                 new_attr = AttributeProto()

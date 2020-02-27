@@ -163,6 +163,8 @@
   **Functions**
   * <a href="#Celu">Celu</a>
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
+  * <a href="#GreaterOrEqual">GreaterOrEqual</a>
+  * <a href="#LessOrEqual">LessOrEqual</a>
   * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
@@ -2442,10 +2444,12 @@ This version of the operator has been available since version 12 of the default 
 <summary>celu</summary>
 
 ```python
+alpha = 2.0
 node = onnx.helper.make_node(
     'Celu',
     inputs=['X'],
-    outputs=['Y']
+    outputs=['Y'],
+    alpha=alpha,
 )
 
 input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
@@ -2457,8 +2461,6 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[[0.41356155], [0.9129373], [0.59330076]],
     [[0.81929934], [0.7862604], [0.11799799]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
-
-alpha = 2
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
@@ -2480,9 +2482,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>, <a href="Changelog.md#Clip-11">Clip-11</a>
 
 #### Inputs (1 - 3)
 
@@ -2505,8 +2507,8 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -2599,6 +2601,49 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+<details>
+<summary>clip_default_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, min_val, np.iinfo(np.int8).max)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_int8_min')
+
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, np.iinfo(np.int8).min, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_int8_max')
+
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.int8)
+y = np.array([-1, 0, 1]).astype(np.int8)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_int8_inbounds')
 ```
 
 </details>
@@ -3265,7 +3310,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>w_zero_point</tt> (optional) : T2</dt>
-<dd>Scale tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
+<dd>Zero point tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
 </dl>
 
 #### Outputs
@@ -6788,6 +6833,26 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal')
+```
+
+</details>
+
+
+<details>
 <summary>greater_broadcast</summary>
 
 ```python
@@ -6805,6 +6870,63 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal_bcast')
+```
+
+</details>
+
+
+### <a name="GreaterOrEqual"></a><a name="greaterorequal">**GreaterOrEqual**</a>
+
+  Returns the tensor resulted from performing the `greater_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
@@ -7980,6 +8102,26 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal')
+```
+
+</details>
+
+
+<details>
 <summary>less_broadcast</summary>
 
 ```python
@@ -7997,6 +8139,63 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal_bcast')
+```
+
+</details>
+
+
+### <a name="LessOrEqual"></a><a name="lessorequal">**LessOrEqual**</a>
+
+  Returns the tensor resulted from performing the `less_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="Log"></a><a name="log">**Log**</a>
@@ -8565,7 +8764,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>a_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
 <dt><tt>b_zero_point</tt> (optional) : T2</dt>
-<dd>Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+<dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
 </dl>
 
 #### Outputs
@@ -8630,9 +8829,9 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>, <a href="Changelog.md#Max-8">Max-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -8651,8 +8850,8 @@ Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -8690,6 +8889,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_max_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>max_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([3, 4, 4]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_max_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -9828,9 +10047,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>, <a href="Changelog.md#Min-8">Min-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -9849,8 +10068,8 @@ Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -9888,6 +10107,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>min_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([1, 2, 1]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_min_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -11845,11 +12084,11 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>w_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
 <dt><tt>w_zero_point</tt> : T2</dt>
-<dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
+<dd>Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> : T3</dt>
-<dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dd>Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>B</tt> (optional) : T4</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
 </dl>

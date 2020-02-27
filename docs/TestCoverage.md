@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 143/159 (89.94%, 5 generators excluded) common operators.
+Node tests have covered 143/161 (88.82%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1449,10 +1449,12 @@ There are 1 test cases, listed as following:
 <summary>celu</summary>
 
 ```python
+alpha = 2.0
 node = onnx.helper.make_node(
     'Celu',
     inputs=['X'],
-    outputs=['Y']
+    outputs=['Y'],
+    alpha=alpha,
 )
 
 input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
@@ -1464,8 +1466,6 @@ input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
     [[[0.41356155], [0.9129373], [0.59330076]],
     [[0.81929934], [0.7862604], [0.11799799]],
     [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
-
-alpha = 2
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
@@ -1480,7 +1480,7 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 
 ### Clip
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>clip</summary>
 
@@ -1566,6 +1566,47 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+<details>
+<summary>clip_default_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, min_val, np.iinfo(np.int8).max)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_int8_min')
+
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, np.iinfo(np.int8).min, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_int8_max')
+
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.int8)
+y = np.array([-1, 0, 1]).astype(np.int8)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_int8_inbounds')
 ```
 
 </details>
@@ -3887,7 +3928,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
 
 ### Greater
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>greater</summary>
 
@@ -3907,6 +3948,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal')
+```
+
+</details>
+<details>
 <summary>greater_broadcast</summary>
 
 ```python
@@ -3921,6 +3980,24 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_bcast')
+```
+
+</details>
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal_bcast')
 ```
 
 </details>
@@ -4454,7 +4531,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Less
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>less</summary>
 
@@ -4474,6 +4551,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal')
+```
+
+</details>
+<details>
 <summary>less_broadcast</summary>
 
 ```python
@@ -4488,6 +4583,24 @@ y = np.random.randn(5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_less_bcast')
+```
+
+</details>
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal_bcast')
 ```
 
 </details>
@@ -4687,7 +4800,7 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 
 ### Max
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>max</summary>
 
@@ -4720,6 +4833,24 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_max_two_inputs')
+```
+
+</details>
+<details>
+<summary>max_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([3, 4, 4]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_max_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -5487,7 +5618,7 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 
 ### Min
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>min</summary>
 
@@ -5520,6 +5651,24 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+<details>
+<summary>min_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([1, 2, 1]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_min_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -11779,7 +11928,13 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GraphCall (call for test cases)
 
 
+### GreaterOrEqual (call for test cases)
+
+
 ### If (call for test cases)
+
+
+### LessOrEqual (call for test cases)
 
 
 ### Loop (call for test cases)
