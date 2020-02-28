@@ -22,6 +22,9 @@ environment:
 
   - CONDA_PREFIX: C:\Miniconda36
 
+  - CONDA_PREFIX: C:\Miniconda36
+    ONNX_DEBUG: 1
+
   - CONDA_PREFIX: C:\Miniconda37-x64
 
   - CONDA_PREFIX: C:\Miniconda37
@@ -49,14 +52,20 @@ build_script:
 # Build and test onnx.
 - cmd: cd c:\projects\onnx
 - cmd: set ONNX_BUILD_TESTS=1
-#The latest libprotobuf Windows packages in anaconda was built with          
-#        -Dprotobuf_BUILD_SHARED_LIBS=ON 
+- >
+  if defined ONNX_DEBUG
+  (
+  set "DEBUG=1"
+  )
+
+#The latest libprotobuf Windows packages in anaconda was built with
+#        -Dprotobuf_BUILD_SHARED_LIBS=ON
 #        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
-#We must align with them. We must set USE_MSVC_STATIC_RUNTIME and 
+#We must align with them. We must set USE_MSVC_STATIC_RUNTIME and
 #ONNX_USE_PROTOBUF_SHARED_LIBS based on their config
 - cmd: set USE_MSVC_STATIC_RUNTIME=0
 # Don't put quotation marks in the following line
-- cmd: set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+- cmd: set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_DEBUG=ON
 - cmd: python setup.py --quiet bdist_wheel --universal --dist-dir .
 - cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt

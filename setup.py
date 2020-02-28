@@ -179,6 +179,8 @@ class cmake_build(setuptools.Command):
                 ])
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
+                if DEBUG:
+                    cmake_args.append('-DONNX_DEBUG=ON')
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI
                     # TODO: need a better way to determine generator
