@@ -22,6 +22,7 @@ endif()
 
 if(ONNX_DEBUG)
   set(ONNX_DEBUG_MODE "Debug")
+  set(ONNX_BUILD_TESTS 0)
 else()
   set(ONNX_DEBUG_MODE "Release")
 endif()
