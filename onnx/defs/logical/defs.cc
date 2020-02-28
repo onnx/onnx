@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/function.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -197,5 +198,47 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ctx.getInputType(1)->tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LessOrEqual,
+    12,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("less_equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor.")
+        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .FunctionBody(FunctionBodyHelper::BuildNodes({
+            // nodes: {outputs, op, inputs, attributes}
+            {{"O1"}, "Greater", {"A", "B"}},
+            {{"O2"}, "Equal", {"A", "B"}},
+            {{"C"}, "Or", {"O1", "O2"}}
+        })));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GreaterOrEqual,
+    12,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("greater_equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor.")
+        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .FunctionBody(FunctionBodyHelper::BuildNodes({
+            // nodes: {outputs, op, inputs, attributes}
+            {{"O1"}, "Less", {"A", "B"}},
+            {{"O2"}, "Equal", {"A", "B"}},
+            {{"C"}, "Or", {"O1", "O2"}}
+        })));
 
 } // namespace ONNX_NAMESPACE
