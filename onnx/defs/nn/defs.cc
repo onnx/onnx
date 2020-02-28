@@ -130,7 +130,7 @@ void convPoolShapeInference(
       }
     }
   }
-    
+
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -283,7 +283,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForPoolingOps(supports8bit),
-        supports8bit ? "Constrain input and output types to float and 8 bit tensors." 
+        supports8bit ? "Constrain input and output types to float and 8 bit tensors."
         : "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
