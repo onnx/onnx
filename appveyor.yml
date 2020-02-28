@@ -52,12 +52,6 @@ build_script:
 # Build and test onnx.
 - cmd: cd c:\projects\onnx
 - cmd: set ONNX_BUILD_TESTS=1
-- >
-  if defined ONNX_DEBUG
-  (
-  set ONNX_BUILD_TESTS=0
-  set "DEBUG=1"
-  )
 
 #The latest libprotobuf Windows packages in anaconda was built with
 #        -Dprotobuf_BUILD_SHARED_LIBS=ON
@@ -65,6 +59,12 @@ build_script:
 #We must align with them. We must set USE_MSVC_STATIC_RUNTIME and
 #ONNX_USE_PROTOBUF_SHARED_LIBS based on their config
 - cmd: set USE_MSVC_STATIC_RUNTIME=0
+- >
+  if defined ONNX_DEBUG
+  (
+  set "DEBUG=1"
+  set USE_MSVC_STATIC_RUNTIME=1
+  )
 # Don't put quotation marks in the following line
 - cmd: set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 - cmd: python setup.py --quiet bdist_wheel --universal --dist-dir .
