@@ -20132,7 +20132,7 @@ This version of the operator has been available since version 12 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>block_size</tt> : list of ints</dt>
+<dt><tt>block_size</tt> : list of ints (required)</dt>
 <dd>The size of the extracted blocks [D1, D2, ..., Dn].</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>

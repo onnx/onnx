@@ -142,8 +142,7 @@ num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] *
     schema.Attr(
         "block_size",
         "The size of the extracted blocks [D1, D2, ..., Dn].",
-        AttributeProto::INTS,
-        OPTIONAL);
+        AttributeProto::INTS);
     schema.Attr(
         "dilations",
         "Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.",
