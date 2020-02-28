@@ -60,6 +60,7 @@
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
+  * <a href="#Inverse">Inverse</a>
   * <a href="#IsInf">IsInf</a>
   * <a href="#IsNaN">IsNaN</a>
   * <a href="#LRN">LRN</a>
@@ -160,10 +161,18 @@
   * <a href="#Xor">Xor</a>
 
   **Functions**
+  * <a href="#Celu">Celu</a>
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
+  * <a href="#GreaterOrEqual">GreaterOrEqual</a>
+  * <a href="#LessOrEqual">LessOrEqual</a>
+  * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
+  * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
+* ai.onnx.training
+  * <a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>
+  * <a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -2386,6 +2395,85 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Celu"></a><a name="celu">**Celu**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+  Perform the linear unit element-wise on the input tensor X
+  using formula: 
+  
+  ```
+  max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>celu</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    'Celu',
+    inputs=['X'],
+    outputs=['Y'],
+    alpha=alpha,
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+# Calculate expected output data
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+expected_output = positive_input + negative_input
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_celu')
+```
+
+</details>
+
+
 ### <a name="Clip"></a><a name="clip">**Clip**</a>
 
   Clip operator limits the given input within an interval. The interval is
@@ -2394,9 +2482,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>, <a href="Changelog.md#Clip-11">Clip-11</a>
 
 #### Inputs (1 - 3)
 
@@ -2419,8 +2507,8 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -2513,6 +2601,49 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+<details>
+<summary>clip_default_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, min_val, np.iinfo(np.int8).max)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_int8_min')
+
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, np.iinfo(np.int8).min, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_int8_max')
+
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.int8)
+y = np.array([-1, 0, 1]).astype(np.int8)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_int8_inbounds')
 ```
 
 </details>
@@ -3179,7 +3310,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>w_zero_point</tt> (optional) : T2</dt>
-<dd>Scale tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
+<dd>Zero point tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
 </dl>
 
 #### Outputs
@@ -5958,40 +6089,49 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 ### <a name="GatherND"></a><a name="gathernd">**GatherND**</a>
 
-  Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers 
-  slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
+  Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
+  slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
   
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
   where each element defines a slice of `data`
+  
+  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of 
+  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension. 
   
   Some salient points about the inputs' rank and shape:
    
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
   
-  2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
+  2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
   
-  3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  3) b < min(q, r) is to be honored.
+  
+  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+  
+  5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
   
   The output is computed as follows:
   
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
    
-  1) If `indices_shape[-1] > r` => error condition
+  1) If `indices_shape[-1] > r-b` => error condition
   
-  2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-     containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
-     Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
-     to form the `output` tensor (Example 1 below)
+  2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
+     containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions 
+     of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]` 
+     is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
   
-  3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-     containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
-     Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
-     to form the `output` tensor (Examples 2, 3, and 4 below)
+  3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
+     containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding 
+     to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor 
+     to form the `output` tensor (Examples 2, 3, 4 and 5 below)
   
   This operator is the inverse of `ScatterND`.
   
   `Example 1`
+  
+    batch_dims = 0
   
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
   
@@ -6001,6 +6141,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   `Example 2`
   
+    batch_dims = 0
+  
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
   
     indices = [[1],[0]]      # indices_shape = [2, 1]
@@ -6008,6 +6150,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
   
   `Example 3`
+  
+    batch_dims = 0
   
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
@@ -6017,16 +6161,38 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   `Example 4`
   
+    batch_dims = 0
+  
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
   
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
   
+  `Example 5`
+  
+    batch_dims = 1
+  
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+  
+    indices = [[1],[0]]             # indices_shape = [2, 1]
+  
+    output  = [[2,3],[4,5]]             # output_shape = [2, 2] 
+  
+  
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GatherND-11">GatherND-11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_dims</tt> : int (default is 0)</dt>
+<dd>The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]</dd>
+</dl>
 
 #### Inputs
 
@@ -6066,7 +6232,7 @@ node = onnx.helper.make_node(
 
 data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.float32)
 indices = np.array([[[0, 1]], [[1, 0]]], dtype=np.int64)
-output = gather_nd_impl(data, indices)
+output = gather_nd_impl(data, indices, 0)
 expected_output = np.array([[[2, 3]], [[4, 5]]], dtype=np.float32)
 assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
@@ -6088,11 +6254,34 @@ node = onnx.helper.make_node(
 
 data = np.array([[0, 1], [2, 3]], dtype=np.int32)
 indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
-output = gather_nd_impl(data, indices)
+output = gather_nd_impl(data, indices, 0)
 expected_output = np.array([0, 3], dtype=np.int32)
 assert (np.array_equal(output, expected_output))
 expect(node, inputs=[data, indices], outputs=[output],
        name='test_gathernd_example_int32')
+```
+
+</details>
+
+
+<details>
+<summary>int32_batchdim_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GatherND',
+    inputs=['data', 'indices'],
+    outputs=['output'],
+    batch_dims=1,
+)
+
+data = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype=np.int32)
+indices = np.array([[1], [0]], dtype=np.int64)
+output = gather_nd_impl(data, indices, 1)
+expected_output = np.array([[2, 3], [4, 5]], dtype=np.int32)
+assert (np.array_equal(output, expected_output))
+expect(node, inputs=[data, indices], outputs=[output],
+       name='test_gathernd_example_int32_batch_dim1')
 ```
 
 </details>
@@ -6644,6 +6833,26 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal')
+```
+
+</details>
+
+
+<details>
 <summary>greater_broadcast</summary>
 
 ```python
@@ -6661,6 +6870,63 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal_bcast')
+```
+
+</details>
+
+
+### <a name="GreaterOrEqual"></a><a name="greaterorequal">**GreaterOrEqual**</a>
+
+  Returns the tensor resulted from performing the `greater_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
@@ -7088,6 +7354,79 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
+```
+
+</details>
+
+
+### <a name="Inverse"></a><a name="inverse">**Inverse**</a>
+
+  Calculates inverse of a square matrix or batches of square matrices.
+  Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+  and the inner-most 2 dimensions form square matrices.
+  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor of the same type as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numerical tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>inverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Inverse',
+    inputs=['x'],
+    outputs=['y']
+)
+
+X = np.random.randn(4, 4)
+Y = inverse_reference_implementation(X)
+
+expect(node, inputs=[X], outputs=[Y], name='test_inverse')
+```
+
+</details>
+
+
+<details>
+<summary>inverse_batched</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Inverse',
+    inputs=['x'],
+    outputs=['y']
+)
+
+X = np.random.randn(2, 3, 4, 4)
+Y = inverse_reference_implementation(X)
+
+expect(node, inputs=[X], outputs=[Y], name='test_inverse_batched')
 ```
 
 </details>
@@ -7763,6 +8102,26 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal')
+```
+
+</details>
+
+
+<details>
 <summary>less_broadcast</summary>
 
 ```python
@@ -7780,6 +8139,63 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal_bcast')
+```
+
+</details>
+
+
+### <a name="LessOrEqual"></a><a name="lessorequal">**LessOrEqual**</a>
+
+  Returns the tensor resulted from performing the `less_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="Log"></a><a name="log">**Log**</a>
@@ -8348,7 +8764,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>a_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
 <dt><tt>b_zero_point</tt> (optional) : T2</dt>
-<dd>Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+<dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
 </dl>
 
 #### Outputs
@@ -8413,9 +8829,9 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>, <a href="Changelog.md#Max-8">Max-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -8434,8 +8850,8 @@ Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -8473,6 +8889,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_max_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>max_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([3, 4, 4]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_max_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -9295,6 +9731,239 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### <a name="MeanSquaredDistance"></a><a name="meansquareddistance">**MeanSquaredDistance**</a>
+
+  Loss function that measures the
+  mean squared distance (squared L2 norm) between each element in the 'scores'
+  and 'labels'.
+  
+  The loss can be described as:
+      L = Pow(Sub(scores, labels), 2)
+  
+  score and label are tensors of arbitrary shapes with total of N elements each,
+  and are of the same shape.
+  
+  If 'weights' is provided, it should be broadcastable to shape of 'L'.
+      L = Mul(weights, L)
+  , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
+  
+  Finally, L is optionally reduced:
+  L = ReduceSum(L), if reduction = 'sum';
+      ReduceMean(L), if reduction = 'mean';
+      L, if reduction = 'none';
+  
+  .
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed into a scalar. 'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>scores</tt> : T</dt>
+<dd>The predicted outputs.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>Weights acts as a coefficient for the loss, it should be broadcastable to shape of 'scores'.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is none, this has the shape of [batch_size]; otherwise, it is scalar.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>mean_square_distance_mean</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
+t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
+
+# Compute Mean Square Distance
+sq = np.square(r - t)
+msd = np.mean(sq)
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_mean_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[[1.2, 2.5], [3.1, 1.3]], [[2.3, 3.4], [1.1, 2.2]], [[3.6, 1.7], [2.5, 3.8]]], dtype=np.float32)
+t = np.array([[[1.1, 2.6], [3.2, 1.4]], [[2.2, 3.3], [1.2, 2.1]], [[3.5, 1.6], [2.5, 3.9]]], dtype=np.float32)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='mean')
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_mean_4d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+np.random.seed(0)
+r = np.random.rand(2, 4, 5, 7)
+t = np.random.rand(2, 4, 5, 7)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='mean')
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_4d')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_none</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([1.2, 2.5], dtype=np.float32)
+t = np.array([1.1, 2.6], dtype=np.float32)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='none')
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_none_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T', 'W'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([1.2, 2.5], dtype=np.float32)
+t = np.array([1.1, 2.6], dtype=np.float32)
+weights = np.array([0.8, 0.9], dtype=np.float32)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='none', w=weights)
+
+# Check results
+expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
+```
+
+</details>
+
+
+<details>
+<summary>mean_square_distance_sum</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('MeanSquaredDistance',
+                             inputs=['R', 'T'],
+                             outputs=['X'],
+                             reduction=reduction
+                             )
+
+# Define operator inputs
+r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
+t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
+
+# Compute Mean Square Distance
+msd = mean_squared_distance(r, t, reduction='sum')
+
+# Check results
+expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')
+```
+
+</details>
+
+
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
@@ -9378,9 +10047,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>, <a href="Changelog.md#Min-8">Min-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -9399,8 +10068,8 @@ Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -9438,6 +10107,26 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_min_two_inputs')
+```
+
+</details>
+
+
+<details>
+<summary>min_all_numeric_types</summary>
+
+```python
+for op_dtype in all_numeric_dtypes:
+    data_0 = np.array([3, 2, 1]).astype(op_dtype)
+    data_1 = np.array([1, 4, 4]).astype(op_dtype)
+    result = np.array([1, 2, 1]).astype(op_dtype)
+    node = onnx.helper.make_node(
+        'Max',
+        inputs=['data_0', 'data_1'],
+        outputs=['result'],
+    )
+    expect(node, inputs=[data_0, data_1], outputs=[result],
+           name='test_min_{0}'.format(np.dtype(op_dtype).name))
 ```
 
 </details>
@@ -9974,7 +10663,7 @@ expect(node, inputs=[x], outputs=[y],
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
-      mean(loss), if "weight" is not provided, 
+      mean(loss), if "weight" is not provided,
   
   or if weight is provided,
   
@@ -9985,11 +10674,11 @@ expect(node, inputs=[x], outputs=[y],
   
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
   
-  Example 1: 
+  Example 1:
   
-      # negative log likelihood loss, "none" reduction
+      // negative log likelihood loss, "none" reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
                [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
   
@@ -9999,15 +10688,15 @@ expect(node, inputs=[x], outputs=[y],
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1]
   
-      # print(loss)
-      # [[-3. -2.]
-      #  [-0. -2.]]
+      // print(loss)
+      // [[-3. -2.]
+      //  [-0. -2.]]
   
   Example 2:
   
-      # weighted negative log likelihood loss, sum reduction
+      // weighted negative log likelihood loss, sum reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -10018,14 +10707,14 @@ expect(node, inputs=[x], outputs=[y],
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
   
       loss = np.sum(loss)
-      # print(loss)
-      # -1.1
+      // print(loss)
+      // -1.1
   
   Example 3:
   
-      # weighted negative log likelihood loss, mean reduction
+      // weighted negative log likelihood loss, mean reduction
       N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]], 
+      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
       weight = [0.2, 0.3, 0.1]
@@ -10038,8 +10727,8 @@ expect(node, inputs=[x], outputs=[y],
               weight_total = weight_total + weight[c]
   
       loss = np.sum(loss) / weight_total
-      # print(loss)
-      # -1.57
+      // print(loss)
+      // -1.57
 
 #### Version
 
@@ -11395,11 +12084,11 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>w_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
 <dt><tt>w_zero_point</tt> : T2</dt>
-<dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
+<dd>Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> : T3</dt>
-<dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dd>Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>B</tt> (optional) : T4</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
 </dl>
@@ -17479,6 +18168,248 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="SoftmaxCrossEntropyLoss"></a><a name="softmaxcrossentropyloss">**SoftmaxCrossEntropyLoss**</a>
+
+  Loss function that measures the softmax cross entropy
+  between 'scores' and 'labels'.
+  This operator first computes a loss tensor whose shape is identical to the labels input.
+  If the input is 2-D with shape (N, C), the loss tensor may be a N-element vector L = (l_1, l_2, ..., l_N).
+  If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
+  the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
+  After L is available, this operator can optionally do a reduction operator.
+  
+  shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+          with K >= 1 in case of K-dimensional loss.
+  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+          with K >= 1 in case of K-dimensional loss.
+  
+  The loss for one sample, l_i, can caculated as follows:
+      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+  or
+      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+  
+  where:
+      p = Softmax(scores)
+      y = Log(p)
+      c = labels[i][d1][d2]...[dk]
+  
+  Finally, L is optionally reduced:
+  If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+  If reduction = 'sum', the output is scalar: Sum(L).
+  If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
+  where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is mean)</dt>
+<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>scores</tt> : T</dt>
+<dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, D1, D2 , ..., Dk], where K is the number of dimensions.</dd>
+<dt><tt>labels</tt> : T</dt>
+<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.</dd>
+<dt><tt>weights</tt> (optional) : T</dt>
+<dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, D1, D2, ..., Dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
+<dt><tt>log_prob</tt> (optional) : T</dt>
+<dd>Log probability tensor. If the output of softmax is prob, its value is log(prob).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>softmaxcrossentropy_mean</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_mean_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+y = np.random.randint(0, high=5, size=(3, 2))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, y)
+
+# Check results
+expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_mean_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, weight=weights)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_none</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, reduction='none')
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_none_weights</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, weight=weights, reduction='none')
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_none_weights')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_sum</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, reduction='sum')
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
+```
+
+</details>
+
+
 ### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
 
   Softplus takes one input data (Tensor<T>) and produces one output data
@@ -19867,5 +20798,399 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+## ai.onnx.training
+### <a name="ai.onnx.training.Gradient"></a><a name="ai.onnx.training.gradient">**ai.onnx.training.Gradient**</a>
+
+  Gradient operator computes the partial derivatives of a specific tensor w.r.t.
+  some other tensors. This operator is widely used in gradient-based training
+  algorithms. To illustrate its use, let's consider a computation graph,
+  
+  ```
+  X -----.
+         |
+         v
+  W --> Conv --> H --> Gemm --> Y
+                        ^
+                        |
+                        Z
+  ```
+  
+  , where W and Z are trainable tensors. Note that operators' attributes are
+  omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
+  Y with respect to W (Z). The user can compute gradient by inserting Gradient
+  operator to form another graph shown below.
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+  |      ^              ^
+  |      |              |
+  |      X              Z
+  |      |              |
+  |      |   .----------'
+  |      |   |  (W/Z/X is the 1st/2nd/3rd input of Gradient as shown in
+  |      |   |   "xs" followed by "zs")
+  |      v   v
+  '---> Gradient(xs=["W", "Z"], zs=["X"], y="Y")
+         |   |
+         |   '-----------------------------------> dY/dW (1st output of Gradient)
+         |
+         '---------------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  By definition, the tensor "y" is a function of independent variables in "xs"
+  and "zs". Since we only compute the gradient of "y" w.r.t. the differentiable
+  variables in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
+  cannot appear in "xs" and "zs". The reason is that "H" can be determined by
+  tensors "W" and "X" and therefore "H" is not an independent variable.
+  
+  All outputs are optional. If needed, for example, user can assign an empty
+  string to the 1st output name of that Gradient to skip the generation of dY/dW.
+  Note that the concept of optional outputs can also be found in ONNX's RNN, GRU,
+  and LSTM.
+  
+  Gradient operator can compute derivative against intermediate tensors. For
+  example, the gradient of Y with respect to H can be done via
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+         ^       |      ^
+         |       |      |
+         X       |      Z
+         .-------'      |
+         |   .----------'
+         |   | (H/Z is the 1st/2nd input of Gradient as shown in "xs")
+         v   v
+        Gradient(xs=["H", "Z"], y="Y")
+         |   |
+         |   '-----------------------------------> dY/dH (1st output of Gradient)
+         |
+         '---------------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  It is possible to represent high-order differentiation using Gradient operators.
+  For example, given the following linear model:
+  
+  ```
+  W --> Gemm --> Y --> Loss --> O
+         ^              ^
+         |              |
+         X              L
+  ```
+  
+  To compute the 2nd order derivative of O with respect to W (denoted by
+  d^2O/dW^2), one can do
+  
+  ```
+  W --> Gemm --> Y --> Loss --> O
+  |      ^              ^
+  |      |              |
+  |      X .------------L
+  |      | |            |
+  |      | |            v
+  +------+-+> Gradient(xs=["X", "W"], zs=["L"], y="O") ---> dO/dX (1st output of Gradient)
+  |      | |    |
+  |      | |    '---> dO/dW (2nd output of Gradient)
+  |      v v
+  '---> Gradient(xs=["X", "W"], zs=["L"], y="dO/dW") ---> d(dO/dW)dX (1st output of
+         |                                                  Gradient)
+         |
+         |
+         '---> d^2O/dW^2 (2nd output of Gradient)
+  ```
+  
+  The tensors named in attributes "xs", "zs", and "y" define the differentiated
+  computation graph, and the inputs to Gradient node define the values at
+  which the gradient is computed. We can feed different tensors to the identified
+  graph. For example, one can compute the gradient of Y with respect to H at 
+  a specific value of H, H_1, by providing that value as an input to the Gradient
+  node.
+  
+  ```
+  W --> Conv --> H --> Gemm --> Y
+         ^              ^
+         |              |
+         X              Z
+  
+            Z_1 (2nd input of Gradient)
+             |
+             v
+  H_1 --> Gradient(xs=["H", "Z"], y="Y") ---> dY/dH when H = H_1 and Y = Y_1.
+             |
+             '------------------------------> dY/dZ (2nd output of Gradient)
+  ```
+  
+  When the inputs of Gradient are the tensors named in "xs" and "zs", the
+  computation can be optimized. More specifically, intermediate variables in
+  forward pass can be reused if the gradient is computed via reverse-mode
+  auto-differentiation.
+  
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>xs</tt> : list of strings (required)</dt>
+<dd>Input tensor names of the differentiated sub-graph. It contains only the necessary differentiated inputs of a (sub-)graph. Variables (usually called intermediate variables) that can be generated from inputs cannot be included in this attribute.</dd>
+<dt><tt>y</tt> : string (required)</dt>
+<dd>The targeted tensor. It can be viewed as the output of the differentiated function. The attribute "xs" and attribute "zs" are the minimal independent variable set that determines the value of "y".</dd>
+<dt><tt>zs</tt> : list of strings</dt>
+<dd>Input tensor names of the differentiated sub-graph. It contains only the necessary non-differentiated inputs of a (sub-)graph. Variables (usually called intermediate variables) that can be generated from inputs cannot be included in this attribute.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T1</dt>
+<dd>The values fed into graph identified by the attributes. The i-th input is the value of the i-th tensor specified in the concatenated list of the attribute "xs" and the attribute  "zs". For example, if xs=["A", "B"] and zs=["C"], the first input is used as the value of symbol "A" and the 3rd input is substituted for all the occurrences of "C".</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T2</dt>
+<dd>The gradient of the tensor specified by the attribute "y" with respect to each of tensors specified in the attribute "xs". The i-th output is the gradient of "y" with respect to the i-th tensor specified in the attribute "xs".</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Allow outputs to be any kind of tensor.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Allow inputs to be any kind of floating-point tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gradient_scalar_add</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dc_da', 'dc_db'], name='my_gradient',
+    domain='ai.onnx.training',
+    xs=['a', 'b'], y='c')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# dc / da = d(a+b) / da = 1
+dc_da = np.array(1).astype(np.float32)
+# db / db = d(a+b) / db = 1
+dc_db = np.array(1).astype(np.float32)
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, gradient_node],
+    name='GradientOfAdd',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('c', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dc_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dc_db',
+                                           onnx.TensorProto.FLOAT, [])])
+opsets = [
+    onnx.helper.make_operatorsetid('', 12),
+    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+model = onnx.helper.make_model(
+    graph,
+    producer_name='backend-test',
+    opset_imports=opsets)
+expect(model, inputs=[a, b], outputs=[c, dc_da, dc_db],
+       name='test_gradient_of_add')
+```
+
+</details>
+
+
+<details>
+<summary>gradient_scalar_add_and_mul</summary>
+
+```python
+add_node = onnx.helper.make_node('Add',
+                                 ['a', 'b'], ['c'], name='my_add')
+mul_node = onnx.helper.make_node('Mul',
+                                 ['c', 'a'], ['d'], name='my_mul')
+gradient_node = onnx.helper.make_node(
+    'Gradient', ['a', 'b'],
+    ['dd_da', 'dd_db'], name='my_gradient',
+    domain='ai.onnx.training',
+    xs=['a', 'b'], y='d')
+
+a = np.array(1.0).astype(np.float32)
+b = np.array(2.0).astype(np.float32)
+c = a + b
+# d = a * c = a * (a + b)
+d = a * c
+# dd / da = d(a*a+a*b) / da = 2 * a + b
+dd_da = (2 * a + b).astype(np.float32)
+# dd / db = d(a*a+a*b) / db = a
+dd_db = a
+
+graph = onnx.helper.make_graph(
+    nodes=[add_node, mul_node, gradient_node],
+    name='GradientOfTwoOperators',
+    inputs=[
+        onnx.helper.make_tensor_value_info('a', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('b', onnx.TensorProto.FLOAT,
+                                           [])],
+    outputs=[
+        onnx.helper.make_tensor_value_info('d', onnx.TensorProto.FLOAT,
+                                           []),
+        onnx.helper.make_tensor_value_info('dd_da',
+                                           onnx.TensorProto.FLOAT, []),
+        onnx.helper.make_tensor_value_info('dd_db',
+                                           onnx.TensorProto.FLOAT, [])])
+
+opsets = [
+    onnx.helper.make_operatorsetid('', 12),
+    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+model = onnx.helper.make_model(graph,
+    producer_name='backend-test',
+    opset_imports=opsets)
+expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
+       name='test_gradient_of_add_and_mul')
+```
+
+</details>
+
+
+### <a name="ai.onnx.training.GraphCall"></a><a name="ai.onnx.training.graphcall">**ai.onnx.training.GraphCall**</a>
+
+  The GraphCall operator invokes a graph inside TrainingInfoProto's
+  algorithm field. The GraphCall inputs and outputs are bound to those of
+  invoked graph by position. If a graph input has an initializer, that input
+  is considered optional. All graph outputs are optional.
+  
+  Below Python syntax is used for describing dictionary and list.
+  
+  Assume that ModelProto's graph field has
+  - name: "MyInferenceGraph"
+  - input: ["X", "W", "Z"]
+  - initializer: [W]
+  - output: ["Y"]
+  
+  as visualized below for inference.
+  
+  ```
+  X -----.
+         |
+         v
+  W --> Conv --> H --> Gemm --> Y
+                        ^
+                        |
+                        Z
+  ```
+  
+  Assume that the training algorithm contains
+  
+  - inputs: ["X_1", "Z_1", "C"]
+  - initializer: [T]
+  - outputs: ["W_new"]
+  
+  with a dictionary
+  
+  - update_binding: {"W": "W_new", "T": "T_new"}
+  
+  Inside the training algorithm graph, one can invoke the inference
+  graph via adding a GraphCall node with
+  
+  - inputs: ["X_1", "W", Z_1"]
+  - outputs: ["Y_1"]
+  - an attribute graph_name="MyInferenceGraph",
+  
+  The initializers, "W" and "T" in this case, in update_binding
+  are considered globally-visible and mutable variables, which
+  can be used as inputs of operators in the training graph.
+  
+  An example training algorithm graph may look like
+  
+  ```
+  .-------- W (a global and mutable variable from
+  |         |  the inference graph)
+  |         |
+  |   .-----'-----------.
+  |   |                 |
+  |   |                 v
+  |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph")
+  |   | |            |  |
+  |   | |            |  |
+  |   | |   Z_1 -----'  |
+  |   | |    |          V
+  |   | |    |         Y_1 ---> Loss ---> O
+  |   | |    |                    ^
+  |   | |    |                    |
+  |   | `--. |                    C
+  |   |    | |                    |
+  |   |    | |   .----------------'
+  |   |    | |   |
+  |   |    v v   v
+  |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1", "C"], y="O")
+  |        |
+  |        v
+  |      dO_dW (gradient of W)      1 (a scalar one)
+  |        |                        |
+  |        V                        v
+  |       Div <--- T ------------> Add ---> T_new
+  |        |    (T is the number of training iterations.
+  |        |     T is also globally visible and mutable.)
+  |        v
+  `-----> Sub ----> W_new
+  ```
+  
+  where Loss is a dummy node which computes the minimized objective function.
+  
+  The variable "W" is an optional input in the called graph.
+  If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
+  In this case, from the view of computation graph, the Conv operator invoked by
+  GraphCall's may be still connected the global "W" variable and therefore the
+  structure of the computation graph is unchanged.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>graph_name</tt> : string (required)</dt>
+<dd>The invoked graph's name. The only allowed value is the name of the inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, heterogeneous) : T</dt>
+<dd>Inputs fed to the invoked graph. The i-th input here goes to the i-th input of the invoked graph. To omit an optional input in this field, the user can drop it or use an empty string.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Outputs</tt> (variadic, heterogeneous) : T</dt>
+<dd>The outputs generated by the called graph. Its i-th value is bound to the i-th output of the called graph. Similar to the inputs, all outputs are optional.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Allow inputs and outputs to be any kind of tensor.</dd>
+</dl>
 
 
