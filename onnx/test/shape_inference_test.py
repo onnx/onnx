@@ -662,6 +662,27 @@ class TestShapeInference(unittest.TestCase):
                          make_tensor('axes', TensorProto.INT32, (2,), (0, 1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (2, 2))])
 
+    def test_unfoldtodepth_padding(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6))],
+            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[2, 2], pads=[1, 1, 1, 1], strides=[1, 1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 16, 42))])
+
+    def test_unfoldtodepth_no_padding(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 1, 5, 5))],
+            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[3, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 9, 9))])
+
+    def test_unfoldtodepth_padding_stride(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 5))],
+            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[3, 3], pads=[2, 2, 2, 2], strides=[3, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 36, 9))])
+
     def test_conv(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
@@ -1099,6 +1120,13 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ReduceL1', 'x', 'y')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 1))])
+
+    def test_reduce_op_shape_no_axes_do_not_keep_dims(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceL1', 'x', 'y', keepdims=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, tuple())])
 
     def test_reduce_op_shape_negative_axis(self):  # type: () -> None
         graph = self._make_graph(
