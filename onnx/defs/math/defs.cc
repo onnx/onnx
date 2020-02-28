@@ -605,6 +605,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+// Generate opschema for element-wise ops. Leaves type constraint "T" unspecified.
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
     const char* name) {
   return [=](OpSchema& schema) {
@@ -623,10 +624,6 @@ All inputs and outputs must have the same data type.
         "T",
         OpSchema::Variadic);
     schema.Output(0, name, "Output tensor.", "T");
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       int num_inputs = static_cast<int>(ctx.getNumInputs());
@@ -649,25 +646,45 @@ All inputs and outputs must have the same data type.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
-    8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("max")));
+    12,
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("max"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Min,
-    8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("min")));
+    12,
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("min"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to numeric tensors."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sum,
     8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("sum")));
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("sum"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mean,
     8,
-    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("mean")));
+    OpSchema()
+        .FillUsing(ElementwiseMultiOpDocGenerator("mean"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors."));
 
-static const char* Clip_ver11_doc = R"DOC(
+static const char* Clip_ver12_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified by the inputs 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max(), respectively.
@@ -675,9 +692,9 @@ numeric_limits::lowest() and numeric_limits::max(), respectively.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
-    11,
+    12,
     OpSchema()
-        .SetDoc(Clip_ver11_doc)
+        .SetDoc(Clip_ver12_doc)
         .Input(
             0,
             "input",
@@ -700,8 +717,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor with clipped input elements", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1525,7 +1542,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "b_zero_point",
-            "Scale tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
+            "Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
             "which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number "
             "of elements should be equal to the number of columns of input 'B'.",
             "T2",
@@ -2156,15 +2173,15 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
   body.push_back(FunctionBodyHelper::Const<int>("Q_Pow", 2));
   body.push_back({{"X_Sub"}, "Sub", {"scores", "labels"}});
 
-  if (ctx.hasInput(2)) {
+  if (!ctx.hasInput(2)) {
     if (ctx.getAttribute("reduction")->s() == "none") {
       body.push_back({{"output"}, "Pow", {"X_Sub", "Q_Pow"}});
     } else {
       body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
       if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}});
+        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}, {MakeAttribute("keepdims", (int64_t)0)}});
       } else {
-        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}});
+        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}, {MakeAttribute("keepdims", (int64_t)0)}});
       }
     }
   } else {
@@ -2174,9 +2191,9 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
     } else {
       body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
       if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}});
+        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}, {MakeAttribute("keepdims", (int64_t)0)}});
       } else {
-        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}});
+        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}, {MakeAttribute("keepdims", (int64_t)0)}});
       }
     }
   }
@@ -2284,10 +2301,12 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
-  if (ctx.hasInput(2)) {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"}, {MakeAttribute("reduction", "mean")}});
+  if (!ctx.hasInput(2)) {
+    body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
+        {MakeRefAttribute("reduction", AttributeProto::STRING)}});
   } else {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"}, {MakeAttribute("reduction", "mean")}});
+    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
+        {MakeRefAttribute("reduction", AttributeProto::STRING)}});
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
@@ -2320,8 +2339,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "labels",
             "The ground truth output tensor, with shape [batch_size], or "
-            "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions."
-            "Usualy, it's a one-hot representation of ground-truth class.",
+            "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions.",
             "T")
          .Input(
             2,
