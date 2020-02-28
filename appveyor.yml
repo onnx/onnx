@@ -55,6 +55,7 @@ build_script:
 - >
   if defined ONNX_DEBUG
   (
+  set ONNX_BUILD_TESTS=0
   set "DEBUG=1"
   )
 
