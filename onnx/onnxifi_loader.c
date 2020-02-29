@@ -84,13 +84,7 @@ int ONNXIFI_ABI onnxifi_load(
     path = ONNXIFI_LIBRARY_NAME;
   }
 
-#ifdef _WIN32
-  onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-#else
-  /* Clear libdl error state */
-  dlerror();
-  onnx->handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
-#endif
+
   if (onnx->handle == NULL) {
 #if ONNXIFI_LOADER_LOGGING
 #if defined(__ANDROID__)
@@ -210,3 +204,30 @@ void ONNXIFI_ABI onnxifi_unload(struct onnxifi_library* onnx) {
 #endif
   }
 }
+
+#if defined(__ANDROID__)
+        __android_log_print(
+          ANDROID_LOG_ERROR,
+          ONNXIFI_LOADER_ANDROID_LOG_TAG,
+          "failed to unload %s: %s",
+          ONNXIFI_LIBRARY_NAME,
+          dlerror());
+#else
+        fprintf(
+          stderr,
+          "Error: failed to unload %s: %s\n",
+          ONNXIFI_LIBRARY_NAME,
+          dlerror());
+#endif
+#endif /* ONNXIFI_LOADER_LOGGING */
+      }
+#endif /* !defined(_WIN32) */
+    }
+#ifdef _WIN32
+    ZeroMemory(onnx, sizeof(struct onnxifi_library));
+#else
+    memset(onnx, 0, sizeof(struct onnxifi_library));
+#endif
+  }
+}
+
