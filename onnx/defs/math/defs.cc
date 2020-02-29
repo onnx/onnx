@@ -255,13 +255,7 @@ the tensor elementwise.
 )DOC";
 
 
-static const char* Floor_ver6_doc = R"DOC(
-Floor takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the floor is, y = floor(x), is applied to
-the tensor elementwise.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
+ONNX_OPERATOR_SET_SCHEMA3(
     Floor,
     6,
     OpSchema()
