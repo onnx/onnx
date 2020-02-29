@@ -58,11 +58,11 @@ def collect_testcases():  # type: () -> List[TestCase]
         ('test_zfnet512', 'zfnet512', 1e-3, 1e-7),
     ]
     if platform.architecture()[0] == '64bit':
-      model_tests.extend([
-        ('test_bvlc_alexnet', 'bvlc_alexnet', 1e-3, 1e-7),
-        ('test_vgg19', 'vgg19', 1e-3, 1e-7),
-        ('test_zfnet512', 'zfnet512', 1e-3, 1e-7),
-      ])
+        model_tests.extend([
+            ('test_bvlc_alexnet', 'bvlc_alexnet', 1e-3, 1e-7),
+            ('test_vgg19', 'vgg19', 1e-3, 1e-7),
+            ('test_zfnet512', 'zfnet512', 1e-3, 1e-7),
+        ])
 
     for test_name, model_name, rtol, atol in model_tests:
         url = '{}/{}.tar.gz'.format(BASE_URL, model_name)
