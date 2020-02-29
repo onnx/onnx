@@ -180,9 +180,9 @@ class cmake_build(setuptools.Command):
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
                 if platform.architecture()[0] == '64bit':
-                    cmake_args.extend(['-A','x64','-T','host=x64'])
-                else: #TODO: support Windows ARM
-                    cmake_args.extend(['-A','Win32','-T','host=x86'])
+                    cmake_args.extend(['-A', 'x64', '-T', 'host=x64'])
+                else:
+                    cmake_args.extend(['-A', 'Win32', '-T', 'host=x86'])
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
             if ONNX_VERIFY_PROTO3:
