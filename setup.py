@@ -17,7 +17,6 @@ import os
 import shlex
 import subprocess
 import sys
-import struct
 import platform
 from textwrap import dedent
 import multiprocessing
