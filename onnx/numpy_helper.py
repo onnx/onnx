@@ -112,7 +112,6 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     except KeyError:
         raise RuntimeError(
             "Numpy data type not understood yet: {}".format(str(arr.dtype)))
-
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
 
