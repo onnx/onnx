@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-import platform
 
 import onnx.defs
 import numpy as np  # type: ignore
@@ -46,6 +45,7 @@ def collect_testcases():  # type: () -> List[TestCase]
     '''
 
     real_model_testcases = []
+
     model_tests = [
         ('test_bvlc_alexnet', 'bvlc_alexnet', 1e-3, 1e-7),
         ('test_densenet121', 'densenet121', 2e-3, 1e-7),
@@ -57,12 +57,6 @@ def collect_testcases():  # type: () -> List[TestCase]
         ('test_vgg19', 'vgg19', 1e-3, 1e-7),
         ('test_zfnet512', 'zfnet512', 1e-3, 1e-7),
     ]
-    if platform.architecture()[0] == '64bit':
-        model_tests.extend([
-            ('test_bvlc_alexnet', 'bvlc_alexnet', 1e-3, 1e-7),
-            ('test_vgg19', 'vgg19', 1e-3, 1e-7),
-            ('test_zfnet512', 'zfnet512', 1e-3, 1e-7),
-        ])
 
     for test_name, model_name, rtol, atol in model_tests:
         url = '{}/{}.tar.gz'.format(BASE_URL, model_name)
