@@ -298,7 +298,6 @@ class Runner(object):
                     tensor = onnx.TensorProto()
                     with open(input_file, 'rb') as f:
                         tensor.ParseFromString(f.read())
-                    import sys
                     if sys.byteorder == 'big':
                         inputs.append(numpy_helper.to_array(tensor).byteswap())
                     else:
@@ -310,7 +309,6 @@ class Runner(object):
                     tensor = onnx.TensorProto()
                     with open(output_file, 'rb') as f:
                         tensor.ParseFromString(f.read())
-                    import sys
                     if sys.byteorder == 'big':
                         ref_outputs.append(numpy_helper.to_array(tensor).byteswap())
                     else:
