@@ -90,6 +90,16 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         ") to UNDEFINED is not allowed");
   }
 
+
+  void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
+  enforce_has_field(tensor, data_type);
+  if (tensor.data_type() == TensorProto::UNDEFINED) {
+    fail_check(
+        "setting data_type field (tensor name: ",
+        tensor.name(),
+        ") to UNDEFINED is not allowed");
+  }
+
   int num_value_fields = 0;
 
   const char* value_field = nullptr;
