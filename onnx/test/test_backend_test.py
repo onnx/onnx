@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import itertools
 import os
+import platform
 import unittest
 import onnx.backend.base
 import onnx.backend.test
@@ -93,6 +94,8 @@ def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
 if os.getenv('APPVEYOR'):
     backend_test.exclude(r'(test_vgg19|test_zfnet)')
+if platform.architecture()[0] == '32bit':
+    backend_test.exclude(r'(test_vgg19|test_zfnet|test_bvlc_alexnet)')
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test
