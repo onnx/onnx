@@ -8,6 +8,173 @@
 #include <numeric>
 
 namespace ONNX_NAMESPACE {
+
+void unfoldToDepthShapeInference(
+    InferenceContext& ctx) {
+  // we need the first input shape for this inference.
+  if (!hasInputShape(ctx, 0)) {
+    return;
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  std::vector<int64_t> dilations;
+  if (getRepeatedAttribute(ctx, "dilations", dilations)) {
+    if (dilations.size() != n_input_dims) {
+      fail_shape_inference("Attribute dilations has incorrect size");
+    }
+  } else {
+    dilations.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> block_size;
+  if (getRepeatedAttribute(ctx, "block_size", block_size)) {
+    if (block_size.size() != n_input_dims) {
+      fail_shape_inference("Attribute size has incorrect size");
+    }
+  } else {
+    fail_shape_inference("Attribute block_size must be specified");
+  }
+
+  std::vector<int64_t> effective_block_size = block_size;
+  size_t block_num_element = 1;
+  for (int i = 0; i < static_cast<int>(block_size.size()); i++) {
+    // accounting for dilation, how big is the block in this dimension
+    effective_block_size[i] = (effective_block_size[i] - 1) * dilations[i] + 1;
+    block_num_element *= effective_block_size[i];
+  }
+
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+  }
+
+  auto output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  *output_shape->add_dim() = input_shape.dim(0);
+  auto newdim = output_shape->add_dim();
+  if (input_shape.dim(1).has_dim_value()) {
+	  block_num_element *= input_shape.dim(1).dim_value();
+	  newdim->set_dim_value(block_num_element);
+  }
+
+  size_t last_dim_size = 1;
+  newdim = output_shape->add_dim();
+  int effective_block_size_dims = static_cast<int>(effective_block_size.size());
+  for (int i = 0; i < effective_block_size_dims; ++i) {
+    if (!input_shape.dim(2 + i).has_dim_value()) {
+      return;
+    }
+    // how big is the input, including padding
+    int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
+    effective_input_size += pads[i];
+    effective_input_size += pads[i + effective_block_size_dims];
+
+    // how many times we can move the kernel from it's initial position, based
+    // on the stride
+    int64_t strided_kernel_positions;
+    strided_kernel_positions =
+        (effective_input_size - effective_block_size[i]) / strides[i];
+
+    // add in the initial position
+    last_dim_size *= (1 + strided_kernel_positions);
+  }
+  newdim->set_dim_value(last_dim_size);
+
+}
+
+std::function<void(OpSchema&)> UnfoldToDepthOpSchemaGenerator() {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
+in the last dimension.
+Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
+
+```(N, C * reduce-mul(block_size), reduce-mul(num_blocks))```
+<br/>
+Where number of blocks extracted from each spatial dimension d is:
+```
+num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+```
+)DOC";
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "X",
+        "Input data tensor from previous layer; "
+        "has size (N x C x H x W), where N is the batch size, "
+        "C is the number of channels, and H and W are the "
+        "height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn). ",
+        "T");
+    schema.Output(
+        0,
+        "Y",
+        "Output data tensor that contains the result of the "
+        "unfold. The output has three dimensions, and dimension "
+        "values are funciton of the kernel size, stride size, and "
+        "pad lengths.",
+        "T");
+    schema.TypeConstraint(
+         "T",
+         OpSchema::all_numeric_types(),
+         "Constrain input and output types to numeric tensors.");
+    schema.Attr(
+        "block_size",
+        "The size of the extracted blocks [D1, D2, ..., Dn].",
+        AttributeProto::INTS);
+    schema.Attr(
+        "dilations",
+        "Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
+    schema.Attr(
+        "strides",
+        "Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
+    schema.Attr(
+        "pads",
+        "Padding for the beginning and ending along each spatial axis, it can take any value greater "
+        "than or equal to 0. The value represent the number of pixels added to the beginning "
+        "and end part of the corresponding axis. `pads` format should be as follow "
+        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
+        "the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      unfoldToDepthShapeInference(ctx);
+    });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    UnfoldToDepth,
+    12,
+    OpSchema().FillUsing(UnfoldToDepthOpSchemaGenerator()));
+
 static const char* Cast_ver9_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in

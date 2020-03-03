@@ -29,8 +29,7 @@ void FunctionExpandHelper(
   }
   std::string node_name =
       node.has_name() ? node.name() : func.name() + uniq_prefix;
-  std::unordered_map<std::string, std::string> input_names_map;
-  std::unordered_map<std::string, std::string> output_names_map;
+  std::unordered_map<std::string, std::string> io_names_map;
   std::unordered_map<std::string, AttributeProto> attr_map;
 
   for (int idx = 0; idx < node.input_size(); ++idx) {
@@ -38,14 +37,20 @@ void FunctionExpandHelper(
       throw std::runtime_error(
           "Input for function node " + node_name + " is out of bounds");
     }
-    input_names_map[func.input().Get(idx)] = node.input().Get(idx);
+    io_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
     if (idx >= func.output_size()) {
       throw std::runtime_error(
           "Output for function node " + node_name + " is out of bounds");
     }
-    output_names_map[func.output().Get(idx)] = node.output().Get(idx);
+    // If the node output is missing, the corresponding function output should
+    // be treated as an internal value (not as missing) because it could also be
+    // an intermediate value.
+    if (node.output().Get(idx) == "") {
+      continue;
+    }
+    io_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }
 
   for (auto& attr : node.attribute()) {
@@ -75,15 +80,15 @@ void FunctionExpandHelper(
     new_node->clear_output();
     new_node->clear_attribute();
     for (auto& input : function_node.input()) {
-      if (input_names_map.count(input)) {
-        new_node->add_input(input_names_map[input]);
+      if (io_names_map.count(input)) {
+        new_node->add_input(io_names_map[input]);
       } else {
         new_node->add_input(InteralTensorNameGenerator(node_name, input));
       }
     }
     for (auto& output : function_node.output()) {
-      if (output_names_map.count(output)) {
-        new_node->add_output(output_names_map[output]);
+      if (io_names_map.count(output)) {
+        new_node->add_output(io_names_map[output]);
       } else {
         new_node->add_output(InteralTensorNameGenerator(node_name, output));
       }
@@ -93,6 +98,7 @@ void FunctionExpandHelper(
         if (attr_map.count(attr.ref_attr_name())) {
           AttributeProto* new_attr = new_node->add_attribute();
           new_attr->CopyFrom(attr_map[attr.ref_attr_name()]);
+          new_attr->set_name(attr.name());
         }
       } else {
         AttributeProto* new_attr = new_node->add_attribute();
