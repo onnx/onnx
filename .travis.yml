@@ -4,7 +4,7 @@ matrix:
   include:
     - os: linux
       sudo: required
-      env: PYTHON_VERSION=python2 ONNX_ML=0
+      env: PYTHON_VERSION=python2 ONNX_ML=1
       language: python
       python: "2.7"
     - os: linux
