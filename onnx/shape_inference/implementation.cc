@@ -6,6 +6,27 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
+std::string getValueCaseString(const TypeProto& type) {
+  switch (type.value_case()) {
+    case TypeProto::ValueCase::kTensorType:
+      return "tensor_type";
+    case TypeProto::ValueCase::kSequenceType:
+      return "sequence_type";
+    case TypeProto::ValueCase::kMapType:
+      return "map_type";
+#ifdef ONNX_ML
+    case TypeProto::ValueCase::kOpaqueType:
+      return "opaque_type";
+    case TypeProto::ValueCase::kSparseTensorType:
+      return "sparse_tensor_type";
+#endif
+    case TypeProto::ValueCase::VALUE_NOT_SET:
+      return "NOT_SET";
+    default:
+      return ONNX_NAMESPACE::to_string(type.value_case());
+  }
+}
+
 std::string getElemTypeString(const TypeProto_Tensor& type) {
 #ifndef ONNX_USE_LITE_PROTO
     const std::string type_str = TensorProto::DataType_Name(
@@ -66,9 +87,9 @@ void checkShapesAndTypes(
   if (inferredTypeCase != existingTypeCase) {
     fail_type_inference(
       "type case mismatch. existing=",
-      existingTypeCase,
+      getValueCaseString(existingType),
       " inferred=",
-      inferredTypeCase);
+      getValueCaseString(inferredType));
   }
 
   if (inferredType.has_tensor_type() && existingType.has_tensor_type()) {
@@ -138,8 +159,8 @@ static void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
-    bool check_type,
     const std::unordered_map<std::string, int>& opset_imports,
+    bool check_type,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
@@ -266,15 +287,15 @@ static void InferShapesImpl(
 
 void InferShapes(
     GraphProto* g,
-    bool check_type,
     const std::unordered_map<std::string, int>& opset_imports,
+    bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
-      check_type,
       opset_imports,
+      check_type,
       schema_registry);
 }
 
@@ -292,8 +313,8 @@ void InferShapes(
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
-      check_type,
       opset_imports,
+      check_type,
       schema_registry);
 }
 
@@ -336,7 +357,9 @@ void InferShapeForFunctionNode(
     for (auto attr : n.attribute()) {
       if (attr.has_ref_attr_name()) {
         if (attr_map.count(attr.ref_attr_name())) {
-          copy_n.add_attribute()->CopyFrom(*attr_map[attr.ref_attr_name()]);
+          auto copy_attr = *attr_map[attr.ref_attr_name()];
+          copy_attr.set_name(attr.name());
+          copy_n.add_attribute()->CopyFrom(std::move(copy_attr));
         }
       } else {
         copy_n.add_attribute()->CopyFrom(attr);
@@ -419,7 +442,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
           "Graph input #",
           i,
           " is tensor type, but provided type is ",
-          inferredInput->value_case());
+          getValueCaseString(*inferredInput));
 
     const auto& inferredType = inferredInput->tensor_type();
 
@@ -439,8 +462,8 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
-      false,
       context_->opset_imports,
+      false,
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;

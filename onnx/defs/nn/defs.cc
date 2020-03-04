@@ -130,7 +130,7 @@ void convPoolShapeInference(
       }
     }
   }
-    
+
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -184,11 +184,19 @@ void convPoolShapeInference(
   }
 }
 
+std::vector<std::string> GetSupportedDataTypesForPoolingOps(bool supports8bit){
+    if (supports8bit) {
+        return {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int8)", "tensor(uint8)"};
+    }
+    return {"tensor(float16)", "tensor(float)", "tensor(double)"};
+}
+
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
     const char* additionalDescription,
-    bool use_dilation) {
+    bool use_dilation,
+    bool supports8bit = false) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
@@ -246,7 +254,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "ceil_mode",
-        "Wether to use ceil or floor (default) to compute the output shape.",
+        "Whether to use ceil or floor (default) to compute the output shape.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(
@@ -274,8 +282,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T");
     schema.TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        GetSupportedDataTypesForPoolingOps(supports8bit),
+        supports8bit ? "Constrain input and output types to float and 8 bit tensors."
+        : "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (ctx.getNumOutputs() > 1) {
@@ -299,6 +308,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "AveragePool",
             "average",
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
+            false,
             false))
         .Attr(
             "count_include_pad",
@@ -308,12 +318,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
-    11,
+    12,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
             "max",
-            "The output of each pooling window is maximum number of elements exclude pad.",
+            "The output of each pooling window is maximum number of elements exclude pad. ",
+            true,
             true))
         .Attr(
             "storage_order",
@@ -778,6 +789,8 @@ a quantized filter, its scale and zero point, and output's scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
 It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
 Each input or output and its related zero point must have same type.
+When bias is present it must be quantized using scale = input scale * weight scale and 
+zero point as 0.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -834,7 +847,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             5,
             "w_zero_point",
-            "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
+            "Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
             "T2")
         .Input(
             6,
@@ -844,12 +857,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             7,
             "y_zero_point",
-            "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
+            "Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
             "T3")
         .Input(
             8,
             "B",
-            "Optional 1D bias to be added to the convolution, has size of M.",
+            "Optional 1D bias to be added to the convolution, has size of M. "
+            "Bias must be quantized using scale = x_scale * w_scale and zero_point = 0",
             "T4",
             OpSchema::Optional)
         .Output(
@@ -991,7 +1005,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "w_zero_point",
-            "Scale tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
+            "Zero point tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
             "which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number "
             "of elements should be equal to the number of output channels (M)",
             "T2",
@@ -1469,24 +1483,45 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
+static const char* BatchNormalization_ver12_doc = R"DOC(
+Carries out batch normalization as described in the paper https://arxiv.org/abs/1502.03167.
+There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
+Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
+and the running statistics in training mode (traning_mode=True).
+There is one required output 'Y' and four optional outputs : 'output_mean', 'output_var', 'saved_mean', 'saved_var' used for training.
 
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
+The output and statistics are updated as follows when training_mode=True:
+```
+saved_mean = ReducedMean(X, axis=all_except_channel_index)
+saved_var =  ReducedVar(X, axis=all_except_channel_index)
+
+output_mean = mean * momentum + saved_mean * (1 - momentum)
+output_var = var * momentum + saved_var * (1 - momentum)
+
+Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
+```
+
+When training_mode=False:
+```
+saved_mean = ReducedMean(X, axis=all_except_channel_index)
+saved_var =  ReducedVar(X, axis=all_except_channel_index)
+
+output_mean = mean
+output_var = var
+
+Y = (X - mean) / sqrt(var + epsilon) * scale + B
+```
 
 For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization operator.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    9,
+    12,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(BatchNormalization_ver12_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1495,7 +1530,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "momentum",
             "Factor used in computing the running mean and variance."
-            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
+            "e.g., output_mean = mean * momentum + saved_mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
         .Input(
@@ -1520,41 +1555,115 @@ ONNX_OPERATOR_SET_SCHEMA(
             "var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
+        .Input(
+            5,
+            "training_mode",
+            "If set to true, run spatial batch normalization in training mode, default is false.",
+            "T1",
+            OpSchema::Optional)
         .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
-            "mean",
-            "The running mean after the BatchNormalization operator.",
+            "output_mean",
+            "The running mean when training_mode=True, "
+            "or the estimated mean when training_mode=False (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .Output(
             2,
-            "var",
-            "The running variance after the BatchNormalization operator.",
+            "output_var",
+            "The running variance when training_mode=True, "
+            "or the estimated variance when training_mode=False (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .Output(
             3,
             "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation.",
+            "Saved mean used during training to speed up gradient computation (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .Output(
             4,
             "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation.",
+            "Saved variance used during training to speed up gradient computation (Tensor of shape (C)).",
             "T",
             OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain input 'training_mode' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
-          // TODO in training mode, it may be possible to infer some of
-          // the other outputs as well.
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if(hasInputShape(ctx, 0)){
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+            auto& x_input_shape = getInputShape(ctx, 0);
+            int num_channels = 1;
+            if ( static_cast<int>(x_input_shape.dim_size()) > 1 && x_input_shape.dim(1).has_dim_value()) {
+                num_channels = static_cast<int>(x_input_shape.dim(1).dim_value());
+            }
+
+            if (hasInputShape(ctx, 1)) {
+                auto& scale_input_shape = getInputShape(ctx, 1);
+                if(static_cast<int>(scale_input_shape.dim_size()) != 1 || !scale_input_shape.dim(0).has_dim_value() || static_cast<int>(scale_input_shape.dim(0).dim_value()) != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
+            }
+
+            if (hasInputShape(ctx, 2)) {
+                auto& b_input_shape = getInputShape(ctx, 2);
+                if(static_cast<int>(b_input_shape.dim_size()) != 1 || !b_input_shape.dim(0).has_dim_value() || static_cast<int>(b_input_shape.dim(0).dim_value()) != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
+            }
+
+            if (hasInputShape(ctx, 3)) {
+                auto& mean_input_shape = getInputShape(ctx, 3);
+                if(static_cast<int>(mean_input_shape.dim_size() != 1)|| !mean_input_shape.dim(0).has_dim_value() || static_cast<int>(mean_input_shape.dim(0).dim_value()) != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
+            }
+
+            if (hasInputShape(ctx, 4)) {
+                auto& var_input_shape = getInputShape(ctx, 4);
+                if(static_cast<int>(var_input_shape.dim_size()) != 1 || !var_input_shape.dim(0).has_dim_value() || static_cast<int>(var_input_shape.dim(0).dim_value()) != num_channels) {
+                    fail_shape_inference("All scale, B, mean and var must be tensors of shape C.");
+                }
+            }
+
+            if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
+                auto& mode_input_shape = getInputShape(ctx, 5);
+                if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
+                    fail_shape_inference("Training_mode is not a scalar boolean.");
+                }
+            }
+
+            if (ctx.getNumOutputs() > 1) {
+                TensorShapeProto outputs_shape;
+                *outputs_shape.add_dim() = x_input_shape.dim(1); // channel
+
+                propagateElemTypeFromInputToOutput(ctx, 0, 1);
+                updateOutputShape(ctx, 1, outputs_shape);
+
+                if (ctx.getNumOutputs() > 2){
+                    propagateElemTypeFromInputToOutput(ctx, 0, 2);
+                    updateOutputShape(ctx, 2, outputs_shape);
+                }
+
+                if (ctx.getNumOutputs() > 3){
+                    propagateElemTypeFromInputToOutput(ctx, 0, 3);
+                    updateOutputShape(ctx, 3, outputs_shape);
+                }
+
+                if (ctx.getNumOutputs() > 4){
+                    propagateElemTypeFromInputToOutput(ctx, 0, 4);
+                    updateOutputShape(ctx, 4, outputs_shape);
+                }
+            }
+          }
         }));
 
 static const char* InstanceNormalization_ver6_doc = R"DOC(
@@ -1636,37 +1745,57 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* Dropout_ver10_doc = R"DOC(
-Dropout takes one input floating tensor and produces two tensor outputs,
-output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-in test mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
+static const char* Dropout_ver12_doc = R"DOC(
+Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
+output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
+the user can simply replace this Dropout with an Identity operator.
+```
+output = scale * data * mask,
+```
+where
+```
+scale = 1. / (1. - ratio).
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
-    10,
+    12,
     OpSchema()
-        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
-        .Attr(
-            "ratio",
-            "The ratio of random dropout",
-            AttributeProto::FLOAT,
-            0.5f)
+        .SetDoc(Dropout_ver12_doc + GenerateOptionalArgumentsDoc())
+        .Attr("seed", "(Optional) Seed to the random generator, if not specified we will auto generate one.", AttributeProto::INT, OPTIONAL)
         .Input(0, "data", "The input data as Tensor.", "T")
+        .Input(1, "ratio", "The ratio of random dropout, with value in [0, 1). If this input was not set, "
+                  "or if it was set to 0, the output would be a simple copy of the input. "
+                  "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
+                  "the case during training.", "T1", OpSchema::Optional)
         .Output(0, "output", "The output.", "T")
-        .Output(1, "mask", "The output mask.", "T1", OpSchema::Optional)
+        .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
             "T1",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input 'ratio' types to float tensors.")
+        .TypeConstraint(
+            "T2",
             {"tensor(bool)"},
-            "Constrain output mask types to boolean tensors.")
+            "Constrain output 'mask' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+
+          if (ctx.getNumInputs() > 1 && hasInputShape(ctx, 1)) {
+            auto& ratio_input_shape = getInputShape(ctx, 1);
+            if (static_cast<int>(ratio_input_shape.dim_size()) != 0) {
+                fail_shape_inference("Ratio of Dropout must be a scalar.");
+            }
+          }
           if (ctx.getNumOutputs() == 2) {
             updateOutputElemType(ctx, 1, TensorProto::BOOL);
             if (hasNInputShapes(ctx, 1)) {

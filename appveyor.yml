@@ -17,15 +17,10 @@ environment:
     ONNX_NAMESPACE: ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
   matrix:
-  - CONDA_PREFIX: C:\Miniconda35-x64
-    ONNX_VERIFY_PROTO3: 1
-
   - CONDA_PREFIX: C:\Miniconda36-x64
     ONNX_VERIFY_PROTO3: 1
 
   - CONDA_PREFIX: C:\Miniconda36
-
-  - CONDA_PREFIX: C:\Miniconda35
 
   - CONDA_PREFIX: C:\Miniconda37-x64
 
@@ -35,38 +30,41 @@ install:
 - cmd: git submodule update --init --recursive
 
 before_build:
-- cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
+#TODO:We should put libprotobuf.dll within onnx's package.
+#Then we don't need to add %CONDA_PREFIX%\Library\bin at here
+- cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%CONDA_PREFIX%\Library\bin;%PATH%
 - cmd: SET _prefix=%CONDA_PREFIX:~0,14%
+- cmd: SET _arch=%CONDA_PREFIX:~15,18%
+- cmd: conda install -y libprotobuf=3.11.3 protobuf=3.11.3 numpy
 - >
+
   IF "%_prefix%"=="C:\Miniconda37"
   (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy &&
   set "PATH=%PATH%;%CONDA_PREFIX%\Library\bin"
   )
-  ELSE
-  (
-  IF "%CONDA_PREFIX%"=="C:\Miniconda36-x64"
-  (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy=1.17.0
-  )
-  ELSE
-  (
-  conda install -y -c conda-forge libprotobuf=3.5.2 numpy
-  )
-  )
+
 - cmd: pip install --quiet pytest nbval numpy
 
 build_script:
 # Build and test onnx.
 - cmd: cd c:\projects\onnx
 - cmd: set ONNX_BUILD_TESTS=1
+#The latest libprotobuf Windows packages in anaconda was built with          
+#        -Dprotobuf_BUILD_SHARED_LIBS=ON 
+#        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+#We must align with them. We must set USE_MSVC_STATIC_RUNTIME and 
+#ONNX_USE_PROTOBUF_SHARED_LIBS based on their config
+- cmd: set USE_MSVC_STATIC_RUNTIME=0
+# Don't put quotation marks in the following line
+- cmd: set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 - cmd: python setup.py --quiet bdist_wheel --universal --dist-dir .
 - cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
 - cmd: pip install %_wheel%
 - cmd: pytest
 - cmd: python onnx/defs/gen_doc.py
-- cmd: python onnx/gen_proto.py
+- cmd: python onnx/gen_proto.py -l
+- cmd: python onnx/gen_proto.py -l --ml
 # Run type checks
 - cmd: pip uninstall -y %_wheel%
 - cmd: rm -rf .setuptools-cmake-build

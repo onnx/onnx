@@ -88,7 +88,7 @@ python setup.py typecheck
 
 # License
 
-[MIT License](LICENSE)
+[MIT License](https://github.com/onnx/onnx/blob/master/LICENSE)
 
 # Code of Conduct
 

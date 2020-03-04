@@ -6,7 +6,20 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
+
+std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit){
+    if (supports8bit) {
+        auto data_types = OpSchema::numeric_types_for_math_reduction();
+        data_types.push_back("tensor(uint8)");
+        data_types.push_back("tensor(int8)");
+
+        return data_types;
+    }
+
+    return OpSchema::numeric_types_for_math_reduction();
+}
+
+std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
@@ -32,7 +45,9 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::numeric_types_for_math_reduction(),
+        GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
+        supports_8bit_datatypes ? 
+        "Constrain input and output types to high-precision and 8 bit numeric tensors." :
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -82,13 +97,13 @@ False instead of True.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMax,
-    11,
-    OpSchema().FillUsing(ReduceDocGenerator("max")));
+    12,
+    OpSchema().FillUsing(ReduceDocGenerator("max", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMin,
-    11,
-    OpSchema().FillUsing(ReduceDocGenerator("min")));
+    12,
+    OpSchema().FillUsing(ReduceDocGenerator("min", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,
@@ -134,8 +149,11 @@ std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the 
-provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
+If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+If select_last_index is True (default False), the index of the last occurrence of the {name} 
+is selected if the {name} appears more than once in the input. Otherwise the index of the 
+first occurrence is selected.
 The type of the output tensor is integer.)DOC";
     ReplaceAll(doc, "{name}", name);
     schema.SetDoc(doc.c_str());
@@ -149,6 +167,11 @@ The type of the output tensor is integer.)DOC";
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
+    schema.Attr(
+        "select_last_index",
+        "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(
         0,
@@ -206,12 +229,12 @@ The type of the output tensor is integer.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ArgMax,
-    11,
+    12,
     OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ArgMin,
-    11,
+    12,
     OpSchema().FillUsing(ArgReduceDocGenerator("min")));
 
 } // namespace ONNX_NAMESPACE

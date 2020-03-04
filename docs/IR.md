@@ -25,9 +25,11 @@ ONNX is an open specification that consists of the following components:
 
 3)  Definitions of built-in operators.
 
-Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
+Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
+
+Upto IR version 6, the ONNX specification and model format addressed only inference (also known as scoring). Starting from IR version 7, the ONNX specification and model format has been extended to support training. An ONNX training-model itself is an extension of the inference-model and allows an inference-only runtime to ignore the training-related extensions and run inference. In typical usage scenarios, however, an inference-only model may enable a more optimized model-representation (for inference purposes) than a training-model.
 
 ## Runtime Agnostic
 
@@ -55,7 +57,7 @@ The IR specification uses simple monotonically increasing numbers for its versio
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators and their semantics at a particular point in time.
+Operator sets use a simple version number. Each operator set version represents a snapshot of the set of operators, and their semantics at a particular point in time.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -86,9 +88,15 @@ Each model has the following components:
 |doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
+|training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
- 
+
+### Model Semantics
+
+The semantics of an inference-model is a _stateless function_ (except possibly for the state used for random-number generation). Thus, whenever an inference-model (without random-generator operations) is used to perform inference on the same input, it is expeced to produce the same output.
+
+The semantics of a training-model is that of a _stateful object_, with the state consisting of the current values of trained-weights (and any other auxiliary state required, such as momentum, for example, used by the learning algorithm). Specifically, its semantics is captured via three methods: an initialization method (which is used to initialize or reset the values of state variables), a training-step method (to train using a batch of input-output pairs), and an inference method to perform inference using the current values of the learned weights. The first two methods update the state of the object, while the third method is side-effect-free.
 
 ### Optional Metadata
 
@@ -102,7 +110,7 @@ model_license|string|Name or URL.|The well-known name or URL of the license unde
 
 ### Operator Sets
 
-Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
+Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators and their version. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
 
 Each operator set SHALL be defined in a separate document, also using protobuf as the serialization format. How operator set documents are found at runtime is implementation-dependent.
 
@@ -146,6 +154,7 @@ There are two distinct ways to pass information to operators – inputs and attr
 
 ### Graphs
 
+A graph is used to describe a side-effect-free computation (function).
 A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
 
 Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
@@ -219,7 +228,7 @@ A name belonging to the Value namespace may appear in multiple places, namely as
 
 A value name used in a graph must have a unique definition site, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
 
-When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
  
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
@@ -282,6 +291,9 @@ There are two ways to leave an optional input or output unspecified: the first, 
 
 Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
 
+#### External Tensor Data
+
+The raw data for large constant tensors, such as initializers, MAY be serialised in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
 
 ## Standard data types
 
@@ -366,7 +378,19 @@ _Historical Notes_: The following extensions were considered early on, but were 
 
 ### Attribute Types
 
-The type system used for attributes is a superset of that used for of inputs and outputs. In addition to tensors, attribute values may be scalar numerical values, strings, and graphs. Sequences are available for attributes in both ONNX and ONNX-ML. Maps are not available for attributes in either variant. 
+The type system used for attributes is related to but slightly different from that used for of inputs and outputs. Attribute-values may be a dense tensor, or sparse tensor, or a scalar numerical value, or a string, or a graph, or repeated values of one of the above mentioned types.
+
+## Training Related Information
+
+Training related information is described by one or more instances of _TrainingInfoProto_ contained in a model. Each TrainingInfoProto contains information describing both an initialization-step and a training-step.
+
+The initialization-step is described using a Graph (TrainingInfoProto.initialization) and an initialization-binding map (TrainingInfoProto.initialization_binding). The initialization-step is performed by evaluating the Graph, and assigning the outputs produced by the Graph to the _state variables_ of the training-model as specified in the initialization-binding. The initialization-binding is conceptually a map, specified as a list of key-value pairs, where each key is the name of a state variable, and the value is the name of an output of the (initialization) Graph. Each name specified as a key in the binding MUST be the name of an initializer that appears in the main inference-graph (i.e., in ModelProto.graph.initializer) or the name of an initializer that appears in TrainingInfoProto.algorithm.initializer. Each name specified as a value in the binding MUST be the name of an output of the TrainingInfoProto.initialization graph. Key values specified in the repeated initialization_binding field MUST be unique.
+
+The training-step is also similarly described using a Graph (TrainingInfoProto.algorithm) and an update-binding map (TrainingInfoProto.update_binding). The training-step is performed by evaluating the Graph and assigning the outputs produced by the Graph to the state variables as specified in the update-binding. The constraints and description presented above for the initialization apply to the training step as well.
+
+Thus, the state variables of the training-model consist of a subset of the initializers of the main inference-graph (i.e., ModelProto.graph.initializer) and the training-algorithm graph (TrainingInfoProto.algorithm.initializer) as identified by the keys of the bindings (in TrainingInfoProto.initialization_binding and TrainingInfoProto.update_binding). Note that the state variables are not constant values in the context of training. They represent mutable variables shared by multiple graphs (implicitly declared in the top-level training-model scope). This implicit-declaration of shared mutable variables is used instead of an explicit-declaration for purposes of backward-compatibility with the inference-graph representation.
+
+All state variables are pre-initialized to the value specified in the corresponding initializer. A subsequent call to perform the initialization-step (using the appropriate API exposed by a runtime) updates the values of the state variables as described above. If the training-model more than one instance of TrainingInfoProto, the initialization-step corresponding to each is performed in order. A TrainingInfoProto.initialization MAY be omitted (only if there are no initialization_bindings). For the training-step, it is expected that a runtime MAY allow users to invoke any one of the TrainingInfoProto.algorithm, allowing the training process to interleave the different algorithms as desired. The order in which the different TrainingProto.algorithms are called affects the training result, and it is the callers responsibility to call them in the correct order.
 
 ## Other Specification Documents 
 

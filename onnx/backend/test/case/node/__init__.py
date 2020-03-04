@@ -22,22 +22,28 @@ from onnx.onnx_pb import NodeProto, AttributeProto
 from onnx.onnx_operators_pb import FunctionProto
 
 
+# FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
 def function_expand_helper(node,  # type: NodeProto
                            function_proto,  # type: FunctionProto
                            op_prefix  # type:  Text
                            ):  # type:  (...) -> List[NodeProto]
     node_list = []
-    input_names_map = dict()
-    output_names_map = dict()
+    io_names_map = dict()
     attribute_map = dict((a.name, a) for a in node.attribute)
 
     for idx in range(len(function_proto.input)):
-        input_names_map[function_proto.input[idx]] = node.input[idx] \
+        io_names_map[function_proto.input[idx]] = node.input[idx] \
             if idx in range(len(node.input)) else ""
 
     for idx in range(len(function_proto.output)):
-        output_names_map[function_proto.output[idx]] = node.output[idx] \
-            if idx in range(len(node.output)) else ""
+        # Even if the node has been created with optional outputs missing, we
+        # can't assume that the function body handles this correctly, such as in
+        # the case that output is also an intermediate value.
+        # So we only add a name mapping if the output is present. An internal
+        # name will be generated if the missing output is used, the same as any
+        # other internal tensor.
+        if idx in range(len(node.output)) and node.output[idx] != "":
+            io_names_map[function_proto.output[idx]] = node.output[idx]
 
     for internal_node in function_proto.node:
         new_node = NodeProto()
@@ -46,13 +52,13 @@ def function_expand_helper(node,  # type: NodeProto
         new_node.ClearField("output")
         new_node.ClearField("attribute")
         for internal_name in internal_node.input:
-            if internal_name in input_names_map:
-                new_node.input.append(input_names_map[internal_name])
+            if internal_name in io_names_map:
+                new_node.input.append(io_names_map[internal_name])
             else:
                 new_node.input.append(op_prefix + internal_name)
         for internal_name in internal_node.output:
-            if internal_name in output_names_map:
-                new_node.output.append(output_names_map[internal_name])
+            if internal_name in io_names_map:
+                new_node.output.append(io_names_map[internal_name])
             else:
                 new_node.output.append(op_prefix + internal_name)
         for attr in internal_node.attribute:
@@ -60,6 +66,7 @@ def function_expand_helper(node,  # type: NodeProto
                 if attr.ref_attr_name in attribute_map:
                     new_attr = AttributeProto()
                     new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                    new_attr.name = attr.name
                     new_node.attribute.extend([new_attr])
             else:
                 new_attr = AttributeProto()
@@ -73,9 +80,15 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op)
-    if not schema.has_function:  # type: ignore
+
+    if schema.has_function:    # type: ignore
+        function_proto = schema.function_body  # type: ignore
+    elif schema.has_context_dependent_function:    # type: ignore
+        function_proto_str = schema.get_context_dependent_function(node.SerializeToString())  # type: ignore
+        function_proto = FunctionProto()
+        function_proto.ParseFromString(function_proto_str)
+    else:
         return []
-    function_proto = schema.function_body  # type: ignore
 
     for attr in schema.attributes:
         if attr in [a.name for a in node.attribute]:
