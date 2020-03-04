@@ -110,7 +110,7 @@ void FunctionExpandHelper(
   // Remove function node from graph
   for (int i = 0; i < g.node().size(); ++i) {
     auto node_i = g.node(i);
-    if (nodes_equal(node, node_i)) {
+    if (customer_nodes_equal(node, node_i)) {
       g.mutable_node()->erase(g.node().begin() + i);
     }
   }
