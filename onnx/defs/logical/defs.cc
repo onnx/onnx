@@ -215,7 +215,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(FunctionBodyHelper::BuildNodes({
             // nodes: {outputs, op, inputs, attributes}
-            {{"O1"}, "Greater", {"A", "B"}},
+            {{"O1"}, "Less", {"A", "B"}},
             {{"O2"}, "Equal", {"A", "B"}},
             {{"C"}, "Or", {"O1", "O2"}}
         })));
@@ -236,7 +236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(FunctionBodyHelper::BuildNodes({
             // nodes: {outputs, op, inputs, attributes}
-            {{"O1"}, "Less", {"A", "B"}},
+            {{"O1"}, "Greater", {"A", "B"}},
             {{"O2"}, "Equal", {"A", "B"}},
             {{"C"}, "Or", {"O1", "O2"}}
         })));
