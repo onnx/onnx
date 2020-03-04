@@ -154,6 +154,7 @@
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
+  * <a href="#UnfoldToDepth">UnfoldToDepth</a>
   * <a href="#Unique">Unique</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Upsample">Upsample</a>
@@ -163,6 +164,8 @@
   **Functions**
   * <a href="#Celu">Celu</a>
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
+  * <a href="#GreaterOrEqual">GreaterOrEqual</a>
+  * <a href="#LessOrEqual">LessOrEqual</a>
   * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
@@ -2480,9 +2483,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>, <a href="Changelog.md#Clip-11">Clip-11</a>
 
 #### Inputs (1 - 3)
 
@@ -2505,8 +2508,8 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -2599,6 +2602,49 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+<details>
+<summary>clip_default_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, min_val, np.iinfo(np.int8).max)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_int8_min')
+
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, np.iinfo(np.int8).min, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_int8_max')
+
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.int8)
+y = np.array([-1, 0, 1]).astype(np.int8)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_int8_inbounds')
 ```
 
 </details>
@@ -6788,6 +6834,26 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal')
+```
+
+</details>
+
+
+<details>
 <summary>greater_broadcast</summary>
 
 ```python
@@ -6805,6 +6871,63 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal_bcast')
+```
+
+</details>
+
+
+### <a name="GreaterOrEqual"></a><a name="greaterorequal">**GreaterOrEqual**</a>
+
+  Returns the tensor resulted from performing the `greater_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
@@ -7980,6 +8103,26 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal')
+```
+
+</details>
+
+
+<details>
 <summary>less_broadcast</summary>
 
 ```python
@@ -7997,6 +8140,63 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal_bcast')
+```
+
+</details>
+
+
+### <a name="LessOrEqual"></a><a name="lessorequal">**LessOrEqual**</a>
+
+  Returns the tensor resulted from performing the `less_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="Log"></a><a name="log">**Log**</a>
@@ -18017,7 +18217,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>scores</tt> : T</dt>
 <dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, D1, D2 , ..., Dk], where K is the number of dimensions.</dd>
 <dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.Usualy, it's a one-hot representation of ground-truth class.</dd>
+<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
 </dl>
@@ -19907,6 +20107,153 @@ node = onnx.helper.make_node(
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
        name='test_transpose_default')
+```
+
+</details>
+
+
+### <a name="UnfoldToDepth"></a><a name="unfoldtodepth">**UnfoldToDepth**</a>
+
+  The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
+  in the last dimension.
+  Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
+  
+  ```(N, C * reduce-mul(block_size), reduce-mul(num_blocks))```
+  <br/>
+  Where number of blocks extracted from each spatial dimension d is:
+  ```
+  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>block_size</tt> : list of ints (required)</dt>
+<dd>The size of the extracted blocks [D1, D2, ..., Dn].</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor that contains the result of the unfold. The output has three dimensions, and dimension values are funciton of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>unfoldtodepth</summary>
+
+```python
+x = np.array([[[[0., 1., 2., 3., 4.],
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+
+# UnfoldToDepth without padding
+node_without_padding = onnx.helper.make_node(
+    'UnfoldToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    block_size=[3, 3],
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    pads=[0, 0, 0, 0],
+)
+y_without_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3])
+# expected [[[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
+#            [1., 2., 3., 6., 7., 8., 11., 12., 13.],
+#            [2., 3., 4., 7., 8., 9., 12., 13., 14.],
+#            [5., 6., 7., 10., 11., 12., 15., 16., 17.],
+#            [6., 7., 8., 11., 12., 13., 16., 17., 18.],
+#            [7., 8., 9., 12., 13., 14., 17., 18., 19.],
+#            [10., 11., 12., 15., 16., 17., 20., 21., 22.],
+#            [11., 12., 13., 16., 17., 18., 21., 22., 23.],
+#            [12., 13., 14., 17., 18., 19., 22., 23., 24.]]]
+
+expect(node_without_padding, inputs=[x], outputs=[y_without_padding],
+       name='test_unfoldtodepth_without_padding')
+
+# UnfoldToDepth with padding
+node_without_padding = onnx.helper.make_node(
+    'UnfoldToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    block_size=[3, 3],
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    pads=[1, 1, 1, 1],
+)
+y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[1, 1, 1, 1])
+# expected [[[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,  # (1, 9, 25) output tensor
+#             8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
+#            [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
+#             9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.],
+#            [0., 0., 0., 0., 0., 1., 2., 3., 4., 0., 6., 7., 8., 9.,
+#             0., 11., 12., 13., 14., 0., 16., 17., 18., 19., 0.],
+#            [0., 0., 1., 2., 3., 0., 5., 6., 7., 8., 0., 10., 11., 12.,
+#             3., 0., 15., 16., 17., 18., 0., 20., 21., 22., 23.],
+#            [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.,
+#             4., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24.],
+#            [1., 2., 3., 4., 0., 6., 7., 8., 9., 0., 11., 12., 13., 14.,
+#             0., 16., 17., 18., 19., 0., 21., 22., 23., 24., 0.],
+#            [0., 5., 6., 7., 8., 0., 10., 11., 12., 13., 0., 15., 16., 17.,
+#             8., 0., 20., 21., 22., 23., 0., 0., 0., 0., 0.],
+#            [5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18.,
+#             9., 20., 21., 22., 23., 24., 0., 0., 0., 0., 0.],
+#            [6., 7., 8., 9., 0., 11., 12., 13., 14., 0., 16., 17., 18., 19.,
+#             0., 21., 22., 23., 24., 0., 0., 0., 0., 0., 0.]]]
+
+expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
+       name='test_unfoldtodepth_with_padding')
+
+# UnfoldToDepth with padding and strides
+node_without_padding = onnx.helper.make_node(
+    'UnfoldToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    block_size=[3, 3],
+    # Default values for other attributes: dilations=[1, 1]
+    pads=[2, 2, 2, 2],
+    strides=[3, 3]
+)
+y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[2, 2, 2, 2], stride=[3, 3])
+# expected [[[ 0.,  0.,  0.,  0.,  6.,  9.,  0., 21., 24.],  # (1, 9, 9) output tensor
+#            [ 0.,  0.,  0.,  0.,  7.,  0.,  0., 22.,  0.],
+#            [ 0.,  0.,  0.,  5.,  8.,  0., 20., 23.,  0.],
+#            [ 0.,  0.,  0.,  0., 11., 14.,  0.,  0.,  0.],
+#            [ 0.,  0.,  0.,  0., 12.,  0.,  0.,  0.,  0.],
+#            [ 0.,  0.,  0., 10., 13.,  0.,  0.,  0.,  0.],
+#            [ 0.,  1.,  4.,  0., 16., 19.,  0.,  0.,  0.],
+#            [ 0.,  2.,  0.,  0., 17.,  0.,  0.,  0.,  0.],
+#            [ 0.,  3.,  0., 15., 18.,  0.,  0.,  0.,  0.]]]
+
+expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
+       name='test_unfoldtodepth_with_padding_stride')
 ```
 
 </details>

@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 143/159 (89.94%, 5 generators excluded) common operators.
+Node tests have covered 144/162 (88.89%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1480,7 +1480,7 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 
 ### Clip
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>clip</summary>
 
@@ -1566,6 +1566,47 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+<details>
+<summary>clip_default_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', 'min'],
+    outputs=['y'],
+)
+min_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, min_val, np.iinfo(np.int8).max)
+expect(node, inputs=[x, min_val], outputs=[y],
+       name='test_clip_default_int8_min')
+
+no_min = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, 'max'],
+    outputs=['y'],
+)
+max_val = np.int8(0)
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.clip(x, np.iinfo(np.int8).min, max_val)
+expect(node, inputs=[x, max_val], outputs=[y],
+       name='test_clip_default_int8_max')
+
+no_max = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x', no_min, no_max],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.int8)
+y = np.array([-1, 0, 1]).astype(np.int8)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_int8_inbounds')
 ```
 
 </details>
@@ -3887,7 +3928,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
 
 ### Greater
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>greater</summary>
 
@@ -3907,6 +3948,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal')
+```
+
+</details>
+<details>
 <summary>greater_broadcast</summary>
 
 ```python
@@ -3921,6 +3980,24 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_bcast')
+```
+
+</details>
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GreaterOrEqual',
+    inputs=['x', 'y'],
+    outputs=['greater_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_equal_bcast')
 ```
 
 </details>
@@ -4454,7 +4531,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Less
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>less</summary>
 
@@ -4474,6 +4551,24 @@ expect(node, inputs=[x, y], outputs=[z],
 
 </details>
 <details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal')
+```
+
+</details>
+<details>
 <summary>less_broadcast</summary>
 
 ```python
@@ -4488,6 +4583,24 @@ y = np.random.randn(5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_less_bcast')
+```
+
+</details>
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LessOrEqual',
+    inputs=['x', 'y'],
+    outputs=['less_equal'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_equal_bcast')
 ```
 
 </details>
@@ -11394,6 +11507,101 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
+### UnfoldToDepth
+There are 1 test cases, listed as following:
+<details>
+<summary>unfoldtodepth</summary>
+
+```python
+x = np.array([[[[0., 1., 2., 3., 4.],
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+
+# UnfoldToDepth without padding
+node_without_padding = onnx.helper.make_node(
+    'UnfoldToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    block_size=[3, 3],
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    pads=[0, 0, 0, 0],
+)
+y_without_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3])
+# expected [[[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
+#            [1., 2., 3., 6., 7., 8., 11., 12., 13.],
+#            [2., 3., 4., 7., 8., 9., 12., 13., 14.],
+#            [5., 6., 7., 10., 11., 12., 15., 16., 17.],
+#            [6., 7., 8., 11., 12., 13., 16., 17., 18.],
+#            [7., 8., 9., 12., 13., 14., 17., 18., 19.],
+#            [10., 11., 12., 15., 16., 17., 20., 21., 22.],
+#            [11., 12., 13., 16., 17., 18., 21., 22., 23.],
+#            [12., 13., 14., 17., 18., 19., 22., 23., 24.]]]
+
+expect(node_without_padding, inputs=[x], outputs=[y_without_padding],
+       name='test_unfoldtodepth_without_padding')
+
+# UnfoldToDepth with padding
+node_without_padding = onnx.helper.make_node(
+    'UnfoldToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    block_size=[3, 3],
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
+    pads=[1, 1, 1, 1],
+)
+y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[1, 1, 1, 1])
+# expected [[[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,  # (1, 9, 25) output tensor
+#             8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
+#            [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
+#             9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.],
+#            [0., 0., 0., 0., 0., 1., 2., 3., 4., 0., 6., 7., 8., 9.,
+#             0., 11., 12., 13., 14., 0., 16., 17., 18., 19., 0.],
+#            [0., 0., 1., 2., 3., 0., 5., 6., 7., 8., 0., 10., 11., 12.,
+#             3., 0., 15., 16., 17., 18., 0., 20., 21., 22., 23.],
+#            [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.,
+#             4., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24.],
+#            [1., 2., 3., 4., 0., 6., 7., 8., 9., 0., 11., 12., 13., 14.,
+#             0., 16., 17., 18., 19., 0., 21., 22., 23., 24., 0.],
+#            [0., 5., 6., 7., 8., 0., 10., 11., 12., 13., 0., 15., 16., 17.,
+#             8., 0., 20., 21., 22., 23., 0., 0., 0., 0., 0.],
+#            [5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18.,
+#             9., 20., 21., 22., 23., 24., 0., 0., 0., 0., 0.],
+#            [6., 7., 8., 9., 0., 11., 12., 13., 14., 0., 16., 17., 18., 19.,
+#             0., 21., 22., 23., 24., 0., 0., 0., 0., 0., 0.]]]
+
+expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
+       name='test_unfoldtodepth_with_padding')
+
+# UnfoldToDepth with padding and strides
+node_without_padding = onnx.helper.make_node(
+    'UnfoldToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    block_size=[3, 3],
+    # Default values for other attributes: dilations=[1, 1]
+    pads=[2, 2, 2, 2],
+    strides=[3, 3]
+)
+y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[2, 2, 2, 2], stride=[3, 3])
+# expected [[[ 0.,  0.,  0.,  0.,  6.,  9.,  0., 21., 24.],  # (1, 9, 9) output tensor
+#            [ 0.,  0.,  0.,  0.,  7.,  0.,  0., 22.,  0.],
+#            [ 0.,  0.,  0.,  5.,  8.,  0., 20., 23.,  0.],
+#            [ 0.,  0.,  0.,  0., 11., 14.,  0.,  0.,  0.],
+#            [ 0.,  0.,  0.,  0., 12.,  0.,  0.,  0.,  0.],
+#            [ 0.,  0.,  0., 10., 13.,  0.,  0.,  0.,  0.],
+#            [ 0.,  1.,  4.,  0., 16., 19.,  0.,  0.,  0.],
+#            [ 0.,  2.,  0.,  0., 17.,  0.,  0.,  0.,  0.],
+#            [ 0.,  3.,  0., 15., 18.,  0.,  0.,  0.,  0.]]]
+
+expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
+       name='test_unfoldtodepth_with_padding_stride')
+```
+
+</details>
+
+
 ### Unique
 There are 5 test cases, listed as following:
 <details>
@@ -11815,7 +12023,13 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GraphCall (call for test cases)
 
 
+### GreaterOrEqual (call for test cases)
+
+
 ### If (call for test cases)
+
+
+### LessOrEqual (call for test cases)
 
 
 ### Loop (call for test cases)
