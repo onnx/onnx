@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
-#include "onnx/proto_utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
 
@@ -12,6 +11,41 @@ std::string InteralTensorNameGenerator(
     const std::string& internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
   return new_name;
+}
+
+bool nodes_equal(const NodeProto& lhs, const NodeProto& rhs) {
+
+  if (!lhs.has_op_type() || !rhs.has_op_type()) {
+    return false;
+  }
+  if (lhs.op_type() != rhs.op_type()){
+    return false;
+  }
+  if(lhs.attribute_size()!=rhs.attribute_size()){
+    return false;
+  }
+  for(int i=0; i<lhs.attribute_size(); i++){
+    if(lhs.attribute(i).name()!=rhs.attribute(i).name()){
+      return false;
+    }
+  }
+  if(lhs.input_size()!=rhs.input_size()){
+    return false;
+  }
+  for(int i=0; i<lhs.input_size(); i++){
+    if(lhs.input(i)!=rhs.input(i)){
+      return false;
+    }
+  }
+    if(lhs.output_size()!=rhs.output_size()){
+    return false;
+  }
+  for(int i=0; i<lhs.output_size(); i++){
+    if(lhs.output(i)!=rhs.output(i)){
+      return false;
+    }
+  }
+  return true; 
 }
 
 void FunctionExpandHelper(
@@ -110,7 +144,7 @@ void FunctionExpandHelper(
   // Remove function node from graph
   for (int i = 0; i < g.node().size(); ++i) {
     auto node_i = g.node(i);
-    if (customer_nodes_equal(node, node_i)) {
+    if (nodes_equal(node, node_i)) {
       g.mutable_node()->erase(g.node().begin() + i);
     }
   }

@@ -2,7 +2,6 @@
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
-#include <google/protobuf/descriptor.pb.h>
 
 #include "onnx/onnx_pb.h"
 
@@ -47,16 +46,6 @@ template<> inline std::vector<std::string> RetrieveValues(const AttributeProto& 
 
 template<> inline std::vector<float> RetrieveValues(const AttributeProto& attr) {
   return { attr.floats().begin(), attr.floats().end() };
-}
-
-inline bool customer_nodes_equal(const NodeProto& lhs, const NodeProto& rhs) {
-  const google::protobuf::Descriptor* descriptor1 = lhs.GetDescriptor();
-  const google::protobuf::Descriptor* descriptor2 = rhs.GetDescriptor();
-
-  if (descriptor1 != descriptor2) {
-    return false;
-  }
-  return true; 
 }
 
 } // namespace ONNX_NAMESPACE
