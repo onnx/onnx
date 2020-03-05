@@ -187,6 +187,16 @@ def make_sparse_tensor(
     sparse.dims.extend(dims)
     return sparse
 
+def make_sequence(
+        vals,  # type: Tensors, SparseTensors, or Maps
+        raw=False  # type: bool
+):  # type: (...) -> TensorProto
+    '''
+    Make a Sequence with specified arguments.
+    '''
+    sequence = SequenceProto()
+    sequence.values.extend(vals)
+    return sequence
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.
