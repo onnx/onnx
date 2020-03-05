@@ -7,20 +7,24 @@
 
 namespace ONNX_NAMESPACE {
 
-std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit){
-    if (supports8bit) {
-        auto data_types = OpSchema::numeric_types_for_math_reduction();
-        data_types.push_back("tensor(uint8)");
-        data_types.push_back("tensor(int8)");
+std::vector<std::string> GetSupportedDataTypesForReductionOps(
+    bool supports8bit) {
+  if (supports8bit) {
+    auto data_types = OpSchema::numeric_types_for_math_reduction();
+    data_types.push_back("tensor(uint8)");
+    data_types.push_back("tensor(int8)");
 
-        return data_types;
-    }
+    return data_types;
+  }
 
-    return OpSchema::numeric_types_for_math_reduction();
+  return OpSchema::numeric_types_for_math_reduction();
 }
 
-std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false) {
+std::function<void(OpSchema&)> ReduceDocGenerator(
+    const char* name,
+    bool supports_8bit_datatypes = false) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
 tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
@@ -30,6 +34,9 @@ The above behavior is similar to numpy, with the exception that numpy default ke
 False instead of True.)DOC";
     ReplaceAll(doc, "{name}", name);
     schema.SetDoc(doc.c_str());
+#else
+    schema.SetDoc("");
+#endif
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
@@ -46,9 +53,9 @@ False instead of True.)DOC";
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
-        supports_8bit_datatypes ? 
-        "Constrain input and output types to high-precision and 8 bit numeric tensors." :
-        "Constrain input and output types to high-precision numeric tensors.");
+        supports_8bit_datatypes
+            ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
+            : "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -147,6 +154,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the 
 provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
@@ -157,6 +165,9 @@ first occurrence is selected.
 The type of the output tensor is integer.)DOC";
     ReplaceAll(doc, "{name}", name);
     schema.SetDoc(doc.c_str());
+#else
+    schema.SetDoc("");
+#endif
     schema.Attr(
         "axis",
         "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
@@ -200,7 +211,7 @@ The type of the output tensor is integer.)DOC";
         axis = axis_proto->i();
         if (axis < -input_ndim || axis >= input_ndim) {
           fail_shape_inference(
-            "'axis' must be in [-rank(indices), rank(indices)-1]");
+              "'axis' must be in [-rank(indices), rank(indices)-1]");
         }
         if (axis < 0)
           axis += input_ndim;

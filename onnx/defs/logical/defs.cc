@@ -7,39 +7,43 @@
 namespace ONNX_NAMESPACE {
 
 inline void unaryLogicalOpInference(InferenceContext& ctx) {
-    // Type inference
-    updateOutputElemType(ctx, 0, TensorProto::BOOL);
-    // Shape inference
-    if (hasInputShape(ctx, 0)) {
-        propagateShapeFromInputToOutput(ctx, 0, 0);
-    }
+  // Type inference
+  updateOutputElemType(ctx, 0, TensorProto::BOOL);
+  // Shape inference
+  if (hasInputShape(ctx, 0)) {
+    propagateShapeFromInputToOutput(ctx, 0, 0);
+  }
 }
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
-        schema.SetDoc(doc);
-        schema.Input(0, "A", "First input operand for the logical operator.", "T");
-        schema.Input(1, "B", "Second input operand for the logical operator.", "T");
-        schema.Output(0, "C", "Result tensor.", "T1");
-        schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference 
-          updateOutputElemType(ctx, 0, TensorProto::BOOL);
-          // Shape inference
-          if (hasNInputShapes(ctx, 2))
-            bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
-                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-        });
-    };
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+    schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
+    schema.Input(0, "A", "First input operand for the logical operator.", "T");
+    schema.Input(1, "B", "Second input operand for the logical operator.", "T");
+    schema.Output(0, "C", "Result tensor.", "T1");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      updateOutputElemType(ctx, 0, TensorProto::BOOL);
+      // Shape inference
+      if (hasNInputShapes(ctx, 2))
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
+  };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -168,11 +172,19 @@ Bitwise shift operator performs element-wise operation. For each input element, 
  not necessarily identical.
 )DOC";
 
+static std::string GetBitShiftDoc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul();
+#else
+  return "";
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     11,
     OpSchema()
-        .SetDoc(std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul())
+        .SetDoc(GetBitShiftDoc())
         .Input(0, "X", "First operand, input to be shifted.", "T")
         .Input(1, "Y", "Second operand, amounts of shift.", "T")
         .Output(0, "Z", "Output tensor", "T")

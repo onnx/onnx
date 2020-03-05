@@ -11,6 +11,7 @@ namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
@@ -19,6 +20,9 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Input(0, "A", "First operand.", "T");
     schema.Input(1, "B", "Second operand.", "T");
     schema.Output(0, "C", "Result, has same element type as two inputs", "T");
@@ -41,6 +45,7 @@ std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
     const char* name,
     const char* description) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
  of the given input.
@@ -60,6 +65,9 @@ and contains the {name} values of the corresponding input.
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{description}", description);
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Attr(
         "axis",
         "Describes the axis of the inputs when coerced "
@@ -87,7 +95,7 @@ and contains the {name} values of the corresponding input.
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      
+
       // Shape inference starts
       if (!hasNInputShapes(ctx, 1)) {
         return;
@@ -511,11 +519,19 @@ produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC";
 
+static std::string GetPowVer7Doc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return (std::string(Pow_ver7_doc) + GenerateBroadcastingDocMul());
+#else
+  return ("");
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     7,
     OpSchema()
-        .SetDoc(std::string(Pow_ver7_doc) + GenerateBroadcastingDocMul())
+        .SetDoc(GetPowVer7Doc())
         .Input(0, "X", "First operand, base of the exponent.", "T")
         .Input(1, "Y", "Second operand, power of the exponent.", "T")
         .Output(0, "Z", "Output tensor (same size as X)", "T")
@@ -538,13 +554,21 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 )DOC";
 
+static std::string GetPReluVer9Doc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return (
+      std::string(PRelu_ver9_doc) +
+      GenerateBroadcastingDocUni("tensor slope", "input tensor X"));
+#else
+  return ("");
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
     9,
     OpSchema()
-        .SetDoc(
-            PRelu_ver9_doc +
-            GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
+        .SetDoc(GetPReluVer9Doc())
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -609,6 +633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
     const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
@@ -617,6 +642,9 @@ All inputs and outputs must have the same data type.
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Input(
         0,
         "data_0",
@@ -793,15 +821,22 @@ and output tensor Y has shape (M, N). A will be transposed before doing the
 computation if attribute transA is non-zero, same for B and transB.
 )DOC";
 
+static std::string GetGemmVer11Doc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return (
+      std::string(Gemm_ver11_doc) +
+      GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
+      GenerateOptionalArgumentsDoc());
+#else
+  return ("");
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     11,
     OpSchema()
-        .SetDoc(
-            Gemm_ver11_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B") +
-            "\n" +
-            GenerateOptionalArgumentsDoc())
+        .SetDoc(GetGemmVer11Doc())
         .Input(
             0,
             "A",
@@ -1601,40 +1636,49 @@ output = [5, 3, 0]
  )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-      CumSum,
-      11,
+    CumSum,
+    11,
     OpSchema()
-            .SetDoc(CumSum_ver11_doc)
-      .Attr(
-          "exclusive",
-          "If set to 1 will return exclusive sum in which the top element is not included."
-          " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
-          " Otherwise, it would be the sum of the first j elements.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Attr(
-          "reverse",
-          "If set to 1 will perform the sums in reverse direction.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Input(0, "x", "An input tensor that is to be processed.", "T")
-      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
-            "Negative value means counting dimensions from the back.", "T2")
-      .Output(0, "y",
-              "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
-              "T")
-      .TypeConstraint("T",  {
-        "tensor(uint32)",
-        "tensor(uint64)",
-        "tensor(int32)",
-        "tensor(int64)",
-        "tensor(float)",
-        "tensor(double)"}, "Input can be of any tensor type.")
-      .TypeConstraint("T2", {
-        "tensor(int32)",
-        "tensor(int64)"}, "axis tensor can be int32 or int64 only")
-      .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput)
-      );
+        .SetDoc(CumSum_ver11_doc)
+        .Attr(
+            "exclusive",
+            "If set to 1 will return exclusive sum in which the top element is not included."
+            " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
+            " Otherwise, it would be the sum of the first j elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "reverse",
+            "If set to 1 will perform the sums in reverse direction.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "x", "An input tensor that is to be processed.", "T")
+        .Input(
+            1,
+            "axis",
+            "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
+            "Negative value means counting dimensions from the back.",
+            "T2")
+        .Output(
+            0,
+            "y",
+            "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Input can be of any tensor type.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int32)", "tensor(int64)"},
+            "axis tensor can be int32 or int64 only")
+        .TypeAndShapeInferenceFunction(
+            ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
 static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
@@ -1702,8 +1746,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             const auto mat_w = input_shape.dim(rank - 1);
             const auto mat_h = input_shape.dim(rank - 2);
-            if (mat_w.has_dim_value() &&
-                mat_h.has_dim_value() &&
+            if (mat_w.has_dim_value() && mat_h.has_dim_value() &&
                 (mat_w.dim_value() != mat_h.dim_value())) {
               fail_shape_inference(
                   "The inner-most 2 dimensions must have the same size (mat_w:",
@@ -1713,7 +1756,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ").");
             }
 
-            for (int i=0; i < rank - 2; ++i) {
+            for (int i = 0; i < rank - 2; ++i) {
               auto* dim = output_shape->add_dim();
               *dim = input_shape.dim(i);
             }

@@ -11,6 +11,7 @@ std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(
     const char* name,
     const char* description) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
  of the given input. The input is a 2-D tensor (Tensor<float>) of size
@@ -31,6 +32,9 @@ will throw errors.
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{description}", description);
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Attr(
         "axis",
         "Describes the axis of the inputs when coerced "
@@ -100,12 +104,16 @@ Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old);
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Attr(
         "broadcast",
         "Pass 1 to enable broadcasting",
@@ -146,12 +154,16 @@ Performs element-wise binary {name} (with limited broadcast support).
 
 std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old);
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Attr(
         "broadcast",
         "Pass 1 to enable broadcasting",
@@ -685,13 +697,21 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 )DOC";
 
+static std::string GetPreluVer7Doc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return (
+      std::string(PRelu_ver7_doc) +
+      GenerateBroadcastingDocUni("tensor slope", "input tensor X"));
+#else
+  return ("");
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
     7,
     OpSchema()
-        .SetDoc(
-            PRelu_ver7_doc +
-            GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
+        .SetDoc(GetPreluVer7Doc())
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -1051,13 +1071,21 @@ and output tensor Y has shape (M, N). A will be transposed before doing the
 computation if attribute transA is non-zero, same for B and transB.
 )DOC";
 
+static std::string GetGemmVer7Doc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return (
+      std::string(Gemm_ver7_doc) +
+      GenerateBroadcastingDocUni("tensor C", "tensor A * B"));
+#else
+  return ("");
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     7,
     OpSchema()
-        .SetDoc(
-            Gemm_ver7_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+        .SetDoc(GetGemmVer7Doc())
         .Input(
             0,
             "A",
@@ -1141,13 +1169,21 @@ and output tensor Y has shape (M, N). A will be transposed before doing the
 computation if attribute transA is non-zero, same for B and transB.
 )DOC";
 
+static std::string GetGemmVer9Doc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  return (
+      std::string(Gemm_ver9_doc) +
+      GenerateBroadcastingDocUni("tensor C", "tensor A * B"));
+#else
+  return ("");
+#endif
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     9,
     OpSchema()
-        .SetDoc(
-            Gemm_ver9_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+        .SetDoc(GetGemmVer9Doc())
         .Input(
             0,
             "A",
@@ -1616,11 +1652,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(Clip_ver11_doc)
-        .Input(
-            0,
-            "input",
-            "Input tensor whose elements to be clipped",
-            "T")
+        .Input(0, "input", "Input tensor whose elements to be clipped", "T")
         .Input(
             1,
             "min",
@@ -1645,6 +1677,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(
     const char* name) {
   return [=](OpSchema& schema) {
+#ifndef __ONNX_NO_DOC_STRINGS
     std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
@@ -1653,6 +1686,9 @@ All inputs and outputs must have the same data type.
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
+#else
+    schema.SetDoc("");
+#endif
     schema.Input(
         0,
         "data_0",
