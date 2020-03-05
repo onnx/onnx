@@ -149,7 +149,7 @@ class OpSchema final {
     // Constructor.
     FormalParameter() = default;
 
-    explicit FormalParameter::FormalParameter(
+    explicit FormalParameter(
         std::string name,
         DataTypeSet allowed_type_set,
         std::string type_str,
@@ -168,7 +168,7 @@ class OpSchema final {
           min_arity_(min_arity) {
     }
 
-    explicit FormalParameter::FormalParameter(
+    explicit FormalParameter(
         std::string name,
         const std::string& description,
         std::string type_str,
