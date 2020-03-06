@@ -5663,7 +5663,7 @@ for op_dtype in all_numeric_dtypes:
     data_1 = np.array([1, 4, 4]).astype(op_dtype)
     result = np.array([1, 2, 1]).astype(op_dtype)
     node = onnx.helper.make_node(
-        'Max',
+        'Min',
         inputs=['data_0', 'data_1'],
         outputs=['result'],
     )
