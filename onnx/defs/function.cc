@@ -145,7 +145,7 @@ void FunctionExpandHelper(
   for (int i = 0; i < g.node().size(); ++i) {
     auto node_i = g.node(i);
     if (nodes_equal(node, node_i)) {
-      g.mutable_node()->erase(g.node().begin() + i);
+      g.mutable_node(i)->Clear();
     }
   }
 }
