@@ -114,7 +114,7 @@ Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor
 <br/>
 Where number of blocks extracted from each spatial dimension d is:
 ```
-num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (kernel_size[d] - 1) - 1) / stride[d]) + 1
 ```
 )DOC";
     schema.SetDoc(doc);
