@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-import platform
 
 import numpy as np  # type: ignore
 from onnx import TensorProto
