@@ -372,7 +372,7 @@ static const char* Adagrad_ver1_doc = R"DOC(
     be concatenated too) and then just reuse the entire pseudo code.
 
     Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
-    In that reference paper, this operator is a spacial case of the Figure 1's composite mirror
+    In that reference paper, this operator is a special case of the Figure 1's composite mirror
     descent update.
 )DOC";
 
