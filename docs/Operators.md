@@ -20123,7 +20123,7 @@ expect(node, inputs=[data], outputs=[transposed],
   <br/>
   Where number of blocks extracted from each spatial dimension d is:
   ```
-  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (kernel_size[d] - ) - 1) / stride[d]) + 1
   ```
 
 #### Version
