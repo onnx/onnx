@@ -14987,6 +14987,57 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="UnfoldToDepth-12"></a>**UnfoldToDepth-12**</a>
+
+  The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
+  in the last dimension.
+  Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
+  
+  ```(N, C * reduce-mul(block_size), reduce-mul(num_blocks))```
+  <br/>
+  Where number of blocks extracted from each spatial dimension d is:
+  ```
+  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] − dilation[d] * (kernel_size[d] − 1) − 1) / stride[d]) + 1
+  ```
+
+#### Version
+
+This version of the operator has been available since version 12 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>block_size</tt> : list of ints (required)</dt>
+<dd>The size of the extracted blocks [D1, D2, ..., Dn].</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor that contains the result of the unfold. The output has three dimensions, and dimension values are funciton of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+</dl>
+
 # ai.onnx.training
 ## Version 1 of the 'ai.onnx.training' operator set
 ### <a name="ai.onnx.training.Adam-1"></a>**ai.onnx.training.Adam-1**</a>
