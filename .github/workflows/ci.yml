@@ -1,0 +1,45 @@
+name: WindowsRelease
+
+on:
+  push:
+    branches:
+      - rel-*
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        architecture: ['x64', 'x86']
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+    - name: Install vcpkg dependencies
+      run: vcpkg install protobuf:${{ matrix.architecture }}-windows-static
+    - name: Install python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest nbval numpy wheel
+    - name: Build wheel
+      run: |
+        $Env:USE_MSVC_STATIC_RUNTIME=1
+        $Env:ONNX_ML=1
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.architecture }}-windows-static"
+        python setup.py bdist_wheel
+        Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+        pytest
+    - uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: dist
