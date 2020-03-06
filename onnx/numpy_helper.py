@@ -46,6 +46,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
         if sys.byteorder == 'big':
+            # Convert endian from little to big
             convert_endian(tensor)
         return np.frombuffer(
             tensor.raw_data,
@@ -112,6 +113,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
     if sys.byteorder == 'big':
+        # Convert endian from big to little
         convert_endian(tensor)
 
     return tensor
