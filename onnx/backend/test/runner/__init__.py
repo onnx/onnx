@@ -298,10 +298,7 @@ class Runner(object):
                     tensor = onnx.TensorProto()
                     with open(input_file, 'rb') as f:
                         tensor.ParseFromString(f.read())
-                    if sys.byteorder == 'big':
-                        inputs.append(numpy_helper.to_array(tensor).byteswap())
-                    else:
-                        inputs.append(numpy_helper.to_array(tensor))
+                    inputs.append(numpy_helper.to_array(tensor))
                 ref_outputs = []
                 ref_outputs_num = len(glob.glob(os.path.join(test_data_dir, 'output_*.pb')))
                 for i in range(ref_outputs_num):
@@ -309,10 +306,7 @@ class Runner(object):
                     tensor = onnx.TensorProto()
                     with open(output_file, 'rb') as f:
                         tensor.ParseFromString(f.read())
-                    if sys.byteorder == 'big':
-                        ref_outputs.append(numpy_helper.to_array(tensor).byteswap())
-                    else:
-                        ref_outputs.append(numpy_helper.to_array(tensor))
+                    ref_outputs.append(numpy_helper.to_array(tensor))
                 outputs = list(prepared_model.run(inputs))
                 self.assert_similar_outputs(ref_outputs, outputs,
                                             rtol=model_test.rtol,

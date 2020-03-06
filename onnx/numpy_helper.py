@@ -12,11 +12,6 @@ from onnx import mapping
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
-if (platform.system() != 'AIX' and platform.processor() != 's390x') and sys.byteorder != 'little':
-    raise RuntimeError(
-        'Numpy helper for tensor/ndarray is not available on big endian '
-        'systems yet.')
-
 
 def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.complex64]
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
@@ -50,6 +45,8 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
 
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
+        if sys.byteorder == 'big':
+            convert_endian(tensor)
         return np.frombuffer(
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
@@ -114,5 +111,18 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
             "Numpy data type not understood yet: {}".format(str(arr.dtype)))
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
+    if sys.byteorder == 'big':
+        convert_endian(tensor)
 
     return tensor
+
+
+def convert_endian(tensor):  # type: (TensorProto) -> None
+    """
+    call to convert endianess of raw data in tensor.
+    @params
+    TensorProto: TensorProto to be converted.
+    """
+    tensor_dtype = tensor.data_type
+    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
+    tensor.raw_data = np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
