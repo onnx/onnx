@@ -1544,22 +1544,14 @@ For previous (depreciated) non-spatial cases, implementors are suggested
 to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization operator.
 )DOC";
 
-static std::string GetBatchNormalizationVer12Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (
-      std::string(BatchNormalization_ver12_doc) +
-      GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     12,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(GetBatchNormalizationVer12Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BatchNormalization_ver12_doc) +
+            GenerateOptionalArgumentsDoc()))
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1814,19 +1806,12 @@ scale = 1. / (1. - ratio).
 ```
 )DOC";
 
-static std::string GetDropoutVer12Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (std::string(Dropout_ver12_doc) + GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     12,
     OpSchema()
-        .SetDoc(GetDropoutVer12Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver12_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",

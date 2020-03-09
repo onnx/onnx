@@ -1497,19 +1497,12 @@ copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
 )DOC";
 
-static std::string GetDropoutVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (std::string(Dropout_ver7_doc) + GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     7,
     OpSchema()
-        .SetDoc(GetDropoutVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1532,19 +1525,12 @@ copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
 )DOC";
 
-static std::string GetDropoutVer10Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (std::string(Dropout_ver10_doc) + GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     10,
     OpSchema()
-        .SetDoc(GetDropoutVer10Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver10_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1696,22 +1682,14 @@ For previous (depreciated) non-spatial cases, implementors are suggested
 to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
 )DOC";
 
-static std::string GetBatchNormalizationVer9Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (
-      std::string(BatchNormalization_ver9_doc) +
-      GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(GetBatchNormalizationVer9Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BatchNormalization_ver9_doc) +
+            GenerateOptionalArgumentsDoc()))
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1895,21 +1873,13 @@ static const char* BatchNormalization_ver7_doc = R"DOC(
     Output case #2: Y (test mode)
         )DOC";
 
-static std::string GetBatchNormalizationVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (
-      std::string(BatchNormalization_ver7_doc) +
-      GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     7,
     OpSchema()
-        .SetDoc(GetBatchNormalizationVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BatchNormalization_ver7_doc) +
+            GenerateOptionalArgumentsDoc()))
         .NumOutputs({1, 5})
         .Attr(
             "spatial",

@@ -172,19 +172,12 @@ Bitwise shift operator performs element-wise operation. For each input element, 
  not necessarily identical.
 )DOC";
 
-static std::string GetBitShiftDoc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul();
-#else
-  return "";
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     11,
     OpSchema()
-        .SetDoc(GetBitShiftDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
         .Input(0, "X", "First operand, input to be shifted.", "T")
         .Input(1, "Y", "Second operand, amounts of shift.", "T")
         .Output(0, "Z", "Output tensor", "T")
@@ -225,12 +218,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"O1"}, "Greater", {"A", "B"}},
-            {{"O2"}, "Equal", {"A", "B"}},
-            {{"C"}, "Or", {"O1", "O2"}}
-        })));
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"O1"}, "Greater", {"A", "B"}},
+             {{"O2"}, "Equal", {"A", "B"}},
+             {{"C"}, "Or", {"O1", "O2"}}})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     GreaterOrEqual,
@@ -246,11 +238,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"O1"}, "Less", {"A", "B"}},
-            {{"O2"}, "Equal", {"A", "B"}},
-            {{"C"}, "Or", {"O1", "O2"}}
-        })));
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"O1"}, "Less", {"A", "B"}},
+             {{"O2"}, "Equal", {"A", "B"}},
+             {{"C"}, "Or", {"O1", "O2"}}})));
 
 } // namespace ONNX_NAMESPACE

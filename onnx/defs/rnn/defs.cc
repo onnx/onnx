@@ -193,19 +193,12 @@ Equations (Default: f=Tanh):
   - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
 )DOC";
 
-static std::string GetRNNVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (std::string(RNN_ver7_doc) + GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     7,
     OpSchema()
-        .SetDoc(GetRNNVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(RNN_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -313,19 +306,12 @@ Equations (Default: f=Sigmoid, g=Tanh):
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
 
-static std::string GetGRUVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (std::string(GRU_ver7_doc) + GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     7,
     OpSchema()
-        .SetDoc(GetGRUVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(GRU_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -449,19 +435,12 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   - Ht = ot (.) h(Ct)
 )DOC";
 
-static std::string GetLSTMVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (std::string(LSTM_ver7_doc) + GenerateOptionalArgumentsDoc());
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     7,
     OpSchema()
-        .SetDoc(GetLSTMVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(LSTM_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "

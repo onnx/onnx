@@ -697,21 +697,13 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 )DOC";
 
-static std::string GetPreluVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (
-      std::string(PRelu_ver7_doc) +
-      GenerateBroadcastingDocUni("tensor slope", "input tensor X"));
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
     7,
     OpSchema()
-        .SetDoc(GetPreluVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(PRelu_ver7_doc) +
+            GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -1071,21 +1063,13 @@ and output tensor Y has shape (M, N). A will be transposed before doing the
 computation if attribute transA is non-zero, same for B and transB.
 )DOC";
 
-static std::string GetGemmVer7Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (
-      std::string(Gemm_ver7_doc) +
-      GenerateBroadcastingDocUni("tensor C", "tensor A * B"));
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     7,
     OpSchema()
-        .SetDoc(GetGemmVer7Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Gemm_ver7_doc) +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B")))
         .Input(
             0,
             "A",
@@ -1169,21 +1153,13 @@ and output tensor Y has shape (M, N). A will be transposed before doing the
 computation if attribute transA is non-zero, same for B and transB.
 )DOC";
 
-static std::string GetGemmVer9Doc() {
-#ifndef __ONNX_NO_DOC_STRINGS
-  return (
-      std::string(Gemm_ver9_doc) +
-      GenerateBroadcastingDocUni("tensor C", "tensor A * B"));
-#else
-  return ("");
-#endif
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     9,
     OpSchema()
-        .SetDoc(GetGemmVer9Doc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Gemm_ver9_doc) +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B")))
         .Input(
             0,
             "A",

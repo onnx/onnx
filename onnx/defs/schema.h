@@ -1079,4 +1079,10 @@ inline std::string GenerateBroadcastingDocUni(
   return ret;
 }
 
+#ifndef __ONNX_NO_DOC_STRINGS
+#define GET_OP_DOC_STR(doc_str) (doc_str)
+#else
+#define GET_OP_DOC_STR(doc_str) ("")
+#endif
+
 } // namespace ONNX_NAMESPACE
