@@ -13,39 +13,8 @@ std::string InteralTensorNameGenerator(
   return new_name;
 }
 
-bool nodes_equal(const NodeProto& lhs, const NodeProto& rhs) {
-
-  if (!lhs.has_op_type() || !rhs.has_op_type()) {
-    return false;
-  }
-  if (lhs.op_type() != rhs.op_type()){
-    return false;
-  }
-  if(lhs.attribute_size()!=rhs.attribute_size()){
-    return false;
-  }
-  for(int i=0; i<lhs.attribute_size(); i++){
-    if(lhs.attribute(i).name()!=rhs.attribute(i).name()){
-      return false;
-    }
-  }
-  if(lhs.input_size()!=rhs.input_size()){
-    return false;
-  }
-  for(int i=0; i<lhs.input_size(); i++){
-    if(lhs.input(i)!=rhs.input(i)){
-      return false;
-    }
-  }
-    if(lhs.output_size()!=rhs.output_size()){
-    return false;
-  }
-  for(int i=0; i<lhs.output_size(); i++){
-    if(lhs.output(i)!=rhs.output(i)){
-      return false;
-    }
-  }
-  return true; 
+bool nodes_equal_string(const NodeProto& lhs, const NodeProto& rhs) {
+      return ProtoString(lhs) == ProtoString(rhs);
 }
 
 void FunctionExpandHelper(
@@ -144,11 +113,12 @@ void FunctionExpandHelper(
   // Remove function node from graph
   for (int i = 0; i < g.node().size(); ++i) {
     auto node_i = g.node(i);
-    if (nodes_equal(node, node_i)) {
-      g.mutable_node(i)->Clear();
+    if (nodes_equal_string(node, node_i)) {
+       g.mutable_node()->DeleteSubrange(i, 1);
     }
   }
 }
+
 
 std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
     const std::vector<NodeDef>& node_defs) {

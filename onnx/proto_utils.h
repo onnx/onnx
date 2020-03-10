@@ -18,10 +18,20 @@ using ::google::protobuf::MessageLite;
 inline std::string ProtoDebugString(const MessageLite& proto) {
   return proto.SerializeAsString();
 }
+inline std::string ProtoString(const MessageLite& proto) {
+  std::string m;
+  proto.SerializeToString(&m);
+  return m;
+}
 #else
 using ::google::protobuf::Message;
 inline std::string ProtoDebugString(const Message& proto) {
   return proto.ShortDebugString();
+}
+inline std::string ProtoString(const Message& proto) {
+  std::string m;
+  proto.SerializeToString(&m);
+  return m;
 }
 #endif
 
