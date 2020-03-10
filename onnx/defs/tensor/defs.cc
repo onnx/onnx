@@ -1578,13 +1578,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
-          for (size_t(i) = 0; i < axes.size(); ++i) {
-            if (axes[i] < -output_ndim || axes[i] >= output_ndim) {
+          for (auto& axe : axes) {
+            if (axe < -output_ndim || axe >= output_ndim) {
               fail_shape_inference(
                   "values in 'axes' are beyond the bounds of the computed output shape");
             }
-            if (axes[i] < 0) {
-              axes[i] += output_ndim;
+            if (axe < 0) {
+              axe += output_ndim;
             }
           }
 
