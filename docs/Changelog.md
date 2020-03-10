@@ -15078,7 +15078,7 @@ This version of the operator has been available since version 12 of the default 
         H_new = H + G_regularized * G_regularized;
   
         // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
-        // compute square root element-wisely.
+        // computes element-wise square-root.
         H_adaptive = Sqrt(H_new) + epsilon
   
         // Compute the new value of "X".
