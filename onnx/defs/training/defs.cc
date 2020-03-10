@@ -350,7 +350,8 @@ static const char* Adagrad_ver1_doc = R"DOC(
     Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
     numpy-style broadcasting support. The pseudo code to compute those outputs is:
 
-      // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
+      // Compute a scalar learning-rate factor. At the first update of X, T is generally
+      // 0 (0-based update index) or 1 (1-based update index).
       r = R / (1 + T * decay_factor);
 
       // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
@@ -386,10 +387,15 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "inputs",
-            "It sequentially contains the current values of optimized tensors and then the "
-            "current values of accumulated gradient. For example, if two tensor \"X_1\" and \"X_2\" "
-            "are optimized, The input list would be [\"X_1\", \"X_2\", gradient of \"X_1\", "
-            "gradient of \"X_2\", accumulated squared gradient of \"X_1\", accumulated squared gradient of \"X_2\"].",
+            "The current values of optimized tensors, followed by their "
+            "respective gradients, followed by their respective accumulated squared gradients."
+            "For example, if two tensor \"X_1\" and \"X_2\" " "are optimized, "
+            "The input list would be "
+            "[\"X_1\", \"X_2\", "
+            "gradient of \"X_1\", "
+            "gradient of \"X_2\", "
+            "accumulated squared gradient of \"X_1\", "
+            "accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
             false)
@@ -400,7 +406,7 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
             "values of accumulated gradient. For example, if two tensor \"X_1\" and \"X_2\" are "
             "optimized, the output list would be [new value of \"X_1,\" new value of \"X_2\" "
             "new accumulated squared gradient of \"X_1\", new accumulated squared gradient of \"X_2\"].",
-            "T2",
+            "T3",
             OpSchema::Variadic,
             false)
         .Attr(
@@ -428,11 +434,11 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(int64)"},
-            "Constrain output types to 64-bit integer scalars.")
+            "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint(
             "T3",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+            "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             // In comments below, we assume that the input list is
             // [R, T, X1, X2, G1, G2, H1, H2] and the output list is

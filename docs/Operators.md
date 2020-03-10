@@ -20977,7 +20977,8 @@ expect(node, inputs=[x, y], outputs=[z],
       Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
       numpy-style broadcasting support. The pseudo code to compute those outputs is:
   
-        // Compute a scalar learning-rate factor. If X is never updated, T should be 0.
+        // Compute a scalar learning-rate factor. At the first update of X, T is generally
+        // 0 (0-based update index) or 1 (1-based update index).
         r = R / (1 + T * decay_factor);
   
         // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
@@ -21025,13 +21026,13 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T</tt> : T2</dt>
 <dd>The update count of "X". It should be a scalar.</dd>
 <dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the current values of optimized tensors and then the current values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
+<dd>The current values of optimized tensors, followed by their respective gradients, followed by their respective accumulated squared gradients.For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs</tt> (variadic, heterogeneous) : T2</dt>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
 <dd>It sequentially contains the new values of optimized tensors and then the new values of accumulated gradient. For example, if two tensor "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
 </dl>
 
@@ -21041,9 +21042,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain output types to 64-bit integer scalars.</dd>
+<dd>Constrain input types to 64-bit integer scalars.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
