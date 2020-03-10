@@ -15088,7 +15088,7 @@ This version of the operator has been available since version 12 of the default 
         // Update exponentially-averaged historical squared gradient.
         H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
   
-        // Compute the element-wise square root of H_new. V_new will be element-wisely
+        // Compute the element-wise square-root of H_new. V_new will be element-wisely
         // divided by H_sqrt for a better update direction.
         H_sqrt = Sqrt(H_new) + epsilon;
   
@@ -15126,14 +15126,14 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T</tt> : T2</dt>
 <dd>The update count of "X". It should be a scalar.</dd>
 <dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the tensors to be optimized, the gradient, the averaged gradient (aka momentum), and the averaged squared gradient. For example, to optimize tensors "X_1" and "X_2,", the "inputs" would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", averaged gradient of "X_1", averaged gradient of "X_2", averaged squared gradient of "X_1", averaged squared gradient of "X_2"].</dd>
+<dd>The tensors to be optimized, followed by their respective gradients, followed by their respective accumulated gradients (aka momentum), followed by their respective accumulated squared gradients. For example, to optimize tensors "X_1" and "X_2,", the input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated gradient of "X_1", accumulated gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
-<dd>It sequentially contains the new values of optimized tensors, then the new values of averaged gradient, and finally values of averaged squared gradient. For example, if two tensors "X_1" and "X_2" are optimized, the "outputs" would be [new value of "X_1,", new value of "X_2," new averaged gradient of "X_1", new averaged gradient of "X_2," new averaged squared gradient of "X_1," new averaged squared gradient of "X_2"].</dd>
+<dd>New values of optimized tensors, followed by their respective new accumulated gradients, followed by their respective new accumulated squared gradients. For example, if two tensors "X_1" and "X_2" are optimized, the outputs list would be [new value of "X_1", new value of "X_2", new accumulated gradient of "X_1", new accumulated gradient of "X_2", new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
 </dl>
 
 #### Type Constraints
@@ -15142,9 +15142,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain output types to 64-bit integer scalars.</dd>
+<dd>Constrain input types to 64-bit integer scalars.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="ai.onnx.training.Gradient-1"></a>**ai.onnx.training.Gradient-1**</a>

@@ -371,7 +371,7 @@ static const char* Adam_ver1_doc = R"DOC(
       // Update exponentially-averaged historical squared gradient.
       H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
 
-      // Compute the element-wise square root of H_new. V_new will be element-wisely
+      // Compute the element-wise square-root of H_new. V_new will be element-wisely
       // divided by H_sqrt for a better update direction.
       H_sqrt = Sqrt(H_new) + epsilon;
 
@@ -395,24 +395,30 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "inputs",
-            "It sequentially contains the tensors to be optimized, the gradient, the "
-            "averaged gradient (aka momentum), and the averaged squared gradient. For example, "
-            "to optimize tensors \"X_1\" and \"X_2,\", the \"inputs\" would be [\"X_1\", \"X_2\", "
+            "The tensors to be optimized, followed by their respective gradients, "
+            "followed by their respective accumulated gradients (aka momentum), "
+            "followed by their respective accumulated squared gradients. For example, "
+            "to optimize tensors \"X_1\" and \"X_2,\", the input list would be "
+            "[\"X_1\", \"X_2\", "
             "gradient of \"X_1\", gradient of \"X_2\", "
-            "averaged gradient of \"X_1\", averaged gradient of \"X_2\", "
-            "averaged squared gradient of \"X_1\", averaged squared gradient of \"X_2\"].",
+            "accumulated gradient of \"X_1\", accumulated gradient of \"X_2\", "
+            "accumulated squared gradient of \"X_1\", accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
             false)
         .Output(
             0,
             "outputs",
-            "It sequentially contains the new values of optimized tensors, then the new "
-            "values of averaged gradient, and finally values of averaged squared gradient. For example, "
-            "if two tensors \"X_1\" and \"X_2\" are optimized, the \"outputs\" would be "
-            "[new value of \"X_1,\", new value of \"X_2,\" new averaged gradient of \"X_1\", "
-            "new averaged gradient of \"X_2,\" new averaged squared gradient of \"X_1,\" "
-            "new averaged squared gradient of \"X_2\"].",
+            "New values of optimized tensors, "
+            "followed by their respective new accumulated gradients, "
+            "followed by their respective new accumulated squared gradients. "
+            "For example, if two tensors \"X_1\" and \"X_2\" are optimized, "
+            "the outputs list would be "
+            "[new value of \"X_1\", new value of \"X_2\", "
+            "new accumulated gradient of \"X_1\", "
+            "new accumulated gradient of \"X_2\", "
+            "new accumulated squared gradient of \"X_1\", "
+            "new accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
             false)
@@ -444,11 +450,11 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(int64)"},
-            "Constrain output types to 64-bit integer scalars.")
+            "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint(
             "T3",
             {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+            "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext &ctx) {
             // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2, H1, H2] and
             // output list is [X1_new, X2_new, V1_new, V2_new, H1_new, H2_new] for explaining
