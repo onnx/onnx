@@ -13,7 +13,7 @@ std::string InteralTensorNameGenerator(
   return new_name;
 }
 
-bool nodes_equal_string(const NodeProto& lhs, const NodeProto& rhs) {
+bool nodes_equal(const NodeProto& lhs, const NodeProto& rhs) {
       return ProtoString(lhs) == ProtoString(rhs);
 }
 
@@ -113,12 +113,12 @@ void FunctionExpandHelper(
   // Remove function node from graph
   for (int i = 0; i < g.node().size(); ++i) {
     auto node_i = g.node(i);
-    if (nodes_equal_string(node, node_i)) {
+    if (nodes_equal(node, node_i)) {
        g.mutable_node()->DeleteSubrange(i, 1);
+       break;
     }
   }
 }
-
 
 std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
     const std::vector<NodeDef>& node_defs) {
