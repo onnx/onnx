@@ -11,6 +11,7 @@ namespace ONNX_NAMESPACE {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Gradient);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, GraphCall);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Momentum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Adagrad);
 
 // Iterate over schema from ai.onnx.training version 1
 class OpSet_OnnxTraining_ver1 {
@@ -19,6 +20,7 @@ class OpSet_OnnxTraining_ver1 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Gradient)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, GraphCall)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Momentum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxTraining, 1, Adagrad)>());
   }
 };
 
