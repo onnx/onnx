@@ -156,13 +156,14 @@ Assuming that there are no breaking changes to the signature of the model's grap
 
 ## Released Versions
 
-ONNX version|File format version|Operator set version ai.onnx|Operator set version ai.onnx.ml
-------------|-------------------|----------------------------|-------------------------------
-1.0|3|1|1
-1.1|3|5|1
-1.1.2|3|6|1
-1.2|3|7|1
-1.3|3|8|1
-1.4.1|4|9|1
-1.5.0|5|10|1
-1.6.0|6|11|2
+ONNX version|File format version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset version ai.onnx.training
+------------|-------------------|---------------------|------------------------|------------------------------
+1.0|3|1|1|-
+1.1|3|5|1|-
+1.1.2|3|6|1|-
+1.2|3|7|1|-
+1.3|3|8|1|-
+1.4.1|4|9|1|-
+1.5.0|5|10|1|-
+1.6.0|6|11|2|-
+1.7.0|7|12|2|1
