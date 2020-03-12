@@ -28,9 +28,6 @@ matrix:
     - os: osx
       osx_image: xcode9.3
       env: PYTHON_VERSION=python3 ONNX_ML=0
-    - os: osx
-      osx_image: xcode9.3
-      env: PYTHON_VERSION=python3 ONNX_ML=0 ONNX_DEBUG=1
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python2
@@ -47,6 +44,9 @@ matrix:
     - os: osx
       osx_image: xcode9.3
       env: PYTHON_VERSION=python3
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python3 ONNX_DEBUG=1
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python2 LITE=1
