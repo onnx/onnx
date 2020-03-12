@@ -190,8 +190,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
     const char* opName,
     const char* additionalDescription) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -214,13 +215,10 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
@@ -285,8 +283,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
     bool use_dilation,
     int opsetNum) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -316,18 +315,15 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
-    ReplaceAll(
-        doc,
-        "{kernelSpatialShape}",
-        use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
-                     : "kernel_spatial_shape[i]");
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(
+            doc,
+            "{kernelSpatialShape}",
+            use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
+                         : "kernel_spatial_shape[i]"););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
@@ -791,18 +787,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
@@ -866,15 +859,12 @@ static const char* GlobalLpPool_ver1_doc = R"DOC(
 std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(
     const char* filter_desc) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Input(
         0,
         "X",
@@ -1121,8 +1111,8 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_10(
     const char* filter_desc) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -1137,11 +1127,8 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Input(
         0,
         "X",

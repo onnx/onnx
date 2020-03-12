@@ -11,8 +11,8 @@ std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(
     const char* name,
     const char* description) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
  of the given input. The input is a 2-D tensor (Tensor<float>) of size
 (batch_size x input_feature_dimensions). The output tensor has the same shape
@@ -29,12 +29,9 @@ In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
 Each of these dimensions must be matched correctly, or else the operator
 will throw errors.
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{description}", description););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "axis",
         "Describes the axis of the inputs when coerced "
@@ -104,16 +101,13 @@ Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old);
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "broadcast",
         "Pass 1 to enable broadcasting",
@@ -154,16 +148,13 @@ Performs element-wise binary {name} (with limited broadcast support).
 
 std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old);
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "broadcast",
         "Pass 1 to enable broadcasting",
@@ -1653,18 +1644,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(
     const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Input(
         0,
         "data_0",

@@ -10,19 +10,16 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset1(
     const char* name,
     int opset = 1) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
 tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "axes",
         opset >= 11
@@ -147,17 +144,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the
 provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
 If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
 The type of the output tensor is integer.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "axis",
         "The axis in which to compute the arg indices.",

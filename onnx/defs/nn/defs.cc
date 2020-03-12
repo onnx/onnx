@@ -205,8 +205,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     bool use_dilation,
     bool supports8bit = false) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -236,18 +237,15 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
-    ReplaceAll(
-        doc,
-        "{kernelSpatialShape}",
-        use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
-                     : "kernel_spatial_shape[i]");
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(
+            doc,
+            "{kernelSpatialShape}",
+            use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
+                         : "kernel_spatial_shape[i]"););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
@@ -542,18 +540,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
@@ -652,16 +647,13 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
 
 std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  ROI {name} pool consumes an input tensor X and region of interests (RoIs) to
  apply {name} pooling across each RoI, to produce output 4-D tensor of shape
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "pooled_shape",
         "ROI pool output shape (height, width).",
@@ -708,15 +700,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Input(
         0,
         "X",
@@ -1260,8 +1249,8 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
     const char* filter_desc) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -1276,11 +1265,8 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Input(
         0,
         "X",
@@ -1409,17 +1395,14 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op_type,
     const char* op) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
-    ReplaceAll(doc, "{op_type}", op_type);
-    ReplaceAll(doc, "{op}", op);
+                        ReplaceAll(doc, "{op_type}", op_type);
+                        ReplaceAll(doc, "{op}", op););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Input(
         0,
         "X",
@@ -1461,17 +1444,14 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
     const char* op_type,
     const char* op) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
-    ReplaceAll(doc, "{op_type}", op_type);
-    ReplaceAll(doc, "{op}", op);
+                        ReplaceAll(doc, "{op_type}", op_type);
+                        ReplaceAll(doc, "{op}", op););
     schema.SetDoc(doc);
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "p",
         "p value of the Lp norm used to pool over the input data.",

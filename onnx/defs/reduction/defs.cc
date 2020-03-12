@@ -24,19 +24,16 @@ std::function<void(OpSchema&)> ReduceDocGenerator(
     const char* name,
     bool supports_8bit_datatypes = false) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
 tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
@@ -154,8 +151,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the 
 provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
 If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
@@ -163,11 +160,8 @@ If select_last_index is True (default False), the index of the last occurrence o
 is selected if the {name} appears more than once in the input. Otherwise the index of the 
 first occurrence is selected.
 The type of the output tensor is integer.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
-#else
-    schema.SetDoc("");
-#endif
     schema.Attr(
         "axis",
         "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",

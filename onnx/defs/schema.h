@@ -1079,10 +1079,24 @@ inline std::string GenerateBroadcastingDocUni(
   return ret;
 }
 
+// Macros for setting operator documentation
+// Use this macro for simple SetDoc() calls that generate documentation
+// directly. This is the macro to use in almost all cases.
 #ifndef __ONNX_NO_DOC_STRINGS
 #define GET_OP_DOC_STR(doc_str) (doc_str)
 #else
 #define GET_OP_DOC_STR(doc_str) ("")
+#endif
+
+// Use this macro when the documentation needs to be populated in some
+// complicated way like string substitutions, etc before calling SetDoc.
+#ifndef __ONNX_NO_DOC_STRINGS
+#define POPULATE_OP_DOC_STR(DocPopulatorCode) \
+  do {                                        \
+    DocPopulatorCode                          \
+  } while (0)
+#else
+#define POPULATE_OP_DOC_STR(DocPopulatorCode)
 #endif
 
 } // namespace ONNX_NAMESPACE
