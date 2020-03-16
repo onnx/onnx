@@ -29,6 +29,7 @@
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
+#include "onnx/version_converter/adapters/clip_10_11.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -105,88 +106,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
       std::vector<TensorProto_DataType> broadcast_unallowed_types = {
         TensorProto_DataType_INT32, TensorProto_DataType_INT64,
         TensorProto_DataType_UINT32, TensorProto_DataType_UINT64};
-      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
-        OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
-        OpSetID(6), OpSetID(7)));
-      registerAdapter(make_unique<TypeRestriction>("Add",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
-        OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<CompatibleAdapter>("Max",
-        OpSetID(7), OpSetID(8)));
-      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
-        OpSetID(8), OpSetID(7)));
-      registerAdapter(make_unique<CompatibleAdapter>("Min",
-        OpSetID(7), OpSetID(8)));
-      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
-        OpSetID(8), OpSetID(7)));
-      registerAdapter(make_unique<CompatibleAdapter>("Mean",
-        OpSetID(7), OpSetID(8)));
-      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mean",
-        OpSetID(8), OpSetID(7)));      
-      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
-        OpSetID(6), OpSetID(7)));
-      registerAdapter(make_unique<TypeRestriction>("Mul",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
-        OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<Gemm_7_6>());
-      registerAdapter(make_unique<Gemm_6_7>());
-      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<CompatibleAdapter>("Relu",
-        OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<SetIsTest>("BatchNormalization",
-        OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<Upsample_8_9>());
-      registerAdapter(make_unique<Cast_9_8>());
-      registerAdapter(make_unique<CompatibleAdapter>("Flatten",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("Flatten",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<CompatibleAdapter>("Constant",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("Constant",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<CompatibleAdapter>("MatMul",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("MatMul",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("Gemm",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("PRelu",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<CompatibleAdapter>("Greater",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("Greater",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<CompatibleAdapter>("Less",
-        OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<ExtendSupportedTypes>("Less",
-        OpSetID(9), OpSetID(8)));
-      registerAdapter(make_unique<Upsample_8_9>());
-      registerAdapter(make_unique<Upsample_9_8>());
-      registerAdapter(make_unique<Scan_9_8>());
-      registerAdapter(make_unique<Scan_8_9>());
-      registerAdapter(make_unique<BatchNormalization_8_9>());
-      registerAdapter(make_unique<BatchNormalization_6_7>());
-      registerAdapter(make_unique<BatchNormalization_6_5>());
-      registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
-        OpSetID(9), OpSetID(8)));
+
+      /******** 3 -> 4 ********/
       registerAdapter(make_unique<Concat_3_4>());
+
+      /******** 4 -> 3 ********/
       std::vector<TensorProto_DataType> concat_unallowed_types = {
         TensorProto_DataType_INT32, TensorProto_DataType_INT64,
         TensorProto_DataType_UINT32, TensorProto_DataType_UINT64,
@@ -195,30 +119,291 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_STRING, TensorProto_DataType_BOOL};
       registerAdapter(make_unique<TypeRestriction>("Concat", OpSetID(4),
             OpSetID(3), concat_unallowed_types));
+
+      /******** 4 -> 5 ********/
       registerAdapter(make_unique<Reshape_4_5>());
+
+      /******** 5 -> 4 ********/
       registerAdapter(make_unique<Reshape_5_4>());
-      registerAdapter(make_unique<CompatibleAdapter>("Sum",
-        OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<CompatibleAdapter>("Sum",
-        OpSetID(7), OpSetID(8)));
+
+      /******** 5 -> 6 ********/
+      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
+        OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
         OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<Sum_8_7>());
-      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
-        OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<SetIsTest>("Dropout",
-        OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
         OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<Dropout_6_7>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("Abs",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Ceil",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Clip",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Div",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Elu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Exp",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Floor",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("HardSigmoid",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("InstanceNormalization",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("LeakyRelu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Log",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Max",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mean",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Min",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Neg",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("PRelu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Reciprocal",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Selu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Sigmoid",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Sqrt",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Sub",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Tanh",
+        OpSetID(5), OpSetID(6)));
+
+      /******** 6 -> 5 ********/
+      registerAdapter(make_unique<TypeRestriction>("Add",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Mul",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Gemm",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Relu",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Sum",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Dropout",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Abs",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Ceil",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Clip",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Div",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Elu",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Exp",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Floor",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("HardSigmoid",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("InstanceNormalization",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("LeakyRelu",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Log",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Max",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Mean",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Min",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Neg",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("PRelu",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Reciprocal",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Selu",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Sigmoid",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Sqrt",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Sub",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Tanh",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<BatchNormalization_6_5>());
+
+      /******** 6 -> 7 ********/
       registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
+        OpSetID(6), OpSetID(7)));      
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
         OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Div",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Pow",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
+        OpSetID(6), OpSetID(7)));    
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Sub",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<Gemm_6_7>());
+      registerAdapter(make_unique<BatchNormalization_6_7>());
+      registerAdapter(make_unique<Dropout_6_7>());
       registerAdapter(make_unique<AveragePool_7_6>());
+
+      /******** 7 -> 6 ********/   
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Div",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Pow",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Sub",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<SetIsTest>("BatchNormalization",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<SetIsTest>("Dropout",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<Gemm_7_6>());
+
+      /******** 7 -> 8 ********/  
+      registerAdapter(make_unique<CompatibleAdapter>("Max",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Min",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Mean",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<CompatibleAdapter>("Sum",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(7), OpSetID(8)));
+
+      /******** 8 -> 7 ********/  
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
+        OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
+        OpSetID(8), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mean",
+        OpSetID(8), OpSetID(7)));      
+      registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<MaxPool_8_7>());
+
+      /******** 8 -> 9 ********/  
+      registerAdapter(make_unique<CompatibleAdapter>("Flatten",
+        OpSetID(8), OpSetID(9)));
+      registerAdapter(make_unique<CompatibleAdapter>("Constant",
+        OpSetID(8), OpSetID(9)));
+      registerAdapter(make_unique<CompatibleAdapter>("MatMul",
+        OpSetID(8), OpSetID(9)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(8), OpSetID(9)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
+        OpSetID(8), OpSetID(9)));
+      registerAdapter(make_unique<CompatibleAdapter>("Greater",
+        OpSetID(8), OpSetID(9)));      
+      registerAdapter(make_unique<CompatibleAdapter>("Less",
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<CompatibleAdapter>("Cast",
         OpSetID(8), OpSetID(9)));
+      registerAdapter(make_unique<BatchNormalization_8_9>());
+      registerAdapter(make_unique<Scan_8_9>());
+      registerAdapter(make_unique<Upsample_8_9>());
+
+      /******** 9 -> 8 ********/
+      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
+        OpSetID(9), OpSetID(8)));  
+      registerAdapter(make_unique<ExtendSupportedTypes>("Flatten",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Constant",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("MatMul",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Gemm",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("PRelu",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Greater",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<ExtendSupportedTypes>("Less",
+        OpSetID(9), OpSetID(8)));
+      registerAdapter(make_unique<Cast_9_8>());
+      registerAdapter(make_unique<Scan_9_8>());
+      registerAdapter(make_unique<Upsample_9_8>());
+
+      /******** 9 -> 10 ********/
+      registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
+        OpSetID(9), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
+        OpSetID(9), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
+        OpSetID(9), OpSetID(10)));
+
+      /******** 10 -> 9 ********/
+      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
+        OpSetID(10), OpSetID(9)));
+
+      /******** 10 -> 11 ********/
+      registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Concat",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Constant",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Conv",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ConvTranspose",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Flatten",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Softmax",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<Clip_10_11>());
+
+      /******** 11 -> 10 ********/
+      registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Concat",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Constant",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Conv",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ConvTranspose",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Flatten",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Softmax",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
+        OpSetID(11), OpSetID(10)));
     }
 
     ModelProto convert_version(
