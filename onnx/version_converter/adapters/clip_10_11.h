@@ -1,6 +1,7 @@
 // Adapter for Clip in default domain from version 10 to 11
 
 #pragma once
+#include <limits>
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -18,7 +19,7 @@ class Clip_10_11 final : public Adapter {
         addMinInit(graph, node);
       }
       if(has_max) {
-        if(!has_min) {addMin(graph, node);}
+        if(!has_min) {addMinDefault(graph, node);}
         addMaxInit(graph, node);
       }
     }
@@ -45,10 +46,13 @@ class Clip_10_11 final : public Adapter {
       node->removeAttribute(kmax);
     }
 
-    void addMin(std::shared_ptr<Graph> graph, Node *node) const {
+    void addMinDefault(std::shared_ptr<Graph> graph, Node *node) const {
+      Tensor t_min;
+      t_min.elem_type() = TensorProto_DataType_FLOAT;
+      auto& data_min = t_min.floats();
+      data_min.emplace_back(std::numeric_limits<float>::lowest());
       Value* v_min;
-      v_min = graph->addInput();
-      v_min->setUniqueName("min");
+      v_min = graph->addInitializerAndInput(t_min, "min");
       node->addInput(v_min);
     }
 
