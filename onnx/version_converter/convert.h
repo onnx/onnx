@@ -30,6 +30,7 @@
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
+#include "onnx/version_converter/adapters/dropout_11_12.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -263,7 +264,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Gemm_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<Dropout_6_7>());
-      registerAdapter(make_unique<AveragePool_7_6>());
 
       /******** 7 -> 6 ********/   
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
@@ -274,6 +274,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Pow",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
+        OpSetID(7), OpSetID(6)));  
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Sub",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<SetIsTest>("BatchNormalization",
@@ -281,6 +283,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<SetIsTest>("Dropout",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<Gemm_7_6>());
+      registerAdapter(make_unique<AveragePool_7_6>());
 
       /******** 7 -> 8 ********/  
       registerAdapter(make_unique<CompatibleAdapter>("Max",
@@ -295,6 +298,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(8)));
 
       /******** 8 -> 7 ********/  
+      /* Should the adapters for Max, Min, Mean be CompatiblAdapter here? */
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
         OpSetID(8), OpSetID(7)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
@@ -404,6 +408,40 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
         OpSetID(11), OpSetID(10)));
+
+      /******** 11 -> 12 ********/
+      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("Constant",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("Clip",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("Min",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("Max",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<Dropout_11_12>());
+
+      /******** 12 -> 11 ********/
+      std::vector<TensorProto_DataType> int_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_UINT16,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16,
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
+        OpSetID(12), OpSetID(11)));
+      registerAdapter(make_unique<TypeRestriction>("Clip", 
+        OpSetID(12), OpSetID(11), int_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Min", 
+        OpSetID(12), OpSetID(11), int_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Max", 
+        OpSetID(12), OpSetID(11), int_unallowed_types));
+      std::vector<TensorProto_DataType> maxpool_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_INT8};
+      registerAdapter(make_unique<TypeRestriction>("MaxPool", 
+        OpSetID(12), OpSetID(11), maxpool_unallowed_types));
     }
 
     ModelProto convert_version(
