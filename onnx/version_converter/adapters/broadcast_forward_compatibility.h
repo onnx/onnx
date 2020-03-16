@@ -22,23 +22,14 @@ class BroadcastForwardCompatibility final : public Adapter {
         const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
         // Also assert that broadcasting syntax are correct if axis is not present
         if (node->hasAttribute(kaxis)) {
-          int axis = node->i(kaxis);
-          if (axis != (int) (A_sizes.size() - B_sizes.size())) {
+          if (node->i(kaxis) != (int) (A_sizes.size() - B_sizes.size())) {
             // Add a Reshape node before input B
             Node * n = graph->create(kUnsqueeze);
             n->addInput(inputs[1]);
             std::vector<int64_t> axes;
-            std::vector<Dimension> new_sizes = {};
-            new_sizes.reserve(A_sizes.size());
-            // Add dimensions to the left
-            for (int i = 0; i < axis; i++) {
-              axes.emplace_back(i);
-              new_sizes.emplace_back(Dimension(1));              
-            }
-            new_sizes.insert(new_sizes.end(), B_sizes.begin(), B_sizes.end());
-            // Add dimensions to the right
-            for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size() - axis); i++) {
-              axes.emplace_back(B_sizes.size() + axis + i);
+            std::vector<Dimension> new_sizes = B_sizes;
+            for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
+              axes.emplace_back(B_sizes.size() + i);
               new_sizes.emplace_back(Dimension(1));
             }
             n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
