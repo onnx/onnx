@@ -6979,16 +6979,16 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 2, 3]).astype(np.float32)
-y = np.array([4, 5, 6]).astype(np.float32)
-z = np.power(x, y)  # expected output [1., 32., 729.]
+y = np.array([4, 5, 6]).astype(np.int64)
+z = pow(x, y)  # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_example')
+       name='test_pow_types_int')
 
-x = np.arange(60).reshape(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
-z = np.power(x, y)
+x = np.array([1, 2, 3]).astype(np.int64)
+y = np.array([4, 5, 6]).astype(np.float32)
+z = pow(x, y)  # expected output [1, 32, 729]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow')
+       name='test_pow_types_float')
 ```
 
 </details>
@@ -7004,7 +7004,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array(2).astype(np.float32)
-z = np.power(x, y)  # expected output [1., 4., 9.]
+z = pow(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_scalar')
 
@@ -7016,7 +7016,7 @@ node = onnx.helper.make_node(
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([1, 2, 3]).astype(np.float32)
 # expected output [[1, 4, 27], [4, 25, 216]]
-z = np.power(x, y).astype(np.float32)
+z = pow(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_array')
 ```
