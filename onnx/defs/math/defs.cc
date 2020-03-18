@@ -521,13 +521,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Z", "Output tensor (same size as X)", "T")
         .TypeConstraint(
             "T",
-            {"tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
+            {"tensor(int32)",
              "tensor(int64)",
              "tensor(float16)",
              "tensor(float)",

@@ -6967,7 +6967,7 @@ for mode in ['edge', 'reflect']:
 
 
 ### Pow
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>pow</summary>
 
@@ -6979,16 +6979,16 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 2, 3]).astype(np.float32)
-y = np.array([4, 5, 6]).astype(np.int64)
+y = np.array([4, 5, 6]).astype(np.float32)
 z = pow(x, y)  # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_types_int')
+       name='test_pow_example')
 
-x = np.array([1, 2, 3]).astype(np.int64)
-y = np.array([4, 5, 6]).astype(np.float32)
-z = pow(x, y)  # expected output [1, 32, 729]
+x = np.arange(60).reshape(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = pow(x, y)
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_types_float')
+       name='test_pow')
 ```
 
 </details>
@@ -7019,6 +7019,30 @@ y = np.array([1, 2, 3]).astype(np.float32)
 z = pow(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_array')
+```
+
+</details>
+<details>
+<summary>types</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pow',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.int64)
+z = pow(x, y)  # expected output [1., 32., 729.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_int')
+
+x = np.array([1, 2, 3]).astype(np.int64)
+y = np.array([4, 5, 6]).astype(np.float32)
+z = pow(x, y)  # expected output [1, 32, 729]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_float')
 ```
 
 </details>

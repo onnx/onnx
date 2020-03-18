@@ -64,7 +64,7 @@ class Pow(Base):
                name='test_pow_bcast_array')
 
     @staticmethod
-    def export():  # type: () -> None
+    def export_types():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
