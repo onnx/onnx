@@ -13,6 +13,64 @@ from onnx import TensorProto
 from typing import List, Optional, Text, Union
 
 
+def SequenceEmptyImpl():  # type: () -> List[Optional[np.ndarray]]
+    return []
+
+
+def SequenceConstructImpl(*tensors):  # type: (*np.ndarray) -> List[np.ndarray]
+    return list(tensors)
+
+
+def SequenceInsertImpl(sequence, tensor, position=None):
+    # type: (List[np.ndarray], np.ndarray, Optional[int]) -> List[np.ndarray]
+    if position is None:
+        position = len(sequence)
+    sequence.insert(position, tensor)
+    return sequence
+
+
+def SequenceAtImpl(sequence, position):
+    # type: (List[np.ndarray], int) -> np.ndarray
+    return sequence[position]
+
+
+def SequenceEraseImpl(sequence, position=None):
+    # type: (List[np.ndarray], Optional[int]) -> List[Optional[np.ndarray]]
+    if position is None:
+        position = -1
+    del sequence[position]
+    return sequence
+
+
+def SequenceLengthImpl(sequence):
+    # type: (List[np.ndarray]) -> np.int64
+    return np.int64(len(sequence))
+
+
+def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
+    # type: (np.ndarray, Optional[Union[int, List[int]]], int, int) -> List[np.ndarray]
+    dim_size = tensor.shape[axis]
+    if split is None:
+        split = 1
+        split_indices = [i * split + 1 for i in range(dim_size) if i * split + 1 < dim_size]
+        if not keepdims:
+            results = np.array_split(tensor, split_indices, axis)
+            return [np.squeeze(res, axis) for res in results]
+    if np.isscalar(split):
+        split_indices = [i * split + 1 for i in range(dim_size) if i * split + 1 < dim_size]  # type: ignore
+    else:
+        split_indices = np.cumsum(split) + 1
+    return np.array_split(tensor, split_indices, axis)  # type: ignore
+
+
+def ConcatFromSequenceImpl(sequence, axis, new_axis=0):
+    # type: (List[np.ndarray], int, Optional[int]) -> np.ndarray
+    if new_axis:
+        return np.concatenate(sequence, axis)
+    else:
+        return np.stack(sequence, axis)
+
+
 class Sequence(Base):
 
     @staticmethod
@@ -66,9 +124,18 @@ class Sequence(Base):
         x = np.ones(x_shape, dtype=np.float32)
         y = np.zeros(y_shape, dtype=np.float32)
         z = np.ones(z_shape, dtype=np.float32) * 2
+        pos_val = 1
+        pos_at_val = 2
 
-        pos = onnx.helper.make_tensor('pos', TensorProto.INT64, (), (1, ))
-        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (2, ))
+        out = SequenceEmptyImpl()
+        out = SequenceInsertImpl(out, x)
+        out = SequenceInsertImpl(out, y)
+        out = SequenceInsertImpl(out, z, pos_val)
+        out = SequenceAtImpl(out, pos_at_val)
+        assert np.array_equal(out, y)
+
+        pos = onnx.helper.make_tensor('pos', TensorProto.INT64, (), (pos_val, ))
+        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (pos_at_val, ))
 
         graph = make_graph(
             [seq_empty_node, seq_insert_node, seq_insert_node2, seq_insert_node3, seq_at_node],
@@ -80,7 +147,7 @@ class Sequence(Base):
             [onnx.TensorProto.FLOAT],
             [pos, pos_at])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
-        expect(model, inputs=[x, y, z], outputs=[y], name="test_sequence_model1")
+        expect(model, inputs=[x, y, z], outputs=[out], name="test_sequence_model1")
 
         #2nd testcase - erase and at.
         # 1. SequenceConstruct(x, y, z):    -> [x, y, z]
@@ -95,9 +162,16 @@ class Sequence(Base):
         x = np.ones(tensor_shape, dtype=np.float32)
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
+        pos_erase_val = 1
+        pos_at_val = 1
 
-        pos_erase = onnx.helper.make_tensor('pos_erase', TensorProto.INT64, (), (1, ))
-        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (1, ))
+        out = SequenceConstructImpl(x, y, z)
+        out = SequenceEraseImpl(out, pos_erase_val)
+        out = SequenceAtImpl(out, pos_at_val)
+        assert np.array_equal(out, z)
+
+        pos_erase = onnx.helper.make_tensor('pos_erase', TensorProto.INT64, (), (pos_erase_val, ))
+        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (pos_at_val, ))
 
         graph = make_graph(
             [seq_construct_node, seq_erase_node, seq_at_node],
@@ -109,7 +183,7 @@ class Sequence(Base):
             [onnx.TensorProto.FLOAT],
             [pos_erase, pos_at])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
-        expect(model, inputs=[x, y, z], outputs=[z], name="test_sequence_model2")
+        expect(model, inputs=[x, y, z], outputs=[out], name="test_sequence_model2")
 
         #3rd testcase - erase, insert and at, with negative index value.
         # 1. SequenceConstruct(x, y, z):    -> [x, y, z]
@@ -126,10 +200,18 @@ class Sequence(Base):
         x = np.ones(tensor_shape, dtype=np.float32)
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
+        pos_erase_val = -3
+        pos_insert_val = -1
+        pos_at_val = -1
+        out = SequenceConstructImpl(x, y, z)
+        out = SequenceEraseImpl(out, pos_erase_val)
+        out = SequenceInsertImpl(out, x, pos_insert_val)
+        out = SequenceAtImpl(out, pos_at_val)
+        assert np.array_equal(out, z)
 
-        pos_erase = onnx.helper.make_tensor('pos_erase', TensorProto.INT64, (), (-3, ))
-        pos_insert = onnx.helper.make_tensor('pos_insert', TensorProto.INT64, (), (-1, ))
-        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (-1, ))
+        pos_erase = onnx.helper.make_tensor('pos_erase', TensorProto.INT64, (), (pos_erase_val, ))
+        pos_insert = onnx.helper.make_tensor('pos_insert', TensorProto.INT64, (), (pos_insert_val, ))
+        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (pos_at_val, ))
 
         graph = make_graph(
             [seq_construct_node, seq_erase_node, seq_insert_node, seq_at_node],
@@ -141,7 +223,7 @@ class Sequence(Base):
             [onnx.TensorProto.FLOAT],
             [pos_erase, pos_insert, pos_at])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
-        expect(model, inputs=[x, y, z], outputs=[z], name="test_sequence_model3")
+        expect(model, inputs=[x, y, z], outputs=[out], name="test_sequence_model3")
 
         #4th testcase - concat
         seq_construct_node = onnx.helper.make_node('SequenceConstruct', ['X', 'Y', 'Z'], ['seq_1'])
@@ -153,7 +235,8 @@ class Sequence(Base):
         x = np.ones(tensor_shape, dtype=np.float32)
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
-        concat_out = np.concatenate((x, y, z), 1)
+        out = SequenceConstructImpl(x, y, z)
+        concat_out = ConcatFromSequenceImpl(out, 1)
 
         graph = make_graph(
             [seq_construct_node, seq_concat_node],
@@ -176,7 +259,8 @@ class Sequence(Base):
         x = np.ones(tensor_shape, dtype=np.float32)
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
-        concat_out = np.stack((x, y, z), -1)
+        out = SequenceConstructImpl(x, y, z)
+        concat_out = ConcatFromSequenceImpl(out, -1)
 
         graph = make_graph(
             [seq_construct_node, seq_concat_node],
@@ -197,7 +281,9 @@ class Sequence(Base):
         len_shape = []  # type: ignore
 
         x = np.ones(tensor_shape, dtype=np.float32)
-        out_len = np.int64(4)
+        out = SplitToSequenceImpl(x, axis=-1)
+        out = SequenceLengthImpl(out)
+        assert np.array_equal(out, np.int64(4))
 
         graph = onnx.helper.make_graph(
             nodes=[seq_split_node, seq_len_node],
@@ -214,7 +300,7 @@ class Sequence(Base):
                     len_shape)])  # type: ignore
 
         model = onnx.helper.make_model(graph, producer_name='backend-test')
-        expect(model, inputs=[x], outputs=[out_len], name="test_sequence_model6")
+        expect(model, inputs=[x], outputs=[out], name="test_sequence_model6")
 
         #7th testcase - split with keepdims=0, and SequenceAt
         seq_split_node = onnx.helper.make_node('SplitToSequence', ['X'], ['seq_1'], axis=0, keepdims=0)
@@ -224,8 +310,12 @@ class Sequence(Base):
         out_shape = [3, 4]
 
         x = np.random.rand(*tensor_shape)
-        out = list(x)[1]
-        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (1, ))
+        pos_at_val = 1
+        out = SplitToSequenceImpl(x, axis=0, keepdims=0)
+        out = SequenceAtImpl(out, pos_at_val)
+        assert np.array_equal(out, x[pos_at_val])
+
+        pos_at = onnx.helper.make_tensor('pos_at', TensorProto.INT64, (), (pos_at_val, ))
 
         graph = make_graph(
             [seq_split_node, seq_at_node],
