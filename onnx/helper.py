@@ -189,9 +189,9 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        vals,
+        vals, # type: TypeProto
         raw=False  # type: bool
-):  # type: (...) -> TensorProto
+):  # type: (...) -> SequenceProto
     '''
     Make a Sequence with specified arguments.
     '''
