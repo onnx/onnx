@@ -2358,7 +2358,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "labels",
             "The ground truth output tensor, with shape [batch_size], or "
             "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions.",
-            "T")
+            "Tind")
          .Input(
             2,
             "weights",
@@ -2384,6 +2384,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain target to integer types")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             propagateElemTypeFromInputToOutput(ctx, 0, 0);
