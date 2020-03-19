@@ -23,7 +23,7 @@ def batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
 
 def batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):  # type: ignore
     axis = np.arange(len(x.shape))
-    np.delete(axis, 1)
+    axis = np.delete(axis, 1)
     axis = tuple(axis)
     saved_mean = x.mean(axis=axis)
     saved_var = x.var(axis=axis)
