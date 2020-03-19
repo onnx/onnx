@@ -7062,23 +7062,11 @@ z = pow(x, y)  # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_types_float32_uint64')
 
-x = np.array([1, 2, 3]).astype(np.uint64)
-y = np.array([4, 5, 6]).astype(np.float32)
-z = pow(x, y)  # expected output [1, 32, 729]
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_types_uint64_float32')
-
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([4, 5, 6]).astype(np.uint32)
 z = pow(x, y)  # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_types_float32_uint32')
-
-x = np.array([1, 2, 3]).astype(np.uint32)
-y = np.array([4, 5, 6]).astype(np.float32)
-z = pow(x, y)  # expected output [1, 32, 729]
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_types_uint32_float32')
 
 x = np.array([1, 2, 3]).astype(np.int64)
 y = np.array([4, 5, 6]).astype(np.int64)
