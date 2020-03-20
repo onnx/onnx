@@ -11954,16 +11954,16 @@ for mode in ['edge', 'reflect']:
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 12 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>
+Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>, <a href="Changelog.md#Pow-7">Pow-7</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>First operand, base of the exponent.</dd>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> : T1</dt>
 <dd>Second operand, power of the exponent.</dd>
 </dl>
 
@@ -11977,8 +11977,10 @@ Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input X and output types to float/int tensors.</dd>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input Y types to float/int tensors.</dd>
 </dl>
 
 
@@ -11996,13 +11998,13 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([4, 5, 6]).astype(np.float32)
-z = np.power(x, y)  # expected output [1., 32., 729.]
+z = pow(x, y)  # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_example')
 
 x = np.arange(60).reshape(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
-z = np.power(x, y)
+z = pow(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow')
 ```
@@ -12022,7 +12024,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array(2).astype(np.float32)
-z = np.power(x, y)  # expected output [1., 4., 9.]
+z = pow(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_scalar')
 
@@ -12034,9 +12036,71 @@ node = onnx.helper.make_node(
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([1, 2, 3]).astype(np.float32)
 # expected output [[1, 4, 27], [4, 25, 216]]
-z = np.power(x, y).astype(np.float32)
+z = pow(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_array')
+```
+
+</details>
+
+
+<details>
+<summary>types</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pow',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.int64)
+z = pow(x, y)  # expected output [1., 32., 729.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_float32_int64')
+
+x = np.array([1, 2, 3]).astype(np.int64)
+y = np.array([4, 5, 6]).astype(np.float32)
+z = pow(x, y)  # expected output [1, 32, 729]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_int64_float32')
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.int32)
+z = pow(x, y)  # expected output [1., 32., 729.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_float32_int32')
+
+x = np.array([1, 2, 3]).astype(np.int32)
+y = np.array([4, 5, 6]).astype(np.float32)
+z = pow(x, y)  # expected output [1, 32, 729]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_int32_float32')
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.uint64)
+z = pow(x, y)  # expected output [1., 32., 729.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_float32_uint64')
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.uint32)
+z = pow(x, y)  # expected output [1., 32., 729.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_float32_uint32')
+
+x = np.array([1, 2, 3]).astype(np.int64)
+y = np.array([4, 5, 6]).astype(np.int64)
+z = pow(x, y)  # expected output [1, 32, 729]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_int64_int64')
+
+x = np.array([1, 2, 3]).astype(np.int32)
+y = np.array([4, 5, 6]).astype(np.int32)
+z = pow(x, y)  # expected output [1, 32, 729]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_types_int32_int32')
 ```
 
 </details>
