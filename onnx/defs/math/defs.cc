@@ -505,7 +505,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Pow_ver7_doc = R"DOC(
+static const char* Pow_ver12_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
@@ -513,16 +513,34 @@ is applied to the data tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
-    7,
+    12,
     OpSchema()
-        .SetDoc(std::string(Pow_ver7_doc) + GenerateBroadcastingDocMul())
+        .SetDoc(std::string(Pow_ver12_doc) + GenerateBroadcastingDocMul())
         .Input(0, "X", "First operand, base of the exponent.", "T")
-        .Input(1, "Y", "Second operand, power of the exponent.", "T")
+        .Input(1, "Y", "Second operand, power of the exponent.", "T1")
         .Output(0, "Z", "Output tensor (same size as X)", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            {"tensor(int32)",
+             "tensor(int64)",
+             "tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrain input X and output types to float/int tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrain input Y types to float/int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
