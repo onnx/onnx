@@ -650,8 +650,18 @@ message SequenceProto {
 message MapProto {
   // Key-Value pair element
   message KeyValuePair {
-    required int32 key = 1;
-    required SequenceMapElement value = 2;
+    oneof value {
+      uint8 key = 1;
+      uint16 key = 2;
+      uint32 key = 3;
+      uint64 key = 4;
+      int8 key = 5;
+      int16 key = 6;
+      int32 key = 7;
+      int64 key = 8;
+      string key = 9;
+    }
+    required SequenceMapElement value = 10;
   };
 
   repeated KeyValuePair pairs = 1;

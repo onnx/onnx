@@ -189,15 +189,25 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        vals, # type: TypeProto
-        raw=False  # type: bool
+        vals # type: TypeProto
 ):  # type: (...) -> SequenceProto
     '''
-    Make a Sequence with specified arguments.
+    Make a Sequence with specified TypeProto value arguments.
     '''
     sequence = SequenceProto()
     sequence.values.extend(vals)
     return sequence
+
+
+def make_map(
+        vals # type: TypeProto
+):  # type: (...) -> MapProto
+    '''
+    Make a Map with specified key-value arguments.
+    '''
+    map = MapProto()
+    map.pairs.extend(vals)
+    return map
 
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
