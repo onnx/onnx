@@ -337,7 +337,7 @@ class Sequence(Base):
         splits_shape = [3]  # type: ignore
 
         x = np.array([]).astype(np.float32)
-        splits = np.array([0,0,0]).astype(np.int64)
+        splits = np.array([0, 0, 0]).astype(np.int64)
         out_len = np.int64(3)
 
         graph = onnx.helper.make_graph(
