@@ -256,7 +256,7 @@ message TrainingInfoProto {
   optional GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
-  // some initializers in "ModelProto.graph.initializer" and 
+  // some initializers in "ModelProto.graph.initializer" and
   // the "algorithm.initializer" in the same TrainingInfoProto.
   // See "update_binding" below for details.
   //
@@ -295,7 +295,7 @@ message TrainingInfoProto {
   //  3. The values must be output names of "algorithm".
   //  4. If an optional input of a graph is omitted when using GraphCall, the
   //     global variable with the same name may be used.
-  //  5. When using GraphCall, the users always can pass values to optional 
+  //  5. When using GraphCall, the users always can pass values to optional
   //     inputs of the called graph even if the associated initializers appears
   //     as keys in "update_binding"s.
   //  6. The graphs in TrainingInfoProto's can use global variables as
@@ -650,16 +650,16 @@ message SequenceProto {
 message MapProto {
   // Key-Value pair element
   message KeyValuePair {
-    oneof value {
-      uint8 key = 1;
-      uint16 key = 2;
-      uint32 key = 3;
-      uint64 key = 4;
-      int8 key = 5;
-      int16 key = 6;
-      int32 key = 7;
-      int64 key = 8;
-      string key = 9;
+    oneof key {
+      uint8 key_uint8 = 1;
+      uint16 key_uint16 = 2;
+      uint32 key_uint32 = 3;
+      uint64 key_uint64 = 4;
+      int8 key_int8 = 5;
+      int16 key_int16 = 6;
+      int32 key_int32 = 7;
+      int64 key_int64 = 8;
+      string key_string = 9;
     }
     required SequenceMapElement value = 10;
   };
@@ -764,4 +764,3 @@ message OperatorSetIdProto {
   // This field MUST be present in this version of the IR.
   optional int64 version = 2;
 }
-
