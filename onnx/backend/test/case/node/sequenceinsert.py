@@ -26,19 +26,30 @@ class SequenceInsert(Base):
     @staticmethod
     def export():  # type: () -> None
         test_cases = {
-            'default': ...,
-            'at_front': ...
+            'at_back': [np.array([10, 11, 12])],
+            'at_front': [np.array([-2, -1, 0]), 0]
         }
-        data = ...
+        sequence = np.array([1, 2, 3, 4], [5, 6, 7], [8, 9])
 
-        for test_name, shape in test_cases.items():
-            node = onnx.helper.make_node(
-                'SequenceInsert',
-                inputs=['sequence', 'tensor'],
-                outputs=['output_sequence']
-            )
+        for test_name, test_inputs in test_cases.items():
+            tensor = test_inputs[0]
 
-            inserted = sequence_insert_reference_implementation(sequence, tensor)
-
-            expect(node, inputs=[sequence, tensor], outputs=[inserted],
-                   name='test_seq_insert_' + test_name)
+            if len(test_inputs) > 1:
+                node = onnx.helper.make_node(
+                    'SequenceInsert',
+                    inputs=['sequence', 'tensor', 'position'],
+                    outputs=['output_sequence']
+                )
+                position = test_inputs[1]
+                inserted = sequence_insert_reference_implementation(sequence, tensor, position)
+                expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
+                       name='test_seq_insert_' + test_name)
+            else:
+                node = onnx.helper.make_node(
+                    'SequenceInsert',
+                    inputs=['sequence', 'tensor'],
+                    outputs=['output_sequence']
+                )
+                inserted = sequence_insert_reference_implementation(sequence, tensor)
+                expect(node, inputs=[sequence, tensor], outputs=[inserted],
+                       name='test_seq_insert_' + test_name)
