@@ -14805,7 +14805,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample. 'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs (2 - 4)
 
 <dl>
 <dt><tt>input</tt> : T</dt>
@@ -14814,6 +14814,8 @@ This version of the operator has been available since version 12 of the default 
 <dd>Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).</dd>
 <dt><tt>weight</tt> (optional) : T</dt>
 <dd>Optional rescaling weight tensor. If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.</dd>
+<dt><tt>ignore_index</tt> (optional) : Tind</dt>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
 </dl>
 
 #### Outputs
@@ -14996,7 +14998,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs (2 - 4)
 
 <dl>
 <dt><tt>scores</tt> : T</dt>
@@ -15005,6 +15007,8 @@ This version of the operator has been available since version 12 of the default 
 <dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
+<dt><tt>ignore_index</tt> (optional) : Tind</dt>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
 </dl>
 
 #### Outputs (1 - 2)

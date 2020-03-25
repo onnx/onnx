@@ -27,7 +27,7 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=-
         neg_gather_element_input = np.zeros((N, D), dtype=np.float32)
         for i in range(N):
             for d in range(D):
-                if target[i] != ignore_index:
+                if target[i][d] != ignore_index:
                     neg_gather_element_input[i][d] = -inp[i][target[i][d]][d]
 
     loss = neg_gather_element_input
@@ -201,7 +201,7 @@ class SoftmaxCrossEntropyLoss(Base):
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
-        sce = softmaxcrossentropy(x, labels, weight=weights)
+        sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
         # Check results
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='export_softmaxcrossentropy_mean_ignore_index')
