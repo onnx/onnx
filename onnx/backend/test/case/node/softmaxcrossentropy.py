@@ -204,4 +204,4 @@ class SoftmaxCrossEntropyLoss(Base):
         sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
         # Check results
-        expect(node, inputs=[x, labels, weights], outputs=[sce], name='export_softmaxcrossentropy_mean_ignore_index')
+        expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmaxcrossentropy_mean_ignore_index')
