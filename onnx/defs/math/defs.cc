@@ -1897,6 +1897,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.",
             "T",
             OpSchema::Optional)
+        .Input(
+            3,
+            "ignore_index",
+            "Specifies a target value that is ignored and does not contribute to the input gradient.",
+            "Tind",
+            OpSchema::Optional)
         .Output(0, "loss", "The negative log likelihood loss", "T")
         .Attr(
             "reduction",
@@ -2367,6 +2373,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "it is treated as if having all ones.",
             "T",
             OpSchema::Optional)
+        .Input(
+            3,
+            "ignore_index",
+            "Specifies a target value that is ignored and does not contribute to the input gradient.",
+            "Tind",
+            OpSchema::Optional)
         .Output(
             0,
             "output",
@@ -2374,31 +2386,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             "shape of [batch_size], or [batch_size, D1, D2, ..., Dk] in case of "
             "K-dimensional loss. Otherwise, it is a scalar.",
             "T")
-	.Output(
-	    1,
-	    "log_prob",
-	    "Log probability tensor. If the output of softmax is prob, its value is log(prob).",
-	    "T",
-	    OpSchema::Optional)
-        .TypeConstraint(
+        .Output(
+            1,
+            "log_prob",
+            "Log probability tensor. If the output of softmax is prob, its value is log(prob).",
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeConstraint(
-            "Tind",
-            {"tensor(int32)", "tensor(int64)"},
-            "Constrain target to integer types")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            propagateElemTypeFromInputToOutput(ctx, 0, 0);
-            std::string reduction = getAttribute(ctx, "reduction", "mean");
-            if (reduction.compare("none") == 0) {
-                if (hasInputShape(ctx, 1)) {
-                    propagateShapeFromInputToOutput(ctx, 1, 0);
+            OpSchema::Optional)
+            .TypeConstraint(
+                "T",
+                {"tensor(float16)", "tensor(float)", "tensor(double)"},
+                "Constrain input and output types to float tensors.")
+            .TypeConstraint(
+                "Tind",
+                {"tensor(int32)", "tensor(int64)"},
+                "Constrain target to integer types")
+            .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
+            .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+                propagateElemTypeFromInputToOutput(ctx, 0, 0);
+                std::string reduction = getAttribute(ctx, "reduction", "mean");
+                if (reduction.compare("none") == 0) {
+                    if (hasInputShape(ctx, 1)) {
+                        propagateShapeFromInputToOutput(ctx, 1, 0);
+                    }
+                } else {
+                    updateOutputShape(ctx, 0, TensorShapeProto());
                 }
-            } else {
-                updateOutputShape(ctx, 0, TensorShapeProto());
-            }
 
-        }));
+            }));
 } // namespace ONNX_NAMESPACE
