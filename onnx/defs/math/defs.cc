@@ -1897,12 +1897,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.",
             "T",
             OpSchema::Optional)
-        .Input(
-            3,
-            "ignore_index",
-            "Specifies a target value that is ignored and does not contribute to the input gradient.",
-            "Tind",
-            OpSchema::Optional)
         .Output(0, "loss", "The negative log likelihood loss", "T")
         .Attr(
             "reduction",
@@ -1912,6 +1906,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'mean': the sum of the output will be divided by the sum of applied weights.",
             AttributeProto::STRING,
             std::string("mean"))
+        .Attr(
+            "ignore_index",
+            "Specifies a target value that is ignored and does not contribute to the input gradient.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-100))
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -2353,6 +2352,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             reduction_doc_sce,
             AttributeProto::STRING,
             std::string("mean"))
+        .Attr(
+            "ignore_index",
+            "Specifies a target value that is ignored and does not contribute to the input gradient.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-100))
         .Input(
             0,
             "scores",
@@ -2372,12 +2376,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be a 1D Tensor assigning weight to each of the classes. Otherwise, "
             "it is treated as if having all ones.",
             "T",
-            OpSchema::Optional)
-        .Input(
-            3,
-            "ignore_index",
-            "Specifies a target value that is ignored and does not contribute to the input gradient.",
-            "Tind",
             OpSchema::Optional)
         .Output(
             0,

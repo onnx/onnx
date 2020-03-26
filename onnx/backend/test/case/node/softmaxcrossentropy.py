@@ -185,22 +185,23 @@ class SoftmaxCrossEntropyLoss(Base):
     def export_softmaxcrossentropy_mean_weights_ignore_index():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
+        ignore_index = np.int64(0)
 
         # Create operator.
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
-                                     inputs=['x', 'y', 'w', 'ignore_index'],
+                                     inputs=['x', 'y', 'w'],
                                      outputs=['z'],
-                                     reduction=reduction)
+                                     reduction=reduction,
+                                     ignore_index=ignore_index)
 
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
         labels = np.random.randint(0, high=5, size=(3, ))
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
-        ignore_index = np.int32(0)
 
         # Compute SoftmaxCrossEntropyLoss
         sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
         # Check results
-        expect(node, inputs=[x, labels, weights, ignore_index], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index')
+        expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index')
