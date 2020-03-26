@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def sequence_insert_reference_implementation(sequence, tensor, position=np.array(-1)):  # type: (np.ndarray, np.ndarray, np.ndarray) -> np.ndarray
+def sequence_insert_reference_implementation(sequence, tensor, position=np.array([-1])):  # type: (np.ndarray, np.ndarray, np.ndarray) -> np.ndarray
     insert_position = position[0]
     num_seq_elements = len(sequence)
     # Default position of insertion is at the end of the sequence.
@@ -27,9 +27,9 @@ class SequenceInsert(Base):
     def export():  # type: () -> None
         test_cases = {
             'at_back': [np.array([10, 11, 12])],
-            'at_front': [np.array([-2, -1, 0]), 0]
+            'at_front': [np.array([-2, -1, 0]), np.array([0])]
         }
-        sequence = np.array([1, 2, 3, 4], [5, 6, 7], [8, 9])
+        sequence = np.array([[1, 2, 3, 4], [5, 6, 7], [8, 9]])
 
         for test_name, test_inputs in test_cases.items():
             tensor = test_inputs[0]
