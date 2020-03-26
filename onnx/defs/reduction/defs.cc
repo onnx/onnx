@@ -39,7 +39,7 @@ False instead of True.)DOC";
         "A list of integers, along which to reduce. The default is to reduce over "
         "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",

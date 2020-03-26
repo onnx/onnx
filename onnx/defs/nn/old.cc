@@ -227,13 +227,13 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
         "strides",
         "Stride along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Input(
         0,
         "X",
@@ -334,13 +334,13 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
             ? "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis."
             : "Stride along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "ceil_mode",
         "Whether to use ceil or floor (default) to compute the output shape.",
@@ -482,7 +482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dilations",
             "Dilation value along each spatial axis of filter.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(
             1,
             "Indices",
@@ -518,7 +518,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(
             1,
             "Indices",
@@ -658,8 +658,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "strides",
             "Stride along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
-        .Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL)
+            OPTIONAL_VALUE)
+        .Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE)
         .Input(
             0,
             "X",
@@ -744,18 +744,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "kernel_shape",
             "The size of the kernel along each axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "strides",
             "Stride along each axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "auto_pad",
             auto_pad_doc1,
             AttributeProto::STRING,
             std::string("NOTSET"))
-        .Attr("pads", pads_doc1, AttributeProto::INTS, OPTIONAL)
+        .Attr("pads", pads_doc1, AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "p",
             "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -804,13 +804,13 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* name) {
         "strides",
         "Stride along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "p",
         "p value of the Lp norm used to pool over the input data.",
@@ -917,23 +917,23 @@ computes the output.)DOC";
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "dilations",
         "dilation value along each spatial axis of the filter.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "strides",
         "Stride along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -1173,35 +1173,35 @@ output_shape can also be explicitly specified in which case pads values are auto
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
         "pads values are ignored. See doc for details for equations to generate pads",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_padding",
         "The zero-padding added to one side of the output."
         " This is also called adjs/adjustment in some frameworks.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "dilations",
         "dilation value along each spatial axis of the filter.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "strides",
         "Stride along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -1378,7 +1378,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero, default is 1e-5f.",
@@ -1426,7 +1426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "is_test",
             "(int, default 0) if nonzero, run dropout in test mode where "

@@ -1079,17 +1079,42 @@ inline std::string GenerateBroadcastingDocUni(
   return ret;
 }
 
-// Macros for setting operator documentation
-// Use this macro for simple SetDoc() calls that generate documentation
-// directly. This is the macro to use in almost all cases.
+/*
+ * Macros for setting operator documentation
+ * Use this macro for simple SetDoc() calls that generate documentation
+ * directly. This is the macro to use in almost all cases.
+ * Sample usage guidelines:
+ * const char* doc_str = "foo";
+ * SetDoc(GET_OP_DOC_STR(doc_str))
+ *
+ * SetDoc(GET_OP_DOC_STR(
+            std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+ */
 #ifndef __ONNX_NO_DOC_STRINGS
 #define GET_OP_DOC_STR(doc_str) (doc_str)
 #else
 #define GET_OP_DOC_STR(doc_str) ("")
 #endif
 
-// Use this macro when the documentation needs to be populated in some
-// complicated way like string substitutions, etc before calling SetDoc.
+/*
+ * Use this macro when the documentation needs to be populated in some
+ * complicated way like string substitutions, etc before calling SetDoc.
+ * Sample usage guidelines:
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
+Returns the tensor resulted from performing the `{name}` logical operation
+elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting
+support).
+
+{broadcast_doc}
+)DOC";
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    schema.SetDoc(doc);
+ *
+ */
 #ifndef __ONNX_NO_DOC_STRINGS
 #define POPULATE_OP_DOC_STR(DocPopulatorCode) \
   do {                                        \

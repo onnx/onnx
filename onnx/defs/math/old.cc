@@ -121,12 +121,12 @@ Performs element-wise binary {name} (with limited broadcast support).
         "consumed_inputs",
         "legacy optimization attribute.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "axis",
         "If set, defines the broadcast dimensions. See doc for details.",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(
         0,
         "A",
@@ -164,7 +164,7 @@ Performs element-wise binary {name} (with limited broadcast support).
         "axis",
         "If set, defines the broadcast dimensions. See doc for details.",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(
         0,
         "A",
@@ -252,7 +252,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis",
             "If set, defines the broadcast dimensions. See doc for details.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(0, "Z", "Output tensor (same size as X)", "T")
         .TypeConstraint(
             "T",
@@ -307,7 +307,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -333,7 +333,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -359,7 +359,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -385,7 +385,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -411,7 +411,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -437,7 +437,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -463,7 +463,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -494,7 +494,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -528,7 +528,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Selu_ver1_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
@@ -560,7 +560,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Elu_ver1_doc)
         .Input(0, "X", "1D input tensor", "T")
         .Output(0, "Y", "1D input tensor", "T")
@@ -592,7 +592,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -621,7 +621,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -650,7 +650,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -684,7 +684,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -756,7 +756,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -789,7 +789,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(HardSigmoid_ver1_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
@@ -817,7 +817,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -842,7 +842,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -867,7 +867,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -897,7 +897,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -918,12 +918,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "min",
             "Minimum value, under which element is replaced by min",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "max",
             "Maximum value, above which element is replaced by max",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         // This attribute was added via AllowConsumed API in OpSchema.
         // After removing the API, we're now using the Attr API to simulate the
         // old definition.
@@ -931,7 +931,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "input", "Input tensor whose elements to be clipped", "T")
         .Output(0, "output", "Output tensor with clipped input elements", "T")
         .TypeConstraint(
