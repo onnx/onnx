@@ -13,21 +13,21 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "hidden_size",
         "Number of neurons in the hidden layer",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM.",
         AttributeProto::FLOATS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "activation_beta",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM.",
         AttributeProto::FLOATS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_sequence",
         "The sequence output for the hidden is optional if 0. Default 0.",
@@ -39,7 +39,7 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "in the range of [-threshold, +threshold] and is applied to the input "
         "of activations. No clip if not specified.",
         AttributeProto::FLOAT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(
         0,
         "X",
@@ -171,7 +171,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             1,
             "W",
@@ -266,7 +266,7 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "hidden_size",
         "Number of neurons in the hidden layer",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
@@ -274,14 +274,14 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "in LSTM. Default values are the same as of corresponding ONNX operators."
         "For example with LeakyRelu, the default alpha is 0.01.",
         AttributeProto::FLOATS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "activation_beta",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM. Default values are the same as of corresponding ONNX operators.",
         AttributeProto::FLOATS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_sequence",
         "The sequence output for the hidden is optional if 0. Default 0.",
@@ -293,7 +293,7 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "in the range of [-threshold, +threshold] and is applied to the input "
         "of activations. No clip if not specified.",
         AttributeProto::FLOAT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(
         0,
         "X",
@@ -527,7 +527,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "linear_before_reset",
             "When computing the output of the hidden gate, "
@@ -655,7 +655,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be one of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "input_forget",
             "Couple the input and forget gates if 1, default 0.",
