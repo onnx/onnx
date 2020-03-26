@@ -260,6 +260,33 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Pow_ver7_doc = R"DOC(
+Pow takes input data (Tensor<T>) and exponent Tensor, and
+produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
+is applied to the data tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Pow,
+    7,
+    OpSchema()
+        .SetDoc(std::string(Pow_ver7_doc) + GenerateBroadcastingDocMul())
+        .Input(0, "X", "First operand, base of the exponent.", "T")
+        .Input(1, "Y", "Second operand, power of the exponent.", "T")
+        .Output(0, "Z", "Output tensor (same size as X)", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
+
 static const char* Neg_ver1_doc = R"DOC(
 Neg takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where each element flipped sign, y = -x, is applied to
