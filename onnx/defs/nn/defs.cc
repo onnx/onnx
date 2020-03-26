@@ -245,13 +245,13 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "strides",
         "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "ceil_mode",
         "Whether to use ceil or floor (default) to compute the output shape.",
@@ -335,7 +335,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(
             1,
             "Indices",
@@ -475,8 +475,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "strides",
             "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
-        .Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL)
+            OPTIONAL_VALUE)
+        .Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE)
         .Input(
             0,
             "X",
@@ -546,13 +546,13 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "strides",
         "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "p",
         "p value of the Lp norm used to pool over the input data.",
@@ -745,17 +745,17 @@ computes the output.)DOC";
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "dilations",
         "dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "strides",
         "Stride along each spatial axis. If not present, the stride defaults is 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -765,7 +765,7 @@ computes the output.)DOC";
         "pads",
         pads_doc,
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -898,17 +898,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "kernel_shape",
             "The shape of the convolution kernel. If not present, should be inferred from input 'w'.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dilations",
             "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "strides",
             "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "pads",
             "Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0."
@@ -918,7 +918,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults"
             "to 0 along start and end of each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "group",
             "number of groups input channels and output channels are divided into. default is 1.",
@@ -1038,17 +1038,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "kernel_shape",
             "The shape of the convolution kernel. If not present, should be inferred from input 'w'.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dilations",
             "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "strides",
             "Stride along each spatial axis. If not present, the stride defaults to 1 along each axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "pads",
             "Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0."
@@ -1058,7 +1058,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults"
             "to 0 along start and end of each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "group",
             "number of groups input channels and output channels are divided into. default is 1.",
@@ -1304,13 +1304,13 @@ output_shape can also be explicitly specified in which case pads values are auto
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
         "pads values are ignored. See doc for details for equations to generate pads",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_padding",
         "Additional elements added to the side with higher coordinate indices in the output. "
@@ -1324,23 +1324,23 @@ output_shape can also be explicitly specified in which case pads values are auto
         "participates in the computation of the needed padding amount. "
         "This is also called adjs or adjustment in some frameworks.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "dilations",
         "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "strides",
         "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -1767,7 +1767,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Dropout_ver12_doc + GenerateOptionalArgumentsDoc())
-        .Attr("seed", "(Optional) Seed to the random generator, if not specified we will auto generate one.", AttributeProto::INT, OPTIONAL)
+        .Attr("seed", "(Optional) Seed to the random generator, if not specified we will auto generate one.", AttributeProto::INT, OPTIONAL_VALUE)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Input(1, "ratio", "The ratio of random dropout, with value in [0, 1). If this input was not set, "
                   "or if it was set to 0, the output would be a simple copy of the input. "
@@ -2003,14 +2003,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. "
             "The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "pool_int64s",
             "List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both. "
             "It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. "
             "The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "ngram_counts",
             "The starting indexes of 1-grams, 2-grams, and so on in pool. "
@@ -2031,7 +2031,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "By default, weights is an all-one tensor.This attribute is used when mode is \"IDF\" or \"TFIDF\" "
             "to scale the associated word counts.",
             AttributeProto::FLOATS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "mode",
             "The weighting criteria. It can be one of \"TF\" (term frequency), "
@@ -2108,13 +2108,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "stopwords",
             "List of stop words. If not set, no word would be removed from X.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "locale",
             "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
             "Default en_US or platform specific equivalent as decided by the implementation.",
             AttributeProto::STRING,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(StringNormalizer_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
