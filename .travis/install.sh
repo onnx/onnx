@@ -13,5 +13,9 @@ fi
 export CMAKE_ARGS="${CMAKE_ARGS} -DONNXIFI_DUMMY_BACKEND=ON"
 export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
+if [ "${ONNX_DEBUG}" == "1" ]; then
+  export DEBUG=1
+fi
+
 time python setup.py --quiet bdist_wheel --universal --dist-dir .
 find . -maxdepth 1 -name "*.whl" -ls -exec pip install {} \;
