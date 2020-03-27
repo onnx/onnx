@@ -1636,8 +1636,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
                 auto& mode_input_shape = getInputShape(ctx, 5);
+                // if mode is not scalar or tensor of rank 1, fail shape inference
                 if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
-                    fail_shape_inference("Training_mode is not a scalar boolean.");
+                  if (static_cast<int>(mode_input_shape.dim_size()) > 1 || !mode_input_shape.dim(0).has_dim_value() || static_cast<int>(mode_input_shape.dim(0).dim_value()) != 1) {
+                      fail_shape_inference("Training_mode is not a scalar boolean.");
+                  }
                 }
             }
 
