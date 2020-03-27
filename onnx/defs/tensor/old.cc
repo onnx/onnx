@@ -136,7 +136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis",
             "Which axis to concat on.  Default value is 1.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Concat_ver1_doc)
         .Input(
             0,
@@ -251,8 +251,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
-        .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
-        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
+        .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL_VALUE)
+        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver1_doc));
 
 static const char* Pad_ver1_doc = R"DOC(
@@ -318,7 +318,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Reshape_ver1_doc)
-        .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
+        .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL_VALUE)
         // This attribute was added via AllowConsumed API in OpSchema.
         // After removing the API, we're now using the Attr API to simulate the
         // old definition.
@@ -326,7 +326,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T")
         .Output(0, "reshaped", "Reshaped data.", "T")
         .TypeConstraint(
@@ -602,7 +602,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "It's optional. If not present, will be treated as "
             "[0, 1, ..., len(`starts`) - 1].",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "starts",
             "Starting indices of corresponding axis in `axes`",
@@ -1167,7 +1167,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axes",
             "List of non-negative integers, indicate the dimensions to squeeze.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Squeeze_ver1_doc)
         .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
         .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
@@ -1450,7 +1450,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) Axis along which to take slices. If not specified, "
             "input is flattened before elements being selected.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "input", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
@@ -1500,7 +1500,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Which axis to split on. ",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
+        .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver2_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {

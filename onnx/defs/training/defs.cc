@@ -177,7 +177,7 @@ ONNX_TRAINING_OPERATOR_SET_SCHEMA(
             "intermediate variables) that can be generated from inputs "
             "cannot be included in this attribute.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "y",
             "The targeted tensor. It can be viewed as the output of the "
