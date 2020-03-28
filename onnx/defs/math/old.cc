@@ -119,12 +119,12 @@ Performs element-wise binary {name} (with limited broadcast support).
         "consumed_inputs",
         "legacy optimization attribute.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "axis",
         "If set, defines the broadcast dimensions. See doc for details.",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(
         0,
         "A",
@@ -161,7 +161,7 @@ Performs element-wise binary {name} (with limited broadcast support).
         "axis",
         "If set, defines the broadcast dimensions. See doc for details.",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(
         0,
         "A",
@@ -249,13 +249,40 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis",
             "If set, defines the broadcast dimensions. See doc for details.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(0, "Z", "Output tensor (same size as X)", "T")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Pow_ver7_doc = R"DOC(
+Pow takes input data (Tensor<T>) and exponent Tensor, and
+produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
+is applied to the data tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Pow,
+    7,
+    OpSchema()
+        .SetDoc(std::string(Pow_ver7_doc) + GenerateBroadcastingDocMul())
+        .Input(0, "X", "First operand, base of the exponent.", "T")
+        .Input(1, "Y", "Second operand, power of the exponent.", "T")
+        .Output(0, "Z", "Output tensor (same size as X)", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
 
 static const char* Neg_ver1_doc = R"DOC(
 Neg takes one input data (Tensor<T>) and produces one output data
@@ -277,7 +304,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -303,7 +330,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -329,7 +356,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -355,7 +382,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -381,7 +408,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -407,7 +434,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -433,7 +460,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -464,7 +491,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -498,7 +525,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Selu_ver1_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
@@ -530,7 +557,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Elu_ver1_doc)
         .Input(0, "X", "1D input tensor", "T")
         .Output(0, "Y", "1D input tensor", "T")
@@ -562,7 +589,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -591,7 +618,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -620,7 +647,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -654,7 +681,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -726,7 +753,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -759,7 +786,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(HardSigmoid_ver1_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
@@ -787,7 +814,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -812,7 +839,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -837,7 +864,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -867,7 +894,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -888,12 +915,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "min",
             "Minimum value, under which element is replaced by min",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "max",
             "Maximum value, above which element is replaced by max",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         // This attribute was added via AllowConsumed API in OpSchema.
         // After removing the API, we're now using the Attr API to simulate the
         // old definition.
@@ -901,7 +928,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "input", "Input tensor whose elements to be clipped", "T")
         .Output(0, "output", "Output tensor with clipped input elements", "T")
         .TypeConstraint(
@@ -1604,5 +1631,94 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Clip_ver11_doc = R"DOC(
+Clip operator limits the given input within an interval. The interval is
+specified by the inputs 'min' and 'max'. They default to
+numeric_limits::lowest() and numeric_limits::max(), respectively.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Clip,
+    11,
+    OpSchema()
+        .SetDoc(Clip_ver11_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor whose elements to be clipped",
+            "T")
+        .Input(
+            1,
+            "min",
+            "Minimum value, under which element is replaced by min. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            2,
+            "max",
+            "Maximum value, above which element is replaced by max. "
+            "It must be a scalar(tensor of empty shape).",
+            "T",
+            OpSchema::Optional)
+        .Output(0, "output", "Output tensor with clipped input elements", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(
+    const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
+All inputs and outputs must have the same data type.
+{broadcast_doc}
+)DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "data_0",
+        "List of tensors for " + std::string(name) + ".",
+        "T",
+        OpSchema::Variadic);
+    schema.Output(0, name, "Output tensor.", "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      int num_inputs = static_cast<int>(ctx.getNumInputs());
+      std::vector<const TensorShapeProto*> shapes;
+      for (int i = 0; i < num_inputs; ++i) {
+        auto input_type = ctx.getInputType(i);
+        if (nullptr == input_type || !input_type->has_tensor_type() ||
+            !input_type->tensor_type().has_shape()) {
+          return;
+        }
+        shapes.push_back(&input_type->tensor_type().shape());
+      }
+
+      multidirectionalBroadcastShapeInference(
+          shapes,
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Max,
+    8,
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator_old("max")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Min,
+    8,
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator_old("min")));
 
 } // namespace ONNX_NAMESPACE

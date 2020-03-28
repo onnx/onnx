@@ -1,1 +1,1 @@
-B	saved_varJлк:@
+B	saved_varJлк*?лк*?

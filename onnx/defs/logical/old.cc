@@ -35,7 +35,7 @@ detailed description of the broadcasting rules.
         "axis",
         "If set, defines the broadcast dimensions.",
         AttributeProto::INT,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Input(0, "A", "Left input tensor for the logical operator.", "T");
     schema.Input(1, "B", "Right input tensor for the logical operator.", "T");
     schema.Output(0, "C", "Result tensor.", "T1");

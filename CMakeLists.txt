@@ -596,6 +596,9 @@ endif()
 if (NOT ANDROID AND NOT IOS)
   # ---[ ONNXIFI wrapper
   add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+  if(MSVC)
+    add_msvc_runtime_flag(onnxifi_wrapper)
+  endif()
   target_include_directories(onnxifi_wrapper PRIVATE
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<INSTALL_INTERFACE:include>)
