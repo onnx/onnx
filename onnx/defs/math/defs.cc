@@ -1931,7 +1931,7 @@ bool BuildContextDependentFunctionBody(
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }
@@ -2311,7 +2311,7 @@ bool BuildContextDependentFunctionBodyMSD(
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }
@@ -2429,7 +2429,7 @@ bool BuildContextDependentFunctionBodySCE(
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }

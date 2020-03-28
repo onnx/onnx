@@ -728,7 +728,7 @@ bool OpSchema::BuildContextDependentFunction(
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
     new_node->CopyFrom(node);
   }
