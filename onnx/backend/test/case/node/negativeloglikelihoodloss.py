@@ -39,13 +39,13 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
             if len(input_shape) == 2:
                 for i in range(input_shape[0]):
                     if target[i] == ignore_index:
-                        gather_weight[i] = 0;
+                        gather_weight[i] = 0
 
             if len(input_shape) == 3:
                 for i in range(input_shape[0]):
                     for j in range(input_shape[1]):
                         if target[i][j] == ignore_index:
-                            gather_weight[i][j] = 0;
+                            gather_weight[i][j] = 0
 
         loss = gather_weight * loss
         if reduction == 'mean':
