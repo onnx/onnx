@@ -10743,7 +10743,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>ignore_index</tt> : int</dt>
-<dd>Specifies a target value that is ignored and does not contribute to the input gradient. This is an optional value but if specified, it needs to be in the range [0, C).</dd>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample. 'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
@@ -10987,7 +10987,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index')            
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index')
 ```
 
 </details>
@@ -18308,7 +18308,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>ignore_index</tt> : int</dt>
-<dd>Specifies a target value that is ignored and does not contribute to the input gradient. This is an optional value but if specified, it needs to be in the range [0, C).</dd>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
 </dl>
