@@ -1,9 +1,9 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
+#include <algorithm>
 #include <functional>
 #include "onnx/defs/function.h"
-#include <algorithm>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -11,13 +11,16 @@ namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T");
     schema.Input(1, "B", "Second operand.", "T");
@@ -41,7 +44,8 @@ std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
     const char* name,
     const char* description) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
  of the given input.
 
@@ -57,8 +61,8 @@ Each of these dimensions must be matched correctly, or else the operator
 will throw errors. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{description}", description););
     schema.SetDoc(doc);
     schema.Attr(
         "axis",
@@ -87,7 +91,7 @@ and contains the {name} values of the corresponding input.
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      
+
       // Shape inference starts
       if (!hasNInputShapes(ctx, 1)) {
         return;
@@ -95,12 +99,17 @@ and contains the {name} values of the corresponding input.
 
       // Validate the value of 'axis'
       const TensorShapeProto& input_shape =
-        ctx.getInputType(0)->tensor_type().shape();
+          ctx.getInputType(0)->tensor_type().shape();
       int r = input_shape.dim_size();
       int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
       if (axis < -r || axis >= r) {
-          fail_shape_inference(
-         "'axis' must be in [", -r, " , " , (r-1) , "]. Its actual value is: ", axis);
+        fail_shape_inference(
+            "'axis' must be in [",
+            -r,
+            " , ",
+            (r - 1),
+            "]. Its actual value is: ",
+            axis);
       }
 
       // Shape inference
@@ -419,25 +428,31 @@ ONNX_OPERATOR_SET_SCHEMA(
     Celu,
     12,
     OpSchema()
-       .SetDoc(celu_ver12_doc)
-       .Input(0, "X", "Input tensor", "T")
-       .Output(0, "Y", "Output tensor", "T")
-       .Attr(
-           "alpha",
-           "The Alpha value in Celu formula which control the shape of "
-           "the unit. The default value is 1.0.",
-           AttributeProto::FLOAT,
-           celu_default_alpha)
-       .TypeConstraint(
-           "T",
-           {"tensor(float16)", "tensor(float)", "tensor(double)"},
-           "Constrain input and output types to floating-point tensors.")
-       .FunctionBody(FunctionBodyHelper::BuildNodes(
-           {// nodes: {outputs, op, inputs, attributes}
-            FunctionBodyHelper::NodeDef{{"alpha"}, "Constant", {}, {MakeRefAttribute("value_float", "alpha", AttributeProto::FLOAT)}},
-            {{"X_alpha"}, "Div", {"X", "alpha"}},
-            {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
-            {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
+        .SetDoc(celu_ver12_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .Attr(
+            "alpha",
+            "The Alpha value in Celu formula which control the shape of "
+            "the unit. The default value is 1.0.",
+            AttributeProto::FLOAT,
+            celu_default_alpha)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to floating-point tensors.")
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             FunctionBodyHelper::NodeDef{{"alpha"},
+                                         "Constant",
+                                         {},
+                                         {MakeRefAttribute(
+                                             "value_float",
+                                             "alpha",
+                                             AttributeProto::FLOAT)}},
+             {{"X_alpha"}, "Div", {"X", "alpha"}},
+             {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
+             {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
 
 static const char* Exp_ver6_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
@@ -515,7 +530,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     12,
     OpSchema()
-        .SetDoc(std::string(Pow_ver12_doc) + GenerateBroadcastingDocMul())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Pow_ver12_doc) + GenerateBroadcastingDocMul()))
         .Input(0, "X", "First operand, base of the exponent.", "T")
         .Input(1, "Y", "Second operand, power of the exponent.", "T1")
         .Output(0, "Z", "Output tensor (same size as X)", "T")
@@ -560,9 +576,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
     9,
     OpSchema()
-        .SetDoc(
-            PRelu_ver9_doc +
-            GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(PRelu_ver9_doc) +
+            GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -623,17 +639,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-// Generate opschema for element-wise ops. Leaves type constraint "T" unspecified.
+// Generate opschema for element-wise ops. Leaves type constraint "T"
+// unspecified.
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
     const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -713,11 +733,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Clip_ver12_doc)
-        .Input(
-            0,
-            "input",
-            "Input tensor whose elements to be clipped",
-            "T")
+        .Input(0, "input", "Input tensor whose elements to be clipped", "T")
         .Input(
             1,
             "min",
@@ -815,11 +831,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     11,
     OpSchema()
-        .SetDoc(
-            Gemm_ver11_doc +
-            GenerateBroadcastingDocUni("tensor C", "tensor A * B") +
-            "\n" +
-            GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Gemm_ver11_doc) +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
+            GenerateOptionalArgumentsDoc()))
         .Input(
             0,
             "A",
@@ -1619,40 +1634,49 @@ output = [5, 3, 0]
  )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-      CumSum,
-      11,
+    CumSum,
+    11,
     OpSchema()
-            .SetDoc(CumSum_ver11_doc)
-      .Attr(
-          "exclusive",
-          "If set to 1 will return exclusive sum in which the top element is not included."
-          " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
-          " Otherwise, it would be the sum of the first j elements.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Attr(
-          "reverse",
-          "If set to 1 will perform the sums in reverse direction.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-      .Input(0, "x", "An input tensor that is to be processed.", "T")
-      .Input(1, "axis", "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
-            "Negative value means counting dimensions from the back.", "T2")
-      .Output(0, "y",
-              "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
-              "T")
-      .TypeConstraint("T",  {
-        "tensor(uint32)",
-        "tensor(uint64)",
-        "tensor(int32)",
-        "tensor(int64)",
-        "tensor(float)",
-        "tensor(double)"}, "Input can be of any tensor type.")
-      .TypeConstraint("T2", {
-        "tensor(int32)",
-        "tensor(int64)"}, "axis tensor can be int32 or int64 only")
-      .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput)
-      );
+        .SetDoc(CumSum_ver11_doc)
+        .Attr(
+            "exclusive",
+            "If set to 1 will return exclusive sum in which the top element is not included."
+            " In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements."
+            " Otherwise, it would be the sum of the first j elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "reverse",
+            "If set to 1 will perform the sums in reverse direction.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "x", "An input tensor that is to be processed.", "T")
+        .Input(
+            1,
+            "axis",
+            "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
+            "Negative value means counting dimensions from the back.",
+            "T2")
+        .Output(
+            0,
+            "y",
+            "Output tensor of the same type as 'x' with cumulative sums of the x's elements",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Input can be of any tensor type.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int32)", "tensor(int64)"},
+            "axis tensor can be int32 or int64 only")
+        .TypeAndShapeInferenceFunction(
+            ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
 static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
@@ -1720,8 +1744,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             const auto mat_w = input_shape.dim(rank - 1);
             const auto mat_h = input_shape.dim(rank - 2);
-            if (mat_w.has_dim_value() &&
-                mat_h.has_dim_value() &&
+            if (mat_w.has_dim_value() && mat_h.has_dim_value() &&
                 (mat_w.dim_value() != mat_h.dim_value())) {
               fail_shape_inference(
                   "The inner-most 2 dimensions must have the same size (mat_w:",
@@ -1731,7 +1754,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ").");
             }
 
-            for (int i=0; i < rank - 2; ++i) {
+            for (int i = 0; i < rank - 2; ++i) {
               auto* dim = output_shape->add_dim();
               *dim = input_shape.dim(i);
             }
@@ -1834,70 +1857,146 @@ TensorProto ToDimensionOneFloatTensor(float value) {
   return t;
 }
 
-bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+bool BuildContextDependentFunctionBody(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back({{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-  body.push_back({{"input_gather_element"}, "GatherElements", {"input", "expanded_target"}, {MakeAttribute("axis", (int64_t)1)}});
+  body.push_back({{"expanded_target"},
+                  "Unsqueeze",
+                  {"target"},
+                  {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+  body.push_back({{"input_gather_element"},
+                  "GatherElements",
+                  {"input", "expanded_target"},
+                  {MakeAttribute("axis", (int64_t)1)}});
   body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element"}});
-  body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(0))}});
-  body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}});
-  body.push_back({{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}});
+  body.push_back({{"const_zero"},
+                  "Constant",
+                  {},
+                  {MakeAttribute("value", ToDimensionOneTensor(0))}});
+  body.push_back({{"const_one"},
+                  "Constant",
+                  {},
+                  {MakeAttribute("value", ToDimensionOneTensor(1))}});
+  body.push_back({{"loss_N1dd"},
+                  "Slice",
+                  {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
-  if(ctx.getAttribute("ignore_index") == nullptr) {
-      if (!ctx.hasInput(2)) {
-          if (ctx.getAttribute("reduction")->s() == "none") {
-              body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-          } else {
-              body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}); 
-              if(ctx.getAttribute("reduction")->s() == "mean") {
-                  body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-              } else {
-                  body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
-              }
-          } 
-      } else {
-          body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
-          body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-          if (ctx.getAttribute("reduction")->s() == "none") {
-              body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
-          } else {
-              body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-              if(ctx.getAttribute("reduction")->s() == "mean") {
-                  body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-                  body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
-                  body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
-              } else {
-                  body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-              }
-          }
-      }
-  } else {
-      body.push_back({{"const_ignore_index"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
-      body.push_back({{"const_zero_float"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
-      if (!ctx.hasInput(2)) {
-          body.push_back({{"input_shape"}, "Shape", {"input"}});  
-          body.push_back({{"input_class"}, "Slice", {"input_shape", "const_one", "const_one"}});
-          body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneFloatTensor(1))}}); 
-          body.push_back({{"weights_default"}, "ScatterElements", {"const_weights_ones", "const_ignore_index", "const_zero_float"}});
-          body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
-      } else {
-          body.push_back({{"weights_default"}, "ScatterElements", {"weight", "const_ignore_index", "const_zero_float"}});
-          body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
-      }
-
-      body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+  if (ctx.getAttribute("ignore_index") == nullptr) {
+    if (!ctx.hasInput(2)) {
       if (ctx.getAttribute("reduction")->s() == "none") {
-          body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        body.push_back({{"loss"},
+                        "Squeeze",
+                        {"loss_N1dd"},
+                        {MakeAttribute("axes", std::vector<int64_t>({1}))}});
       } else {
-          body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-          if(ctx.getAttribute("reduction")->s() == "mean") {
-              body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-              body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
-              body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
-          } else {
-              body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-          }
+        body.push_back({{"loss_Ndd"},
+                        "Squeeze",
+                        {"loss_N1dd"},
+                        {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+        if (ctx.getAttribute("reduction")->s() == "mean") {
+          body.push_back({{"loss"},
+                          "ReduceMean",
+                          {"loss_Ndd"},
+                          {MakeAttribute("keepdims", (int64_t)0)}});
+        } else {
+          body.push_back({{"loss"},
+                          "ReduceSum",
+                          {"loss_Ndd"},
+                          {MakeAttribute("keepdims", (int64_t)0)}});
+        }
       }
+    } else {
+      body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
+      body.push_back({{"loss_unweighted"},
+                      "Squeeze",
+                      {"loss_N1dd"},
+                      {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+      if (ctx.getAttribute("reduction")->s() == "none") {
+        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      } else {
+        body.push_back(
+            {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        if (ctx.getAttribute("reduction")->s() == "mean") {
+          body.push_back({{"loss_sum"},
+                          "ReduceSum",
+                          {"loss_Ndd"},
+                          {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back({{"weight_gather_sum"},
+                          "ReduceSum",
+                          {"weight_gather"},
+                          {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+        } else {
+          body.push_back({{"loss"},
+                          "ReduceSum",
+                          {"loss_Ndd"},
+                          {MakeAttribute("keepdims", (int64_t)0)}});
+        }
+      }
+    }
+  } else {
+    body.push_back(
+        {{"const_ignore_index"},
+         "Constant",
+         {},
+         {MakeAttribute(
+             "value",
+             ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
+    body.push_back({{"const_zero_float"},
+                    "Constant",
+                    {},
+                    {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
+    if (!ctx.hasInput(2)) {
+      body.push_back({{"input_shape"}, "Shape", {"input"}});
+      body.push_back({{"input_class"},
+                      "Slice",
+                      {"input_shape", "const_one", "const_one"}});
+      body.push_back({{"const_weights_ones"},
+                      "ConstantOfShape",
+                      {"input_class"},
+                      {MakeAttribute("value", ToDimensionOneFloatTensor(1))}});
+      body.push_back(
+          {{"weights_default"},
+           "ScatterElements",
+           {"const_weights_ones", "const_ignore_index", "const_zero_float"}});
+      body.push_back(
+          {{"weight_gather"}, "Gather", {"weights_default", "target"}});
+    } else {
+      body.push_back({{"weights_default"},
+                      "ScatterElements",
+                      {"weight", "const_ignore_index", "const_zero_float"}});
+      body.push_back(
+          {{"weight_gather"}, "Gather", {"weights_default", "target"}});
+    }
+
+    body.push_back({{"loss_unweighted"},
+                    "Squeeze",
+                    {"loss_N1dd"},
+                    {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+    } else {
+      body.push_back(
+          {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      if (ctx.getAttribute("reduction")->s() == "mean") {
+        body.push_back({{"loss_sum"},
+                        "ReduceSum",
+                        {"loss_Ndd"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"weight_gather_sum"},
+                        "ReduceSum",
+                        {"weight_gather"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+      } else {
+        body.push_back({{"loss"},
+                        "ReduceSum",
+                        {"loss_Ndd"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
+      }
+    }
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
@@ -1955,73 +2054,87 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
             "Constrain target to integer types")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody)
+        .SetContextDependentFunctionBodyBuilder(
+            BuildContextDependentFunctionBody)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            // Type inference
-            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-            // Shape inference
-            if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
-                const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-                const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+          // Shape inference
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+            const TensorShapeProto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& target_shape =
+                ctx.getInputType(1)->tensor_type().shape();
 
-                const int input_rank = static_cast<int>(input_shape.dim_size());
-                const int target_rank = static_cast<int>(target_shape.dim_size());
+            const int input_rank = static_cast<int>(input_shape.dim_size());
+            const int target_rank = static_cast<int>(target_shape.dim_size());
 
-                if (input_rank < 2) {
-                    fail_shape_inference("Input rank must be >= 2.")
-                }
-                if (target_rank != input_rank - 1) {
-                    fail_shape_inference("Target rank must be 1 less than the input rank.")
-                }
+            if (input_rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+            if (target_rank != input_rank - 1) {
+              fail_shape_inference(
+                  "Target rank must be 1 less than the input rank.")
+            }
 
-                // match input dimensions (N, C, d1, ..., dk) with target dimensions of (C,
-                // d1, ..., dk)
-                for (int dim = 0; dim < target_rank; dim++) {
-                    const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-                    const auto target_dim = target_shape.dim(dim);
-                    if (input_dim.has_dim_value() && target_dim.has_dim_value() && input_dim.dim_value() != target_dim.dim_value()) 
-                        fail_shape_inference("Input and target dimension value mismatch.")
-                }
+            // match input dimensions (N, C, d1, ..., dk) with target
+            // dimensions of (C, d1, ..., dk)
+            for (int dim = 0; dim < target_rank; dim++) {
+              const auto input_dim =
+                  dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+              const auto target_dim = target_shape.dim(dim);
+              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
+                  input_dim.dim_value() != target_dim.dim_value())
+                fail_shape_inference(
+                    "Input and target dimension value mismatch.")
+            }
 
-                if (ctx.getNumInputs() == 3) {
-                    const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
-                    if (weight_shape.dim_size() != 1)
-                        fail_shape_inference("Weight rank must be 1.") 
+            if (ctx.getNumInputs() == 3) {
+              const TensorShapeProto& weight_shape =
+                  ctx.getInputType(2)->tensor_type().shape();
+              if (weight_shape.dim_size() != 1)
+                fail_shape_inference("Weight rank must be 1.")
                     const auto weight_dim = weight_shape.dim(0);
-                    const auto input_dim_1 = input_shape.dim(1);
-                    if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() && weight_dim.dim_value() != input_dim_1.dim_value())
-                        fail_shape_inference("Input and weight dimension value mismatch.")
-                }
+              const auto input_dim_1 = input_shape.dim(1);
+              if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
+                  weight_dim.dim_value() != input_dim_1.dim_value())
+                fail_shape_inference(
+                    "Input and weight dimension value mismatch.")
+            }
 
-                TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            TensorShapeProto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-                if (ctx.getAttribute("reduction")->s() == "none") {
-                    // output tensor is of shape (N, d1, d2, ..., dk) if reduction attribute
-                    // is "none".
-                    for (int i = 0; i < input_rank - 1; i++) {
-                        auto* dim = output_shape->add_dim();
-                        if (i == 0)
-                            *dim = input_shape.dim(i);
-                        else
-                            *dim = input_shape.dim(i + 1);
-                    }
-                }
-                // otherwise output is a scalar.
-            }}));
+            if (ctx.getAttribute("reduction")->s() == "none") {
+              // output tensor is of shape (N, d1, d2, ..., dk) if
+              // reduction attribute is "none".
+              for (int i = 0; i < input_rank - 1; i++) {
+                auto* dim = output_shape->add_dim();
+                if (i == 0)
+                  *dim = input_shape.dim(i);
+                else
+                  *dim = input_shape.dim(i + 1);
+              }
+            }
+            // otherwise output is a scalar.
+          }
+        }));
 
 void einsumRankInference(
-    ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
-
+    ONNX_NAMESPACE::InferenceContext& ctx,
+    std::string equation) {
   const size_t numInputs = ctx.getNumInputs();
   if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
     return;
   }
 
   auto* output_shape = getOutputShape(ctx, 0);
-  std::string  left_equation;
+  std::string left_equation;
 
-  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end()); // Remove space char
+  equation.erase(
+      std::remove(equation.begin(), equation.end(), ' '),
+      equation.end()); // Remove space char
   auto mid_index = equation.find("->");
   if (mid_index != std::string::npos) {
     // Separate right and left hand sides of the equation
@@ -2038,17 +2151,21 @@ void einsumRankInference(
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
-  while(std::getline(str, term, ',')) {
+  while (std::getline(str, term, ',')) {
     auto ellipsis_index = term.find("...");
     if (ellipsis_index != std::string::npos) {
       if (numInputs <= num_operands) {
-        fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+        fail_shape_inference(
+            "Number of input tensors does not match the operands in the equation.");
       }
-      // If there is an ellipsis, the number of dimensions it represents must be total dim - letter dimensions
-      size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+      // If there is an ellipsis, the number of dimensions it represents
+      // must be total dim - letter dimensions
+      size_t rank =
+          ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
       if (num_ellipsis == 0) {
         num_ellipsis_indices = rank - term.size() + 3;
-      } else { // ellipsis has been seen before. Check that if dimensions are compatible
+      } else { // ellipsis has been seen before. Check that if dimensions
+               // are compatible
         if (num_ellipsis_indices != rank - term.size() + 3) {
           fail_shape_inference("Ellipsis represents incompatible dimensions.");
         }
@@ -2059,7 +2176,8 @@ void einsumRankInference(
   }
 
   if (numInputs != num_operands) {
-    fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+    fail_shape_inference(
+        "Number of input tensors does not match the operands in the equation.");
   }
 
   const size_t number_of_letters = 26;
@@ -2068,12 +2186,14 @@ void einsumRankInference(
   if (mid_index != std::string::npos) {
     std::string right_equation = equation.substr(mid_index + 2);
     auto right_ellipsis_index = right_equation.find("...");
-    if (right_ellipsis_index != std::string::npos) { // Right-hand side contains ellipsis
+    if (right_ellipsis_index !=
+        std::string::npos) { // Right-hand side contains ellipsis
       for (size_t i = 0; i < num_ellipsis; ++i) {
         output_shape->add_dim();
       }
     }
-    for (char c: right_equation) { // Add a dimension per each character in right hand equation
+    for (char c : right_equation) { // Add a dimension per each character
+                                    // in right hand equation
       if (c != '.') {
         output_shape->add_dim();
       }
@@ -2083,7 +2203,8 @@ void einsumRankInference(
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
       output_shape->add_dim();
     }
-    for (size_t i = 0; i < left_equation.size(); i++) { // Count chars that appear exactly once on left hand side
+    for (size_t i = 0; i < left_equation.size();
+         i++) { // Count chars that appear exactly once on left hand side
       if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
         num_letter_occurrences[left_equation.at(i) - 'a']++;
       }
@@ -2126,15 +2247,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Einsum_ver12_doc)
-        .Attr(
-            "equation",
-            "Einsum expression string.",
-            AttributeProto::STRING)
-        .Input(0,
-            "Inputs",
-            "Operands",
-            "T",
-            OpSchema::Variadic)
+        .Attr("equation", "Einsum expression string.", AttributeProto::STRING)
+        .Input(0, "Inputs", "Operands", "T", OpSchema::Variadic)
         .Output(0, "Output", "Output tensor", "T")
         .TypeConstraint(
             "T",
@@ -2147,7 +2261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (equation.compare("") == 0) {
             return;
           }
-	        einsumRankInference(ctx, equation);
+          einsumRankInference(ctx, equation);
         }));
 
 static const char* Inverse_ver12_doc = R"DOC(
@@ -2184,8 +2298,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             const auto mat_w = input_shape.dim(rank - 1);
             const auto mat_h = input_shape.dim(rank - 2);
-            if (mat_w.has_dim_value() &&
-                mat_h.has_dim_value() &&
+            if (mat_w.has_dim_value() && mat_h.has_dim_value() &&
                 (mat_w.dim_value() != mat_h.dim_value())) {
               fail_shape_inference(
                   "The inner-most 2 dimensions must have the same size (mat_w:",
@@ -2227,7 +2340,10 @@ L = ReduceSum(L), if reduction = 'sum';
 
 .)DOC";
 
-bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+bool BuildContextDependentFunctionBodyMSD(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back(FunctionBodyHelper::Const<int>("Q_Pow", 2));
   body.push_back({{"X_Sub"}, "Sub", {"scores", "labels"}});
@@ -2238,9 +2354,15 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
     } else {
       body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
       if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"}, "ReduceSum", {"X_Pow"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"output"},
+                        "ReduceSum",
+                        {"X_Pow"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
       } else {
-        body.push_back({{"output"}, "ReduceMean", {"X_Pow"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"output"},
+                        "ReduceMean",
+                        {"X_Pow"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
       }
     }
   } else {
@@ -2250,9 +2372,15 @@ bool BuildContextDependentFunctionBodyMSD(const FunctionBodyBuildContext& ctx, c
     } else {
       body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
       if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"}, "ReduceSum", {"X_Mul"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"output"},
+                        "ReduceSum",
+                        {"X_Mul"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
       } else {
-        body.push_back({{"output"}, "ReduceMean", {"X_Mul"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"output"},
+                        "ReduceMean",
+                        {"X_Mul"},
+                        {MakeAttribute("keepdims", (int64_t)0)}});
       }
     }
   }
@@ -2300,18 +2428,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMSD)
+        .SetContextDependentFunctionBodyBuilder(
+            BuildContextDependentFunctionBodyMSD)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            propagateElemTypeFromInputToOutput(ctx, 0, 0);
-            std::string reduction = getAttribute(ctx, "reduction", "mean");
-            if (reduction.compare("none") == 0) {
-	        if (hasInputShape(ctx, 0)) {
-		    propagateShapeFromInputToOutput(ctx, 0, 0);
-		}
-            } else {
-                updateOutputShape(ctx, 0, TensorShapeProto());
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          std::string reduction = getAttribute(ctx, "reduction", "mean");
+          if (reduction.compare("none") == 0) {
+            if (hasInputShape(ctx, 0)) {
+              propagateShapeFromInputToOutput(ctx, 0, 0);
             }
-
+          } else {
+            updateOutputShape(ctx, 0, TensorShapeProto());
+          }
         }));
 
 const char* reduction_doc_sce =
@@ -2352,7 +2480,10 @@ If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is prov
 where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
 )DOC";
 
-bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+bool BuildContextDependentFunctionBodySCE(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back({{"X_Max"}, "Max", {"scores"}});
   body.push_back({{"X_Sub"}, "Sub", {"scores", "X_Max"}});
@@ -2360,22 +2491,31 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
-  if(ctx.getAttribute("ignore_index") == nullptr)
-  {
+  if (ctx.getAttribute("ignore_index") == nullptr) {
     if (!ctx.hasInput(2)) {
-        body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
-            {MakeRefAttribute("reduction", AttributeProto::STRING)}});
+      body.push_back({{"output"},
+                      "NegativeLogLikelihoodLoss",
+                      {"log_prob", "labels"},
+                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
     } else {
-        body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
-            {MakeRefAttribute("reduction", AttributeProto::STRING)}});
+      body.push_back({{"output"},
+                      "NegativeLogLikelihoodLoss",
+                      {"log_prob", "labels", "weights"},
+                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
     }
   } else {
     if (!ctx.hasInput(2)) {
-        body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
-            {MakeRefAttribute("reduction", AttributeProto::STRING), MakeRefAttribute("ignore_index", AttributeProto::INT)}});
+      body.push_back({{"output"},
+                      "NegativeLogLikelihoodLoss",
+                      {"log_prob", "labels"},
+                      {MakeRefAttribute("reduction", AttributeProto::STRING),
+                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
     } else {
-        body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
-            {MakeRefAttribute("reduction", AttributeProto::STRING), MakeRefAttribute("ignore_index", AttributeProto::INT)}});
+      body.push_back({{"output"},
+                      "NegativeLogLikelihoodLoss",
+                      {"log_prob", "labels", "weights"},
+                      {MakeRefAttribute("reduction", AttributeProto::STRING),
+                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
     }
   }
 
@@ -2417,7 +2557,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The ground truth output tensor, with shape [batch_size], or "
             "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions.",
             "Tind")
-         .Input(
+        .Input(
             2,
             "weights",
             "A manual rescaling weight given to each class. If given, it has to "
@@ -2438,25 +2578,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Log probability tensor. If the output of softmax is prob, its value is log(prob).",
             "T",
             OpSchema::Optional)
-            .TypeConstraint(
-                "T",
-                {"tensor(float16)", "tensor(float)", "tensor(double)"},
-                "Constrain input and output types to float tensors.")
-            .TypeConstraint(
-                "Tind",
-                {"tensor(int32)", "tensor(int64)"},
-                "Constrain target to integer types")
-            .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
-            .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 0);
-                std::string reduction = getAttribute(ctx, "reduction", "mean");
-                if (reduction.compare("none") == 0) {
-                    if (hasInputShape(ctx, 1)) {
-                        propagateShapeFromInputToOutput(ctx, 1, 0);
-                    }
-                } else {
-                    updateOutputShape(ctx, 0, TensorShapeProto());
-                }
-
-            }));
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain target to integer types")
+        .SetContextDependentFunctionBodyBuilder(
+            BuildContextDependentFunctionBodySCE)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          std::string reduction = getAttribute(ctx, "reduction", "mean");
+          if (reduction.compare("none") == 0) {
+            if (hasInputShape(ctx, 1)) {
+              propagateShapeFromInputToOutput(ctx, 1, 0);
+            }
+          } else {
+            updateOutputShape(ctx, 0, TensorShapeProto());
+          }
+        }));
 } // namespace ONNX_NAMESPACE
