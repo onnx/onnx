@@ -33,6 +33,19 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=N
     loss = neg_gather_element_input
     if weight is not None:
         gather_weight = np.take(weight, target)
+
+        if ignore_index is not None:
+            if len(input_shape) == 2:
+                for i in range(input_shape[0]):
+                    if target[i] == ignore_index:
+                        gather_weight[i] = 0;
+
+            if len(input_shape) == 3:
+                for i in range(input_shape[0]):
+                    for j in range(input_shape[1]):
+                        if target[i][j] == ignore_index:
+                            gather_weight[i][j] = 0;
+
         loss = gather_weight * loss
         if reduction == 'mean':
             return loss.sum() / gather_weight.sum()
