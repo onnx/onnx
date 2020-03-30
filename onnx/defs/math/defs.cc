@@ -1837,33 +1837,63 @@ bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, cons
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}});
   body.push_back({{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
-  if (!ctx.hasInput(2)) {
-    if (ctx.getAttribute("reduction")->s() == "none") {
-      body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+    if(ctx.getAttribute("ignore_index") == nullptr)
+    {
+    if (ctx.hasInput(2)) {
+        if (ctx.getAttribute("reduction")->s() == "none") {
+        body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+        } else {
+        body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}); 
+        if(ctx.getAttribute("reduction")->s() == "mean") {
+            body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        } else {
+            body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
+        }
+        } 
     } else {
-      body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}); 
-      if(ctx.getAttribute("reduction")->s() == "mean") {
-        body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-      } else {
-        body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
-      }
-    } 
-  } else {
-    body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
-    body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-    if (ctx.getAttribute("reduction")->s() == "none") {
-      body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
-    } else {
-      body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-      if(ctx.getAttribute("reduction")->s() == "mean") {
-        body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-        body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
-        body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
-      } else {
-        body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-      }
+        body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
+        body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+        if (ctx.getAttribute("reduction")->s() == "none") {
+        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        } else {
+        body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        if(ctx.getAttribute("reduction")->s() == "mean") {
+            body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+            body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+            body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+        } else {
+            body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        }
+        }
     }
-  }
+    }else
+    {
+        if (ctx.hasInput(2)) {
+            body.push_back({{"input_shape"}, "Shape", {"input"}});  
+            body.push_back({{"input_class"}, "Slice", {"input_shape", ToDimensionOneTensor(1), ToDimensionOneTensor(1)}});
+            body.push_back({{"const_weights"}, "Constant", {"input_class"}, {MakeAttribute("value", ToDimensionOneTensor(1))}}); 
+            body.push_back({{"weights_default"}, "ScatterElements", {"const_weights", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()), ToDimensionOneTensor(0)}});
+            body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
+        }else{
+            body.push_back({{"weights_default"}, "ScatterElements", {"weight", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()), ToDimensionOneTensor(0)}});
+            body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
+        }
+
+        body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+        if (ctx.getAttribute("reduction")->s() == "none") {
+        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        } else {
+        body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        if(ctx.getAttribute("reduction")->s() == "mean") {
+            body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+            body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+            body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+        } else {
+            body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        }
+        }
+    }
+    
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
@@ -2326,10 +2356,12 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
   if (!ctx.hasInput(2)) {
     body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
-        {MakeRefAttribute("reduction", AttributeProto::STRING)}});
+        {MakeRefAttribute("reduction", AttributeProto::STRING)},
+        {MakeRefAttribute("ignore_index", AttributeProto::INT)}});
   } else {
     body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
-        {MakeRefAttribute("reduction", AttributeProto::STRING)}});
+        {MakeRefAttribute("reduction", AttributeProto::STRING)},
+        {MakeRefAttribute("ignore_index", AttributeProto::INT)}});
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
@@ -2354,9 +2386,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("mean"))
         .Attr(
             "ignore_index",
-            "Specifies a target value that is ignored and does not contribute to the input gradient.",
+            "Specifies a target value that is ignored and does not contribute to the input gradient. "
+            "This is an optional value but if specified, it needs to be in the range [0, C).",
             AttributeProto::INT,
-            static_cast<int64_t>(-100))
+            false)
         .Input(
             0,
             "scores",

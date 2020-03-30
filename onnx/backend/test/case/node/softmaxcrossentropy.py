@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=-100):  # type: ignore
+def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=None):  # type: ignore
     max_x = np.max(x, axis=1, keepdims=True)
     exp_x = np.exp(x - max_x)
     p = exp_x / np.sum(exp_x, axis=1, keepdims=True)
@@ -198,6 +198,7 @@ class SoftmaxCrossEntropyLoss(Base):
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
         labels = np.random.randint(0, high=5, size=(3, ))
+        labels[0] = 0
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
