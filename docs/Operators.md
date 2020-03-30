@@ -10742,8 +10742,8 @@ This version of the operator has been available since version 12 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>ignore_index</tt> : int (default is -100)</dt>
-<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
+<dt><tt>ignore_index</tt> : int (required)</dt>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient. This is an optional value but if specified, it needs to be in the range [0, C).</dd>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample. 'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
@@ -10958,6 +10958,36 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, targe
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
     name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')
+```
+
+</details>
+
+
+<details>
+<summary>input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index</summary>
+
+```python
+reduction = 'sum'
+ignore_index = np.int64(0)
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target', 'weight'],
+    outputs=['loss'],
+    reduction=reduction,
+    ignore_index=ignore_index
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target[0][0][0] = 0
+weight = np.random.rand(C).astype(np.float32)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
+
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index')            
 ```
 
 </details>
@@ -18277,8 +18307,8 @@ This version of the operator has been available since version 12 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>ignore_index</tt> : int (default is -100)</dt>
-<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
+<dt><tt>ignore_index</tt> : int</dt>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient. This is an optional value but if specified, it needs to be in the range [0, C).</dd>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
 </dl>
@@ -18419,6 +18449,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
 labels = np.random.randint(0, high=5, size=(3, ))
+labels[0] = 0
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss

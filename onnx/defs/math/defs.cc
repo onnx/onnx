@@ -1868,14 +1868,15 @@ bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, cons
     }
     }else
     {
+        body.push_back({{"const_ignore_index"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
         if (ctx.hasInput(2)) {
             body.push_back({{"input_shape"}, "Shape", {"input"}});  
-            body.push_back({{"input_class"}, "Slice", {"input_shape", ToDimensionOneTensor(1), ToDimensionOneTensor(1)}});
-            body.push_back({{"const_weights"}, "Constant", {"input_class"}, {MakeAttribute("value", ToDimensionOneTensor(1))}}); 
-            body.push_back({{"weights_default"}, "ScatterElements", {"const_weights", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()), ToDimensionOneTensor(0)}});
+            body.push_back({{"input_class"}, "Slice", {"input_shape", "const_one", "const_one"}});
+            body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneTensor(1))}}); 
+            body.push_back({{"weights_default"}, "ScatterElements", {"const_weights_ones", "const_ignore_index", "const_zero"}});
             body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
         }else{
-            body.push_back({{"weights_default"}, "ScatterElements", {"weight", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()), ToDimensionOneTensor(0)}});
+            body.push_back({{"weights_default"}, "ScatterElements", {"weight", "const_ignore_index", "const_zero"}});
             body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
         }
 
@@ -1938,9 +1939,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("mean"))
         .Attr(
             "ignore_index",
-            "Specifies a target value that is ignored and does not contribute to the input gradient.",
-            AttributeProto::INT,
-            static_cast<int64_t>(-100))
+            "Specifies a target value that is ignored and does not contribute to the input gradient. "
+            "This is an optional value but if specified, it needs to be in the range [0, C).",
+            AttributeProto::INT)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -2354,14 +2355,23 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
-  if (!ctx.hasInput(2)) {
-    body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
-        {MakeRefAttribute("reduction", AttributeProto::STRING)},
-        {MakeRefAttribute("ignore_index", AttributeProto::INT)}});
+  if(ctx.getAttribute("ignore_index") == nullptr)
+  {
+    if (ctx.hasInput(2)) {
+        body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
+            {MakeRefAttribute("reduction", AttributeProto::STRING)}});
+    } else {
+        body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
+            {MakeRefAttribute("reduction", AttributeProto::STRING)}});
+    }
   } else {
-    body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
-        {MakeRefAttribute("reduction", AttributeProto::STRING)},
-        {MakeRefAttribute("ignore_index", AttributeProto::INT)}});
+    if (ctx.hasInput(2)) {
+        body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
+            {MakeRefAttribute("reduction", AttributeProto::STRING), MakeRefAttribute("ignore_index", AttributeProto::INT)}});
+    } else {
+        body.push_back({{"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels", "weights"},
+            {MakeRefAttribute("reduction", AttributeProto::STRING), MakeRefAttribute("ignore_index", AttributeProto::INT)}});
+    }
   }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
