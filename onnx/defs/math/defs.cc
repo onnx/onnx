@@ -1828,6 +1828,12 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
+TensorProto ToDimensionOneFloatTensor(float value) {
+  auto t = ToTensor(std::vector<float>({value}));
+  t.add_dims(1);
+  return t;
+}
+
 bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back({{"expanded_target"}, "Unsqueeze", {"target"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
@@ -1869,14 +1875,16 @@ bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, cons
     }else
     {
         body.push_back({{"const_ignore_index"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
+        body.push_back({{"const_zero_float"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
         if (!ctx.hasInput(2)) {
             body.push_back({{"input_shape"}, "Shape", {"input"}});  
             body.push_back({{"input_class"}, "Slice", {"input_shape", "const_one", "const_one"}});
-            body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneTensor(1))}}); 
-            body.push_back({{"weights_default"}, "ScatterElements", {"const_weights_ones", "const_ignore_index", "const_zero"}});
+            body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneFloatTensor(1))}}); 
+            body.push_back({{"weights_default"}, "ScatterElements", {"const_weights_ones", "const_ignore_index", "const_zero_float"}});
             body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
         }else{
-            body.push_back({{"weights_default"}, "ScatterElements", {"weight", "const_ignore_index", "const_zero"}});
+
+            body.push_back({{"weights_default"}, "ScatterElements", {"weight", "const_ignore_index", "const_zero_float"}});
             body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
         }
 
