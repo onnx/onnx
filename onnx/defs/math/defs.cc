@@ -1941,7 +1941,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "ignore_index",
             "Specifies a target value that is ignored and does not contribute to the input gradient. "
             "This is an optional value but if specified, it needs to be in the range [0, C).",
-            AttributeProto::INT)
+            AttributeProto::INT,
+            false)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
