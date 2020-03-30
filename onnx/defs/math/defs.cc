@@ -1843,66 +1843,62 @@ bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, cons
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(1))}});
   body.push_back({{"loss_N1dd"}, "Slice", {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
-    if(ctx.getAttribute("ignore_index") == nullptr)
-    {
-    if (!ctx.hasInput(2)) {
-        if (ctx.getAttribute("reduction")->s() == "none") {
-        body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-        } else {
-        body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}); 
-        if(ctx.getAttribute("reduction")->s() == "mean") {
-            body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-        } else {
-            body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
-        }
-        } 
-    } else {
-        body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
-        body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-        if (ctx.getAttribute("reduction")->s() == "none") {
-        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        } else {
-        body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        if(ctx.getAttribute("reduction")->s() == "mean") {
-            body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-            body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
-            body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
-        } else {
-            body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-        }
-        }
-    }
-    }else
-    {
-        body.push_back({{"const_ignore_index"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
-        body.push_back({{"const_zero_float"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
-        if (!ctx.hasInput(2)) {
-            body.push_back({{"input_shape"}, "Shape", {"input"}});  
-            body.push_back({{"input_class"}, "Slice", {"input_shape", "const_one", "const_one"}});
-            body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneFloatTensor(1))}}); 
-            body.push_back({{"weights_default"}, "ScatterElements", {"const_weights_ones", "const_ignore_index", "const_zero_float"}});
-            body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
-        }else{
+  if(ctx.getAttribute("ignore_index") == nullptr) {
+      if (!ctx.hasInput(2)) {
+          if (ctx.getAttribute("reduction")->s() == "none") {
+              body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+          } else {
+              body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}}); 
+              if(ctx.getAttribute("reduction")->s() == "mean") {
+                  body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+              } else {
+                  body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});  
+              }
+          } 
+      } else {
+          body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
+          body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+          if (ctx.getAttribute("reduction")->s() == "none") {
+              body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+          } else {
+              body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+              if(ctx.getAttribute("reduction")->s() == "mean") {
+                  body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+                  body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+                  body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+              } else {
+                  body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+              }
+          }
+      }
+  } else {
+      body.push_back({{"const_ignore_index"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
+      body.push_back({{"const_zero_float"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
+      if (!ctx.hasInput(2)) {
+          body.push_back({{"input_shape"}, "Shape", {"input"}});  
+          body.push_back({{"input_class"}, "Slice", {"input_shape", "const_one", "const_one"}});
+          body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneFloatTensor(1))}}); 
+          body.push_back({{"weights_default"}, "ScatterElements", {"const_weights_ones", "const_ignore_index", "const_zero_float"}});
+          body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
+      } else {
+          body.push_back({{"weights_default"}, "ScatterElements", {"weight", "const_ignore_index", "const_zero_float"}});
+          body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
+      }
 
-            body.push_back({{"weights_default"}, "ScatterElements", {"weight", "const_ignore_index", "const_zero_float"}});
-            body.push_back({{"weight_gather"}, "Gather", {"weights_default", "target"}});
-        }
-
-        body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-        if (ctx.getAttribute("reduction")->s() == "none") {
-        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        } else {
-        body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        if(ctx.getAttribute("reduction")->s() == "mean") {
-            body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-            body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
-            body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
-        } else {
-            body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
-        }
-        }
-    }
-    
+      body.push_back({{"loss_unweighted"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+      if (ctx.getAttribute("reduction")->s() == "none") {
+          body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      } else {
+          body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+          if(ctx.getAttribute("reduction")->s() == "mean") {
+              body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+              body.push_back({{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+              body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+          } else {
+              body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+          }
+      }
+  }
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
