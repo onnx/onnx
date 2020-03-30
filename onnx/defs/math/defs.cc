@@ -1839,7 +1839,7 @@ bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, cons
 
     if(ctx.getAttribute("ignore_index") == nullptr)
     {
-    if (ctx.hasInput(2)) {
+    if (!ctx.hasInput(2)) {
         if (ctx.getAttribute("reduction")->s() == "none") {
         body.push_back({{"loss"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
         } else {
@@ -1869,7 +1869,7 @@ bool BuildContextDependentFunctionBody(const FunctionBodyBuildContext& ctx, cons
     }else
     {
         body.push_back({{"const_ignore_index"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
-        if (ctx.hasInput(2)) {
+        if (!ctx.hasInput(2)) {
             body.push_back({{"input_shape"}, "Shape", {"input"}});  
             body.push_back({{"input_class"}, "Slice", {"input_shape", "const_one", "const_one"}});
             body.push_back({{"const_weights_ones"}, "ConstantOfShape", {"input_class"}, {MakeAttribute("value", ToDimensionOneTensor(1))}}); 
@@ -2358,7 +2358,7 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
   body.push_back({{"log_prob"}, "Log", {"X_Div"}});
   if(ctx.getAttribute("ignore_index") == nullptr)
   {
-    if (ctx.hasInput(2)) {
+    if (!ctx.hasInput(2)) {
         body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
             {MakeRefAttribute("reduction", AttributeProto::STRING)}});
     } else {
@@ -2366,7 +2366,7 @@ bool BuildContextDependentFunctionBodySCE(const FunctionBodyBuildContext& ctx, c
             {MakeRefAttribute("reduction", AttributeProto::STRING)}});
     }
   } else {
-    if (ctx.hasInput(2)) {
+    if (!ctx.hasInput(2)) {
         body.push_back({ {"output"}, "NegativeLogLikelihoodLoss", {"log_prob", "labels"},
             {MakeRefAttribute("reduction", AttributeProto::STRING), MakeRefAttribute("ignore_index", AttributeProto::INT)}});
     } else {
