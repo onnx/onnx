@@ -21,7 +21,14 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
         for i in range(N):
             if target[i] != ignore_index:
                 neg_gather_element_input[i] = -input[i][target[i]]
-    else:
+    elif len(input_shape) == 3:
+        N, C, dim1 = input_shape
+        neg_gather_element_input = np.zeros((N, dim1), dtype=np.float32)
+        for i in range(N):
+            for d1 in range(dim1):
+                if target[i][d1] != ignore_index:
+                    neg_gather_element_input[i][d1] = -input[i][target[i][d1]][d1]
+    elif len(input_shape) == 4:
         N, C, dim1, dim2 = input_shape
         neg_gather_element_input = np.zeros((N, dim1, dim2), dtype=np.float32)
         for i in range(N):
@@ -29,6 +36,8 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
                 for d2 in range(dim2):
                     if target[i][d1][d2] != ignore_index:
                         neg_gather_element_input[i][d1][d2] = -input[i][target[i][d1][d2]][d1][d2]
+    else:
+        raise NotImplementedError
 
     loss = neg_gather_element_input
 
@@ -46,12 +55,19 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
                 for i in range(input_shape[0]):
                     if target[i] == ignore_index:
                         gather_weight[i] = 0
-
-            if len(input_shape) == 3:
+            elif len(input_shape) == 3:
                 for i in range(input_shape[0]):
-                    for j in range(input_shape[1]):
+                    for j in range(input_shape[2]):
                         if target[i][j] == ignore_index:
                             gather_weight[i][j] = 0
+            elif len(input_shape) == 4:
+                for i in range(input_shape[0]):
+                    for j in range(input_shape[2]):
+                        for k in range(input_shape[3]):
+                            if target[i][j][k] == ignore_index:
+                                gather_weight[i][j][k] = 0
+            else:
+                raise NotImplementedError
 
         loss = gather_weight * loss
         if reduction == 'mean':
@@ -256,3 +272,87 @@ class NegativeLogLikelihoodLoss(Base):
 
         expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
             name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index')
+
+    def export_input_shape_is_NCd1():  # type: () -> None
+        reduction = 'mean'
+        node = onnx.helper.make_node(
+            'NegativeLogLikelihoodLoss',
+            inputs=['input', 'target'],
+            outputs=['loss'],
+            reduction=reduction
+        )
+
+        N, C, d1 = 3, 5, 2
+        np.random.seed(0)
+        input = np.random.rand(N, C, d1).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, d1))
+
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+
+        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+            name='test_negative_log_likelihood_loss_input_shape_is_NCd1')
+
+    def export_input_shape_is_NCd1_weight():  # type: () -> None
+        reduction = 'mean'
+        node = onnx.helper.make_node(
+            'NegativeLogLikelihoodLoss',
+            inputs=['input', 'target', 'weight'],
+            outputs=['loss'],
+            reduction=reduction
+        )
+
+        N, C, d1 = 3, 5, 2
+        np.random.seed(0)
+        input = np.random.rand(N, C, d1).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, d1))
+        weight = np.random.rand(C).astype(np.float32)
+
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+
+        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+            name='test_negative_log_likelihood_loss_input_shape_is_NCd1_weight')
+
+    def export_input_shape_is_NCd1_ignore_index():  # type: () -> None
+        reduction = 'mean'
+        ignore_index = np.int64(1)
+        node = onnx.helper.make_node(
+            'NegativeLogLikelihoodLoss',
+            inputs=['input', 'target'],
+            outputs=['loss'],
+            reduction=reduction,
+            ignore_index=ignore_index
+        )
+
+        N, C, d1 = 3, 5, 2
+        np.random.seed(0)
+        input = np.random.rand(N, C, d1).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, d1))
+        target[0][0] = 1
+
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
+
+        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+            name='test_negative_log_likelihood_loss_input_shape_is_NCd1_ignore_index')
+
+    def export_input_shape_is_NCd1_weight_ignore_index():  # type: () -> None
+        reduction = 'mean'
+        ignore_index = np.int64(1)
+        node = onnx.helper.make_node(
+            'NegativeLogLikelihoodLoss',
+            inputs=['input', 'target', 'weight'],
+            outputs=['loss'],
+            reduction=reduction,
+            ignore_index=ignore_index
+        )
+
+        N, C, d1 = 3, 5, 2
+        np.random.seed(0)
+        input = np.random.rand(N, C, d1).astype(np.float32)
+        target = np.random.randint(0, high=C, size=(N, d1))
+        target[0][0] = 1
+        weight = np.random.rand(C).astype(np.float32)
+
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
+
+        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+            name='test_negative_log_likelihood_loss_iinput_shape_is_NCd1_weight_ignore_index')

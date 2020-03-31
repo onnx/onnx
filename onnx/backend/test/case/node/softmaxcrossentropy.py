@@ -22,14 +22,23 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=N
         for i in range(N):
             if target[i] != ignore_index:
                 neg_gather_element_input[i] = -inp[i][target[i]]
-    if len(input_shape) == 3:
+    elif len(input_shape) == 3:
         N, C, D = input_shape
         neg_gather_element_input = np.zeros((N, D), dtype=np.float32)
         for i in range(N):
             for d in range(D):
                 if target[i][d] != ignore_index:
                     neg_gather_element_input[i][d] = -inp[i][target[i][d]][d]
-
+    elif len(input_shape) == 4:
+        N, C, D, H = input_shape
+        neg_gather_element_input = np.zeros((N, D, H), dtype=np.float32)
+        for i in range(N):
+            for d in range(D):
+                for h in range(H):
+                    if target[i][d][h] != ignore_index:
+                        neg_gather_element_input[i][d][h] = -inp[i][target[i][d][h]][d][h]
+    else:
+        raise NotImplementedError
     loss = neg_gather_element_input
 
     if weight is None and ignore_index is not None:
@@ -45,12 +54,19 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=N
                 for i in range(input_shape[0]):
                     if target[i] == ignore_index:
                         gather_weight[i] = 0
-
-            if len(input_shape) == 3:
+            elif len(input_shape) == 3:
                 for i in range(input_shape[0]):
-                    for j in range(target.shape[1]):
+                    for j in range(input_shape[2]):
                         if target[i][j] == ignore_index:
                             gather_weight[i][j] = 0
+            elif len(input_shape) == 4:
+                for i in range(input_shape[0]):
+                    for j in range(input_shape[2]):
+                        for k in range(input_shape[3]):
+                            if target[i][j][k] == ignore_index:
+                                gather_weight[i][j][k] = 0
+            else:
+                raise NotImplementedError
 
         loss = gather_weight * loss
         if reduction == 'mean':
@@ -301,3 +317,52 @@ class SoftmaxCrossEntropyLoss(Base):
 
         # Check results
         expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_3d')
+
+    def export_softmaxcrossentropy_mean_weights_ignore_index_4d():  # type: () -> None
+        # Define operator attributes.
+        reduction = 'mean'
+        ignore_index = np.int64(2)
+
+        # Create operator.
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                                    inputs=['x', 'y', 'w'],
+                                    outputs=['z'],
+                                    reduction=reduction,
+                                    ignore_index=ignore_index)
+
+        # Define operator inputs.
+        np.random.seed(0)
+        x = np.random.rand(3, 5, 2, 7).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, 2, 7))
+        labels[0][0][0] = 2
+        weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
+
+        # Compute SoftmaxCrossEntropyLoss
+        sce = softmaxcrossentropy(x, labels, reduction=reduction, weight=weights, ignore_index=ignore_index)
+
+        # Check results
+        expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index_4d')
+
+    def export_softmaxcrossentropy_mean_no_weights_ignore_index_4d():  # type: () -> None
+        # Define operator attributes.
+        reduction = 'mean'
+        ignore_index = np.int64(2)
+
+        # Create operator.
+        node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                                    inputs=['x', 'y'],
+                                    outputs=['z'],
+                                    reduction=reduction,
+                                    ignore_index=ignore_index)
+
+        # Define operator inputs.
+        np.random.seed(0)
+        x = np.random.rand(3, 5, 2, 7).astype(np.float32)
+        labels = np.random.randint(0, high=5, size=(3, 2, 7))
+        labels[0][0][0] = 2
+
+        # Compute SoftmaxCrossEntropyLoss
+        sce = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_index)
+
+        # Check results
+        expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_4d')
