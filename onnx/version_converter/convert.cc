@@ -22,8 +22,8 @@ ModelProto DefaultVersionConverter::convert_version(
     const ModelProto& mp_in,
     const OpSetID& initial_version,
     const OpSetID& target_version) const {
-  const std::string initial_domain = initial_version.domain();
-  const std::string target_domain = target_version.domain();
+  const std::string& initial_domain = initial_version.domain();
+  const std::string& target_domain = target_version.domain();
   assertDefaultDomain(initial_domain, target_domain);
 
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()

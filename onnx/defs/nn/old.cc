@@ -87,9 +87,9 @@ void convPoolShapeInference1(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
-
 
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
@@ -113,7 +113,9 @@ void convPoolShapeInference1(
             residual -= stride;
           }
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0
+            ? effective_kernel_shape[i] - stride
+            : effective_kernel_shape[i] - residual;
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -128,7 +130,7 @@ void convPoolShapeInference1(
       }
     }
   }
-    
+
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -165,7 +167,8 @@ void convPoolShapeInference1(
 
     if (ceil_mode == 1)
       strided_kernel_positions = (int64_t)(std::ceil(
-          (effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
+          (effective_input_size - effective_kernel_shape[i]) /
+          float(strides[i])));
     else
       strided_kernel_positions =
           (effective_input_size - effective_kernel_shape[i]) / strides[i];
@@ -187,7 +190,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
     const char* opName,
     const char* additionalDescription) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -210,16 +215,19 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription););
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
@@ -275,7 +283,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
     bool use_dilation,
     int opsetNum) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -305,23 +315,25 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
-    ReplaceAll(
-        doc,
-        "{kernelSpatialShape}",
-        use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
-                     : "kernel_spatial_shape[i]");
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(
+            doc,
+            "{kernelSpatialShape}",
+            use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
+                         : "kernel_spatial_shape[i]"););
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", 
-        opsetNum == 11 ? "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis." : "Stride along each spatial axis.", 
-        AttributeProto::INTS, 
+        "strides",
+        opsetNum == 11
+            ? "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis."
+            : "Stride along each spatial axis.",
+        AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
@@ -775,20 +787,24 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
@@ -840,12 +856,14 @@ static const char* GlobalLpPool_ver1_doc = R"DOC(
  the values in the same channel. This is equivalent to LpPool with kernel size
  equal to the spatial dimension of input tensor.)DOC";
 
- std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(
+    const char* filter_desc) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -906,7 +924,10 @@ computes the output.)DOC";
         AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
@@ -1027,7 +1048,7 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
       }
     }
   }
-    
+
   std::vector<int64_t> output_shape;
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
@@ -1090,7 +1111,8 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_10(
     const char* filter_desc) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -1105,7 +1127,7 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1170,7 +1192,10 @@ output_shape can also be explicitly specified in which case pads values are auto
         AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
@@ -1463,7 +1488,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     7,
     OpSchema()
-        .SetDoc(Dropout_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1490,7 +1516,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     10,
     OpSchema()
-        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver10_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1647,7 +1674,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BatchNormalization_ver9_doc) +
+            GenerateOptionalArgumentsDoc()))
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1835,8 +1864,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     7,
     OpSchema()
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BatchNormalization_ver7_doc) +
+            GenerateOptionalArgumentsDoc()))
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "spatial",
             "If true, compute the mean and variance across per activation. "

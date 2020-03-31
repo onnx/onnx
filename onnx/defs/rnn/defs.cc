@@ -197,7 +197,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     7,
     OpSchema()
-        .SetDoc(RNN_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(RNN_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -309,7 +310,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     7,
     OpSchema()
-        .SetDoc(GRU_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(GRU_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -437,7 +439,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     7,
     OpSchema()
-        .SetDoc(LSTM_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(LSTM_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
