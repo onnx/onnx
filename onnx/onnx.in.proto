@@ -650,14 +650,57 @@ message SequenceProto {
 message MapProto {
   // Key-Value pair element
   message KeyValuePair {
-    oneof key {
-      uint32 uint32_key = 1;
-      uint64 uint64_key = 2;
-      int32 int32_key = 3;
-      int64 int64_key = 4;
-      string key_string = 5;
+    enum DataType {
+      UINT8 = 1;   // uint8_t
+      INT8 = 2;    // int8_t
+      UINT16 = 3;  // uint16_t
+      INT16 = 4;   // int16_t
+      UINT32 = 5;  // uint32_t
+      INT32 = 6;   // int32_t
+      UINT64 = 7;  // uint64_t
+      INT64 = 8;   // int64_t
+      STRING = 9;  // string
     }
-    required SequenceMapElement value = 6;
+
+    // The data type of the key.
+    // This field MUST have a valid MapProto.DataType value
+    optional int32 key_type = 2;
+
+    // For int32, uint8, int8, uint16, int16 keys.
+    // When this field is present, the key_type field MUST be
+    // INT32, INT16, INT8, UINT16, or UINT8
+    int32 int32_key = 3 [packed = true];
+
+    // For string keys.
+    // Each element of string_data is a UTF-8 encoded Unicode
+    // string. No trailing null, no leading BOM. The protobuf "string"
+    // scalar type is not used to match ML community conventions.
+    // When this field is present, the key_type field MUST be STRING
+    bytes string_key = 4;
+
+    // For int64 keys.
+    // When this field is present, the key_type field MUST be INT64
+    int64 int64_key = 5 [packed = true];
+
+    // For uint64 and uint32 keys.
+    // When this field is present, the key_type field MUST be
+    // UINT32 or UINT64
+    uint64 uint64_key = 6 [packed = true];
+
+    // Serializations can either use one of the fields above, or use this
+    // raw bytes field. The only exception is the string case, where one is
+    // required to store the content in the repeated bytes string_key field.
+    //
+    // When this raw_key field is used to store the key, elements MUST
+    // be stored in as fixed-width, little-endian order.
+    //
+    // Note: the advantage of specific field rather than the raw_key field is
+    // that in some cases (e.g. int data), protobuf does a better packing via
+    // variable length storage, and may lead to smaller binary footprint.
+    // When this field is present, the key_type field MUST NOT be STRING or UNDEFINED
+    optional bytes raw_key = 7;
+
+    required SequenceMapElement value = 8;
   };
 
   repeated KeyValuePair pairs = 1;
