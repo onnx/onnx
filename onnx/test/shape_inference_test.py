@@ -3011,6 +3011,15 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph,
                               [make_tensor_value_info('z', TensorProto.FLOAT, (None, None, None))])  # type: ignore
 
+    def test_einsum_ellipsis_3(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2, 2)),
+             ('y', TensorProto.FLOAT, (2, 2, 2))],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation='...ij,...jk')],
+            [], )
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('z', TensorProto.FLOAT, (None, None, None))])  # type: ignore
+
     def test_einsum_contraction(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7, 8)),
