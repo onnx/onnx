@@ -2188,7 +2188,7 @@ void einsumRankInference(
     auto right_ellipsis_index = right_equation.find("...");
     if (right_ellipsis_index !=
         std::string::npos) { // Right-hand side contains ellipsis
-      for (size_t i = 0; i < num_ellipsis; ++i) {
+      for (size_t i = 0; i < num_ellipsis_indices; ++i) {
         output_shape->add_dim();
       }
     }
