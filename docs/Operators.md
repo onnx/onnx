@@ -10831,6 +10831,35 @@ expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
 
 
 <details>
+<summary>input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index</summary>
+
+```python
+reduction = 'mean'
+ignore_index = np.int64(1)
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target', 'weight'],
+    outputs=['loss'],
+    reduction=reduction,
+    ignore_index=ignore_index
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target[0][0][0] = 1
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index')
+```
+
+</details>
+
+
+<details>
 <summary>input_shape_is_NCd1d2_reduction_mean</summary>
 
 ```python
@@ -18402,6 +18431,68 @@ expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean
 
 
 <details>
+<summary>softmaxcrossentropy_mean_no_weights_ignore_index</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(2)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y'],
+                            outputs=['z'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.array([1, 3, 2], dtype=np.int64)
+labels[0] = 2
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, ignore_index=ignore_index)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_mean_no_weights_ignore_index_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(2)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y'],
+                            outputs=['z'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, 2))
+labels[0][0] = 2
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, ignore_index=ignore_index)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_3d')
+```
+
+</details>
+
+
+<details>
 <summary>softmaxcrossentropy_mean_weights</summary>
 
 ```python
@@ -18457,6 +18548,38 @@ sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
 # Check results
 expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index')
+```
+
+</details>
+
+
+<details>
+<summary>softmaxcrossentropy_mean_weights_ignore_index_3d</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(1)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y', 'w'],
+                            outputs=['z'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, 2))
+labels[0][0] = 1
+weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index_3d')
 ```
 
 </details>
