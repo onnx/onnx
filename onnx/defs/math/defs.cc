@@ -2166,7 +2166,6 @@ void einsumRankInference(
         if (rank + 3 < term.size()) {
           fail_shape_inference("Ellipsis represents incompatible dimensions.");
         }
-		    std::cout << "iiis " << rank - term.size() + 3 << "\n";
         num_ellipsis_indices = rank - term.size() + 3;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
