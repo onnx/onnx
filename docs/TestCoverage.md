@@ -6373,7 +6373,7 @@ reduction = 'mean'
 ignore_index = np.int64(1)
 node = onnx.helper.make_node(
     'NegativeLogLikelihoodLoss',
-    inputs=['input', 'target', 'weight'],
+    inputs=['input', 'target'],
     outputs=['loss'],
     reduction=reduction,
     ignore_index=ignore_index
