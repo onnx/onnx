@@ -318,6 +318,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Check results
         expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_3d')
 
+    @staticmethod
     def export_softmaxcrossentropy_mean_weights_ignore_index_4d():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'
@@ -343,6 +344,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Check results
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index_4d')
 
+    @staticmethod
     def export_softmaxcrossentropy_mean_no_weights_ignore_index_4d():  # type: () -> None
         # Define operator attributes.
         reduction = 'mean'

@@ -273,6 +273,7 @@ class NegativeLogLikelihoodLoss(Base):
         expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
             name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index')
 
+    @staticmethod
     def export_input_shape_is_NCd1():  # type: () -> None
         reduction = 'mean'
         node = onnx.helper.make_node(
@@ -292,6 +293,7 @@ class NegativeLogLikelihoodLoss(Base):
         expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
             name='test_negative_log_likelihood_loss_input_shape_is_NCd1')
 
+    @staticmethod
     def export_input_shape_is_NCd1_weight():  # type: () -> None
         reduction = 'mean'
         node = onnx.helper.make_node(
@@ -312,6 +314,7 @@ class NegativeLogLikelihoodLoss(Base):
         expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
             name='test_negative_log_likelihood_loss_input_shape_is_NCd1_weight')
 
+    @staticmethod
     def export_input_shape_is_NCd1_ignore_index():  # type: () -> None
         reduction = 'mean'
         ignore_index = np.int64(1)
@@ -334,6 +337,7 @@ class NegativeLogLikelihoodLoss(Base):
         expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
             name='test_negative_log_likelihood_loss_input_shape_is_NCd1_ignore_index')
 
+    @staticmethod
     def export_input_shape_is_NCd1_weight_ignore_index():  # type: () -> None
         reduction = 'mean'
         ignore_index = np.int64(1)
