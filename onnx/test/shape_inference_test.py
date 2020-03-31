@@ -2997,7 +2997,7 @@ class TestShapeInference(unittest.TestCase):
 
     def test_einsum_ellipsis(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4))],
+            [('x', TensorProto.FLOAT, (3, 4, 4))],
             [make_node('Einsum', ['x'], ['y'], equation='... ii ->... i')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])  # type: ignore
