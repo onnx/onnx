@@ -17,7 +17,7 @@ def sequence_insert_reference_implementation(sequence, tensor, position=np.array
     # In these cases, insert_position will be between [-len(sequence), len(sequence)]
     seq_split_1 = sequence[:insert_position]
     seq_split_2 = sequence[insert_position:]
-    inserted = np.vstack(seq_split_1, np.array(tensor), seq_split_2, axis=0)
+    inserted = np.vstack(seq_split_1, np.array(tensor), seq_split_2)
     return inserted
 
 
