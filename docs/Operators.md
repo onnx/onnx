@@ -18560,7 +18560,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.array([1, 3, 2], dtype=np.int64)
+labels = np.random.randint(0, high=5, size=(3, ))
 labels[0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
