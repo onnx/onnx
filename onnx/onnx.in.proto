@@ -669,23 +669,23 @@ message MapProto {
     // For int32, uint8, int8, uint16, int16 keys.
     // When this field is present, the key_type field MUST be
     // INT32, INT16, INT8, UINT16, or UINT8
-    int32 int32_key = 3 [packed = true];
+    optional int32 int32_key = 3 [packed = true];
 
     // For string keys.
     // Each element of string_data is a UTF-8 encoded Unicode
     // string. No trailing null, no leading BOM. The protobuf "string"
     // scalar type is not used to match ML community conventions.
     // When this field is present, the key_type field MUST be STRING
-    bytes string_key = 4;
+    optional bytes string_key = 4;
 
     // For int64 keys.
     // When this field is present, the key_type field MUST be INT64
-    int64 int64_key = 5 [packed = true];
+    optional int64 int64_key = 5 [packed = true];
 
     // For uint64 and uint32 keys.
     // When this field is present, the key_type field MUST be
     // UINT32 or UINT64
-    uint64 uint64_key = 6 [packed = true];
+    optional uint64 uint64_key = 6 [packed = true];
 
     // Serializations can either use one of the fields above, or use this
     // raw bytes field. The only exception is the string case, where one is
