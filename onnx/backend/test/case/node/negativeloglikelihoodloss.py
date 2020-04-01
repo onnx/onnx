@@ -242,7 +242,7 @@ class NegativeLogLikelihoodLoss(Base):
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, dim1, dim2))
-        target[0][0][0] = 0
+        target[0][0][0] = np.int64(0)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
@@ -266,7 +266,7 @@ class NegativeLogLikelihoodLoss(Base):
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, dim1, dim2))
-        target[0][0][0] = 1
+        target[0][0][0] = np.int64(1)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
 
@@ -330,7 +330,7 @@ class NegativeLogLikelihoodLoss(Base):
         np.random.seed(0)
         input = np.random.rand(N, C, d1).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, d1))
-        target[0][0] = 1
+        target[0][0] = np.int64(1)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
 
@@ -353,7 +353,7 @@ class NegativeLogLikelihoodLoss(Base):
         np.random.seed(0)
         input = np.random.rand(N, C, d1).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, d1))
-        target[0][0] = 1
+        target[0][0] = np.int64(1)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
