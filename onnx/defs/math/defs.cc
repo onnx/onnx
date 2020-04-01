@@ -2163,6 +2163,9 @@ void einsumRankInference(
       size_t rank =
           ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
       if (num_ellipsis == 0) {
+        if (rank + 3 < term.size()) {
+          fail_shape_inference("Ellipsis represents incompatible dimensions.");
+        }
         num_ellipsis_indices = rank - term.size() + 3;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
@@ -2188,7 +2191,7 @@ void einsumRankInference(
     auto right_ellipsis_index = right_equation.find("...");
     if (right_ellipsis_index !=
         std::string::npos) { // Right-hand side contains ellipsis
-      for (size_t i = 0; i < num_ellipsis; ++i) {
+      for (size_t i = 0; i < num_ellipsis_indices; ++i) {
         output_shape->add_dim();
       }
     }
