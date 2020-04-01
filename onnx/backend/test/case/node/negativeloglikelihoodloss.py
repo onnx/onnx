@@ -44,7 +44,7 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
     if weight is None and ignore_index is not None:
         c = input_shape[1]
         weight = np.ones(c, dtype=np.float32)
-        weight[ignore_index] = 0
+        weight[ignore_index] = np.float32(0)
 
     if weight is not None:
         # Gather(input=weight, index=target)

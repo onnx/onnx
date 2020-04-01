@@ -44,7 +44,7 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=N
     if weight is None and ignore_index is not None:
         c = input_shape[1]
         weight = np.ones(c, dtype=np.float32)
-        weight[ignore_index] = 0
+        weight[ignore_index] = np.float32(0)
 
     if weight is not None:
         gather_weight = np.take(weight, target)
