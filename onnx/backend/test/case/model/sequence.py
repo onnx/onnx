@@ -360,7 +360,3 @@ class Sequence(Base):
 
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x, splits], outputs=[out_len], name="test_sequence_model8")
-
-
-model = onnx.shape_inference.infer_shapes(onnx.load('onnx/backend/test/data/simple/test_sequence_model8/model.onnx'), True)
-print(onnx.checker.check_model(model, True))
