@@ -12,6 +12,16 @@ matrix:
       env: PYTHON_VERSION=python3 ONNX_ML=0
       language: python
       python: "3.6"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3 ONNX_ML=0 ONNX_DEBUG=1
+      language: python
+      python: "3.6"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3 ONNX_ML=1 ONNX_DEBUG=1
+      language: python
+      python: "3.6"
     - os: osx
       osx_image: xcode9.3
       env: PYTHON_VERSION=python2 ONNX_ML=0
@@ -34,6 +44,9 @@ matrix:
     - os: osx
       osx_image: xcode9.3
       env: PYTHON_VERSION=python3
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python3 ONNX_DEBUG=1
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python2 LITE=1

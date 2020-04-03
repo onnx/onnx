@@ -7,35 +7,39 @@
 
 namespace ONNX_NAMESPACE {
 
-std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit){
-    if (supports8bit) {
-        auto data_types = OpSchema::numeric_types_for_math_reduction();
-        data_types.push_back("tensor(uint8)");
-        data_types.push_back("tensor(int8)");
+std::vector<std::string> GetSupportedDataTypesForReductionOps(
+    bool supports8bit) {
+  if (supports8bit) {
+    auto data_types = OpSchema::numeric_types_for_math_reduction();
+    data_types.push_back("tensor(uint8)");
+    data_types.push_back("tensor(int8)");
 
-        return data_types;
-    }
+    return data_types;
+  }
 
-    return OpSchema::numeric_types_for_math_reduction();
+  return OpSchema::numeric_types_for_math_reduction();
 }
 
-std::function<void(OpSchema&)> ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false) {
+std::function<void(OpSchema&)> ReduceDocGenerator(
+    const char* name,
+    bool supports_8bit_datatypes = false) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
 tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
         "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
@@ -46,9 +50,9 @@ False instead of True.)DOC";
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
-        supports_8bit_datatypes ? 
-        "Constrain input and output types to high-precision and 8 bit numeric tensors." :
-        "Constrain input and output types to high-precision numeric tensors.");
+        supports_8bit_datatypes
+            ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
+            : "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -147,7 +151,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the 
 provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
 If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
@@ -155,7 +160,7 @@ If select_last_index is True (default False), the index of the last occurrence o
 is selected if the {name} appears more than once in the input. Otherwise the index of the 
 first occurrence is selected.
 The type of the output tensor is integer.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
@@ -200,7 +205,7 @@ The type of the output tensor is integer.)DOC";
         axis = axis_proto->i();
         if (axis < -input_ndim || axis >= input_ndim) {
           fail_shape_inference(
-            "'axis' must be in [-rank(indices), rank(indices)-1]");
+              "'axis' must be in [-rank(indices), rank(indices)-1]");
         }
         if (axis < 0)
           axis += input_ndim;

@@ -10,24 +10,25 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset1(
     const char* name,
     int opset = 1) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
 tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axes",
-        opset >= 11 ?
-        "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data)." :
-        "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor.",
+        opset >= 11
+            ? "A list of integers, along which to reduce. The default is to reduce over "
+              "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data)."
+            : "A list of integers, along which to reduce. The default is to reduce over "
+              "all the dimensions of the input tensor.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
@@ -143,12 +144,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the
 provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
 If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
 The type of the output tensor is integer.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
@@ -268,7 +270,7 @@ The type of the output tensor is integer.)DOC";
         axis = axis_proto->i();
         if (axis < -input_ndim || axis >= input_ndim) {
           fail_shape_inference(
-            "'axis' must be in [-rank(indices), rank(indices)-1]");
+              "'axis' must be in [-rank(indices), rank(indices)-1]");
         }
         if (axis < 0)
           axis += input_ndim;

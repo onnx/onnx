@@ -1257,7 +1257,9 @@ s = np.array([1.0, 1.5]).astype(np.float32)
 bias = np.array([0, 1]).astype(np.float32)
 mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
-training_mode = np.ones(1, dtype=bool)
+# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
+# working around by using np.byte(1).astype(bool)
+training_mode = np.byte(1).astype(bool)
 y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
@@ -1276,7 +1278,7 @@ s = np.random.randn(3).astype(np.float32)
 bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
-training_mode = np.ones(1, dtype=bool)
+training_mode = np.byte(1).astype(bool)
 momentum = 0.9
 epsilon = 1e-2
 y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
@@ -6210,7 +6212,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### NegativeLogLikelihoodLoss
-There are 7 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>input_shape_is_NC</summary>
 
@@ -6379,6 +6381,34 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, targe
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
     name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index</summary>
+
+```python
+reduction = 'sum'
+ignore_index = np.int64(0)
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target', 'weight'],
+    outputs=['loss'],
+    reduction=reduction,
+    ignore_index=ignore_index
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target[0][0][0] = 0
+weight = np.random.rand(C).astype(np.float32)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
+
+expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index')
 ```
 
 </details>
@@ -10671,7 +10701,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### SoftmaxCrossEntropyLoss
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>softmaxcrossentropy_mean</summary>
 
@@ -10748,6 +10778,36 @@ sce = softmaxcrossentropy(x, labels, weight=weights)
 
 # Check results
 expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_weights_ignore_index</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(0)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z'],
+                             reduction=reduction,
+                             ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+labels[0] = 0
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index')
 ```
 
 </details>
