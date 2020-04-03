@@ -10743,7 +10743,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>ignore_index</tt> : int</dt>
-<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient. Its an optional value.</dd>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean (default). 'none': the output is the loss for each sample. 'sum': the output will be summed. 'mean': the sum of the output will be divided by the sum of applied weights.</dd>
 </dl>
@@ -18308,7 +18308,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>ignore_index</tt> : int</dt>
-<dd>Specifies a target value that is ignored and does not contribute to the input gradient.</dd>
+<dd>Specifies a target value that is ignored and does not contribute to the input gradient. Its an optional value.</dd>
 <dt><tt>reduction</tt> : string (default is mean)</dt>
 <dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': no reduction will be applied, 'sum': the output will be summed. 'mean': the sum of the output will be divided by the number of elements in the output.</dd>
 </dl>
