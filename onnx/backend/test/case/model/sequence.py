@@ -65,7 +65,7 @@ def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
 
 def ConcatFromSequenceImpl(sequence, axis, new_axis=0):
     # type: (List[np.ndarray], int, Optional[int]) -> np.ndarray
-    if new_axis:
+    if not new_axis:
         return np.concatenate(sequence, axis)
     else:
         return np.stack(sequence, axis)
@@ -260,7 +260,7 @@ class Sequence(Base):
         y = np.zeros(tensor_shape, dtype=np.float32)
         z = np.ones(tensor_shape, dtype=np.float32) * 2
         out = SequenceConstructImpl(x, y, z)
-        concat_out = ConcatFromSequenceImpl(out, -1)
+        concat_out = ConcatFromSequenceImpl(out, -1, 1)
 
         graph = make_graph(
             [seq_construct_node, seq_concat_node],
@@ -360,3 +360,7 @@ class Sequence(Base):
 
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x, splits], outputs=[out_len], name="test_sequence_model8")
+
+
+model = onnx.shape_inference.infer_shapes(onnx.load('onnx/backend/test/data/simple/test_sequence_model8/model.onnx'), True)
+print(onnx.checker.check_model(model, True))
