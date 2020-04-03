@@ -8,7 +8,7 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import SequenceProto, TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+from onnx import SequenceProto, MapProto, TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
@@ -189,24 +189,24 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        vals # type: TypeProto
+        values   # type: TypeProto
 ):  # type: (...) -> SequenceProto
     '''
     Make a Sequence with specified TypeProto value arguments.
     '''
     sequence = SequenceProto()
-    sequence.values.extend(vals)
+    sequence.values.extend(values)
     return sequence
 
 
 def make_map(
-        vals # type: TypeProto
+        values   # type: TypeProto
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value arguments.
     '''
     map = MapProto()
-    map.pairs.extend(vals)
+    map.pairs.extend(values)
     return map
 
 
