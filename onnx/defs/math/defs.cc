@@ -2042,8 +2042,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("mean"))
         .Attr(
             "ignore_index",
-            "Specifies a target value that is ignored and does not contribute to the input gradient. "
-            "It is an optional value and valid values are [0, C).",
+            "Specifies a target value that is ignored and does not contribute to the input gradient. It's an optional value.",
             AttributeProto::INT,
             false)
         .TypeConstraint(
@@ -2544,8 +2543,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("mean"))
         .Attr(
             "ignore_index",
-            "Specifies a target value that is ignored and does not contribute to the input gradient. "
-            "It is an optional value and valid values are [0, C).",
+            "Specifies a target value that is ignored and does not contribute to the input gradient. It's an optional value.",
             AttributeProto::INT,
             false)
         .Input(
