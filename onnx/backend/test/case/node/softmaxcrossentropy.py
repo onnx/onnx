@@ -11,70 +11,63 @@ from . import expect
 
 
 def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=None):  # type: ignore
+    # compute log_softmax
     max_x = np.max(x, axis=1, keepdims=True)
     exp_x = np.exp(x - max_x)
     p = exp_x / np.sum(exp_x, axis=1, keepdims=True)
     inp = np.log(p)
+
     input_shape = inp.shape
+    target_shape = target.shape
+    N = input_shape[0]
+    C = input_shape[1]
+
+    # initialize the positional weights when required
+    gather_weight = None
+    if weight is not None:
+        # setting mode='clip' to deal with ignore_index > C cases.
+        # when the target valeu is > C, it doesn't matter which value we are
+        # taking in gather_weight, since it will be set to 0 in the following lines
+        gather_weight = np.take(weight, target, mode='clip')
+        if ignore_index is not None:
+            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(dtype=np.float32)
+    elif ignore_index is not None:
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=np.float32)
+
+    # if input is 4-d and above, make it 3-d
+    if len(input_shape) > 3:
+        inp = inp.reshape((N, C, -1))
+        target = target.reshape((N, -1))
+
     if len(input_shape) == 2:
-        N, C = input_shape
         neg_gather_element_input = np.zeros((N, ), dtype=np.float32)
         for i in range(N):
             if target[i] != ignore_index:
                 neg_gather_element_input[i] = -inp[i][target[i]]
-    elif len(input_shape) == 3:
-        N, C, D = input_shape
+    else:  # 3-d and above
+        D = inp.shape[2]
         neg_gather_element_input = np.zeros((N, D), dtype=np.float32)
         for i in range(N):
             for d in range(D):
                 if target[i][d] != ignore_index:
                     neg_gather_element_input[i][d] = -inp[i][target[i][d]][d]
-    elif len(input_shape) == 4:
-        N, C, D, H = input_shape
-        neg_gather_element_input = np.zeros((N, D, H), dtype=np.float32)
-        for i in range(N):
-            for d in range(D):
-                for h in range(H):
-                    if target[i][d][h] != ignore_index:
-                        neg_gather_element_input[i][d][h] = -inp[i][target[i][d][h]][d][h]
-    else:
-        raise NotImplementedError
+
     loss = neg_gather_element_input
 
-    if weight is None and ignore_index is not None:
-        c = input_shape[1]
-        weight = np.ones(c, dtype=np.float32)
-        weight[ignore_index] = np.float32(0)  # type: ignore
+    # if the input was 4-d or above reshape to the right shape
+    if len(input_shape) > 3:
+        loss = loss.reshape(target_shape)
 
-    if weight is not None:
-        gather_weight = np.take(weight, target)
-
-        if ignore_index is not None:
-            if len(input_shape) == 2:
-                for i in range(input_shape[0]):
-                    if target[i] == ignore_index:
-                        gather_weight[i] = 0
-            elif len(input_shape) == 3:
-                for i in range(input_shape[0]):
-                    for j in range(input_shape[2]):
-                        if target[i][j] == ignore_index:
-                            gather_weight[i][j] = 0
-            elif len(input_shape) == 4:
-                for i in range(input_shape[0]):
-                    for j in range(input_shape[2]):
-                        for k in range(input_shape[3]):
-                            if target[i][j][k] == ignore_index:
-                                gather_weight[i][j][k] = 0
-            else:
-                raise NotImplementedError
-
+    # apply the weights when required
+    if gather_weight is not None:
         loss = gather_weight * loss
         if reduction == 'mean':
-            return loss.sum() / gather_weight.sum()
+            loss = loss.sum() / gather_weight.sum()
+            return loss
 
     if reduction == 'mean':
         loss = np.mean(loss)
-    if reduction == 'sum':
+    elif reduction == 'sum':
         loss = np.sum(loss)
 
     return loss

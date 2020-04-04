@@ -11,74 +11,60 @@ from . import expect
 
 
 def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='mean', ignore_index=None):  # type: ignore
-    ''' Compute negative_log_likelihood_loss '''
     input_shape = input.shape
+    target_shape = target.shape
+    N = input_shape[0]
+    C = input_shape[1]
 
-    # GatherElement(-input, target)
+    # initialize the positional weights when required
+    gather_weight = None
+    if weight is not None:
+        # setting mode='clip' to deal with ignore_index > C cases.
+        # when the target valeu is > C, it doesn't matter which value we are
+        # taking in gather_weight, since it will be set to 0 in the following lines
+        gather_weight = np.take(weight, target, mode='clip')
+        if ignore_index is not None:
+            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(dtype=np.float32)
+    elif ignore_index is not None:
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=np.float32)
+
+    # if input is 4-d and above, make it 3-d
+    if len(input_shape) > 3:
+        input = input.reshape((N, C, -1))
+        target = target.reshape((N, -1))
+
     if len(input_shape) == 2:
-        N, C = input_shape
         neg_gather_element_input = np.zeros((N, ), dtype=np.float32)
         for i in range(N):
             if target[i] != ignore_index:
                 neg_gather_element_input[i] = -input[i][target[i]]
-    elif len(input_shape) == 3:
-        N, C, dim1 = input_shape
-        neg_gather_element_input = np.zeros((N, dim1), dtype=np.float32)
+    else:
+        D = input.shape[2]
+        neg_gather_element_input = np.zeros((N, D), dtype=np.float32)
         for i in range(N):
-            for d1 in range(dim1):
+            for d1 in range(D):
                 if target[i][d1] != ignore_index:
                     neg_gather_element_input[i][d1] = -input[i][target[i][d1]][d1]
-    elif len(input_shape) == 4:
-        N, C, dim1, dim2 = input_shape
-        neg_gather_element_input = np.zeros((N, dim1, dim2), dtype=np.float32)
-        for i in range(N):
-            for d1 in range(dim1):
-                for d2 in range(dim2):
-                    if target[i][d1][d2] != ignore_index:
-                        neg_gather_element_input[i][d1][d2] = -input[i][target[i][d1][d2]][d1][d2]
-    else:
-        raise NotImplementedError
 
     loss = neg_gather_element_input
 
-    if weight is None and ignore_index is not None:
-        c = input_shape[1]
-        weight = np.ones(c, dtype=np.float32)
-        weight[ignore_index] = np.float32(0)  # type: ignore
+    # if the input was 4-d or above reshape to the right shape
+    if len(input_shape) > 3:
+        loss = loss.reshape(target_shape)
 
-    if weight is not None:
-        # Gather(input=weight, index=target)
-        gather_weight = np.take(weight, target)
-
-        if ignore_index is not None:
-            if len(input_shape) == 2:
-                for i in range(input_shape[0]):
-                    if target[i] == ignore_index:
-                        gather_weight[i] = 0
-            elif len(input_shape) == 3:
-                for i in range(input_shape[0]):
-                    for j in range(input_shape[2]):
-                        if target[i][j] == ignore_index:
-                            gather_weight[i][j] = 0
-            elif len(input_shape) == 4:
-                for i in range(input_shape[0]):
-                    for j in range(input_shape[2]):
-                        for k in range(input_shape[3]):
-                            if target[i][j][k] == ignore_index:
-                                gather_weight[i][j][k] = 0
-            else:
-                raise NotImplementedError
-
+    # apply the weights when required
+    if gather_weight is not None:
         loss = gather_weight * loss
         if reduction == 'mean':
-            return loss.sum() / gather_weight.sum()
+            loss = loss.sum() / gather_weight.sum()
+            return loss
 
-    if reduction == 'none':
-        return loss
-    elif reduction == 'mean':
-        return np.mean(loss, keepdims=False)
+    if reduction == 'mean':
+        loss = np.mean(loss)
     elif reduction == 'sum':
-        return np.sum(loss, keepdims=False)
+        loss = np.sum(loss)
+
+    return loss
 
 
 class NegativeLogLikelihoodLoss(Base):
