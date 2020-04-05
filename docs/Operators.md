@@ -10831,6 +10831,35 @@ expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
 
 
 <details>
+<summary>input_shape_is_NCd1_ignore_index</summary>
+
+```python
+reduction = 'mean'
+ignore_index = np.int64(1)
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target'],
+    outputs=['loss'],
+    reduction=reduction,
+    ignore_index=ignore_index
+)
+
+N, C, d1 = 3, 5, 2
+np.random.seed(0)
+input = np.random.rand(N, C, d1).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, d1))
+target[0][0] = np.int64(1)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1_ignore_index')
+```
+
+</details>
+
+
+<details>
 <summary>input_shape_is_NCd1_weight</summary>
 
 ```python
@@ -10908,6 +10937,35 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, targe
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
     name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2')
+```
+
+</details>
+
+
+<details>
+<summary>input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index</summary>
+
+```python
+reduction = 'mean'
+ignore_index = np.int64(1)
+node = onnx.helper.make_node(
+    'NegativeLogLikelihoodLoss',
+    inputs=['input', 'target'],
+    outputs=['loss'],
+    reduction=reduction,
+    ignore_index=ignore_index
+)
+
+N, C, dim1, dim2 = 3, 5, 6, 6
+np.random.seed(0)
+input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
+target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target[0][0][0] = np.int64(1)
+
+negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
+
+expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
+    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index')
 ```
 
 </details>

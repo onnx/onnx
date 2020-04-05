@@ -1949,10 +1949,14 @@ bool BuildContextDependentFunctionBody(
                     {},
                     {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
     if (!ctx.hasInput(2)) {
+      body.push_back({{"const_two"},
+                "Constant",
+                {},
+                {MakeAttribute("value", ToDimensionOneTensor(2))}});
       body.push_back({{"input_shape"}, "Shape", {"input"}});
       body.push_back({{"input_class"},
                       "Slice",
-                      {"input_shape", "const_one", "const_one"}});
+                      {"input_shape", "const_one", "const_two"}});
       body.push_back({{"const_weights_ones"},
                       "ConstantOfShape",
                       {"input_class"},
