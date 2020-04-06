@@ -2300,7 +2300,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
-        .Input(0, "X", "Input tensor. Must be full-rank.", "T")
+        .Input(0, "X", "Input tensor. The matrix must be invertible.", "T")
         .Output(0, "Y", "Output tensor of the same type as input.", "T")
         .TypeConstraint(
             "T",

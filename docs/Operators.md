@@ -7380,7 +7380,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor. Must be full-rank.</dd>
+<dd>Input tensor. The matrix must be invertible.</dd>
 </dl>
 
 #### Outputs
