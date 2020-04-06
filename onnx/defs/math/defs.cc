@@ -2290,9 +2290,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Inverse_ver12_doc = R"DOC(
 Calculates inverse of a square matrix or batches of square matrices.
 Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-and the inner-most 2 dimensions form square matrices. The matrices must be invertible (have full rank).
-The behavior is undefined otherwise. The output is a tensor of shape `[*, M, M]`, containing the individual
-inverses of all input submatrices.
+and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
+The behavior where one of the matrices is not invertible is undefined. The implementation can choose
+to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
+containing the individual inverses of all input submatrices.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2300,7 +2301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
-        .Input(0, "X", "Input tensor. The matrix must be invertible.", "T")
+        .Input(0, "X", "Input tensor. Every matrix in the batch must be invertible.", "T")
         .Output(0, "Y", "Output tensor of the same type as input.", "T")
         .TypeConstraint(
             "T",
