@@ -14726,7 +14726,7 @@ This version of the operator has been available since version 12 of the default 
   
   loss is zero for the case when target-value equals ignore_index.
       
-      loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k]] = ignore_index
+      loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
   
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
@@ -14981,7 +14981,7 @@ This version of the operator has been available since version 12 of the default 
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
   
   loss is zero for the case when label-value equals ignore_index.
-      l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk]] = ignore_index
+      l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
   
   where:
       p = Softmax(scores)
