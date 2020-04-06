@@ -1765,7 +1765,8 @@ static const char* NegativeLogLikelihoodLoss_ver12_doc = R"DOC(
 A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
 Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
 The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
-The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
+or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
 The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
@@ -1773,6 +1774,10 @@ The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = ta
 When an optional "weight" is provided, the sample loss is calculated as:
 
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+
+loss is zero for the case when target-value equals ignore_index.
+    
+    loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
 
 If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
@@ -2043,7 +2048,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "target",
-            "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).",
+            "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C). "
+            "If ignore_index is specified, it may have a value outside [0, C) and the target values should either be "
+            "in the range [0, C) or have the value ignore_index.",
             "Tind")
         .Input(
             2,
@@ -2492,6 +2499,9 @@ The loss for one sample, l_i, can caculated as follows:
 or
     l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
 
+loss is zero for the case when label-value equals ignore_index.
+    l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+
 where:
     p = Softmax(scores)
     y = Log(p)
@@ -2578,7 +2588,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "labels",
             "The ground truth output tensor, with shape [batch_size], or "
-            "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions.",
+            "[batch_size, D1, D2, ..., Dk], where K is the number of dimensions. "
+            "Labels element value shall be in range of [0, C). "
+            "If ignore_index is specified, it may have a value outside [0, C) and the label values should either be "
+            "in the range [0, C) or have the value ignore_index.",
             "Tind")
         .Input(
             2,
