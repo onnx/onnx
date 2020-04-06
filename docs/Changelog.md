@@ -14445,8 +14445,9 @@ This version of the operator has been available since version 12 of the default 
 
   Calculates inverse of a square matrix or batches of square matrices.
   Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices. These square matrices may or may not be full-rank.
-  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+  and the inner-most 2 dimensions form square matrices. The matrices must be invertible (have full rank).
+  The behavior is undefined otherwise. The output is a tensor of shape `[*, M, M]`, containing the individual
+  inverses of all input submatrices.
 
 #### Version
 
@@ -14456,7 +14457,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor. May or may not be full-rank.</dd>
+<dd>Input tensor. Must be full-rank.</dd>
 </dl>
 
 #### Outputs
