@@ -10656,7 +10656,8 @@ expect(node, inputs=[x], outputs=[y],
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
   Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
   The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
-  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes) for N x d1 x d2 x ... x dk samples.
+  The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
+or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
   The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
