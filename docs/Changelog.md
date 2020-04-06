@@ -14724,6 +14724,10 @@ This version of the operator has been available since version 12 of the default 
   
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
   
+  loss is zero for the case when target-value equals ignore_index.
+      
+      loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k]] = ignore_index
+  
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
   
@@ -14813,7 +14817,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).</dd>
 <dt><tt>target</tt> : Tind</dt>
-<dd>Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C).</dd>
+<dd>Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C). If ignore_index is specified, it may have a value outside [0, C) and the target values should either be in the range [0, C) or have the value ignore_index.</dd>
 <dt><tt>weight</tt> (optional) : T</dt>
 <dd>Optional rescaling weight tensor. If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.</dd>
 </dl>
@@ -14976,6 +14980,9 @@ This version of the operator has been available since version 12 of the default 
   or
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
   
+  loss is zero for the case when label-value equals ignore_index.
+      l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk]] = ignore_index
+  
   where:
       p = Softmax(scores)
       y = Log(p)
@@ -15006,7 +15013,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>scores</tt> : T</dt>
 <dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, D1, D2 , ..., Dk], where K is the number of dimensions.</dd>
 <dt><tt>labels</tt> : Tind</dt>
-<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions.</dd>
+<dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions. Labels element value shall be in range of [0, C). If ignore_index is specified, it may have a value outside [0, C) and the label values should either be in the range [0, C) or have the value ignore_index.</dd>
 <dt><tt>weights</tt> (optional) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
 </dl>
