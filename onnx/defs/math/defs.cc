@@ -1862,7 +1862,6 @@ bool BuildContextDependentFunctionBody(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-    
   body.push_back({{"const_zero"},
                   "Constant",
                   {},
@@ -1944,7 +1943,6 @@ bool BuildContextDependentFunctionBody(
       }
     }
   } else {
-    
     body.push_back(
         {{"const_ignore_index"},
          "Constant",
@@ -1954,11 +1952,8 @@ bool BuildContextDependentFunctionBody(
              ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
 
     body.push_back({{"mask"}, "Equal", {"expanded_target", "const_ignore_index"}});
-
     body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero", "expanded_target"}});
-
     body.push_back({{"input_gather_element"}, "GatherElements", {"input", "transform_targets"}, {MakeAttribute("axis", (int64_t)1)}});
-  
     body.push_back({{"const_zero_float"},
                 "Constant",
                 {},
@@ -1966,9 +1961,7 @@ bool BuildContextDependentFunctionBody(
 
     body.push_back(
         {{"input_gather_element_transform"}, "Where", {"mask", "const_zero_float", "input_gather_element"}});
-
     body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element_transform"}});
-
     body.push_back({{"loss_N1dd"},
                     "Slice",
                     {"loss_NCdd", "const_zero", "const_one", "const_one"}});
@@ -1979,26 +1972,24 @@ bool BuildContextDependentFunctionBody(
                 {"mask"},
                 {MakeAttribute("axes", std::vector<int64_t>({1}))}});
 
-      body.push_back({{"target_shape"}, "Shape", {"target"}});
-      body.push_back({{"const_weights_ones_float"},
-                      "ConstantOfShape",
-                      {"target_shape"},
-                      {MakeAttribute("value", ToDimensionOneFloatTensor(1))}});
+    body.push_back({{"const_one_float"},
+                "Constant",
+                {},
+                {MakeAttribute("value", ToDimensionOneFloatTensor(1.0f))}});
 
-      body.push_back({{"weight_gather"}, "Where", {"squeeze_mask", "const_zero_float", "const_weights_ones_float"}});
+      body.push_back({{"weight_gather"}, "Where", {"squeeze_mask", "const_zero_float", "const_one_float"}});
 
     } else {
       body.push_back(
       {{"weight_gather_temp"}, "Gather", {"weight", "transform_targets"}});
-      
+
       body.push_back(
       {{"weight_gather_temp_1"}, "Where", {"mask", "const_zero_float", "weight_gather_temp"}});
-      
+
       body.push_back({{"weight_gather"},
           "Squeeze",
           {"weight_gather_temp_1"},
           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-
     }
 
     body.push_back({{"loss_unweighted"},
