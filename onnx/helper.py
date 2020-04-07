@@ -8,7 +8,7 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import SequenceProto, MapProto, SequenceMapElement, KeyValuePair, TensorProto, \
+from onnx import SequenceProto, MapProto, SequenceMapElement, TensorProto, \
     SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
@@ -203,7 +203,7 @@ def make_sequence(
 
 
 def make_map(
-        pairs,   # type: Sequence[KeyValuePair]
+        pairs,   # type: Sequence[MapProto.KeyValuePair]
         key_type, # type: int
         value_type, # type: TypeProto
         raw=False  # type: bool
