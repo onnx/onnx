@@ -60,6 +60,20 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.BOOL): 'int32_data',
 }
 
+MAP_KEY_TYPE_TO_NP_TYPE = {
+    int(MapProto.KeyValuePair.INT8): np.dtype('int8'),
+    int(MapProto.KeyValuePair.INT16): np.dtype('int16'),
+    int(MapProto.KeyValuePair.INT32): np.dtype('int32'),
+    int(MapProto.KeyValuePair.INT64): np.dtype('int64'),
+    int(MapProto.KeyValuePair.UINT8): np.dtype('uint8'),
+    int(MapProto.KeyValuePair.UINT16): np.dtype('uint16'),
+    int(MapProto.KeyValuePair.UINT32): np.dtype('uint32'),
+    int(MapProto.KeyValuePair.UINT64): np.dtype('uint64'),
+    int(MapProto.KeyValuePair.STRING): np.dtype(np.object),
+}
+
+NP_TYPE_TO_MAP_KEY_TYPE = {v: k for k, v in MAP_KEY_TYPE_TO_NP_TYPE.items()}
+
 STORAGE_MAP_KEY_TYPE_TO_FIELD = {
     int(MapProto.KeyValuePair.INT8): 'int32_key',
     int(MapProto.KeyValuePair.INT16): 'int32_key',
@@ -69,5 +83,5 @@ STORAGE_MAP_KEY_TYPE_TO_FIELD = {
     int(MapProto.KeyValuePair.UINT16): 'int32_key',
     int(MapProto.KeyValuePair.UINT32): 'uint64_key',
     int(MapProto.KeyValuePair.UINT64): 'uint64_key',
-    int(MapProto.KeyValuePair.STRING): 'string_key',
+    int(MapProto.KeyValuePair.STRING): 'string_key'
 }
