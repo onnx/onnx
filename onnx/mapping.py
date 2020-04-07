@@ -59,3 +59,15 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.STRING): 'string_data',
     int(TensorProto.BOOL): 'int32_data',
 }
+
+STORAGE_MAP_KEY_TYPE_TO_FIELD = {
+    int(MapProto.INT8): 'int32_key',
+    int(MapProto.INT16): 'int32_key',
+    int(MapProto.INT32): 'int32_key',
+    int(MapProto.INT64): 'int64_key',
+    int(MapProto.UINT8): 'int32_key',
+    int(MapProto.UINT16): 'int32_key',
+    int(MapProto.UINT32): 'uint64_key',
+    int(MapProto.UINT64): 'uint64_key',
+    int(TensorProto.STRING): 'string_key',
+}

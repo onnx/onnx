@@ -8,7 +8,8 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import SequenceProto, MapProto, TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+from onnx import SequenceProto, MapProto, SequenceMapElement, KeyValuePair, TensorProto, \
+    SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
@@ -189,24 +190,45 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        values   # type: TypeProto
+        values,   # type: Sequence[TypeProto]
+        elem_type # type: TypeProto
 ):  # type: (...) -> SequenceProto
     '''
-    Make a Sequence with specified TypeProto value arguments.
+    Make a Sequence with specified SequenceMapElement value arguments.
     '''
     sequence = SequenceProto()
     sequence.values.extend(values)
+    sequence.elem_type = elem_type
     return sequence
 
 
 def make_map(
-        values   # type: TypeProto
+        pairs,   # type: Sequence[KeyValuePair]
+        key_type, # type: int
+        value_type, # type: TypeProto
+        raw=False  # type: bool
 ):  # type: (...) -> MapProto
     '''
-    Make a Map with specified key-value arguments.
+    Make a Map with specified key-value argument.
+    If raw is False, this function will choose the corresponding proto
+    field to store the key based on data_type. If raw is True, use "raw_key"
+    proto field to store the key, and values should be of type bytes in
+    this case.
     '''
     map = MapProto()
-    map.pairs.extend(values)
+    map.key_type = key_type
+    map.value_type = value_type
+
+    # if key_type == MapProto.STRING:
+    #     assert not raw, "Can not use raw_key to store string type"
+    #
+    # if raw:
+    #     map.KeyValuePair.raw_key = pairs.raw_key
+    # else:
+    #     field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
+    #     getattr(map.KeyValuePair, field).extend(key)
+
+    map.pairs.extend(pairs)
     return map
 
 
