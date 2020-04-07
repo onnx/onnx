@@ -14449,6 +14449,8 @@ This version of the operator has been available since version 12 of the default 
   The behavior where one of the matrices is not invertible is undefined. The implementation can choose
   to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
   containing the individual inverses of all input submatrices.
+  For an input tensor of integer type, output will be a tensor of float type (output
+  type is float32 for input type int32, and float64 for input type int64).
 
 #### Version
 
@@ -14464,15 +14466,17 @@ This version of the operator has been available since version 12 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor of the same type as input.</dd>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output tensor of the same shape as input.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numerical tensor types.</dd>
+<dt><tt>T</tt> : tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input type to 32-bit and 64-bit float and int tensors.</dd>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain output type to 32-bit and 64-bit float tensors.</dd>
 </dl>
 
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
