@@ -28,36 +28,6 @@ DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
 }
 #endif
 
-OpSchema::FormalParameter::FormalParameter(
-    std::string name,
-    DataTypeSet allowed_type_set,
-    std::string type_str,
-    std::string description,
-    FormalParameterOption param_option,
-    bool is_homogeneous,
-    int min_arity)
-    : name_(std::move(name)),
-      type_set_(std::move(allowed_type_set)),
-      type_str_(std::move(type_str)),
-      description_(std::move(description)),
-      param_option_(param_option),
-      is_homogeneous_(is_homogeneous),
-      min_arity_(min_arity) {}
-
-OpSchema::FormalParameter::FormalParameter(
-    std::string name,
-    std::string description,
-    std::string type_str,
-    FormalParameterOption param_option,
-    bool is_homogeneous,
-    int min_arity)
-    : name_(std::move(name)),
-      type_str_(std::move(type_str)),
-      description_(std::move(description)),
-      param_option_(param_option),
-      is_homogeneous_(is_homogeneous),
-      min_arity_(min_arity) {}
-
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
 }
@@ -441,11 +411,6 @@ OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   return *this;
 }
 
-OpSchema& OpSchema::SetDoc(std::string doc) {
-  doc_ = std::move(doc);
-  return *this;
-}
-
 // Functions to specify name for the operator schema.
 OpSchema& OpSchema::SetName(std::string name) {
   name_ = std::move(name);
@@ -607,7 +572,7 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
-    std::string description,
+    const std::string& description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
@@ -617,7 +582,11 @@ OpSchema& OpSchema::Input(
   }
   inputs_[n] = FormalParameter(
       std::move(name),
-      std::move(description),
+#ifndef __ONNX_NO_DOC_STRINGS
+      description,
+#else
+      std::string(),
+#endif
       std::move(type_str),
       param_option,
       is_homogeneous,
@@ -636,7 +605,11 @@ OpSchema& OpSchema::Input(
   return Input(
       n,
       std::string(name),
+#ifndef __ONNX_NO_DOC_STRINGS
       std::string(description),
+#else
+      std::string(),
+#endif
       std::string(type_str),
       param_option,
       is_homogeneous,
@@ -646,7 +619,7 @@ OpSchema& OpSchema::Input(
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
-    std::string description,
+    const std::string& description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
@@ -656,7 +629,11 @@ OpSchema& OpSchema::Output(
   }
   outputs_[n] = FormalParameter(
       std::move(name),
-      std::move(description),
+#ifndef __ONNX_NO_DOC_STRINGS
+      description,
+#else
+      std::string(),
+#endif
       std::move(type_str),
       param_option,
       is_homogeneous,
@@ -675,7 +652,11 @@ OpSchema& OpSchema::Output(
   return Output(
       n,
       std::string(name),
+#ifndef __ONNX_NO_DOC_STRINGS
       std::string(description),
+#else
+      std::string(),
+#endif
       std::string(type_str),
       param_option,
       is_homogeneous,
@@ -747,7 +728,7 @@ bool OpSchema::BuildContextDependentFunction(
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
     new_node->CopyFrom(node);
   }
