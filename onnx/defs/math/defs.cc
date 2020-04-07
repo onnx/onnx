@@ -2325,7 +2325,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output type to 32-bit and 64-bit float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto x_type = ctx.getInputType(0);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == x_type || nullptr == y_type || x_type->value_case() != TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          auto input_elem_type = x_type->tensor_type().elem_type();
+
+          // Output is of type float32 for input type int32, and float64 for input type int64
+          if ((input_elem_type == TensorProto::FLOAT) || (input_elem_type == TensorProto::INT32)) {
+            y_type->mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
+          } else if ((input_elem_type == TensorProto::DOUBLE) || (input_elem_type == TensorProto::INT64)) {
+            y_type->mutable_tensor_type()->set_elem_type(TensorProto::DOUBLE);
+          }
 
           // Shape inference
           if (hasInputShape(ctx, 0)) {
