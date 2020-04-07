@@ -15040,6 +15040,103 @@ This version of the operator has been available since version 12 of the default 
 
 # ai.onnx.training
 ## Version 1 of the 'ai.onnx.training' operator set
+### <a name="ai.onnx.training.Adagrad-1"></a>**ai.onnx.training.Adagrad-1**</a>
+
+  Compute one iteration of ADAGRAD, a stochastic gradient based optimization
+      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  
+      Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
+      some parameters:
+       
+       - The initial learning-rate "R".
+       - The update count "T". That is, the number of training iterations conducted.
+       - A L2-norm regularization coefficient "norm_coefficient".
+       - A learning-rate decay factor "decay_factor".
+       - A small constant "epsilon" to avoid dividing-by-zero. 
+  
+      At each ADAGRAD iteration, the optimized tensors are moved along a direction
+      computed based on their estimated gradient and accumulated squared gradient. Assume
+      that only a single tensor "X" is updated by this operator. We need the value of "X",
+      its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
+      this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
+      parameters are given as attributes because they are usually constants. Also, the
+      corresponding output tensors are the new value of "X" (called "X_new"), and then
+      the new accumulated squared gradient (called "H_new"). Those outputs are computed
+      from the given inputs following the pseudo code below.
+  
+      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  
+        // Compute a scalar learning-rate factor. At the first update of X, T is generally
+        // 0 (0-based update index) or 1 (1-based update index).
+        r = R / (1 + T * decay_factor);
+  
+        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+        G_regularized = norm_coefficient * X + G;
+  
+        // Compute new accumulated squared gradient.
+        H_new = H + G_regularized * G_regularized;
+  
+        // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
+        // computes element-wise square-root.
+        H_adaptive = Sqrt(H_new) + epsilon
+  
+        // Compute the new value of "X".
+        X_new = X - r * G_regularized / H_adaptive;
+  
+      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
+      pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
+      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+      be concatenated too) and then just reuse the entire pseudo code.
+  
+      Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
+      In that reference paper, this operator is a special case of the Figure 1's composite mirror
+      descent update.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
+<dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
+<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dd>Small scalar to avoid dividing by zero.</dd>
+<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
+</dl>
+
+#### Inputs (3 - &#8734;)
+
+<dl>
+<dt><tt>R</tt> : T1</dt>
+<dd>The initial learning rate.</dd>
+<dt><tt>T</tt> : T2</dt>
+<dd>The update count of "X". It should be a scalar.</dd>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>The current values of optimized tensors, followed by their respective gradients, followed by their respective accumulated squared gradients.For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>Updated values of optimized tensors, followed by their updated values of accumulated squared gradients. For example, if two tensor "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float scalars.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain input types to 64-bit integer scalars.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="ai.onnx.training.Adam-1"></a>**ai.onnx.training.Adam-1**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
@@ -15432,5 +15529,114 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Allow inputs and outputs to be any kind of tensor.</dd>
+</dl>
+
+### <a name="ai.onnx.training.Momentum-1"></a>**ai.onnx.training.Momentum-1**</a>
+
+  Compute one iteration of stochastic gradient update with momentum.
+      This operator can conduct the optimization of multiple tensor variables.
+  
+      Let's define the behavior of this operator. As you can imagine, SG with momentum requires
+      several parameters:
+       
+       - The learning-rate "R".
+       - The update count "T". That is, the number of conducted training iterations. It should
+         be zero in the first training iteration.
+       - A L2-norm regularization coefficient "norm_coefficient".
+       - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
+       - The scaling coefficient of current gradient "beta".
+       - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
+         be used.
+  
+      For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
+      Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
+      Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
+      momentum (called "V_new").
+      
+      This operator supports two different momentum algorithms. Set the attribute "mode" to
+      "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
+      "standard" to use standard momentum. Computation details are described subsequently.
+  
+      Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+  
+      Pseudo code for SG with standard momentum:
+  
+        // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+        // values of all elements in X.
+        G_regularized = norm_coefficient * X + G
+  
+        // In the first training iteration, beta should always be 1.
+        beta_adjusted = T > 0 ? beta : 1
+  
+        // Compute the current momentum based on previous momentum and the current gradient.
+        V_new = alpha * V + beta_adjusted * G_regularized
+  
+        // Update X.
+        X_new = X - R * V_new
+  
+      Pseudo code for SG with Nesterov's momentum:
+  
+        // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+        // values of all elements in X.
+        G_regularized = norm_coefficient * X + G;
+  
+        // In the first training iteration, beta should always be 1.
+        beta_adjusted = T > 0 ? beta : 1
+  
+        // Compute the current momentum based on previous momentum and the current gradient.
+        V_new = alpha * V + beta_adjusted * G_regularized;
+  
+        // Compute final update direction and then update X.
+        X_new = X - R * (G_regularized + alpha * V_new)
+  
+      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+      pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+      be concatenated too) and then our pseudo code becomes applicable.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (required)</dt>
+<dd>The decay factor of momentum. It should be a scalar.</dd>
+<dt><tt>beta</tt> : float (required)</dt>
+<dd>The coefficient of gradient in computing new momentum. It should be a scalar.</dd>
+<dt><tt>mode</tt> : string (required)</dt>
+<dd>Its value should be either "nesterov" or "standard". The value "nesterov" leads to the use of Nesterov's momentum while "standard" invokes stochastic gradient method using standard momentum</dd>
+<dt><tt>norm_coefficient</tt> : float (required)</dt>
+<dd>Coefficient of 0.5 * norm_coefficient * ||X||^2.</dd>
+</dl>
+
+#### Inputs (3 - &#8734;)
+
+<dl>
+<dt><tt>R</tt> : T1</dt>
+<dd>The learning rate.</dd>
+<dt><tt>T</tt> : T2</dt>
+<dd>Update count of "X". It should be a scalar.</dd>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>It sequentially contains the current values of optimized tensors, then their gradient tensors, and finally their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, The expected input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", momentum of "X_1", momentum of "X_2"].</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>It sequentially contains the new values of optimized tensors and then the new values of their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new momentum of "X_1", new momentum of "X_2"].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float scalars.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain input types to 64-bit integer scalars.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
 </dl>
 
