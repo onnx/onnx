@@ -2301,8 +2301,7 @@ and the inner-most 2 dimensions form square matrices. These matrices must be inv
 The behavior where one of the matrices is not invertible is undefined. The implementation can choose
 to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
 containing the individual inverses of all input submatrices.
-For an input tensor of integer type, output will be a tensor of float type (output
-type is float32 for input type int32, and float64 for input type int64).
+For an input tensor of integer type, output will be a tensor of float type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2311,7 +2310,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
         .Input(0, "X", "Input tensor. Every matrix in the batch must be invertible.", "T")
-        .Output(0, "Y", "Output tensor of the same shape as input.", "T1")
+        .Output(0, "Y", "Output tensor of the same shape as input. Output is of type float32 for input type int32, and float64 for input type int64.", "T1")
         .TypeConstraint(
             "T",
             {"tensor(int32)",

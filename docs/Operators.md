@@ -7372,8 +7372,7 @@ expect(node, inputs=[x, s, bias], outputs=[y],
   The behavior where one of the matrices is not invertible is undefined. The implementation can choose
   to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
   containing the individual inverses of all input submatrices.
-  For an input tensor of integer type, output will be a tensor of float type (output
-  type is float32 for input type int32, and float64 for input type int64).
+  For an input tensor of integer type, output will be a tensor of float type.
 
 #### Version
 
@@ -7390,7 +7389,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
-<dd>Output tensor of the same shape as input.</dd>
+<dd>Output tensor of the same shape as input. Output is of type float32 for input type int32, and float64 for input type int64.</dd>
 </dl>
 
 #### Type Constraints
