@@ -29,7 +29,7 @@ def apply_adam(r, t, x, g, v, h, norm_coefficient, norm_coefficient_post, alpha,
         r_adjusted = r
     # Apply Adam update rule.
     x_new = x - r_adjusted * (v_new / h_sqrt)
-    # It's possible to apply regularization in the end. 
+    # It's possible to apply regularization in the end.
     x_final = (1 - norm_coefficient_post) * x_new
     return x_final, v_new, h_new
 
