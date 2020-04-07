@@ -102,7 +102,8 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
 
 
 def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
-    if len(arr.shape) > 1:
+    if arr.dtype == "object":
+        # np.array of np.arrays
         return onnx.helper.make_sequence_value_info(
             name=name,
             elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],

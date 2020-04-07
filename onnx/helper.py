@@ -13,7 +13,7 @@ from onnx import SequenceProto, MapProto, SequenceMapElement, TensorProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
-from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD, STORAGE_MAP_KEY_TYPE_TO_FIELD
+from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 import numpy as np  # type: ignore
 
@@ -220,7 +220,6 @@ def make_key_value_pair(
         key,  # type: Any
         key_type,  # type: int
         value,  # type: SequenceMapElement
-        value_type,  # type: TypeProto
         raw=False  # type: bool
 ):  # type: (...) -> MapProto.KeyValuePair
     '''
@@ -241,8 +240,7 @@ def make_key_value_pair(
         field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
         getattr(kv_pair, field).extend(key)
 
-    if value_type:
-        kv_pair.value.extend(value)
+    kv_pair.value.extend(value)
 
     return kv_pair
 
