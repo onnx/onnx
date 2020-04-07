@@ -204,33 +204,47 @@ def make_sequence(
 
 def make_map(
         pairs,   # type: Sequence[MapProto.KeyValuePair]
-        key_type, # type: int
-        value_type, # type: TypeProto
-        raw=False  # type: bool
+        key_type,  # type: int
+        value_type  # type: TypeProto
 ):  # type: (...) -> MapProto
     '''
-    Make a Map with specified key-value argument.
+    Make a Map with specified key-value pair arguments.
+    '''
+    map = MapProto()
+    map.key_type = key_type
+    map.value_type = value_type
+    map.pairs.extend(pairs)
+    return map
+
+def make_key_value_pair(
+        key,  # type: Any
+        key_type,  # type: int
+        value,  # type: SequenceMapElement
+        value_type,  # type: TypeProto
+        raw=False  # type: bool
+):  # type: (...) -> MapProto.KeyValuePair
+    '''
+    Make a KeyValuePair element for MapProto.
     If raw is False, this function will choose the corresponding proto
     field to store the key based on data_type. If raw is True, use "raw_key"
     proto field to store the key, and values should be of type bytes in
     this case.
     '''
-    map = MapProto()
-    map.key_type = key_type
-    map.value_type = value_type
+    kv_pair = MapProto.KeyValuePair()
 
-    # if key_type == MapProto.STRING:
-    #     assert not raw, "Can not use raw_key to store string type"
-    #
-    # if raw:
-    #     map.KeyValuePair.raw_key = pairs.raw_key
-    # else:
-    #     field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
-    #     getattr(map.KeyValuePair, field).extend(key)
+    if key_type == MapProto.KeyValuePair.STRING:
+        assert not raw, "Can not use raw_key to store string type"
 
-    map.pairs.extend(pairs)
-    return map
+    if raw:
+        kv_pair.raw_key = key
+    else:
+        field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
+        getattr(kv_pair, field).extend(key)
 
+    if value_type:
+        kv_pair.value.extend(value)
+
+    return kv_pair
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.
