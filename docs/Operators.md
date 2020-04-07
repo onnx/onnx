@@ -21178,23 +21178,26 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
       numpy-style broadcasting support. The pseudo code to compute those outputs is:
   
         // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = norm_coefficient * X + G;
+        G_regularized = norm_coefficient * X + G
   
         // Update exponentially-averaged historical gradient.
-        V_new = alpha * V + (1 - alpha) * G_regularized;
+        V_new = alpha * V + (1 - alpha) * G_regularized
   
         // Update exponentially-averaged historical squared gradient.
-        H_new = beta * H + (1 - beta) * G_regularized * G_regularized;
+        H_new = beta * H + (1 - beta) * G_regularized * G_regularized
   
         // Compute the element-wise square-root of H_new. V_new will be element-wisely
         // divided by H_sqrt for a better update direction.
-        H_sqrt = Sqrt(H_new) + epsilon;
+        H_sqrt = Sqrt(H_new) + epsilon
   
         // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
-        R_adjusted = R * Sqrt(1 - beta**T) / (1 - alpha**T);
+        R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
   
         // Compute new value of "X".
         X_new = X - R_adjusted * V_new / H_sqrt
+  
+        // Post-update regularization.
+        X_final = (1 - norm_coefficient_post) * X_new 
   
       If there are multiple inputs to be optimized, the pseudo code will be applied
       independently to each of them.
@@ -21213,6 +21216,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>epsilon</tt> : float (default is 0.0)</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
+<dt><tt>norm_coefficient_post</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
 </dl>
 
@@ -21279,7 +21284,7 @@ h = np.array([0.1, 0.1], dtype=np.float32)
 
 # Compute expected outputs of Adam.
 x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
-                                 norm_coefficient, alpha, beta,
+                                 norm_coefficient, 0.0, alpha, beta,
                                  epsilon)
 
 # Check results.
@@ -21330,10 +21335,10 @@ h2 = np.array([1.0, 10.0], dtype=np.float32)
 
 # Compute expected outputs of Adam.
 x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
-                            norm_coefficient, alpha, beta,
+                            norm_coefficient, 0.0, alpha, beta,
                             epsilon)
 x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
-                            norm_coefficient, alpha, beta,
+                            norm_coefficient, 0.0, alpha, beta,
                             epsilon)
 
 # Check results.

@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def apply_adam(r, t, x, g, v, h, norm_coefficient, alpha, beta, epsilon):  # type: ignore
+def apply_adam(r, t, x, g, v, h, norm_coefficient, norm_coefficient_post, alpha, beta, epsilon):  # type: ignore
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Update momentum.
@@ -20,11 +20,18 @@ def apply_adam(r, t, x, g, v, h, norm_coefficient, alpha, beta, epsilon):  # typ
     # Compute element-wise square root.
     h_sqrt = np.sqrt(h_new) + epsilon
     # Adjust learning rate.
-    t = t + 1
-    r_adjusted = r * np.sqrt(1 - beta**t) / (1 - alpha**t)
+    r_adjusted = None
+    if t > 0:
+        # Consider bias correction on momentums.
+        r_adjusted = r * np.sqrt(1 - beta**t) / (1 - alpha**t)
+    else:
+        # No bias correction on momentums.
+        r_adjusted = r
     # Apply Adam update rule.
     x_new = x - r_adjusted * (v_new / h_sqrt)
-    return x_new, v_new, h_new
+    # It's possible to apply regularization in the end. 
+    x_final = (1 - norm_coefficient_post) * x_new
+    return x_final, v_new, h_new
 
 
 class Adam(Base):
@@ -58,7 +65,7 @@ class Adam(Base):
 
         # Compute expected outputs of Adam.
         x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
-                                         norm_coefficient, alpha, beta,
+                                         norm_coefficient, 0.0, alpha, beta,
                                          epsilon)
 
         # Check results.
@@ -103,10 +110,10 @@ class Adam(Base):
 
         # Compute expected outputs of Adam.
         x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
-                                    norm_coefficient, alpha, beta,
+                                    norm_coefficient, 0.0, alpha, beta,
                                     epsilon)
         x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
-                                    norm_coefficient, alpha, beta,
+                                    norm_coefficient, 0.0, alpha, beta,
                                     epsilon)
 
         # Check results.

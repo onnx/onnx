@@ -207,7 +207,7 @@ h = np.array([0.1, 0.1], dtype=np.float32)
 
 # Compute expected outputs of Adam.
 x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
-                                 norm_coefficient, alpha, beta,
+                                 norm_coefficient, 0.0, alpha, beta,
                                  epsilon)
 
 # Check results.
@@ -256,10 +256,10 @@ h2 = np.array([1.0, 10.0], dtype=np.float32)
 
 # Compute expected outputs of Adam.
 x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
-                            norm_coefficient, alpha, beta,
+                            norm_coefficient, 0.0, alpha, beta,
                             epsilon)
 x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
-                            norm_coefficient, alpha, beta,
+                            norm_coefficient, 0.0, alpha, beta,
                             epsilon)
 
 # Check results.
