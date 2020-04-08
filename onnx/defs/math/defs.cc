@@ -2185,8 +2185,7 @@ void einsumRankInference(
       fail_shape_inference(
           "Number of input tensors does not match the operands in the equation.");
     }
-    size_t rank =
-    ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+    size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
     if (ellipsis_index != std::string::npos) {
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions

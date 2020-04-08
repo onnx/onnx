@@ -2984,7 +2984,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1,)),
              ('y', TensorProto.FLOAT, (1,))],
-            [make_node('Einsum', ['x','y'], ['z'], equation='i,i->')],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation='i,i->')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
