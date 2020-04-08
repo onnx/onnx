@@ -2301,7 +2301,6 @@ and the inner-most 2 dimensions form square matrices. These matrices must be inv
 The behavior where one of the matrices is not invertible is undefined. The implementation can choose
 to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
 containing the individual inverses of all input submatrices.
-For an input tensor of integer type, output will be a tensor of float type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2310,39 +2309,16 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
         .Input(0, "X", "Input tensor. Every matrix in the batch must be invertible.", "T")
-        .Output(0, "Y", "Output tensor of the same shape as input. Output is of type float32 for input type int32, and float64 for input type int64.", "T1")
+        .Output(0, "Y", "Output tensor of the same type and shape as the input tensor.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(int32)",
-             "tensor(int64)",
+            {"tensor(float16)",
              "tensor(float)",
              "tensor(double)"},
-            "Constrain input type to 32-bit and 64-bit float and int tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)",
-             "tensor(double)"},
-            "Constrain output type to 32-bit and 64-bit float tensors.")
+            "Constrain input and output type to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-          auto x_type = ctx.getInputType(0);
-          auto y_type = ctx.getOutputType(0);
-          if (nullptr == x_type || nullptr == y_type || x_type->value_case() != TypeProto::kTensorType) {
-            fail_type_inference(
-                "input is expected to have tensor type and output type should not be null.");
-          }
-
-          auto input_elem_type = x_type->tensor_type().elem_type();
-
-          // Output is of type float32 for input type int32, and float64 for input type int64
-          if ((input_elem_type == TensorProto::FLOAT) || (input_elem_type == TensorProto::INT32)) {
-            y_type->mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
-          } else if ((input_elem_type == TensorProto::DOUBLE) || (input_elem_type == TensorProto::INT64)) {
-            y_type->mutable_tensor_type()->set_elem_type(TensorProto::DOUBLE);
-          } else {
-            fail_type_inference(
-                "input is expected to be of type int32, int64, float, or double.");
-          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
           if (hasInputShape(ctx, 0)) {

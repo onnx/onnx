@@ -1286,10 +1286,10 @@ class TestShapeInference(unittest.TestCase):
 
     def test_inverse_float(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.INT32, (3, 4, 4))],
+            [('x', TensorProto.FLOAT16, (3, 4, 4))],
             [make_node('Inverse', ['x'], 'y')],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 4))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT16, (3, 4, 4))])
 
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 5, 5))],
@@ -1297,18 +1297,11 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 5))])
 
-    def test_inverse_double(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.INT64, (3, 4, 4))],
+            [('x', TensorProto.DOUBLE, (5, 5))],
             [make_node('Inverse', ['x'], 'y')],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (3, 4, 4))])
-
-        graph = self._make_graph(
-            [('x', TensorProto.DOUBLE, (2, 5, 5))],
-            [make_node('Inverse', ['x'], 'y')],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (2, 5, 5))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (5, 5))])
 
     def test_logsoftmax_2d(self):  # type: () -> None
         graph = self._make_graph(
