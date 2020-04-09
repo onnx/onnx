@@ -596,6 +596,9 @@ endif()
 if (NOT ANDROID AND NOT IOS)
   # ---[ ONNXIFI wrapper
   add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+  if(MSVC)
+    add_msvc_runtime_flag(onnxifi_wrapper)
+  endif()
   target_include_directories(onnxifi_wrapper PRIVATE
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<INSTALL_INTERFACE:include>)
@@ -637,12 +640,14 @@ if(MSVC)
   add_msvc_runtime_flag(onnxifi_dummy)
 endif()
 
+include(GNUInstallDirs)
+
 install(DIRECTORY ${ONNX_ROOT}/onnx
-        DESTINATION include
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
         PATTERN "*.h")
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
-        DESTINATION include
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
         PATTERN "*.h")
 
@@ -657,13 +662,13 @@ configure_file(
 install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
-  DESTINATION share/cmake/ONNX
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets DESTINATION share/cmake/ONNX)
+install(EXPORT ONNXTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX")
 install(TARGETS
   onnx onnx_proto
   onnxifi onnxifi_dummy onnxifi_loader
-  EXPORT ONNXTargets DESTINATION lib)
+  EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(NOT ANDROID AND NOT IOS)
   install(TARGETS onnxifi_wrapper

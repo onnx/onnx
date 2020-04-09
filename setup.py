@@ -17,7 +17,7 @@ import os
 import shlex
 import subprocess
 import sys
-import struct
+import platform
 from textwrap import dedent
 import multiprocessing
 
@@ -179,10 +179,10 @@ class cmake_build(setuptools.Command):
                 ])
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
-                if 8 * struct.calcsize("P") == 64:
-                    # Temp fix for CI
-                    # TODO: need a better way to determine generator
-                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
+                if platform.architecture()[0] == '64bit':
+                    cmake_args.extend(['-A', 'x64', '-T', 'host=x64'])
+                else:
+                    cmake_args.extend(['-A', 'Win32', '-T', 'host=x86'])
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
             if ONNX_VERIFY_PROTO3:
