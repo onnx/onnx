@@ -14446,8 +14446,10 @@ This version of the operator has been available since version 12 of the default 
 
   Calculates inverse of a square matrix or batches of square matrices.
   Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices.
-  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+  and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
+  The behavior where one of the matrices is not invertible is undefined. The implementation can choose
+  to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
+  containing the individual inverses of all input submatrices.
 
 #### Version
 
@@ -14457,21 +14459,21 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
+<dd>Input tensor. Every matrix in the batch must be invertible.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor of the same type as input.</dd>
+<dd>Output tensor of the same type and shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numerical tensor types.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
