@@ -2297,8 +2297,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Inverse_ver12_doc = R"DOC(
 Calculates inverse of a square matrix or batches of square matrices.
 Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-and the inner-most 2 dimensions form square matrices.
-The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
+The behavior where one of the matrices is not invertible is undefined. The implementation can choose
+to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
+containing the individual inverses of all input submatrices.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2306,12 +2308,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor of the same type as input.", "T")
+        .Input(0, "X", "Input tensor. Every matrix in the batch must be invertible.", "T")
+        .Output(0, "Y", "Output tensor of the same type and shape as the input tensor.", "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
-            "Constrain input and output types to all numerical tensor types.")
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
