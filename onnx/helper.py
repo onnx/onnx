@@ -190,7 +190,7 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        values,   # type: Sequence[TypeProto]
+        values,   # type: Sequence[SequenceMapElement]
         elem_type # type: TypeProto
 ):  # type: (...) -> SequenceProto
     '''
@@ -204,15 +204,13 @@ def make_sequence(
 
 def make_map(
         pairs,   # type: Sequence[MapProto.KeyValuePair]
-        key_type,  # type: int
-        value_type  # type: TypeProto
+        key_type  # type: int
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
     '''
     map = MapProto()
     map.key_type = key_type
-    map.value_type = value_type
     map.pairs.extend(pairs)
     return map
 
@@ -229,7 +227,7 @@ def make_key_value_pair(
     proto field to store the key, and values should be of type bytes in
     this case.
     '''
-    kv_pair = MapProto.KeyValuePair()
+    kv_pair = MapProto().KeyValuePair
 
     if key_type == MapProto.KeyValuePair.STRING:
         assert not raw, "Can not use raw_key to store string type"
@@ -238,9 +236,9 @@ def make_key_value_pair(
         kv_pair.raw_key = key
     else:
         field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
-        getattr(kv_pair, field).extend(key)
+        getattr(kv_pair, field) = key
 
-    kv_pair.value.extend(value)
+    kv_pair.value = value
 
     return kv_pair
 
