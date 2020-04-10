@@ -2178,17 +2178,17 @@ void einsumRankInference(
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
-  while (std::getline(str, term, ',')) {
+  while (!str.eof()) {
+    std::getline(str, term, ',');
     auto ellipsis_index = term.find("...");
+    if (numInputs <= num_operands) {
+      fail_shape_inference(
+          "Number of input tensors does not match the operands in the equation.");
+    }
+    size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
     if (ellipsis_index != std::string::npos) {
-      if (numInputs <= num_operands) {
-        fail_shape_inference(
-            "Number of input tensors does not match the operands in the equation.");
-      }
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
-      size_t rank =
-          ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
       if (num_ellipsis == 0) {
         if (rank + 3 < term.size()) {
           fail_shape_inference("Ellipsis represents incompatible dimensions.");
@@ -2201,6 +2201,10 @@ void einsumRankInference(
         }
       }
       num_ellipsis++;
+    } else {
+      if (rank != term.size()) {
+        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
+      }
     }
     num_operands++;
   }
@@ -2268,6 +2272,7 @@ equation.
 When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
 The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
 The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
 beginning of the output. The equation string may contain space (U+0020) character.
 )DOC";
