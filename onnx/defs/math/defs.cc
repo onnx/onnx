@@ -2178,17 +2178,17 @@ void einsumRankInference(
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
-  while (std::getline(str, term, ',')) {
+  while (!str.eof()) {
+    std::getline(str, term, ',');
     auto ellipsis_index = term.find("...");
+    if (numInputs <= num_operands) {
+      fail_shape_inference(
+          "Number of input tensors does not match the operands in the equation.");
+    }
+    size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
     if (ellipsis_index != std::string::npos) {
-      if (numInputs <= num_operands) {
-        fail_shape_inference(
-            "Number of input tensors does not match the operands in the equation.");
-      }
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
-      size_t rank =
-          ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
       if (num_ellipsis == 0) {
         if (rank + 3 < term.size()) {
           fail_shape_inference("Ellipsis represents incompatible dimensions.");
@@ -2201,6 +2201,10 @@ void einsumRankInference(
         }
       }
       num_ellipsis++;
+    } else {
+      if (rank != term.size()) {
+        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
+      }
     }
     num_operands++;
   }
@@ -2268,6 +2272,7 @@ equation.
 When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
 The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
 The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
 beginning of the output. The equation string may contain space (U+0020) character.
 )DOC";
@@ -2297,8 +2302,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Inverse_ver12_doc = R"DOC(
 Calculates inverse of a square matrix or batches of square matrices.
 Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-and the inner-most 2 dimensions form square matrices.
-The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
+The behavior where one of the matrices is not invertible is undefined. The implementation can choose
+to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
+containing the individual inverses of all input submatrices.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2306,12 +2313,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     OpSchema()
         .SetDoc(Inverse_ver12_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor of the same type as input.", "T")
+        .Input(0, "X", "Input tensor. Every matrix in the batch must be invertible.", "T")
+        .Output(0, "Y", "Output tensor of the same type and shape as the input tensor.", "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
-            "Constrain input and output types to all numerical tensor types.")
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);

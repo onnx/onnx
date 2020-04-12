@@ -1284,6 +1284,25 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
 
+    def test_inverse_float(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT16, (3, 4, 4))],
+            [make_node('Inverse', ['x'], 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT16, (3, 4, 4))])
+
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 5, 5))],
+            [make_node('Inverse', ['x'], 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 5))])
+
+        graph = self._make_graph(
+            [('x', TensorProto.DOUBLE, (5, 5))],
+            [make_node('Inverse', ['x'], 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (5, 5))])
+
     def test_logsoftmax_2d(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5))],
@@ -2979,6 +2998,22 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Einsum', ['x'], ['y'], equation='ij->ji')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])  # type: ignore
+
+    def test_einsum_dot(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1,)),
+             ('y', TensorProto.FLOAT, (1,))],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation='i,i->')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_einsum_scalar(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ()),
+             ('y', TensorProto.FLOAT, ())],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation=',->')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
     def test_einsum_outer_prod(self):  # type: () -> None
         graph = self._make_graph(
