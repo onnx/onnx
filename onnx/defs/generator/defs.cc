@@ -184,7 +184,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) The value of the output elements."
             "Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32",
             AttributeProto::TENSOR,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -313,7 +313,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the data type of the input tensor T1 is used. If input tensor T1 is also not"
             "specified, then type defaults to 'float'.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -397,7 +397,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.",
@@ -447,7 +447,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "The data type for the elements of the output tensor. Default is TensorProto::FLOAT.",
@@ -497,13 +497,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -562,13 +562,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -617,7 +617,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.",

@@ -23,7 +23,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) The data type of the tensors in the output sequence. "
             "The default type is 'float'.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(
             0,
             "output",
