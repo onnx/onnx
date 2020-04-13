@@ -235,7 +235,7 @@ def make_key_value_pair(
     if raw:
         kv_pair.raw_key = key
     else:
-        kv_pair.(mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]) = key
+        kv_pair[mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]] = key
 
     kv_pair.value = value
 
