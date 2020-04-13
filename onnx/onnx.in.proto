@@ -641,10 +641,13 @@ message SequenceMapElement {
 //
 // Defines a dense, ordered, collection of elements that are of homogeneous types.
 message SequenceProto {
-  // The data type of the key.
-  // This field MUST have a valid MapProto.DataType value
-  optional TypeProto elem_type = 1;
-  repeated SequenceMapElement values = 2;
+
+  optional string name = 1;
+
+  // The data type of the element.
+  // This field MUST have a valid TypeProto value
+  optional TypeProto elem_type = 2;
+  repeated SequenceMapElement values = 3;
 }
 
 // Maps
@@ -704,9 +707,13 @@ message MapProto {
     optional bytes raw_key = 7;
 
     required SequenceMapElement value = 8;
+
+    optional TypeProto value_type = 9;
   };
 
-  repeated KeyValuePair pairs = 1;
+  optional string name = 1;
+
+  repeated KeyValuePair pairs = 2;
 }
 
 // Types

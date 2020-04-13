@@ -190,6 +190,7 @@ def make_sparse_tensor(
 
 
 def make_sequence(
+        name,  # type: Text
         values,   # type: Sequence[SequenceMapElement]
         elem_type # type: TypeProto
 ):  # type: (...) -> SequenceProto
@@ -197,20 +198,21 @@ def make_sequence(
     Make a Sequence with specified SequenceMapElement value arguments.
     '''
     sequence = SequenceProto()
+    sequence.name = name
     sequence.values.extend(values)
     sequence.elem_type = elem_type
     return sequence
 
 
 def make_map(
-        pairs,   # type: Sequence[MapProto.KeyValuePair]
-        key_type  # type: int
+        name,  # type: Text
+        pairs   # type: Sequence[MapProto.KeyValuePair]
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
     '''
     map = MapProto()
-    map.key_type = key_type
+    map.name = name
     map.pairs.extend(pairs)
     return map
 
@@ -218,6 +220,7 @@ def make_key_value_pair(
         key,  # type: Any
         key_type,  # type: int
         value,  # type: SequenceMapElement
+        value_type,  # type: TypeProto
         raw=False  # type: bool
 ):  # type: (...) -> MapProto.KeyValuePair
     '''
@@ -235,9 +238,12 @@ def make_key_value_pair(
     if raw:
         kv_pair.raw_key = key
     else:
-        kv_pair[mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]] = key
+        storage_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]]
+        setattr(kv_pair, storage_field, key)
 
     kv_pair.value = value
+    kv_pair.key_type = key_type
+    kv_pair.value_type = value_type
 
     return kv_pair
 

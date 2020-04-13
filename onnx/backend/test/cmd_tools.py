@@ -47,20 +47,22 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                 prepare_dir(data_set_dir)
                 for j, input_np in enumerate(inputs):
                     if input_np.dtype == 'object':
-                        raise TypeError('Sequences not yet supported.')
-                    tensor = numpy_helper.from_array(
-                        input_np, case.model.graph.input[j].name)
+                        arr = numpy_helper.from_array_to_sequence(input_np)
+                    else:
+                        arr = numpy_helper.from_array(
+                            input_np, case.model.graph.input[j].name)
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
-                        f.write(tensor.SerializeToString())
+                        f.write(arr.SerializeToString())
                 for j, output_np in enumerate(outputs):
                     if output_np.dtype == 'object':
-                        raise TypeError('Sequences not yet supported.')
-                    tensor = numpy_helper.from_array(
-                        output_np, case.model.graph.output[j].name)
+                        arr = numpy_helper.from_array_to_sequence(output_np)
+                    else:
+                        arr = numpy_helper.from_array(
+                            output_np, case.model.graph.output[j].name)
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
-                        f.write(tensor.SerializeToString())
+                        f.write(arr.SerializeToString())
 
 
 def parse_args():  # type: () -> argparse.Namespace

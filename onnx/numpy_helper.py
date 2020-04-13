@@ -119,7 +119,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
 
 
 def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any]
-    """Converts a sequence  object to a numpy array.
+    """Converts a sequence def to a numpy array.
 
     Inputs:
         sequence: a SequenceProto object.
@@ -133,10 +133,56 @@ def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any
             arr.append(to_array(elem))
     elif elem_type == TypeProto.Map:
         for elem in sequence.values:
-            arr.append(to_array_from_map(elem))
+            arr.append(to_dict_from_map(elem))
     elif elem_type == TypeProto.Sequence:
         for elem in sequence.values:
             arr.append(to_array_from_sequence(elem))
     else:
         raise TypeError("The element type in the input sequence is not defined.")
     return arr
+
+
+def from_array_to_sequence(arr, name=None):  # type: type: (np.ndarray[Any], Optional[Text]) -> SequenceProto
+    """Converts a numpy array into a sequence def.
+
+    Inputs:
+        arr: a numpy array.
+    Returns:
+        sequence: the converted sequence def.
+    """
+    sequence = SequenceProto()
+    if name:
+        sequence.name = name
+    for elem in arr:
+        # If elem is a tensor
+        if elem.dtype == np.ndarray:
+            sequence.values.append(from_array(elem))
+        else:
+            raise TypeError("The element type in the input sequence is not supported yet.")
+    return sequence
+
+
+def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
+    """Converts a map def to a Python dictionary.
+
+    Inputs:
+        map: a MapProto object.
+    Returns:
+        dict: the converted dictionary.
+    """
+    dict = {}
+    for kv_pair in map.pairs:
+        key_type = kv_pair.key_type
+        value_type = kv_pair.value_type
+        key_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
+        key = get_attr(kv_pair, key_field)
+        value = kv_pair.value
+        if value_type == TypeProto.Tensor or value_type == TypeProto.SparseTensor:
+            dict[key] = to_array(value)
+        elif value_type == TypeProto.Map:
+            dict[key] = to_dict_from_map(value)
+        elif elem_type == TypeProto.Sequence:
+            dict[key] = to_array_from_sequence(value)
+        else:
+            raise TypeError("The value type in the Map is not defined.")
+    return dict
