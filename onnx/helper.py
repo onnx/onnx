@@ -199,11 +199,10 @@ def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """
     if isinstance(val, bytes):
         return val
-    else:
-        try:
-            return val.encode('utf-8')
-        except AttributeError:
-            return False
+    try:
+        return val.encode('utf-8')
+    except AttributeError:
+        return False
 
 
 def make_attribute(
@@ -277,26 +276,25 @@ def make_attribute(
 def get_attribute_value(attr):  # type: (AttributeProto) -> Any
     if attr.type == AttributeProto.FLOAT:
         return attr.f
-    elif attr.type == AttributeProto.INT:
+    if attr.type == AttributeProto.INT:
         return attr.i
-    elif attr.type == AttributeProto.STRING:
+    if attr.type == AttributeProto.STRING:
         return attr.s
-    elif attr.type == AttributeProto.TENSOR:
+    if attr.type == AttributeProto.TENSOR:
         return attr.t
-    elif attr.type == AttributeProto.GRAPH:
+    if attr.type == AttributeProto.GRAPH:
         return attr.g
-    elif attr.type == AttributeProto.FLOATS:
+    if attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
-    elif attr.type == AttributeProto.INTS:
+    if attr.type == AttributeProto.INTS:
         return list(attr.ints)
-    elif attr.type == AttributeProto.STRINGS:
+    if attr.type == AttributeProto.STRINGS:
         return list(attr.strings)
-    elif attr.type == AttributeProto.TENSORS:
+    if attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
-    elif attr.type == AttributeProto.GRAPHS:
+    if attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
-    else:
-        raise ValueError("Unsupported ONNX attribute: {}".format(attr))
+    raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
 def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
@@ -391,8 +389,7 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
         sanitized = str(s)
     if len(sanitized) < 64:
         return sanitized
-    else:
-        return sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64)
+    return sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64)
 
 
 def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
