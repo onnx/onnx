@@ -116,3 +116,27 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
 
     return tensor
+
+
+def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any]
+    """Converts a sequence  object to a numpy array.
+
+    Inputs:
+        sequence: a SequenceProto object.
+    Returns:
+        arr: the converted array.
+    """
+    arr = np.array([])
+    elem_type = sequence.elem_type
+    if elem_type == TypeProto.Tensor or elem_type == TypeProto.SparseTensor:
+        for elem in sequence.values:
+            arr.append(to_array(elem))
+    elif elem_type == TypeProto.Map:
+        for elem in sequence.values:
+            arr.append(to_array_from_map(elem))
+    elif elem_type == TypeProto.Sequence:
+        for elem in sequence.values:
+            arr.append(to_array_from_sequence(elem))
+    else:
+        raise TypeError("The element type in the input sequence is not defined.")
+    return arr
