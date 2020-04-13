@@ -238,7 +238,7 @@ def make_key_value_pair(
     if raw:
         kv_pair.raw_key = key
     else:
-        storage_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]]
+        storage_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
         setattr(kv_pair, storage_field, key)
 
     kv_pair.value = value
