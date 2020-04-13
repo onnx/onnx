@@ -7,8 +7,8 @@ import sys
 import platform
 
 import numpy as np  # type: ignore
-from onnx import TensorProto
-from onnx import mapping
+from onnx import TensorProto, MapProto, SequenceProto
+from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
@@ -147,6 +147,7 @@ def from_array_to_sequence(arr, name=None):  # type: type: (np.ndarray[Any], Opt
 
     Inputs:
         arr: a numpy array.
+        name: (optional) the name of the sequence.
     Returns:
         sequence: the converted sequence def.
     """
@@ -186,3 +187,28 @@ def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
         else:
             raise TypeError("The value type in the Map is not defined.")
     return dict
+
+
+def from_dict_to_map(d, name=None):  # type: (dict, Optional[Text]) -> MapProto
+    """Converts a Python dictionary into a map def.
+
+    Inputs:
+        d: Python dictionary
+        name: (optional) the name of the map.
+    Returns:
+        map: the converted map def.
+    """
+    map = MapProto()
+    if name:
+        map.name = name
+    for key, val in d.items():
+        key_type = mapping.NP_TYPE_TO_MAP_KEY_TYPE(key.dtype)
+        if isinstance(val, dict):
+            val_type = TypeProto.Map
+        elif val.dtype == 'object':
+            val_type = TypeProto.Sequence
+        elif isinstance(val, np.ndarray):
+            val_type = TypeProto.Tensor
+        kv_pair = helper.make_key_value_pair(key, key_type, val, val_type)
+        map.pairs.extend(kv_pair)
+    return map

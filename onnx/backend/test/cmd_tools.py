@@ -46,8 +46,12 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     output_dir, 'test_data_set_{}'.format(i))
                 prepare_dir(data_set_dir)
                 for j, input_np in enumerate(inputs):
-                    if input_np.dtype == 'object':
-                        arr = numpy_helper.from_array_to_sequence(input_np)
+                    if isinstance(input_np, dict):
+                        arr = numpy_helper.from_dict_to_map(
+                            input_np, case.model.graph.input[j].name)
+                    elif input_np.dtype == 'object':
+                        arr = numpy_helper.from_array_to_sequence(
+                            input_np, case.model.graph.input[j].name)
                     else:
                         arr = numpy_helper.from_array(
                             input_np, case.model.graph.input[j].name)
@@ -55,8 +59,12 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())
                 for j, output_np in enumerate(outputs):
-                    if output_np.dtype == 'object':
-                        arr = numpy_helper.from_array_to_sequence(output_np)
+                    if isinstance(output_np, dict):
+                        arr = numpy_helper.from_dict_to_map(
+                            output_np, case.model.graph.output[j].name)
+                    elif output_np.dtype == 'object':
+                        arr = numpy_helper.from_array_to_sequence(
+                            output_np, case.model.graph.output[j].name)
                     else:
                         arr = numpy_helper.from_array(
                             output_np, case.model.graph.output[j].name)
