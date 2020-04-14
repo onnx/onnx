@@ -8,19 +8,21 @@ import argparse
 from onnx import load, checker, NodeProto
 
 
+def _get_arguments(prog, arg_name, file_type):
+    parser = argparse.ArgumentParser(prog)
+    parser.add_argument(arg_name, type=argparse.FileType(file_type))
+    return parser.parse_args()
+
+
 def check_model():  # type: () -> None
-    parser = argparse.ArgumentParser('check-model')
-    parser.add_argument('model_pb', type=argparse.FileType('rb'))
-    args = parser.parse_args()
+    args = _get_arguments('check-model', 'model_pb', 'rb')
 
     model = load(args.model_pb)
     checker.check_model(model)
 
 
 def check_node():  # type: () -> None
-    parser = argparse.ArgumentParser('check-node')
-    parser.add_argument('node_pb', type=argparse.FileType('rb'))
-    args = parser.parse_args()
+    args = _get_arguments('check-node', 'node_pb', 'rb')
 
     node = NodeProto()
     node.ParseFromString(args.node_pb.read())
