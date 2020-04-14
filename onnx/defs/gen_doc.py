@@ -35,7 +35,7 @@ def display_number(v):  # type: (int) -> Text
 def should_render_domain(domain):  # type: (Text) -> bool
     if domain == ONNX_ML_DOMAIN and not ONNX_ML:
         return False
-    elif ONNX_ML and domain != ONNX_ML_DOMAIN:
+    if ONNX_ML and domain != ONNX_ML_DOMAIN:
         return False
     return True
 
@@ -43,8 +43,7 @@ def should_render_domain(domain):  # type: (Text) -> bool
 def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
     if domain:
         return '{}.{}'.format(domain, schema_name)
-    else:
-        return schema_name
+    return schema_name
 
 
 def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
@@ -59,15 +58,13 @@ def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
 def display_domain(domain):  # type: (Text) -> Text
     if domain:
         return "the '{}' operator set".format(domain)
-    else:
-        return "the default ONNX operator set"
+    return "the default ONNX operator set"
 
 
 def display_domain_short(domain):  # type: (Text) -> Text
     if domain:
         return domain
-    else:
-        return 'ai.onnx (default)'
+    return 'ai.onnx (default)'
 
 
 def display_version_link(name, version):  # type: (Text, int) -> Text
