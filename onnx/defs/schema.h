@@ -181,7 +181,7 @@ class OpSchema final {
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
-          differentiation_category_(differentiation_category_) {
+          differentiation_category_(differentiation_category) {
     }
 
     explicit FormalParameter(
@@ -200,7 +200,7 @@ class OpSchema final {
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
-          differentiation_category_(differentiation_category_) {
+          differentiation_category_(differentiation_category) {
     }
 
     // Get formal parameter name.

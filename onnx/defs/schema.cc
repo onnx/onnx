@@ -646,7 +646,8 @@ OpSchema& OpSchema::Output(
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -875,7 +876,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
             << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? "hihihihihi" : "(no type)") << std::endl;
+            << ("" != type_str ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;

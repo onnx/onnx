@@ -15224,16 +15224,16 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>shape</tt> : tensor(int64)</dt>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Specified shape for output.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reshaped</tt> : T</dt>
+<dt><tt>reshaped</tt> (differentiable) : T</dt>
 <dd>Reshaped data.</dd>
 </dl>
 
@@ -19340,14 +19340,14 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The tensor to split</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs</tt> (variadic) : T</dt>
+<dt><tt>outputs</tt> (variadic, differentiable) : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 

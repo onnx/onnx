@@ -79,6 +79,25 @@ def display_version_link(name, version):  # type: (Text, int) -> Text
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
 
 
+def generate_formal_parameter_tags(formal_parameter):  # type: (OpSchema.FormalParameter) -> Text
+    tags = []  # type: List[Text]
+    if OpSchema.FormalParameterOption.Optional == formal_parameter.option:
+        tags = ["optional"]
+    elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:
+        if formal_parameter.isHomogeneous:
+            tags = ["variadic"]
+        else:
+            tags = ["variadic", "heterogeneous"]
+    differentiable = OpSchema.DifferentiationCategory.Differentiable  # type: OpSchema.DifferentiationCategory
+    non_differentiable = OpSchema.DifferentiationCategory.NonDifferentiable  # type: OpSchema.DifferentiationCategory
+    if differentiable == formal_parameter.differentiationCategory:
+        tags.append('differentiable')
+    elif non_differentiable == formal_parameter.differentiationCategory:
+        tags.append('non-differentiable')
+
+    return '' if len(tags) == 0 else ' (' + ', '.join(tags) + ')'
+
+
 def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
     s = ''
 
@@ -151,21 +170,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     if schema.inputs:
         s += '<dl>\n'
         for input in schema.inputs:
-            tags = None
-            if OpSchema.FormalParameterOption.Optional == input.option:
-                tags = ["optional"]
-            elif OpSchema.FormalParameterOption.Variadic == input.option:
-                if input.isHomogeneous:
-                    tags = ["variadic"]
-                else:
-                    tags = ["variadic", "heterogeneous"]
-            if OpSchema.DifferentiationCategory.Differentiatiable == input.differentiationCategory:
-                tags.append('differentiable')
-            elif OpSchema.DifferentiationCategory.NonDifferentiatiable == input.differentiationCategory:
-                tags.append('non-differentiable')
-
-            option_str = '' if tags is None else ' (' + ', '.join(tags) + ')'
-
+            option_str = generate_formal_parameter_tags(input)
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
@@ -180,14 +185,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     if schema.outputs:
         s += '<dl>\n'
         for output in schema.outputs:
-            option_str = ""
-            if OpSchema.FormalParameterOption.Optional == output.option:
-                option_str = " (optional)"
-            elif OpSchema.FormalParameterOption.Variadic == output.option:
-                if output.isHomogeneous:
-                    option_str = " (variadic)"
-                else:
-                    option_str = " (variadic, heterogeneous)"
+            option_str = generate_formal_parameter_tags(output)
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'
