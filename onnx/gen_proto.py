@@ -163,10 +163,8 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
                 os.remove(pb3_file)
 
         if need_rename:
-            if do_onnx_ml:
-                proto_header = qualify("{}-ml.pb.h".format(stem), pardir=output)
-            else:
-                proto_header = qualify("{}.pb.h".format(stem), pardir=output)
+            fname = "{}-ml.pb.h" if do_onnx_ml else "{}.pb.h"
+            proto_header = qualify(fname.format(stem), pardir=output)
             print("Writing {}".format(proto_header))
             with io.open(proto_header, 'w', newline='') as fout:
                 fout.write("#pragma once\n")
