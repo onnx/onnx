@@ -60,6 +60,10 @@ int OpSchema::FormalParameter::GetMinArity() const {
   return min_arity_;
 }
 
+OpSchema::DifferentiationCategory OpSchema::FormalParameter::GetDifferentiationCategory() const {
+  return differentiation_category_;
+}
+
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
   static OpSchemaRegistry instance;
   return &instance;
@@ -576,7 +580,8 @@ OpSchema& OpSchema::Input(
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
@@ -590,7 +595,8 @@ OpSchema& OpSchema::Input(
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -601,7 +607,8 @@ OpSchema& OpSchema::Input(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Input(
       n,
       std::string(name),
@@ -613,7 +620,8 @@ OpSchema& OpSchema::Input(
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::Output(
@@ -623,7 +631,8 @@ OpSchema& OpSchema::Output(
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
@@ -648,7 +657,8 @@ OpSchema& OpSchema::Output(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Output(
       n,
       std::string(name),
@@ -660,7 +670,8 @@ OpSchema& OpSchema::Output(
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -864,7 +875,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
             << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+            << ("" != type_str ? "hihihihihi" : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;

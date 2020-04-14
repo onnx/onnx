@@ -266,9 +266,30 @@ ONNX_OPERATOR_SET_SCHEMA(
     5,
     OpSchema()
         .SetDoc(Reshape_ver5_doc)
-        .Input(0, "data", "An input tensor.", "T")
-        .Input(1, "shape", "Specified shape for output.", "tensor(int64)")
-        .Output(0, "reshaped", "Reshaped data.", "T")
+        .Input(0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(1,
+            "shape",
+            "Specified shape for output.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0,
+            "reshaped",
+            "Reshaped data.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -548,13 +569,23 @@ ONNX_OPERATOR_SET_SCHEMA(
     Split,
     11,
     OpSchema()
-        .Input(0, "input", "The tensor to split", "T")
+        .Input(0,
+            "input",
+            "The tensor to split",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             0,
             "outputs",
             "One or more outputs forming list of tensors after splitting",
             "T",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),

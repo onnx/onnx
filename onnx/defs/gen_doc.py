@@ -151,14 +151,21 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     if schema.inputs:
         s += '<dl>\n'
         for input in schema.inputs:
-            option_str = ""
+            tags = None
             if OpSchema.FormalParameterOption.Optional == input.option:
-                option_str = " (optional)"
+                tags = ["optional"]
             elif OpSchema.FormalParameterOption.Variadic == input.option:
                 if input.isHomogeneous:
-                    option_str = " (variadic)"
+                    tags = ["variadic"]
                 else:
-                    option_str = " (variadic, heterogeneous)"
+                    tags = ["variadic", "heterogeneous"]
+            if OpSchema.DifferentiationCategory.Differentiatiable == input.differentiationCategory:
+                tags.append('differentiable')
+            elif OpSchema.DifferentiationCategory.NonDifferentiatiable == input.differentiationCategory:
+                tags.append('non-differentiable')
+
+            option_str = '' if tags is None else ' (' + ', '.join(tags) + ')'
+
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
