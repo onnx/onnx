@@ -65,7 +65,7 @@ Because onnx.proto is expected to be consumed by multiple independent developers
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation. Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
 
-A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`). Nodes in graphs always refer to operators by their three-part identifier. Breaking opset changes include:
+A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`). Nodes in graphs always refer to operators by their three-part identifier. Breaking operator changes include:
 
 * Adding/removing/renaming an attribute. This even includes the case of adding a new optional attribute, where omitting the attribute would imply a default value yielding semantics identical to the previous operator version.
 
@@ -93,6 +93,8 @@ operator id MUST be greater than any extant `op_version` for the
 >    step (1).
 > 4. Register the new operator in the corresponding `operator_sets`
 >    header file.
+
+### Operator Sets
 
 ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
 
