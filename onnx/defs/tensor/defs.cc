@@ -56,7 +56,7 @@ void unfoldToDepthShapeInference(
   for (int i = 0; i < static_cast<int>(block_size.size()); i++) {
     // accounting for dilation, how big is the block in this dimension
     effective_block_size[i] = (effective_block_size[i] - 1) * dilations[i] + 1;
-    block_num_element *= effective_block_size[i];
+    block_num_element *= block_size[i];
   }
 
   std::vector<int64_t> pads;
