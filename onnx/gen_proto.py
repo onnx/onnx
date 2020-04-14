@@ -133,10 +133,8 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
 def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
-    if do_onnx_ml:
-        proto_base = "{}_{}-ml".format(stem, package_name) if need_rename else "{}-ml".format(stem)
-    else:
-        proto_base = "{}_{}".format(stem, package_name) if need_rename else "{}".format(stem)
+    t1, t2 = ("{}_{}-ml", "{}-ml") if do_onnx_ml else ("{}_{}", "{}")
+    proto_base = t1.format(stem, package_name) if need_rename else t2.format(stem)
     proto = qualify("{}.proto".format(proto_base), pardir=output)
     proto3 = qualify("{}.proto3".format(proto_base), pardir=output)
 
