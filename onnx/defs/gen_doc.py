@@ -23,10 +23,7 @@ SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
 ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 
 
-if ONNX_ML:
-    ext = '-ml.md'
-else:
-    ext = '.md'
+ext = '-ml.md' if ONNX_ML else '.md'
 
 
 def display_number(v):  # type: (int) -> Text
