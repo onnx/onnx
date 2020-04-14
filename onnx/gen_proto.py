@@ -176,10 +176,8 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
     if need_rename:
         pb2_py = qualify('{}_pb2.py'.format(proto_base.replace('-', '_')), pardir=output)
     else:
-        if do_onnx_ml:
-            pb2_py = qualify('{}_ml_pb2.py'.format(stem.replace('-', '_')), pardir=output)
-        else:
-            pb2_py = qualify('{}_pb2.py'.format(stem.replace('-', '_')), pardir=output)
+        fname = '{}_ml_pb2.py' if do_onnx_ml else '{}_pb2.py'
+        pb2_py = qualify(fname.format(stem.replace('-', '_')), pardir=output)
 
     print('generating {}'.format(pb_py))
     with open(pb_py, 'w') as f:
