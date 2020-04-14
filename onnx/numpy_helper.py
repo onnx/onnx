@@ -142,7 +142,7 @@ def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any
     return arr
 
 
-def from_array_to_sequence(arr, name=None):  # type: type: (np.ndarray[Any], Optional[Text]) -> SequenceProto
+def from_array_to_sequence(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> SequenceProto
     """Converts a numpy array into a sequence def.
 
     Inputs:
