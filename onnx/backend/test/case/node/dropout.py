@@ -11,19 +11,14 @@ from ..base import Base
 from . import expect
 from onnx import helper
 
+def dropout(X, drop_probability=0.5, seed=0):  # type: ignore
+    if drop_probability == 0:
+        return X
 
-def dropout(x, ratio=0, seed=0):  # type: ignore
     np.random.seed(seed)
-    total_nb_indices = x.size
-    nb_to_dropout = total_nb_indices * ratio
-    indices_to_dropout = np.random.choice(total_nb_indices, int(nb_to_dropout), replace=False)
-    flattened_x = x.flatten()
-
-    for index in indices_to_dropout:
-        flattened_x[index] = 0.
-    y = flattened_x.reshape(x.shape)
-    return y
-
+    mask = np.random.uniform(0, 1.0, X.shape) >= drop_probability
+    scale = (1 / (1 - drop_probability))
+    return mask * X * scale
 
 class Dropout(Base):
 
