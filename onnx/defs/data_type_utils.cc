@@ -1,3 +1,4 @@
+#include <onnx/common/common.h>
 #include <cctype>
 #include <iostream>
 #include <iterator>
@@ -96,7 +97,9 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
     TypeProto type;
-    FromString(typeStr, type);
+    Common::Status st = FromString(typeStr, type);
+    if (!st.IsOK())
+      return nullptr;
     GetTypeStrToProtoMap()[typeStr] = type;
   }
   return &(GetTypeStrToProtoMap().find(typeStr)->first);
@@ -104,7 +107,9 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {
   TypeProto type;
-  FromString(type_str, type);
+  Common::Status st = FromString(type_str, type);
+  if (!st.IsOK())
+    return nullptr;
   return ToType(type);
 }
 
@@ -173,7 +178,7 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   return iter->second;
 }
 
-void DataTypeUtils::FromString(
+Common::Status DataTypeUtils::FromString(
     const std::string& type_str,
     TypeProto& type_proto) {
   StringRange s(type_str);
@@ -186,13 +191,16 @@ void DataTypeUtils::FromString(
   } else if (s.LStrip("map")) {
     s.ParensWhitespaceStrip();
     size_t key_size = s.Find(',');
+    if (key_size == std::string::npos)
+      return Common::Status(
+          Common::NONE, Common::INVALID_ARGUMENT, "invalid type string");
     StringRange k(s.Data(), key_size);
     std::string key(k.Data(), k.Size());
     s.LStrip(key_size);
     s.LStrip(",");
     StringRange v(s.Data(), s.Size());
     int32_t key_type;
-    FromDataTypeString(key, key_type);
+    ONNX_RETURN_IF_ERROR(FromDataTypeString(key, key_type));
     type_proto.mutable_map_type()->set_key_type(key_type);
     return FromString(
         std::string(v.Data(), v.Size()),
@@ -217,24 +225,28 @@ void DataTypeUtils::FromString(
   } else if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
     int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    ONNX_RETURN_IF_ERROR(
+        FromDataTypeString(std::string(s.Data(), s.Size()), e));
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
   } else
 #endif
       if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    ONNX_RETURN_IF_ERROR(
+        FromDataTypeString(std::string(s.Data(), s.Size()), e));
     type_proto.mutable_tensor_type()->set_elem_type(e);
   } else {
     // Scalar
     int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    ONNX_RETURN_IF_ERROR(
+        FromDataTypeString(std::string(s.Data(), s.Size()), e));
     TypeProto::Tensor* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
     // Call mutable_shape() to initialize a shape with no dimension.
     t->mutable_shape();
   }
+  return Common::Status::OK();
 } // namespace Utils
 
 bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
@@ -243,13 +255,20 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
   return (allowedSet.find(type_str) != allowedSet.end());
 }
 
-void DataTypeUtils::FromDataTypeString(
+Common::Status DataTypeUtils::FromDataTypeString(
     const std::string& type_str,
     int32_t& tensor_data_type) {
-  assert(IsValidDataTypeString(type_str));
+  if (!IsValidDataTypeString(type_str))
+    return Common::Status(
+        Common::NONE, Common::INVALID_ARGUMENT, "invalid type string");
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  tensor_data_type = t.TypeStrToTensorDataType()[type_str];
+  auto iter = t.TypeStrToTensorDataType().find(type_str);
+  if (iter == t.TypeStrToTensorDataType().end())
+    return Common::Status(
+        Common::NONE, Common::INVALID_ARGUMENT, "invalid type string");
+  tensor_data_type = iter->second;
+  return Common::Status::OK();
 }
 
 StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}

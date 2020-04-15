@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include "onnx/common/status.h"
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -41,9 +42,11 @@ class DataTypeUtils final {
   static const TypeProto& ToTypeProto(const DataType& data_type);
 
  private:
-  static void FromString(const std::string& type_str, TypeProto& type_proto);
+  static Common::Status FromString(
+      const std::string& type_str,
+      TypeProto& type_proto);
 
-  static void FromDataTypeString(
+  static Common::Status FromDataTypeString(
       const std::string& type_str,
       int32_t& tensor_data_type);
 
