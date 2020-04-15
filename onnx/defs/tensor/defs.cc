@@ -147,12 +147,12 @@ num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (
         "dilations",
         "Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "strides",
         "Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "pads",
         "Padding for the beginning and ending along each spatial axis, it can take any value greater "
@@ -162,7 +162,7 @@ num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (
         "added at the beginning of axis `i` and xi_end, the number of pixels added at "
         "the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       unfoldToDepthShapeInference(ctx);
@@ -566,7 +566,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL)
+        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -912,7 +912,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A list of integers. By default, reverse the dimensions, "
             "otherwise permute the axes according to the values given.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T")
         .Output(0, "transposed", "Transposed output.", "T")
         .TypeConstraint(
@@ -1464,7 +1464,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .SetDoc(Squeeze_ver11_doc)
         .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
         .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
@@ -2007,7 +2007,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input is flattened before elements being selected. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "input", "Tensor of rank r >= 1.", "T")
         .Input(
             1,
@@ -2514,7 +2514,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "flattened input are returned. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(0, "X", "A N-D input tensor that is to be processed.", "T")
         .Output(
             0,
