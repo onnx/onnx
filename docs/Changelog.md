@@ -14242,6 +14242,7 @@ This version of the operator has been available since version 12 of the default 
   When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
   
   The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+  Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
   The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
   beginning of the output. The equation string may contain space (U+0020) character.
 
@@ -14445,8 +14446,10 @@ This version of the operator has been available since version 12 of the default 
 
   Calculates inverse of a square matrix or batches of square matrices.
   Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices.
-  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
+  and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
+  The behavior where one of the matrices is not invertible is undefined. The implementation can choose
+  to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
+  containing the individual inverses of all input submatrices.
 
 #### Version
 
@@ -14456,21 +14459,21 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
+<dd>Input tensor. Every matrix in the batch must be invertible.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor of the same type as input.</dd>
+<dd>Output tensor of the same type and shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numerical tensor types.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
@@ -15174,6 +15177,118 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
 <dd>Updated values of optimized tensors, followed by their updated values of accumulated squared gradients. For example, if two tensor "X_1" and "X_2" are optimized, the output list would be [new value of "X_1," new value of "X_2" new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float scalars.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain input types to 64-bit integer scalars.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="ai.onnx.training.Adam-1"></a>**ai.onnx.training.Adam-1**</a>
+
+  Compute one iteration of Adam, a stochastic gradient based optimization
+      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  
+      Let's define the behavior of this operator. First of all, Adam requires
+      some parameters:
+       
+       - The learning-rate "R".
+       - The update count "T". That is, the number of training iterations conducted.
+       - A L2-norm regularization coefficient "norm_coefficient".
+       - A small constant "epsilon" to avoid dividing-by-zero. 
+       - Two coefficients, "alpha" and "beta".
+  
+      At each Adam iteration, the optimized tensors are moved along a direction
+      computed based on their exponentially-averaged historical gradient and
+      exponentially-averaged historical squared gradient. Assume that only a tensor
+      "X" is being optimized. The rest of required information is
+      
+       - the value of "X",
+       - "X"'s gradient (denoted by "G"),
+       - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
+       - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
+  
+      Some of those parameters are passed into this operator as input tensors and others
+      are stored as this operator's attributes. Specifically, this operator's input tensor
+      list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
+      the second input, and so on. Other parameters are given as attributes because they
+      are constants. Moreover, the corresponding output tensors are 
+      
+       - the new value of "X" (called "X_new"),
+       - the new exponentially-averaged historical gradient (denoted by "V_new"), and
+       - the new exponentially-averaged historical squared gradient (denoted by "H_new").
+  
+      Those outputs are computed following the pseudo code below.
+  
+      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  
+        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+        G_regularized = norm_coefficient * X + G
+  
+        // Update exponentially-averaged historical gradient.
+        V_new = alpha * V + (1 - alpha) * G_regularized
+  
+        // Update exponentially-averaged historical squared gradient.
+        H_new = beta * H + (1 - beta) * G_regularized * G_regularized
+  
+        // Compute the element-wise square-root of H_new. V_new will be element-wisely
+        // divided by H_sqrt for a better update direction.
+        H_sqrt = Sqrt(H_new) + epsilon
+  
+        // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
+        R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
+  
+        // Compute new value of "X".
+        X_new = X - R_adjusted * V_new / H_sqrt
+  
+        // Post-update regularization.
+        X_final = (1 - norm_coefficient_post) * X_new 
+  
+      If there are multiple inputs to be optimized, the pseudo code will be applied
+      independently to each of them.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 0.9)</dt>
+<dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
+<dt><tt>beta</tt> : float (default is 0.999)</dt>
+<dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
+<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dd>Small scalar to avoid dividing by zero.</dd>
+<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
+<dt><tt>norm_coefficient_post</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
+</dl>
+
+#### Inputs (3 - &#8734;)
+
+<dl>
+<dt><tt>R</tt> : T1</dt>
+<dd>The initial learning rate.</dd>
+<dt><tt>T</tt> : T2</dt>
+<dd>The update count of "X". It should be a scalar.</dd>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>The tensors to be optimized, followed by their respective gradients, followed by their respective accumulated gradients (aka momentum), followed by their respective accumulated squared gradients. For example, to optimize tensors "X_1" and "X_2,", the input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated gradient of "X_1", accumulated gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>New values of optimized tensors, followed by their respective new accumulated gradients, followed by their respective new accumulated squared gradients. For example, if two tensors "X_1" and "X_2" are optimized, the outputs list would be [new value of "X_1", new value of "X_2", new accumulated gradient of "X_1", new accumulated gradient of "X_2", new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
 </dl>
 
 #### Type Constraints

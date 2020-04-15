@@ -1291,6 +1291,25 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
 
+    def test_inverse_float(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT16, (3, 4, 4))],
+            [make_node('Inverse', ['x'], 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT16, (3, 4, 4))])
+
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 5, 5))],
+            [make_node('Inverse', ['x'], 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 5))])
+
+        graph = self._make_graph(
+            [('x', TensorProto.DOUBLE, (5, 5))],
+            [make_node('Inverse', ['x'], 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (5, 5))])
+
     def test_logsoftmax_2d(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5))],
@@ -2941,6 +2960,58 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_value_info('V2_new', TensorProto.FLOAT, (3, 4))],
             opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.training', 1)])
 
+    def test_adam(self):  # type: () -> None
+        graph = self._make_graph(
+            [('R', TensorProto.FLOAT, ()),  # scalar's shape is ()
+             ('T', TensorProto.INT64, ()),  # scalar's shape is ()
+             ('X', TensorProto.FLOAT, (1, 2)),
+             ('G', TensorProto.FLOAT, (1, 2)),
+             ('V', TensorProto.FLOAT, (1, 2)),
+             ('H', TensorProto.FLOAT, (1, 2))],
+            [make_node('Adam', ['R', 'T', 'X', 'G', 'V', 'H'], ['X_new', 'V_new', 'H_new'],
+             domain='ai.onnx.training',
+             alpha=0.9, beta=1.0, norm_coefficient=0.02)],
+            [])
+
+        infos = [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
+                 make_tensor_value_info('V_new', TensorProto.FLOAT, (1, 2)),
+                 make_tensor_value_info('H_new', TensorProto.FLOAT, (1, 2))]
+
+        self._assert_inferred(
+            graph,
+            infos,
+            opset_imports=[make_opsetid('ai.onnx.training', 1), make_opsetid('', 12)])
+
+    def test_adam_multiple(self):  # type: () -> None
+        graph = self._make_graph(
+            [('R', TensorProto.FLOAT, ()),  # scalar's shape is ()
+             ('T', TensorProto.INT64, ()),  # scalar's shape is ()
+             ('X1', TensorProto.FLOAT, (1, 2)),
+             ('X2', TensorProto.FLOAT, (3, 4)),
+             ('G1', TensorProto.FLOAT, (1, 2)),
+             ('G2', TensorProto.FLOAT, (3, 4)),
+             ('V1', TensorProto.FLOAT, (1, 2)),
+             ('V2', TensorProto.FLOAT, (3, 4)),
+             ('H1', TensorProto.FLOAT, (1, 2)),
+             ('H2', TensorProto.FLOAT, (3, 4))],
+            [make_node('Adam', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'V1', 'V2', 'H1', 'H2'],
+             ['X1_new', 'X2_new', 'V1_new', 'V2_new', 'H1_new', 'H2_new'],
+             domain='ai.onnx.training',
+             alpha=0.9, beta=1.0, norm_coefficient=0.02)],
+            [])
+
+        infos = [make_tensor_value_info('X1_new', TensorProto.FLOAT, (1, 2)),
+                 make_tensor_value_info('X2_new', TensorProto.FLOAT, (3, 4)),
+                 make_tensor_value_info('V1_new', TensorProto.FLOAT, (1, 2)),
+                 make_tensor_value_info('V2_new', TensorProto.FLOAT, (3, 4)),
+                 make_tensor_value_info('H1_new', TensorProto.FLOAT, (1, 2)),
+                 make_tensor_value_info('H2_new', TensorProto.FLOAT, (3, 4))]
+
+        self._assert_inferred(
+            graph,
+            infos,
+            opset_imports=[make_opsetid('ai.onnx.training', 1), make_opsetid('', 12)])
+
     def test_pad_opset10(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, None, 2))],
@@ -2986,6 +3057,22 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Einsum', ['x'], ['y'], equation='ij->ji')],
             [],)
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])  # type: ignore
+
+    def test_einsum_dot(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1,)),
+             ('y', TensorProto.FLOAT, (1,))],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation='i,i->')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_einsum_scalar(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ()),
+             ('y', TensorProto.FLOAT, ())],
+            [make_node('Einsum', ['x', 'y'], ['z'], equation=',->')],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
     def test_einsum_outer_prod(self):  # type: () -> None
         graph = self._make_graph(
