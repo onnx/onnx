@@ -216,6 +216,7 @@ def make_map(
     map.pairs.extend(pairs)
     return map
 
+
 def make_key_value_pair(
         key,  # type: Any
         key_type,  # type: int
@@ -246,6 +247,18 @@ def make_key_value_pair(
     kv_pair.value_type = value_type
 
     return kv_pair
+
+
+def make_sequence_map_element(
+        value  # type: TypeProto
+):  # type: (...) -> SequenceMapElement
+    '''
+    Make a sequence map element to store values for SequenceProto and MapProto.
+    '''
+    seq_map_elem = SequenceMapElement()
+    seq_map_elem.value = value
+    return seq_map_elem
+
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.

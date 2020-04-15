@@ -7,7 +7,7 @@ import sys
 import platform
 
 import numpy as np  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto
+from onnx import TensorProto, MapProto, SequenceProto, TypeProto
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
@@ -157,7 +157,7 @@ def from_array_to_sequence(arr, name=None):  # type: (np.ndarray[Any], Optional[
     for elem in arr:
         # If elem is a tensor
         if elem.dtype == np.ndarray:
-            sequence.values.append(from_array(elem))
+            sequence.values.append(make_sequence_map_element(from_array(elem)))
         else:
             raise TypeError("The element type in the input sequence is not supported yet.")
     return sequence
@@ -177,7 +177,7 @@ def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
         value_type = kv_pair.value_type
         key_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
         key = get_attr(kv_pair, key_field)
-        value = kv_pair.value
+        value = kv_pair.value.value
         if value_type == TypeProto.Tensor or value_type == TypeProto.SparseTensor:
             dict[key] = to_array(value)
         elif value_type == TypeProto.Map:
@@ -210,5 +210,5 @@ def from_dict_to_map(d, name=None):  # type: (dict, Optional[Text]) -> MapProto
         elif isinstance(val, np.ndarray):
             val_type = TypeProto.Tensor
         kv_pair = helper.make_key_value_pair(key, key_type, val, val_type)
-        map.pairs.extend(kv_pair)
+        map.pairs.append(kv_pair)
     return map
