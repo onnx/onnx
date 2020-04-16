@@ -71,7 +71,7 @@ class Backend(object):
                 **kwargs  # type: Any
                 ):  # type: (...) -> Optional[BackendRep]
         # TODO Remove Optional from return type
-        onnx.checker.check_model(model, True)
+        onnx.checker.check_model(model)
         return None
 
     @classmethod
