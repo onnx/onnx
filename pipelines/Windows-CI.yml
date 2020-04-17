@@ -41,7 +41,7 @@ jobs:
   - script: |
       call activate py$(python.version)
       python -m pip install --upgrade pip
-      python -m pip install --quiet pytest nbval numpy
+      python -m pip install --quiet pytest nbval flake8 numpy
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
@@ -51,9 +51,6 @@ jobs:
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 
       python setup.py --quiet install
-    displayName: Install dependencies and onnx
-
-  - script: |
       flake8
       pytest
       python onnx/defs/gen_doc.py
@@ -65,4 +62,4 @@ jobs:
       python setup.py typecheck
 
       git diff --exit-code
-    displayName: Test ONNX
+    displayName: Install and test ONNX
