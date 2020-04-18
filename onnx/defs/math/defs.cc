@@ -424,6 +424,37 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 
 static float celu_default_alpha = 1.0;
 
+TensorProto ToDimensionOneFloatTensor(float value) {
+  auto t = ToTensor(std::vector<float>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+bool BuildContextDependentFunctionBodyCelu(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+float alpha = ctx.getAttribute("alpha")->f();
+  body.push_back({{"alpha"},
+                  "Constant",
+                  {},
+                  {MakeAttribute("value", ToDimensionOneFloatTensor(alpha))}});
+
+  body.push_back({{"X_alpha"}, "Div", {"X", "alpha"}});
+  body.push_back({{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}});
+  body.push_back({{"Y"}, "Mul", {"alpha", "Elu_Result"}});
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto& node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
     12,
@@ -441,18 +472,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to floating-point tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::NodeDef{{"alpha"},
-                                         "Constant",
-                                         {},
-                                         {MakeRefAttribute(
-                                             "value_float",
-                                             "alpha",
-                                             AttributeProto::FLOAT)}},
-             {{"X_alpha"}, "Div", {"X", "alpha"}},
-             {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
-             {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
+        .SetContextDependentFunctionBodyBuilder(
+            BuildContextDependentFunctionBodyCelu));
 
 static const char* Exp_ver6_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
@@ -1856,12 +1877,6 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
-TensorProto ToDimensionOneFloatTensor(float value) {
-  auto t = ToTensor(std::vector<float>({value}));
-  t.add_dims(1);
-  return t;
-}
-
 bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -2527,35 +2542,40 @@ bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back({{"X_Max"}, "Max", {"scores"}});
+
+  body.push_back({{"X_Max"},
+                  "ReduceMax",
+                  {"scores"},
+                  {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+
   body.push_back({{"X_Sub"}, "Sub", {"scores", "X_Max"}});
   body.push_back({{"X_Exp"}, "Exp", {"X_Sub"}});
-  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
+  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
-  body.push_back({{"log_prob"}, "Log", {"X_Div"}});
+  body.push_back({{"X_Log"}, "Log", {"X_Div"}});
   if (ctx.getAttribute("ignore_index") == nullptr) {
     if (!ctx.hasInput(2)) {
       body.push_back({{"output"},
                       "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels"},
+                      {"X_Log", "labels"},
                       {MakeRefAttribute("reduction", AttributeProto::STRING)}});
     } else {
       body.push_back({{"output"},
                       "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels", "weights"},
+                      {"X_Log", "labels", "weights"},
                       {MakeRefAttribute("reduction", AttributeProto::STRING)}});
     }
   } else {
     if (!ctx.hasInput(2)) {
       body.push_back({{"output"},
                       "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels"},
+                      {"X_Log", "labels"},
                       {MakeRefAttribute("reduction", AttributeProto::STRING),
                        MakeRefAttribute("ignore_index", AttributeProto::INT)}});
     } else {
       body.push_back({{"output"},
                       "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels", "weights"},
+                      {"X_Log", "labels", "weights"},
                       {MakeRefAttribute("reduction", AttributeProto::STRING),
                        MakeRefAttribute("ignore_index", AttributeProto::INT)}});
     }
