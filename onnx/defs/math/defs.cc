@@ -435,7 +435,7 @@ bool BuildContextDependentFunctionBodyCelu(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-float alpha = ctx.getAttribute("alpha")->f();
+  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
   body.push_back({{"alpha"},
                   "Constant",
                   {},
@@ -2553,33 +2553,30 @@ bool BuildContextDependentFunctionBodySCE(
   body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"X_Log"}, "Log", {"X_Div"}});
-  if (ctx.getAttribute("ignore_index") == nullptr) {
-    if (!ctx.hasInput(2)) {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"X_Log", "labels"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
-    } else {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"X_Log", "labels", "weights"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
-    }
-  } else {
-    if (!ctx.hasInput(2)) {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"X_Log", "labels"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING),
-                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
-    } else {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"X_Log", "labels", "weights"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING),
-                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
-    }
+
+  // Review(mzs): Ideally we want to reuse the output from Log for sub-graph output as well but
+  // looking at the graph resolve code it does not include graph outputs as intermediate outputs, hence
+  // if intermediate X_log is renamed as log_prob then it will be treated as graph output and will not 
+  // be available to NegativeLogLikelihoodLoss. May be my understanding is incorrect or there is a bug in
+  // function population code in ORTbut I will dig further to be 100%.
+  // In the meantime we just replicate the log by recomputing it or may be copy if there is an op for that?
+  if(ctx.hasOutput(1)){
+    body.push_back({{"log_prob"}, "Log", {"X_Div"}});
   }
+
+  std::vector<std::string> input_tensor_names{"X_Log", "labels"};
+  std::vector<FunctionBodyHelper::AttributeProtoWrapper> attributes{MakeRefAttribute("reduction", AttributeProto::STRING)};
+  // Add weights as input if needed.
+  if(ctx.hasInput(2)){
+    input_tensor_names.push_back("weights");
+  }
+
+  // add ignore_index attributes if needed.
+  if (ctx.getAttribute("ignore_index") != nullptr){
+    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+  }
+  
+  body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
@@ -2662,5 +2659,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             updateOutputShape(ctx, 0, TensorShapeProto());
           }
+
+          if(ctx.getNumOutputs() == 2){
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateShapeFromInputToOutput(ctx, 0, 1);
+          }
+
         }));
 } // namespace ONNX_NAMESPACE
