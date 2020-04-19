@@ -118,7 +118,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Create operator.
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                      inputs=['x', 'y'],
-                                     outputs=['z','log_prob'],
+                                     outputs=['z', 'log_prob'],
                                      reduction=reduction)
 
         # Define operator inputs.
@@ -308,7 +308,7 @@ class SoftmaxCrossEntropyLoss(Base):
         loss, log_prob = softmaxcrossentropy(x, y, get_log_prob=True)
 
         # Check results
-        expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_3d_log_prob')        
+        expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_3d_log_prob')
 
     @staticmethod
     def export_softmaxcrossentropy_mean_weights():  # type: () -> None
@@ -595,7 +595,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Create operator.
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                     inputs=['x', 'y', 'w'],
-                                    outputs=['z','log_prob'],
+                                    outputs=['z', 'log_prob'],
                                     reduction=reduction,
                                     ignore_index=ignore_index)
 
@@ -646,7 +646,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Create operator.
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                     inputs=['x', 'y'],
-                                    outputs=['z','log_prob'],
+                                    outputs=['z', 'log_prob'],
                                     reduction=reduction,
                                     ignore_index=ignore_index)
 
@@ -690,7 +690,7 @@ class SoftmaxCrossEntropyLoss(Base):
 
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                      inputs=['x', 'y', 'w'],
-                                     outputs=['z','log_prob'],
+                                     outputs=['z', 'log_prob'],
                                      reduction=reduction)
 
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
@@ -883,7 +883,7 @@ class SoftmaxCrossEntropyLoss(Base):
 
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                                      inputs=['x', 'y', 'w'],
-                                     outputs=['z','log_prob'],
+                                     outputs=['z', 'log_prob'],
                                      reduction=reduction,
                                      ignore_index=ignore_index)
 

@@ -11,6 +11,7 @@ from ..base import Base
 from . import expect
 from onnx import helper
 
+
 def dropout(X, drop_probability=0.5, seed=0):  # type: ignore
     if drop_probability == 0:
         return X
@@ -19,6 +20,7 @@ def dropout(X, drop_probability=0.5, seed=0):  # type: ignore
     mask = np.random.uniform(0, 1.0, X.shape) >= drop_probability
     scale = (1 / (1 - drop_probability))
     return mask * X * scale
+
 
 class Dropout(Base):
 
