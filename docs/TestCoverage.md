@@ -11236,7 +11236,7 @@ ignore_index = np.int64(10)
 
 node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y', 'w'],
-                             outputs=['z','log_prob'],
+                             outputs=['z', 'log_prob'],
                              reduction=reduction,
                              ignore_index=ignore_index)
 
@@ -11292,7 +11292,7 @@ reduction = 'mean'
 
 node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y', 'w'],
-                             outputs=['z','log_prob'],
+                             outputs=['z', 'log_prob'],
                              reduction=reduction)
 
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
@@ -11434,7 +11434,7 @@ y = np.random.randint(0, high=5, size=(3, 2))
 loss, log_prob = softmaxcrossentropy(x, y, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_3d_log_prob')        
+expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_3d_log_prob')
 ```
 
 </details>
@@ -11591,7 +11591,7 @@ ignore_index = np.int64(2)
 # Create operator.
 node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                             inputs=['x', 'y'],
-                            outputs=['z','log_prob'],
+                            outputs=['z', 'log_prob'],
                             reduction=reduction,
                             ignore_index=ignore_index)
 
@@ -11796,7 +11796,7 @@ ignore_index = np.int64(2)
 # Create operator.
 node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                             inputs=['x', 'y', 'w'],
-                            outputs=['z','log_prob'],
+                            outputs=['z', 'log_prob'],
                             reduction=reduction,
                             ignore_index=ignore_index)
 
@@ -11908,7 +11908,7 @@ reduction = 'none'
 # Create operator.
 node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
                              inputs=['x', 'y'],
-                             outputs=['z','log_prob'],
+                             outputs=['z', 'log_prob'],
                              reduction=reduction)
 
 # Define operator inputs.
