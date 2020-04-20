@@ -1877,6 +1877,12 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
+TensorProto ToDimensionOneInt64Tensor(int64_t value) {
+  auto t = ToTensor(std::vector<int64_t>({value}));
+  t.add_dims(1);
+  return t;
+}
+
 bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -1969,10 +1975,13 @@ bool BuildContextDependentFunctionBody(
          {},
          {MakeAttribute(
              "value",
-             ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
+             ToDimensionOneInt64Tensor(ctx.getAttribute("ignore_index")->i()))}});
 
-    body.push_back({{"mask"}, "Equal", {"expanded_target", "const_ignore_index"}});
-    body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero", "expanded_target"}});
+    body.push_back({{"const_zero_target_typed"}, "Sub", {"expanded_target", "expanded_target"}});
+    body.push_back({{"expanded_target_int64"}, "Cast", {"expanded_target"}, {MakeAttribute("to", (int64_t)TensorProto_DataType::TensorProto_DataType_INT64)}});
+ 
+    body.push_back({{"mask"}, "Equal", {"expanded_target_int64", "const_ignore_index"}});
+    body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero_target_typed", "expanded_target"}});
     body.push_back({{"input_gather_element"}, "GatherElements", {"input", "transform_targets"}, {MakeAttribute("axis", (int64_t)1)}});
     body.push_back({{"const_zero_float"},
                 "Constant",
@@ -2660,7 +2669,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             updateOutputShape(ctx, 0, TensorShapeProto());
           }
 
-          if(ctx.getNumOutputs() == 2){
+          if(ctx.getNumOutputs() == 2) {
             propagateElemTypeFromInputToOutput(ctx, 0, 1);
             propagateShapeFromInputToOutput(ctx, 0, 1);
           }
