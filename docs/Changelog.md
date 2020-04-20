@@ -15050,7 +15050,7 @@ This version of the operator has been available since version 12 of the default 
   <br/>
   Where number of blocks extracted from each spatial dimension d is:
   ```
-  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (kernel_size[d] - 1) - 1) / stride[d]) + 1
+  num_blocks[d] = floor((input_spatial_shape[d] + (pad_begin[d] + pad_end[d]) - dilation[d] * (block_size[d] - 1) - 1) / stride[d]) + 1
   ```
 
 #### Version
@@ -15081,7 +15081,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor that contains the result of the unfold. The output has three dimensions, and dimension values are funciton of the kernel size, stride size, and pad lengths.</dd>
+<dd>Output data tensor that contains the result of the unfold. The output has three dimensions, and dimension values are function of the block size, stride size, and pad lengths.</dd>
 </dl>
 
 #### Type Constraints
