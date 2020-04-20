@@ -1,0 +1,64 @@
+trigger:
+- master
+
+jobs:
+
+- job: 'Test'
+  pool:
+    vmImage: 'vs2017-win2016'
+  strategy:
+    matrix:
+      py37:
+        python.version: '3.7'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py36:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py37_onnx_ml:
+        python.version: '3.7'
+        onnx_ml: 1
+        onnx_verify_proto: 0
+      py36_verify_proto:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_verify_proto: 1
+    maxParallel: 4
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+
+  - script: conda create --yes --quiet --name py$(python.version) -c conda-forge python=$(python.version) numpy libprotobuf=3.11.3 protobuf
+    displayName: Create Anaconda environment
+
+  - script: |
+      call activate py$(python.version)
+      python -m pip install --upgrade pip
+      python -m pip install --quiet pytest nbval numpy
+
+      git submodule update --init --recursive
+      set ONNX_BUILD_TESTS=1
+      set ONNX_ML=$(onnx_ml)
+      set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
+      set USE_MSVC_STATIC_RUNTIME=0
+      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+
+      python setup.py --quiet install
+      pytest
+      python onnx/defs/gen_doc.py
+      python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --ml
+
+      rm -rf .setuptools-cmake-build
+      pip install --quiet -e .[mypy]
+      python setup.py typecheck
+
+      git diff --exit-code
+    displayName: Install and test ONNX
