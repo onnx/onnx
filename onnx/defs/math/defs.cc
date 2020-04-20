@@ -2146,12 +2146,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx.getInputType(2)->tensor_type().shape();
               if (weight_shape.dim_size() != 1)
                 fail_shape_inference("Weight rank must be 1.")
-                    const auto weight_dim = weight_shape.dim(0);
-              const auto input_dim_1 = input_shape.dim(1);
-              if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
-                  weight_dim.dim_value() != input_dim_1.dim_value())
-                fail_shape_inference(
-                    "Input and weight dimension value mismatch.")
             }
 
             TensorShapeProto* output_shape =
