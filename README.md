@@ -1,9 +1,9 @@
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
-[![Build Status](https://img.shields.io/travis/onnx/onnx/master.svg?label=Linux-Travis)](https://travis-ci.org/onnx/onnx)
-[![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux-Jenkins-ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
-[![Build status](https://img.shields.io/appveyor/ci/onnx/onnx/master.svg?label=Windows-Appveyor)](https://ci.appveyor.com/project/onnx/onnx)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows-Azure)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
+[![Build Status](https://img.shields.io/travis/onnx/onnx/master.svg?label=Linux)](https://travis-ci.org/onnx/onnx)
+[![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
+[![Build status](https://img.shields.io/appveyor/ci/onnx/onnx/master.svg?label=Windows)](https://ci.appveyor.com/project/onnx/onnx)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Azure-Windows)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
