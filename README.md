@@ -125,7 +125,7 @@ set USE_MSVC_STATIC_RUNTIME=0
 python setup.py install
 ```
 
-If you do not want to build protobuf and instead want to use protobuf from conda forge then follow these instructions.
+If you do not want to build protobuf and instead want to use protobuf from conda forge then follow these instructions. 
 However please note : This method is just added as a convenience for users and there is very limited support from ONNX team when using this method.
 
 #### Instructions to build ONNX on windows in anaconda environment
