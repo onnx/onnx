@@ -4435,10 +4435,10 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
-  Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
-  output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+  Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
+  output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
   Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-  the user can simply replace this Dropout with an Identity operator.
+  the user can simply not pass `training_mode` input or set it to false.
   ```
   output = scale * data * mask,
   ```
@@ -4461,13 +4461,15 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs (1 - 3)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
 <dt><tt>ratio</tt> (optional) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training.</dd>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
+<dt><tt>training_mode</tt> (optional) : T2</dt>
+<dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless  specified explicitly it is false and ratio will be zero in which case it will mimic inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -4505,8 +4507,47 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 y = dropout(x)
-expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_default')
+
+expect(node, inputs=[x], outputs=[y], name='test_dropout_default')
+```
+
+</details>
+
+
+<details>
+<summary>default_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y', 'z'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y, z = dropout(x, return_mask=True)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_dropout_default_mask')
+```
+
+</details>
+
+
+<details>
+<summary>default_mask_ratio</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r'],
+    outputs=['y', 'z'],
+)
+
+r = np.float32(0.1)
+x = np.array([-1, 0, 1]).astype(np.float32)
+y, z = dropout(x, r, return_mask=True)
+
+expect(node, inputs=[x, r], outputs=[y, z], name='test_dropout_default_mask_ratio')
 ```
 
 </details>
@@ -4526,6 +4567,26 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
        name='test_dropout_default_old', opset_imports=[helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>default_ratio</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x','r'],
+    outputs=['y'],
+)
+
+r = np.float32(0.1)
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = dropout(x, r)
+
+expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
 ```
 
 </details>
@@ -4569,6 +4630,132 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
        name='test_dropout_random_old', opset_imports=[helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>training</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+r = np.float32(0.75)
+t = np.bool_(True)
+y = dropout(x, r, training_mode= t)
+
+expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout')
+```
+
+</details>
+
+
+<details>
+<summary>training_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+r = np.float32(0.5)
+t = np.bool_(True)
+y = dropout(x, r, training_mode= t)
+
+expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_default')
+```
+
+</details>
+
+
+<details>
+<summary>training_default_ratio_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y', 'z'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+r = np.float32(0.5)
+t = np.bool_(True)
+y, z = dropout(x, r, training_mode= t, return_mask= True)
+
+expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_default_mask')
+```
+
+</details>
+
+
+<details>
+<summary>training_default_zero_ratio</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+r = np.float32(0.0)
+t = np.bool_(True)
+y = dropout(x, r, training_mode= t)
+
+expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_zero_ratio')
+```
+
+</details>
+
+
+<details>
+<summary>training_default_zero_ratio_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y', 'z'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+r = np.float32(0.0)
+t = np.bool_(True)
+y, z = dropout(x, r, training_mode= t, return_mask= True)
+
+expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_zero_ratio_mask')
+```
+
+</details>
+
+
+<details>
+<summary>training_ratio_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y', 'z'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+r = np.float32(0.75)
+t = np.bool_(True)
+y, z = dropout(x, r, training_mode= t, return_mask= True)
+
+expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_mask')
 ```
 
 </details>
