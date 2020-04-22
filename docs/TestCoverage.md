@@ -2854,7 +2854,6 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 y = dropout(x)
-
 expect(node, inputs=[x], outputs=[y], name='test_dropout_default')
 ```
 
@@ -2871,7 +2870,6 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 y, z = dropout(x, return_mask=True)
-
 expect(node, inputs=[x], outputs=[y, z], name='test_dropout_default_mask')
 ```
 
@@ -2889,7 +2887,6 @@ node = onnx.helper.make_node(
 r = np.float32(0.1)
 x = np.array([-1, 0, 1]).astype(np.float32)
 y, z = dropout(x, r, return_mask=True)
-
 expect(node, inputs=[x, r], outputs=[y, z], name='test_dropout_default_mask_ratio')
 ```
 
@@ -2917,14 +2914,13 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Dropout',
-    inputs=['x','r'],
+    inputs=['x', 'r'],
     outputs=['y'],
 )
 
 r = np.float32(0.1)
 x = np.array([-1, 0, 1]).astype(np.float32)
 y = dropout(x, r)
-
 expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
 ```
 
@@ -2981,8 +2977,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 r = np.float32(0.75)
 t = np.bool_(True)
-y = dropout(x, r, training_mode= t)
-
+y = dropout(x, r, training_mode=t)
 expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout')
 ```
 
@@ -3000,8 +2995,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 r = np.float32(0.5)
 t = np.bool_(True)
-y = dropout(x, r, training_mode= t)
-
+y = dropout(x, r, training_mode=t)
 expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_default')
 ```
 
@@ -3019,8 +3013,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 r = np.float32(0.5)
 t = np.bool_(True)
-y, z = dropout(x, r, training_mode= t, return_mask= True)
-
+y, z = dropout(x, r, training_mode=t, return_mask=True)
 expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_default_mask')
 ```
 
@@ -3038,8 +3031,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 r = np.float32(0.0)
 t = np.bool_(True)
-y = dropout(x, r, training_mode= t)
-
+y = dropout(x, r, training_mode=t)
 expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_zero_ratio')
 ```
 
@@ -3057,8 +3049,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 r = np.float32(0.0)
 t = np.bool_(True)
-y, z = dropout(x, r, training_mode= t, return_mask= True)
-
+y, z = dropout(x, r, training_mode=t, return_mask=True)
 expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_zero_ratio_mask')
 ```
 
@@ -3076,8 +3067,7 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.float32)
 r = np.float32(0.75)
 t = np.bool_(True)
-y, z = dropout(x, r, training_mode= t, return_mask= True)
-
+y, z = dropout(x, r, training_mode=t, return_mask=True)
 expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_mask')
 ```
 
