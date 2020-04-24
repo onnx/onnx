@@ -94,17 +94,17 @@ operator id MUST be greater than any extant `op_version` for the
 > 4. Register the new operator in the corresponding `operator_sets`
 >    header file.
 
-### Operator Sets
-
-ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
-
-ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version). The empty string ("") domain indicates the operators defined as part of the ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
-
 How nodes bind to operator declarations is strictly defined, and are designed to increase model compatibility across ONNX implementations (appealing to the conservative clause of the robustness principle).
 
 How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification. Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
 
-### Operator Set and Operator Versioning Example
+### Operator sets
+
+ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as a version (referred to as the `opset` version). The opset version is largely independent of the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
+
+ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version). The empty string ("") domain indicates the operators defined as part of the ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
+
+### Example
 
 This section is not normative and informational only.
 
