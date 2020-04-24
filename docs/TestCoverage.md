@@ -2846,10 +2846,12 @@ There are 13 test cases, listed as following:
 <summary>default</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x'],
     outputs=['y'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -2862,10 +2864,12 @@ expect(node, inputs=[x], outputs=[y], name='test_dropout_default')
 <summary>default_mask</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x'],
     outputs=['y', 'z'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -2878,10 +2882,12 @@ expect(node, inputs=[x], outputs=[y, z], name='test_dropout_default_mask')
 <summary>default_mask_ratio</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r'],
     outputs=['y', 'z'],
+    seed=seed
 )
 
 r = np.float32(0.1)
@@ -2912,10 +2918,12 @@ expect(node, inputs=[x], outputs=[y],
 <summary>default_ratio</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r'],
     outputs=['y'],
+    seed=seed
 )
 
 r = np.float32(0.1)
@@ -2968,10 +2976,12 @@ expect(node, inputs=[x], outputs=[y],
 <summary>training</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r', 't'],
     outputs=['y'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -2986,10 +2996,12 @@ expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout')
 <summary>training_default</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r', 't'],
     outputs=['y'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -3004,10 +3016,12 @@ expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_default'
 <summary>training_default_ratio_mask</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r', 't'],
     outputs=['y', 'z'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -3022,10 +3036,12 @@ expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_defau
 <summary>training_default_zero_ratio</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r', 't'],
     outputs=['y'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -3040,10 +3056,12 @@ expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_zero_rat
 <summary>training_default_zero_ratio_mask</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r', 't'],
     outputs=['y', 'z'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -3058,10 +3076,12 @@ expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_zero_
 <summary>training_ratio_mask</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x', 'r', 't'],
     outputs=['y', 'z'],
+    seed=seed
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)

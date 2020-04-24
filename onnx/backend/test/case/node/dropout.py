@@ -33,10 +33,12 @@ class Dropout(Base):
     # Inferencing tests.
     @staticmethod
     def export_default():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x'],
             outputs=['y'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -45,10 +47,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_default_ratio():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r'],
             outputs=['y'],
+            seed=seed
         )
 
         r = np.float32(0.1)
@@ -58,10 +62,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_default_mask():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x'],
             outputs=['y', 'z'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -70,10 +76,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_default_mask_ratio():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r'],
             outputs=['y', 'z'],
+            seed=seed
         )
 
         r = np.float32(0.1)
@@ -85,10 +93,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_training_default():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r', 't'],
             outputs=['y'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -99,10 +109,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_training_default_ratio_mask():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r', 't'],
             outputs=['y', 'z'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -113,10 +125,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_training():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r', 't'],
             outputs=['y'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -127,10 +141,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_training_ratio_mask():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r', 't'],
             outputs=['y', 'z'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -141,10 +157,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_training_default_zero_ratio():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r', 't'],
             outputs=['y'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
@@ -155,10 +173,12 @@ class Dropout(Base):
 
     @staticmethod
     def export_training_default_zero_ratio_mask():  # type: () -> None
+        seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x', 'r', 't'],
             outputs=['y', 'z'],
+            seed=seed
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
