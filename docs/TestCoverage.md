@@ -106,7 +106,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -123,7 +123,7 @@ x_new, h_new = apply_adagrad(r, t, x, g, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, h],
        outputs=[x_new, h_new], name='test_adagrad',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
@@ -144,7 +144,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -168,7 +168,7 @@ x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
        outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
@@ -194,7 +194,7 @@ node = onnx.helper.make_node('Adam',
                              alpha=alpha,
                              beta=beta,
                              epsilon=epsilon,
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -213,7 +213,7 @@ x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, v, h],
        outputs=[x_new, v_new, h_new], name='test_adam',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
@@ -237,7 +237,7 @@ node = onnx.helper.make_node('Adam',
                              norm_coefficient=norm_coefficient,
                              alpha=alpha,
                              beta=beta,
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -266,7 +266,7 @@ x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
        outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
        name='test_adam_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
@@ -4022,7 +4022,7 @@ add_node = onnx.helper.make_node('Add',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dc_da', 'dc_db'], name='my_gradient',
-    domain='ai.onnx.experiment',
+    domain=ONNX_EXPERIMENTAL_DOMAIN,
     xs=['a', 'b'], y='c')
 
 a = np.array(1.0).astype(np.float32)
@@ -4049,8 +4049,8 @@ graph = onnx.helper.make_graph(
         onnx.helper.make_tensor_value_info('dc_db',
                                            onnx.TensorProto.FLOAT, [])])
 opsets = [
-    onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.experiment', 1)]
+    onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
+    onnx.helper.make_operatorsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)]
 model = onnx.helper.make_model(
     graph,
     producer_name='backend-test',
@@ -4071,7 +4071,7 @@ mul_node = onnx.helper.make_node('Mul',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dd_da', 'dd_db'], name='my_gradient',
-    domain='ai.onnx.experiment',
+    domain=ONNX_EXPERIMENTAL_DOMAIN,
     xs=['a', 'b'], y='d')
 
 a = np.array(1.0).astype(np.float32)
@@ -4101,8 +4101,8 @@ graph = onnx.helper.make_graph(
                                            onnx.TensorProto.FLOAT, [])])
 
 opsets = [
-    onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.experiment', 1)]
+    onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
+    onnx.helper.make_operatorsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)]
 model = onnx.helper.make_model(graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -6130,7 +6130,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -6147,7 +6147,7 @@ x_new, v_new = apply_momentum(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
@@ -6169,7 +6169,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -6193,7 +6193,7 @@ x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
        outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
@@ -6214,7 +6214,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='nesterov',
-                             domain='ai.onnx.experiment'
+                             domain=ONNX_EXPERIMENTAL_DOMAIN
                              )
 
 # Define operator inputs.
@@ -6231,7 +6231,7 @@ x_new, v_new = apply_nesterov(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_nesterov_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
+       opset_imports=[onnx.helper.make_opsetid(ONNX_EXPERIMENTAL_DOMAIN, 1)])
 ```
 
 </details>
