@@ -1,7 +1,7 @@
 # Metadata
 # Metadata
 
-In addition to the core metadata recommendations listed in the [extensibility documentation](IR.md#metadata) there is additional experimental metadata to help provide information for model inputs and outputs.  
+In addition to the core metadata recommendations listed in the [extensibility documentation](IR.md#optional-metadata) there is additional experimental metadata to help provide information for model inputs and outputs.  
 
 This metadata applies to all input and output tensors of a given category.  The first such category we define is: `Image`.
 
