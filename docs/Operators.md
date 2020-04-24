@@ -171,12 +171,12 @@
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
   * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
-* ai.onnx.training
-  * <a href="#ai.onnx.training.Adagrad">ai.onnx.training.Adagrad</a>
-  * <a href="#ai.onnx.training.Adam">ai.onnx.training.Adam</a>
-  * <a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>
-  * <a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>
-  * <a href="#ai.onnx.training.Momentum">ai.onnx.training.Momentum</a>
+* ai.onnx.experiment
+  * <a href="#ai.onnx.experiment.Adagrad">ai.onnx.experiment.Adagrad</a>
+  * <a href="#ai.onnx.experiment.Adam">ai.onnx.experiment.Adam</a>
+  * <a href="#ai.onnx.experiment.Gradient">ai.onnx.experiment.Gradient</a>
+  * <a href="#ai.onnx.experiment.GraphCall">ai.onnx.experiment.GraphCall</a>
+  * <a href="#ai.onnx.experiment.Momentum">ai.onnx.experiment.Momentum</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -21700,8 +21700,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-## ai.onnx.training
-### <a name="ai.onnx.training.Adagrad"></a><a name="ai.onnx.training.adagrad">**ai.onnx.training.Adagrad**</a>
+## ai.onnx.experiment
+### <a name="ai.onnx.experiment.Adagrad"></a><a name="ai.onnx.experiment.adagrad">**ai.onnx.experiment.Adagrad**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -21756,7 +21756,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.experiment' operator set.
 
 #### Attributes
 
@@ -21817,7 +21817,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -21834,7 +21834,7 @@ x_new, h_new = apply_adagrad(r, t, x, g, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, h],
        outputs=[x_new, h_new], name='test_adagrad',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>
@@ -21857,7 +21857,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -21881,13 +21881,13 @@ x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
        outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>
 
 
-### <a name="ai.onnx.training.Adam"></a><a name="ai.onnx.training.adam">**ai.onnx.training.Adam**</a>
+### <a name="ai.onnx.experiment.Adam"></a><a name="ai.onnx.experiment.adam">**ai.onnx.experiment.Adam**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -21953,7 +21953,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.experiment' operator set.
 
 #### Attributes
 
@@ -22020,7 +22020,7 @@ node = onnx.helper.make_node('Adam',
                              alpha=alpha,
                              beta=beta,
                              epsilon=epsilon,
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -22039,7 +22039,7 @@ x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, v, h],
        outputs=[x_new, v_new, h_new], name='test_adam',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>
@@ -22065,7 +22065,7 @@ node = onnx.helper.make_node('Adam',
                              norm_coefficient=norm_coefficient,
                              alpha=alpha,
                              beta=beta,
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -22094,13 +22094,13 @@ x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
        outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
        name='test_adam_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>
 
 
-### <a name="ai.onnx.training.Gradient"></a><a name="ai.onnx.training.gradient">**ai.onnx.training.Gradient**</a>
+### <a name="ai.onnx.experiment.Gradient"></a><a name="ai.onnx.experiment.gradient">**ai.onnx.experiment.Gradient**</a>
 
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
@@ -22228,7 +22228,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.experiment' operator set.
 
 #### Attributes
 
@@ -22276,7 +22276,7 @@ add_node = onnx.helper.make_node('Add',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dc_da', 'dc_db'], name='my_gradient',
-    domain='ai.onnx.training',
+    domain='ai.onnx.experiment',
     xs=['a', 'b'], y='c')
 
 a = np.array(1.0).astype(np.float32)
@@ -22304,7 +22304,7 @@ graph = onnx.helper.make_graph(
                                            onnx.TensorProto.FLOAT, [])])
 opsets = [
     onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+    onnx.helper.make_operatorsetid('ai.onnx.experiment', 1)]
 model = onnx.helper.make_model(
     graph,
     producer_name='backend-test',
@@ -22327,7 +22327,7 @@ mul_node = onnx.helper.make_node('Mul',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dd_da', 'dd_db'], name='my_gradient',
-    domain='ai.onnx.training',
+    domain='ai.onnx.experiment',
     xs=['a', 'b'], y='d')
 
 a = np.array(1.0).astype(np.float32)
@@ -22358,7 +22358,7 @@ graph = onnx.helper.make_graph(
 
 opsets = [
     onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+    onnx.helper.make_operatorsetid('ai.onnx.experiment', 1)]
 model = onnx.helper.make_model(graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -22369,7 +22369,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 </details>
 
 
-### <a name="ai.onnx.training.GraphCall"></a><a name="ai.onnx.training.graphcall">**ai.onnx.training.GraphCall**</a>
+### <a name="ai.onnx.experiment.GraphCall"></a><a name="ai.onnx.experiment.graphcall">**ai.onnx.experiment.GraphCall**</a>
 
   The GraphCall operator invokes a graph inside TrainingInfoProto's
   algorithm field. The GraphCall inputs and outputs are bound to those of
@@ -22462,7 +22462,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.experiment' operator set.
 
 #### Attributes
 
@@ -22493,7 +22493,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
-### <a name="ai.onnx.training.Momentum"></a><a name="ai.onnx.training.momentum">**ai.onnx.training.Momentum**</a>
+### <a name="ai.onnx.experiment.Momentum"></a><a name="ai.onnx.experiment.momentum">**ai.onnx.experiment.Momentum**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
@@ -22558,7 +22558,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.experiment' operator set.
 
 #### Attributes
 
@@ -22622,7 +22622,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -22639,7 +22639,7 @@ x_new, v_new = apply_momentum(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>
@@ -22663,7 +22663,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -22687,7 +22687,7 @@ x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
        outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>
@@ -22710,7 +22710,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='nesterov',
-                             domain='ai.onnx.training'
+                             domain='ai.onnx.experiment'
                              )
 
 # Define operator inputs.
@@ -22727,7 +22727,7 @@ x_new, v_new = apply_nesterov(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_nesterov_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 ```
 
 </details>

@@ -40,7 +40,7 @@ class Adagrad(Base):
                                      norm_coefficient=norm_coefficient,
                                      epsilon=epsilon,
                                      decay_factor=decay_factor,
-                                     domain='ai.onnx.training'
+                                     domain='ai.onnx.experiment'
                                      )
 
         # Define operator inputs.
@@ -57,7 +57,7 @@ class Adagrad(Base):
         # Check results.
         expect(node, inputs=[r, t, x, g, h],
                outputs=[x_new, h_new], name='test_adagrad',
-               opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+               opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])
 
     @staticmethod
     def export_adagrad_multiple():  # type: () -> None
@@ -74,7 +74,7 @@ class Adagrad(Base):
                                      norm_coefficient=norm_coefficient,
                                      epsilon=epsilon,
                                      decay_factor=decay_factor,
-                                     domain='ai.onnx.training'
+                                     domain='ai.onnx.experiment'
                                      )
 
         # Define operator inputs.
@@ -98,4 +98,4 @@ class Adagrad(Base):
         # Check results.
         expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
                outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple',
-               opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+               opset_imports=[onnx.helper.make_opsetid('ai.onnx.experiment', 1)])

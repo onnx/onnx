@@ -19,7 +19,7 @@ class Gradient(Base):
         gradient_node = onnx.helper.make_node(
             'Gradient', ['a', 'b'],
             ['dc_da', 'dc_db'], name='my_gradient',
-            domain='ai.onnx.training',
+            domain='ai.onnx.experiment',
             xs=['a', 'b'], y='c')
 
         a = np.array(1.0).astype(np.float32)
@@ -47,7 +47,7 @@ class Gradient(Base):
                                                    onnx.TensorProto.FLOAT, [])])
         opsets = [
             onnx.helper.make_operatorsetid('', 12),
-            onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+            onnx.helper.make_operatorsetid('ai.onnx.experiment', 1)]
         model = onnx.helper.make_model(
             graph,
             producer_name='backend-test',
@@ -64,7 +64,7 @@ class Gradient(Base):
         gradient_node = onnx.helper.make_node(
             'Gradient', ['a', 'b'],
             ['dd_da', 'dd_db'], name='my_gradient',
-            domain='ai.onnx.training',
+            domain='ai.onnx.experiment',
             xs=['a', 'b'], y='d')
 
         a = np.array(1.0).astype(np.float32)
@@ -95,7 +95,7 @@ class Gradient(Base):
 
         opsets = [
             onnx.helper.make_operatorsetid('', 12),
-            onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+            onnx.helper.make_operatorsetid('ai.onnx.experiment', 1)]
         model = onnx.helper.make_model(graph,
             producer_name='backend-test',
             opset_imports=opsets)

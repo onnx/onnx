@@ -2902,14 +2902,14 @@ class TestShapeInference(unittest.TestCase):
              ('G', TensorProto.FLOAT, (1, 2)),
              ('H', TensorProto.FLOAT, (1, 2))],
             [make_node('Adagrad', ['R', 'T', 'X', 'G', 'H'], ['X_new', 'H_new'],
-                       domain='ai.onnx.training')],
+                       domain='ai.onnx.experiment')],
             [])
 
         self._assert_inferred(
             graph,
             [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
              make_tensor_value_info('H_new', TensorProto.FLOAT, (1, 2))],
-            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.training', 1)])
+            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.experiment', 1)])
 
     def test_adagrad_multiple(self):  # type: () -> None
         graph = self._make_graph(
@@ -2923,7 +2923,7 @@ class TestShapeInference(unittest.TestCase):
              ('H2', TensorProto.FLOAT, (3, 4))],
             [make_node('Adagrad', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'H1', 'H2'],
                        ['X1_new', 'X2_new', 'H1_new', 'H2_new'],
-                       domain='ai.onnx.training')],
+                       domain='ai.onnx.experiment')],
             [])
 
         self._assert_inferred(graph,
@@ -2931,7 +2931,7 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_value_info('X2_new', TensorProto.FLOAT, (3, 4)),
              make_tensor_value_info('H1_new', TensorProto.FLOAT, (1, 2)),
              make_tensor_value_info('H2_new', TensorProto.FLOAT, (3, 4))],
-            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.training', 1)])
+            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.experiment', 1)])
 
     def test_momentum(self):  # type: () -> None
         graph = self._make_graph(
@@ -2942,13 +2942,13 @@ class TestShapeInference(unittest.TestCase):
              ('V', TensorProto.FLOAT, (1, 2))],
             [make_node('Momentum', ['R', 'T', 'X', 'G', 'V'], ['X_new', 'V_new'],
              alpha=0.9, beta=1.0, norm_coefficient=0.02, mode='standard',
-             domain='ai.onnx.training')],
+             domain='ai.onnx.experiment')],
             [])
         self._assert_inferred(
             graph,
             [make_tensor_value_info('X_new', TensorProto.FLOAT, (1, 2)),
              make_tensor_value_info('V_new', TensorProto.FLOAT, (1, 2))],
-            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.training', 1)])
+            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.experiment', 1)])
 
     def test_momentum_multiple(self):  # type: () -> None
         graph = self._make_graph(
@@ -2963,7 +2963,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Momentum', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'V1', 'V2'],
              ['X1_new', 'X2_new', 'V1_new', 'V2_new'],
              alpha=0.9, beta=1.0, norm_coefficient=0.02, mode='nesterov',
-             domain='ai.onnx.training')],
+             domain='ai.onnx.experiment')],
             [])
 
         self._assert_inferred(
@@ -2972,7 +2972,7 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_value_info('X2_new', TensorProto.FLOAT, (3, 4)),
              make_tensor_value_info('V1_new', TensorProto.FLOAT, (1, 2)),
              make_tensor_value_info('V2_new', TensorProto.FLOAT, (3, 4))],
-            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.training', 1)])
+            opset_imports=[helper.make_opsetid('', 12), helper.make_opsetid('ai.onnx.experiment', 1)])
 
     def test_adam(self):  # type: () -> None
         graph = self._make_graph(
@@ -2983,7 +2983,7 @@ class TestShapeInference(unittest.TestCase):
              ('V', TensorProto.FLOAT, (1, 2)),
              ('H', TensorProto.FLOAT, (1, 2))],
             [make_node('Adam', ['R', 'T', 'X', 'G', 'V', 'H'], ['X_new', 'V_new', 'H_new'],
-             domain='ai.onnx.training',
+             domain='ai.onnx.experiment',
              alpha=0.9, beta=1.0, norm_coefficient=0.02)],
             [])
 
@@ -2994,7 +2994,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             infos,
-            opset_imports=[make_opsetid('ai.onnx.training', 1), make_opsetid('', 12)])
+            opset_imports=[make_opsetid('ai.onnx.experiment', 1), make_opsetid('', 12)])
 
     def test_adam_multiple(self):  # type: () -> None
         graph = self._make_graph(
@@ -3010,7 +3010,7 @@ class TestShapeInference(unittest.TestCase):
              ('H2', TensorProto.FLOAT, (3, 4))],
             [make_node('Adam', ['R', 'T', 'X1', 'X2', 'G1', 'G2', 'V1', 'V2', 'H1', 'H2'],
              ['X1_new', 'X2_new', 'V1_new', 'V2_new', 'H1_new', 'H2_new'],
-             domain='ai.onnx.training',
+             domain='ai.onnx.experiment',
              alpha=0.9, beta=1.0, norm_coefficient=0.02)],
             [])
 
@@ -3024,7 +3024,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             infos,
-            opset_imports=[make_opsetid('ai.onnx.training', 1), make_opsetid('', 12)])
+            opset_imports=[make_opsetid('ai.onnx.experiment', 1), make_opsetid('', 12)])
 
     def test_pad_opset10(self):  # type: () -> None
         graph = self._make_graph(

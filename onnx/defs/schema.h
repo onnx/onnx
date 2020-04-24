@@ -986,12 +986,12 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(                             \
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
-// Experimental operators' version is always 0, which means they don't
+// Experimental operators' version is always 1, which means they don't
 // have versioning. In other words, experimental operators are subject to
 // changes.
 #define ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(name, impl)    \
   ONNX_OPERATOR_SET_SCHEMA_EX(                             \
-      name, OnnxExperiment, AI_ONNX_EXPERIMENT_DOMAIN, 0, true, impl)
+      name, OnnxExperiment, AI_ONNX_EXPERIMENT_DOMAIN, 1, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are

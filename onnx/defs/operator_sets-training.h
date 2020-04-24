@@ -13,6 +13,7 @@ namespace ONNX_NAMESPACE {
 class OpSet_OnnxTraining_ver1 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  }
 };
 
 // Register training operators.
