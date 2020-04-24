@@ -41,7 +41,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         y = dropout(x)
         expect(node, inputs=[x], outputs=[y], name='test_dropout_default')
 
@@ -56,7 +56,7 @@ class Dropout(Base):
         )
 
         r = np.float32(0.1)
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         y = dropout(x, r)
         expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
 
@@ -70,7 +70,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         y, z = dropout(x, return_mask=True)
         expect(node, inputs=[x], outputs=[y, z], name='test_dropout_default_mask')
 
@@ -85,7 +85,7 @@ class Dropout(Base):
         )
 
         r = np.float32(0.1)
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         y, z = dropout(x, r, return_mask=True)
         expect(node, inputs=[x, r], outputs=[y, z], name='test_dropout_default_mask_ratio')
 
@@ -101,7 +101,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         r = np.float32(0.5)
         t = np.bool_(True)
         y = dropout(x, r, training_mode=t)
@@ -117,7 +117,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         r = np.float32(0.5)
         t = np.bool_(True)
         y, z = dropout(x, r, training_mode=t, return_mask=True)
@@ -133,7 +133,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         r = np.float32(0.75)
         t = np.bool_(True)
         y = dropout(x, r, training_mode=t)
@@ -149,7 +149,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         r = np.float32(0.75)
         t = np.bool_(True)
         y, z = dropout(x, r, training_mode=t, return_mask=True)
@@ -165,7 +165,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         r = np.float32(0.0)
         t = np.bool_(True)
         y = dropout(x, r, training_mode=t)
@@ -181,7 +181,7 @@ class Dropout(Base):
             seed=seed
         )
 
-        x = np.array([-1, 0, 1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
         r = np.float32(0.0)
         t = np.bool_(True)
         y, z = dropout(x, r, training_mode=t, return_mask=True)
