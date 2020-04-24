@@ -782,7 +782,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's experiment domain contains operators subject to change, so versining
       // is not meaningful and that domain should have only one version.
-      map_[AI_ONNX_EXPERIMENT_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_EXPERIMENTAL_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -986,12 +986,9 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(                             \
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
-// Experimental operators' version is always 1, which means they don't
-// have versioning. In other words, experimental operators are subject to
-// changes.
-#define ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(name, impl)    \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                             \
-      name, OnnxExperiment, AI_ONNX_EXPERIMENT_DOMAIN, 1, true, impl)
+#define ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(                                 \
+      name, OnnxExperimental, AI_ONNX_EXPERIMENTAL_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
@@ -1044,10 +1041,8 @@ class DbgOperatorSetTracker {
   name##_##domain##_ver##ver
 
 // Naming convention for experimental operator schema classes
-// Experimental operators don't have versioning, so all their
-// versions are 1.
-#define ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA_CLASS_NAME(name) \
-  ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxExperiment, 1, name)
+#define ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA_CLASS_NAME(ver, name) \
+  ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxExperimental, ver, name)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);

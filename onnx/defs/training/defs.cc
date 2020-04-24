@@ -134,8 +134,9 @@ auto-differentiation.
 
 )DOC";
 
-ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(
+ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA(
     Gradient,
+    1,
     OpSchema()
         .SetDoc(Gradient_ver1_doc)
         .Input(
@@ -287,8 +288,9 @@ GraphCall's may be still connected the global "W" variable and therefore the
 structure of the computation graph is unchanged.
 )DOC";
 
-ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(
+ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA(
     GraphCall,
+    1,
     OpSchema()
         .SetDoc(GraphCall_ver1_doc)
         .Input(
@@ -375,8 +377,9 @@ static const char* Adagrad_ver1_doc = R"DOC(
     descent update.
 )DOC";
 
-ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(
+ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA(
     Adagrad,
+    1,
     OpSchema()
         .SetDoc(Adagrad_ver1_doc)
         .Input(0, "R", "The initial learning rate.", "T1")
@@ -521,8 +524,9 @@ static const char* Momentum_ver1_doc = R"DOC(
     be concatenated too) and then our pseudo code becomes applicable.
 )DOC";
 
-ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(
+ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA(
     Momentum,
+    1,
     OpSchema()
         .SetDoc(Momentum_ver1_doc)
         .Input(0, "R", "The learning rate.", "T1")
@@ -671,8 +675,9 @@ static const char* Adam_ver1_doc = R"DOC(
     independently to each of them.
 )DOC";
 
-ONNX_EXPERIMENT_OPERATOR_SET_SCHEMA(
+ONNX_EXPERIMENTAL_OPERATOR_SET_SCHEMA(
     Adam,
+    1,
     OpSchema()
         .SetDoc(Adam_ver1_doc)
         .Input(0, "R", "The initial learning rate.", "T1")
