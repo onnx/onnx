@@ -15038,6 +15038,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
+<<<<<<< HEAD
 ### <a name="UnfoldToDepth-12"></a>**UnfoldToDepth-12**</a>
 
   The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
@@ -15089,6 +15090,8 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
+=======
+>>>>>>> parent of e8b33a5a... Adding UnfoldToDepth op [1.7 Release] (#2616)
 # ai.onnx.training
 ## Version 1 of the 'ai.onnx.training' operator set
 ### <a name="ai.onnx.training.Adagrad-1"></a>**ai.onnx.training.Adagrad-1**</a>
