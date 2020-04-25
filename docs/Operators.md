@@ -3,7 +3,7 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
-ai.onnx (default)
+### ai.onnx (default)
 |**Operator**|**Since version**|
 |-|-|
 |<a href="#Abs">Abs</a>|<a href="Changelog.md#Abs-6">6</a>, <a href="Changelog.md#Abs-1">1</a>|
@@ -172,7 +172,8 @@ ai.onnx (default)
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
-ai.onnx.training
+
+### ai.onnx.training
 |**Operator**|**Since version**|
 |-|-|
 |<a href="#ai.onnx.training.Adagrad">ai.onnx.training.Adagrad</a>|<a href="Changelog.md#ai.onnx.training.Adagrad-1">1</a>|
@@ -180,6 +181,7 @@ ai.onnx.training
 |<a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>|<a href="Changelog.md#ai.onnx.training.Gradient-1">1</a>|
 |<a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>|<a href="Changelog.md#ai.onnx.training.GraphCall-1">1</a>|
 |<a href="#ai.onnx.training.Momentum">ai.onnx.training.Momentum</a>|<a href="Changelog.md#ai.onnx.training.Momentum-1">1</a>|
+
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>

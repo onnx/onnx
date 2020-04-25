@@ -281,7 +281,7 @@ def main(args):  # type: (Type[Args]) -> None
 
         # Table of contents
         for domain, supportmap in operator_schemas:
-            s = '{}\n'.format(display_domain_short(domain))
+            s = '### {}\n'.format(display_domain_short(domain))
             fout.write(s)
 
             fout.write('|**Operator**|**Since version**|\n')
@@ -309,6 +309,8 @@ def main(args):  # type: (Type[Args]) -> None
                         format_name_with_domain(domain, n),
                         format_versions(versions))
                     fout.write(s)
+
+            fout.write('\n')
 
         fout.write('\n')
 
