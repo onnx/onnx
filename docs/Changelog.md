@@ -14278,7 +14278,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
-<<<<<<< HEAD
 ### <a name="GatherND-12"></a>**GatherND-12**</a>
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
@@ -14443,38 +14442,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
 
-### <a name="Inverse-12"></a>**Inverse-12**</a>
-
-  Calculates inverse of a square matrix or batches of square matrices.
-  Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices.
-  The output is a tensor of shape `[*, M, M]`, containing the individual inverses of all input submatrices.
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor of the same type as input.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numerical tensor types.</dd>
-</dl>
-
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
 
   Returns the tensor resulted from performing the `less_equal` logical operation
@@ -14542,8 +14509,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-=======
->>>>>>> parent of 8873cb02... Adding Inverse Op (#2578)
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
@@ -14624,66 +14589,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-<<<<<<< HEAD
-### <a name="MeanSquaredDistance-12"></a>**MeanSquaredDistance-12**</a>
-
-  Loss function that measures the
-  mean squared distance (squared L2 norm) between each element in the 'scores'
-  and 'labels'.
-  
-  The loss can be described as:
-      L = Pow(Sub(scores, labels), 2)
-  
-  score and label are tensors of arbitrary shapes with total of N elements each,
-  and are of the same shape.
-  
-  If 'weights' is provided, it should be broadcastable to shape of 'L'.
-      L = Mul(weights, L)
-  , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
-  
-  Finally, L is optionally reduced:
-  L = ReduceSum(L), if reduction = 'sum';
-      ReduceMean(L), if reduction = 'mean';
-      L, if reduction = 'none';
-  
-  .
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed into a scalar. 'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`</dd>
-</dl>
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>scores</tt> : T</dt>
-<dd>The predicted outputs.</dd>
-<dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
-<dt><tt>weights</tt> (optional) : T</dt>
-<dd>Weights acts as a coefficient for the loss, it should be broadcastable to shape of 'scores'.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is none, this has the shape of [batch_size]; otherwise, it is scalar.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Min-12"></a>**Min-12**</a>
 
   Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
@@ -14715,8 +14620,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-=======
->>>>>>> parent of d2fe4f22... Introduce MeanSquaredError as Loss Function (#2570)
 ### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**</a>
 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
@@ -15044,60 +14947,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
-<<<<<<< HEAD
-### <a name="UnfoldToDepth-12"></a>**UnfoldToDepth-12**</a>
-
-  The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
-  in the last dimension.
-  Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
-  
-  ```(N, C * reduce-mul(block_size), reduce-mul(num_blocks))```
-  <br/>
-  Where number of blocks extracted from each spatial dimension d is:
-  ```
-  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (kernel_size[d] - 1) - 1) / stride[d]) + 1
-  ```
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>block_size</tt> : list of ints (required)</dt>
-<dd>The size of the extracted blocks [D1, D2, ..., Dn].</dd>
-<dt><tt>dilations</tt> : list of ints</dt>
-<dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>
-<dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). </dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor that contains the result of the unfold. The output has three dimensions, and dimension values are funciton of the kernel size, stride size, and pad lengths.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
-</dl>
-
-=======
->>>>>>> parent of e8b33a5a... Adding UnfoldToDepth op [1.7 Release] (#2616)
 # ai.onnx.training
 ## Version 1 of the 'ai.onnx.training' operator set
 ### <a name="ai.onnx.training.Adagrad-1"></a>**ai.onnx.training.Adagrad-1**</a>

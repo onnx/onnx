@@ -5,19 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-Node tests have covered 147/165 (89.09%, 5 generators excluded) common operators.
-=======
-Node tests have covered 143/161 (88.82%, 5 generators excluded) common operators.
->>>>>>> parent of e8b33a5a... Adding UnfoldToDepth op [1.7 Release] (#2616)
-=======
-Node tests have covered 140/156 (89.74%, 5 generators excluded) common operators.
->>>>>>> parent of 8873cb02... Adding Inverse Op (#2578)
-=======
-Node tests have covered 141/157 (89.81%, 5 generators excluded) common operators.
->>>>>>> parent of d2fe4f22... Introduce MeanSquaredError as Loss Function (#2570)
+Node tests have covered 144/162 (88.89%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
