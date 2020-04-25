@@ -2841,7 +2841,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Dropout
-There are 13 test cases, listed as following:
+There are 12 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -2930,27 +2930,6 @@ r = np.float32(0.1)
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = dropout(x, r)
 expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
-```
-
-</details>
-<details>
-<summary>random</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Dropout',
-    inputs=['x', 'ratio'],
-    outputs=['y'],
-    seed=0,
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-ratio = np.array(random.uniform(0, 1))
-seed = 0
-y = dropout(x, ratio, seed)
-
-expect(node, inputs=[x, ratio], outputs=[y],
-       name='test_dropout_random')
 ```
 
 </details>

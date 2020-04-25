@@ -4597,29 +4597,6 @@ expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
 
 
 <details>
-<summary>random</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Dropout',
-    inputs=['x', 'ratio'],
-    outputs=['y'],
-    seed=0,
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-ratio = np.array(random.uniform(0, 1))
-seed = 0
-y = dropout(x, ratio, seed)
-
-expect(node, inputs=[x, ratio], outputs=[y],
-       name='test_dropout_random')
-```
-
-</details>
-
-
-<details>
 <summary>random_old</summary>
 
 ```python

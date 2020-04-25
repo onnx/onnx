@@ -190,23 +190,6 @@ class Dropout(Base):
     # Old dropout tests
 
     @staticmethod
-    def export_random():  # type: () -> None
-        node = onnx.helper.make_node(
-            'Dropout',
-            inputs=['x', 'ratio'],
-            outputs=['y'],
-            seed=0,
-        )
-
-        x = np.random.randn(3, 4, 5).astype(np.float32)
-        ratio = np.array(random.uniform(0, 1))
-        seed = 0
-        y = dropout(x, ratio, seed)
-
-        expect(node, inputs=[x, ratio], outputs=[y],
-               name='test_dropout_random')
-
-    @staticmethod
     def export_default_old():  # type: () -> None
         node = onnx.helper.make_node(
             'Dropout',
