@@ -2562,9 +2562,9 @@ bool BuildContextDependentFunctionBodySCE(
   // if intermediate X_log is renamed as log_prob then it will be treated as graph output and will not 
   // be available to NegativeLogLikelihoodLoss. May be my understanding is incorrect or there is a bug in
   // function population code in ORTbut I will dig further to be 100%.
-  // In the meantime we just replicate the log by recomputing it or may be copy if there is an op for that?
+  // In the meantime we just replicate the log.
   if(ctx.hasOutput(1)){
-    body.push_back({{"log_prob"}, "Log", {"X_Div"}});
+    body.push_back({{"log_prob"}, "Identity", {"X_Log"}});
   }
 
   std::vector<std::string> input_tensor_names{"X_Log", "labels"};

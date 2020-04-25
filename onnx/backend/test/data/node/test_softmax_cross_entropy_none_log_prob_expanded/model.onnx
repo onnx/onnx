@@ -1,4 +1,4 @@
-backend-test:à
+backend-test:ç
 t
 xWSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_Max"	ReduceMax*
 axes@†
@@ -15,8 +15,8 @@ WSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_funct
 VSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_RSWSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_Div"Div
 ∑
 WSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_DivWSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_Log"Log
-h
-WSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_Divlog_prob"Log
+m
+WSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_Loglog_prob"Identity
 ê
 WSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_log_prob_expanded_functionX_Log
 yz"NegativeLogLikelihoodLoss*
