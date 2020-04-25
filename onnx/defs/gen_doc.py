@@ -45,6 +45,9 @@ def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
         return '{}.{}'.format(domain, schema_name)
     return schema_name
 
+def format_versions(versions):
+    return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
+                                               v.since_version) for v in versions[::-1]))
 
 def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     assert isinstance(v, OpSchema.AttrType)
@@ -70,7 +73,7 @@ def display_domain_short(domain):  # type: (Text) -> Text
 def display_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
-    return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
+    return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, version)
 
 
 def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
@@ -258,7 +261,7 @@ def main(args):  # type: (Type[Args]) -> None
         # Preprocess the Operator Schemas
         # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
         operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
-        exsting_ops = set()  # type: Set[Text]
+        existing_ops = set()  # type: Set[Text]
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
@@ -269,36 +272,42 @@ def main(args):  # type: (Type[Args]) -> None
                 for n, unsorted_versions in sorted(_namemap.items()):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
-                    if schema.name in exsting_ops:
+                    if schema.name in existing_ops:
                         continue
-                    exsting_ops.add(schema.name)
+                    existing_ops.add(schema.name)
                     processed_namemap.append((n, schema, versions))
                 processed_supportmap.append((_support, processed_namemap))
             operator_schemas.append((domain, processed_supportmap))
 
         # Table of contents
         for domain, supportmap in operator_schemas:
-            s = '* {}\n'.format(display_domain_short(domain))
+            s = '{}\n'.format(display_domain_short(domain))
             fout.write(s)
+
+            fout.write('|**Operator**|**Since version**|\n')
+            fout.write('|-|-|\n')
+
             function_ops = list()
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
                     if schema.has_function or schema.has_context_dependent_function:  # type: ignore
                         function_ops.append((n, schema, versions))
                         continue
-                    s = '  * {}<a href="#{}">{}</a>\n'.format(
+                    s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
-                        format_name_with_domain(domain, n))
+                        format_name_with_domain(domain, n),
+                        ' (deprecated)' if schema.deprecated else '',
+                        format_versions(versions))
                     fout.write(s)
             if len(function_ops):
-                fout.write('\n')
-                fout.write('  **Functions**\n')
+                fout.write('|**Function**|**Since version**|\n')
                 for n, schema, versions in function_ops:
-                    s = '  * {}<a href="#{}">{}</a>\n'.format(
+                    s = '|{}<a href="#{}">{}</a>|{}|\n'.format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
-                        format_name_with_domain(domain, n))
+                        format_name_with_domain(domain, n),
+                        format_versions(versions))
                     fout.write(s)
 
         fout.write('\n')
