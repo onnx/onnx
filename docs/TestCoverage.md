@@ -6,10 +6,14 @@
 # Node Test Coverage
 ## Summary
 <<<<<<< HEAD
+<<<<<<< HEAD
 Node tests have covered 147/165 (89.09%, 5 generators excluded) common operators.
 =======
 Node tests have covered 143/161 (88.82%, 5 generators excluded) common operators.
 >>>>>>> parent of e8b33a5a... Adding UnfoldToDepth op [1.7 Release] (#2616)
+=======
+Node tests have covered 140/156 (89.74%, 5 generators excluded) common operators.
+>>>>>>> parent of 8873cb02... Adding Inverse Op (#2578)
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4398,44 +4402,6 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
-```
-
-</details>
-
-
-### Inverse
-There are 2 test cases, listed as following:
-<details>
-<summary>inverse</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Inverse',
-    inputs=['x'],
-    outputs=['y']
-)
-
-X = np.random.randn(4, 4)
-Y = inverse_reference_implementation(X)
-
-expect(node, inputs=[X], outputs=[Y], name='test_inverse')
-```
-
-</details>
-<details>
-<summary>inverse_batched</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Inverse',
-    inputs=['x'],
-    outputs=['y']
-)
-
-X = np.random.randn(2, 3, 4, 4)
-Y = inverse_reference_implementation(X)
-
-expect(node, inputs=[X], outputs=[Y], name='test_inverse_batched')
 ```
 
 </details>
