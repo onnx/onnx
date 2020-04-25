@@ -1967,9 +1967,7 @@ s = np.array([1.0, 1.5]).astype(np.float32)
 bias = np.array([0, 1]).astype(np.float32)
 mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
-# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
-# working around by using np.byte(1).astype(bool)
-training_mode = np.byte(1).astype(bool)
+training_mode = np.ones(1, dtype=bool)
 y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
@@ -1988,7 +1986,7 @@ s = np.random.randn(3).astype(np.float32)
 bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
-training_mode = np.byte(1).astype(bool)
+training_mode = np.ones(1, dtype=bool)
 momentum = 0.9
 epsilon = 1e-2
 y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
