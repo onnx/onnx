@@ -14624,6 +14624,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+<<<<<<< HEAD
 ### <a name="MeanSquaredDistance-12"></a>**MeanSquaredDistance-12**</a>
 
   Loss function that measures the
@@ -14714,6 +14715,8 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
+=======
+>>>>>>> parent of d2fe4f22... Introduce MeanSquaredError as Loss Function (#2570)
 ### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**</a>
 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
