@@ -4,7 +4,6 @@
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
 [![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
 
-
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
 data types. Currently we focus on the capabilities needed for inferencing (scoring).
@@ -126,7 +125,7 @@ set USE_MSVC_STATIC_RUNTIME=0
 python setup.py install
 ```
 
-If you do not want to build protobuf and instead want to use protobuf from conda forge then follow these instructions.
+If you do not want to build protobuf and instead want to use protobuf from conda forge then follow these instructions. 
 However please note : This method is just added as a convenience for users and there is very limited support from ONNX team when using this method.
 
 #### Instructions to build ONNX on windows in anaconda environment
