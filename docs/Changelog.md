@@ -14278,6 +14278,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
+<<<<<<< HEAD
 ### <a name="GatherND-12"></a>**GatherND-12**</a>
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
@@ -14541,6 +14542,8 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
+=======
+>>>>>>> parent of 8873cb02... Adding Inverse Op (#2578)
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
