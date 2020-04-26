@@ -164,12 +164,8 @@
   **Functions**
   * <a href="#Celu">Celu</a>
   * <a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>
-<<<<<<< HEAD
   * <a href="#GreaterOrEqual">GreaterOrEqual</a>
   * <a href="#LessOrEqual">LessOrEqual</a>
-  * <a href="#MeanSquaredDistance">MeanSquaredDistance</a>
-=======
->>>>>>> parent of d2fe4f22... Introduce MeanSquaredError as Loss Function (#2570)
   * <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>

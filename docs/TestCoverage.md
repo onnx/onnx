@@ -5,11 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-<<<<<<< HEAD
-Node tests have covered 147/165 (89.09%, 5 generators excluded) common operators.
-=======
-Node tests have covered 141/157 (89.81%, 5 generators excluded) common operators.
->>>>>>> parent of d2fe4f22... Introduce MeanSquaredError as Loss Function (#2570)
+Node tests have covered 146/164 (89.02%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
