@@ -154,7 +154,6 @@
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
-  * <a href="#UnfoldToDepth">UnfoldToDepth</a>
   * <a href="#Unique">Unique</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Upsample">Upsample</a>
@@ -20864,6 +20863,7 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
+<<<<<<< HEAD
 ### <a name="UnfoldToDepth"></a><a name="unfoldtodepth">**UnfoldToDepth**</a>
 
   The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
@@ -21011,6 +21011,8 @@ expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
 </details>
 
 
+=======
+>>>>>>> parent of e8b33a5a... Adding UnfoldToDepth op [1.7 Release] (#2616)
 ### <a name="Unique"></a><a name="unique">**Unique**</a>
 
   Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 

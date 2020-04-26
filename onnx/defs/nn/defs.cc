@@ -132,7 +132,7 @@ void convPoolShapeInference(
       }
     }
   }
-
+    
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
