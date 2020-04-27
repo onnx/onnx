@@ -470,8 +470,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             celu_default_alpha)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to floating-point tensors.")
+            {"tensor(float)"},
+            "Constrain input and output types to float32 tensors.")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
