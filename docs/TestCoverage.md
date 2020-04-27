@@ -174,6 +174,104 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 </details>
 
 
+### Adam
+There are 2 test cases, listed as following:
+<details>
+<summary>adam</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+alpha = 0.95
+beta = 0.1
+epsilon = 1e-7
+
+# Create operator.
+node = onnx.helper.make_node('Adam',
+                             inputs=['R', 'T', 'X', 'G', 'V', 'H'],
+                             outputs=['X_new', 'V_new', 'H_new'],
+                             norm_coefficient=norm_coefficient,
+                             alpha=alpha,
+                             beta=beta,
+                             epsilon=epsilon,
+                             domain='ai.onnx.training'
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
+x = np.array([1.2, 2.8], dtype=np.float32)
+g = np.array([-0.94, -2.5], dtype=np.float32)
+v = np.array([1.7, 3.6], dtype=np.float32)
+h = np.array([0.1, 0.1], dtype=np.float32)
+
+# Compute expected outputs of Adam.
+x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
+                                 norm_coefficient, 0.0, alpha, beta,
+                                 epsilon)
+
+# Check results.
+expect(node, inputs=[r, t, x, g, v, h],
+       outputs=[x_new, v_new, h_new], name='test_adam',
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+```
+
+</details>
+<details>
+<summary>adam_multiple</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+alpha = 0.95
+beta = 0.85
+epsilon = 1e-2
+
+node = onnx.helper.make_node('Adam',
+                             inputs=['R', 'T', 'X1', 'X2',
+                                     'G1', 'G2', 'V1', 'V2',
+                                     'H1', 'H2'],
+                             outputs=['X1_new', 'X2_new',
+                                      'V1_new', 'V2_new',
+                                      'H1_new', 'H2_new'],
+                             norm_coefficient=norm_coefficient,
+                             alpha=alpha,
+                             beta=beta,
+                             domain='ai.onnx.training'
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
+
+x1 = np.array([1.0], dtype=np.float32)
+g1 = np.array([-1.0], dtype=np.float32)
+v1 = np.array([2.0], dtype=np.float32)
+h1 = np.array([0.5], dtype=np.float32)
+
+x2 = np.array([1.0, 2.0], dtype=np.float32)
+g2 = np.array([-1.0, -3.0], dtype=np.float32)
+v2 = np.array([4.0, 1.0], dtype=np.float32)
+h2 = np.array([1.0, 10.0], dtype=np.float32)
+
+# Compute expected outputs of Adam.
+x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
+                            norm_coefficient, 0.0, alpha, beta,
+                            epsilon)
+x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
+                            norm_coefficient, 0.0, alpha, beta,
+                            epsilon)
+
+# Check results.
+expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
+       outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
+       name='test_adam_multiple',
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+```
+
+</details>
+
+
 ### Add
 There are 2 test cases, listed as following:
 <details>
@@ -12398,101 +12496,6 @@ node = onnx.helper.make_node(
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
        name='test_transpose_default')
-```
-
-</details>
-
-
-### UnfoldToDepth
-There are 1 test cases, listed as following:
-<details>
-<summary>unfoldtodepth</summary>
-
-```python
-x = np.array([[[[0., 1., 2., 3., 4.],
-                [5., 6., 7., 8., 9.],
-                [10., 11., 12., 13., 14.],
-                [15., 16., 17., 18., 19.],
-                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
-
-# UnfoldToDepth without padding
-node_without_padding = onnx.helper.make_node(
-    'UnfoldToDepth',
-    inputs=['x'],
-    outputs=['y'],
-    block_size=[3, 3],
-    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
-    pads=[0, 0, 0, 0],
-)
-y_without_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3])
-# expected [[[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
-#            [1., 2., 3., 6., 7., 8., 11., 12., 13.],
-#            [2., 3., 4., 7., 8., 9., 12., 13., 14.],
-#            [5., 6., 7., 10., 11., 12., 15., 16., 17.],
-#            [6., 7., 8., 11., 12., 13., 16., 17., 18.],
-#            [7., 8., 9., 12., 13., 14., 17., 18., 19.],
-#            [10., 11., 12., 15., 16., 17., 20., 21., 22.],
-#            [11., 12., 13., 16., 17., 18., 21., 22., 23.],
-#            [12., 13., 14., 17., 18., 19., 22., 23., 24.]]]
-
-expect(node_without_padding, inputs=[x], outputs=[y_without_padding],
-       name='test_unfoldtodepth_without_padding')
-
-# UnfoldToDepth with padding
-node_without_padding = onnx.helper.make_node(
-    'UnfoldToDepth',
-    inputs=['x'],
-    outputs=['y'],
-    block_size=[3, 3],
-    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
-    pads=[1, 1, 1, 1],
-)
-y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[1, 1, 1, 1])
-# expected [[[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,  # (1, 9, 25) output tensor
-#             8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
-#            [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
-#             9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.],
-#            [0., 0., 0., 0., 0., 1., 2., 3., 4., 0., 6., 7., 8., 9.,
-#             0., 11., 12., 13., 14., 0., 16., 17., 18., 19., 0.],
-#            [0., 0., 1., 2., 3., 0., 5., 6., 7., 8., 0., 10., 11., 12.,
-#             3., 0., 15., 16., 17., 18., 0., 20., 21., 22., 23.],
-#            [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.,
-#             4., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24.],
-#            [1., 2., 3., 4., 0., 6., 7., 8., 9., 0., 11., 12., 13., 14.,
-#             0., 16., 17., 18., 19., 0., 21., 22., 23., 24., 0.],
-#            [0., 5., 6., 7., 8., 0., 10., 11., 12., 13., 0., 15., 16., 17.,
-#             8., 0., 20., 21., 22., 23., 0., 0., 0., 0., 0.],
-#            [5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18.,
-#             9., 20., 21., 22., 23., 24., 0., 0., 0., 0., 0.],
-#            [6., 7., 8., 9., 0., 11., 12., 13., 14., 0., 16., 17., 18., 19.,
-#             0., 21., 22., 23., 24., 0., 0., 0., 0., 0., 0.]]]
-
-expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
-       name='test_unfoldtodepth_with_padding')
-
-# UnfoldToDepth with padding and strides
-node_without_padding = onnx.helper.make_node(
-    'UnfoldToDepth',
-    inputs=['x'],
-    outputs=['y'],
-    block_size=[3, 3],
-    # Default values for other attributes: dilations=[1, 1]
-    pads=[2, 2, 2, 2],
-    strides=[3, 3]
-)
-y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[2, 2, 2, 2], stride=[3, 3])
-# expected [[[ 0.,  0.,  0.,  0.,  6.,  9.,  0., 21., 24.],  # (1, 9, 9) output tensor
-#            [ 0.,  0.,  0.,  0.,  7.,  0.,  0., 22.,  0.],
-#            [ 0.,  0.,  0.,  5.,  8.,  0., 20., 23.,  0.],
-#            [ 0.,  0.,  0.,  0., 11., 14.,  0.,  0.,  0.],
-#            [ 0.,  0.,  0.,  0., 12.,  0.,  0.,  0.,  0.],
-#            [ 0.,  0.,  0., 10., 13.,  0.,  0.,  0.,  0.],
-#            [ 0.,  1.,  4.,  0., 16., 19.,  0.,  0.,  0.],
-#            [ 0.,  2.,  0.,  0., 17.,  0.,  0.,  0.,  0.],
-#            [ 0.,  3.,  0., 15., 18.,  0.,  0.,  0.,  0.]]]
-
-expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
-       name='test_unfoldtodepth_with_padding_stride')
 ```
 
 </details>

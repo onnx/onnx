@@ -154,7 +154,6 @@
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
-  * <a href="#UnfoldToDepth">UnfoldToDepth</a>
   * <a href="#Unique">Unique</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Upsample">Upsample</a>
@@ -173,6 +172,7 @@
   * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
 * ai.onnx.training
   * <a href="#ai.onnx.training.Adagrad">ai.onnx.training.Adagrad</a>
+  * <a href="#ai.onnx.training.Adam">ai.onnx.training.Adam</a>
   * <a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>
   * <a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>
   * <a href="#ai.onnx.training.Momentum">ai.onnx.training.Momentum</a>
@@ -20863,153 +20863,6 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
-### <a name="UnfoldToDepth"></a><a name="unfoldtodepth">**UnfoldToDepth**</a>
-
-  The UnfoldToDepth operator extracts sliding blocks from an input tensor, and concatenates these blocks
-  in the last dimension.
-  Given an input of shape (N x C x D1 x D2 ... x Dn), output would be a 3-D tensor of shape:<br/>
-  
-  ```(N, C * reduce-mul(block_size), reduce-mul(num_blocks))```
-  <br/>
-  Where number of blocks extracted from each spatial dimension d is:
-  ```
-  num_blocks[d] = floor((input_spatial_shape[d] + 2 * padding[d] - dilation[d] * (kernel_size[d] - 1) - 1) / stride[d]) + 1
-  ```
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>block_size</tt> : list of ints (required)</dt>
-<dd>The size of the extracted blocks [D1, D2, ..., Dn].</dd>
-<dt><tt>dilations</tt> : list of ints</dt>
-<dd>Dilation value along each spatial axis of the extracted blocks. If not present, the dilation defaults is 1 along each spatial axis.</dd>
-<dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each spatial axis of the input image. If not present, the stride defaults is 1 along each spatial axis.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). </dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor that contains the result of the unfold. The output has three dimensions, and dimension values are funciton of the kernel size, stride size, and pad lengths.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>unfoldtodepth</summary>
-
-```python
-x = np.array([[[[0., 1., 2., 3., 4.],
-                [5., 6., 7., 8., 9.],
-                [10., 11., 12., 13., 14.],
-                [15., 16., 17., 18., 19.],
-                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
-
-# UnfoldToDepth without padding
-node_without_padding = onnx.helper.make_node(
-    'UnfoldToDepth',
-    inputs=['x'],
-    outputs=['y'],
-    block_size=[3, 3],
-    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
-    pads=[0, 0, 0, 0],
-)
-y_without_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3])
-# expected [[[0., 1., 2., 5., 6., 7., 10., 11., 12.],  # (1, 9, 9) output tensor
-#            [1., 2., 3., 6., 7., 8., 11., 12., 13.],
-#            [2., 3., 4., 7., 8., 9., 12., 13., 14.],
-#            [5., 6., 7., 10., 11., 12., 15., 16., 17.],
-#            [6., 7., 8., 11., 12., 13., 16., 17., 18.],
-#            [7., 8., 9., 12., 13., 14., 17., 18., 19.],
-#            [10., 11., 12., 15., 16., 17., 20., 21., 22.],
-#            [11., 12., 13., 16., 17., 18., 21., 22., 23.],
-#            [12., 13., 14., 17., 18., 19., 22., 23., 24.]]]
-
-expect(node_without_padding, inputs=[x], outputs=[y_without_padding],
-       name='test_unfoldtodepth_without_padding')
-
-# UnfoldToDepth with padding
-node_without_padding = onnx.helper.make_node(
-    'UnfoldToDepth',
-    inputs=['x'],
-    outputs=['y'],
-    block_size=[3, 3],
-    # Default values for other attributes: strides=[1, 1], dilations=[1, 1]
-    pads=[1, 1, 1, 1],
-)
-y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[1, 1, 1, 1])
-# expected [[[0., 0., 0., 0., 0., 0., 0., 1., 2., 3., 0., 5., 6., 7.,  # (1, 9, 25) output tensor
-#             8., 0., 10., 11., 12., 13., 0., 15., 16., 17., 18.],
-#            [0., 0., 0., 0., 0., 0., 1., 2., 3., 4., 5., 6., 7., 8.,
-#             9., 10., 11., 12., 13., 14., 15., 16., 17., 18., 19.],
-#            [0., 0., 0., 0., 0., 1., 2., 3., 4., 0., 6., 7., 8., 9.,
-#             0., 11., 12., 13., 14., 0., 16., 17., 18., 19., 0.],
-#            [0., 0., 1., 2., 3., 0., 5., 6., 7., 8., 0., 10., 11., 12.,
-#             3., 0., 15., 16., 17., 18., 0., 20., 21., 22., 23.],
-#            [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.,
-#             4., 15., 16., 17., 18., 19., 20., 21., 22., 23., 24.],
-#            [1., 2., 3., 4., 0., 6., 7., 8., 9., 0., 11., 12., 13., 14.,
-#             0., 16., 17., 18., 19., 0., 21., 22., 23., 24., 0.],
-#            [0., 5., 6., 7., 8., 0., 10., 11., 12., 13., 0., 15., 16., 17.,
-#             8., 0., 20., 21., 22., 23., 0., 0., 0., 0., 0.],
-#            [5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 15., 16., 17., 18.,
-#             9., 20., 21., 22., 23., 24., 0., 0., 0., 0., 0.],
-#            [6., 7., 8., 9., 0., 11., 12., 13., 14., 0., 16., 17., 18., 19.,
-#             0., 21., 22., 23., 24., 0., 0., 0., 0., 0., 0.]]]
-
-expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
-       name='test_unfoldtodepth_with_padding')
-
-# UnfoldToDepth with padding and strides
-node_without_padding = onnx.helper.make_node(
-    'UnfoldToDepth',
-    inputs=['x'],
-    outputs=['y'],
-    block_size=[3, 3],
-    # Default values for other attributes: dilations=[1, 1]
-    pads=[2, 2, 2, 2],
-    strides=[3, 3]
-)
-y_with_padding = unfoldtodepth_2d_reference_implementation(x, shape=[3, 3], padding=[2, 2, 2, 2], stride=[3, 3])
-# expected [[[ 0.,  0.,  0.,  0.,  6.,  9.,  0., 21., 24.],  # (1, 9, 9) output tensor
-#            [ 0.,  0.,  0.,  0.,  7.,  0.,  0., 22.,  0.],
-#            [ 0.,  0.,  0.,  5.,  8.,  0., 20., 23.,  0.],
-#            [ 0.,  0.,  0.,  0., 11., 14.,  0.,  0.,  0.],
-#            [ 0.,  0.,  0.,  0., 12.,  0.,  0.,  0.,  0.],
-#            [ 0.,  0.,  0., 10., 13.,  0.,  0.,  0.,  0.],
-#            [ 0.,  1.,  4.,  0., 16., 19.,  0.,  0.,  0.],
-#            [ 0.,  2.,  0.,  0., 17.,  0.,  0.,  0.,  0.],
-#            [ 0.,  3.,  0., 15., 18.,  0.,  0.,  0.,  0.]]]
-
-expect(node_without_padding, inputs=[x], outputs=[y_with_padding],
-       name='test_unfoldtodepth_with_padding_stride')
-```
-
-</details>
-
-
 ### <a name="Unique"></a><a name="unique">**Unique**</a>
 
   Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
@@ -21880,6 +21733,219 @@ x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
        outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple',
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+```
+
+</details>
+
+
+### <a name="ai.onnx.training.Adam"></a><a name="ai.onnx.training.adam">**ai.onnx.training.Adam**</a>
+
+  Compute one iteration of Adam, a stochastic gradient based optimization
+      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  
+      Let's define the behavior of this operator. First of all, Adam requires
+      some parameters:
+       
+       - The learning-rate "R".
+       - The update count "T". That is, the number of training iterations conducted.
+       - A L2-norm regularization coefficient "norm_coefficient".
+       - A small constant "epsilon" to avoid dividing-by-zero. 
+       - Two coefficients, "alpha" and "beta".
+  
+      At each Adam iteration, the optimized tensors are moved along a direction
+      computed based on their exponentially-averaged historical gradient and
+      exponentially-averaged historical squared gradient. Assume that only a tensor
+      "X" is being optimized. The rest of required information is
+      
+       - the value of "X",
+       - "X"'s gradient (denoted by "G"),
+       - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
+       - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
+  
+      Some of those parameters are passed into this operator as input tensors and others
+      are stored as this operator's attributes. Specifically, this operator's input tensor
+      list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
+      the second input, and so on. Other parameters are given as attributes because they
+      are constants. Moreover, the corresponding output tensors are 
+      
+       - the new value of "X" (called "X_new"),
+       - the new exponentially-averaged historical gradient (denoted by "V_new"), and
+       - the new exponentially-averaged historical squared gradient (denoted by "H_new").
+  
+      Those outputs are computed following the pseudo code below.
+  
+      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  
+        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+        G_regularized = norm_coefficient * X + G
+  
+        // Update exponentially-averaged historical gradient.
+        V_new = alpha * V + (1 - alpha) * G_regularized
+  
+        // Update exponentially-averaged historical squared gradient.
+        H_new = beta * H + (1 - beta) * G_regularized * G_regularized
+  
+        // Compute the element-wise square-root of H_new. V_new will be element-wisely
+        // divided by H_sqrt for a better update direction.
+        H_sqrt = Sqrt(H_new) + epsilon
+  
+        // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
+        R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
+  
+        // Compute new value of "X".
+        X_new = X - R_adjusted * V_new / H_sqrt
+  
+        // Post-update regularization.
+        X_final = (1 - norm_coefficient_post) * X_new 
+  
+      If there are multiple inputs to be optimized, the pseudo code will be applied
+      independently to each of them.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 0.9)</dt>
+<dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
+<dt><tt>beta</tt> : float (default is 0.999)</dt>
+<dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
+<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dd>Small scalar to avoid dividing by zero.</dd>
+<dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
+<dt><tt>norm_coefficient_post</tt> : float (default is 0.0)</dt>
+<dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
+</dl>
+
+#### Inputs (3 - &#8734;)
+
+<dl>
+<dt><tt>R</tt> : T1</dt>
+<dd>The initial learning rate.</dd>
+<dt><tt>T</tt> : T2</dt>
+<dd>The update count of "X". It should be a scalar.</dd>
+<dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>The tensors to be optimized, followed by their respective gradients, followed by their respective accumulated gradients (aka momentum), followed by their respective accumulated squared gradients. For example, to optimize tensors "X_1" and "X_2,", the input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated gradient of "X_1", accumulated gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : T3</dt>
+<dd>New values of optimized tensors, followed by their respective new accumulated gradients, followed by their respective new accumulated squared gradients. For example, if two tensors "X_1" and "X_2" are optimized, the outputs list would be [new value of "X_1", new value of "X_2", new accumulated gradient of "X_1", new accumulated gradient of "X_2", new accumulated squared gradient of "X_1", new accumulated squared gradient of "X_2"].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float scalars.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain input types to 64-bit integer scalars.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>adam</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+alpha = 0.95
+beta = 0.1
+epsilon = 1e-7
+
+# Create operator.
+node = onnx.helper.make_node('Adam',
+                             inputs=['R', 'T', 'X', 'G', 'V', 'H'],
+                             outputs=['X_new', 'V_new', 'H_new'],
+                             norm_coefficient=norm_coefficient,
+                             alpha=alpha,
+                             beta=beta,
+                             epsilon=epsilon,
+                             domain='ai.onnx.training'
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
+x = np.array([1.2, 2.8], dtype=np.float32)
+g = np.array([-0.94, -2.5], dtype=np.float32)
+v = np.array([1.7, 3.6], dtype=np.float32)
+h = np.array([0.1, 0.1], dtype=np.float32)
+
+# Compute expected outputs of Adam.
+x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
+                                 norm_coefficient, 0.0, alpha, beta,
+                                 epsilon)
+
+# Check results.
+expect(node, inputs=[r, t, x, g, v, h],
+       outputs=[x_new, v_new, h_new], name='test_adam',
+       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+```
+
+</details>
+
+
+<details>
+<summary>adam_multiple</summary>
+
+```python
+# Define operator attributes.
+norm_coefficient = 0.001
+alpha = 0.95
+beta = 0.85
+epsilon = 1e-2
+
+node = onnx.helper.make_node('Adam',
+                             inputs=['R', 'T', 'X1', 'X2',
+                                     'G1', 'G2', 'V1', 'V2',
+                                     'H1', 'H2'],
+                             outputs=['X1_new', 'X2_new',
+                                      'V1_new', 'V2_new',
+                                      'H1_new', 'H2_new'],
+                             norm_coefficient=norm_coefficient,
+                             alpha=alpha,
+                             beta=beta,
+                             domain='ai.onnx.training'
+                             )
+
+# Define operator inputs.
+r = np.array(0.1, dtype=np.float32)  # scalar
+t = np.array(0, dtype=np.int64)  # scalar
+
+x1 = np.array([1.0], dtype=np.float32)
+g1 = np.array([-1.0], dtype=np.float32)
+v1 = np.array([2.0], dtype=np.float32)
+h1 = np.array([0.5], dtype=np.float32)
+
+x2 = np.array([1.0, 2.0], dtype=np.float32)
+g2 = np.array([-1.0, -3.0], dtype=np.float32)
+v2 = np.array([4.0, 1.0], dtype=np.float32)
+h2 = np.array([1.0, 10.0], dtype=np.float32)
+
+# Compute expected outputs of Adam.
+x1_new, v1_new, h1_new = apply_adam(r, t, x1, g1, v1, h1,
+                            norm_coefficient, 0.0, alpha, beta,
+                            epsilon)
+x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
+                            norm_coefficient, 0.0, alpha, beta,
+                            epsilon)
+
+# Check results.
+expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
+       outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
+       name='test_adam_multiple',
        opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
 ```
 
