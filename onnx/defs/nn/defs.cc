@@ -1818,7 +1818,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "training_mode",
             "If set to true then it indicates dropout is being used for training. It is an optional value hence unless  "
-            "specified explicitly it is false and ratio will be zero in which case it will mimic inference mode where "
+            "specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where "
             "nothing will be dropped from the input data and if mask is requested as output it will contain all ones.",
             "T2",
             OpSchema::Optional)            
