@@ -643,11 +643,7 @@ message SequenceMapElement {
 message SequenceProto {
 
   optional string name = 1;
-
-  // The data type of the element.
-  // This field MUST have a valid TypeProto value
-  optional TypeProto elem_type = 2;
-  repeated SequenceMapElement values = 3;
+  repeated SequenceMapElement values = 2;
 }
 
 // Maps

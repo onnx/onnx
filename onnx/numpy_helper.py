@@ -157,7 +157,7 @@ def from_array_to_sequence(arr, name=None):  # type: (np.ndarray[Any], Optional[
     for elem in arr:
         # If elem is a tensor
         if elem.dtype == np.ndarray:
-            sequence.values.append(make_sequence_map_element(from_array(elem)))
+            sequence.values.append(helper.make_sequence_map_element(from_array(elem)))
         else:
             raise TypeError("The element type in the input sequence is not supported yet.")
     return sequence
@@ -176,20 +176,20 @@ def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
         key_type = kv_pair.key_type
         value_type = kv_pair.value_type
         key_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
-        key = get_attr(kv_pair, key_field)
+        key = getattr(kv_pair, key_field)
         value = kv_pair.value.value
         if value_type == TypeProto.Tensor or value_type == TypeProto.SparseTensor:
             dict[key] = to_array(value)
         elif value_type == TypeProto.Map:
             dict[key] = to_dict_from_map(value)
-        elif elem_type == TypeProto.Sequence:
+        elif value_type == TypeProto.Sequence:
             dict[key] = to_array_from_sequence(value)
         else:
             raise TypeError("The value type in the Map is not defined.")
     return dict
 
 
-def from_dict_to_map(d, name=None):  # type: (dict, Optional[Text]) -> MapProto
+def from_dict_to_map(d, name=None):  # type: (typing.Dict, Optional[Text]) -> MapProto
     """Converts a Python dictionary into a map def.
 
     Inputs:
@@ -204,11 +204,11 @@ def from_dict_to_map(d, name=None):  # type: (dict, Optional[Text]) -> MapProto
     for key, val in d.items():
         key_type = mapping.NP_TYPE_TO_MAP_KEY_TYPE(key.dtype)
         if isinstance(val, dict):
-            val_type = TypeProto.Map
+            val_type = TypeProto.Map  # type: ignore
         elif val.dtype == 'object':
-            val_type = TypeProto.Sequence
+            val_type = TypeProto.Sequence  # type: ignore
         elif isinstance(val, np.ndarray):
-            val_type = TypeProto.Tensor
+            val_type = TypeProto.Tensor  # type: ignore
         kv_pair = helper.make_key_value_pair(key, key_type, val, val_type)
         map.pairs.append(kv_pair)
     return map
