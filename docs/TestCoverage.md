@@ -2841,21 +2841,59 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Dropout
-There are 4 test cases, listed as following:
+There are 12 test cases, listed as following:
 <details>
 <summary>default</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
     inputs=['x'],
     outputs=['y'],
+    seed=seed
 )
 
-x = np.array([-1, 0, 1]).astype(np.float32)
+x = np.random.randn(3, 4, 5).astype(np.float32)
 y = dropout(x)
-expect(node, inputs=[x], outputs=[y],
-       name='test_dropout_default')
+expect(node, inputs=[x], outputs=[y], name='test_dropout_default')
+```
+
+</details>
+<details>
+<summary>default_mask</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y, z = dropout(x, return_mask=True)
+expect(node, inputs=[x], outputs=[y, z], name='test_dropout_default_mask')
+```
+
+</details>
+<details>
+<summary>default_mask_ratio</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r'],
+    outputs=['y', 'z'],
+    seed=seed
+)
+
+r = np.float32(0.1)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y, z = dropout(x, r, return_mask=True)
+expect(node, inputs=[x, r], outputs=[y, z], name='test_dropout_default_mask_ratio')
 ```
 
 </details>
@@ -2877,23 +2915,21 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
-<summary>random</summary>
+<summary>default_ratio</summary>
 
 ```python
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Dropout',
-    inputs=['x', 'ratio'],
+    inputs=['x', 'r'],
     outputs=['y'],
-    seed=0,
+    seed=seed
 )
 
+r = np.float32(0.1)
 x = np.random.randn(3, 4, 5).astype(np.float32)
-ratio = np.array(random.uniform(0, 1))
-seed = 0
-y = dropout(x, ratio, seed)
-
-expect(node, inputs=[x, ratio], outputs=[y],
-       name='test_dropout_random')
+y = dropout(x, r)
+expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
 ```
 
 </details>
@@ -2912,6 +2948,126 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = x
 expect(node, inputs=[x], outputs=[y],
        name='test_dropout_random_old', opset_imports=[helper.make_opsetid("", 11)])
+```
+
+</details>
+<details>
+<summary>training</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+r = np.float32(0.75)
+t = np.bool_(True)
+y = dropout(x, r, training_mode=t)
+expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout')
+```
+
+</details>
+<details>
+<summary>training_default</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+r = np.float32(0.5)
+t = np.bool_(True)
+y = dropout(x, r, training_mode=t)
+expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_default')
+```
+
+</details>
+<details>
+<summary>training_default_ratio_mask</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y', 'z'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+r = np.float32(0.5)
+t = np.bool_(True)
+y, z = dropout(x, r, training_mode=t, return_mask=True)
+expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_default_mask')
+```
+
+</details>
+<details>
+<summary>training_default_zero_ratio</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+r = np.float32(0.0)
+t = np.bool_(True)
+y = dropout(x, r, training_mode=t)
+expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_zero_ratio')
+```
+
+</details>
+<details>
+<summary>training_default_zero_ratio_mask</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y', 'z'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+r = np.float32(0.0)
+t = np.bool_(True)
+y, z = dropout(x, r, training_mode=t, return_mask=True)
+expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_zero_ratio_mask')
+```
+
+</details>
+<details>
+<summary>training_ratio_mask</summary>
+
+```python
+seed = np.int64(0)
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x', 'r', 't'],
+    outputs=['y', 'z'],
+    seed=seed
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+r = np.float32(0.75)
+t = np.bool_(True)
+y, z = dropout(x, r, training_mode=t, return_mask=True)
+expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_mask')
 ```
 
 </details>
@@ -11078,7 +11234,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### SoftmaxCrossEntropyLoss
-There are 17 test cases, listed as following:
+There are 34 test cases, listed as following:
 <details>
 <summary>input_shape_is_NCd1_mean_weight_negative_ignore_index</summary>
 
@@ -11110,6 +11266,37 @@ expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_softmax_cross
 
 </details>
 <details>
+<summary>input_shape_is_NCd1_mean_weight_negative_ignore_index_log_prob</summary>
+
+```python
+reduction = 'mean'
+ignore_index = np.int64(-1)
+
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction,
+                             ignore_index=ignore_index)
+
+N, C, dim1 = 3, 5, 6
+np.random.seed(0)
+x = np.random.rand(N, C, dim1).astype(np.float32)
+labels = np.random.randint(0, high=C, size=(N, dim1))
+labels[0][0] = -1
+weight = np.random.rand(C).astype(np.float32)
+
+loss, log_prob = softmaxcrossentropy(x,
+                          labels,
+                          weight=weight,
+                          reduction=reduction,
+                          ignore_index=ignore_index,
+                          get_log_prob=True)
+
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1_mean_weight_negative_ignore_index_log_prob')
+```
+
+</details>
+<details>
 <summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index</summary>
 
 ```python
@@ -11134,6 +11321,35 @@ sce = softmaxcrossentropy(x,
                           ignore_index=ignore_index)
 
 expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob</summary>
+
+```python
+reduction = 'none'
+ignore_index = np.int64(-5)
+
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction,
+                             ignore_index=ignore_index)
+
+N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
+np.random.seed(0)
+x = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+labels[0][0][0][0] = -5
+
+loss, log_prob = softmaxcrossentropy(x,
+                          labels,
+                          reduction=reduction,
+                          ignore_index=ignore_index,
+                          get_log_prob=True)
+
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob')
 ```
 
 </details>
@@ -11168,6 +11384,37 @@ expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_softmax_cross
 
 </details>
 <details>
+<summary>input_shape_is_NCd1d2d3_sum_weight_high_ignore_index_log_prob</summary>
+
+```python
+reduction = 'sum'
+ignore_index = np.int64(10)
+
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction,
+                             ignore_index=ignore_index)
+
+N, C = 3, 5
+np.random.seed(0)
+x = np.random.rand(N, C).astype(np.float32)
+labels = np.random.randint(0, high=C, size=(N))
+labels[0] = 10
+weight = np.random.rand(C).astype(np.float32)
+
+loss, log_prob = softmaxcrossentropy(x,
+                          labels,
+                          weight=weight,
+                          reduction=reduction,
+                          ignore_index=ignore_index,
+                          get_log_prob=True)
+
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_sum_weight_high_ignore_index_log_prob')
+```
+
+</details>
+<details>
 <summary>input_shape_is_NCd1d2d3d4d5_mean_weight</summary>
 
 ```python
@@ -11194,6 +11441,33 @@ expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_softmax_cross
 
 </details>
 <details>
+<summary>input_shape_is_NCd1d2d3d4d5_mean_weight_log_prob</summary>
+
+```python
+reduction = 'mean'
+
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
+np.random.seed(0)
+x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+weight = np.random.rand(C).astype(np.float32)
+
+loss, log_prob = softmaxcrossentropy(x,
+                        labels,
+                        weight=weight,
+                        reduction=reduction,
+                        get_log_prob=True)
+
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_mean_weight_log_prob')
+```
+
+</details>
+<details>
 <summary>input_shape_is_NCd1d2d3d4d5_none_no_weight</summary>
 
 ```python
@@ -11214,6 +11488,31 @@ sce = softmaxcrossentropy(x,
                         reduction=reduction)
 
 expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight')
+```
+
+</details>
+<details>
+<summary>input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob</summary>
+
+```python
+reduction = 'none'
+
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
+np.random.seed(0)
+x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+
+loss, log_prob = softmaxcrossentropy(x,
+                        labels,
+                        reduction=reduction,
+                        get_log_prob=True)
+
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob')
 ```
 
 </details>
@@ -11266,6 +11565,58 @@ sce = softmaxcrossentropy(x, y)
 
 # Check results
 expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_3d_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+y = np.random.randint(0, high=5, size=(3, 2))
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, y, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_3d_log_prob')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_log_prob')
 ```
 
 </details>
@@ -11328,6 +11679,35 @@ expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy
 
 </details>
 <details>
+<summary>softmaxcrossentropy_mean_no_weights_ignore_index_3d_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(2)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y'],
+                            outputs=['z', 'log_prob'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, 2))
+labels[0][0] = np.int64(2)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, ignore_index=ignore_index, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_3d_log_prob')
+```
+
+</details>
+<details>
 <summary>softmaxcrossentropy_mean_no_weights_ignore_index_4d</summary>
 
 ```python
@@ -11353,6 +11733,64 @@ sce = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_in
 
 # Check results
 expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_4d')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_no_weights_ignore_index_4d_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(2)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y'],
+                            outputs=['z', 'log_prob'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2, 7).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, 2, 7))
+labels[0][0][0] = np.int64(2)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_index, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_4d_log_prob')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_no_weights_ignore_index_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(2)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y'],
+                            outputs=['z', 'log_prob'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+labels[0] = np.int64(2)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, ignore_index=ignore_index, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_log_prob')
 ```
 
 </details>
@@ -11444,6 +11882,36 @@ expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cros
 
 </details>
 <details>
+<summary>softmaxcrossentropy_mean_weights_ignore_index_3d_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(1)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y', 'w'],
+                            outputs=['z', 'log_prob'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, 2))
+labels[0][0] = np.int64(1)
+weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_ignore_index_3d_log_prob')
+```
+
+</details>
+<details>
 <summary>softmaxcrossentropy_mean_weights_ignore_index_4d</summary>
 
 ```python
@@ -11474,6 +11942,93 @@ expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cros
 
 </details>
 <details>
+<summary>softmaxcrossentropy_mean_weights_ignore_index_4d_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(2)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                            inputs=['x', 'y', 'w'],
+                            outputs=['z', 'log_prob'],
+                            reduction=reduction,
+                            ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5, 2, 7).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, 2, 7))
+labels[0][0][0] = np.int64(2)
+weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, reduction=reduction, weight=weights, ignore_index=ignore_index, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_ignore_index_4d_log_prob')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_weights_ignore_index_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+ignore_index = np.int64(0)
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction,
+                             ignore_index=ignore_index)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+labels[0] = np.int64(0)
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_ignore_index_log_prob')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_mean_weights_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'mean'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_log_prob')
+```
+
+</details>
+<details>
 <summary>softmaxcrossentropy_none</summary>
 
 ```python
@@ -11496,6 +12051,32 @@ sce = softmaxcrossentropy(x, labels, reduction='none')
 
 # Check results
 expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_none_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, reduction='none', get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_none_log_prob')
 ```
 
 </details>
@@ -11527,6 +12108,33 @@ expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cros
 
 </details>
 <details>
+<summary>softmaxcrossentropy_none_weights_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'none'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y', 'w'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, reduction='none', get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_none_weights_log_prob')
+```
+
+</details>
+<details>
 <summary>softmaxcrossentropy_sum</summary>
 
 ```python
@@ -11549,6 +12157,32 @@ sce = softmaxcrossentropy(x, labels, reduction='sum')
 
 # Check results
 expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_sum_log_prob</summary>
+
+```python
+# Define operator attributes.
+reduction = 'sum'
+
+# Create operator.
+node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
+                             inputs=['x', 'y'],
+                             outputs=['z', 'log_prob'],
+                             reduction=reduction)
+
+# Define operator inputs.
+np.random.seed(0)
+x = np.random.rand(3, 5).astype(np.float32)
+labels = np.random.randint(0, high=5, size=(3, ))
+
+# Compute SoftmaxCrossEntropyLoss
+loss, log_prob = softmaxcrossentropy(x, labels, reduction='sum', get_log_prob=True)
+
+# Check results
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_sum_log_prob')
 ```
 
 </details>
