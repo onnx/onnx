@@ -725,7 +725,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, NegativeLogLikelihoodLoss);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Celu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, UnfoldToDepth);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Max);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Min);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, LessOrEqual);
@@ -750,7 +749,6 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, BatchNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, NegativeLogLikelihoodLoss)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Constant)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, UnfoldToDepth)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Celu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Max)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Min)>());

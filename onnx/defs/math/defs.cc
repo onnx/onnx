@@ -424,6 +424,37 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 
 static float celu_default_alpha = 1.0;
 
+TensorProto ToDimensionOneFloatTensor(float value) {
+  auto t = ToTensor(std::vector<float>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+bool BuildContextDependentFunctionBodyCelu(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
+  body.push_back({{"alpha"},
+                  "Constant",
+                  {},
+                  {MakeAttribute("value", ToDimensionOneFloatTensor(alpha))}});
+
+  body.push_back({{"X_alpha"}, "Div", {"X", "alpha"}});
+  body.push_back({{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}});
+  body.push_back({{"Y"}, "Mul", {"alpha", "Elu_Result"}});
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto& node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
     12,
@@ -439,20 +470,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             celu_default_alpha)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to floating-point tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::NodeDef{{"alpha"},
-                                         "Constant",
-                                         {},
-                                         {MakeRefAttribute(
-                                             "value_float",
-                                             "alpha",
-                                             AttributeProto::FLOAT)}},
-             {{"X_alpha"}, "Div", {"X", "alpha"}},
-             {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
-             {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
+            {"tensor(float)"},
+            "Constrain input and output types to float32 tensors.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Exp_ver6_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
@@ -1856,8 +1877,8 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
-TensorProto ToDimensionOneFloatTensor(float value) {
-  auto t = ToTensor(std::vector<float>({value}));
+TensorProto ToDimensionOneInt64Tensor(int64_t value) {
+  auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
   return t;
 }
@@ -1954,10 +1975,13 @@ bool BuildContextDependentFunctionBody(
          {},
          {MakeAttribute(
              "value",
-             ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
+             ToDimensionOneInt64Tensor(ctx.getAttribute("ignore_index")->i()))}});
 
-    body.push_back({{"mask"}, "Equal", {"expanded_target", "const_ignore_index"}});
-    body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero", "expanded_target"}});
+    body.push_back({{"const_zero_target_typed"}, "Sub", {"expanded_target", "expanded_target"}});
+    body.push_back({{"expanded_target_int64"}, "Cast", {"expanded_target"}, {MakeAttribute("to", (int64_t)TensorProto_DataType::TensorProto_DataType_INT64)}});
+ 
+    body.push_back({{"mask"}, "Equal", {"expanded_target_int64", "const_ignore_index"}});
+    body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero_target_typed", "expanded_target"}});
     body.push_back({{"input_gather_element"}, "GatherElements", {"input", "transform_targets"}, {MakeAttribute("axis", (int64_t)1)}});
     body.push_back({{"const_zero_float"},
                 "Constant",
@@ -2122,12 +2146,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx.getInputType(2)->tensor_type().shape();
               if (weight_shape.dim_size() != 1)
                 fail_shape_inference("Weight rank must be 1.")
-                    const auto weight_dim = weight_shape.dim(0);
-              const auto input_dim_1 = input_shape.dim(1);
-              if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
-                  weight_dim.dim_value() != input_dim_1.dim_value())
-                fail_shape_inference(
-                    "Input and weight dimension value mismatch.")
             }
 
             TensorShapeProto* output_shape =
@@ -2398,39 +2416,41 @@ bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back({{"X_Max"}, "Max", {"scores"}});
+
+  body.push_back({{"X_Max"},
+                  "ReduceMax",
+                  {"scores"},
+                  {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+
   body.push_back({{"X_Sub"}, "Sub", {"scores", "X_Max"}});
   body.push_back({{"X_Exp"}, "Exp", {"X_Sub"}});
-  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
+  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
-  body.push_back({{"log_prob"}, "Log", {"X_Div"}});
-  if (ctx.getAttribute("ignore_index") == nullptr) {
-    if (!ctx.hasInput(2)) {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
-    } else {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels", "weights"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
-    }
-  } else {
-    if (!ctx.hasInput(2)) {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING),
-                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
-    } else {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels", "weights"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING),
-                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
-    }
+  body.push_back({{"X_Log"}, "Log", {"X_Div"}});
+
+  // Review(mzs): Ideally we want to reuse the output from Log for sub-graph output as well but
+  // looking at the graph resolve code it does not include graph outputs as intermediate outputs, hence
+  // if intermediate X_log is renamed as log_prob then it will be treated as graph output and will not 
+  // be available to NegativeLogLikelihoodLoss. May be my understanding is incorrect or there is a bug in
+  // function population code in ORTbut I will dig further to be 100%.
+  // In the meantime we just replicate the log.
+  if(ctx.hasOutput(1)){
+    body.push_back({{"log_prob"}, "Identity", {"X_Log"}});
   }
+
+  std::vector<std::string> input_tensor_names{"X_Log", "labels"};
+  std::vector<FunctionBodyHelper::AttributeProtoWrapper> attributes{MakeRefAttribute("reduction", AttributeProto::STRING)};
+  // Add weights as input if needed.
+  if(ctx.hasInput(2)){
+    input_tensor_names.push_back("weights");
+  }
+
+  // add ignore_index attributes if needed.
+  if (ctx.getAttribute("ignore_index") != nullptr){
+    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+  }
+  
+  body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
@@ -2513,5 +2533,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             updateOutputShape(ctx, 0, TensorShapeProto());
           }
+
+          if(ctx.getNumOutputs() == 2) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateShapeFromInputToOutput(ctx, 0, 1);
+          }
+
         }));
 } // namespace ONNX_NAMESPACE
