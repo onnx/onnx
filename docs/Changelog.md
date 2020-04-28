@@ -14079,8 +14079,8 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to floating-point tensors.</dd>
+<dt><tt>T</tt> : tensor(float)</dt>
+<dd>Constrain input and output types to float32 tensors.</dd>
 </dl>
 
 ### <a name="Clip-12"></a>**Clip-12**</a>
@@ -14167,10 +14167,10 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Dropout-12"></a>**Dropout-12**</a>
 
-  Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
-  output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+  Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
+  output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
   Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-  the user can simply replace this Dropout with an Identity operator.
+  the user can simply not pass `training_mode` input or set it to false.
   ```
   output = scale * data * mask,
   ```
@@ -14191,13 +14191,15 @@ This version of the operator has been available since version 12 of the default 
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs (1 - 3)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
 <dt><tt>ratio</tt> (optional) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training.</dd>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
+<dt><tt>training_mode</tt> (optional) : T2</dt>
+<dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
 
 #### Outputs (1 - 2)
