@@ -662,48 +662,6 @@ class TestShapeInference(unittest.TestCase):
                          make_tensor('axes', TensorProto.INT32, (2,), (0, 1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (2, 2))])
 
-    def test_unfoldtodepth_padding(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5, 6))],
-            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[2, 2], pads=[1, 1, 1, 1], strides=[1, 1])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 16, 42))])
-
-    def test_unfoldtodepth_dilation(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 20, 30))],
-            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[10, 15], pads=[5, 5, 5, 5], strides=[3, 3],
-                       dilations=[2, 2])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 600, 16))])
-
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 20, 30))],
-            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[1, 1], pads=[2, 2, 2, 2], strides=[3, 3],
-                       dilations=[5, 5])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 96))])
-
-    def test_unfoldtodepth_no_padding(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (1, 1, 5, 5))],
-            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[3, 3])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 9, 9))])
-
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 20, 30))],
-            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[2, 2], strides=[3, 3])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 16, 70))])
-
-    def test_unfoldtodepth_padding_stride(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5, 5))],
-            [make_node('UnfoldToDepth', ['x'], 'y', block_size=[3, 3], pads=[2, 2, 2, 2], strides=[3, 3])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 36, 9))])
-
     def test_conv(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
@@ -1206,23 +1164,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
-    def test_batch_norm_train(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
-             ('scale', TensorProto.FLOAT, (4,)),
-             ('b', TensorProto.FLOAT, (4,)),
-             ('mean', TensorProto.FLOAT, (4,)),
-             ('var', TensorProto.FLOAT, (4,)),
-             ('training_mode', TensorProto.BOOL, ())],
-            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var', 'training_mode'], ['out', 'output_mean', 'output_var', 'saved_mean', 'saved_var'])],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
-                                      make_tensor_value_info('output_mean', TensorProto.FLOAT, (4,)),
-                                      make_tensor_value_info('output_var', TensorProto.FLOAT, (4,)),
-                                      make_tensor_value_info('saved_mean', TensorProto.FLOAT, (4,)),
-                                      make_tensor_value_info('saved_var', TensorProto.FLOAT, (4,))
-                                      ])
-
     def test_split_negative_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 4))],
@@ -1304,25 +1245,6 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Hardmax', ['x'], 'z')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5, 6))])
-
-    def test_inverse_float(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT16, (3, 4, 4))],
-            [make_node('Inverse', ['x'], 'y')],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT16, (3, 4, 4))])
-
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (2, 5, 5))],
-            [make_node('Inverse', ['x'], 'y')],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 5))])
-
-        graph = self._make_graph(
-            [('x', TensorProto.DOUBLE, (5, 5))],
-            [make_node('Inverse', ['x'], 'y')],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.DOUBLE, (5, 5))])
 
     def test_logsoftmax_2d(self):  # type: () -> None
         graph = self._make_graph(
@@ -3308,46 +3230,6 @@ class TestShapeInference(unittest.TestCase):
             []
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
-
-    def test_mean_square_none_1D(self):  # type: () -> None
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, )),
-             ("y", TensorProto.FLOAT, (2, ))],
-            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='none')],
-            [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, ))])  # type: ignore
-
-    def test_mean_square_none(self):  # type: () -> None
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 3)),
-             ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='none')],
-            [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3))])  # type: ignore
-
-    def test_mean_square_none_4D(self):  # type: () -> None
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 3, 4, 5)),
-             ("y", TensorProto.FLOAT, (2, 3, 4, 5))],
-            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='none')],
-            [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 4, 5))])  # type: ignore
-
-    def test_mean_square_mean(self):  # type: () -> None
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 3)),
-             ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
-            [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
-
-    def test_mean_square_mean_4D(self):  # type: () -> None
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 3, 4, 5)),
-             ("y", TensorProto.FLOAT, (2, 3, 4, 5))],
-            [make_node('MeanSquaredDistance', ['x', 'y'], ['z'], reduction='mean')],
-            [],)
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])  # type: ignore
 
 
 if __name__ == '__main__':
