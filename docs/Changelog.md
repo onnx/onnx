@@ -13953,94 +13953,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="BatchNormalization-12"></a>**BatchNormalization-12**</a>
-
-  Carries out batch normalization as described in the paper https://arxiv.org/abs/1502.03167.
-  There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
-  Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
-  and the running statistics in training mode (traning_mode=True).
-  There is one required output 'Y' and four optional outputs : 'output_mean', 'output_var', 'saved_mean', 'saved_var' used for training.
-  
-  The output and statistics are updated as follows when training_mode=True:
-  ```
-  saved_mean = ReducedMean(X, axis=all_except_channel_index)
-  saved_var =  ReducedVar(X, axis=all_except_channel_index)
-  
-  output_mean = mean * momentum + saved_mean * (1 - momentum)
-  output_var = var * momentum + saved_var * (1 - momentum)
-  
-  Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
-  ```
-  
-  When training_mode=False:
-  ```
-  saved_mean = ReducedMean(X, axis=all_except_channel_index)
-  saved_var =  ReducedVar(X, axis=all_except_channel_index)
-  
-  output_mean = mean
-  output_var = var
-  
-  Y = (X - mean) / sqrt(var + epsilon) * scale + B
-  ```
-  
-  For previous (depreciated) non-spatial cases, implementors are suggested
-  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization operator.
-  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>momentum</tt> : float (default is 0.9)</dt>
-<dd>Factor used in computing the running mean and variance.e.g., output_mean = mean * momentum + saved_mean * (1 - momentum).</dd>
-</dl>
-
-#### Inputs (5 - 6)
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dt><tt>scale</tt> : T</dt>
-<dd>Scale tensor of shape (C).</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>Bias tensor of shape (C).</dd>
-<dt><tt>mean</tt> : T</dt>
-<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>var</tt> : T</dt>
-<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
-<dt><tt>training_mode</tt> (optional) : T1</dt>
-<dd>If set to true, run spatial batch normalization in training mode, default is false.</dd>
-</dl>
-
-#### Outputs (1 - 5)
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X</dd>
-<dt><tt>output_mean</tt> (optional) : T</dt>
-<dd>The running mean when training_mode=True, or the estimated mean when training_mode=False (Tensor of shape (C)).</dd>
-<dt><tt>output_var</tt> (optional) : T</dt>
-<dd>The running variance when training_mode=True, or the estimated variance when training_mode=False (Tensor of shape (C)).</dd>
-<dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation (Tensor of shape (C)).</dd>
-<dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation (Tensor of shape (C)).</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain input 'training_mode' types to boolean tensors.</dd>
-</dl>
-
 ### <a name="Celu-12"></a>**Celu-12**</a>
 
   Continuously Differentiable Exponential Linear Units:
@@ -14079,8 +13991,8 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to floating-point tensors.</dd>
+<dt><tt>T</tt> : tensor(float)</dt>
+<dd>Constrain input and output types to float32 tensors.</dd>
 </dl>
 
 ### <a name="Clip-12"></a>**Clip-12**</a>
@@ -14167,10 +14079,10 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Dropout-12"></a>**Dropout-12**</a>
 
-  Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
-  output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+  Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
+  output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
   Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-  the user can simply replace this Dropout with an Identity operator.
+  the user can simply not pass `training_mode` input or set it to false.
   ```
   output = scale * data * mask,
   ```
@@ -14191,13 +14103,15 @@ This version of the operator has been available since version 12 of the default 
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs (1 - 3)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
 <dt><tt>ratio</tt> (optional) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training.</dd>
+<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
+<dt><tt>training_mode</tt> (optional) : T2</dt>
+<dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -14442,40 +14356,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
 
-### <a name="Inverse-12"></a>**Inverse-12**</a>
-
-  Calculates inverse of a square matrix or batches of square matrices.
-  Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-  and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
-  The behavior where one of the matrices is not invertible is undefined. The implementation can choose
-  to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
-  containing the individual inverses of all input submatrices.
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor. Every matrix in the batch must be invertible.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor of the same type and shape as the input tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
 
   Returns the tensor resulted from performing the `less_equal` logical operation
@@ -14621,65 +14501,6 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to float and 8 bit tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
-</dl>
-
-### <a name="MeanSquaredDistance-12"></a>**MeanSquaredDistance-12**</a>
-
-  Loss function that measures the
-  mean squared distance (squared L2 norm) between each element in the 'scores'
-  and 'labels'.
-  
-  The loss can be described as:
-      L = Pow(Sub(scores, labels), 2)
-  
-  score and label are tensors of arbitrary shapes with total of N elements each,
-  and are of the same shape.
-  
-  If 'weights' is provided, it should be broadcastable to shape of 'L'.
-      L = Mul(weights, L)
-  , where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
-  
-  Finally, L is optionally reduced:
-  L = ReduceSum(L), if reduction = 'sum';
-      ReduceMean(L), if reduction = 'mean';
-      L, if reduction = 'none';
-  
-  .
-
-#### Version
-
-This version of the operator has been available since version 12 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>reduction</tt> : string (default is mean)</dt>
-<dd>Type of reduction to apply to loss: none, sum, mean(default). 'none': the output is the loss for each sample in the batch.'sum': the output will be summed into a scalar. 'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`</dd>
-</dl>
-
-#### Inputs (2 - 3)
-
-<dl>
-<dt><tt>scores</tt> : T</dt>
-<dd>The predicted outputs.</dd>
-<dt><tt>labels</tt> : T</dt>
-<dd>The ground truth output tensor, same dimensions as 'scores'.</dd>
-<dt><tt>weights</tt> (optional) : T</dt>
-<dd>Weights acts as a coefficient for the loss, it should be broadcastable to shape of 'scores'.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Weighted loss float Tensor. If reduction is none, this has the shape of [batch_size]; otherwise, it is scalar.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="Min-12"></a>**Min-12**</a>
