@@ -132,7 +132,7 @@ void convPoolShapeInference(
       }
     }
   }
-
+    
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -1659,10 +1659,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Dropout_ver12_doc = R"DOC(
-Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
-output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
+output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
 Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-the user can simply replace this Dropout with an Identity operator.
+the user can simply not pass `training_mode` input or set it to false.
 ```
 output = scale * data * mask,
 ```
@@ -1690,9 +1690,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The ratio of random dropout, with value in [0, 1). If this input was not set, "
             "or if it was set to 0, the output would be a simple copy of the input. "
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
-            "the case during training.",
+            "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
             OpSchema::Optional)
+        .Input(
+            2,
+            "training_mode",
+            "If set to true then it indicates dropout is being used for training. It is an optional value hence unless "
+            "specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where "
+            "nothing will be dropped from the input data and if mask is requested as output it will contain all ones.",
+            "T2",
+            OpSchema::Optional)            
         .Output(0, "output", "The output.", "T")
         .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional)
         .TypeConstraint(
@@ -1719,6 +1727,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Ratio of Dropout must be a scalar.");
             }
           }
+
+          if (ctx.getNumInputs() > 2 && hasInputShape(ctx, 2)) {
+            auto& training_mode_input_shape = getInputShape(ctx, 2);
+            if (static_cast<int>(training_mode_input_shape.dim_size()) != 0) {
+              fail_shape_inference("training_mode of Dropout must be a scalar.");
+            }
+          }
+
           if (ctx.getNumOutputs() == 2) {
             updateOutputElemType(ctx, 1, TensorProto::BOOL);
             if (hasNInputShapes(ctx, 1)) {
