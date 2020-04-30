@@ -1,0 +1,58 @@
+trigger:
+- master
+
+jobs:
+- job: 'Test'
+  pool:
+    vmImage: 'macOS-10.14'
+  strategy:
+    matrix:
+      py27:
+        python.version: '2.7'
+        onnx_ml: 0
+      py36:
+        python.version: '3.6'
+        onnx_ml: 0
+      py36-onnx-ml:
+        python.version: '3.6'
+        onnx_ml: 1
+    maxParallel: 3
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: |
+      git submodule update --init --recursive
+      python -m pip install --upgrade setuptools
+      python -m pip install numpy
+      conda install -c conda-forge pybind11 protobuf
+      brew install protobuf
+      set ONNX_ML=${onnx_ml}
+      set ONNX_BUILD_TESTS=1
+      set USE_MSVC_STATIC_RUNTIME=0
+      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      python setup.py --quiet install
+    displayName: 'Install dependencies and ONNX'
+
+  - script: |
+      pip install --quiet pytest nbval
+      pytest
+
+      pip install --quiet flake8
+      flake8
+
+      find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
+      git status
+      git diff --exit-code
+
+      python onnx/defs/gen_doc.py
+      python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --ml
+      python onnx/backend/test/stat_coverage.py
+      backend-test-tools generate-data
+      git status
+      git diff --exit-code
+
+    displayName: 'Run ONNX Tests'
