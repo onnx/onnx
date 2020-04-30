@@ -59,7 +59,7 @@ conda install -c conda-forge onnx
 ## Source
 
 ### Linux and MacOS
-You will need an install of protobuf and numpy to build ONNX.  One easy
+You will need an install of Protobuf and NumPy to build ONNX.  One easy
 way to get these dependencies is via
 [Anaconda](https://www.anaconda.com/download/):
 
@@ -74,7 +74,7 @@ You can then install ONNX from PyPi (Note: Set environment variable `ONNX_ML=1` 
 pip install onnx
 ```
 
-You can also build and install ONNX locally from source code:
+Alternatively, you can also build and install ONNX locally from source code:
 
 ```
 git clone https://github.com/onnx/onnx.git
@@ -91,10 +91,10 @@ pip install onnx
 ```
 
 ### Windows
-When building on Windows it is highly recommended that you also build protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static lib.
+If you are building ONNX on Windows, it is highly recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static lib.
 
-#### Instructions to build protobuf and ONNX on windows
-Step 1 : Build protobuf locally
+#### (Recommended) Build Protobuf and ONNX on windows
+Step 1: Build protobuf locally
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
@@ -125,10 +125,10 @@ set USE_MSVC_STATIC_RUNTIME=0
 python setup.py install
 ```
 
-If you do not want to build protobuf and instead want to use protobuf from conda forge then follow these instructions. 
-However please note : This method is just added as a convenience for users and there is very limited support from ONNX team when using this method.
+If you do not want to build Protobuf and instead want to use Protobuf from conda forge then follow these instructions.
+However please note, this method is added as a convenience for users and there is very limited support from ONNX team when using this method.
 
-#### Instructions to build ONNX on windows in anaconda environment
+#### Build ONNX on Windows with Anaconda
 
 ```
 # Use conda-forge protobuf
@@ -143,9 +143,18 @@ git submodule update --init --recursive
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 
 # Build ONNX
-# Optional : Set environment variable `ONNX_ML=1` for onnx-ml
+# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
 
 python setup.py install
+```
+
+### ARM 64
+If you are building ONNX on an ARM 64 device, please make sure to install the dependencies appropriately.
+
+```
+pip install cython protobuf numpy
+sudo apt-get install libprotobuf-dev protobuf-compiler
+pip install onnx
 ```
 
 ## Verify Installation
@@ -155,24 +164,19 @@ After installation, run
 python -c "import onnx"
 ```
 
-to verify it works.  Note that this command does not work from
-a source checkout directory; in this case you'll see:
+to verify it works.
 
-```
-ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'
-```
-
-Change into another directory to fix this error.
+Note that this command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
 # Testing
 
-ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
+ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, you will first need to install pytest:
 
 ```
 pip install pytest nbval
 ```
 
-After installing pytest, do
+After installing pytest, run the following command
 
 ```
 pytest
