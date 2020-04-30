@@ -148,7 +148,7 @@ set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 python setup.py install
 ```
 
-### ARM 64
+#### Build ONNX on ARM 64
 If you are building ONNX on an ARM 64 device, please make sure to install the dependencies appropriately.
 
 ```
