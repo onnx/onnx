@@ -168,12 +168,12 @@
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
   * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
-* ai.onnx.experimental
-  * <a href="#ai.onnx.experimental.Adagrad">ai.onnx.experimental.Adagrad</a>
-  * <a href="#ai.onnx.experimental.Adam">ai.onnx.experimental.Adam</a>
-  * <a href="#ai.onnx.experimental.Gradient">ai.onnx.experimental.Gradient</a>
-  * <a href="#ai.onnx.experimental.GraphCall">ai.onnx.experimental.GraphCall</a>
-  * <a href="#ai.onnx.experimental.Momentum">ai.onnx.experimental.Momentum</a>
+* ai.onnx.preview.training
+  * <a href="#ai.onnx.preview.training.Adagrad">ai.onnx.preview.training.Adagrad</a>
+  * <a href="#ai.onnx.preview.training.Adam">ai.onnx.preview.training.Adam</a>
+  * <a href="#ai.onnx.preview.training.Gradient">ai.onnx.preview.training.Gradient</a>
+  * <a href="#ai.onnx.preview.training.GraphCall">ai.onnx.preview.training.GraphCall</a>
+  * <a href="#ai.onnx.preview.training.Momentum">ai.onnx.preview.training.Momentum</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -21861,8 +21861,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-## ai.onnx.experimental
-### <a name="ai.onnx.experimental.Adagrad"></a><a name="ai.onnx.experimental.adagrad">**ai.onnx.experimental.Adagrad**</a>
+## ai.onnx.preview.training
+### <a name="ai.onnx.preview.training.Adagrad"></a><a name="ai.onnx.preview.training.adagrad">**ai.onnx.preview.training.Adagrad**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -21917,7 +21917,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.experimental' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22048,7 +22048,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 </details>
 
 
-### <a name="ai.onnx.experimental.Adam"></a><a name="ai.onnx.experimental.adam">**ai.onnx.experimental.Adam**</a>
+### <a name="ai.onnx.preview.training.Adam"></a><a name="ai.onnx.preview.training.adam">**ai.onnx.preview.training.Adam**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -22114,7 +22114,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.experimental' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22261,7 +22261,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
 </details>
 
 
-### <a name="ai.onnx.experimental.Gradient"></a><a name="ai.onnx.experimental.gradient">**ai.onnx.experimental.Gradient**</a>
+### <a name="ai.onnx.preview.training.Gradient"></a><a name="ai.onnx.preview.training.gradient">**ai.onnx.preview.training.Gradient**</a>
 
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
@@ -22389,7 +22389,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.experimental' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22530,7 +22530,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 </details>
 
 
-### <a name="ai.onnx.experimental.GraphCall"></a><a name="ai.onnx.experimental.graphcall">**ai.onnx.experimental.GraphCall**</a>
+### <a name="ai.onnx.preview.training.GraphCall"></a><a name="ai.onnx.preview.training.graphcall">**ai.onnx.preview.training.GraphCall**</a>
 
   The GraphCall operator invokes a graph inside TrainingInfoProto's
   algorithm field. The GraphCall inputs and outputs are bound to those of
@@ -22623,7 +22623,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.experimental' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22654,7 +22654,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
-### <a name="ai.onnx.experimental.Momentum"></a><a name="ai.onnx.experimental.momentum">**ai.onnx.experimental.Momentum**</a>
+### <a name="ai.onnx.preview.training.Momentum"></a><a name="ai.onnx.preview.training.momentum">**ai.onnx.preview.training.Momentum**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
@@ -22719,7 +22719,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.experimental' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
