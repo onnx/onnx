@@ -7,7 +7,7 @@ import sys
 import platform
 
 import numpy as np  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto, TypeProto
+from onnx import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
@@ -129,11 +129,11 @@ def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any
     arr = np.array([])
     for elem in sequence.values:
         elem_type = elem.elem_type
-        if elem_type == SequenceMapElement.DataType.TENSOR or elem_type == SequenceMapElement.DataType.SPARSE_TENSOR:
+        if elem_type == SequenceMapElement.TENSOR or elem_type == SequenceMapElement.SPARSE_TENSOR:
             arr.append(to_array(elem))
-        elif elem_type == SequenceMapElement.DataType.SEQUENCE:
+        elif elem_type == SequenceMapElement.SEQUENCE:
             arr.append(to_array_from_sequence(elem))
-        elif elem_type == SequenceMapElement.DataType.MAP:
+        elif elem_type == SequenceMapElement.MAP:
             arr.append(to_dict_from_map(elem))
         else:
             raise TypeError("The element type in the input sequence is not defined.")
