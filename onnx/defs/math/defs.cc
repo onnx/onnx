@@ -424,6 +424,37 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 
 static float celu_default_alpha = 1.0;
 
+TensorProto ToDimensionOneFloatTensor(float value) {
+  auto t = ToTensor(std::vector<float>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+bool BuildContextDependentFunctionBodyCelu(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
+  body.push_back({{"alpha"},
+                  "Constant",
+                  {},
+                  {MakeAttribute("value", ToDimensionOneFloatTensor(alpha))}});
+
+  body.push_back({{"X_alpha"}, "Div", {"X", "alpha"}});
+  body.push_back({{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}});
+  body.push_back({{"Y"}, "Mul", {"alpha", "Elu_Result"}});
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto& node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
     12,
@@ -439,20 +470,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             celu_default_alpha)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to floating-point tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::NodeDef{{"alpha"},
-                                         "Constant",
-                                         {},
-                                         {MakeRefAttribute(
-                                             "value_float",
-                                             "alpha",
-                                             AttributeProto::FLOAT)}},
-             {{"X_alpha"}, "Div", {"X", "alpha"}},
-             {{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}},
-             {{"Y"}, "Mul", {"alpha", "Elu_Result"}}})));
+            {"tensor(float)"},
+            "Constrain input and output types to float32 tensors.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Exp_ver6_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
@@ -1856,8 +1877,8 @@ TensorProto ToDimensionOneTensor(int32_t value) {
   return t;
 }
 
-TensorProto ToDimensionOneFloatTensor(float value) {
-  auto t = ToTensor(std::vector<float>({value}));
+TensorProto ToDimensionOneInt64Tensor(int64_t value) {
+  auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
   return t;
 }
@@ -1954,10 +1975,13 @@ bool BuildContextDependentFunctionBody(
          {},
          {MakeAttribute(
              "value",
-             ToDimensionOneTensor(ctx.getAttribute("ignore_index")->i()))}});
+             ToDimensionOneInt64Tensor(ctx.getAttribute("ignore_index")->i()))}});
 
-    body.push_back({{"mask"}, "Equal", {"expanded_target", "const_ignore_index"}});
-    body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero", "expanded_target"}});
+    body.push_back({{"const_zero_target_typed"}, "Sub", {"expanded_target", "expanded_target"}});
+    body.push_back({{"expanded_target_int64"}, "Cast", {"expanded_target"}, {MakeAttribute("to", (int64_t)TensorProto_DataType::TensorProto_DataType_INT64)}});
+ 
+    body.push_back({{"mask"}, "Equal", {"expanded_target_int64", "const_ignore_index"}});
+    body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero_target_typed", "expanded_target"}});
     body.push_back({{"input_gather_element"}, "GatherElements", {"input", "transform_targets"}, {MakeAttribute("axis", (int64_t)1)}});
     body.push_back({{"const_zero_float"},
                 "Constant",
@@ -2122,12 +2146,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx.getInputType(2)->tensor_type().shape();
               if (weight_shape.dim_size() != 1)
                 fail_shape_inference("Weight rank must be 1.")
-                    const auto weight_dim = weight_shape.dim(0);
-              const auto input_dim_1 = input_shape.dim(1);
-              if (input_dim_1.has_dim_value() && weight_dim.has_dim_value() &&
-                  weight_dim.dim_value() != input_dim_1.dim_value())
-                fail_shape_inference(
-                    "Input and weight dimension value mismatch.")
             }
 
             TensorShapeProto* output_shape =
@@ -2299,188 +2317,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           einsumRankInference(ctx, equation);
         }));
 
-static const char* Inverse_ver12_doc = R"DOC(
-Calculates inverse of a square matrix or batches of square matrices.
-Inverse takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-and the inner-most 2 dimensions form square matrices. These matrices must be invertible (full-rank).
-The behavior where one of the matrices is not invertible is undefined. The implementation can choose
-to throw an error or output (garbage) results as is. The output is a tensor of shape `[*, M, M]`,
-containing the individual inverses of all input submatrices.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Inverse,
-    12,
-    OpSchema()
-        .SetDoc(Inverse_ver12_doc)
-        .Input(0, "X", "Input tensor. Every matrix in the batch must be invertible.", "T")
-        .Output(0, "Y", "Output tensor of the same type and shape as the input tensor.", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          // Shape inference
-          if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& input_shape =
-                ctx.getInputType(0)->tensor_type().shape();
-            const int rank = static_cast<int>(input_shape.dim_size());
-
-            if (rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.")
-            }
-
-            const auto mat_w = input_shape.dim(rank - 1);
-            const auto mat_h = input_shape.dim(rank - 2);
-            if (mat_w.has_dim_value() && mat_h.has_dim_value() &&
-                (mat_w.dim_value() != mat_h.dim_value())) {
-              fail_shape_inference(
-                  "The inner-most 2 dimensions must have the same size (mat_w:",
-                  mat_w.dim_value(),
-                  " != mat_h:",
-                  mat_h.dim_value(),
-                  ").");
-            }
-
-            // Shape inference
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-          }
-        }));
-
-const char* reduction_doc_mse =
-    "Type of reduction to apply to loss: none, sum, mean(default). "
-    "'none': the output is the loss for each sample in the batch."
-    "'sum': the output will be summed into a scalar. "
-    "'mean': the output with the `reduction=sum` will be further divided by the the first dimension of `scores`";
-
-static const char* MSD_ver12_doc = R"DOC(Loss function that measures the
-mean squared distance (squared L2 norm) between each element in the 'scores'
-and 'labels'.
-
-The loss can be described as:
-    L = Pow(Sub(scores, labels), 2)
-
-score and label are tensors of arbitrary shapes with total of N elements each,
-and are of the same shape.
-
-If 'weights' is provided, it should be broadcastable to shape of 'L'.
-    L = Mul(weights, L)
-, where Mul is element-wise binary multiplication with Numpy-style broadcasting support.
-
-Finally, L is optionally reduced:
-L = ReduceSum(L), if reduction = 'sum';
-    ReduceMean(L), if reduction = 'mean';
-    L, if reduction = 'none';
-
-.)DOC";
-
-bool BuildContextDependentFunctionBodyMSD(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back(FunctionBodyHelper::Const<int>("Q_Pow", 2));
-  body.push_back({{"X_Sub"}, "Sub", {"scores", "labels"}});
-
-  if (!ctx.hasInput(2)) {
-    if (ctx.getAttribute("reduction")->s() == "none") {
-      body.push_back({{"output"}, "Pow", {"X_Sub", "Q_Pow"}});
-    } else {
-      body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
-      if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"},
-                        "ReduceSum",
-                        {"X_Pow"},
-                        {MakeAttribute("keepdims", (int64_t)0)}});
-      } else {
-        body.push_back({{"output"},
-                        "ReduceMean",
-                        {"X_Pow"},
-                        {MakeAttribute("keepdims", (int64_t)0)}});
-      }
-    }
-  } else {
-    body.push_back({{"X_Pow"}, "Pow", {"X_Sub", "Q_Pow"}});
-    if (ctx.getAttribute("reduction")->s() == "none") {
-      body.push_back({{"output"}, "Mul", {"weights", "X_Pow"}});
-    } else {
-      body.push_back({{"X_Mul"}, "Mul", {"weights", "X_Pow"}});
-      if (ctx.getAttribute("reduction")->s() == "sum") {
-        body.push_back({{"output"},
-                        "ReduceSum",
-                        {"X_Mul"},
-                        {MakeAttribute("keepdims", (int64_t)0)}});
-      } else {
-        body.push_back({{"output"},
-                        "ReduceMean",
-                        {"X_Mul"},
-                        {MakeAttribute("keepdims", (int64_t)0)}});
-      }
-    }
-  }
-
-  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
-    new_node->CopyFrom(node);
-  }
-
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
-ONNX_OPERATOR_SET_SCHEMA(
-    MeanSquaredDistance,
-    12,
-    OpSchema()
-        .SetDoc(MSD_ver12_doc)
-        .Attr(
-            "reduction",
-            reduction_doc_mse,
-            AttributeProto::STRING,
-            std::string("mean"))
-        .Input(0, "scores", "The predicted outputs.", "T")
-        .Input(
-            1,
-            "labels",
-            "The ground truth output tensor, same dimensions as 'scores'.",
-            "T")
-        .Input(
-            2,
-            "weights",
-            "Weights acts as a coefficient for the loss, it should be "
-            "broadcastable to shape of 'scores'.",
-            "T",
-            OpSchema::Optional)
-        .Output(
-            0,
-            "output",
-            "Weighted loss float Tensor. If reduction is none, this has the "
-            "shape of [batch_size]; otherwise, it is scalar.",
-            "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .SetContextDependentFunctionBodyBuilder(
-            BuildContextDependentFunctionBodyMSD)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          std::string reduction = getAttribute(ctx, "reduction", "mean");
-          if (reduction.compare("none") == 0) {
-            if (hasInputShape(ctx, 0)) {
-              propagateShapeFromInputToOutput(ctx, 0, 0);
-            }
-          } else {
-            updateOutputShape(ctx, 0, TensorShapeProto());
-          }
-        }));
-
 const char* reduction_doc_sce =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
@@ -2527,39 +2363,41 @@ bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back({{"X_Max"}, "Max", {"scores"}});
+
+  body.push_back({{"X_Max"},
+                  "ReduceMax",
+                  {"scores"},
+                  {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+
   body.push_back({{"X_Sub"}, "Sub", {"scores", "X_Max"}});
   body.push_back({{"X_Exp"}, "Exp", {"X_Sub"}});
-  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}});
+  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
-  body.push_back({{"log_prob"}, "Log", {"X_Div"}});
-  if (ctx.getAttribute("ignore_index") == nullptr) {
-    if (!ctx.hasInput(2)) {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
-    } else {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels", "weights"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING)}});
-    }
-  } else {
-    if (!ctx.hasInput(2)) {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING),
-                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
-    } else {
-      body.push_back({{"output"},
-                      "NegativeLogLikelihoodLoss",
-                      {"log_prob", "labels", "weights"},
-                      {MakeRefAttribute("reduction", AttributeProto::STRING),
-                       MakeRefAttribute("ignore_index", AttributeProto::INT)}});
-    }
+  body.push_back({{"X_Log"}, "Log", {"X_Div"}});
+
+  // Review(mzs): Ideally we want to reuse the output from Log for sub-graph output as well but
+  // looking at the graph resolve code it does not include graph outputs as intermediate outputs, hence
+  // if intermediate X_log is renamed as log_prob then it will be treated as graph output and will not 
+  // be available to NegativeLogLikelihoodLoss. May be my understanding is incorrect or there is a bug in
+  // function population code in ORTbut I will dig further to be 100%.
+  // In the meantime we just replicate the log.
+  if(ctx.hasOutput(1)){
+    body.push_back({{"log_prob"}, "Identity", {"X_Log"}});
   }
+
+  std::vector<std::string> input_tensor_names{"X_Log", "labels"};
+  std::vector<FunctionBodyHelper::AttributeProtoWrapper> attributes{MakeRefAttribute("reduction", AttributeProto::STRING)};
+  // Add weights as input if needed.
+  if(ctx.hasInput(2)){
+    input_tensor_names.push_back("weights");
+  }
+
+  // add ignore_index attributes if needed.
+  if (ctx.getAttribute("ignore_index") != nullptr){
+    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+  }
+  
+  body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
@@ -2642,5 +2480,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             updateOutputShape(ctx, 0, TensorShapeProto());
           }
+
+          if(ctx.getNumOutputs() == 2) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateShapeFromInputToOutput(ctx, 0, 1);
+          }
+
         }));
 } // namespace ONNX_NAMESPACE
