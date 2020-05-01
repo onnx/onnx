@@ -228,9 +228,9 @@ def make_key_value_pair(
     proto field to store the key, and values should be of type bytes in
     this case.
     '''
-    kv_pair = MapProto().KeyValuePair
+    kv_pair = KeyValuePair()
 
-    if key_type == MapProto.KeyValuePair.STRING:
+    if key_type == KeyValuePair.DataType.STRING:
         assert not raw, "Can not use raw_key to store string type"
 
     if raw:
@@ -246,13 +246,27 @@ def make_key_value_pair(
 
 
 def make_sequence_map_element(
-        value  # type: TypeProto
+        value,  # type: TypeProto
+        value_type  # type: int
 ):  # type: (...) -> SequenceMapElement
     '''
     Make a sequence map element to store values for SequenceProto and MapProto.
     '''
     seq_map_elem = SequenceMapElement()
-    seq_map_elem.tensor_value = value
+    if value_type == TypeProto.Tensor:
+        seq_map_elem.elem_type = SequenceMapElement.DataType.TENSOR
+        seq_map_elem.tensor_value = value
+    elif value_type == TypeProto.SparseTensor:
+        seq_map_elem.elem_type = SequenceMapElement.DataType.SPARSE_TENSOR
+        seq_map_elem.sparse_tensor_value = value
+    elif value_type == TypeProto.Sequence:
+        seq_map_elem.elem_type = SequenceMapElement.DataType.SEQUENCE
+        seq_map_elem.sequence_value = value
+    elif value_type == TypeProto.Map:
+        seq_map_elem.elem_type = SequenceMapElement.DataType.MAP
+        seq_map_elem.map_value = value
+    else:
+        raise TypeError("Invalid value type.")
     return seq_map_elem
 
 

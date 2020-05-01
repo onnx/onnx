@@ -127,18 +127,16 @@ def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any
         arr: the converted array.
     """
     arr = np.array([])
-    elem_type = sequence.elem_type
-    if elem_type == TypeProto.Tensor or elem_type == TypeProto.SparseTensor:
-        for elem in sequence.values:
+    for elem in sequence.values:
+        elem_type = elem.elem_type
+        if elem_type == SequenceMapElement.DataType.TENSOR or elem_type == SequenceMapElement.DataType.SPARSE_TENSOR:
             arr.append(to_array(elem))
-    elif elem_type == TypeProto.Map:
-        for elem in sequence.values:
-            arr.append(to_dict_from_map(elem))
-    elif elem_type == TypeProto.Sequence:
-        for elem in sequence.values:
+        elif elem_type == SequenceMapElement.DataType.SEQUENCE:
             arr.append(to_array_from_sequence(elem))
-    else:
-        raise TypeError("The element type in the input sequence is not defined.")
+        elif elem_type == SequenceMapElement.DataType.MAP:
+            arr.append(to_dict_from_map(elem))
+        else:
+            raise TypeError("The element type in the input sequence is not defined.")
     return arr
 
 
