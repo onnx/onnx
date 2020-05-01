@@ -156,7 +156,7 @@ def from_array_to_sequence(arr, name=None):  # type: (np.ndarray[Any], Optional[
         sequence.name = name
     for elem in arr:
         # If elem is a tensor
-        if elem.dtype == np.ndarray:
+        if type(elem) == np.ndarray:
             sequence.values.append(helper.make_sequence_map_element(from_array(elem)))
         else:
             raise TypeError("The element type in the input sequence is not supported yet.")
