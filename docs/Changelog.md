@@ -14861,9 +14861,9 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
-# ai.onnx.training
-## Version 1 of the 'ai.onnx.training' operator set
-### <a name="ai.onnx.training.Adagrad-1"></a>**ai.onnx.training.Adagrad-1**</a>
+# ai.onnx.preview.training
+## Version 1 of the 'ai.onnx.preview.training' operator set
+### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -14918,7 +14918,7 @@ This version of the operator has been available since version 12 of the default 
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -14960,7 +14960,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ai.onnx.training.Adam-1"></a>**ai.onnx.training.Adam-1**</a>
+### <a name="ai.onnx.preview.training.Adam-1"></a>**ai.onnx.preview.training.Adam-1**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -15026,7 +15026,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -15072,7 +15072,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ai.onnx.training.Gradient-1"></a>**ai.onnx.training.Gradient-1**</a>
+### <a name="ai.onnx.preview.training.Gradient-1"></a>**ai.onnx.preview.training.Gradient-1**</a>
 
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
@@ -15200,7 +15200,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -15236,7 +15236,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Allow inputs to be any kind of floating-point tensor.</dd>
 </dl>
 
-### <a name="ai.onnx.training.GraphCall-1"></a>**ai.onnx.training.GraphCall-1**</a>
+### <a name="ai.onnx.preview.training.GraphCall-1"></a>**ai.onnx.preview.training.GraphCall-1**</a>
 
   The GraphCall operator invokes a graph inside TrainingInfoProto's
   algorithm field. The GraphCall inputs and outputs are bound to those of
@@ -15329,7 +15329,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -15359,7 +15359,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Allow inputs and outputs to be any kind of tensor.</dd>
 </dl>
 
-### <a name="ai.onnx.training.Momentum-1"></a>**ai.onnx.training.Momentum-1**</a>
+### <a name="ai.onnx.preview.training.Momentum-1"></a>**ai.onnx.preview.training.Momentum-1**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
@@ -15424,7 +15424,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 

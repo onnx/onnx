@@ -6,10 +6,11 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
-#include "onnx/defs/operator_sets-training.h"
+#include "onnx/defs/operator_sets_training.h"
+#include "onnx/defs/operator_sets_experiment.h"
 
 #ifdef ONNX_ML
-#include "onnx/defs/operator_sets-ml.h"
+#include "onnx/defs/operator_sets_ml.h"
 #endif
 
 #include "onnx/common/assertions.h"
@@ -946,6 +947,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
       // Invoke register of training operators.
       RegisterOnnxTrainingOperatorSetSchema();
+
+      // Invoke register of experimental operators.
+      RegisterOnnxExperimentalOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =
