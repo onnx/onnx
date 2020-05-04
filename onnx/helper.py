@@ -9,7 +9,7 @@ from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
 from onnx import SequenceProto, MapProto, SequenceMapElement, TensorProto, \
-    SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+    SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, KeyValuePair, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 from onnx import defs
 from onnx import mapping
@@ -204,7 +204,7 @@ def make_sequence(
 
 def make_map(
         name,  # type: Text
-        pairs   # type: Sequence[MapProto.KeyValuePair]
+        pairs   # type: Sequence[KeyValuePair]
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
@@ -220,7 +220,7 @@ def make_key_value_pair(
         key_type,  # type: int
         value,  # type: SequenceMapElement
         raw=False  # type: bool
-):  # type: (...) -> MapProto.KeyValuePair
+):  # type: (...) -> KeyValuePair
     '''
     Make a KeyValuePair element for MapProto.
     If raw is False, this function will choose the corresponding proto
@@ -246,7 +246,7 @@ def make_key_value_pair(
 
 
 def make_sequence_map_element(
-        value,  # type: TypeProto
+        value,  # type: Any
         value_type  # type: int
 ):  # type: (...) -> SequenceMapElement
     '''
