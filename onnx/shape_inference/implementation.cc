@@ -222,7 +222,7 @@ static void InferShapesImpl(
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
         //(void)ex;
         // Continue with inference for remaining nodes
-        error_message += ex.what();
+        error_message += std::string(ex.what()) + "\n";
         continue;
       }
     } else if (schema->HasFunction()) {
@@ -231,7 +231,7 @@ static void InferShapesImpl(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
         //(void)function_ex;
-        error_message += function_ex.what();
+        error_message += std::string(function_ex.what()) + "\n";
         continue;
       }
     } else {
@@ -288,7 +288,8 @@ static void InferShapesImpl(
     }
   }
   if (!error_message.empty()) {
-    throw error_message;
+    std::cerr << "Type consistency error: " << error_message;
+    throw std::runtime_error(error_message);
   }
 }
 
