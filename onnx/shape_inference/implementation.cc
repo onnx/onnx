@@ -199,7 +199,7 @@ static void InferShapesImpl(
           }
       }
   }
-
+  std::string error_message = "";
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -212,14 +212,17 @@ static void InferShapesImpl(
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
         n, valueTypesByName, inputDataByName, &graphInferenceContext);
+    
+    
     if (!schema) {
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
-        (void)ex;
+        //(void)ex;
         // Continue with inference for remaining nodes
+        error_message += ex.what();
         continue;
       }
     } else if (schema->HasFunction()) {
@@ -227,7 +230,8 @@ static void InferShapesImpl(
         InferShapeForFunctionNode(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
-        (void)function_ex;
+        //(void)function_ex;
+        error_message += function_ex.what();
         continue;
       }
     } else {
@@ -282,6 +286,9 @@ static void InferShapesImpl(
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
       throw;
     }
+  }
+  if (!error_message.empty()) {
+    throw error_message;
   }
 }
 
