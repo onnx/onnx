@@ -7,7 +7,7 @@
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_training.h"
-#include "onnx/defs/operator_sets_experiment.h"
+#include "onnx/defs/operator_sets_preview.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets_ml.h"
