@@ -937,7 +937,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       RegisterOnnxTrainingOperatorSetSchema();
 
       // Invoke register of experimental operators.
-      RegisterOnnxExperimentalOperatorSetSchema();
+      RegisterOnnxPreviewOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =
