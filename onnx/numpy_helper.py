@@ -140,11 +140,11 @@ def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any
     return arr
 
 
-def from_array_to_sequence(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> SequenceProto
-    """Converts a numpy array into a sequence def.
+def from_list_to_sequence(lst, name=None):  # type: (typing.List, Optional[Text]) -> SequenceProto
+    """Converts a list into a sequence def.
 
     Inputs:
-        arr: a numpy array.
+        lst: a Python list
         name: (optional) the name of the sequence.
     Returns:
         sequence: the converted sequence def.
@@ -152,12 +152,17 @@ def from_array_to_sequence(arr, name=None):  # type: (np.ndarray[Any], Optional[
     sequence = SequenceProto()
     if name:
         sequence.name = name
-    for elem in arr:
+    for elem in lst:
         # If elem is a tensor
-        if type(elem) == np.ndarray:
+        if isinstance(elem, np.ndarray):
             sequence.values.append(helper.make_sequence_map_element(from_array(elem)))
+        elif isinstance(elem, list):
+            sequence.values.append(from_list_to_sequence(elem))
+        elif isinstance (elem, dict):
+            sequence.values.append(from_dict_to_map(elem))
         else:
-            raise TypeError("The element type in the input sequence is not supported yet.")
+            raise TypeError("The element type in the input sequence is not a list,"
+                            "dictionary, or np.ndarray and is not supported.")
     return sequence
 
 
@@ -203,7 +208,7 @@ def from_dict_to_map(d, name=None):  # type: (typing.Dict, Optional[Text]) -> Ma
         key_type = mapping.NP_TYPE_TO_MAP_KEY_TYPE(key.dtype)
         if isinstance(val, dict):
             val_type = TypeProto.Map  # type: ignore
-        elif val.dtype == 'object':
+        elif isinstance(val, list):
             val_type = TypeProto.Sequence  # type: ignore
         elif isinstance(val, np.ndarray):
             val_type = TypeProto.Tensor  # type: ignore
