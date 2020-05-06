@@ -11,7 +11,7 @@ namespace ONNX_NAMESPACE {
 // ONNX domains.
 constexpr const char* AI_ONNX_ML_DOMAIN = "ai.onnx.ml";
 constexpr const char* AI_ONNX_TRAINING_DOMAIN = "ai.onnx.training";
-constexpr const char* AI_ONNX_EXPERIMENTAL_DOMAIN = "ai.onnx.preview.training";
+constexpr const char* AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training";
 constexpr const char* ONNX_DOMAIN = "";
 constexpr bool OPTIONAL_VALUE = false;
 
