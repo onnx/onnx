@@ -87,9 +87,9 @@ void convPoolShapeInference1(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
-
 
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
@@ -113,7 +113,9 @@ void convPoolShapeInference1(
             residual -= stride;
           }
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0
+            ? effective_kernel_shape[i] - stride
+            : effective_kernel_shape[i] - residual;
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -128,7 +130,7 @@ void convPoolShapeInference1(
       }
     }
   }
-    
+
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -165,7 +167,8 @@ void convPoolShapeInference1(
 
     if (ceil_mode == 1)
       strided_kernel_positions = (int64_t)(std::ceil(
-          (effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
+          (effective_input_size - effective_kernel_shape[i]) /
+          float(strides[i])));
     else
       strided_kernel_positions =
           (effective_input_size - effective_kernel_shape[i]) / strides[i];
@@ -187,7 +190,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
     const char* opName,
     const char* additionalDescription) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -210,22 +215,25 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_9(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription););
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Input(
         0,
         "X",
@@ -275,7 +283,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
     bool use_dilation,
     int opsetNum) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -305,30 +315,32 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
  ```
  {additionalDescription}
  )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{opName}", opName);
-    ReplaceAll(doc, "{additionalDescription}", additionalDescription);
-    ReplaceAll(
-        doc,
-        "{kernelSpatialShape}",
-        use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
-                     : "kernel_spatial_shape[i]");
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{opName}", opName);
+        ReplaceAll(doc, "{additionalDescription}", additionalDescription);
+        ReplaceAll(
+            doc,
+            "{kernelSpatialShape}",
+            use_dilation ? "((kernel_spatial_shape[i] - 1) * dilations[i] + 1)"
+                         : "kernel_spatial_shape[i]"););
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", 
-        opsetNum == 11 ? "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis." : "Stride along each spatial axis.", 
-        AttributeProto::INTS, 
-        OPTIONAL);
+        "strides",
+        opsetNum == 11
+            ? "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis."
+            : "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "ceil_mode",
         "Whether to use ceil or floor (default) to compute the output shape.",
@@ -470,7 +482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dilations",
             "Dilation value along each spatial axis of filter.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(
             1,
             "Indices",
@@ -506,7 +518,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Output(
             1,
             "Indices",
@@ -646,8 +658,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "strides",
             "Stride along each spatial axis.",
             AttributeProto::INTS,
-            OPTIONAL)
-        .Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL)
+            OPTIONAL_VALUE)
+        .Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE)
         .Input(
             0,
             "X",
@@ -732,18 +744,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "kernel_shape",
             "The size of the kernel along each axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "strides",
             "Stride along each axis.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "auto_pad",
             auto_pad_doc1,
             AttributeProto::STRING,
             std::string("NOTSET"))
-        .Attr("pads", pads_doc1, AttributeProto::INTS, OPTIONAL)
+        .Attr("pads", pads_doc1, AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "p",
             "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -775,26 +787,30 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
-    ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "p",
         "p value of the Lp norm used to pool over the input data.",
@@ -840,12 +856,14 @@ static const char* GlobalLpPool_ver1_doc = R"DOC(
  the values in the same channel. This is equivalent to LpPool with kernel size
  equal to the spatial dimension of input tensor.)DOC";
 
- std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(
+    const char* filter_desc) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -899,20 +917,23 @@ computes the output.)DOC";
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "dilations",
         "dilation value along each spatial axis of the filter.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -1027,7 +1048,7 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
       }
     }
   }
-    
+
   std::vector<int64_t> output_shape;
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
@@ -1090,7 +1111,8 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_10(
     const char* filter_desc) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -1105,7 +1127,7 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-    ReplaceAll(doc, "{filter_desc}", filter_desc);
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1151,32 +1173,35 @@ output_shape can also be explicitly specified in which case pads values are auto
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
         "pads values are ignored. See doc for details for equations to generate pads",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "output_padding",
         "The zero-padding added to one side of the output."
         " This is also called adjs/adjustment in some frameworks.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
         "dilations",
         "dilation value along each spatial axis of the filter.",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL_VALUE);
     schema.Attr(
-        "strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL);
+        "strides",
+        "Stride along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
         auto_pad_doc2,
         AttributeProto::STRING,
         std::string("NOTSET"));
-    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL);
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "group",
         "number of groups input channels and output channels are divided into.",
@@ -1353,7 +1378,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero, default is 1e-5f.",
@@ -1401,7 +1426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "consumed_inputs",
             "legacy optimization attribute.",
             AttributeProto::INTS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "is_test",
             "(int, default 0) if nonzero, run dropout in test mode where "
@@ -1463,7 +1488,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     7,
     OpSchema()
-        .SetDoc(Dropout_ver7_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver7_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1490,7 +1516,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     10,
     OpSchema()
-        .SetDoc(Dropout_ver10_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Dropout_ver10_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "ratio",
             "The ratio of random dropout",
@@ -1630,94 +1657,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the other outputs as well.
         }));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    BatchNormalization,
-    9,
-    OpSchema()
-        .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
-        .Attr(
-            "epsilon",
-            "The epsilon value to use to avoid division by zero.",
-            AttributeProto::FLOAT,
-            1e-5f)
-        .Attr(
-            "momentum",
-            "Factor used in computing the running mean and variance."
-            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
-            AttributeProto::FLOAT,
-            0.9f)
-        .Input(
-            0,
-            "X",
-            "Input data tensor from the previous operator; "
-            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
-            "where N is the batch size, C is the number of channels. "
-            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
-            "For image data, input dimensions become (N x C x H x W). "
-            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
-            "T")
-        .Input(1, "scale", "Scale tensor of shape (C).", "T")
-        .Input(2, "B", "Bias tensor of shape (C).", "T")
-        .Input(
-            3,
-            "mean",
-            "running (training) or estimated (testing) mean tensor of shape (C).",
-            "T")
-        .Input(
-            4,
-            "var",
-            "running (training) or estimated (testing) variance tensor of shape (C).",
-            "T")
-        .Output(0, "Y", "The output tensor of the same shape as X", "T")
-        .Output(
-            1,
-            "mean",
-            "The running mean after the BatchNormalization operator.",
-            "T",
-            OpSchema::Optional)
-        .Output(
-            2,
-            "var",
-            "The running variance after the BatchNormalization operator.",
-            "T",
-            OpSchema::Optional)
-        .Output(
-            3,
-            "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation.",
-            "T",
-            OpSchema::Optional)
-        .Output(
-            4,
-            "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation.",
-            "T",
-            OpSchema::Optional)
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
-          // TODO in training mode, it may be possible to infer some of
-          // the other outputs as well.
-        }));
-
 static const char* Flatten_ver1_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
@@ -1835,8 +1774,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     7,
     OpSchema()
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BatchNormalization_ver7_doc) +
+            GenerateOptionalArgumentsDoc()))
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "spatial",
             "If true, compute the mean and variance across per activation. "

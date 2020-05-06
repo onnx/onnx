@@ -79,7 +79,7 @@ def function_expand_helper(node,  # type: NodeProto
 def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[NodeProto]
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
-    schema = onnx.defs.get_schema(test_op)
+    schema = onnx.defs.get_schema(test_op, node.domain)
 
     if schema.has_function:    # type: ignore
         function_proto = schema.function_body  # type: ignore
