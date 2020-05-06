@@ -118,26 +118,26 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     return tensor
 
 
-def to_array_from_sequence(sequence):  # type: (SequenceProto) -> np.ndarray[Any]
-    """Converts a sequence def to a numpy array.
+def to_list_from_sequence(sequence):  # type: (SequenceProto) -> typing.List
+    """Converts a sequence def to a Python list.
 
     Inputs:
         sequence: a SequenceProto object.
     Returns:
-        arr: the converted array.
+        lst: the converted list.
     """
-    arr = np.array([])
+    lst = []
     for elem in sequence.values:
         elem_type = elem.elem_type
         if elem_type == SequenceMapElement.TENSOR or elem_type == SequenceMapElement.SPARSE_TENSOR:
-            arr.append(to_array(elem))
+            lst.append(to_array(elem))
         elif elem_type == SequenceMapElement.SEQUENCE:
-            arr.append(to_array_from_sequence(elem))
+            lst.append(to_list_from_sequence(elem))
         elif elem_type == SequenceMapElement.MAP:
-            arr.append(to_dict_from_map(elem))
+            lst.append(to_dict_from_map(elem))
         else:
             raise TypeError("The element type in the input sequence is not defined.")
-    return arr
+    return lst
 
 
 def from_list_to_sequence(lst, name=None):  # type: (typing.List, Optional[Text]) -> SequenceProto
