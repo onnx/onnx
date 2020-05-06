@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import numpy as np  # type: ignore
 
 import onnx
-from onnx.defs import ONNX_DOMAIN, ONNX_PREVIEW_DOMAIN
+from onnx.defs import ONNX_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from ..base import Base
 from . import expect
 
@@ -53,7 +53,7 @@ class Adam(Base):
                                      alpha=alpha,
                                      beta=beta,
                                      epsilon=epsilon,
-                                     domain=ONNX_PREVIEW_DOMAIN
+                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                                      )
 
         # Define operator inputs.
@@ -72,7 +72,7 @@ class Adam(Base):
         # Check results.
         expect(node, inputs=[r, t, x, g, v, h],
                outputs=[x_new, v_new, h_new], name='test_adam',
-               opset_imports=[onnx.helper.make_opsetid(ONNX_PREVIEW_DOMAIN, 1)])
+               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
     def export_adam_multiple():  # type: () -> None
@@ -92,7 +92,7 @@ class Adam(Base):
                                      norm_coefficient=norm_coefficient,
                                      alpha=alpha,
                                      beta=beta,
-                                     domain=ONNX_PREVIEW_DOMAIN
+                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                                      )
 
         # Define operator inputs.
@@ -121,4 +121,4 @@ class Adam(Base):
         expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
                outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
                name='test_adam_multiple',
-               opset_imports=[onnx.helper.make_opsetid(ONNX_PREVIEW_DOMAIN, 1)])
+               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
