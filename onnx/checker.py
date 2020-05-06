@@ -88,12 +88,12 @@ def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProt
 def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], bool) -> None
     if isinstance(model, string_types):
         C.check_model_path(model)
-        if full_check:
-            onnx.shape_inference.infer_shapes(onnx.load(model), True)
+        m = onnx.load(model)
     else:
         C.check_model(model.SerializeToString())
-        if full_check:
-            onnx.shape_inference.infer_shapes(model, True)
+        m = model
+    if full_check:
+        onnx.shape_inference.infer_shapes(m, True)
 
 
 ValidationError = C.ValidationError
