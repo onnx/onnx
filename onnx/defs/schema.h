@@ -986,7 +986,7 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(                             \
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
-#define ONNX_PREVIEW_OPERATOR_SET_SCHEMA(name, ver, impl) \
+#define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(                                 \
       name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
