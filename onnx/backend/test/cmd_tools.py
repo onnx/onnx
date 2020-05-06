@@ -45,29 +45,37 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                 data_set_dir = os.path.join(
                     output_dir, 'test_data_set_{}'.format(i))
                 prepare_dir(data_set_dir)
-                for j, input_np in enumerate(inputs):
-                    if isinstance(input_np, dict):
+                for j, input in enumerate(inputs):
+                    if isinstance(input, dict):
                         arr = numpy_helper.from_dict_to_map(
-                            input_np, case.model.graph.input[j].name)
-                    elif input_np.dtype == 'object':
-                        arr = numpy_helper.from_array_to_sequence(
-                            input_np, case.model.graph.input[j].name)
-                    else:
+                            input, case.model.graph.input[j].name)
+                    elif isinstance(input, list):
+                        arr = numpy_helper.from_list_to_sequence(
+                            input, case.model.graph.input[j].name)
+                    elif isinstance(input, np.ndarray):
                         arr = numpy_helper.from_array(
-                            input_np, case.model.graph.input[j].name)
+                            input, case.model.graph.input[j].name)
+                    else:
+                        raise TypeError(
+                            "Your input is not a sequence (list), dictionary (map), or tensor (array)"
+                            "and cannot be processed accordingly.")
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())
-                for j, output_np in enumerate(outputs):
-                    if isinstance(output_np, dict):
+                for j, output in enumerate(outputs):
+                    if isinstance(output, dict):
                         arr = numpy_helper.from_dict_to_map(
-                            output_np, case.model.graph.output[j].name)
-                    elif output_np.dtype == 'object':
-                        arr = numpy_helper.from_array_to_sequence(
-                            output_np, case.model.graph.output[j].name)
-                    else:
+                            output, case.model.graph.output[j].name)
+                    elif isinstance(output, list):
+                        arr = numpy_helper.from_list_to_sequence(
+                            output, case.model.graph.output[j].name)
+                    elif isinstance(output, np.ndarray):
                         arr = numpy_helper.from_array(
-                            output_np, case.model.graph.output[j].name)
+                            output, case.model.graph.output[j].name)
+                    else:
+                        raise TypeError(
+                            "Your output is not a sequence (list), dictionary (map), or tensor (array)"
+                            "and cannot be processed accordingly.")
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())
