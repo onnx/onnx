@@ -101,18 +101,18 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     return node_list
 
 
-def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
-    if arr.dtype == "object":
-        # np.array of np.arrays
+def _extract_value_info(input, name):
+    # TODO: See how sequence_value_info can be addressed more effectively for lists
+    if isinstance(input, list):
         return onnx.helper.make_sequence_value_info(
             name=name,
-            elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
-            shape=arr.shape
+            elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
+            shape=len(input)
         )
     return onnx.helper.make_tensor_value_info(
         name=name,
-        elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
-        shape=arr.shape)
+        elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
+        shape=input.shape)
 
 
 def expect(node,  # type: onnx.NodeProto
