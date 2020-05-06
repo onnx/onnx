@@ -11,7 +11,6 @@ from . import expect
 
 
 def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (np.ndarray, np.ndarray, np.ndarray) -> np.ndarray
-    sequence = list(sequence)
     if position:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
         # The position argument will be in the format np.array([pos_index])
@@ -31,7 +30,7 @@ class SequenceInsert(Base):
             'at_back': [np.array([10, 11, 12])],
             'at_front': [np.array([-2, -1, 0]), np.array([0])]
         }
-        sequence = np.array([np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])])
+        sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
 
         for test_name, test_inputs in test_cases.items():
             tensor = test_inputs[0]
