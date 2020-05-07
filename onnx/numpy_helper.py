@@ -207,9 +207,9 @@ def from_dict_to_map(d, name=None):  # type: (typing.Dict, Optional[Text]) -> Ma
         map.name = name
     for key, val in d.items():
         key_type = mapping.NP_TYPE_TO_MAP_KEY_TYPE(key.dtype)
-        if isinstance(val, dict):
+        if isinstance(val, abc.Mapping):
             val_type = TypeProto.Map  # type: ignore
-        elif isinstance(val, list):
+        elif isinstance(val, abc.Sequence):
             val_type = TypeProto.Sequence  # type: ignore
         elif isinstance(val, np.ndarray):
             val_type = TypeProto.Tensor  # type: ignore
