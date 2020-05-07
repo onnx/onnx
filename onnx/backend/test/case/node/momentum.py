@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import numpy as np  # type: ignore
 
 import onnx
+from onnx.defs import ONNX_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from ..base import Base
 from . import expect
 
@@ -51,7 +52,7 @@ class Momentum(Base):
                                      alpha=alpha,
                                      beta=beta,
                                      mode='standard',
-                                     domain='ai.onnx.training'
+                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                                      )
 
         # Define operator inputs.
@@ -68,7 +69,7 @@ class Momentum(Base):
         # Check results.
         expect(node, inputs=[r, t, x, g, v],
                outputs=[x_new, v_new], name='test_momentum',
-               opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
     def export_nesterov_momentum():  # type: () -> None
@@ -85,7 +86,7 @@ class Momentum(Base):
                                      alpha=alpha,
                                      beta=beta,
                                      mode='nesterov',
-                                     domain='ai.onnx.training'
+                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                                      )
 
         # Define operator inputs.
@@ -102,7 +103,7 @@ class Momentum(Base):
         # Check results.
         expect(node, inputs=[r, t, x, g, v],
                outputs=[x_new, v_new], name='test_nesterov_momentum',
-               opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
     def export_momentum_multiple():  # type: () -> None
@@ -120,7 +121,7 @@ class Momentum(Base):
                                      alpha=alpha,
                                      beta=beta,
                                      mode='standard',
-                                     domain='ai.onnx.training'
+                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                                      )
 
         # Define operator inputs.
@@ -144,4 +145,4 @@ class Momentum(Base):
         # Check results.
         expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
                outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple',
-               opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
