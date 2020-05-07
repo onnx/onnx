@@ -166,7 +166,10 @@ python -c "import onnx"
 
 to verify it works.
 
+#### Common Errors
 Note that this command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
+
+Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of "/lib" with "/lib64".
 
 # Testing
 
