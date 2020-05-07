@@ -780,6 +780,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[ONNX_DOMAIN] = std::make_pair(1, 12);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      // ONNX's preview domain contains operators subject to change, so versining
+      // is not meaningful and that domain should have only one version.
+      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -983,6 +986,10 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(                             \
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
+#define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(                                 \
+      name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
+
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
 // normally included in operator sets and registered in OpSchemaRegistry::map().
@@ -1032,6 +1039,10 @@ class DbgOperatorSetTracker {
 // Naming convention for operator schema classes
 #define ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name) \
   name##_##domain##_ver##ver
+
+// Naming convention for preview operator schema classes
+#define ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(ver, name) \
+  ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreview, ver, name)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
