@@ -125,8 +125,7 @@ set USE_MSVC_STATIC_RUNTIME=0
 python setup.py install
 ```
 
-If you do not want to build Protobuf and instead want to use Protobuf from conda forge then follow these instructions.
-However please note, this method is added as a convenience for users and there is very limited support from ONNX team when using this method.
+If you do not want to build Protobuf and instead want to use Protobuf from conda forge then follow these instructions. However please note, this method is added as a convenience for users and there is limited support from ONNX team when using this method.
 
 #### Build ONNX on Windows with Anaconda
 
@@ -170,6 +169,8 @@ to verify it works.
 Note that this command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
 Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of "/lib" with "/lib64".
+
+If you want to build ONNX on Debug mode, remember to set the environment variable `DEBUG=1`. For debug versions of the dependencies, you need to open the [CMakeLists file](CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 
 # Testing
 
