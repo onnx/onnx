@@ -139,6 +139,7 @@ cd onnx
 git submodule update --init --recursive
 
 # Set environment variable for ONNX to use protobuf shared lib
+set USE_MSVC_STATIC_RUNTIME=0
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
 # Build ONNX
