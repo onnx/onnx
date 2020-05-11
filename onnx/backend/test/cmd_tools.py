@@ -59,8 +59,8 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                             input, case.model.graph.input[j].name)
                     else:
                         raise TypeError(
-                            "Your input is not a sequence (list), dictionary (map), or tensor (array)"
-                            "and cannot be processed accordingly.")
+                            "Your input is not a sequence (list), dictionary (map), or tensor (array) "
+                            "and cannot be processed accordingly.", input)
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())

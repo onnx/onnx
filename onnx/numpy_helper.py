@@ -11,7 +11,7 @@ from collections import abc
 from onnx import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
 from onnx import mapping, helper
 from six import text_type, binary_type
-from typing import Sequence, Any, Optional, Text, List
+from typing import Sequence, Any, Optional, Text, List, Dict
 
 if platform.system() != 'AIX' and sys.byteorder != 'little':
     raise RuntimeError(
@@ -119,7 +119,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     return tensor
 
 
-def to_list_from_sequence(sequence):  # type: (SequenceProto) -> typing.List
+def to_list_from_sequence(sequence):  # type: (SequenceProto) -> List
     """Converts a sequence def to a Python list.
 
     Inputs:
@@ -141,7 +141,7 @@ def to_list_from_sequence(sequence):  # type: (SequenceProto) -> typing.List
     return lst
 
 
-def from_list_to_sequence(lst, name=None):  # type: (typing.List, Optional[Text]) -> SequenceProto
+def from_list_to_sequence(lst, name=None):  # type: (List, Optional[Text]) -> SequenceProto
     """Converts a list into a sequence def.
 
     Inputs:
@@ -159,7 +159,7 @@ def from_list_to_sequence(lst, name=None):  # type: (typing.List, Optional[Text]
             sequence.values.append(helper.make_sequence_map_element(from_array(elem)))
         elif isinstance(elem, abc.Sequence):
             sequence.values.append(from_list_to_sequence(elem))
-        elif isinstance (elem, abc.Mapping):
+        elif isinstance(elem, abc.Mapping):
             sequence.values.append(from_dict_to_map(elem))
         else:
             raise TypeError("The element type in the input sequence is not a list,"
@@ -187,13 +187,13 @@ def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
         elif value_type == TypeProto.Map:
             dict[key] = to_dict_from_map(value)
         elif value_type == TypeProto.Sequence:
-            dict[key] = to_array_from_sequence(value)
+            dict[key] = to_list_from_sequence(value)
         else:
             raise TypeError("The value type in the Map is not defined.")
     return dict
 
 
-def from_dict_to_map(d, name=None):  # type: (typing.Dict, Optional[Text]) -> MapProto
+def from_dict_to_map(d, name=None):  # type: (Dict, Optional[Text]) -> MapProto
     """Converts a Python dictionary into a map def.
 
     Inputs:
