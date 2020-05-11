@@ -171,9 +171,10 @@ Note that the `import onnx` command does not work from the source checkout direc
 
 **Environment variables**: `USE_MSVC_STATIC_RUNTIME` (should be 1 or 0, not ON or OFF)
 
-**CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS` `Protobuf_USE_STATIC_LIBS`
+**CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
 
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON, then `Protobuf_USE_STATIC_LIBS` must be off and `USE_MSVC_STATIC_RUNTIME` must be 0. If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON, then `Protobuf_USE_STATIC_LIBS` must be off and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
 
 Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of "/lib" with "/lib64".
 
