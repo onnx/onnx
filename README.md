@@ -167,14 +167,14 @@ python -c "import onnx"
 to verify it works.
 
 #### Common Errors
-Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
-
 **Environment variables**: `USE_MSVC_STATIC_RUNTIME` (should be 1 or 0, not ON or OFF)
 
 **CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
 
 If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON, then `Protobuf_USE_STATIC_LIBS` must be off and `USE_MSVC_STATIC_RUNTIME` must be 0.  
 If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
+
+Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
 Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of "/lib" with "/lib64".
 
