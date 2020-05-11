@@ -812,7 +812,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so versining
       // is not meaningful and that domain should have only one version.
-      map_[AI_ONNX_PREVIEW_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -1016,9 +1016,9 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(                             \
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
-#define ONNX_PREVIEW_OPERATOR_SET_SCHEMA(name, ver, impl) \
+#define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(                                 \
-      name, OnnxPreview, AI_ONNX_PREVIEW_DOMAIN, ver, true, impl)
+      name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
