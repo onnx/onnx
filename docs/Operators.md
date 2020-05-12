@@ -17490,6 +17490,45 @@ This version of the operator has been available since version 11 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>sequenceinsert</summary>
+
+```python
+test_cases = {
+    'at_back': [np.array([10, 11, 12])],
+    'at_front': [np.array([-2, -1, 0]), np.array([0])]
+}
+sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
+
+for test_name, test_inputs in test_cases.items():
+    tensor = test_inputs[0]
+
+    if len(test_inputs) > 1:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor', 'position'],
+            outputs=['output_sequence']
+        )
+        position = test_inputs[1]
+        inserted = sequence_insert_reference_implementation(sequence, tensor, position)
+        expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
+               name='test_seq_insert_' + test_name)
+    else:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor'],
+            outputs=['output_sequence']
+        )
+        inserted = sequence_insert_reference_implementation(sequence, tensor)
+        expect(node, inputs=[sequence, tensor], outputs=[inserted],
+               name='test_seq_insert_' + test_name)
+```
+
+</details>
+
+
 ### <a name="SequenceLength"></a><a name="sequencelength">**SequenceLength**</a>
 
   Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
