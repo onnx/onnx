@@ -3,6 +3,10 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
+For an operator input/output's differentiability, it can be differentiable,
+            non-differentiable, or undefined. If a variable's differentiability
+            is not specified, that variable has undefined differentiability.
+
 # ai.onnx (default)
 ## Version 1 of the default ONNX operator set
 ### <a name="Abs-1"></a>**Abs-1**</a>

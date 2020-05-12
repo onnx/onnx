@@ -3,6 +3,10 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
+For an operator input/output's differentiability, it can be differentiable,
+            non-differentiable, or undefined. If a variable's differentiability
+            is not specified, that variable has undefined differentiability.
+
 * ai.onnx.ml
   * <a href="#ai.onnx.ml.ArrayFeatureExtractor">ai.onnx.ml.ArrayFeatureExtractor</a>
   * <a href="#ai.onnx.ml.Binarizer">ai.onnx.ml.Binarizer</a>
