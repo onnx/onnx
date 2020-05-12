@@ -566,7 +566,8 @@ class OpSchema final {
         "tensor(int64)",
         "tensor(float16)",
         "tensor(float)",
-        "tensor(double)"};
+        "tensor(double)",
+        "tensor(bfloat16)"};
     return all_numeric_types;
   }
 
