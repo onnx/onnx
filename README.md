@@ -91,7 +91,7 @@ pip install onnx
 ```
 
 ### Windows
-If you are building ONNX on Windows, it is highly recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static lib.
+If you are building ONNX on Windows, it is highly recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static library.
 
 #### Build Protobuf and ONNX on Windows
 Step 1: Build Protobuf locally
@@ -119,7 +119,7 @@ git submodule update --init --recursive
 set PATH=<protobuf_install_dir>\bin;%PATH%
 set USE_MSVC_STATIC_RUNTIME=0
 
-# Optional : Set environment variable `ONNX_ML=1` for onnx-ml
+# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
 
 # Build ONNX
 python setup.py install
