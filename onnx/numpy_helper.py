@@ -131,11 +131,11 @@ def to_list_from_sequence(sequence):  # type: (SequenceProto) -> List
     for elem in sequence.values:
         elem_type = elem.elem_type
         if elem_type == SequenceMapElement.TENSOR or elem_type == SequenceMapElement.SPARSE_TENSOR:
-            lst.append(to_array(elem))
+            lst.append(to_array(elem.tensor_value))
         elif elem_type == SequenceMapElement.SEQUENCE:
-            lst.append(to_list_from_sequence(elem))
+            lst.append(to_list_from_sequence(elem.sequence_value))
         elif elem_type == SequenceMapElement.MAP:
-            lst.append(to_dict_from_map(elem))
+            lst.append(to_dict_from_map(elem.map_value))
         else:
             raise TypeError("The element type in the input sequence is not defined.")
     return lst
@@ -158,11 +158,11 @@ def from_list_to_sequence(lst, name=None):  # type: (List, Optional[Text]) -> Se
         if isinstance(elem, np.ndarray):
             sequence.values.append(helper.make_sequence_map_element(from_array(elem)))
         elif isinstance(elem, abc.Sequence):
-            sequence.values.append(from_list_to_sequence(elem))
+            sequence.values.append(helper.make_sequence_map_element(from_list_to_sequence(elem)))
         elif isinstance(elem, abc.Mapping):
-            sequence.values.append(from_dict_to_map(elem))
+            sequence.values.append(helper.make_sequence_map_element(from_dict_to_map(elem)))
         else:
-            raise TypeError("The element type in the input sequence is not a list,"
+            raise TypeError("The element type in the input sequence is not a list, "
                             "dictionary, or np.ndarray and is not supported.")
     return sequence
 
@@ -179,7 +179,7 @@ def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
     for kv_pair in map.pairs:
         key_type = kv_pair.key_type
         value_type = kv_pair.value_type
-        key_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
+        key_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
         key = getattr(kv_pair, key_field)
         value = kv_pair.value.value
         if value_type == TypeProto.Tensor or value_type == TypeProto.SparseTensor:
@@ -206,7 +206,7 @@ def from_dict_to_map(d, name=None):  # type: (Dict, Optional[Text]) -> MapProto
     if name:
         map.name = name
     for key, val in d.items():
-        key_type = mapping.NP_TYPE_TO_MAP_KEY_TYPE(key.dtype)
+        key_type = mapping.NP_TYPE_TO_TENSOR_TYPE(key.dtype)
         if isinstance(val, abc.Mapping):
             val_type = TypeProto.Map  # type: ignore
         elif isinstance(val, abc.Sequence):

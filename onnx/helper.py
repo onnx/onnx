@@ -230,13 +230,13 @@ def make_key_value_pair(
     '''
     kv_pair = KeyValuePair()
 
-    if key_type == KeyValuePair.DataType.STRING:
+    if key_type == TensorProto.STRING:
         assert not raw, "Can not use raw_key to store string type"
 
     if raw:
-        kv_pair.raw_key = key
+        kv_pair.raw_data = key
     else:
-        storage_field = mapping.STORAGE_MAP_KEY_TYPE_TO_FIELD[key_type]
+        storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
         setattr(kv_pair, storage_field, key)
 
     kv_pair.value = value
@@ -254,16 +254,16 @@ def make_sequence_map_element(
     '''
     seq_map_elem = SequenceMapElement()
     if value_type == TypeProto.Tensor:
-        seq_map_elem.elem_type = SequenceMapElement.DataType.TENSOR
+        seq_map_elem.elem_type = SequenceMapElement.TENSOR
         seq_map_elem.tensor_value = value
     elif value_type == TypeProto.SparseTensor:
-        seq_map_elem.elem_type = SequenceMapElement.DataType.SPARSE_TENSOR
+        seq_map_elem.elem_type = SequenceMapElement.SPARSE_TENSOR
         seq_map_elem.sparse_tensor_value = value
     elif value_type == TypeProto.Sequence:
-        seq_map_elem.elem_type = SequenceMapElement.DataType.SEQUENCE
+        seq_map_elem.elem_type = SequenceMapElement.SEQUENCE
         seq_map_elem.sequence_value = value
     elif value_type == TypeProto.Map:
-        seq_map_elem.elem_type = SequenceMapElement.DataType.MAP
+        seq_map_elem.elem_type = SequenceMapElement.MAP
         seq_map_elem.map_value = value
     else:
         raise TypeError("Invalid value type.")

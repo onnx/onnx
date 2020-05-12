@@ -660,42 +660,31 @@ message SequenceProto {
 
 // Key-Value pair element for MapProto
 message KeyValuePair {
-  enum DataType {
-    INT8 = 1;    // int8_t
-    INT16 = 2;   // int16_t
-    INT32 = 3;   // int32_t
-    INT64 = 4;   // int64_t
-    UINT8 = 5;   // uint8_t
-    UINT16 = 6;  // uint16_t
-    UINT32 = 7;  // uint32_t
-    UINT64 = 8;  // uint64_t
-    STRING = 9;  // string
-  }
-
   // The data type of the key.
-  // This field MUST have a valid KeyValuePair.DataType value
+  // This field MUST have a valid TensorProto.DataType value of
+  // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING
   optional int32 key_type = 2;
 
   // For int32, uint8, int8, uint16, int16 keys.
   // When this field is present, the key_type field MUST be
   // INT32, INT16, INT8, UINT16, or UINT8
-  optional int32 int32_key = 3;
+  optional int32 int32_data = 3;
 
   // For string keys.
   // Each element of string_data is a UTF-8 encoded Unicode
   // string. No trailing null, no leading BOM. The protobuf "string"
   // scalar type is not used to match ML community conventions.
   // When this field is present, the key_type field MUST be STRING
-  optional bytes string_key = 4;
+  optional bytes string_data = 4;
 
   // For int64 keys.
   // When this field is present, the key_type field MUST be INT64
-  optional int64 int64_key = 5;
+  optional int64 int64_data = 5;
 
   // For uint64 and uint32 keys.
   // When this field is present, the key_type field MUST be
   // UINT32 or UINT64
-  optional uint64 uint64_key = 6;
+  optional uint64 uint64_data = 6;
 
   // Serializations can either use one of the fields above, or use this
   // raw bytes field. The only exception is the string case, where one is
@@ -708,7 +697,7 @@ message KeyValuePair {
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
   // When this field is present, the key_type field MUST NOT be STRING or UNDEFINED
-  optional bytes raw_key = 7;
+  optional bytes raw_data = 7;
 
   required SequenceMapElement value = 8;
 
