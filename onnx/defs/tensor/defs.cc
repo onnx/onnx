@@ -62,7 +62,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)",
-             "tensor(string)"},
+             "tensor(string)",
+             "tensor(bfloat16)"},
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
@@ -78,7 +79,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)",
-             "tensor(string)"},
+             "tensor(string)",
+             "tensor(bfloat16)"},
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
@@ -2052,7 +2054,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "output", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrain input types to float tensors.")
         .TypeConstraint(
             "T2",
@@ -2088,7 +2093,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)"},
+            {"tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input types to float tensors.")
         .TypeConstraint(
             "T2",
