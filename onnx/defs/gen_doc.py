@@ -210,6 +210,8 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
 
 
 def main(args):  # type: (Type[Args]) -> None
+    print ("WRITING DOCS!")
+    print (args.changelog)
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
         fout.write(
@@ -240,7 +242,7 @@ def main(args):  # type: (Type[Args]) -> None
                     s += '\n'
 
             fout.write(s)
-
+    print (args.output)
     with io.open(args.output, 'w', newline='', encoding="utf-8") as fout:
         fout.write('## Operator Schemas\n')
         fout.write(
