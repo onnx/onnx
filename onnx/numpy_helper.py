@@ -7,7 +7,6 @@ import sys
 import platform
 
 import numpy as np  # type: ignore
-from collections import abc
 from onnx import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
 from onnx import mapping, helper
 from six import text_type, binary_type
@@ -157,9 +156,9 @@ def from_list_to_sequence(lst, name=None):  # type: (List, Optional[Text]) -> Se
         # If elem is a tensor
         if isinstance(elem, np.ndarray):
             sequence.values.append(helper.make_sequence_map_element(from_array(elem)))
-        elif isinstance(elem, abc.Sequence):
+        elif isinstance(elem, list):
             sequence.values.append(helper.make_sequence_map_element(from_list_to_sequence(elem)))
-        elif isinstance(elem, abc.Mapping):
+        elif isinstance(elem, dict):
             sequence.values.append(helper.make_sequence_map_element(from_dict_to_map(elem)))
         else:
             raise TypeError("The element type in the input sequence is not a list, "
@@ -207,9 +206,9 @@ def from_dict_to_map(d, name=None):  # type: (Dict, Optional[Text]) -> MapProto
         map.name = name
     for key, val in d.items():
         key_type = mapping.NP_TYPE_TO_TENSOR_TYPE(key.dtype)
-        if isinstance(val, abc.Mapping):
+        if isinstance(val, dict):
             val_type = TypeProto.Map  # type: ignore
-        elif isinstance(val, abc.Sequence):
+        elif isinstance(val, list):
             val_type = TypeProto.Sequence  # type: ignore
         elif isinstance(val, np.ndarray):
             val_type = TypeProto.Tensor  # type: ignore

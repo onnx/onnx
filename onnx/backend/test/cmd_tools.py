@@ -11,7 +11,6 @@ import shutil
 import numpy as np
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
-from collections import abc
 from onnx import numpy_helper
 from typing import Text
 
@@ -48,10 +47,10 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     output_dir, 'test_data_set_{}'.format(i))
                 prepare_dir(data_set_dir)
                 for j, input in enumerate(inputs):
-                    if isinstance(input, abc.Mapping):
+                    if isinstance(input, dict):
                         arr = numpy_helper.from_dict_to_map(
                             input, case.model.graph.input[j].name)
-                    elif isinstance(input, abc.Sequence):
+                    elif isinstance(input, list):
                         arr = numpy_helper.from_list_to_sequence(
                             input, case.model.graph.input[j].name)
                     elif isinstance(input, np.ndarray):
@@ -65,10 +64,10 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())
                 for j, output in enumerate(outputs):
-                    if isinstance(output, abc.Mapping):
+                    if isinstance(output, dict):
                         arr = numpy_helper.from_dict_to_map(
                             output, case.model.graph.output[j].name)
-                    elif isinstance(output, abc.Sequence):
+                    elif isinstance(output, list):
                         arr = numpy_helper.from_list_to_sequence(
                             output, case.model.graph.output[j].name)
                     elif isinstance(output, np.ndarray):
