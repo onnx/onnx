@@ -24,6 +24,7 @@ from google.protobuf.message import Message
 from typing import TypeVar, Callable, Any, Type, cast, Union, Text
 from six import string_types
 import onnx.shape_inference
+import os
 
 
 # TODO: This thing where we reserialize the protobuf back into the
@@ -85,12 +86,15 @@ def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProt
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
-def check_model(model, full_check=True):  # type: (Union[ModelProto, Text], bool) -> None
+def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], bool) -> None
     if isinstance(model, string_types):
         C.check_model_path(model)
         m = onnx.load(model)
     else:
-        C.check_model(model.SerializeToString())
+        if model.filepath:
+            C.check_model_path(os.path.abspath(model.filepath))
+        else:
+            C.check_model(model.SerializeToString())
         m = model
     if full_check:
         onnx.shape_inference.infer_shapes(m, True)

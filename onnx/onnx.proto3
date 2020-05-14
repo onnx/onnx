@@ -376,6 +376,8 @@ message ModelProto {
   //
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
+
+  string filepath = 21;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.

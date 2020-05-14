@@ -65,6 +65,10 @@ def load_external_data_for_model(model, base_dir):  # type: (ModelProto, Text) -
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             load_external_data_for_tensor(tensor, base_dir)
+            # After loading raw_data from external_data, change the state of tensors
+            tensor.data_location = TensorProto.DEFAULT
+            # and remove external data
+            del tensor.external_data[:]
 
 
 def set_external_data(tensor,  # type: TensorProto
