@@ -91,7 +91,7 @@ pip install onnx
 ```
 
 ### Windows
-If you are building ONNX on Windows, it is highly recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static library.
+If you are building ONNX from source on Windows, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static library.
 
 #### Build Protobuf and ONNX on Windows
 Step 1: Build Protobuf locally
@@ -125,7 +125,7 @@ set USE_MSVC_STATIC_RUNTIME=0
 python setup.py install
 ```
 
-If you would prefer to use Protobuf from conda-forge instead of building Protobuf from source, you can use the following instructions. Please note that this method is added as a convenience for users and there is limited support from ONNX team with this installation path.
+If you would prefer to use Protobuf from conda-forge instead of building Protobuf from source, you can use the following instructions.
 
 #### Build ONNX on Windows with Anaconda
 
@@ -171,12 +171,12 @@ to verify it works.
 
 **CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
 
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON, then `Protobuf_USE_STATIC_LIBS` must be off and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
 If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
 
 Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
-Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of "/lib" with "/lib64".
+Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of `/lib` with `/lib64`.
 
 If you want to build ONNX on Debug mode, remember to set the environment variable `DEBUG=1`. For debug versions of the dependencies, you need to open the [CMakeLists file](CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 
@@ -190,17 +190,15 @@ ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run test
 pip install pytest nbval
 ```
 
-After installing pytest, run the following command
+After installing pytest, use the following command to run tests.
 
 ```
 pytest
 ```
 
-to run tests.
-
 # Development
 
-Check out [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
+Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
 
 # License
 
