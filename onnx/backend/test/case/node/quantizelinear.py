@@ -27,9 +27,9 @@ class QuantizeLinear(Base):
     
     @staticmethod
     def export_channels():  # type: () -> None
-    node = onnx.helper.make_node('QuantizeLinear',
-        inputs=['x', 'y_scale', 'y_zero_point'],
-        outputs=['y'],)
+        node = onnx.helper.make_node('QuantizeLinear',
+            inputs=['x', 'y_scale', 'y_zero_point'],
+            outputs=['y'],)
 
         x = np.array([[[[-162,   10],
                         [-100,  232],
@@ -56,5 +56,5 @@ class QuantizeLinear(Base):
                         [  4, 142],
                         [121, 102]],],], dtype=np.uint8)
 
-    expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
-            name='test_quantizelinear')
+        expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+                name='test_quantizelinear')
