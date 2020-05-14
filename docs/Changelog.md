@@ -14876,7 +14876,7 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>channel_axis</tt> : int (default is 1)</dt>
+<dt><tt>axis</tt> : int (default is 1)</dt>
 <dd>(Optional) The axis of the channel dimension of the input tensor.</dd>
 </dl>
 
@@ -14919,7 +14919,7 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>channel_axis</tt> : int (default is 1)</dt>
+<dt><tt>axis</tt> : int (default is 1)</dt>
 <dd>(Optional) The axis of the channel dimension of the input tensor.</dd>
 </dl>
 

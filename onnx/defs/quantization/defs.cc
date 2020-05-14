@@ -38,7 +38,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "N-D quantized output tensor. It has same shape as input 'x'.",
             "T2")
         .Attr(
-            "channel_axis",
+            "axis",
             "(Optional) The axis of the channel dimension of the input tensor.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
@@ -94,7 +94,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "N-D full precision output tensor. It has same shape as input 'x'.",
             "tensor(float)")
         .Attr(
-            "channel_axis",
+            "axis",
             "(Optional) The axis of the channel dimension of the input tensor.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
