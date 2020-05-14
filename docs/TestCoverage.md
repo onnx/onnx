@@ -2696,7 +2696,7 @@ expect(node, inputs=[x], outputs=[y],
 ### DequantizeLinear
 There are 2 test cases, listed as following:
 <details>
-<summary>channels</summary>
+<summary>dequantizelinear_channels</summary>
 
 ```python
 node = onnx.helper.make_node('DequantizeLinear',
@@ -2715,7 +2715,7 @@ x = np.array([[[[  3,  89],
                [[245,  99],
                 [  4, 142],
                 [121, 102]],],], dtype=np.uint8)
-x_scale = np.array([2,4,5], dtype=np.float32)
+x_scale = np.array([2, 4, 5], dtype=np.float32)
 x_zero_point = np.array([84, 24, 196], dtype=np.uint8)
 y = np.array([[[[-162,   10],
                 [-100,  232],
@@ -7562,7 +7562,7 @@ expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale
 ### QuantizeLinear
 There are 2 test cases, listed as following:
 <details>
-<summary>channels</summary>
+<summary>quantizelinear_channels</summary>
 
 ```python
 node = onnx.helper.make_node('QuantizeLinear',
@@ -7573,24 +7573,24 @@ x = np.array([[[[-162,   10],
                 [-100,  232],
                 [ -20,  -50]],
 
-            [[ -76,    0],
+               [[ -76,    0],
                 [   0,  252],
                 [  32,  -44]],
 
-            [[ 245, -485],
+               [[ 245, -485],
                 [-960, -270],
                 [-375, -470]],],], dtype=np.float32)
-y_scale = np.array([2,4,5], dtype=np.float32)
+y_scale = np.array([2, 4, 5], dtype=np.float32)
 y_zero_point = np.array([84, 24, 196], dtype=np.uint8)
 y = np.array([[[[  3,  89],
                 [ 34, 200],
                 [ 74,  59]],
 
-            [[  5,  24],
+               [[  5,  24],
                 [ 24,  87],
                 [ 32,  13]],
 
-            [[245,  99],
+               [[245,  99],
                 [  4, 142],
                 [121, 102]],],], dtype=np.uint8)
 
