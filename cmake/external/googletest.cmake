@@ -20,7 +20,7 @@ else()
   set(ONNX_USE_MSVC_SHARED_RUNTIME ON)
 endif()
 
-if(ONNX_DEBUG)
+if(DEBUG)
   set(ONNX_DEBUG_MODE "Debug")
   set(ONNX_USE_MSVC_SHARED_RUNTIME ON)
 else()

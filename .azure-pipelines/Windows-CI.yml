@@ -12,19 +12,28 @@ jobs:
         python.version: '3.7'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py36:
-        python.version: '3.6'
-        onnx_ml: 0
-        onnx_verify_proto: 0
+        onnx_debug: 0
       py37_onnx_ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_verify_proto: 0
+        onnx_debug: 0
+      py36:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+        onnx_debug: 0
       py36_verify_proto:
         python.version: '3.6'
         onnx_ml: 0
         onnx_verify_proto: 1
-    maxParallel: 4
+        onnx_debug: 0
+      py36_debug:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+        onnx_debug: 1
+    maxParallel: 5
 
   steps:
   - task: UsePythonVersion@0
@@ -47,6 +56,7 @@ jobs:
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
       set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
+      set DEBUG=$(onnx_debug)
       set USE_MSVC_STATIC_RUNTIME=0
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 
