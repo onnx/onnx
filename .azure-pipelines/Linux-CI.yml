@@ -41,7 +41,6 @@ jobs:
 
   - script: |
       python -m pip install --upgrade pip
-      python -m pip install --quiet -U dos2unix
       python -m pip install numpy
       git submodule update --init --recursive
       set ONNX_ML=${onnx_ml}
@@ -52,19 +51,21 @@ jobs:
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
 
-
   - script: |
-      pip install --quiet pytest nbval flake8
+      pip install --quiet pytest nbval flake8 dos2unix
       pytest
       flake8
       find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
-      git status
-      git diff --exit-code
+
+      .setuptools-cmake-build/onnx_gtests
+      .setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
+      
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
       python onnx/backend/test/stat_coverage.py
       backend-test-tools generate-data
+
       git status
       git diff --exit-code
     displayName: 'Run ONNX tests'
