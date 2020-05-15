@@ -57,6 +57,9 @@ jobs:
       flake8
       find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
 
+      .setuptools-cmake-build/onnx_gtests
+      .setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
+      
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
