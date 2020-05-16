@@ -312,14 +312,19 @@ inline void propagateShapeFromInputToOutput(
     size_t outputIndex) {
   auto output_type = ctx.getOutputType(outputIndex);
   auto input_type = ctx.getInputType(inputIndex);
+
   if (TypeProto::kTensorType != input_type->value_case() ||
       TypeProto::kTensorType != output_type->value_case()) {
     throw std::runtime_error(ONNX_NAMESPACE::to_string(
         ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
   }
 
-  *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
-      ctx.getInputType(inputIndex)->tensor_type().shape();
+  // If input shape is "uknown", the corresponding should be "unknown" too.
+  // The way to make output shape unknown is not to assign it any value.
+  if (hasShape(*input_type)) {
+    *output_type->mutable_tensor_type()->mutable_shape() =
+        input_type->tensor_type().shape();
+  }
 }
 
 inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
