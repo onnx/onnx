@@ -789,7 +789,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Sum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Mean);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Clip);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Gemm);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Matmul);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, MatMul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Expand);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Sign);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Erf);
@@ -797,7 +797,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, SoftmaxCrossEntropyLoss);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Dropout);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Flatten);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, LRN);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, MVN);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, ReduceSum);
@@ -870,7 +870,7 @@ class OpSet_Onnx_ver13 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Mean)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Clip)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Gemm)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Matmul)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, MatMul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Expand)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Sign)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Erf)>());
@@ -878,7 +878,7 @@ class OpSet_Onnx_ver13 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Dropout)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Flatten)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, LRN)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, MVN)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, ReduceMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, ReduceMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, ReduceSum)>());
@@ -933,6 +933,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver10>();
   RegisterOpSetSchema<OpSet_Onnx_ver11>();
   RegisterOpSetSchema<OpSet_Onnx_ver12>();
+  RegisterOpSetSchema<OpSet_Onnx_ver13>();
 }
 
 } // namespace ONNX_NAMESPACE
