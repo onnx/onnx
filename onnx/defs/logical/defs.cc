@@ -1,8 +1,8 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
-#include "onnx/defs/schema.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -89,12 +89,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
-    9,
+    13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_numeric_types_with_bfloat(),
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
@@ -103,12 +103,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
-    9,
+    13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_numeric_types_with_bfloat(),
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
@@ -117,7 +117,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
-    11,
+    13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("equal"))
         .TypeConstraint(
@@ -133,7 +133,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)",
              "tensor(float16)",
              "tensor(float)",
-             "tensor(double)"},
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",

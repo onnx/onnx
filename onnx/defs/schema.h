@@ -542,8 +542,8 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& numeric_types_for_math_reduction() {
-    static const std::vector<std::string> numeric_types_for_math_reduction = {
+  static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
+    static const std::vector<std::string> numeric_types_for_math_reduction_with_bfloat = {
         "tensor(uint32)",
         "tensor(uint64)",
         "tensor(int32)",
@@ -552,7 +552,36 @@ class OpSchema final {
         "tensor(float)",
         "tensor(double)",
         "tensor(bfloat16)"};
+    return numeric_types_for_math_reduction_with_bfloat;
+  }
+
+  static const std::vector<std::string>& numeric_types_for_math_reduction() {
+    static const std::vector<std::string> numeric_types_for_math_reduction = {
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)"};
     return numeric_types_for_math_reduction;
+  }
+
+  static const std::vector<std::string>& all_numeric_types_with_bfloat() {
+    static const std::vector<std::string> all_numeric_types_with_bfloat = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(bfloat16)"};
+    return all_numeric_types_with_bfloat;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -567,8 +596,7 @@ class OpSchema final {
         "tensor(int64)",
         "tensor(float16)",
         "tensor(float)",
-        "tensor(double)",
-        "tensor(bfloat16)"};
+        "tensor(double)"};
     return all_numeric_types;
   }
 
@@ -606,6 +634,27 @@ class OpSchema final {
         "tensor(complex64)",
         "tensor(complex128)"};
     return all_tensor_types;
+  }
+
+  static const std::vector<std::string>& all_tensor_types_with_bfloat() {
+    static const std::vector<std::string> all_tensor_types_with_bfloat = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
+    return all_tensor_types_with_bfloat;
   }
 
   static const std::vector<std::string>& all_tensor_sequence_types() {
@@ -782,8 +831,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[ONNX_DOMAIN] = std::make_pair(1, 12);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
-      // ONNX's preview domain contains operators subject to change, so versining
-      // is not meaningful and that domain should have only one version.
+      // ONNX's preview domain contains operators subject to change, so
+      // versining is not meaningful and that domain should have only one
+      // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
     }
 
@@ -989,7 +1039,7 @@ OpSchema GetOpSchema();
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                                 \
+  ONNX_OPERATOR_SET_SCHEMA_EX(                                     \
       name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
