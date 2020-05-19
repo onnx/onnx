@@ -139,10 +139,14 @@ class cmake_build(setuptools.Command):
     built = False
 
     def initialize_options(self):
-        self.jobs = multiprocessing.cpu_count()
+        self.jobs = None
 
     def finalize_options(self):
-        self.jobs = int(self.jobs)
+        if sys.version_info[0] >= 3:
+            self.set_undefined_options('build', ('parallel', 'jobs'))
+        if self.jobs is None and os.getenv("MAX_JOBS") is not None:
+            self.jobs = os.getenv("MAX_JOBS")
+        self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
 
     def run(self):
         if cmake_build.built:
@@ -321,13 +325,14 @@ setuptools.setup(
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
+    license='MIT',
     include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
     extras_require=extras_require,
-    author='bddppq',
-    author_email='jbai@fb.com',
+    author='ONNX',
+    author_email='onnx-technical-discuss@lists.lfai.foundation',
     url='https://github.com/onnx/onnx',
     entry_points={
         'console_scripts': [

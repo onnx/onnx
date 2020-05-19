@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 146/164 (89.02%, 5 generators excluded) common operators.
+Node tests have covered 144/162 (88.89%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -106,7 +106,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -123,7 +123,7 @@ x_new, h_new = apply_adagrad(r, t, x, g, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, h],
        outputs=[x_new, h_new], name='test_adagrad',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -144,7 +144,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -168,7 +168,7 @@ x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
        outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -194,7 +194,7 @@ node = onnx.helper.make_node('Adam',
                              alpha=alpha,
                              beta=beta,
                              epsilon=epsilon,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -213,7 +213,7 @@ x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, v, h],
        outputs=[x_new, v_new, h_new], name='test_adam',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -237,7 +237,7 @@ node = onnx.helper.make_node('Adam',
                              norm_coefficient=norm_coefficient,
                              alpha=alpha,
                              beta=beta,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -266,7 +266,7 @@ x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
        outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
        name='test_adam_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -1300,18 +1300,27 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 
 ### BatchNormalization
-There are 2 test cases, listed as following:
+There are 1 test cases, listed as following:
 <details>
 <summary>batchnormalization</summary>
 
 ```python
+def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    mean = mean.reshape(-1, *dim_ones)
+    var = var.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
 # input size: (1, 2, 1, 3)
 x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
 s = np.array([1.0, 1.5]).astype(np.float32)
 bias = np.array([0, 1]).astype(np.float32)
 mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
-y = batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
+y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
@@ -1321,7 +1330,7 @@ node = onnx.helper.make_node(
 
 # output size: (1, 2, 1, 3)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_example_old')
+       name='test_batchnorm_example')
 
 # input size: (2, 3, 4, 5)
 x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -1330,7 +1339,7 @@ bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
 epsilon = 1e-2
-y = batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
+y = _batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
@@ -1341,56 +1350,7 @@ node = onnx.helper.make_node(
 
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-       name='test_batchnorm_epsilon_old')
-```
-
-</details>
-<details>
-<summary>train</summary>
-
-```python
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-mean = np.array([0, 3]).astype(np.float32)
-var = np.array([1, 1.5]).astype(np.float32)
-# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
-# working around by using np.byte(1).astype(bool)
-training_mode = np.byte(1).astype(bool)
-y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var)
-
-node = onnx.helper.make_node(
-    'BatchNormalization',
-    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
-    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
-)
-
-# output size: (1, 2, 1, 3)
-expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
-       name='test_batchnorm_example_training_mode')
-
-# input size: (2, 3, 4, 5)
-x = np.random.randn(2, 3, 4, 5).astype(np.float32)
-s = np.random.randn(3).astype(np.float32)
-bias = np.random.randn(3).astype(np.float32)
-mean = np.random.randn(3).astype(np.float32)
-var = np.random.rand(3).astype(np.float32)
-training_mode = np.byte(1).astype(bool)
-momentum = 0.9
-epsilon = 1e-2
-y, saved_mean, saved_var, output_mean, output_var = batchnorm_training_mode(x, s, bias, mean, var, momentum, epsilon)
-
-node = onnx.helper.make_node(
-    'BatchNormalization',
-    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
-    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
-    epsilon=epsilon,
-)
-
-# output size: (2, 3, 4, 5)
-expect(node, inputs=[x, s, bias, mean, var, training_mode], outputs=[y, output_mean, output_var, saved_mean, saved_var],
-       name='test_batchnorm_epsilon_training_mode')
+       name='test_batchnorm_epsilon')
 ```
 
 </details>
@@ -4178,7 +4138,7 @@ add_node = onnx.helper.make_node('Add',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dc_da', 'dc_db'], name='my_gradient',
-    domain='ai.onnx.training',
+    domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     xs=['a', 'b'], y='c')
 
 a = np.array(1.0).astype(np.float32)
@@ -4205,8 +4165,8 @@ graph = onnx.helper.make_graph(
         onnx.helper.make_tensor_value_info('dc_db',
                                            onnx.TensorProto.FLOAT, [])])
 opsets = [
-    onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+    onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
+    onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
 model = onnx.helper.make_model(
     graph,
     producer_name='backend-test',
@@ -4227,7 +4187,7 @@ mul_node = onnx.helper.make_node('Mul',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dd_da', 'dd_db'], name='my_gradient',
-    domain='ai.onnx.training',
+    domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     xs=['a', 'b'], y='d')
 
 a = np.array(1.0).astype(np.float32)
@@ -4257,8 +4217,8 @@ graph = onnx.helper.make_graph(
                                            onnx.TensorProto.FLOAT, [])])
 
 opsets = [
-    onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+    onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
+    onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
 model = onnx.helper.make_model(graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -4550,44 +4510,6 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
-```
-
-</details>
-
-
-### Inverse
-There are 2 test cases, listed as following:
-<details>
-<summary>inverse</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Inverse',
-    inputs=['x'],
-    outputs=['y']
-)
-
-X = np.random.randn(4, 4)
-Y = inverse_reference_implementation(X)
-
-expect(node, inputs=[X], outputs=[Y], name='test_inverse')
-```
-
-</details>
-<details>
-<summary>inverse_batched</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Inverse',
-    inputs=['x'],
-    outputs=['y']
-)
-
-X = np.random.randn(2, 3, 4, 4)
-Y = inverse_reference_implementation(X)
-
-expect(node, inputs=[X], outputs=[Y], name='test_inverse_batched')
 ```
 
 </details>
@@ -5759,169 +5681,6 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### MeanSquaredDistance
-There are 6 test cases, listed as following:
-<details>
-<summary>mean_square_distance_mean</summary>
-
-```python
-# Define operator attributes.
-reduction = 'mean'
-
-# Create operator.
-node = onnx.helper.make_node('MeanSquaredDistance',
-                             inputs=['R', 'T'],
-                             outputs=['X'],
-                             reduction=reduction
-                             )
-
-# Define operator inputs
-r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
-t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
-
-# Compute Mean Square Distance
-sq = np.square(r - t)
-msd = np.mean(sq)
-
-# Check results
-expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean')
-```
-
-</details>
-<details>
-<summary>mean_square_distance_mean_3d</summary>
-
-```python
-# Define operator attributes.
-reduction = 'mean'
-
-# Create operator.
-node = onnx.helper.make_node('MeanSquaredDistance',
-                             inputs=['R', 'T'],
-                             outputs=['X'],
-                             reduction=reduction
-                             )
-
-# Define operator inputs
-r = np.array([[[1.2, 2.5], [3.1, 1.3]], [[2.3, 3.4], [1.1, 2.2]], [[3.6, 1.7], [2.5, 3.8]]], dtype=np.float32)
-t = np.array([[[1.1, 2.6], [3.2, 1.4]], [[2.2, 3.3], [1.2, 2.1]], [[3.5, 1.6], [2.5, 3.9]]], dtype=np.float32)
-
-# Compute Mean Square Distance
-msd = mean_squared_distance(r, t, reduction='mean')
-
-# Check results
-expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_3d')
-```
-
-</details>
-<details>
-<summary>mean_square_distance_mean_4d</summary>
-
-```python
-# Define operator attributes.
-reduction = 'mean'
-
-# Create operator.
-node = onnx.helper.make_node('MeanSquaredDistance',
-                             inputs=['R', 'T'],
-                             outputs=['X'],
-                             reduction=reduction
-                             )
-
-# Define operator inputs
-np.random.seed(0)
-r = np.random.rand(2, 4, 5, 7)
-t = np.random.rand(2, 4, 5, 7)
-
-# Compute Mean Square Distance
-msd = mean_squared_distance(r, t, reduction='mean')
-
-# Check results
-expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_mean_4d')
-```
-
-</details>
-<details>
-<summary>mean_square_distance_none</summary>
-
-```python
-# Define operator attributes.
-reduction = 'none'
-
-# Create operator.
-node = onnx.helper.make_node('MeanSquaredDistance',
-                             inputs=['R', 'T'],
-                             outputs=['X'],
-                             reduction=reduction
-                             )
-
-# Define operator inputs
-r = np.array([1.2, 2.5], dtype=np.float32)
-t = np.array([1.1, 2.6], dtype=np.float32)
-
-# Compute Mean Square Distance
-msd = mean_squared_distance(r, t, reduction='none')
-
-# Check results
-expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_none')
-```
-
-</details>
-<details>
-<summary>mean_square_distance_none_weights</summary>
-
-```python
-# Define operator attributes.
-reduction = 'none'
-
-# Create operator.
-node = onnx.helper.make_node('MeanSquaredDistance',
-                             inputs=['R', 'T', 'W'],
-                             outputs=['X'],
-                             reduction=reduction
-                             )
-
-# Define operator inputs
-r = np.array([1.2, 2.5], dtype=np.float32)
-t = np.array([1.1, 2.6], dtype=np.float32)
-weights = np.array([0.8, 0.9], dtype=np.float32)
-
-# Compute Mean Square Distance
-msd = mean_squared_distance(r, t, reduction='none', w=weights)
-
-# Check results
-expect(node, inputs=[r, t, weights], outputs=[msd], name='test_mean_square_distance_none_weights')
-```
-
-</details>
-<details>
-<summary>mean_square_distance_sum</summary>
-
-```python
-# Define operator attributes.
-reduction = 'sum'
-
-# Create operator.
-node = onnx.helper.make_node('MeanSquaredDistance',
-                             inputs=['R', 'T'],
-                             outputs=['X'],
-                             reduction=reduction
-                             )
-
-# Define operator inputs
-r = np.array([[1.2, 2.5, 3.1], [1.3, 2.3, 3.4]], dtype=np.float32)
-t = np.array([[1.1, 2.6, 3.2], [1.4, 2.2, 3.3]], dtype=np.float32)
-
-# Compute Mean Square Distance
-msd = mean_squared_distance(r, t, reduction='sum')
-
-# Check results
-expect(node, inputs=[r, t], outputs=[msd], name='test_mean_square_distance_sum')
-```
-
-</details>
-
-
 ### MeanVarianceNormalization
 There are 1 test cases, listed as following:
 <details>
@@ -6286,7 +6045,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -6303,7 +6062,7 @@ x_new, v_new = apply_momentum(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -6325,7 +6084,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -6349,7 +6108,7 @@ x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
        outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -6370,7 +6129,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='nesterov',
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -6387,7 +6146,7 @@ x_new, v_new = apply_nesterov(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_nesterov_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
