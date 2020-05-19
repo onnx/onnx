@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 144/162 (88.89%, 5 generators excluded) common operators.
+Node tests have covered 145/162 (89.51%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -10519,6 +10519,45 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### SequenceInsert
+There are 1 test cases, listed as following:
+<details>
+<summary>sequenceinsert</summary>
+
+```python
+test_cases = {
+    'at_back': [np.array([10, 11, 12])],
+    'at_front': [np.array([-2, -1, 0]), np.array([0])]
+}
+sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
+
+for test_name, test_inputs in test_cases.items():
+    tensor = test_inputs[0]
+
+    if len(test_inputs) > 1:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor', 'position'],
+            outputs=['output_sequence']
+        )
+        position = test_inputs[1]
+        inserted = sequence_insert_reference_implementation(sequence, tensor, position)
+        expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
+               name='test_seq_insert_' + test_name)
+    else:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor'],
+            outputs=['output_sequence']
+        )
+        inserted = sequence_insert_reference_implementation(sequence, tensor)
+        expect(node, inputs=[sequence, tensor], outputs=[inserted],
+               name='test_seq_insert_' + test_name)
+```
+
+</details>
+
+
 ### Shape
 There are 1 test cases, listed as following:
 <details>
@@ -13361,9 +13400,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### SequenceErase (call for test cases)
-
-
-### SequenceInsert (call for test cases)
 
 
 ### SequenceLength (call for test cases)
