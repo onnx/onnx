@@ -274,8 +274,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Type inference, pass true to tell it is reshape 
+          propagateElemTypeFromInputToOutput(ctx, 0, 0, true);
           // Shape Inference if 2nd input data (the target shape) is available
           const TensorProto* targetShapeInitializer = ctx.getInputData(1);
           if (!targetShapeInitializer) {

@@ -287,12 +287,12 @@ static void InferShapesImpl(
       throw;
     }
   }
-  /*
+  
   if (!inference_errors.empty()) {
     std::cerr << "Type consistency error: " << inference_errors;
     throw std::runtime_error(inference_errors);
   }
-  */
+  
 }
 
 void InferShapes(

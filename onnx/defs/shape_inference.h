@@ -204,13 +204,14 @@ inline void propagateElemTypeWithValidation(
 inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
-    size_t outputIndex) {
+    size_t outputIndex, bool isReshape=false) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
       input_type->value_case() != TypeProto::kTensorType) {
     fail_type_inference("Input ", inputIndex, " expected to have tensor type");
   }
-  if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
+  // If it is reshape op, it would allow TensorProto::UNDEFINED. 
+  if (!isReshape && input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
     fail_type_inference("Element type of input ", inputIndex, " unknown");
   }
   auto output_type = ctx.getOutputType(outputIndex);
