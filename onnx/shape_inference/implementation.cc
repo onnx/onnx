@@ -199,7 +199,7 @@ static void InferShapesImpl(
           }
       }
   }
-
+  std::string inference_errors = "";
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -212,14 +212,17 @@ static void InferShapesImpl(
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
         n, valueTypesByName, inputDataByName, &graphInferenceContext);
+    
+    
     if (!schema) {
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
-        (void)ex;
+        //(void)ex;
         // Continue with inference for remaining nodes
+        inference_errors += std::string(ex.what()) + "\n";
         continue;
       }
     } else if (schema->HasFunction()) {
@@ -227,7 +230,8 @@ static void InferShapesImpl(
         InferShapeForFunctionNode(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
-        (void)function_ex;
+        //(void)function_ex;
+        inference_errors += std::string(function_ex.what()) + "\n";
         continue;
       }
     } else {
@@ -283,6 +287,12 @@ static void InferShapesImpl(
       throw;
     }
   }
+  /*
+  if (!inference_errors.empty()) {
+    std::cerr << "Type consistency error: " << inference_errors;
+    throw std::runtime_error(inference_errors);
+  }
+  */
 }
 
 void InferShapes(
