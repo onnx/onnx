@@ -7,15 +7,6 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-inline void unaryLogicalOpInference_opset12(InferenceContext& ctx) {
-  // Type inference
-  updateOutputElemType(ctx, 0, TensorProto::BOOL);
-  // Shape inference
-  if (hasInputShape(ctx, 0)) {
-    propagateShapeFromInputToOutput(ctx, 0, 0);
-  }
-}
-
 std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset12(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
