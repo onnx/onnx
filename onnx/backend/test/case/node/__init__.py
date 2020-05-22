@@ -101,10 +101,10 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     return node_list
 
 
-def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
+def _extract_value_info(arr, name, ele_type=None):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
     return onnx.helper.make_tensor_value_info(
         name=name,
-        elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
+        elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
         shape=arr.shape)
 
 
@@ -116,10 +116,12 @@ def expect(node,  # type: onnx.NodeProto
            ):  # type: (...) -> None
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
-    inputs_vi = [_extract_value_info(arr, arr_name)
-                 for arr, arr_name in zip(inputs, present_inputs)]
-    outputs_vi = [_extract_value_info(arr, arr_name)
-                  for arr, arr_name in zip(outputs, present_outputs)]
+    input_types = kwargs.pop('input_types') if 'input_types' in kwargs else ([None] * len(inputs))
+    output_types = kwargs.pop('output_types') if 'output_types' in kwargs else ([None] * len(outputs))
+    inputs_vi = [_extract_value_info(arr, arr_name, input_type)
+                 for arr, arr_name, input_type in zip(inputs, present_inputs, input_types)]
+    outputs_vi = [_extract_value_info(arr, arr_name, output_type)
+                  for arr, arr_name, output_type in zip(outputs, present_outputs, output_types)]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,

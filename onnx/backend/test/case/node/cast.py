@@ -34,6 +34,8 @@ class Cast(Base):
         ]
 
         for from_type, to_type in test_cases:
+            input_type = None
+            output_type = None
             if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
                 np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
                     u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
@@ -55,6 +57,8 @@ class Cast(Base):
                     assert from_type == 'FLOAT'
                     input = np_fp32.reshape([3, 4])
                     output = np_bfp16.reshape([3, 4])
+                    input_type = int(TensorProto.FLOAT)
+                    output_type = int(TensorProto.BFLOAT16)
                 else:
                     assert to_type == 'FLOAT'
                     input = np_bfp16.reshape([3, 4])
@@ -62,6 +66,8 @@ class Cast(Base):
                     c_floats = [ctypes.c_float.from_buffer(ctypes.c_uint32(_ << 16)) for _ in c_bfloats_arr]
                     c_float_arr = (ctypes.c_float * 12)(*c_floats)
                     output = np.frombuffer(bytes(c_float_arr), dtype=np.float32).reshape([3, 4])
+                    input_type = int(TensorProto.BFLOAT16)
+                    output_type = int(TensorProto.FLOAT)
             elif 'STRING' != from_type:
                 input = np.random.random_sample(shape).astype(
                     TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
@@ -87,5 +93,11 @@ class Cast(Base):
                 outputs=['output'],
                 to=getattr(TensorProto, to_type),
             )
-            expect(node, inputs=[input], outputs=[output],
-                       name='test_cast_' + from_type + '_to_' + to_type)
+            if input_type and output_type:
+                expect(node, inputs=[input], outputs=[output],
+                           name='test_cast_' + from_type + '_to_' + to_type,
+                           input_types = [input_type],
+                           output_types = [output_type])
+            else:
+                expect(node, inputs=[input], outputs=[output],
+                           name='test_cast_' + from_type + '_to_' + to_type)
