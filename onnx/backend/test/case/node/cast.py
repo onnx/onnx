@@ -41,18 +41,8 @@ class Cast(Base):
                     u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
                     u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
                 little_endisan = sys.byteorder == 'little'
-                import ctypes
-                #get the np array's c buffer
-                fp32_c_arr = (ctypes.c_float * 12).from_buffer_copy(np_fp32.tobytes())
-                c_bfloats = []
-                for i in range(0, len(fp32_c_arr)):
-                    #indices to the 16 high bits
-                    index = i * 4 + 2 if little_endisan else i * 4
-                    #because no bfloat type in numpy, using uint16 to store it.
-                    c_bfloats.append(ctypes.c_uint16.from_address(ctypes.addressof(fp32_c_arr) + index))
-                c_bfloats_arr = (ctypes.c_uint16 * 12)(*c_bfloats)
-                #back to numpy arry
-                np_bfp16 = np.frombuffer(bytes(c_bfloats_arr), dtype=np.uint16)
+                np_uint16_view = np_fp32.view(dtype=np.uint16)
+                np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
                 if 'BFLOAT16' == to_type:
                     assert from_type == 'FLOAT'
                     input = np_fp32.reshape([3, 4])
@@ -63,9 +53,13 @@ class Cast(Base):
                     assert to_type == 'FLOAT'
                     input = np_bfp16.reshape([3, 4])
                     #convert bfloat to FLOAT
-                    c_floats = [ctypes.c_float.from_buffer(ctypes.c_uint32(_ << 16)) for _ in c_bfloats_arr]
-                    c_float_arr = (ctypes.c_float * 12)(*c_floats)
-                    output = np.frombuffer(bytes(c_float_arr), dtype=np.float32).reshape([3, 4])
+                    np_fp32_zeros = np.zeros((len(np_bfp16) * 2,), dtype=np.uint16)
+                    if little_endisan:
+                        np_fp32_zeros[1::2] = np_bfp16
+                    else:
+                        np_fp32_zeros[0::2] = np_bfp16
+                    np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
+                    output = np_fp32_from_bfloat.reshape([3, 4])
                     input_type = int(TensorProto.BFLOAT16)
                     output_type = int(TensorProto.FLOAT)
             elif 'STRING' != from_type:
