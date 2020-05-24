@@ -2297,8 +2297,8 @@ for from_type, to_type in test_cases:
     if input_type and output_type:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type,
-                   input_types = [input_type],
-                   output_types = [output_type])
+                   input_types=[input_type],
+                   output_types=[output_type])
     else:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type)
