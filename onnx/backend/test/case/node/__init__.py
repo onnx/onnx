@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import sys
 import re
 
-from typing import List, Text, Sequence, Any
+from typing import List, Text, Sequence, Any, Dict
 import numpy as np  # type: ignore
 
 import onnx
@@ -112,7 +112,7 @@ def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
            name,  # type: Text
-           **kwargs  # type: Any
+           **kwargs  # type: Dict[str, Any]
            ):  # type: (...) -> None
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
