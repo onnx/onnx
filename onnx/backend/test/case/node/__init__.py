@@ -118,12 +118,12 @@ def expect(node,  # type: onnx.NodeProto
     present_outputs = [x for x in node.output if (x != '')]
     input_types = [None] * len(inputs)
     if 'input_types' in kwargs:
-        input_types = kwargs['input_types']
-        del kwargs['input_types']
+        input_types = kwargs[str('input_types')]
+        del kwargs[str('input_types')]
     output_types = [None] * len(outputs)
     if 'output_types' in kwargs:
-        output_types = kwargs['output_types']
-        del kwargs['output_types']
+        output_types = kwargs[str('output_types')]
+        del kwargs[str('output_types')]
     inputs_vi = [_extract_value_info(arr, arr_name, input_type)
                  for arr, arr_name, input_type in zip(inputs, present_inputs, input_types)]
     outputs_vi = [_extract_value_info(arr, arr_name, output_type)
