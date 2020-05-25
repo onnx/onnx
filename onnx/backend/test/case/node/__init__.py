@@ -101,7 +101,7 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     return node_list
 
 
-def _extract_value_info(arr, name, ele_type=None):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
+def _extract_value_info(arr, name, ele_type=None):  # type: (np.ndarray, Text, np.dtype) -> onnx.ValueInfoProto
     return onnx.helper.make_tensor_value_info(
         name=name,
         elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
