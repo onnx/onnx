@@ -7,7 +7,7 @@ import sys
 import platform
 
 import numpy as np  # type: ignore
-# from onnx import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
+from onnx.onnx_data import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
