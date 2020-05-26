@@ -188,86 +188,86 @@ def make_sparse_tensor(
     sparse.dims.extend(dims)
     return sparse
 
-
-def make_sequence(
-        name,  # type: Text
-        values,   # type: Sequence[SequenceMapElement]
-):  # type: (...) -> SequenceProto
-    '''
-    Make a Sequence with specified SequenceMapElement value arguments.
-    '''
-    sequence = SequenceProto()
-    sequence.name = name
-    sequence.values.extend(values)
-    return sequence
-
-
-def make_map(
-        name,  # type: Text
-        pairs   # type: Sequence[KeyValuePair]
-):  # type: (...) -> MapProto
-    '''
-    Make a Map with specified key-value pair arguments.
-    '''
-    map = MapProto()
-    map.name = name
-    map.pairs.extend(pairs)
-    return map
-
-
-def make_key_value_pair(
-        key,  # type: Any
-        key_type,  # type: int
-        value,  # type: SequenceMapElement
-        raw=False  # type: bool
-):  # type: (...) -> KeyValuePair
-    '''
-    Make a KeyValuePair element for MapProto.
-    If raw is False, this function will choose the corresponding proto
-    field to store the key based on data_type. If raw is True, use "raw_key"
-    proto field to store the key, and values should be of type bytes in
-    this case.
-    '''
-    kv_pair = KeyValuePair()
-
-    if key_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_key to store string type"
-
-    if raw:
-        kv_pair.raw_data = key
-    else:
-        storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
-        setattr(kv_pair, storage_field, key)
-
-    kv_pair.value = value
-    kv_pair.key_type = key_type
-
-    return kv_pair
-
-
-def make_sequence_map_element(
-        value,  # type: Any
-        value_type  # type: int
-):  # type: (...) -> SequenceMapElement
-    '''
-    Make a sequence map element to store values for SequenceProto and MapProto.
-    '''
-    seq_map_elem = SequenceMapElement()
-    if value_type == TypeProto.Tensor:
-        seq_map_elem.elem_type = SequenceMapElement.TENSOR
-        seq_map_elem.tensor_value = value
-    elif value_type == TypeProto.SparseTensor:
-        seq_map_elem.elem_type = SequenceMapElement.SPARSE_TENSOR
-        seq_map_elem.sparse_tensor_value = value
-    elif value_type == TypeProto.Sequence:
-        seq_map_elem.elem_type = SequenceMapElement.SEQUENCE
-        seq_map_elem.sequence_value = value
-    elif value_type == TypeProto.Map:
-        seq_map_elem.elem_type = SequenceMapElement.MAP
-        seq_map_elem.map_value = value
-    else:
-        raise TypeError("Invalid value type.")
-    return seq_map_elem
+#
+# def make_sequence(
+#         name,  # type: Text
+#         values,   # type: Sequence[SequenceMapElement]
+# ):  # type: (...) -> SequenceProto
+#     '''
+#     Make a Sequence with specified SequenceMapElement value arguments.
+#     '''
+#     sequence = SequenceProto()
+#     sequence.name = name
+#     sequence.values.extend(values)
+#     return sequence
+#
+#
+# def make_map(
+#         name,  # type: Text
+#         pairs   # type: Sequence[KeyValuePair]
+# ):  # type: (...) -> MapProto
+#     '''
+#     Make a Map with specified key-value pair arguments.
+#     '''
+#     map = MapProto()
+#     map.name = name
+#     map.pairs.extend(pairs)
+#     return map
+#
+#
+# def make_key_value_pair(
+#         key,  # type: Any
+#         key_type,  # type: int
+#         value,  # type: SequenceMapElement
+#         raw=False  # type: bool
+# ):  # type: (...) -> KeyValuePair
+#     '''
+#     Make a KeyValuePair element for MapProto.
+#     If raw is False, this function will choose the corresponding proto
+#     field to store the key based on data_type. If raw is True, use "raw_key"
+#     proto field to store the key, and values should be of type bytes in
+#     this case.
+#     '''
+#     kv_pair = KeyValuePair()
+#
+#     if key_type == TensorProto.STRING:
+#         assert not raw, "Can not use raw_key to store string type"
+#
+#     if raw:
+#         kv_pair.raw_data = key
+#     else:
+#         storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
+#         setattr(kv_pair, storage_field, key)
+#
+#     kv_pair.value = value
+#     kv_pair.key_type = key_type
+#
+#     return kv_pair
+#
+#
+# def make_sequence_map_element(
+#         value,  # type: Any
+#         value_type  # type: int
+# ):  # type: (...) -> SequenceMapElement
+#     '''
+#     Make a sequence map element to store values for SequenceProto and MapProto.
+#     '''
+#     seq_map_elem = SequenceMapElement()
+#     if value_type == TypeProto.Tensor:
+#         seq_map_elem.elem_type = SequenceMapElement.TENSOR
+#         seq_map_elem.tensor_value = value
+#     elif value_type == TypeProto.SparseTensor:
+#         seq_map_elem.elem_type = SequenceMapElement.SPARSE_TENSOR
+#         seq_map_elem.sparse_tensor_value = value
+#     elif value_type == TypeProto.Sequence:
+#         seq_map_elem.elem_type = SequenceMapElement.SEQUENCE
+#         seq_map_elem.sequence_value = value
+#     elif value_type == TypeProto.Map:
+#         seq_map_elem.elem_type = SequenceMapElement.MAP
+#         seq_map_elem.map_value = value
+#     else:
+#         raise TypeError("Invalid value type.")
+#     return seq_map_elem
 
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
