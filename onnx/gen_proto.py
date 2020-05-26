@@ -214,7 +214,7 @@ def main():  # type: () -> None
     parser.add_argument('--protoc_path',
                         default='',
                         help='path to protoc for proto3 file validation')
-    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
+    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators', 'onnx-data'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
     args = parser.parse_args()
