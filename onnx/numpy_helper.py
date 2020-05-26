@@ -9,6 +9,7 @@ import platform
 import numpy as np  # type: ignore
 from onnx import TensorProto
 from onnx import mapping
+from onnx.external_data_helper import uses_external_data, load_external_data_for_tensor
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
@@ -22,11 +23,12 @@ def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.comple
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
+def to_array(tensor, base_dir=None):  # type: (TensorProto, Optional[str]) -> np.ndarray[Any]
     """Converts a tensor def object to a numpy array.
 
     Inputs:
         tensor: a TensorProto object.
+        base_dir: directory that contains the external data.
     Returns:
         arr: the converted array.
     """
@@ -35,6 +37,8 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             "Currently not supporting loading segments.")
     if tensor.data_type == TensorProto.UNDEFINED:
         raise TypeError("The element type in the input tensor is not defined.")
+    if uses_external_data(tensor):
+        load_external_data_for_tensor(tensor, base_dir)
 
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]

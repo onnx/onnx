@@ -29,7 +29,7 @@ class ExternalDataInfo(object):
             self.length = int(self.length)
 
 
-def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text) -> None
+def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Optional[Text]) -> None
     """
     Load data from an external file for tensor.
 
@@ -39,6 +39,9 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
     """
     if tensor.HasField("raw_data"):  # already loaded
         return
+    if base_dir is None:
+        raise ValueError("No directory provided for external data")
+
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
     external_data_file_path = os.path.join(base_dir, file_location)
