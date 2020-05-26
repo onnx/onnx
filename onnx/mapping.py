@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import TensorProto, KeyValuePair
+from onnx import TensorProto
 from typing import Text, Any
 import numpy as np  # type: ignore
 
