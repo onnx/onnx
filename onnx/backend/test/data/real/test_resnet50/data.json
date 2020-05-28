@@ -1,1 +1,1 @@
-{"atol": 1e-07, "model_name": "resnet50", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_10/resnet50.tar.gz"}
+{"atol": 1e-07, "model_name": "resnet50", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_9/resnet50.tar.gz"}

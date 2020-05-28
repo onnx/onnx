@@ -1,1 +1,1 @@
-{"atol": 1e-07, "model_name": "inception_v1", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_10/inception_v1.tar.gz"}
+{"atol": 1e-07, "model_name": "inception_v1", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_9/inception_v1.tar.gz"}
