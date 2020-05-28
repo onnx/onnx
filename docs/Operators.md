@@ -4162,7 +4162,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">Dequ
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the channel dimension of the input tensor.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -4171,7 +4171,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">Dequ
 <dt><tt>x</tt> : T</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
 <dt><tt>x_scale</tt> : tensor(float)</dt>
-<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor of size C for per-channel dequantization.</dd>
+<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T</dt>
 <dd>Zero point for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor of size C for per-channel dequantization. It's optional. 0 is the default value when it's not specified.</dd>
 </dl>
@@ -4198,35 +4198,34 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">Dequ
 
 ```python
 node = onnx.helper.make_node('DequantizeLinear',
-    inputs=['x', 'x_scale', 'x_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'x_scale', 'x_zero_point'],
+                             outputs=['y'],)
 
 # 1-D tensor zero point and scale of size C
-x = np.array([[[[  3,  89],
-                [ 34, 200],
-                [ 74,  59]],
+x = np.array([[[[3, 89],
+                [34, 200],
+                [74, 59]],
 
-               [[  5,  24],
-                [ 24,  87],
-                [ 32,  13]],
+               [[5, 24],
+                [24, 87],
+                [32, 13]],
 
-               [[245,  99],
-                [  4, 142],
-                [121, 102]],],], dtype=np.uint8)
+               [[245, 99],
+                [4, 142],
+                [121, 102]], ], ], dtype=np.uint8)
 x_scale = np.array([2, 4, 5], dtype=np.float32)
 x_zero_point = np.array([84, 24, 196], dtype=np.uint8)
-y = np.array([[[[-162,   10],
-                [-100,  232],
-                [ -20,  -50]],
+y = np.array([[[[-162, 10],
+                [-100, 232],
+                [-20, -50]],
 
-               [[ -76,    0],
-                [   0,  252],
-                [  32,  -44]],
+               [[-76, 0],
+                [0, 252],
+                [32, -44]],
 
-               [[ 245, -485],
+               [[245, -485],
                 [-960, -270],
-                [-375, -470]],],], dtype=np.float32)
-
+                [-375, -470]], ], ], dtype=np.float32)
 
 expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
        name='test_dequantizelinear_channels')
@@ -4240,8 +4239,8 @@ expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
 
 ```python
 node = onnx.helper.make_node('DequantizeLinear',
-    inputs=['x', 'x_scale', 'x_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'x_scale', 'x_zero_point'],
+                             outputs=['y'],)
 
 # scalar zero point and scale
 x = np.array([0, 3, 128, 255]).astype(np.uint8)
@@ -12542,7 +12541,7 @@ expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale
 ### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
 
   The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor. The scale factor can be a scalar
-  (per-tensor/layer quantization), or a 1-D tensor of size C for per-channel quantization. The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
+  (per-tensor/layer quantization), or a 1-D tensor for per-axis quantization. The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
   For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
   For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
 
@@ -12556,7 +12555,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">Quanti
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the channel dimension of the input tensor.</dd>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -12565,7 +12564,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">Quanti
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
 <dt><tt>y_scale</tt> : tensor(float)</dt>
-<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor of size C for per-channel quantization.</dd>
+<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
 <dd>Zero point for doing quantization to get 'y'. It can be a scalar, which means a per-tensor/layer quantization, or a 1-D tensor of size C for per-channel quantization.Default value is uint8 typed 0 if it's not specified.</dd>
 </dl>
@@ -12594,36 +12593,36 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">Quanti
 
 ```python
 node = onnx.helper.make_node('QuantizeLinear',
-    inputs=['x', 'y_scale', 'y_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'y_scale', 'y_zero_point'],
+                             outputs=['y'],)
 
-x = np.array([[[[-162,   10],
-                [-100,  232],
-                [ -20,  -50]],
+x = np.array([[[[-162, 10],
+                [-100, 232],
+                [-20, -50]],
 
-               [[ -76,    0],
-                [   0,  252],
-                [  32,  -44]],
+               [[-76, 0],
+                [0, 252],
+                [32, -44]],
 
-               [[ 245, -485],
+               [[245, -485],
                 [-960, -270],
-                [-375, -470]],],], dtype=np.float32)
+                [-375, -470]], ], ], dtype=np.float32)
 y_scale = np.array([2, 4, 5], dtype=np.float32)
 y_zero_point = np.array([84, 24, 196], dtype=np.uint8)
-y = np.array([[[[  3,  89],
-                [ 34, 200],
-                [ 74,  59]],
+y = np.array([[[[3, 89],
+                [34, 200],
+                [74, 59]],
 
-               [[  5,  24],
-                [ 24,  87],
-                [ 32,  13]],
+               [[5, 24],
+                [24, 87],
+                [32, 13]],
 
-               [[245,  99],
-                [  4, 142],
-                [121, 102]],],], dtype=np.uint8)
+               [[245, 99],
+                [4, 142],
+                [121, 102]], ], ], dtype=np.uint8)
 
 expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
-        name='test_quantizelinear')
+       name='test_quantizelinear')
 ```
 
 </details>
@@ -12634,8 +12633,8 @@ expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
 
 ```python
 node = onnx.helper.make_node('QuantizeLinear',
-    inputs=['x', 'y_scale', 'y_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'y_scale', 'y_zero_point'],
+                             outputs=['y'],)
 
 x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
 y_scale = np.float32(2)

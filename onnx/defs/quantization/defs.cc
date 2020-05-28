@@ -8,7 +8,7 @@ namespace ONNX_NAMESPACE {
 
 static const char* QuantizeLinear_ver13_doc = R"DOC(
 The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor. The scale factor can be a scalar
-(per-tensor/layer quantization), or a 1-D tensor of size C for per-channel quantization. The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
+(per-tensor/layer quantization), or a 1-D tensor for per-axis quantization. The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
 For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
 For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
 )DOC";
@@ -22,7 +22,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "y_scale",
             "Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, "
-            "or a 1-D Tensor of size C for per-channel quantization.",
+            "or a 1-D Tensor for per-axis quantization.",
             "tensor(float)")
         .Input(
             2,
@@ -39,7 +39,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2")
         .Attr(
             "axis",
-            "(Optional) The axis of the channel dimension of the input tensor.",
+            "(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint(
@@ -64,7 +64,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* DequantizeLinear_ver13_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
+for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantizations. 
 'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
 )DOC";
@@ -78,7 +79,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "x_scale",
             "Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, "
-            "or a 1-D tensor of size C for per-channel dequantization.",
+            "or a 1-D tensor for per-axis dequantization.",
             "tensor(float)")
         .Input(
             2,
@@ -95,7 +96,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(float)")
         .Attr(
             "axis",
-            "(Optional) The axis of the channel dimension of the input tensor.",
+            "(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint(
