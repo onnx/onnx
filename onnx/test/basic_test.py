@@ -20,7 +20,6 @@ class TestBasicFunctions(unittest.TestCase):
         # Create a ModelProto.
         model = ModelProto()
         model.ir_version = IR_VERSION
-        model.filepath = ""
         return model
 
     def _simple_tensor(self):  # type: () -> TensorProto
@@ -56,7 +55,6 @@ class TestBasicFunctions(unittest.TestCase):
             fi.close()
 
             loaded_proto = onnx.load_model(fi.name, cls)
-            loaded_proto.filepath = ""
             self.assertTrue(proto == loaded_proto)
         finally:
             os.remove(fi.name)

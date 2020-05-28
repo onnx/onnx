@@ -113,14 +113,10 @@ def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[byte
     '''
     s = _load_bytes(f)
     model = load_model_from_string(s, format=format)
-    model.filepath = ""
 
     if load_external_data:
         model_filepath = _get_file_path(f)
         if model_filepath:
-            # Avoid f being zipfile
-            if isinstance(f, string_types):
-                model.filepath = f.replace("\\", "/")
             base_dir = os.path.dirname(model_filepath)
             load_external_data_for_model(model, base_dir)
 
