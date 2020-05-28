@@ -28,7 +28,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "y_zero_point",
             "Zero point for doing quantization to get 'y'. It can be a scalar, which means a per-tensor/layer quantization, "
-            "or a 1-D tensor of size C for per-channel quantization."
+            "or a 1-D tensor for per-axis quantization. "
             "Default value is uint8 typed 0 if it's not specified.",
             "T2",
             OpSchema::Optional)
@@ -85,7 +85,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "x_zero_point",
             "Zero point for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, "
-            "or a 1-D tensor of size C for per-channel dequantization. "
+            "or a 1-D tensor for per-axis dequantization. "
             "It's optional. 0 is the default value when it's not specified.",
             "T",
             OpSchema::Optional)
