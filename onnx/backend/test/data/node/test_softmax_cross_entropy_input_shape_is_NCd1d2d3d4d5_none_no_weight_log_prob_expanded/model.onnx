@@ -1,57 +1,0 @@
-backend-test:ô
-ö
-x}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Max"	ReduceMax*
-axes@†
-Ü
-x
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Max}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Sub"Sub
-É
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Sub}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp"Exp
-ï
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp|SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_RS"	ReduceSum*
-axes@†
-Å
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp
-|SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_RS}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Div"Div
-É
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Div}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Log"Log
-ì
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Loglog_prob"Identity
-∂
-}SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Log
-yz"NegativeLogLikelihoodLoss*
-	reduction"none†Wtest_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob_expandedZ'
-x"
- 
-
-
-
-
-
-
-Z#
-y
-
-
-
-
-
-
-b#
-z
-
-
-
-
-
-
-b.
-log_prob"
- 
-
-
-
-
-
-
-B

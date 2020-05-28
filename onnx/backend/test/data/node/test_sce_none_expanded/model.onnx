@@ -1,0 +1,33 @@
+backend-test:‡
+Y
+x<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Max"	ReduceMax*
+axes@ 
+„
+x
+<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Max<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Sub"Sub
+
+<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Sub<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Exp"Exp
+“
+<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Exp;SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_RS"	ReduceSum*
+axes@ 
+¾
+<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Exp
+;SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_RS<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Div"Div
+
+<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Div<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Log"Log
+u
+<SoftmaxCrossEntropyLoss_test_sce_none_expanded_functionX_Log
+yz"NegativeLogLikelihoodLoss*
+	reduction"none test_sce_none_expandedZ
+x
+
+
+Z
+y
+
+
+b
+z
+
+
+B

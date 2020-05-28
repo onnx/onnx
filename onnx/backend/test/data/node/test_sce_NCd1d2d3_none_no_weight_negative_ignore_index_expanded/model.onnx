@@ -1,0 +1,41 @@
+backend-test:‰
+‚
+xeSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Max"	ReduceMax*
+axes@ 
+Ö
+x
+eSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_MaxeSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Sub"Sub
+Ó
+eSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_SubeSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Exp"Exp
+å
+eSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_ExpdSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_RS"	ReduceSum*
+axes@ 
+¹
+eSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Exp
+dSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_RSeSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Div"Div
+Ó
+eSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_DiveSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Log"Log
+¼
+eSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Log
+yz"NegativeLogLikelihoodLoss*
+	reduction"none *
+ignore_indexûÿÿÿÿÿÿÿÿ ?test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_expandedZ
+x
+
+
+
+
+
+Z
+y
+
+
+
+
+b
+z
+
+
+
+
+B
