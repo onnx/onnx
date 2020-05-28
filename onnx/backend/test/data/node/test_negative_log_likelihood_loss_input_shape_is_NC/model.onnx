@@ -1,17 +1,0 @@
-backend-test:À
-F
-input
-targetloss"NegativeLogLikelihoodLoss*
-	reduction"none 3test_negative_log_likelihood_loss_input_shape_is_NCZ
-input
-
-
-Z
-target
-
-
-b
-loss
-
-
-B
