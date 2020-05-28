@@ -518,7 +518,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
-  std::cout << "old"<< std::endl;
+=
   std::vector<const TypeProto*> subgraph_input_types;
 
   std::vector<TypeProto> temporary_type_protos;
@@ -538,7 +538,7 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   // across iterations so don't propagate it to the outputs and don't pass it
   // into the subgraph inferencing
   for (size_t i = 2; i < num_inputs; ++i) {
-    std::cout << "old"<< std::endl;
+
     propagateElemTypeFromInputToOutput(ctx, i, i - 2);
 
     // copy so we can remove the shape before passing to the subgraph
@@ -549,7 +549,7 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
 
     subgraph_input_types.push_back(&input_type);
   }
-  std::cout << "GGGGG"<< std::endl;
+
   // Run inferencing on the subgraph
   std::vector<const TypeProto*> subgraph_output_types;
 
@@ -560,11 +560,11 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
     for (size_t i = 1; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
-    std::cout << "middle"<< std::endl;
+
     subgraph_output_types =
         graphInferencer->doInferencing(subgraph_input_types, input_data, true);
   }
-  std::cout << "middle"<< std::endl;
+
   // if empty(), assume inferencing was skipped
   if (!subgraph_output_types.empty()) {
     auto num_outputs = ctx.getNumOutputs();
@@ -625,7 +625,6 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
       }
     }
   }
-  std::cout << "end"<< std::endl;
 }
 
 static const char* Loop_ver1_doc = R"DOC(

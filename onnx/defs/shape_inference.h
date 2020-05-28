@@ -206,11 +206,11 @@ inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex, bool isReshape=false) {
-      std::cout << inputIndex <<  ", " << outputIndex<< std::endl;
+
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
       (input_type->value_case() != TypeProto::kTensorType)) {
-        std::cout << inputIndex <<  "ttttttttttttttt" << outputIndex<< std::endl;
+
     fail_type_inference("Input ", inputIndex, " expected to have tensor type ", input_type->value_case());
   }
   // If it is reshape op, it would allow TensorProto::UNDEFINED. 
@@ -227,7 +227,7 @@ inline void propagateElemTypeFromInputToOutput(
     fail_type_inference(
         "Output ", outputIndex, " expected to have tensor type");
   }
-   std::cout << "done." << std::endl;
+
 }
 
 inline void propagateElemTypeFromDtypeToOutput(

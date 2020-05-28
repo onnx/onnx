@@ -30,7 +30,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         OpSchema::numeric_types_for_math_reduction(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      std::cout<<"!!!!!!!!!1"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (hasNInputShapes(ctx, 2))
         bidirectionalBroadcastShapeInference(
             ctx.getInputType(0)->tensor_type().shape(),
@@ -90,7 +90,7 @@ and contains the {name} values of the corresponding input.
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
-      std::cout<<"!!!!!!!!!"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
       // Shape inference starts
       if (!hasNInputShapes(ctx, 1)) {
@@ -162,7 +162,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_numeric_types(),
             "Constrain input and output types to high-precision numeric tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::cout<<"!!!!!!!!!2"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
                 ctx.getInputType(0)->tensor_type().shape(),
@@ -579,7 +579,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)"},
             "Constrain input Y types to float/int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::cout<<"!!!!!!!!!3"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
                 ctx.getInputType(0)->tensor_type().shape(),
@@ -684,7 +684,7 @@ All inputs and outputs must have the same data type.
         OpSchema::Variadic);
     schema.Output(0, name, "Output tensor.", "T");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      std::cout<<"!!!!!!!!!4"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
       int num_inputs = static_cast<int>(ctx.getNumInputs());
       std::vector<const TensorShapeProto*> shapes;
       for (int i = 0; i < num_inputs; ++i) {
@@ -910,7 +910,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::cout<<"!!!!!!!!!5"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2)) {
             auto transAAttr = ctx.getAttribute("transA");
             bool transA =
@@ -1030,7 +1030,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float/int tensors.")
         .SetDoc(MatMul_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::cout<<"!!!!!!!!!6"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           matmulShapeInference(ctx, 0, 1);
         }));
 
@@ -1101,7 +1101,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference:
-          std::cout<<"!!!!!!!!!7"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           updateOutputElemType(ctx, 1, TensorProto::INT64);
           // Shape inference:
           if (!hasInputShape(ctx, 0))
@@ -1320,7 +1320,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-          std::cout<<"!!!!!!!!!8"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
           // For shape inference (and rank inference), we need both input shape
@@ -1749,7 +1749,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to floating-point tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-          std::cout<<"!!!!!!!!!9"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
           if (hasInputShape(ctx, 0)) {
@@ -2109,7 +2109,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             BuildContextDependentFunctionBody)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-          std::cout<<"!!!!!!!!!10"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
           if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
@@ -2309,7 +2309,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numerical tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
-          std::cout<<"!!!!!!!!!11"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string equation = getAttribute(ctx, "equation", "");
           if (equation.compare("") == 0) {
             return;
@@ -2471,7 +2471,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(
             BuildContextDependentFunctionBodySCE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::cout<<"!!!!!!!!!12"<<std::endl; propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string reduction = getAttribute(ctx, "reduction", "mean");
           if (reduction.compare("none") == 0) {
             if (hasInputShape(ctx, 1)) {

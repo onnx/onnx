@@ -429,7 +429,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData,
     const bool isLoop) {
-      std::cout << "gjggjjgjgjgjgjgjg" << std::endl;
+  
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs)
@@ -466,10 +466,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
         !inferredType.has_shape()) {
       continue;
     }
-  std::cout << "merge" << std::endl;
+
     mergeShapesAndTypes(inferredType, graphInput->mutable_tensor_type());
   }
-  std::cout << "merge2" << std::endl;
+
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)inputData;
@@ -480,7 +480,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->opset_imports,
       false,
       context_->schema_registry);
-  std::cout << "merge3" << std::endl;
+
   std::vector<const TypeProto*> graphOutputTypes;
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
