@@ -161,7 +161,8 @@ static void InferShapesImpl(
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
     bool check_type,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    bool isLoop=false
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
@@ -218,7 +219,9 @@ static void InferShapesImpl(
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
       try {
+        if (!isLoop) {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
+        }
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
         //(void)ex;
         // Continue with inference for remaining nodes
@@ -424,7 +427,9 @@ void InferShapeForFunctionNode(
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
-    const std::vector<const TensorProto*>& inputData) {
+    const std::vector<const TensorProto*>& inputData,
+    const bool isLoop) {
+      std::cout << "gjggjjgjgjgjgjgjg" << std::endl;
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs)
@@ -461,10 +466,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
         !inferredType.has_shape()) {
       continue;
     }
-
+  std::cout << "merge" << std::endl;
     mergeShapesAndTypes(inferredType, graphInput->mutable_tensor_type());
   }
-
+  std::cout << "merge2" << std::endl;
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)inputData;
@@ -475,7 +480,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->opset_imports,
       false,
       context_->schema_registry);
-
+  std::cout << "merge3" << std::endl;
   std::vector<const TypeProto*> graphOutputTypes;
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
