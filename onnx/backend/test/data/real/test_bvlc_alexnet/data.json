@@ -1,1 +1,1 @@
-{"atol": 1e-07, "model_name": "bvlc_alexnet", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_9/bvlc_alexnet.tar.gz"}
+{"atol": 1e-07, "model_name": "bvlc_alexnet", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_10/bvlc_alexnet.tar.gz"}
