@@ -4148,7 +4148,8 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="DequantizeLinear"></a><a name="dequantizelinear">**DequantizeLinear**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
+  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantizations.
   'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
 
@@ -4194,14 +4195,14 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">Dequ
 #### Examples
 
 <details>
-<summary>channels</summary>
+<summary>axis</summary>
 
 ```python
 node = onnx.helper.make_node('DequantizeLinear',
                              inputs=['x', 'x_scale', 'x_zero_point'],
                              outputs=['y'],)
 
-# 1-D tensor zero point and scale of size C
+# 1-D tensor zero point and scale of size equal to axis 1 of the input tensor
 x = np.array([[[[3, 89],
                 [34, 200],
                 [74, 59]],
@@ -4215,20 +4216,10 @@ x = np.array([[[[3, 89],
                 [121, 102]], ], ], dtype=np.uint8)
 x_scale = np.array([2, 4, 5], dtype=np.float32)
 x_zero_point = np.array([84, 24, 196], dtype=np.uint8)
-y = np.array([[[[-162, 10],
-                [-100, 232],
-                [-20, -50]],
-
-               [[-76, 0],
-                [0, 252],
-                [32, -44]],
-
-               [[245, -485],
-                [-960, -270],
-                [-375, -470]], ], ], dtype=np.float32)
+y = (x.astype(np.float32) - x_zero_point.reshape(1,3,1,1)).astype(np.float32) * x_scale.reshape(1,3,1,1)
 
 expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
-       name='test_dequantizelinear_channels')
+       name='test_dequantizelinear_axis')
 ```
 
 </details>
@@ -12589,7 +12580,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">Quanti
 #### Examples
 
 <details>
-<summary>channels</summary>
+<summary>axis</summary>
 
 ```python
 node = onnx.helper.make_node('QuantizeLinear',
@@ -12609,20 +12600,10 @@ x = np.array([[[[-162, 10],
                 [-375, -470]], ], ], dtype=np.float32)
 y_scale = np.array([2, 4, 5], dtype=np.float32)
 y_zero_point = np.array([84, 24, 196], dtype=np.uint8)
-y = np.array([[[[3, 89],
-                [34, 200],
-                [74, 59]],
-
-               [[5, 24],
-                [24, 87],
-                [32, 13]],
-
-               [[245, 99],
-                [4, 142],
-                [121, 102]], ], ], dtype=np.uint8)
+y = (x / y_scale.reshape(1,3,1,1) + y_zero_point.reshape(1,3,1,1))
 
 expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
-       name='test_quantizelinear')
+       name='test_quantizelinear_axis')
 ```
 
 </details>
