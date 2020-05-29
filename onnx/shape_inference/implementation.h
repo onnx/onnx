@@ -33,8 +33,7 @@ class GraphInferencerImpl : public GraphInferencer {
   
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData,
-      const bool isLoop=false) override;
+      const std::vector<const TensorProto*>& inputData) override;
 
  private:
   GraphProto* g_;

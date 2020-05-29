@@ -14,8 +14,7 @@ class GraphInferencer {
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData,
-      const bool isLoop=false) = 0;
+      const std::vector<const TensorProto*>& inputData) = 0;
   virtual ~GraphInferencer() = default;
 };
 
@@ -205,7 +204,7 @@ inline void propagateElemTypeWithValidation(
 inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
-    size_t outputIndex, bool isReshape=false) {
+    size_t outputIndex) {
 
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
@@ -213,8 +212,7 @@ inline void propagateElemTypeFromInputToOutput(
 
     fail_type_inference("Input ", inputIndex, " expected to have tensor type ", input_type->value_case());
   }
-  // If it is reshape op, it would allow TensorProto::UNDEFINED. 
-  if (!isReshape && input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
+  if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
     fail_type_inference("Element type of input ", inputIndex, " unknown");
   }
   auto output_type = ctx.getOutputType(outputIndex);
