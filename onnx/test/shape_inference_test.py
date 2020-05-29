@@ -24,19 +24,17 @@ class TestShapeInference(unittest.TestCase):
             initializer = []
         names_in_initializer = set(x.name for x in initializer)
         input_value_infos = []
-        proto_type = TensorProto.FLOAT  # Should be set; checker does not allow UNDEFINED
         # If the starting values are not also initializers,
         # introduce the starting values as the output of reshape,
         # so that the sizes are guaranteed to be unknown
         for seed_value in seed_values:
             if isinstance(seed_value, tuple):
-                seed_name = seed_value[0]
-                proto_type = seed_value[1]
+                seed_name, proto_type = seed_value[:2]
                 seed_value_info = make_tensor_value_info(*seed_value)
             else:
                 seed_name = seed_value
                 seed_value_info = make_empty_tensor_value_info(seed_value)
-
+                proto_type = TensorProto.UNDEFINED  
             if seed_name in names_in_initializer:
                 input_value_infos.append(seed_value_info)
             else:
@@ -74,7 +72,10 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             ['y'],
             [], [])
-        self._assert_inferred(graph, [])
+        self.assertRaises(RuntimeError, self._inferred, graph)
+
+
+        
 
     def _identity_prop(self, op, **kwargs):  # type: (Text, **Any) -> None
         graph = self._make_graph(
@@ -184,7 +185,7 @@ class TestShapeInference(unittest.TestCase):
              ("z", TensorProto.FLOAT, (None, None, None))],
             [make_node("Concat", ['x', 'y', 'z'], ['out'], axis=0)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None)])
+        self.assertRaises(RuntimeError, self._inferred, graph)    
 
     def test_concat_3d_axis_2(self):  # type: () -> None
         graph = self._make_graph(
@@ -212,7 +213,7 @@ class TestShapeInference(unittest.TestCase):
     def test_reshape_dynamic_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4, 3)),
-             ('shape', TensorProto.UNDEFINED, (2,))],
+             ('shape', TensorProto.INT64, (2,))],
             [make_node("Reshape", ['x', 'shape'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, None)])
@@ -465,7 +466,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (4, 5, 6)),
              ('indices', TensorProto.INT64, (3, 3, 2)),
              ('updates', TensorProto.FLOAT, (3, 3, 6)),
-             ('shape', TensorProto.UNDEFINED, (2,))],
+             ('shape', TensorProto.INT64, (2,))],
             [make_node("Reshape", ['x', 'shape'], ['x_reshaped']),
              make_node("ScatterND", ['x_reshaped', 'indices', 'updates'], ['y'])],
             [])
@@ -532,15 +533,15 @@ class TestShapeInference(unittest.TestCase):
     def test_slice_with_input_shape_steps(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7)),
-             ('starts', TensorProto.INT, (3,)),
-             ('ends', TensorProto.INT, (3,)),
-             ('axes'),
-             ('steps', TensorProto.INT, (3,))],
+             ('starts', TensorProto.INT64, (3,)),
+             ('ends', TensorProto.INT64, (3,)),
+             ('axes',  TensorProto.INT64, (None)),
+             ('steps', TensorProto.INT64, (3,))],
             [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], ['y'])],
             [],
-            initializer=[make_tensor('starts', TensorProto.INT, (3,), (1, 0, 0)),
-                         make_tensor('ends', TensorProto.INT, (3,), (2, 6, 6)),
-                         make_tensor('steps', TensorProto.INT, (3,), (1, 4, 3))])
+            initializer=[make_tensor('starts', TensorProto.INT64, (3,), (1, 0, 0)),
+                         make_tensor('ends', TensorProto.INT64, (3,), (2, 6, 6)),
+                         make_tensor('steps', TensorProto.INT64, (3,), (1, 4, 3))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2, 2))])
 
     def test_slice_with_input_shape_axes(self):  # type: () -> None
@@ -549,7 +550,7 @@ class TestShapeInference(unittest.TestCase):
              ('starts', TensorProto.INT64, (2,)),
              ('ends', TensorProto.INT64, (2,)),
              ('axes', TensorProto.INT64, (2,)),
-             ('steps')],
+             ('steps', TensorProto.INT64, (None))],
             [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], ['y'])],
             [],
             initializer=[make_tensor('starts', TensorProto.INT64, (2,), (1, 0)),
@@ -3186,12 +3187,11 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (N, C, d1, d2)),
              ("target", TensorProto.INT64, (N, d1, d2)),
-             ("weight", TensorProto.FLOAT, (C + 1,))],
+             ("weight", TensorProto.FLOAT, (C + 1,)),
+             ("loss", TensorProto.FLOAT, (N, d1, d2))],
             [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='none')],
             [])
-        # TODO
-        # Cannot catch this error here; The original expcetion is duplicated output name (void 'loss'), which is not expected.
-        # self.assertRaises(RuntimeError, self._inferred, graph)
+        self.assertRaises(checker.ValidationError, self._inferred, graph)
 
     def test_softmax_cross_entropy_none(self):  # type: () -> None
         graph = self._make_graph(
