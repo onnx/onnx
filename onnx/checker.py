@@ -29,7 +29,7 @@ import warnings
 
 
 # Limitation of single protobuf file is 2GB
-MAXIMUM_PROTOBUF = 1900000000  # loose boundary
+MAXIMUM_PROTOBUF = 2000000000
 
 # TODO: This thing where we reserialize the protobuf back into the
 # string, only to deserialize it at the call site, is really goofy.
@@ -97,9 +97,10 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], boo
     else:
         # If the protobuf is larger than 2GB,
         # remind user should use the model path to check
-        if sys.getsizeof(model.SerializeToString()) > MAXIMUM_PROTOBUF:
+        protobuf_string = model.SerializeToString()
+        if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
             warnings.warn('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.')
-        C.check_model(model.SerializeToString())
+        C.check_model(protobuf_string)
         m = model
     if full_check:
         onnx.shape_inference.infer_shapes(m, True)
