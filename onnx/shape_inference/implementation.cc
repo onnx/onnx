@@ -220,7 +220,6 @@ static void InferShapesImpl(
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
-        //(void)ex;
         // Continue with inference for remaining nodes
         inference_errors += std::string(ex.what()) + "\n";
         continue;
@@ -230,7 +229,7 @@ static void InferShapesImpl(
         InferShapeForFunctionNode(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
-        //(void)function_ex;
+        // Continue with inference for remaining nodes
         inference_errors += std::string(function_ex.what()) + "\n";
         continue;
       }
@@ -425,7 +424,6 @@ void InferShapeForFunctionNode(
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData) {
-  
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs)
