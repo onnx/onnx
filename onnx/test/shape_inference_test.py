@@ -24,12 +24,14 @@ class TestShapeInference(unittest.TestCase):
             initializer = []
         names_in_initializer = set(x.name for x in initializer)
         input_value_infos = []
+        proto_type = TensorProto.FLOAT  # Should be set; checker does not allow UNDEFINED
         # If the starting values are not also initializers,
         # introduce the starting values as the output of reshape,
         # so that the sizes are guaranteed to be unknown
         for seed_value in seed_values:
             if isinstance(seed_value, tuple):
                 seed_name = seed_value[0]
+                proto_type = seed_value[1]
                 seed_value_info = make_tensor_value_info(*seed_value)
             else:
                 seed_name = seed_value
@@ -39,8 +41,8 @@ class TestShapeInference(unittest.TestCase):
                 input_value_infos.append(seed_value_info)
             else:
                 value_info.append(seed_value_info)
-                input_value_infos.append(make_tensor_value_info('SEED_' + seed_name, TensorProto.UNDEFINED, ()))
-                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, TensorProto.UNDEFINED, ()))
+                input_value_infos.append(make_tensor_value_info('SEED_' + seed_name, proto_type, ()))
+                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, proto_type, ()))
                 nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
         return helper.make_graph(nodes, "test", input_value_infos, [], initializer=initializer, value_info=value_info)
 
@@ -530,15 +532,15 @@ class TestShapeInference(unittest.TestCase):
     def test_slice_with_input_shape_steps(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7)),
-             ('starts', TensorProto.INT64, (3,)),
-             ('ends', TensorProto.INT64, (3,)),
+             ('starts', TensorProto.INT, (3,)),
+             ('ends', TensorProto.INT, (3,)),
              ('axes'),
-             ('steps', TensorProto.INT64, (3,))],
+             ('steps', TensorProto.INT, (3,))],
             [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], ['y'])],
             [],
-            initializer=[make_tensor('starts', TensorProto.INT64, (3,), (1, 0, 0)),
-                         make_tensor('ends', TensorProto.INT64, (3,), (2, 6, 6)),
-                         make_tensor('steps', TensorProto.INT64, (3,), (1, 4, 3))])
+            initializer=[make_tensor('starts', TensorProto.INT, (3,), (1, 0, 0)),
+                         make_tensor('ends', TensorProto.INT, (3,), (2, 6, 6)),
+                         make_tensor('steps', TensorProto.INT, (3,), (1, 4, 3))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2, 2))])
 
     def test_slice_with_input_shape_axes(self):  # type: () -> None
