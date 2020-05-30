@@ -25,7 +25,6 @@ from typing import TypeVar, Callable, Any, Type, cast, Union, Text
 from six import string_types
 import onnx.shape_inference
 import sys
-import warnings
 
 
 # Limitation of single protobuf file is 2GB
@@ -99,7 +98,7 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], boo
         # remind user should use the model path to check
         protobuf_string = model.SerializeToString()
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
-            warnings.warn(str('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.'))
+            raise RuntimeError('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.')
         C.check_model(protobuf_string)
         m = model
     if full_check:
