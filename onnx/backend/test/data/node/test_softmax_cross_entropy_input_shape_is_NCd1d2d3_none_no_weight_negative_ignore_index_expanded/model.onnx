@@ -1,41 +1,0 @@
-backend-test:ä
-¤
-x†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Max"	ReduceMax*
-axes@ 
-š
-x
-†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Max†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Sub"Sub
-—
-†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Sub†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Exp"Exp
-©
-†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Exp…SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_RS"	ReduceSum*
-axes@ 
-Ÿ
-†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Exp
-…SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_RS†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Div"Div
-—
-†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Div†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Log"Log
-Þ
-†SoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expanded_functionX_Log
-yz"NegativeLogLikelihoodLoss*
-	reduction"none *
-ignore_indexûÿÿÿÿÿÿÿÿ `test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_expandedZ
-x
-
-
-
-
-
-Z
-y
-
-
-
-
-b
-z
-
-
-
-
-B
