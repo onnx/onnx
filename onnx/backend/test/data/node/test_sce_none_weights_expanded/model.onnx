@@ -1,0 +1,38 @@
+backend-test:Œ	
+a
+xDSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Max"	ReduceMax*
+axes@ 
+”
+x
+DSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_MaxDSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Sub"Sub
+‘
+DSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_SubDSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Exp"Exp
+£
+DSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_ExpCSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_RS"	ReduceSum*
+axes@ 
+Ö
+DSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Exp
+CSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_RSDSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Div"Div
+‘
+DSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_DivDSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Log"Log
+€
+DSoftmaxCrossEntropyLoss_test_sce_none_weights_expanded_functionX_Log
+y
+wz"NegativeLogLikelihoodLoss*
+	reduction"none test_sce_none_weights_expandedZ
+x
+
+
+Z
+y
+
+
+Z
+w
+
+
+b
+z
+
+
+B
