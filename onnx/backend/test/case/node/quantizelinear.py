@@ -44,7 +44,7 @@ class QuantizeLinear(Base):
                         [-375, -470]], ], ], dtype=np.float32)
         y_scale = np.array([2, 4, 5], dtype=np.float32)
         y_zero_point = np.array([84, 24, 196], dtype=np.uint8)
-        y = (x / y_scale.reshape(1,3,1,1) + y_zero_point.reshape(1,3,1,1)).astype(np.uint8)
+        y = (x / y_scale.reshape(1, 3, 1, 1) + y_zero_point.reshape(1, 3, 1, 1)).astype(np.uint8)
 
         expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
                name='test_quantizelinear_axis')
