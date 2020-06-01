@@ -1,39 +1,0 @@
-backend-test:·
-B
-x
-yzlog_prob"SoftmaxCrossEntropyLoss*
-	reduction"none Ntest_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_probZ'
-x"
- 
-
-
-
-
-
-
-Z#
-y
-
-
-
-
-
-
-b#
-z
-
-
-
-
-
-
-b.
-log_prob"
- 
-
-
-
-
-
-
-B

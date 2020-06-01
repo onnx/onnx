@@ -168,12 +168,12 @@
   * <a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>
   * <a href="#Range">Range</a>
   * <a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>
-* ai.onnx.training
-  * <a href="#ai.onnx.training.Adagrad">ai.onnx.training.Adagrad</a>
-  * <a href="#ai.onnx.training.Adam">ai.onnx.training.Adam</a>
-  * <a href="#ai.onnx.training.Gradient">ai.onnx.training.Gradient</a>
-  * <a href="#ai.onnx.training.GraphCall">ai.onnx.training.GraphCall</a>
-  * <a href="#ai.onnx.training.Momentum">ai.onnx.training.Momentum</a>
+* ai.onnx.preview.training
+  * <a href="#ai.onnx.preview.training.Adagrad">ai.onnx.preview.training.Adagrad</a>
+  * <a href="#ai.onnx.preview.training.Adam">ai.onnx.preview.training.Adam</a>
+  * <a href="#ai.onnx.preview.training.Gradient">ai.onnx.preview.training.Gradient</a>
+  * <a href="#ai.onnx.preview.training.GraphCall">ai.onnx.preview.training.GraphCall</a>
+  * <a href="#ai.onnx.preview.training.Momentum">ai.onnx.preview.training.Momentum</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -184,9 +184,9 @@
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
+Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>, <a href="Changelog.md#Abs-6">Abs-6</a>
 
 #### Inputs
 
@@ -205,7 +205,7 @@ Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -373,9 +373,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href="Changelog.md#Add-6">Add-6</a>
+Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href="Changelog.md#Add-6">Add-6</a>, <a href="Changelog.md#Add-7">Add-7</a>
 
 #### Inputs
 
@@ -396,7 +396,7 @@ Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -578,9 +578,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>, <a href="Changelog.md#ArgMax-11">ArgMax-11</a>
+Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>, <a href="Changelog.md#ArgMax-11">ArgMax-11</a>, <a href="Changelog.md#ArgMax-12">ArgMax-12</a>
 
 #### Attributes
 
@@ -610,7 +610,7 @@ Other versions of this operator: <a href="Changelog.md#ArgMax-1">ArgMax-1</a>, <
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -839,9 +839,9 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>, <a href="Changelog.md#ArgMin-11">ArgMin-11</a>
+Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>, <a href="Changelog.md#ArgMin-11">ArgMin-11</a>, <a href="Changelog.md#ArgMin-12">ArgMin-12</a>
 
 #### Attributes
 
@@ -871,7 +871,7 @@ Other versions of this operator: <a href="Changelog.md#ArgMin-1">ArgMin-1</a>, <
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -2185,9 +2185,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>, <a href="Changelog.md#Cast-6">Cast-6</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>, <a href="Changelog.md#Cast-6">Cast-6</a>, <a href="Changelog.md#Cast-9">Cast-9</a>
 
 #### Attributes
 
@@ -2213,9 +2213,9 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -2236,10 +2236,40 @@ test_cases = [
     ('DOUBLE', 'FLOAT16'),
     ('FLOAT', 'STRING'),
     ('STRING', 'FLOAT'),
+    ('FLOAT', 'BFLOAT16'),
+    ('BFLOAT16', 'FLOAT'),
 ]
 
 for from_type, to_type in test_cases:
-    if 'STRING' != from_type:
+    input_type = None
+    output_type = None
+    if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
+        np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+        little_endisan = sys.byteorder == 'little'
+        np_uint16_view = np_fp32.view(dtype=np.uint16)
+        np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
+        if 'BFLOAT16' == to_type:
+            assert from_type == 'FLOAT'
+            input = np_fp32.reshape([3, 4])
+            output = np_bfp16.reshape([3, 4])
+            input_type = int(TensorProto.FLOAT)
+            output_type = int(TensorProto.BFLOAT16)
+        else:
+            assert to_type == 'FLOAT'
+            input = np_bfp16.reshape([3, 4])
+            #convert bfloat to FLOAT
+            np_fp32_zeros = np.zeros((len(np_bfp16) * 2,), dtype=np.uint16)
+            if little_endisan:
+                np_fp32_zeros[1::2] = np_bfp16
+            else:
+                np_fp32_zeros[0::2] = np_bfp16
+            np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
+            output = np_fp32_from_bfloat.reshape([3, 4])
+            input_type = int(TensorProto.BFLOAT16)
+            output_type = int(TensorProto.FLOAT)
+    elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
         if ('STRING' == to_type):
@@ -2264,8 +2294,14 @@ for from_type, to_type in test_cases:
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    expect(node, inputs=[input], outputs=[output],
-               name='test_cast_' + from_type + '_to_' + to_type)
+    if input_type and output_type:
+        expect(node, inputs=[input], outputs=[output],
+                   name='test_cast_' + from_type + '_to_' + to_type,
+                   input_types=[input_type],
+                   output_types=[output_type])
+    else:
+        expect(node, inputs=[input], outputs=[output],
+                   name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -2279,9 +2315,9 @@ for from_type, to_type in test_cases:
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>
+Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>, <a href="Changelog.md#Ceil-6">Ceil-6</a>
 
 #### Inputs
 
@@ -2300,7 +2336,7 @@ Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -2418,9 +2454,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>, <a href="Changelog.md#Clip-11">Clip-11</a>
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a href="Changelog.md#Clip-6">Clip-6</a>, <a href="Changelog.md#Clip-11">Clip-11</a>, <a href="Changelog.md#Clip-12">Clip-12</a>
 
 #### Inputs (1 - 3)
 
@@ -2443,7 +2479,7 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -2734,9 +2770,9 @@ expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>, <a href="Changelog.md#Concat-4">Concat-4</a>
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>, <a href="Changelog.md#Concat-4">Concat-4</a>, <a href="Changelog.md#Concat-11">Concat-11</a>
 
 #### Attributes
 
@@ -2762,7 +2798,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>, <
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
@@ -2863,9 +2899,9 @@ This version of the operator has been available since version 11 of the default 
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a>, <a href="Changelog.md#Constant-9">Constant-9</a>, <a href="Changelog.md#Constant-11">Constant-11</a>
+Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a>, <a href="Changelog.md#Constant-9">Constant-9</a>, <a href="Changelog.md#Constant-11">Constant-11</a>, <a href="Changelog.md#Constant-12">Constant-12</a>
 
 #### Attributes
 
@@ -2901,7 +2937,7 @@ Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -4016,9 +4052,9 @@ expect(node, inputs=[x, axis], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSpace-1</a>
+Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSpace-1</a>, <a href="Changelog.md#DepthToSpace-11">DepthToSpace-11</a>
 
 #### Attributes
 
@@ -4046,7 +4082,7 @@ Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">DepthToSp
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -4287,9 +4323,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href="Changelog.md#Div-6">Div-6</a>
+Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href="Changelog.md#Div-6">Div-6</a>, <a href="Changelog.md#Div-7">Div-7</a>
 
 #### Inputs
 
@@ -4310,7 +4346,7 @@ Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -4380,9 +4416,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>, <a href="Changelog.md#Dropout-10">Dropout-10</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>, <a href="Changelog.md#Dropout-7">Dropout-7</a>, <a href="Changelog.md#Dropout-10">Dropout-10</a>, <a href="Changelog.md#Dropout-12">Dropout-12</a>
 
 #### Attributes
 
@@ -4414,7 +4450,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input 'ratio' types to float tensors.</dd>
@@ -5052,9 +5088,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>, <a href="Changelog.md#Equal-7">Equal-7</a>
+Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>, <a href="Changelog.md#Equal-7">Equal-7</a>, <a href="Changelog.md#Equal-11">Equal-11</a>
 
 #### Inputs
 
@@ -5075,7 +5111,7 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>, <a 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
@@ -5130,7 +5166,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Erf-9">Erf-9</a>
 
 #### Inputs
 
@@ -5149,7 +5187,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5181,9 +5219,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>
+Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>, <a href="Changelog.md#Exp-6">Exp-6</a>
 
 #### Inputs
 
@@ -5202,7 +5240,7 @@ Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -5246,7 +5284,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Expand-8">Expand-8</a>
 
 #### Inputs
 
@@ -5267,7 +5307,7 @@ This version of the operator has been available since version 8 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensors.</dd>
 </dl>
 
@@ -5450,9 +5490,9 @@ expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Flatten-1">Flatten-1</a>, <a href="Changelog.md#Flatten-9">Flatten-9</a>
+Other versions of this operator: <a href="Changelog.md#Flatten-1">Flatten-1</a>, <a href="Changelog.md#Flatten-9">Flatten-9</a>, <a href="Changelog.md#Flatten-11">Flatten-11</a>
 
 #### Attributes
 
@@ -5478,7 +5518,7 @@ Other versions of this operator: <a href="Changelog.md#Flatten-1">Flatten-1</a>,
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output to all tensor types.</dd>
 </dl>
 
@@ -5562,9 +5602,9 @@ expect(node, inputs=[a], outputs=[b],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
+Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>, <a href="Changelog.md#Floor-6">Floor-6</a>
 
 #### Inputs
 
@@ -5583,7 +5623,7 @@ Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -5913,9 +5953,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>
+Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>, <a href="Changelog.md#Gather-11">Gather-11</a>
 
 #### Attributes
 
@@ -5943,7 +5983,7 @@ Other versions of this operator: <a href="Changelog.md#Gather-1">Gather-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -6075,7 +6115,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GatherElements-11">GatherElements-11</a>
 
 #### Attributes
 
@@ -6103,7 +6145,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -6294,9 +6336,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GatherND-11">GatherND-11</a>
+Other versions of this operator: <a href="Changelog.md#GatherND-11">GatherND-11</a>, <a href="Changelog.md#GatherND-12">GatherND-12</a>
 
 #### Attributes
 
@@ -6324,7 +6366,7 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">GatherND-11<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
@@ -6416,9 +6458,9 @@ expect(node, inputs=[data, indices], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>, <a href="Changelog.md#Gemm-9">Gemm-9</a>
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>, <a href="Changelog.md#Gemm-7">Gemm-7</a>, <a href="Changelog.md#Gemm-9">Gemm-9</a>, <a href="Changelog.md#Gemm-11">Gemm-11</a>
 
 #### Attributes
 
@@ -6454,7 +6496,7 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -6891,9 +6933,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>, <a href="Changelog.md#Greater-7">Greater-7</a>
+Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>, <a href="Changelog.md#Greater-7">Greater-7</a>, <a href="Changelog.md#Greater-9">Greater-9</a>
 
 #### Inputs
 
@@ -6914,7 +6956,7 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>,
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
@@ -7150,9 +7192,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Hardmax-1">Hardmax-1</a>
+Other versions of this operator: <a href="Changelog.md#Hardmax-1">Hardmax-1</a>, <a href="Changelog.md#Hardmax-11">Hardmax-11</a>
 
 #### Attributes
 
@@ -7178,7 +7220,7 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">Hardmax-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -7277,7 +7319,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Identity-1">Identity-1</a>
 
 #### Inputs
 
@@ -7296,7 +7340,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -7575,7 +7619,9 @@ expect(node, inputs=[x], outputs=[y], name='test_isinf_positive')
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#IsNaN-9">IsNaN-9</a>
 
 #### Inputs
 
@@ -7594,7 +7640,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -7636,7 +7682,9 @@ expect(node, inputs=[x], outputs=[y], name='test_isnan')
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LRN-1">LRN-1</a>
 
 #### Attributes
 
@@ -7668,7 +7716,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output  types to float tensors.</dd>
 </dl>
 
@@ -8087,9 +8135,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a href="Changelog.md#Less-7">Less-7</a>
+Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a href="Changelog.md#Less-7">Less-7</a>, <a href="Changelog.md#Less-9">Less-9</a>
 
 #### Inputs
 
@@ -8110,7 +8158,7 @@ Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
@@ -8242,9 +8290,9 @@ This version of the operator has been available since version 12 of the default 
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>
+Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>, <a href="Changelog.md#Log-6">Log-6</a>
 
 #### Inputs
 
@@ -8263,7 +8311,7 @@ Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -8313,9 +8361,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">LogSoftmax-1</a>
+Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">LogSoftmax-1</a>, <a href="Changelog.md#LogSoftmax-11">LogSoftmax-11</a>
 
 #### Attributes
 
@@ -8341,7 +8389,7 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">LogSoftmax-
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -8718,9 +8766,9 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>, <
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MatMul-1">MatMul-1</a>
+Other versions of this operator: <a href="Changelog.md#MatMul-1">MatMul-1</a>, <a href="Changelog.md#MatMul-9">MatMul-9</a>
 
 #### Inputs
 
@@ -8741,7 +8789,7 @@ Other versions of this operator: <a href="Changelog.md#MatMul-1">MatMul-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -8867,9 +8915,9 @@ expect(node, inputs=[A, B, a_zero_point, b_zero_point], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>, <a href="Changelog.md#Max-8">Max-8</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>, <a href="Changelog.md#Max-8">Max-8</a>, <a href="Changelog.md#Max-12">Max-12</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -8888,7 +8936,7 @@ Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
@@ -9704,9 +9752,9 @@ expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_o
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a href="Changelog.md#Mean-6">Mean-6</a>
+Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a href="Changelog.md#Mean-6">Mean-6</a>, <a href="Changelog.md#Mean-8">Mean-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -9725,7 +9773,7 @@ Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -9776,7 +9824,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">MeanVarianceNormalization-9</a>
 
 #### Attributes
 
@@ -9802,7 +9852,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -9852,9 +9902,9 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>, <a href="Changelog.md#Min-8">Min-8</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>, <a href="Changelog.md#Min-8">Min-8</a>, <a href="Changelog.md#Min-12">Min-12</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -9873,7 +9923,7 @@ Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
@@ -9955,7 +10005,9 @@ for op_dtype in all_numeric_dtypes:
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Mod-10">Mod-10</a>
 
 #### Attributes
 
@@ -9983,7 +10035,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -10271,9 +10323,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href="Changelog.md#Mul-6">Mul-6</a>
+Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href="Changelog.md#Mul-6">Mul-6</a>, <a href="Changelog.md#Mul-7">Mul-7</a>
 
 #### Inputs
 
@@ -10294,7 +10346,7 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -10399,9 +10451,9 @@ This version of the operator has been available since version 7 of the default O
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
+Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>, <a href="Changelog.md#Neg-6">Neg-6</a>
 
 #### Inputs
 
@@ -10420,7 +10472,7 @@ Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
@@ -10603,7 +10655,7 @@ target = np.random.randint(0, high=C, size=(N, ))
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NC')
+    name='test_nllloss_NC')
 ```
 
 </details>
@@ -10629,7 +10681,7 @@ target = np.random.randint(0, high=C, size=(N, d1))
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1')
+    name='test_nllloss_NCd1')
 ```
 
 </details>
@@ -10658,7 +10710,7 @@ target[0][0] = np.int64(1)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1_ignore_index')
+    name='test_nllloss_NCd1_ignore_index')
 ```
 
 </details>
@@ -10692,7 +10744,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1_mean_weight_negative_ignore_index')
+    name='test_nllloss_NCd1_mean_weight_negative_ignore_index')
 ```
 
 </details>
@@ -10719,7 +10771,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1_weight')
+    name='test_nllloss_NCd1_weight')
 ```
 
 </details>
@@ -10749,7 +10801,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_iinput_shape_is_NCd1_weight_ignore_index')
+    name='test_nllloss_NCd1_weight_ignore_index')
 ```
 
 </details>
@@ -10775,7 +10827,7 @@ target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2')
+    name='test_nllloss_NCd1d2')
 ```
 
 </details>
@@ -10804,7 +10856,7 @@ target[0][0][0] = np.int64(1)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index')
+    name='test_nllloss_NCd1d2_no_weight_reduction_mean_ignore_index')
 ```
 
 </details>
@@ -10830,7 +10882,7 @@ target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_reduction_mean')
+    name='test_nllloss_NCd1d2_reduction_mean')
 ```
 
 </details>
@@ -10856,7 +10908,7 @@ target = np.random.randint(0, high=C, size=(N, dim1, dim2))
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_reduction_sum')
+    name='test_nllloss_NCd1d2_reduction_sum')
 ```
 
 </details>
@@ -10883,7 +10935,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight')
+    name='test_nllloss_NCd1d2_with_weight')
 ```
 
 </details>
@@ -10910,7 +10962,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_mean')
+    name='test_nllloss_NCd1d2_with_weight_reduction_mean')
 ```
 
 </details>
@@ -10937,7 +10989,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum')
+    name='test_nllloss_NCd1d2_with_weight_reduction_sum')
 ```
 
 </details>
@@ -10967,7 +11019,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index')
+    name='test_nllloss_NCd1d2_with_weight_reduction_sum_ignore_index')
 ```
 
 </details>
@@ -10999,7 +11051,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     ignore_index=ignore_index)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index')
+    name='test_nllloss_NCd1d2d3_none_no_weight_negative_ignore_index')
 ```
 
 </details>
@@ -11033,7 +11085,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2d3_sum_weight_high_ignore_index')
+    name='test_nllloss_NCd1d2d3_sum_weight_high_ignore_index')
 ```
 
 </details>
@@ -11063,7 +11115,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     reduction=reduction)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2d3d4d5_mean_weight')
+    name='test_nllloss_NCd1d2d3d4d5_mean_weight')
 ```
 
 </details>
@@ -11091,7 +11143,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     reduction=reduction)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_negative_log_likelihood_loss_input_shape_is_NCd1d2d3d4d5_none_no_weight')
+    name='test_nllloss_NCd1d2d3d4d5_none_no_weight')
 ```
 
 </details>
@@ -11425,7 +11477,9 @@ expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, s
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#NonZero-9">NonZero-9</a>
 
 #### Inputs
 
@@ -11444,7 +11498,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to all tensor types.</dd>
 </dl>
 
@@ -11991,9 +12045,9 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href="Changelog.md#Pad-2">Pad-2</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href="Changelog.md#Pad-2">Pad-2</a>, <a href="Changelog.md#Pad-11">Pad-11</a>
 
 #### Attributes
 
@@ -12023,7 +12077,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrains input and output to only numeric types.</dd>
 </dl>
 
@@ -12092,9 +12146,9 @@ for mode in ['edge', 'reflect']:
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>, <a href="Changelog.md#Pow-7">Pow-7</a>
+Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>, <a href="Changelog.md#Pow-7">Pow-7</a>, <a href="Changelog.md#Pow-12">Pow-12</a>
 
 #### Inputs
 
@@ -12115,7 +12169,7 @@ Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input X and output types to float/int tensors.</dd>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input Y types to float/int tensors.</dd>
@@ -13076,9 +13130,9 @@ expect(node, inputs=[start, limit, delta], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-1</a>
+Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-1</a>, <a href="Changelog.md#Reciprocal-6">Reciprocal-6</a>
 
 #### Inputs
 
@@ -13097,7 +13151,7 @@ Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -13139,9 +13193,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceL1-1">ReduceL1-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceL1-1">ReduceL1-1</a>, <a href="Changelog.md#ReduceL1-11">ReduceL1-11</a>
 
 #### Attributes
 
@@ -13169,7 +13223,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">ReduceL1-1</a
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -13338,9 +13392,9 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceL2-1">ReduceL2-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceL2-1">ReduceL2-1</a>, <a href="Changelog.md#ReduceL2-11">ReduceL2-11</a>
 
 #### Attributes
 
@@ -13368,7 +13422,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">ReduceL2-1</a
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -13550,9 +13604,9 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">ReduceLogSum-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">ReduceLogSum-1</a>, <a href="Changelog.md#ReduceLogSum-11">ReduceLogSum-11</a>
 
 #### Attributes
 
@@ -13580,7 +13634,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">ReduceLog
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -13668,9 +13722,9 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">ReduceLogSumExp-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">ReduceLogSumExp-1</a>, <a href="Changelog.md#ReduceLogSumExp-11">ReduceLogSumExp-11</a>
 
 #### Attributes
 
@@ -13698,7 +13752,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">Reduce
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -13879,9 +13933,9 @@ expect(node, inputs=[data], outputs=[reduced],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>, <a href="Changelog.md#ReduceMax-11">ReduceMax-11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1</a>, <a href="Changelog.md#ReduceMax-11">ReduceMax-11</a>, <a href="Changelog.md#ReduceMax-12">ReduceMax-12</a>
 
 #### Attributes
 
@@ -13909,7 +13963,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">ReduceMax-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
 <dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
@@ -14059,9 +14113,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_ax
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-1</a>, <a href="Changelog.md#ReduceMean-11">ReduceMean-11</a>
 
 #### Attributes
 
@@ -14089,7 +14143,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">ReduceMean-
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -14240,9 +14294,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_a
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>, <a href="Changelog.md#ReduceMin-11">ReduceMin-11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1</a>, <a href="Changelog.md#ReduceMin-11">ReduceMin-11</a>, <a href="Changelog.md#ReduceMin-12">ReduceMin-12</a>
 
 #### Attributes
 
@@ -14270,7 +14324,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">ReduceMin-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(uint8), tensor(int8)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
 <dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
@@ -14419,9 +14473,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_ax
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceProd-1">ReduceProd-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceProd-1">ReduceProd-1</a>, <a href="Changelog.md#ReduceProd-11">ReduceProd-11</a>
 
 #### Attributes
 
@@ -14449,7 +14503,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">ReduceProd-
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -14596,9 +14650,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_a
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceSum-1">ReduceSum-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceSum-1">ReduceSum-1</a>, <a href="Changelog.md#ReduceSum-11">ReduceSum-11</a>
 
 #### Attributes
 
@@ -14626,7 +14680,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">ReduceSum-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -14777,9 +14831,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_ax
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">ReduceSumSquare-1</a>
+Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">ReduceSumSquare-1</a>, <a href="Changelog.md#ReduceSumSquare-11">ReduceSumSquare-11</a>
 
 #### Attributes
 
@@ -14807,7 +14861,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">Reduce
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -14955,9 +15009,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_nega
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
+Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>, <a href="Changelog.md#Relu-6">Relu-6</a>
 
 #### Inputs
 
@@ -14976,7 +15030,7 @@ Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -15013,9 +15067,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 5 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>, <a href="Changelog.md#Reshape-5">Reshape-5</a>
 
 #### Inputs
 
@@ -15036,7 +15090,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -15085,9 +15139,9 @@ for test_name, shape in test_cases.items():
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Resize-10">Resize-10</a>
+Other versions of this operator: <a href="Changelog.md#Resize-10">Resize-10</a>, <a href="Changelog.md#Resize-11">Resize-11</a>
 
 #### Attributes
 
@@ -15151,7 +15205,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain roi type to float or double.</dd>
@@ -16859,9 +16913,9 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 
 #### Version
 
-This version of the operator has been deprecated since version 11 of the default ONNX operator set.
+This version of the operator has been deprecated since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Scatter-9">Scatter-9</a>
+Other versions of this operator: <a href="Changelog.md#Scatter-9">Scatter-9</a>, <a href="Changelog.md#Scatter-11">Scatter-11</a>
 
 
 #### Examples
@@ -16974,7 +17028,9 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ScatterElements-11">ScatterElements-11</a>
 
 #### Attributes
 
@@ -17004,7 +17060,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input and output types can be of any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -17152,7 +17208,9 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ScatterND-11">ScatterND-11</a>
 
 #### Inputs
 
@@ -17175,7 +17233,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
@@ -17528,7 +17586,9 @@ This version of the operator has been available since version 11 of the default 
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Shape-1">Shape-1</a>
 
 #### Inputs
 
@@ -17547,7 +17607,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor.</dd>
@@ -17678,9 +17738,9 @@ expect(node, inputs=[X], outputs=[Y],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>
+Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>, <a href="Changelog.md#Sigmoid-6">Sigmoid-6</a>
 
 #### Inputs
 
@@ -17699,7 +17759,7 @@ Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -17737,7 +17797,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Sign-9">Sign-9</a>
 
 #### Inputs
 
@@ -17756,7 +17818,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -17900,7 +17962,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Size-1">Size-1</a>
 
 #### Inputs
 
@@ -17919,7 +17983,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
@@ -17998,9 +18062,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a href="Changelog.md#Slice-10">Slice-10</a>
+Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a href="Changelog.md#Slice-10">Slice-10</a>, <a href="Changelog.md#Slice-11">Slice-11</a>
 
 #### Inputs (3 - 5)
 
@@ -18027,7 +18091,7 @@ Other versions of this operator: <a href="Changelog.md#Slice-1">Slice-1</a>, <a 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -18243,9 +18307,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Softmax-1">Softmax-1</a>
+Other versions of this operator: <a href="Changelog.md#Softmax-1">Softmax-1</a>, <a href="Changelog.md#Softmax-11">Softmax-11</a>
 
 #### Attributes
 
@@ -18271,7 +18335,7 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">Softmax-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -18409,7 +18473,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">SoftmaxCrossEntropyLoss-12</a>
 
 #### Attributes
 
@@ -18443,7 +18509,7 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain target to integer types</dd>
@@ -18478,7 +18544,7 @@ sce = softmaxcrossentropy(x,
                           reduction=reduction,
                           ignore_index=ignore_index)
 
-expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1_mean_weight_negative_ignore_index')
+expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1_mean_weight_negative_ignore_index')
 ```
 
 </details>
@@ -18511,7 +18577,7 @@ loss, log_prob = softmaxcrossentropy(x,
                           ignore_index=ignore_index,
                           get_log_prob=True)
 
-expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1_mean_weight_negative_ignore_index_log_prob')
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1_mean_weight_negative_ignore_index_log_prob')
 ```
 
 </details>
@@ -18541,7 +18607,7 @@ sce = softmaxcrossentropy(x,
                           reduction=reduction,
                           ignore_index=ignore_index)
 
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_NCd1d2d3_none_no_weight_negative_ignore_index')
 ```
 
 </details>
@@ -18572,7 +18638,7 @@ loss, log_prob = softmaxcrossentropy(x,
                           ignore_index=ignore_index,
                           get_log_prob=True)
 
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob')
 ```
 
 </details>
@@ -18604,7 +18670,7 @@ sce = softmaxcrossentropy(x,
                           reduction=reduction,
                           ignore_index=ignore_index)
 
-expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_sum_weight_high_ignore_index')
+expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1d2d3_sum_weight_high_ignore_index')
 ```
 
 </details>
@@ -18637,7 +18703,7 @@ loss, log_prob = softmaxcrossentropy(x,
                           ignore_index=ignore_index,
                           get_log_prob=True)
 
-expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3_sum_weight_high_ignore_index_log_prob')
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_sum_weight_high_ignore_index_log_prob')
 ```
 
 </details>
@@ -18665,7 +18731,7 @@ sce = softmaxcrossentropy(x,
                         weight=weight,
                         reduction=reduction)
 
-expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_mean_weight')
+expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1d2d3d4d5_mean_weight')
 ```
 
 </details>
@@ -18694,7 +18760,7 @@ loss, log_prob = softmaxcrossentropy(x,
                         reduction=reduction,
                         get_log_prob=True)
 
-expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_mean_weight_log_prob')
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1d2d3d4d5_mean_weight_log_prob')
 ```
 
 </details>
@@ -18720,7 +18786,7 @@ sce = softmaxcrossentropy(x,
                         labels,
                         reduction=reduction)
 
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_NCd1d2d3d4d5_none_no_weight')
 ```
 
 </details>
@@ -18747,7 +18813,7 @@ loss, log_prob = softmaxcrossentropy(x,
                         reduction=reduction,
                         get_log_prob=True)
 
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_NCd1d2d3d4d5_none_no_weight_log_prob')
 ```
 
 </details>
@@ -18775,7 +18841,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 sce = softmaxcrossentropy(x, labels)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean')
 ```
 
 </details>
@@ -18803,7 +18869,7 @@ y = np.random.randint(0, high=5, size=(3, 2))
 sce = softmaxcrossentropy(x, y)
 
 # Check results
-expect(node, inputs=[x, y], outputs=[sce], name='test_softmax_cross_entropy_mean_3d')
+expect(node, inputs=[x, y], outputs=[sce], name='test_sce_mean_3d')
 ```
 
 </details>
@@ -18831,7 +18897,7 @@ y = np.random.randint(0, high=5, size=(3, 2))
 loss, log_prob = softmaxcrossentropy(x, y, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_3d_log_prob')
+expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_sce_mean_3d_log_prob')
 ```
 
 </details>
@@ -18859,7 +18925,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 loss, log_prob = softmaxcrossentropy(x, labels, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_log_prob')
 ```
 
 </details>
@@ -18890,7 +18956,7 @@ labels[0] = np.int64(2)
 sce = softmaxcrossentropy(x, labels, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ignore_index')
 ```
 
 </details>
@@ -18921,7 +18987,7 @@ labels[0][0] = np.int64(2)
 sce = softmaxcrossentropy(x, labels, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_3d')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ignore_index_3d')
 ```
 
 </details>
@@ -18952,7 +19018,7 @@ labels[0][0] = np.int64(2)
 loss, log_prob = softmaxcrossentropy(x, labels, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_3d_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ignore_index_3d_log_prob')
 ```
 
 </details>
@@ -18983,7 +19049,7 @@ labels[0][0][0] = np.int64(2)
 sce = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_4d')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ignore_index_4d')
 ```
 
 </details>
@@ -19014,7 +19080,7 @@ labels[0][0][0] = np.int64(2)
 loss, log_prob = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_4d_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ignore_index_4d_log_prob')
 ```
 
 </details>
@@ -19045,7 +19111,7 @@ labels[0] = np.int64(2)
 loss, log_prob = softmaxcrossentropy(x, labels, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_no_weight_ignore_index_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ignore_index_log_prob')
 ```
 
 </details>
@@ -19074,7 +19140,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, weight=weights)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight')
 ```
 
 </details>
@@ -19106,7 +19172,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ignore_index')
 ```
 
 </details>
@@ -19138,7 +19204,7 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index_3d')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ignore_index_3d')
 ```
 
 </details>
@@ -19170,7 +19236,7 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_ignore_index_3d_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ignore_index_3d_log_prob')
 ```
 
 </details>
@@ -19202,7 +19268,7 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, reduction=reduction, weight=weights, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_mean_weight_ignore_index_4d')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ignore_index_4d')
 ```
 
 </details>
@@ -19234,7 +19300,7 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, reduction=reduction, weight=weights, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_ignore_index_4d_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ignore_index_4d_log_prob')
 ```
 
 </details>
@@ -19266,7 +19332,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_ignore_index_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ignore_index_log_prob')
 ```
 
 </details>
@@ -19295,7 +19361,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_mean_weight_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_log_prob')
 ```
 
 </details>
@@ -19323,7 +19389,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 sce = softmaxcrossentropy(x, labels, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_none')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_none')
 ```
 
 </details>
@@ -19351,7 +19417,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 loss, log_prob = softmaxcrossentropy(x, labels, reduction='none', get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_none_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_none_log_prob')
 ```
 
 </details>
@@ -19380,7 +19446,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, weight=weights, reduction='none')
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_softmax_cross_entropy_none_weights')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_none_weights')
 ```
 
 </details>
@@ -19409,7 +19475,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, reduction='none', get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_softmax_cross_entropy_none_weights_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_none_weights_log_prob')
 ```
 
 </details>
@@ -19437,7 +19503,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 sce = softmaxcrossentropy(x, labels, reduction='sum')
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_softmax_cross_entropy_sum')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_sum')
 ```
 
 </details>
@@ -19465,7 +19531,7 @@ labels = np.random.randint(0, high=5, size=(3, ))
 loss, log_prob = softmaxcrossentropy(x, labels, reduction='sum', get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_softmax_cross_entropy_sum_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_sum_log_prob')
 ```
 
 </details>
@@ -19593,7 +19659,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">SpaceToDepth-1</a>
 
 #### Attributes
 
@@ -19619,7 +19687,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -19632,9 +19700,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a href="Changelog.md#Split-2">Split-2</a>
+Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a href="Changelog.md#Split-2">Split-2</a>, <a href="Changelog.md#Split-11">Split-11</a>
 
 #### Attributes
 
@@ -19662,7 +19730,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -19849,9 +19917,9 @@ This version of the operator has been available since version 11 of the default 
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>
+Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>, <a href="Changelog.md#Sqrt-6">Sqrt-6</a>
 
 #### Inputs
 
@@ -19870,7 +19938,7 @@ Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -19910,9 +19978,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>
+Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>, <a href="Changelog.md#Squeeze-11">Squeeze-11</a>
 
 #### Attributes
 
@@ -19938,7 +20006,7 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">Squeeze-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -20173,9 +20241,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwo
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href="Changelog.md#Sub-6">Sub-6</a>
+Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href="Changelog.md#Sub-6">Sub-6</a>, <a href="Changelog.md#Sub-7">Sub-7</a>
 
 #### Inputs
 
@@ -20196,7 +20264,7 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -20257,9 +20325,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href="Changelog.md#Sum-6">Sum-6</a>
+Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href="Changelog.md#Sum-6">Sum-6</a>, <a href="Changelog.md#Sum-8">Sum-8</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -20278,7 +20346,7 @@ Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -20384,9 +20452,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
+Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>, <a href="Changelog.md#Tanh-6">Tanh-6</a>
 
 #### Inputs
 
@@ -20405,7 +20473,7 @@ Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -20815,9 +20883,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Tile-1">Tile-1</a>
+Other versions of this operator: <a href="Changelog.md#Tile-1">Tile-1</a>, <a href="Changelog.md#Tile-6">Tile-6</a>
 
 #### Inputs
 
@@ -20838,7 +20906,7 @@ Other versions of this operator: <a href="Changelog.md#Tile-1">Tile-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain repeat's type to int64 tensors.</dd>
@@ -21095,7 +21163,9 @@ expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Transpose-1">Transpose-1</a>
 
 #### Attributes
 
@@ -21121,7 +21191,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -21462,9 +21532,9 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1</a>
+Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1</a>, <a href="Changelog.md#Unsqueeze-11">Unsqueeze-11</a>
 
 #### Attributes
 
@@ -21490,7 +21560,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">Unsqueeze-1<
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -21614,9 +21684,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been deprecated since version 10 of the default ONNX operator set.
+This version of the operator has been deprecated since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>, <a href="Changelog.md#Upsample-9">Upsample-9</a>
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>, <a href="Changelog.md#Upsample-9">Upsample-9</a>, <a href="Changelog.md#Upsample-10">Upsample-10</a>
 
 
 #### Examples
@@ -21861,8 +21931,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-## ai.onnx.training
-### <a name="ai.onnx.training.Adagrad"></a><a name="ai.onnx.training.adagrad">**ai.onnx.training.Adagrad**</a>
+## ai.onnx.preview.training
+### <a name="ai.onnx.preview.training.Adagrad"></a><a name="ai.onnx.preview.training.adagrad">**ai.onnx.preview.training.Adagrad**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -21917,7 +21987,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -21978,7 +22048,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -21995,7 +22065,7 @@ x_new, h_new = apply_adagrad(r, t, x, g, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, h],
        outputs=[x_new, h_new], name='test_adagrad',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -22018,7 +22088,7 @@ node = onnx.helper.make_node('Adagrad',
                              norm_coefficient=norm_coefficient,
                              epsilon=epsilon,
                              decay_factor=decay_factor,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -22042,13 +22112,13 @@ x2_new, h2_new = apply_adagrad(r, t, x2, g2, h2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
        outputs=[x1_new, x2_new, h1_new, h2_new], name='test_adagrad_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
 
 
-### <a name="ai.onnx.training.Adam"></a><a name="ai.onnx.training.adam">**ai.onnx.training.Adam**</a>
+### <a name="ai.onnx.preview.training.Adam"></a><a name="ai.onnx.preview.training.adam">**ai.onnx.preview.training.Adam**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -22114,7 +22184,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22181,7 +22251,7 @@ node = onnx.helper.make_node('Adam',
                              alpha=alpha,
                              beta=beta,
                              epsilon=epsilon,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -22200,7 +22270,7 @@ x_new, v_new, h_new = apply_adam(r, t, x, g, v, h,
 # Check results.
 expect(node, inputs=[r, t, x, g, v, h],
        outputs=[x_new, v_new, h_new], name='test_adam',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -22226,7 +22296,7 @@ node = onnx.helper.make_node('Adam',
                              norm_coefficient=norm_coefficient,
                              alpha=alpha,
                              beta=beta,
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -22255,13 +22325,13 @@ x2_new, v2_new, h2_new = apply_adam(r, t, x2, g2, v2, h2,
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
        outputs=[x1_new, x2_new, v1_new, v2_new, h1_new, h2_new],
        name='test_adam_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
 
 
-### <a name="ai.onnx.training.Gradient"></a><a name="ai.onnx.training.gradient">**ai.onnx.training.Gradient**</a>
+### <a name="ai.onnx.preview.training.Gradient"></a><a name="ai.onnx.preview.training.gradient">**ai.onnx.preview.training.Gradient**</a>
 
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
@@ -22389,7 +22459,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22437,7 +22507,7 @@ add_node = onnx.helper.make_node('Add',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dc_da', 'dc_db'], name='my_gradient',
-    domain='ai.onnx.training',
+    domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     xs=['a', 'b'], y='c')
 
 a = np.array(1.0).astype(np.float32)
@@ -22464,8 +22534,8 @@ graph = onnx.helper.make_graph(
         onnx.helper.make_tensor_value_info('dc_db',
                                            onnx.TensorProto.FLOAT, [])])
 opsets = [
-    onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+    onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
+    onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
 model = onnx.helper.make_model(
     graph,
     producer_name='backend-test',
@@ -22488,7 +22558,7 @@ mul_node = onnx.helper.make_node('Mul',
 gradient_node = onnx.helper.make_node(
     'Gradient', ['a', 'b'],
     ['dd_da', 'dd_db'], name='my_gradient',
-    domain='ai.onnx.training',
+    domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     xs=['a', 'b'], y='d')
 
 a = np.array(1.0).astype(np.float32)
@@ -22518,8 +22588,8 @@ graph = onnx.helper.make_graph(
                                            onnx.TensorProto.FLOAT, [])])
 
 opsets = [
-    onnx.helper.make_operatorsetid('', 12),
-    onnx.helper.make_operatorsetid('ai.onnx.training', 1)]
+    onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
+    onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
 model = onnx.helper.make_model(graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -22530,7 +22600,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 </details>
 
 
-### <a name="ai.onnx.training.GraphCall"></a><a name="ai.onnx.training.graphcall">**ai.onnx.training.GraphCall**</a>
+### <a name="ai.onnx.preview.training.GraphCall"></a><a name="ai.onnx.preview.training.graphcall">**ai.onnx.preview.training.GraphCall**</a>
 
   The GraphCall operator invokes a graph inside TrainingInfoProto's
   algorithm field. The GraphCall inputs and outputs are bound to those of
@@ -22623,7 +22693,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22654,7 +22724,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
-### <a name="ai.onnx.training.Momentum"></a><a name="ai.onnx.training.momentum">**ai.onnx.training.Momentum**</a>
+### <a name="ai.onnx.preview.training.Momentum"></a><a name="ai.onnx.preview.training.momentum">**ai.onnx.preview.training.Momentum**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
@@ -22719,7 +22789,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.training' operator set.
+This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
 
 #### Attributes
 
@@ -22783,7 +22853,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -22800,7 +22870,7 @@ x_new, v_new = apply_momentum(r, t, x, g, v,
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -22824,7 +22894,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='standard',
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -22848,7 +22918,7 @@ x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
 # Check results.
 expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
        outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>
@@ -22871,7 +22941,7 @@ node = onnx.helper.make_node('Momentum',
                              alpha=alpha,
                              beta=beta,
                              mode='nesterov',
-                             domain='ai.onnx.training'
+                             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
                              )
 
 # Define operator inputs.
@@ -22881,14 +22951,14 @@ x = np.array([1.2, 2.8], dtype=np.float32)
 g = np.array([-0.94, -2.5], dtype=np.float32)
 v = np.array([1.7, 3.6], dtype=np.float32)
 
-# Compute expected outputs of Adagrad.
+# Compute expected outputs of Momentum.
 x_new, v_new = apply_nesterov(r, t, x, g, v,
                               norm_coefficient, alpha, beta)
 
 # Check results.
 expect(node, inputs=[r, t, x, g, v],
        outputs=[x_new, v_new], name='test_nesterov_momentum',
-       opset_imports=[onnx.helper.make_opsetid('ai.onnx.training', 1)])
+       opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 ```
 
 </details>

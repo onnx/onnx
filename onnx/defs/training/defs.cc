@@ -134,7 +134,7 @@ auto-differentiation.
 
 )DOC";
 
-ONNX_TRAINING_OPERATOR_SET_SCHEMA(
+ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     Gradient,
     1,
     OpSchema()
@@ -288,7 +288,7 @@ GraphCall's may be still connected the global "W" variable and therefore the
 structure of the computation graph is unchanged.
 )DOC";
 
-ONNX_TRAINING_OPERATOR_SET_SCHEMA(
+ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     GraphCall,
     1,
     OpSchema()
@@ -377,7 +377,7 @@ static const char* Adagrad_ver1_doc = R"DOC(
     descent update.
 )DOC";
 
-ONNX_TRAINING_OPERATOR_SET_SCHEMA(
+ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     Adagrad,
     1,
     OpSchema()
@@ -524,7 +524,7 @@ static const char* Momentum_ver1_doc = R"DOC(
     be concatenated too) and then our pseudo code becomes applicable.
 )DOC";
 
-ONNX_TRAINING_OPERATOR_SET_SCHEMA(
+ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     Momentum,
     1,
     OpSchema()
@@ -675,7 +675,7 @@ static const char* Adam_ver1_doc = R"DOC(
     independently to each of them.
 )DOC";
 
-ONNX_TRAINING_OPERATOR_SET_SCHEMA(
+ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     Adam,
     1,
     OpSchema()
