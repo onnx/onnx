@@ -10,14 +10,14 @@ namespace ONNX_NAMESPACE {
 std::vector<std::string> GetSupportedDataTypesForReductionOps(
     bool supports8bit) {
   if (supports8bit) {
-    auto data_types = OpSchema::numeric_types_for_math_reduction();
+    auto data_types = OpSchema::numeric_types_for_math_reduction_with_bfloat();
     data_types.push_back("tensor(uint8)");
     data_types.push_back("tensor(int8)");
 
     return data_types;
   }
 
-  return OpSchema::numeric_types_for_math_reduction();
+  return OpSchema::numeric_types_for_math_reduction_with_bfloat();
 }
 
 std::function<void(OpSchema&)> ReduceDocGenerator(
@@ -101,52 +101,52 @@ False instead of True.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMax,
-    12,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("max", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMin,
-    12,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("min", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSumSquare,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("sum square")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMean,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("mean")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceProd,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("product")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSum,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("log sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("log sum exponent")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceL1,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("L1 norm")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceL2,
-    11,
+    13,
     OpSchema().FillUsing(ReduceDocGenerator("L2 norm")));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
@@ -185,7 +185,7 @@ The type of the output tensor is integer.)DOC";
         "tensor(int64)");
     schema.TypeConstraint(
         "T",
-        OpSchema::all_numeric_types(),
+        OpSchema::all_numeric_types_with_bfloat(),
         "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
@@ -234,12 +234,12 @@ The type of the output tensor is integer.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ArgMax,
-    12,
+    13,
     OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ArgMin,
-    12,
+    13,
     OpSchema().FillUsing(ArgReduceDocGenerator("min")));
 
 } // namespace ONNX_NAMESPACE
