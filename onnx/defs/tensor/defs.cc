@@ -1997,8 +1997,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "Y",
             "N-D tensor after resizing",
-            "T1",
-            OpSchema::Optional)
+            "T1")
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -2650,10 +2649,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
             "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
             "tensor(int64)",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .Output(
             3,
             "counts",
@@ -2661,10 +2657,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the count of each element "
             "of 'Y' in input 'X'",
             "tensor(int64)",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),

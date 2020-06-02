@@ -13804,9 +13804,9 @@ This version of the operator has been available since version 11 of the default 
 <dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
 <dt><tt>indices</tt> (optional) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
-<dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dt><tt>inverse_indices</tt> (optional) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
-<dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dt><tt>counts</tt> (optional) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing the count of each element of 'Y' in input 'X'</dd>
 </dl>
 
@@ -17321,10 +17321,10 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
 </dl>
 
-#### Outputs (0 - 1)
+#### Outputs
 
 <dl>
-<dt><tt>Y</tt> (optional) : T1</dt>
+<dt><tt>Y</tt> : T1</dt>
 <dd>N-D tensor after resizing</dd>
 </dl>
 
