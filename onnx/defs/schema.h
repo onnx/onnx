@@ -142,6 +142,20 @@ class OpSchema final {
     Variadic = 2,
   };
 
+  enum DifferentiationCategory : uint8_t {
+    // Whether this formal parameter is differentiable or not cannot
+    // be statically determined. It also covers variadic formal
+    // parameters which contain both of differentiable and
+    // non-differentiable variables.
+    Unknown = 0,
+    // This formal parameter is differentiable. That is, this formal
+    // parameter can be differentiable input of Gradient operator. 
+    Differentiable = 1,
+    // This formal parameter is not differentiable. That is, this formal
+    // parameter can not be differentiable input of Gradient operator. 
+    NonDifferentiable = 2
+  };
+
   // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter final {
@@ -156,7 +170,8 @@ class OpSchema final {
         const std::string& description,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
-        int min_arity = 1)
+        int min_arity = 1,
+        DifferentiationCategory differentiation_category = Unknown)
         : name_(std::move(name)),
           type_set_(std::move(allowed_type_set)),
           type_str_(std::move(type_str)),
@@ -165,7 +180,8 @@ class OpSchema final {
 #endif
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
-          min_arity_(min_arity) {
+          min_arity_(min_arity),
+          differentiation_category_(differentiation_category) {
     }
 
     explicit FormalParameter(
@@ -174,7 +190,8 @@ class OpSchema final {
         std::string type_str,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
-        int min_arity = 1)
+        int min_arity = 1,
+        DifferentiationCategory differentiation_category = Unknown)
         : name_(std::move(name)),
           type_str_(std::move(type_str)),
 #ifndef __ONNX_NO_DOC_STRINGS
@@ -182,7 +199,8 @@ class OpSchema final {
 #endif
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
-          min_arity_(min_arity) {
+          min_arity_(min_arity),
+          differentiation_category_(differentiation_category) {
     }
 
     // Get formal parameter name.
@@ -205,6 +223,9 @@ class OpSchema final {
 
     // Get minimum arity. Applicable only in the Variadic case.
     int GetMinArity() const;
+
+    // Get the differentiation property of this formal parameter.
+    DifferentiationCategory GetDifferentiationCategory() const;
 
    private:
     friend class OpSchema;
@@ -235,6 +256,11 @@ class OpSchema final {
 
     // Minimum number of parameters expected. Applicable only for Variadic.
     int min_arity_;
+
+    // True if this parameter can be an differentiable inputs of Gradient.
+    // Otherwise, using this parameter as an differentiable inputs of Gradient
+    // is prohibited.
+    DifferentiationCategory differentiation_category_;
   };
 
   enum class SupportType : uint8_t {
@@ -497,7 +523,8 @@ class OpSchema final {
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -507,7 +534,8 @@ class OpSchema final {
       const char* type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   OpSchema& Output(
       int n,
@@ -516,7 +544,8 @@ class OpSchema final {
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -526,7 +555,8 @@ class OpSchema final {
       const char* type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   OpSchema& TypeConstraint(
       std::string type_str,
