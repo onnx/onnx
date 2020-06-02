@@ -32,9 +32,8 @@ class TestShapeInference(unittest.TestCase):
                 seed_name, proto_type = seed_value[:2]
                 seed_value_info = make_tensor_value_info(*seed_value)
             else:
-                seed_name = seed_value
+                seed_name, proto_type = seed_value, TensorProto.UNDEFINED 
                 seed_value_info = make_empty_tensor_value_info(seed_value)
-                proto_type = TensorProto.UNDEFINED  
             if seed_name in names_in_initializer:
                 input_value_infos.append(seed_value_info)
             else:
@@ -73,9 +72,6 @@ class TestShapeInference(unittest.TestCase):
             ['y'],
             [], [])
         self._assert_inferred(graph, [])
-
-
-        
 
     def _identity_prop(self, op, **kwargs):  # type: (Text, **Any) -> None
         graph = self._make_graph(
@@ -185,7 +181,7 @@ class TestShapeInference(unittest.TestCase):
              ("z", TensorProto.FLOAT, (None, None, None))],
             [make_node("Concat", ['x', 'y', 'z'], ['out'], axis=0)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None)]) 
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None)])
 
     def test_concat_3d_axis_2(self):  # type: () -> None
         graph = self._make_graph(
@@ -3183,7 +3179,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='mean')],
             [])
         self.assertRaises(checker.ValidationError, self._inferred, graph)
-    
+
     def test_negative_log_likehood_input_weight_shape_mismatch(self):  # type: () -> None
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(

@@ -441,11 +441,12 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       continue;
 
     TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
-
+    /*
     if (!graphInput->has_tensor_type()) {
       continue;
+      
     }
-
+    */
     if (!inferredInput->has_tensor_type())
       fail_type_inference(
           "Graph input #",
@@ -455,12 +456,16 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
     const auto& inferredType = inferredInput->tensor_type();
 
+
     // Bail out early if shape inference does nothing useful.
     if (inferredType.elem_type() == TensorProto::UNDEFINED &&
         !inferredType.has_shape()) {
       continue;
     }
-
+    if (!graphInput->has_tensor_type() && inferredType.has_shape() && inferredType.elem_type() != TensorProto::UNDEFINED) {
+      graphInput = const_cast<onnx::TypeProto*>(g_->mutable_input(i)->mutable_type());
+    }
+  
     mergeShapesAndTypes(inferredType, graphInput->mutable_tensor_type());
   }
 
@@ -476,6 +481,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
+  ValueInfoProto temp;
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
   }
