@@ -9,7 +9,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Cast_ver9_doc = R"DOC(
+static const char* Cast_ver13_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -33,9 +33,9 @@ an integer 36 to Boolean may produce 1 because we truncate bits which can't be s
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    9,
+    13,
     OpSchema()
-        .SetDoc(Cast_ver9_doc)
+        .SetDoc(Cast_ver13_doc)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -62,7 +62,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)",
-             "tensor(string)"},
+             "tensor(string)",
+             "tensor(bfloat16)"},
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
@@ -78,7 +79,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)",
-             "tensor(string)"},
+             "tensor(string)",
+             "tensor(bfloat16)"},
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
@@ -87,7 +89,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Reshape_ver5_doc = R"DOC(
+static const char* Reshape_ver13_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
@@ -97,9 +99,9 @@ from the input tensor).)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
-    5,
+    13,
     OpSchema()
-        .SetDoc(Reshape_ver5_doc)
+        .SetDoc(Reshape_ver13_doc)
         .Input(0,
             "data",
             "An input tensor.",
@@ -126,7 +128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
@@ -247,15 +249,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver1_doc = R"DOC(
+static const char* Shape_ver13_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
-    1,
+    13,
     OpSchema()
-        .SetDoc(Shape_ver1_doc)
+        .SetDoc(Shape_ver13_doc)
         .Input(0,
             "data",
             "An input tensor.",
@@ -274,7 +276,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Input tensor can be of arbitrary type.")
         .TypeConstraint(
             "T1",
@@ -298,15 +300,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Size_ver1_doc = R"DOC(
+static const char* Size_ver13_doc = R"DOC(
 Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
-    1,
+    13,
     OpSchema()
-        .SetDoc(Size_ver1_doc)
+        .SetDoc(Size_ver13_doc)
         .Input(0,
             "data",
             "An input tensor.",
@@ -325,7 +327,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Input tensor can be of arbitrary type.")
         .TypeConstraint(
             "T1",
@@ -339,7 +341,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Concat,
-    11,
+    13,
     OpSchema()
         .Attr(
             "axis",
@@ -369,7 +371,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -432,7 +434,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver11_doc =
+static const char* Split_ver13_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
@@ -440,7 +442,7 @@ Otherwise, the tensor is split to equal sized parts.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    11,
+    13,
     OpSchema()
         .Input(
             0,
@@ -462,7 +464,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .Attr(
             "axis",
@@ -472,7 +474,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL_VALUE)
-        .SetDoc(Split_ver11_doc)
+        .SetDoc(Split_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -552,7 +554,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Slice_ver11_doc = R"DOC(
+static const char* Slice_ver13_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
@@ -593,9 +595,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
-    11,
+    13,
     OpSchema()
-        .SetDoc(Slice_ver11_doc)
+        .SetDoc(Slice_ver13_doc)
         .Input(
             0,
             "data",
@@ -637,7 +639,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeConstraint(
             "Tind",
@@ -813,7 +815,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Transpose_ver1_doc = R"DOC(
+static const char* Transpose_ver13_doc = R"DOC(
 Transpose the input tensor similar to numpy.transpose. For example, when
 perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
 will be (2, 1, 3).
@@ -821,9 +823,9 @@ will be (2, 1, 3).
 
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
-    1,
+    13,
     OpSchema()
-        .SetDoc(Transpose_ver1_doc)
+        .SetDoc(Transpose_ver13_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
@@ -844,7 +846,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -886,7 +888,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Scatter_ver11_doc = R"DOC(
+static const char* Scatter_ver13_doc = R"DOC(
 This operator is deprecated. Please use ScatterElements, which provides the same functionality.
 
 Scatter takes three inputs `data`, `updates`, and `indices` of the same
@@ -944,10 +946,10 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scatter,
-    11,
+    13,
     OpSchema()
         .Deprecate()
-        .SetDoc(Scatter_ver11_doc)
+        .SetDoc(Scatter_ver13_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -981,7 +983,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Input and output types can be of any tensor type.")
         .TypeConstraint(
             "Tind",
@@ -994,7 +996,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterND_ver11_doc = R"DOC(
+static const char* ScatterND_ver13_doc = R"DOC(
 ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
@@ -1055,9 +1057,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
-    11,
+    13,
     OpSchema()
-        .SetDoc(ScatterND_ver11_doc)
+        .SetDoc(ScatterND_ver13_doc)
         .Input(
             0,
             "data",
@@ -1079,7 +1081,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Tensor of rank r >= 1.", "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1088,7 +1090,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterElements_ver11_doc = R"DOC(
+static const char* ScatterElements_ver13_doc = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
 (by default, the outer-most axis, that is axis 0). The output of the operation
@@ -1144,9 +1146,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
-    11,
+    13,
     OpSchema()
-        .SetDoc(ScatterElements_ver11_doc)
+        .SetDoc(ScatterElements_ver13_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1180,7 +1182,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Input and output types can be of any tensor type.")
         .TypeConstraint(
             "Tind",
@@ -1193,7 +1195,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Gather_ver11_doc = R"DOC(
+static const char* Gather_ver13_doc = R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
@@ -1255,9 +1257,9 @@ output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
-    11,
+    13,
     OpSchema()
-        .SetDoc(Gather_ver11_doc)
+        .SetDoc(Gather_ver13_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
@@ -1285,7 +1287,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to any tensor type.")
         .TypeConstraint(
             "Tind",
@@ -1327,7 +1329,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GatherElements_ver11_doc = R"DOC(
+static const char* GatherElements_ver13_doc = R"DOC(
 
 GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
 and an optional attribute `axis` that identifies an axis of `data`
@@ -1388,9 +1390,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     GatherElements,
-    11,
+    13,
     OpSchema()
-        .SetDoc(GatherElements_ver11_doc)
+        .SetDoc(GatherElements_ver13_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
@@ -1418,7 +1420,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to any tensor type.")
         .TypeConstraint(
             "Tind",
@@ -1432,7 +1434,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Squeeze_ver11_doc = R"DOC(
+static const char* Squeeze_ver13_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
@@ -1441,7 +1443,7 @@ the shape. If an axis is selected with shape entry not equal to one, an error is
 
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
-    11,
+    13,
     OpSchema()
         .Attr(
             "axes",
@@ -1449,7 +1451,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .SetDoc(Squeeze_ver11_doc)
+        .SetDoc(Squeeze_ver13_doc)
         .Input(
             0,
             "data",
@@ -1464,7 +1466,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1512,7 +1514,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Unsqueeze_ver11_doc = R"DOC(
+static const char* Unsqueeze_ver13_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
 Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
@@ -1529,14 +1531,14 @@ The order of values in `axes` does not matter and can come in any order.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
-    11,
+    13,
     OpSchema()
         .Attr(
             "axes",
             "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
             AttributeProto::INTS)
-        .SetDoc(Unsqueeze_ver11_doc)
+        .SetDoc(Unsqueeze_ver13_doc)
         .Input(
             0,
             "data",
@@ -1551,7 +1553,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1626,7 +1628,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SpaceToDepth_ver1_doc =
+static const char* SpaceToDepth_ver13_doc =
     R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
@@ -1634,13 +1636,13 @@ are moved to the depth dimension.
 
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
-    1,
+    13,
     OpSchema()
         .Attr(
             "blocksize",
             "Blocks of [blocksize, blocksize] are moved.",
             AttributeProto::INT)
-        .SetDoc(SpaceToDepth_ver1_doc)
+        .SetDoc(SpaceToDepth_ver13_doc)
         .Input(
             0,
             "input",
@@ -1656,7 +1658,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1680,7 +1682,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DepthToSpace_ver11_doc =
+static const char* DepthToSpace_ver13_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
@@ -1712,7 +1714,7 @@ y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
 
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
-    11,
+    13,
     OpSchema()
         .Attr(
             "blocksize",
@@ -1723,7 +1725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(DepthToSpace_ver11_doc)
+        .SetDoc(DepthToSpace_ver13_doc)
         .Input(
             0,
             "input",
@@ -1739,7 +1741,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1763,7 +1765,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Tile_ver6_doc =
+static const char* Tile_ver13_doc =
     R"DOC(Constructs a tensor by tiling a given tensor.
 This is the same as function `tile` in Numpy, but no broadcast.
 For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
@@ -1771,9 +1773,9 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
-    6,
+    13,
     OpSchema()
-        .SetDoc(Tile_ver6_doc)
+        .SetDoc(Tile_ver13_doc)
         .Input(0, "input", "Input tensor of any shape.", "T")
         .Input(
             1,
@@ -1791,7 +1793,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeConstraint(
             "T1",
@@ -1851,7 +1853,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return;
         }));
 
-static const char* Upsample_ver10_doc = R"DOC(
+static const char* Upsample_ver13_doc = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
@@ -1859,7 +1861,7 @@ Each dimension value of the output tensor is:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
-    10,
+    13,
     OpSchema()
         .Deprecate()
         .Attr(
@@ -1888,14 +1890,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver10_doc)
+        .SetDoc(Upsample_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference_opset7_to_10(ctx);
         }));
 
-static const char* Resize_ver11_doc = R"DOC(
+static const char* Resize_ver13_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
@@ -1927,7 +1929,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    11,
+    13,
     OpSchema()
         .Attr(
             "mode",
@@ -1999,20 +2001,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .TypeConstraint(
             "T1",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver11_doc)
+        .SetDoc(Resize_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference(ctx, true);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
-    1,
+    13,
     OpSchema()
         .SetDoc("Identity operator")
         .Input(
@@ -2029,7 +2031,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
@@ -2265,7 +2267,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
-    9,
+    13,
     OpSchema()
         .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
         .Input(
@@ -2282,7 +2284,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrain input types to float tensors.")
         .TypeConstraint(
             "T2",
@@ -2395,7 +2400,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NonZero_ver9_doc = R"DOC(
+static const char* NonZero_ver13_doc = R"DOC(
     Returns the indices of the elements that are non-zero
     (in row-major order - by dimension).
     NonZero behaves similar to numpy.nonzero:
@@ -2404,9 +2409,9 @@ static const char* NonZero_ver9_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
-    9,
+    13,
     OpSchema()
-        .SetDoc(NonZero_ver9_doc)
+        .SetDoc(NonZero_ver13_doc)
         .Input(
             0,
             "X",
@@ -2421,7 +2426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
@@ -2729,7 +2734,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GatherND_ver12_doc = R"DOC(
+static const char* GatherND_ver13_doc = R"DOC(
 Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
 slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
@@ -2825,9 +2830,9 @@ This operator is the inverse of `ScatterND`.
 
 ONNX_OPERATOR_SET_SCHEMA(
     GatherND,
-    12,
+    13,
     OpSchema()
-        .SetDoc(GatherND_ver12_doc)
+        .SetDoc(GatherND_ver13_doc)
         .Attr(
             "batch_dims",
             "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
@@ -2854,7 +2859,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
@@ -2911,7 +2916,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver11_doc = R"DOC(
+static const char* Pad_ver13_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
 a padded tensor (`output`) is generated.
 
@@ -2997,14 +3002,14 @@ Example 3 (`edge` mode):
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    11,
+    13,
     OpSchema()
         .Attr(
             "mode",
             "Supported modes: `constant`(default), `reflect`, `edge`",
             AttributeProto::STRING,
             std::string("constant"))
-        .SetDoc(Pad_ver11_doc)
+        .SetDoc(Pad_ver13_doc)
         .Input(
             0,
             "data",
@@ -3036,7 +3041,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrains input and output to only numeric types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
