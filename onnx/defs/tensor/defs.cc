@@ -601,38 +601,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of data to extract slices from.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "starts",
             "1-D tensor of starting indices of corresponding axis in `axes`",
             "Tind",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "ends",
             "1-D tensor of ending indices (exclusive) of corresponding axis in `axes`",
             "Tind",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             3,
             "axes",
             "1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             "Tind",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .Input(
             4,
             "steps",
@@ -640,19 +628,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Negative value means slicing backward. 'steps' cannot be 0. "
             "Defaults to 1.",
             "Tind",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .Output(
             0,
             "output",
             "Sliced data tensor.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -853,19 +835,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "An input tensor.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "transposed",
             "Transposed output.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -983,38 +959,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "indices",
             "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
             "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "updates",
             "Tensor of rank r >=1 (same rank and shape as indices)",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of rank r >= 1 (same rank as input).",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1099,28 +1063,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "indices",
             "Tensor of rank q >= 1.",
             "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "updates",
             "Tensor of rank q + r - indices_shape[-1] - 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(0, "output", "Tensor of rank r >= 1.", "T")
         .TypeConstraint(
             "T",
@@ -1203,38 +1158,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "indices",
             "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
             "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "updates",
             "Tensor of rank r >=1 (same rank and shape as indices)",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of rank r >= 1 (same rank as input).",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1326,29 +1269,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "indices",
             "Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] "
             "along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of rank q + (r - 1).",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1468,29 +1402,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "indices",
             "Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be "
             "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
             "Tind",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of the same shape as indices.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1530,19 +1455,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensors with at least max(dims) dimensions.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "squeezed",
             "Reshaped tensor with same data as input.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1623,19 +1542,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Original tensor",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "expanded",
             "Reshaped tensor with same data as input.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1734,19 +1647,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
             ", H is the height and W is the width.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1823,19 +1730,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
             ", H is the height and W is the width.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1880,20 +1781,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1D int64 tensor of the same length as input's dimension number, "
             "includes numbers of repeated copies along input's dimensions.",
             "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Output tensor of the same dimension and type as tensor input. "
             "output_dim[i] = input_dim[i] * repeats[i]",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -1977,29 +1872,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "N-D tensor",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "scales",
             "The scale array along each dimension. It takes value greater than or equal to 1."
             " The number of elements of 'scales' should be the same as the rank of input 'X'.",
             "tensor(float)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "Y",
             "N-D tensor after resizing",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -2083,19 +1969,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "N-D tensor",
             "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "roi",
             "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
             "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "scales",
@@ -2103,29 +1983,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
             " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
             "tensor(float)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
             "tensor(int64)",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .Output(
             0,
             "Y",
             "N-D tensor after resizing",
             "T1",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Optional)
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types(),
@@ -2149,19 +2020,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input",
             "Input tensor",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor to copy input into.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -2191,10 +2056,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "condition",
@@ -2203,19 +2065,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "or the flattened input size if axis is not specified. "
             "In such cases data slices or elements exceeding the condition length are discarded.",
             "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -2290,10 +2146,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'off_value' values in the output tensor."
             "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
             "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             1,
             "depth",
@@ -2303,10 +2156,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in the range [-depth, depth-1]. "
             "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
             "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "values",
@@ -2315,10 +2165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor, and 'off_value' is the value used for filling locations other than those specified "
             "in 'indices' input tensor. ",
             "T3",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
@@ -2326,10 +2173,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The data type for the elements of the output tensor is the same as the type of input 'values' "
             "is used.",
             "T3",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T1",
             OpSchema::all_numeric_types(),
@@ -2429,19 +2273,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "input",
             "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "Y",
             "output",
             "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T1",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -2467,19 +2305,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "input",
             "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "Y",
             "output",
             "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Attr(
             "detect_positive",
             "(Optional) Whether map positive infinity to true. Default to 1 "
@@ -2526,37 +2358,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "condition",
             "When True (nonzero), yield X, otherwise yield Y",
             "B",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             1,
             "X",
             "values selected at indices where condition is True",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             2,
             "Y",
             "values selected at indices where condition is False",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of shape equal to the broadcasted shape of condition, X, and Y.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
         .TypeConstraint(
             "T",
@@ -2592,19 +2412,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "input",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "Y",
             "output",
             "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -2669,28 +2483,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input",
             "Tensor of rank r >= 2.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "sequence_lens",
             "Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.",
             "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "Y",
             "Tensor with same shape of input.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -2814,10 +2619,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "A N-D input tensor that is to be processed.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "Y",
@@ -2825,10 +2627,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
             "or maintained in the same order they occur in input 'X'",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             1,
             "indices",
@@ -2837,10 +2636,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
             "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
             "tensor(int64)",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .Output(
             2,
             "inverse_indices",
@@ -3042,29 +2838,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "indices",
             "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
             "along axis of size s. It is an error if any of the index values are out of bounds.",
             "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Output(
             0,
             "output",
             "Tensor of rank q + r - indices_shape[-1] - 1.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
@@ -3223,10 +3010,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Input tensor.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .Input(
             1,
             "pads",
@@ -3237,28 +3021,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where xi_begin is the number of pad values added at the beginning of axis `i` and "
             "xi_end, the number of pad values added at the end of axis `i`.",
             "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Single)
         .Input(
             2,
             "constant_value",
             "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).",
             "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Optional)
         .Output(
             0,
             "output",
             "Tensor after padding.",
             "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Single)
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
