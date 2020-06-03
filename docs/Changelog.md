@@ -3,6 +3,10 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
+For an operator input/output's differentiability, it can be differentiable,
+            non-differentiable, or undefined. If a variable's differentiability
+            is not specified, that variable has undefined differentiability.
+
 # ai.onnx (default)
 ## Version 1 of the default ONNX operator set
 ### <a name="Abs-1"></a>**Abs-1**</a>
@@ -15158,14 +15162,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>inputs</tt> (variadic) : T</dt>
+<dt><tt>inputs</tt> (variadic, differentiable) : T</dt>
 <dd>List of tensors for concatenation</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>concat_result</tt> : T</dt>
+<dt><tt>concat_result</tt> (differentiable) : T</dt>
 <dd>Concatenated tensor</dd>
 </dl>
 
@@ -17235,16 +17239,16 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>shape</tt> : tensor(int64)</dt>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Specified shape for output.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reshaped</tt> : T</dt>
+<dt><tt>reshaped</tt> (differentiable) : T</dt>
 <dd>Reshaped data.</dd>
 </dl>
 
@@ -17584,14 +17588,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>shape</tt> : T1</dt>
+<dt><tt>shape</tt> (non-differentiable) : T1</dt>
 <dd>Shape of the input tensor</dd>
 </dl>
 
@@ -17676,14 +17680,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>size</tt> : T1</dt>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
 <dd>Total number of elements of the input tensor</dd>
 </dl>
 
@@ -17955,14 +17959,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The tensor to split</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs</tt> (variadic) : T</dt>
+<dt><tt>outputs</tt> (variadic, differentiable) : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
