@@ -101,8 +101,7 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     return node_list
 
 
-def _extract_value_info(input, name):
-    # TODO: See how sequence_value_info can be addressed more effectively for lists
+def _extract_value_info(input, name, ele_type=None):  # type: (np.ndarray, Text, np.dtype) -> onnx.ValueInfoProto
     if isinstance(input, list):
         return onnx.helper.make_sequence_value_info(
             name=name,
@@ -111,9 +110,9 @@ def _extract_value_info(input, name):
         )
     return onnx.helper.make_tensor_value_info(
         name=name,
-        elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
+        elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
         shape=input.shape)
-
+  
 
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
@@ -123,10 +122,18 @@ def expect(node,  # type: onnx.NodeProto
            ):  # type: (...) -> None
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
-    inputs_vi = [_extract_value_info(arr, arr_name)
-                 for arr, arr_name in zip(inputs, present_inputs)]
-    outputs_vi = [_extract_value_info(arr, arr_name)
-                  for arr, arr_name in zip(outputs, present_outputs)]
+    input_types = [None] * len(inputs)
+    if 'input_types' in kwargs:
+        input_types = kwargs[str('input_types')]
+        del kwargs[str('input_types')]
+    output_types = [None] * len(outputs)
+    if 'output_types' in kwargs:
+        output_types = kwargs[str('output_types')]
+        del kwargs[str('output_types')]
+    inputs_vi = [_extract_value_info(arr, arr_name, input_type)
+                 for arr, arr_name, input_type in zip(inputs, present_inputs, input_types)]
+    outputs_vi = [_extract_value_info(arr, arr_name, output_type)
+                  for arr, arr_name, output_type in zip(outputs, present_outputs, output_types)]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,

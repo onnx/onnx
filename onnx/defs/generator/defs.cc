@@ -7,16 +7,16 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver12_doc = R"DOC(
+static const char* Constant_ver13_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    12,
+    13,
     OpSchema()
-        .SetDoc(Constant_ver12_doc)
+        .SetDoc(Constant_ver13_doc)
         .Attr(
             "value",
             "The value for the elements of the output tensor.",
@@ -64,7 +64,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto* value = ctx.getAttribute("value");
