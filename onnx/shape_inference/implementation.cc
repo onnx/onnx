@@ -165,7 +165,7 @@ static void InferShapesImpl(
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
-  std::unordered_map<std::string, google::protobuf::int32> outputTypesByName;
+  std::unordered_set<std::string> undefinedOutput;
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
@@ -179,9 +179,13 @@ static void InferShapesImpl(
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
   for (auto& vi : *g->mutable_output()) {
+    
+    // Save names of output with undefined types
     if (vi.mutable_type() != NULL && !vi.mutable_type()->mutable_tensor_type()->has_elem_type()) {
-      outputTypesByName[vi.name()] = NULL;
-    } else if (vi.has_type()) {
+      undefinedOutput.insert(vi.name());
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    }
+    else if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
     } 
   }
@@ -269,18 +273,19 @@ static void InferShapesImpl(
         auto iter = valueTypesByName.find(n.output(i));
         TypeProto* existingType = nullptr;
         if (iter != valueTypesByName.end()) {
+          auto output_iter = undefinedOutput.find(n.output(i));
+
+          // If output type is not defined, update inferredType to otuput
+          if (output_iter != undefinedOutput.end()) {
+            google::protobuf::int32 inferredTypeValue = (*inferredType).tensor_type().elem_type();
+            valueTypesByName[n.output(i)]->mutable_tensor_type()->set_elem_type(inferredTypeValue);
+          }
           existingType = iter->second;
           checkShapesAndTypes(*inferredType, *existingType);
         } else {
-            auto output_iter = outputTypesByName.find(n.output(i));
-            if (output_iter != outputTypesByName.end() && inferredType->tensor_type().elem_type() != TensorProto::UNDEFINED) {
-              outputTypesByName[n.output(i)] = (*inferredType).tensor_type().elem_type();
-              continue;
-            } else {
-              auto vi = g->add_value_info();
-              vi->set_name(n.output(i));
-              existingType = vi->mutable_type();
-          }
+          auto vi = g->add_value_info();
+          vi->set_name(n.output(i));
+          existingType = vi->mutable_type();
         }
 
         // Now we can merge pre-existing and inferred info, without
@@ -300,14 +305,6 @@ static void InferShapesImpl(
   if (!inference_errors.empty()) {
     std::cerr << "Type consistency error: " << inference_errors;
     throw std::runtime_error(inference_errors);
-  }
-    for (auto& vi : *g->mutable_output()) {
-      if (!vi.name().empty()) {
-        auto iter = outputTypesByName.find(vi.name());
-        if (iter != outputTypesByName.end() && iter->second != NULL) {
-          vi.mutable_type()->mutable_tensor_type()->set_elem_type(iter->second);
-        }
-      }  
   }
 }
 
