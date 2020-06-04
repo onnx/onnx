@@ -274,7 +274,6 @@ static void InferShapesImpl(
         } else {
             auto output_iter = outputTypesByName.find(n.output(i));
             if (output_iter != outputTypesByName.end() && inferredType->tensor_type().elem_type() != TensorProto::UNDEFINED) {
-              TypeProto* graphOutput = g->mutable_output(i)->mutable_type();
               outputTypesByName[n.output(i)] = (*inferredType).tensor_type().elem_type();
               continue;
             } else {
@@ -303,10 +302,12 @@ static void InferShapesImpl(
     throw std::runtime_error(inference_errors);
   }
     for (auto& vi : *g->mutable_output()) {
-    auto iter = outputTypesByName.find(vi.name());
-    if (iter != outputTypesByName.end() && iter->second != NULL) {
-      vi.mutable_type()->mutable_tensor_type()->set_elem_type(iter->second);
-    }
+      if (!vi.name().empty()) {
+        auto iter = outputTypesByName.find(vi.name());
+        if (iter != outputTypesByName.end() && iter->second != NULL) {
+          vi.mutable_type()->mutable_tensor_type()->set_elem_type(iter->second);
+        }
+      }  
   }
 }
 
@@ -489,7 +490,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
-  ValueInfoProto temp;
+
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
   }
