@@ -165,6 +165,7 @@ static void InferShapesImpl(
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
+  std::unordered_map<std::string, google::protobuf::int32> outputTypesByName;
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
@@ -178,8 +179,11 @@ static void InferShapesImpl(
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
   for (auto& vi : *g->mutable_output()) {
-    if (vi.has_type())
+    if (vi.mutable_type() != NULL && !vi.mutable_type()->mutable_tensor_type()->has_elem_type()) {
+      outputTypesByName[vi.name()] = NULL;
+    } else if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    } 
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -268,9 +272,16 @@ static void InferShapesImpl(
           existingType = iter->second;
           checkShapesAndTypes(*inferredType, *existingType);
         } else {
-          auto vi = g->add_value_info();
-          vi->set_name(n.output(i));
-          existingType = vi->mutable_type();
+            auto output_iter = outputTypesByName.find(n.output(i));
+            if (output_iter != outputTypesByName.end() && inferredType->tensor_type().elem_type() != TensorProto::UNDEFINED) {
+              TypeProto* graphOutput = g->mutable_output(i)->mutable_type();
+              outputTypesByName[n.output(i)] = (*inferredType).tensor_type().elem_type();
+              continue;
+            } else {
+              auto vi = g->add_value_info();
+              vi->set_name(n.output(i));
+              existingType = vi->mutable_type();
+          }
         }
 
         // Now we can merge pre-existing and inferred info, without
@@ -291,7 +302,12 @@ static void InferShapesImpl(
     std::cerr << "Type consistency error: " << inference_errors;
     throw std::runtime_error(inference_errors);
   }
-  
+    for (auto& vi : *g->mutable_output()) {
+    auto iter = outputTypesByName.find(vi.name());
+    if (iter != outputTypesByName.end() && iter->second != NULL) {
+      vi.mutable_type()->mutable_tensor_type()->set_elem_type(iter->second);
+    }
+  }
 }
 
 void InferShapes(
@@ -441,12 +457,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       continue;
 
     TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
-    /*
-    if (!graphInput->has_tensor_type()) {
-      continue;
-      
-    }
-    */
+
     if (!inferredInput->has_tensor_type())
       fail_type_inference(
           "Graph input #",
@@ -462,10 +473,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
         !inferredType.has_shape()) {
       continue;
     }
-    if (!graphInput->has_tensor_type() && inferredType.has_shape() && inferredType.elem_type() != TensorProto::UNDEFINED) {
-      graphInput = const_cast<onnx::TypeProto*>(g_->mutable_input(i)->mutable_type());
-    }
-  
+    // Even if graphInput doesn't have defined type, it will assign inferredType to it
     mergeShapesAndTypes(inferredType, graphInput->mutable_tensor_type());
   }
 
