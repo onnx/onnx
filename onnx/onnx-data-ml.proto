@@ -6,10 +6,10 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
-syntax = "proto3";
+syntax = "proto2";
 
 package onnx;
-import "onnx/onnx.proto3";
+import "onnx/onnx-ml.proto";
 
 // This file contains the proto definitions for MapProto and
 // SequenceProto.  These protos are used to describe the proto files for
@@ -27,12 +27,12 @@ message SequenceMapElement {
   }
   // The data type of the element.
   // This field MUST have a valid TensorProto.DataType value
-  int32 elem_type = 1;
+  optional int32 elem_type = 1;
 
-  TensorProto tensor_value = 2;
-  SparseTensorProto sparse_tensor_value = 3;
-  SequenceProto sequence_value = 4;
-  MapProto map_value = 5;
+  optional TensorProto tensor_value = 2;
+  optional SparseTensorProto sparse_tensor_value = 3;
+  optional SequenceProto sequence_value = 4;
+  optional MapProto map_value = 5;
 }
 
 // Sequences
@@ -40,7 +40,7 @@ message SequenceMapElement {
 // Defines a dense, ordered, collection of elements that are of homogeneous types.
 message SequenceProto {
 
-  string name = 1;
+  optional string name = 1;
   repeated SequenceMapElement values = 2;
 }
 
@@ -53,28 +53,28 @@ message KeyValuePair {
   // The data type of the key.
   // This field MUST have a valid TensorProto.DataType value of
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING
-  int32 key_type = 2;
+  optional int32 key_type = 2;
 
   // For int32, uint8, int8, uint16, int16 keys.
   // When this field is present, the key_type field MUST be
   // INT32, INT16, INT8, UINT16, or UINT8
-  int32 int32_data = 3;
+  optional int32 int32_data = 3;
 
   // For string keys.
   // Each element of string_data is a UTF-8 encoded Unicode
   // string. No trailing null, no leading BOM. The protobuf "string"
   // scalar type is not used to match ML community conventions.
   // When this field is present, the key_type field MUST be STRING
-  bytes string_data = 4;
+  optional bytes string_data = 4;
 
   // For int64 keys.
   // When this field is present, the key_type field MUST be INT64
-  int64 int64_data = 5;
+  optional int64 int64_data = 5;
 
   // For uint64 and uint32 keys.
   // When this field is present, the key_type field MUST be
   // UINT32 or UINT64
-  uint64 uint64_data = 6;
+  optional uint64 uint64_data = 6;
 
   // Serializations can either use one of the fields above, or use this
   // raw bytes field. The only exception is the string case, where one is
@@ -87,15 +87,15 @@ message KeyValuePair {
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
   // When this field is present, the key_type field MUST NOT be STRING or UNDEFINED
-  bytes raw_data = 7;
+  optional bytes raw_data = 7;
 
   required SequenceMapElement value = 8;
 
-  TypeProto value_type = 9;
+  optional TypeProto value_type = 9;
 }
 
 message MapProto {
-  string name = 1;
+  optional string name = 1;
 
   repeated KeyValuePair pairs = 2;
 }
