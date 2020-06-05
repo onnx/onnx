@@ -205,11 +205,10 @@ inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex) {
-
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
       input_type->value_case() != TypeProto::kTensorType) {
-    fail_type_inference("Input ", inputIndex, " expected to have tensor type.");
+    fail_type_inference("Input ", inputIndex, " expected to have tensor type");
   }
   if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
     fail_type_inference("Element type of input ", inputIndex, " unknown");
@@ -224,7 +223,6 @@ inline void propagateElemTypeFromInputToOutput(
     fail_type_inference(
         "Output ", outputIndex, " expected to have tensor type");
   }
-
 }
 
 inline void propagateElemTypeFromDtypeToOutput(

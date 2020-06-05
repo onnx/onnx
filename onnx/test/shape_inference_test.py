@@ -32,7 +32,7 @@ class TestShapeInference(unittest.TestCase):
                 seed_name, proto_type = seed_value[:2]
                 seed_value_info = make_tensor_value_info(*seed_value)
             else:
-                seed_name, proto_type = seed_value, TensorProto.UNDEFINED 
+                seed_name, proto_type = seed_value, TensorProto.UNDEFINED
                 seed_value_info = make_empty_tensor_value_info(seed_value)
             if seed_name in names_in_initializer:
                 input_value_infos.append(seed_value_info)
@@ -71,7 +71,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             ['y'],
             [], [])
-        self._assert_inferred(graph, [])
+        self.assertRaises(RuntimeError, self._inferred, graph)
 
     def _identity_prop(self, op, **kwargs):  # type: (Text, **Any) -> None
         graph = self._make_graph(
@@ -181,7 +181,7 @@ class TestShapeInference(unittest.TestCase):
              ("z", TensorProto.FLOAT, (None, None, None))],
             [make_node("Concat", ['x', 'y', 'z'], ['out'], axis=0)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None)])
+        self.assertRaises(RuntimeError, self._inferred, graph)
 
     def test_concat_3d_axis_2(self):  # type: () -> None
         graph = self._make_graph(
@@ -531,7 +531,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (5, 6, 7)),
              ('starts', TensorProto.INT64, (3,)),
              ('ends', TensorProto.INT64, (3,)),
-             ('axes',  TensorProto.INT64, (None)),
+             ('axes', TensorProto.INT64, (None)),
              ('steps', TensorProto.INT64, (3,))],
             [make_node('Slice', ['x', 'starts', 'ends', 'axes', 'steps'], ['y'])],
             [],
@@ -3091,7 +3091,7 @@ class TestShapeInference(unittest.TestCase):
              ("z", TensorProto.FLOAT, (2, 3))],
             [make_node('Einsum', ['x', 'y'], ['z'], equation='i,...j, k, l-> i')],
             [])
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(RuntimeError, self._inferred, graph)
 
     def test_negative_log_likehood_shape_is_NCdd(self):  # type: () -> None
         N, C = 3, 4
@@ -3178,7 +3178,7 @@ class TestShapeInference(unittest.TestCase):
              ("loss", TensorProto.FLOAT, ())],
             [make_node('NegativeLogLikelihoodLoss', ['input', 'target', 'weight'], ['loss'], reduction='mean')],
             [])
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(RuntimeError, self._inferred, graph)
 
     def test_negative_log_likehood_input_weight_shape_mismatch(self):  # type: () -> None
         N, C, d1, d2 = 3, 4, 5, 6

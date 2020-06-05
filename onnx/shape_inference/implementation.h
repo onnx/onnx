@@ -30,6 +30,7 @@ class GraphInferencerImpl : public GraphInferencer {
  public:
   GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
       : g_{&g}, context_{&context} {}
+
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) override;

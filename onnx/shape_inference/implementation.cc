@@ -181,7 +181,7 @@ static void InferShapesImpl(
   for (auto& vi : *g->mutable_output()) {
     
     // Save names of output with undefined types
-    if (vi.mutable_type() != NULL && !vi.mutable_type()->mutable_tensor_type()->has_elem_type()) {
+    if (!vi.mutable_type()->mutable_tensor_type()->has_elem_type()) {
       undefinedOutput.insert(vi.name());
       valueTypesByName[vi.name()] = vi.mutable_type();
     }
@@ -207,7 +207,7 @@ static void InferShapesImpl(
           }
       }
   }
-  std::string inference_errors = "";
+  std::vector<std::string> inference_errors;
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -219,9 +219,7 @@ static void InferShapesImpl(
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
-        n, valueTypesByName, inputDataByName, &graphInferenceContext);
-    
-    
+        n, valueTypesByName, inputDataByName, &graphInferenceContext);    
     if (!schema) {
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
@@ -229,7 +227,7 @@ static void InferShapesImpl(
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
         // Continue with inference for remaining nodes
-        inference_errors += std::string(ex.what()) + "\n";
+        inference_errors.push_back(std::string(ex.what()));
         continue;
       }
     } else if (schema->HasFunction()) {
@@ -238,7 +236,7 @@ static void InferShapesImpl(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
         // Continue with inference for remaining nodes
-        inference_errors += std::string(function_ex.what()) + "\n";
+        inference_errors.push_back(std::string(function_ex.what()));
         continue;
       }
     } else {
@@ -301,10 +299,13 @@ static void InferShapesImpl(
       throw;
     }
   }
-  
+  // Throw shape inference error if any
   if (!inference_errors.empty()) {
-    std::cerr << "Type consistency error: " << inference_errors;
-    throw std::runtime_error(inference_errors);
+    std::cerr << "Shape inference error(s): ";
+    for (std::string error: inference_errors) {
+      std::cerr << error << std::endl;
+    }  
+    throw std::runtime_error("");
   }
 }
 
@@ -465,7 +466,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
     const auto& inferredType = inferredInput->tensor_type();
 
-
     // Bail out early if shape inference does nothing useful.
     if (inferredType.elem_type() == TensorProto::UNDEFINED &&
         !inferredType.has_shape()) {
@@ -487,7 +487,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
-
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
   }
