@@ -302,6 +302,15 @@ relative_protobuf_generate_cpp(gen_onnx_operators_proto
 list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
 list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
+relative_protobuf_generate_cpp(gen_onnx_data_proto
+                               __tmp_srcs
+                               __tmp_hdrs
+                               ${ONNX_ROOT}
+                               gen_onnx_proto
+                               onnx/onnx-data.in.proto)
+list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
+
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
     "${ONNX_ROOT}/onnx/test/cpp/*.cc"
@@ -682,15 +691,6 @@ endif()
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
-
-relative_protobuf_generate_cpp(gen_onnx_data_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               gen_onnx_proto
-                               onnx/onnx-data.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
 include(cmake/summary.cmake)
 onnx_print_configuration_summary()
