@@ -112,7 +112,7 @@ def _extract_value_info(input, name, ele_type=None):  # type: (np.ndarray, Text,
         name=name,
         elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
         shape=input.shape)
-  
+
 
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
