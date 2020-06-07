@@ -88,9 +88,7 @@ message KeyValuePair {
   // When this field is present, the key_type field MUST NOT be STRING or UNDEFINED
   optional bytes raw_data = 7;
 
-  required SequenceMapElement value = 8;
-
-  optional TypeProto value_type = 9;
+  optional SequenceMapElement value = 8;
 }
 
 message MapProto {

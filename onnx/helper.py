@@ -219,7 +219,8 @@ def make_map(
 def make_key_value_pair(
         key,  # type: Any
         key_type,  # type: int
-        value,  # type: SequenceMapElement
+        value,  # type: Any
+        value_type,  # type: int
         raw=False  # type: bool
 ):  # type: (...) -> KeyValuePair
     '''
@@ -240,7 +241,7 @@ def make_key_value_pair(
         storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
         setattr(kv_pair, storage_field, key)
 
-    kv_pair.value = value
+    kv_pair.value = make_sequence_map_element(value, value_type)
     kv_pair.key_type = key_type
 
     return kv_pair
@@ -254,20 +255,9 @@ def make_sequence_map_element(
     Make a sequence map element to store values for SequenceProto and MapProto.
     '''
     seq_map_elem = SequenceMapElement()
-    if value_type == TypeProto.Tensor:
-        seq_map_elem.elem_type = SequenceMapElement.TENSOR
-        seq_map_elem.tensor_value = value
-    elif value_type == TypeProto.SparseTensor:
-        seq_map_elem.elem_type = SequenceMapElement.SPARSE_TENSOR
-        seq_map_elem.sparse_tensor_value = value
-    elif value_type == TypeProto.Sequence:
-        seq_map_elem.elem_type = SequenceMapElement.SEQUENCE
-        seq_map_elem.sequence_value = value
-    elif value_type == TypeProto.Map:
-        seq_map_elem.elem_type = SequenceMapElement.MAP
-        seq_map_elem.map_value = value
-    else:
-        raise TypeError("Invalid value type.")
+    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[value_type]
+    setattr(seq_map_elem, value_field, value)
+    seq_map_elem.elem_type = value_type
     return seq_map_elem
 
 

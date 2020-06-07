@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import TensorProto
+from onnx import TensorProto, SequenceMapElement
 from typing import Text, Any
 import numpy as np  # type: ignore
 
@@ -58,4 +58,11 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.UINT64): 'uint64_data',
     int(TensorProto.STRING): 'string_data',
     int(TensorProto.BOOL): 'int32_data',
+}
+
+STORAGE_ELEMENT_TYPE_TO_FIELD = {
+    int(SequenceMapElement.TENSOR): 'tensor_value',
+    int(SequenceMapElement.SPARSE_TENSOR): 'sparse_tensor_value',
+    int(SequenceMapElement.SEQUENCE): 'sequence_value',
+    int(SequenceMapElement.MAP): 'map_value'
 }
