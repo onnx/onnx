@@ -53,13 +53,9 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     elif isinstance(input, list):
                         arr = numpy_helper.from_list_to_sequence(
                             input, case.model.graph.input[j].name)
-                    elif isinstance(input, np.ndarray):
+                    else:
                         arr = numpy_helper.from_array(
                             input, case.model.graph.input[j].name)
-                    else:
-                        raise TypeError(
-                            "Your input is not a sequence (list), dictionary (map), or tensor (array) "
-                            "and cannot be processed accordingly.", input)
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())
@@ -70,13 +66,9 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     elif isinstance(output, list):
                         arr = numpy_helper.from_list_to_sequence(
                             output, case.model.graph.output[j].name)
-                    elif isinstance(output, np.ndarray):
+                    else:
                         arr = numpy_helper.from_array(
                             output, case.model.graph.output[j].name)
-                    else:
-                        raise TypeError(
-                            "Your output is not a sequence (list), dictionary (map), or tensor (array) ",
-                            "and cannot be processed accordingly.", output)
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
                         f.write(arr.SerializeToString())
