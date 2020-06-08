@@ -256,7 +256,7 @@ def make_sequence_map_element(
     '''
     seq_map_elem = SequenceMapElement()
     value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[value_type]
-    setattr(seq_map_elem, value_field, value)
+    getattr(seq_map_elem, value_field).CopyFrom(value)
     seq_map_elem.elem_type = value_type
     return seq_map_elem
 
