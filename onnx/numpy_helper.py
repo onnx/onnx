@@ -118,7 +118,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     return tensor
 
 
-def to_list_from_sequence(sequence):  # type: SequenceProto -> List
+def to_list_from_sequence(sequence):  # type: (SequenceProto) -> List[Any]
     """Converts a sequence def to a Python list.
 
     Inputs:
@@ -142,7 +142,7 @@ def to_list_from_sequence(sequence):  # type: SequenceProto -> List
     return lst
 
 
-def from_list_to_sequence(lst, name=None):  # type: List, Optional[Text] -> SequenceProto
+def from_list_to_sequence(lst, name=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
     """Converts a list into a sequence def.
 
     Inputs:
@@ -167,7 +167,7 @@ def from_list_to_sequence(lst, name=None):  # type: List, Optional[Text] -> Sequ
     return sequence
 
 
-def to_dict_from_map(map):  # type: MapProto -> np.ndarray[Any]
+def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
     """Converts a map def to a Python dictionary.
 
     Inputs:
@@ -197,7 +197,7 @@ def to_dict_from_map(map):  # type: MapProto -> np.ndarray[Any]
     return dict
 
 
-def from_dict_to_map(dict, name=None):  # type: Dict, Optional[Text] -> MapProto
+def from_dict_to_map(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> MapProto
     """Converts a Python dictionary into a map def.
 
     Inputs:
