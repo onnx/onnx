@@ -239,9 +239,9 @@ def make_key_value_pair(
         kv_pair.raw_data = key
     else:
         storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
-        setattr(kv_pair, storage_field, key)
+        getattr(kv_pair, storage_field).CopyFrom(key)
 
-    kv_pair.value = make_sequence_map_element(value, value_type)
+    getattr(kv_pair, value).CopyFrom(make_sequence_map_element(value, value_type))
     kv_pair.key_type = key_type
 
     return kv_pair

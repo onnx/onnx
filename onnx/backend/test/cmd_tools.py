@@ -47,31 +47,29 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     output_dir, 'test_data_set_{}'.format(i))
                 prepare_dir(data_set_dir)
                 for j, input in enumerate(inputs):
-                    if isinstance(input, dict):
-                        arr = numpy_helper.from_dict_to_map(
-                            input, case.model.graph.input[j].name)
-                    elif isinstance(input, list):
-                        arr = numpy_helper.from_list_to_sequence(
-                            input, case.model.graph.input[j].name)
-                    else:
-                        arr = numpy_helper.from_array(
-                            input, case.model.graph.input[j].name)
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
-                        f.write(arr.SerializeToString())
+                        if isinstance(input, dict):
+                            f.write(numpy_helper.from_dict_to_map(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                        elif isinstance(input, list):
+                            f.write(numpy_helper.from_list_to_sequence(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                        else:
+                            f.write(numpy_helper.from_array(
+                                input, case.model.graph.input[j].name).SerializeToString())
                 for j, output in enumerate(outputs):
-                    if isinstance(output, dict):
-                        arr = numpy_helper.from_dict_to_map(
-                            output, case.model.graph.output[j].name)
-                    elif isinstance(output, list):
-                        arr = numpy_helper.from_list_to_sequence(
-                            output, case.model.graph.output[j].name)
-                    else:
-                        arr = numpy_helper.from_array(
-                            output, case.model.graph.output[j].name)
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
-                        f.write(arr.SerializeToString())
+                        if isinstance(output, dict):
+                            f.write(numpy_helper.from_dict_to_map(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        elif isinstance(output, list):
+                            f.write(numpy_helper.from_list_to_sequence(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        else:
+                            f.write(numpy_helper.from_array(
+                                output, case.model.graph.output[j].name).SerializeToString())
 
 
 def parse_args():  # type: () -> argparse.Namespace
