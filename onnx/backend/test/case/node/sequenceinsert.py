@@ -4,11 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
+from typing import List
 
 import onnx
 from ..base import Base
 from . import expect
-from typing import List
 
 
 def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (List[Any], np.ndarray, np.ndarray) -> List[Any]
