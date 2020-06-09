@@ -17576,7 +17576,7 @@ for test_name, test_inputs in test_cases.items():
         position = test_inputs[1]
         inserted = sequence_insert_reference_implementation(sequence, tensor, position)
         expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
-               name='test_seq_insert_' + test_name)
+               name='test_sequence_insert_' + test_name)
     else:
         node = onnx.helper.make_node(
             'SequenceInsert',
@@ -17585,7 +17585,7 @@ for test_name, test_inputs in test_cases.items():
         )
         inserted = sequence_insert_reference_implementation(sequence, tensor)
         expect(node, inputs=[sequence, tensor], outputs=[inserted],
-               name='test_seq_insert_' + test_name)
+               name='test_sequence_insert_' + test_name)
 ```
 
 </details>
