@@ -12,12 +12,12 @@ package onnx;
 import "onnx/onnx.proto";
 
 // This file contains the proto definitions for MapProto and
-// SequenceProto.  These protos are used to describe the proto files for
-// data structures set of operators that can be used by a ModelProto.
-//
-// Sequences and Maps are made of TypeProto elements, which can either be
+// SequenceProto. These protos are used to represent the data structures
+// of Maps and Sequences as defined in the ONNX specification in test data
+// or as input to ModelProto.
+
+// Sequences and maps are made of SequenceMapElement values, which can be
 // tensors, maps, or sequences.
-//
 message SequenceMapElement {
   enum DataType {
     TENSOR = 1;
@@ -44,11 +44,9 @@ message SequenceProto {
   repeated SequenceMapElement values = 2;
 }
 
-// Maps
-//
-// Specifies an associative table, defined by a key type and a value type.
 
-// Key-Value pair element for MapProto
+// Key-Value pair element for MapProto. The key can be an integer or string type,
+// and the value is represented by a SequenceMapElement.
 message KeyValuePair {
   // The data type of the key.
   // This field MUST have a valid TensorProto.DataType value of
@@ -92,6 +90,9 @@ message KeyValuePair {
   optional SequenceMapElement value = 8;
 }
 
+// Maps
+//
+// Specifies an associative table, defined by a key type and a value type.
 message MapProto {
   optional string name = 1;
 
