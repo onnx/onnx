@@ -11,7 +11,7 @@ from . import expect
 from typing import List
 
 
-def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (np.ndarray, np.ndarray, np.ndarray) -> List[Any]
+def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (List[Any], np.ndarray, np.ndarray) -> List[Any]
     # make a copy of input sequence
     seq = list(sequence)
     if position:
