@@ -8,18 +8,20 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
+from typing import List
 
 
-def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (np.ndarray, np.ndarray, np.ndarray) -> np.ndarray
+def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (np.ndarray, np.ndarray, np.ndarray) -> List[Any]
+    seq = sequence.copy()
     if position:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
         # The position argument will be in the format np.array([pos_index])
         insert_position = position[0]
-        sequence.insert(insert_position, tensor)
+        seq.insert(insert_position, tensor)
     else:
         # Default position of insertion is at the end of the sequence.
-        sequence.append(tensor)
-    return np.array(sequence)
+        seq.append(tensor)
+    return seq
 
 
 class SequenceInsert(Base):
@@ -44,7 +46,7 @@ class SequenceInsert(Base):
                 position = test_inputs[1]
                 inserted = sequence_insert_reference_implementation(sequence, tensor, position)
                 expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
-                       name='test_seq_insert_' + test_name)
+                       name='test_sequence_insert_' + test_name)
             else:
                 node = onnx.helper.make_node(
                     'SequenceInsert',
@@ -53,4 +55,4 @@ class SequenceInsert(Base):
                 )
                 inserted = sequence_insert_reference_implementation(sequence, tensor)
                 expect(node, inputs=[sequence, tensor], outputs=[inserted],
-                       name='test_seq_insert_' + test_name)
+                       name='test_sequence_insert_' + test_name)
