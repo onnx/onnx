@@ -341,8 +341,7 @@ class TestLarge2GBExternalData(unittest.TestCase):
     def test_check_model_by_model(self):  # type: () -> None
         model = onnx.load_model(self.model_filename, load_external_data=False)
         load_external_data_for_model(model, self.temp_dir)
-        checker.check_model(model)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError):
             checker.check_model(model)
 
     def test_check_model_by_name(self):  # type: () -> None

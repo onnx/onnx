@@ -98,7 +98,7 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], boo
         # remind users should use the model path to check
         protobuf_string = model.SerializeToString()
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
-            raise RuntimeError('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.')
+            raise ValueError('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.')
         C.check_model(protobuf_string)
         m = model
     if full_check:
