@@ -13,8 +13,7 @@ import "onnx/onnx-ml.proto3";
 
 // This file contains the proto definitions for MapProto and
 // SequenceProto. These protos are used to represent the data structures
-// of Maps and Sequences as defined in the ONNX specification in test data
-// or as input to ModelProto.
+// of maps and sequences in test data or can be used by ModelProto.
 
 // Sequences and maps are made of SequenceMapElement values, which can be
 // tensors, maps, or sequences.
@@ -76,12 +75,12 @@ message KeyValuePair {
 
   // Serializations can either use one of the fields above, or use this
   // raw bytes field. The only exception is the string case, where one is
-  // required to store the content in the repeated bytes string_key field.
+  // required to store the content in the repeated bytes string_data field.
   //
-  // When this raw_key field is used to store the key, elements MUST
+  // When this raw_data field is used to store the key, elements MUST
   // be stored in as fixed-width, little-endian order.
   //
-  // Note: the advantage of specific field rather than the raw_key field is
+  // Note: the advantage of specific field rather than the raw_data field is
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
   // When this field is present, the key_type field MUST NOT be STRING or UNDEFINED
