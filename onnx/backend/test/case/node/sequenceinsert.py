@@ -12,7 +12,8 @@ from typing import List
 
 
 def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (np.ndarray, np.ndarray, np.ndarray) -> List[Any]
-    seq = sequence.copy()
+    # make a copy of input sequence
+    seq = list(sequence)
     if position:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
         # The position argument will be in the format np.array([pos_index])
