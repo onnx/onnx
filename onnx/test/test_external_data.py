@@ -17,6 +17,7 @@ from onnx.external_data_helper import convert_model_from_external_data
 from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
+import pytest
 
 
 class TestLoadExternalData(unittest.TestCase):
@@ -287,6 +288,65 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
+class TestLarge2GBExternalData(unittest.TestCase):
+
+    def setUp(self):  # type: () -> None
+        self.temp_dir = "large"  #tempfile.mkdtemp()  # type: Text
+        if not os.path.exists(self.temp_dir):
+            os.makedirs(self.temp_dir)
+        self.initializer_value = np.arange(300000000).astype(np.float32)
+        self.attribute_value = np.arange(300000000).astype(np.float32)
+        self.model_filename, self.model = self.create_test_model()
+
+    def tearDown(self):  # type: () -> None
+        shutil.rmtree(self.temp_dir)
+
+    def create_external_data_tensor(self, value, tensor_name):  # type: (List[Any], Text) -> TensorProto
+        tensor = from_array(np.array(value))
+        tensor.name = tensor_name
+        tensor_filename = "{}.bin".format(tensor_name)
+        set_external_data(tensor, location=tensor_filename)
+
+        with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
+            data_file.write(tensor.raw_data)
+        tensor.ClearField('raw_data')
+        tensor.data_location = onnx.TensorProto.EXTERNAL
+        return tensor
+
+    def create_test_model(self):  # type: () -> Text
+        constant_node = onnx.helper.make_node(
+            'Constant',
+            inputs=[],
+            outputs=['values'],
+            value=self.create_external_data_tensor(self.attribute_value, "attribute_value")
+        )
+
+        initializers = [self.create_external_data_tensor(self.initializer_value, "input_value")]
+        inputs = [helper.make_tensor_value_info("input_value",
+                                                onnx.TensorProto.FLOAT,
+                                                self.initializer_value.shape)]
+
+        graph = helper.make_graph([constant_node], "test_graph",
+                                  inputs=inputs, outputs=[],
+                                  initializer=initializers)
+
+        model = helper.make_model(graph)
+
+        model_filename = os.path.join(self.temp_dir, "model.onnx")
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+        
+        return model_filename, model
+
+    def test_check_model_by_model(self):  # type: () -> None
+        model = onnx.load_model(self.model_filename, load_external_data=False)
+        load_external_data_for_model(model, self.temp_dir)
+        checker.check_model(model)
+        with pytest.raises(RuntimeError):
+            checker.check_model(model)
+
+    def test_check_model_by_name(self):  # type: () -> None
+        checker.check_model(self.model_filename)        
 
 if __name__ == '__main__':
     unittest.main()
