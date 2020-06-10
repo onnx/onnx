@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
-from typing import List
+from typing import List, Any
 
 import onnx
 from ..base import Base
