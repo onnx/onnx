@@ -106,7 +106,7 @@ def _extract_value_info(input, name, ele_type=None):  # type: (np.ndarray, Text,
         return onnx.helper.make_sequence_value_info(
             name=name,
             elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
-            shape=(len(input),)
+            shape=None
         )
     return onnx.helper.make_tensor_value_info(
         name=name,
