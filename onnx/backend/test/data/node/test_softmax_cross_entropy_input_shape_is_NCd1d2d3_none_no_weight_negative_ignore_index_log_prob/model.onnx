@@ -1,32 +1,0 @@
-backend-test:Ç
-`
-x
-yzlog_prob"SoftmaxCrossEntropyLoss*
-ignore_indexûÿÿÿÿÿÿÿÿ *
-	reduction"none `test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_probZ
-x
-
-
-
-
-
-Z
-y
-
-
-
-
-b
-z
-
-
-
-
-b&
-log_prob
-
-
-
-
-
-B
