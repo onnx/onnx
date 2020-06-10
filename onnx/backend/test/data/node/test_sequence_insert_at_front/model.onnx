@@ -1,13 +1,11 @@
-backend-test:Ë
+backend-test:¿
 =
 sequence
 tensor
-positionoutput_sequence"SequenceInserttest_sequence_insert_at_frontZ
-sequence"
-
-
-
-Z
+positionoutput_sequence"SequenceInserttest_sequence_insert_at_frontZ
+sequence"
+
+Z
 tensor
 
 
@@ -15,9 +13,7 @@
 position
 
 
-b!
-output_sequence"
-
-
-
-B
+b
+output_sequence"
+
+B
