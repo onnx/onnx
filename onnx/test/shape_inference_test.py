@@ -39,7 +39,7 @@ class TestShapeInference(unittest.TestCase):
             else:
                 value_info.append(seed_value_info)
                 input_value_infos.append(make_tensor_value_info('SEED_' + seed_name, proto_type, ()))
-                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, TensorProto.FLOAT, ()))
+                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, TensorProto.INT64, ()))
                 nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
         return helper.make_graph(nodes, "test", input_value_infos, [], initializer=initializer, value_info=value_info)
 
