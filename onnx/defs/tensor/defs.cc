@@ -113,7 +113,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(1,
             "shape",
             "Specified shape for output.",
-            "tensor(int64)",
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -130,6 +130,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int64)",
+             "tensor(int32)"},
+            "Constrain pad input to int64/int32 type")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -140,17 +145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
+          std::vector<int64_t> targetShape = GetIntInitializerData(targetShapeInitializer);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targertShape dimension is -1, we do not set the
@@ -3018,7 +3013,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
             "where xi_begin is the number of pad values added at the beginning of axis `i` and "
             "xi_end, the number of pad values added at the end of axis `i`.",
-            "tensor(int64)",
+            "T1",
             OpSchema::Single)
         .Input(
             2,
@@ -3036,6 +3031,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrains input and output to only numeric types.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int64)", "tensor(int32)"},
+            "Constrain pad input to int64/int32 type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3050,11 +3049,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
             if (pads_initializer->dims_size() != 1 ||
-                pads_initializer->data_type() != TensorProto::INT64)
+                (pads_initializer->data_type() != TensorProto::INT64 &&
+                 pads_initializer->data_type() != TensorProto::INT32))
               fail_shape_inference(
-                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64 or int32");
 
-            const auto& pads_data = ParseData<int64_t>(pads_initializer);
+            const auto& pads_data = GetIntInitializerData(pads_initializer);
 
             if (pads_data.size() != static_cast<size_t>(2 * input_rank))
               fail_shape_inference("Pads has incorrect number of values");
