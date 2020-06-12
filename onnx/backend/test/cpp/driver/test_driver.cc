@@ -202,10 +202,11 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
 
   for (auto& test_data : t.test_data_) {
     ResolvedTestData proto_test_data;
-
+    // TODO: identify input / output types from model's input / output nodes
     for (auto& input_file : test_data.input_filenames_) {
       std::string input_data;
       LoadSingleFile(input_file, input_data);
+      // TODO: account for other types (SequenceProto, MapProto)
       ONNX_NAMESPACE::TensorProto input_proto;
       ONNX_NAMESPACE::ParseProtoFromBytes(
           &input_proto, input_data.c_str(), input_data.size());
@@ -214,6 +215,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data = "";
       LoadSingleFile(output_file, output_data);
+      // TODO: account for other types (SequenceProto, MapProto)
       ONNX_NAMESPACE::TensorProto output_proto;
       ONNX_NAMESPACE::ParseProtoFromBytes(
           &output_proto, output_data.c_str(), output_data.size());

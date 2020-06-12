@@ -228,6 +228,14 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_field
 }
 
+void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
+  enforce_has_field(sequence, values);
+}
+
+void check_map(const MapProto& map, const CheckerContext& ctx) {
+  enforce_has_field(map, pairs);
+}
+
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.

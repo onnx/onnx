@@ -211,10 +211,11 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
       onnxBackendID backendID) {
     // Check Model
     ONNX_NAMESPACE::checker::check_model(model_);
-    // Check Input&Output Tensors
+    // Check Input & Output Data
     ONNX_NAMESPACE::checker::CheckerContext ctx;
     for (auto proto_test_data : protos_) {
       for (auto input : proto_test_data.inputs_) {
+        // TODO: address case of sequence / map input
         ONNX_NAMESPACE::checker::check_tensor(input, ctx);
       }
       for (auto output : proto_test_data.outputs_) {
@@ -238,7 +239,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
           backendID, serialized_model.size(), serialized_model.data());
       std::string error_msg;
       if (IsUnsupported(is_compatible, error_msg)) {
-        std::cout << "Warnning: " << error_msg
+        std::cout << "Warning: " << error_msg
                   << " This test case will be skipped." << std::endl;
         GTEST_SKIP();
         return;
