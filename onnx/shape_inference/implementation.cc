@@ -84,7 +84,7 @@ void checkShapesAndTypes(
     const TypeProto& existingType) {
   const auto inferredTypeCase = inferredType.value_case();
   const auto existingTypeCase = existingType.value_case();
-  if (inferredTypeCase != existingTypeCase) {
+  if (inferredTypeCase != existingTypeCase && existingTypeCase != TensorProto::UNDEFINED) {
     fail_type_inference(
       "type case mismatch. existing=",
       getValueCaseString(existingType),
@@ -96,6 +96,9 @@ void checkShapesAndTypes(
     checkShapesAndTypes(inferredType.tensor_type(), existingType.tensor_type());
   } else if (inferredType.has_sequence_type() && existingType.has_sequence_type()) {
     checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
+  } else if (existingTypeCase == TensorProto::UNDEFINED) {
+    // nothing to check; will merge inferredType into undefined exisitingType 
+    return; 
   } else {
     fail_type_inference(
       "type case unsupported. existing=",
@@ -108,16 +111,8 @@ void checkShapesAndTypes(
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType) {
-  if (inferredType.elem_type() != TensorProto::UNDEFINED) {
-    if (existingType->elem_type() == TensorProto::UNDEFINED) {
-      existingType->set_elem_type(inferredType.elem_type());
-    } else if (existingType->elem_type() != inferredType.elem_type()) {
-      fail_type_inference(
-          "type mismatch. existing=",
-          getElemTypeString(*existingType),
-          " inferred=",
-          getElemTypeString(inferredType));
-    }
+  if (existingType->elem_type() == TensorProto::UNDEFINED) {
+    existingType->set_elem_type(inferredType.elem_type());
   }
 
   if (!inferredType.has_shape()) {
@@ -146,6 +141,8 @@ void mergeShapesAndTypes(
 void mergeShapesAndTypes(
     const TypeProto& inferredType,
     TypeProto* existingType) {
+  // Check before merge
+  checkShapesAndTypes(inferredType, *existingType);
   if (inferredType.has_tensor_type()) {
     mergeShapesAndTypes(inferredType.tensor_type(), existingType->mutable_tensor_type());
   } else if (inferredType.has_sequence_type()) {
@@ -165,7 +162,6 @@ static void InferShapesImpl(
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
-  std::unordered_set<std::string> undefinedOutput;
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
@@ -179,15 +175,8 @@ static void InferShapesImpl(
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
   for (auto& vi : *g->mutable_output()) {
-    
-    // Save names of output with undefined types
-    if (!vi.mutable_type()->mutable_tensor_type()->has_elem_type()) {
-      undefinedOutput.insert(vi.name());
-      valueTypesByName[vi.name()] = vi.mutable_type();
-    }
-    else if (vi.has_type()) {
-      valueTypesByName[vi.name()] = vi.mutable_type();
-    } 
+    // Save names of output with undefined types; No matter vi has type or not
+    valueTypesByName[vi.name()] = vi.mutable_type(); 
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -271,15 +260,7 @@ static void InferShapesImpl(
         auto iter = valueTypesByName.find(n.output(i));
         TypeProto* existingType = nullptr;
         if (iter != valueTypesByName.end()) {
-          auto output_iter = undefinedOutput.find(n.output(i));
-
-          // If output type is not defined, update inferredType to otuput
-          if (output_iter != undefinedOutput.end()) {
-            google::protobuf::int32 inferredTypeValue = (*inferredType).tensor_type().elem_type();
-            valueTypesByName[n.output(i)]->mutable_tensor_type()->set_elem_type(inferredTypeValue);
-          }
           existingType = iter->second;
-          checkShapesAndTypes(*inferredType, *existingType);
         } else {
           auto vi = g->add_value_info();
           vi->set_name(n.output(i));
