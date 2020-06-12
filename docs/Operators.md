@@ -3004,7 +3004,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int64)</dt>
+<dt><tt>T1</tt> : tensor(int64), tensor(int32)</dt>
 <dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
 <dd>Constrain output types to be numerics.</dd>
@@ -12065,7 +12065,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
-<dt><tt>pads</tt> : tensor(int64)</dt>
+<dt><tt>pads</tt> : T1</dt>
 <dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
 <dt><tt>constant_value</tt> (optional) : T</dt>
 <dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).</dd>
@@ -12083,6 +12083,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>, <a href
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrains input and output to only numeric types.</dd>
+<dt><tt>T1</tt> : tensor(int64), tensor(int32)</dt>
+<dd>Constrain pad input to int64/int32 type.</dd>
 </dl>
 
 
@@ -15080,7 +15082,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>,
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dt><tt>shape</tt> (non-differentiable) : T1</dt>
 <dd>Specified shape for output.</dd>
 </dl>
 
@@ -15096,6 +15098,8 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>,
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T1</tt> : tensor(int64), tensor(int32)</dt>
+<dd>Constrain pad input to int64/int32 type</dd>
 </dl>
 
 
