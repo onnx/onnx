@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver13_doc = R"DOC(
@@ -199,7 +200,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {"tensor(int64)", "tensor(int32)"}, "Constrain input types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -260,17 +261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // In this case, we extract the shape values from input tensor
           // and create output tensor of that shape.
           // First, extract target shape value.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
+          std::vector<int64_t> targetShape = GetIntInitializerData(targetShapeInitializer);
           // Next, set output shape to the target shape.
           auto final_output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
