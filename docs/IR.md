@@ -295,6 +295,8 @@ Each node referring to an operator with optional outputs MUST provide a name for
 
 The raw data for large constant tensors, such as initializers, MAY be serialised in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
 
+More details can be found in [ExternalData.md](ExternalData.md).
+
 ## Standard data types
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
