@@ -13,6 +13,7 @@
 //   F = Add(F, A)
 //   G = Add(E, F)
 
+#include <set>
 #include "onnx/defs/tensor_util.h"
 #include "onnx/optimizer/pass.h"
 
@@ -89,7 +90,6 @@ struct EliminateDuplicateInitializer final : public FullGraphBasedPass {
           continue;
         }
         Tensor i_tensor = *iter_i_initializer;
-        int32_t i_type = i_tensor.elem_type();
 
         Value* i_value = input_map.find(i_tensor.name())->second;
 
