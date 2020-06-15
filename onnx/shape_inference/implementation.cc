@@ -84,7 +84,11 @@ void checkShapesAndTypes(
     const TypeProto& existingType) {
   const auto inferredTypeCase = inferredType.value_case();
   const auto existingTypeCase = existingType.value_case();
-  if (inferredTypeCase != existingTypeCase && existingTypeCase != TensorProto::UNDEFINED) {
+  if (existingTypeCase == TypeProto::ValueCase::VALUE_NOT_SET) {
+    // nothing to check; will assign inferredType to undefined exisitingType 
+    return; 
+  }
+  if (inferredTypeCase != existingTypeCase) {
     fail_type_inference(
       "type case mismatch. existing=",
       getValueCaseString(existingType),
@@ -96,9 +100,6 @@ void checkShapesAndTypes(
     checkShapesAndTypes(inferredType.tensor_type(), existingType.tensor_type());
   } else if (inferredType.has_sequence_type() && existingType.has_sequence_type()) {
     checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
-  } else if (existingTypeCase == TensorProto::UNDEFINED) {
-    // nothing to check; will merge inferredType into undefined exisitingType 
-    return; 
   } else {
     fail_type_inference(
       "type case unsupported. existing=",
