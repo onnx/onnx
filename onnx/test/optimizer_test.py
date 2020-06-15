@@ -1777,7 +1777,7 @@ class TestOptimizer(unittest.TestCase):
             [helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 7)),
              helper.make_tensor_value_info("B", TensorProto.FLOAT, (5, 7)),
              helper.make_tensor_value_info("D", TensorProto.FLOAT, (5, 7)),
-            ],
+             ],
             [helper.make_tensor_value_info("E", TensorProto.FLOAT, (5, 7))],
             [helper.make_tensor("B", TensorProto.FLOAT,
                                 dims=duplicate_initializer.shape,
