@@ -10,7 +10,7 @@ from onnx import ModelProto, ValueInfoProto
 import onnx.checker
 
 
-def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelProto, Dict[Text, List[Any]], Dict[Text, List[Any]]) -> ModelProto
+def update_inputs_outputs_dims(model, input_dims={}, output_dims={}):  # type: (ModelProto, Dict[Text, List[Any]], Dict[Text, List[Any]]) -> ModelProto
     """
         This function updates the dimension sizes of the model's inputs and outputs to the values
         provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
@@ -69,15 +69,17 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
 
     for input in model.graph.input:
         input_name = input.name
-        input_dim_arr = input_dims[input_name]
-        for j, dim in enumerate(input_dim_arr):
-            update_dim(input, dim, j, input_name)
+        input_dim_arr = input_dims.get(input_name)
+        if input_dim_arr:
+            for j, dim in enumerate(input_dim_arr):
+                update_dim(input, dim, j, input_name)
 
     for output in model.graph.output:
         output_name = output.name
-        output_dim_arr = output_dims[output_name]
-        for j, dim in enumerate(output_dim_arr):
-            update_dim(output, dim, j, output_name)
+        output_dim_arr = output_dims.get(output_name)
+        if output_dim_arr:
+            for j, dim in enumerate(output_dim_arr):
+                update_dim(output, dim, j, output_name)
 
     onnx.checker.check_model(model)
     return model
