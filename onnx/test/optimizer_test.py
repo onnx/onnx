@@ -1767,6 +1767,95 @@ class TestOptimizer(unittest.TestCase):
                             optimized_output_shape = tuple(x.dim_value for x in optimized_model.graph.output[0].type.tensor_type.shape.dim)
                             assert optimized_output_shape == output_shape
 
+    def test_eliminate_duplicate_initializer(self):  # type: () -> None
+        duplicate_initializer = np.random.randn(5, 7).astype(np.float32)
+        node = helper.make_node("Add", ["A", "B"], ["C"])
+        node1 = helper.make_node("Add", ["C", "D"], ["E"])
+        graph = helper.make_graph(
+            [node, node1],
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 7)),
+             helper.make_tensor_value_info("B", TensorProto.FLOAT, (5, 7)),
+             helper.make_tensor_value_info("D", TensorProto.FLOAT, (5, 7)),
+            ],
+            [helper.make_tensor_value_info("E", TensorProto.FLOAT, (5, 7))],
+            [helper.make_tensor("B", TensorProto.FLOAT,
+                                dims=duplicate_initializer.shape,
+                                vals=duplicate_initializer.tobytes(),
+                                raw=True),
+             helper.make_tensor("D", TensorProto.FLOAT,
+                                dims=duplicate_initializer.shape,
+                                vals=duplicate_initializer.tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(
+            graph, ["eliminate_duplicate_initializer"], False)
+
+        assert len(optimized_model.graph.initializer) == 1
+        assert optimized_model.graph.initializer[0].name == "B"
+        assert len(optimized_model.graph.input) == 2
+        assert "D" not in [i.name for i in optimized_model.graph.input]
+
+    def test_eliminate_duplicate_initializer_output(self):  # type: () -> None
+        duplicate_initializer = np.random.randn(5, 7).astype(np.float32)
+        node = helper.make_node("Add", ["A", "B"], ["C"])
+        node1 = helper.make_node("Add", ["C", "D"], ["E"])
+        graph = helper.make_graph(
+            [node, node1],
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 7)),
+             helper.make_tensor_value_info("B", TensorProto.FLOAT, (5, 7)),
+             helper.make_tensor_value_info("D", TensorProto.FLOAT, (5, 7)),
+             ],
+            [helper.make_tensor_value_info("E", TensorProto.FLOAT, (5, 7)),
+             helper.make_tensor_value_info("D", TensorProto.FLOAT, (5, 7))],
+            [helper.make_tensor("B", TensorProto.FLOAT,
+                                dims=duplicate_initializer.shape,
+                                vals=duplicate_initializer.tobytes(),
+                                raw=True),
+             helper.make_tensor("D", TensorProto.FLOAT,
+                                dims=duplicate_initializer.shape,
+                                vals=duplicate_initializer.tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(
+            graph, ["eliminate_duplicate_initializer"], False)
+
+        assert len(optimized_model.graph.initializer) == 2
+        assert optimized_model.graph.initializer[0].name == "B"
+        assert optimized_model.graph.initializer[1].name == "D"
+        assert len(optimized_model.graph.input) == 3
+        assert "D" in [i.name for i in optimized_model.graph.input]
+
+    def test_eliminate_duplicate_initializer_scalar(self):  # type: () -> None
+        duplicate_initializer = np.random.rand()
+        node = helper.make_node("Add", ["A", "B"], ["C"])
+        node1 = helper.make_node("Add", ["C", "D"], ["E"])
+        node2 = helper.make_node("Add", ["F", "D"], ["G"])
+        node3 = helper.make_node("Sum", ["C", "E", "G"], ["H"])
+        graph = helper.make_graph(
+            [node, node1, node2, node3],
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 7)),
+             helper.make_tensor_value_info("B", TensorProto.FLOAT, ()),
+             helper.make_tensor_value_info("D", TensorProto.FLOAT, ()),
+             helper.make_tensor_value_info("F", TensorProto.FLOAT, (5, 7)),
+             ],
+            [helper.make_tensor_value_info("H", TensorProto.FLOAT, (5, 7))],
+            [helper.make_tensor("B", TensorProto.FLOAT,
+                                dims=(),
+                                vals=[duplicate_initializer],
+                                raw=False),
+             helper.make_tensor("D", TensorProto.FLOAT,
+                                dims=(),
+                                vals=[duplicate_initializer],
+                                raw=False)])
+        optimized_model = self._optimized(
+            graph, ["eliminate_duplicate_initializer"], False)
+
+        assert len(optimized_model.graph.initializer) == 1
+        assert optimized_model.graph.initializer[0].name == "B"
+        assert len(optimized_model.graph.input) == 3
+        assert "D" not in [i.name for i in optimized_model.graph.input]
+
 
 if __name__ == '__main__':
     unittest.main()
