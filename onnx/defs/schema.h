@@ -142,6 +142,20 @@ class OpSchema final {
     Variadic = 2,
   };
 
+  enum DifferentiationCategory : uint8_t {
+    // Whether this formal parameter is differentiable or not cannot
+    // be statically determined. It also covers variadic formal
+    // parameters which contain both of differentiable and
+    // non-differentiable variables.
+    Unknown = 0,
+    // This formal parameter is differentiable. That is, this formal
+    // parameter can be differentiable input of Gradient operator. 
+    Differentiable = 1,
+    // This formal parameter is not differentiable. That is, this formal
+    // parameter can not be differentiable input of Gradient operator. 
+    NonDifferentiable = 2
+  };
+
   // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter final {
@@ -156,7 +170,8 @@ class OpSchema final {
         const std::string& description,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
-        int min_arity = 1)
+        int min_arity = 1,
+        DifferentiationCategory differentiation_category = Unknown)
         : name_(std::move(name)),
           type_set_(std::move(allowed_type_set)),
           type_str_(std::move(type_str)),
@@ -165,7 +180,8 @@ class OpSchema final {
 #endif
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
-          min_arity_(min_arity) {
+          min_arity_(min_arity),
+          differentiation_category_(differentiation_category) {
     }
 
     explicit FormalParameter(
@@ -174,7 +190,8 @@ class OpSchema final {
         std::string type_str,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
-        int min_arity = 1)
+        int min_arity = 1,
+        DifferentiationCategory differentiation_category = Unknown)
         : name_(std::move(name)),
           type_str_(std::move(type_str)),
 #ifndef __ONNX_NO_DOC_STRINGS
@@ -182,7 +199,8 @@ class OpSchema final {
 #endif
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
-          min_arity_(min_arity) {
+          min_arity_(min_arity),
+          differentiation_category_(differentiation_category) {
     }
 
     // Get formal parameter name.
@@ -205,6 +223,9 @@ class OpSchema final {
 
     // Get minimum arity. Applicable only in the Variadic case.
     int GetMinArity() const;
+
+    // Get the differentiation property of this formal parameter.
+    DifferentiationCategory GetDifferentiationCategory() const;
 
    private:
     friend class OpSchema;
@@ -235,6 +256,11 @@ class OpSchema final {
 
     // Minimum number of parameters expected. Applicable only for Variadic.
     int min_arity_;
+
+    // True if this parameter can be an differentiable inputs of Gradient.
+    // Otherwise, using this parameter as an differentiable inputs of Gradient
+    // is prohibited.
+    DifferentiationCategory differentiation_category_;
   };
 
   enum class SupportType : uint8_t {
@@ -497,7 +523,8 @@ class OpSchema final {
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -507,7 +534,8 @@ class OpSchema final {
       const char* type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   OpSchema& Output(
       int n,
@@ -516,7 +544,8 @@ class OpSchema final {
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -526,7 +555,8 @@ class OpSchema final {
       const char* type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   OpSchema& TypeConstraint(
       std::string type_str,
@@ -542,6 +572,19 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
+  static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
+    static const std::vector<std::string> numeric_types_for_math_reduction_with_bfloat = {
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(bfloat16)"};
+    return numeric_types_for_math_reduction_with_bfloat;
+  }
+
   static const std::vector<std::string>& numeric_types_for_math_reduction() {
     static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
@@ -552,6 +595,23 @@ class OpSchema final {
         "tensor(float)",
         "tensor(double)"};
     return numeric_types_for_math_reduction;
+  }
+
+  static const std::vector<std::string>& all_numeric_types_with_bfloat() {
+    static const std::vector<std::string> all_numeric_types_with_bfloat = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(bfloat16)"};
+    return all_numeric_types_with_bfloat;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -604,6 +664,27 @@ class OpSchema final {
         "tensor(complex64)",
         "tensor(complex128)"};
     return all_tensor_types;
+  }
+
+  static const std::vector<std::string>& all_tensor_types_with_bfloat() {
+    static const std::vector<std::string> all_tensor_types_with_bfloat = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
+    return all_tensor_types_with_bfloat;
   }
 
   static const std::vector<std::string>& all_tensor_sequence_types() {
@@ -777,11 +858,12 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 12);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 13);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
-      // ONNX's preview domain contains operators subject to change, so versining
-      // is not meaningful and that domain should have only one version.
+      // ONNX's preview domain contains operators subject to change, so
+      // versining is not meaningful and that domain should have only one
+      // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
     }
 
@@ -987,7 +1069,7 @@ OpSchema GetOpSchema();
       name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
 
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                                 \
+  ONNX_OPERATOR_SET_SCHEMA_EX(                                     \
       name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined

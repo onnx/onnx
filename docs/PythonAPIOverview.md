@@ -10,6 +10,27 @@ onnx_model = onnx.load('path/to/the/model.onnx')
 Runnable IPython notebooks:
 - [load_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/load_model.ipynb)
 
+## Loading an ONNX Model with External Data
+
+
+* [Default] If the external data is under the same directory of the model, simply use `onnx.load()`
+```python
+import onnx
+
+onnx_model = onnx.load('path/to/the/model.onnx')
+```
+
+* If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load()`
+
+```python
+import onnx
+from onnx.external_data_helper import load_external_data_for_model
+
+onnx_model = onnx.load('path/to/the/model.onnx', load_external_data=False)
+load_external_data_for_model(onnx_model, 'data/directory/path/')
+# Then the onnx_model has loaded the external data from the specific directory
+```
+
 ## Saving an ONNX Model
 ```python
 import onnx
@@ -117,6 +138,17 @@ print('The model is checked!')
 ```
 Runnable IPython notebooks:
 - [check_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/check_model.ipynb)
+
+### Checking a Large ONNX Model >2GB
+Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory. 
+
+```python
+import onnx
+
+onnx.checker.check_model('path/to/the/model.onnx')
+# onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
+```
+
 
 ## Optimizing an ONNX Model
 ```python

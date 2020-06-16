@@ -1,17 +1,0 @@
-backend-test:’
-8
-x
-yz"SoftmaxCrossEntropyLoss*
-	reduction"none test_softmax_cross_entropy_noneZ
-x
-
-
-Z
-y
-
-
-b
-z
-
-
-B

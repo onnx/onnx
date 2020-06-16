@@ -1,25 +1,0 @@
-backend-test:Œ
-V
-x
-yz"SoftmaxCrossEntropyLoss*
-ignore_indexûÿÿÿÿÿÿÿÿ *
-	reduction"none Wtest_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_indexZ
-x
-
-
-
-
-
-Z
-y
-
-
-
-
-b
-z
-
-
-
-
-B

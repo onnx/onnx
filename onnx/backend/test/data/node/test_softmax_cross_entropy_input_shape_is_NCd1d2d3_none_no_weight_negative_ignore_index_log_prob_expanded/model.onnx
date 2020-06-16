@@ -1,50 +1,0 @@
-backend-test:≥
-≠
-xèSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Max"	ReduceMax*
-axes@†
-¨
-x
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_MaxèSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Sub"Sub
-©
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_SubèSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Exp"Exp
-ª
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_ExpéSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_RS"	ReduceSum*
-axes@†
-∫
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Exp
-éSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_RSèSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Div"Div
-©
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_DivèSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Log"Log
-¶
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Loglog_prob"Identity
-Á
-èSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Log
-yz"NegativeLogLikelihoodLoss*
-	reduction"none†*
-ignore_index˚ˇˇˇˇˇˇˇˇ†itest_softmax_cross_entropy_input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expandedZ
-x
-
-
-
-
-
-Z
-y
-
-
-
-
-b
-z
-
-
-
-
-b&
-log_prob
-
-
-
-
-
-B
