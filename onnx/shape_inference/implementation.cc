@@ -243,15 +243,6 @@ static void InferShapesImpl(
         if (inferredType->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
           continue;
         }
-        if (inferredType->has_tensor_type()) {
-          const auto& inferredTensorType = inferredType->tensor_type();
-
-          // Bail out early if shape inference does nothing useful.
-          if (inferredTensorType.elem_type() == TensorProto::UNDEFINED &&
-              !inferredTensorType.has_shape()) {
-            continue;
-          }
-        }
 
         // Find any pre-existing type and shape info. If there is such,
         // then check for compatibility with the inferred
