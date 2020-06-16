@@ -103,6 +103,8 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
 def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[bytes], Text], Optional[Any], bool) -> ModelProto
     '''
     Loads a serialized ModelProto into memory
+    load_external_data is true if the external data under the same directory of the model and load the external data
+    If not, users need to call load_external_data_for_model with directory to load
 
     @params
     f can be a file-like object (has "read" function) or a string containing a file name
