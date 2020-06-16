@@ -84,7 +84,7 @@ void checkShapesAndTypes(
     const TypeProto& existingType) {
   const auto inferredTypeCase = inferredType.value_case();
   const auto existingTypeCase = existingType.value_case();
-  if (existingTypeCase == TypeProto::ValueCase::VALUE_NOT_SET) {
+  if (inferredTypeCase == TypeProto::ValueCase::VALUE_NOT_SET || existingTypeCase == TypeProto::ValueCase::VALUE_NOT_SET) {
     // nothing to check; will assign inferredType to undefined exisitingType 
     return; 
   }
@@ -240,11 +240,9 @@ static void InferShapesImpl(
       }
       for (int i = 0; i < n.output_size(); ++i) {
         const auto* inferredType = ctx.getOutputType(i);
-        if (!inferredType->has_tensor_type() &&
-            !inferredType->has_sequence_type()) {
+        if (inferredType->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
           continue;
         }
-
         if (inferredType->has_tensor_type()) {
           const auto& inferredTensorType = inferredType->tensor_type();
 
