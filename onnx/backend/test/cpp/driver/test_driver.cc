@@ -199,17 +199,19 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   st.test_case_name_ = t.test_case_name_;
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
-
+  ONNX_NAMESPACE::ValueInfoProto input = &st.model_.graph.input;
+  ONNX_NAMESPACE::ValueInfoProto output = &st.model_.graph.output;
   for (auto& test_data : t.test_data_) {
     ResolvedTestData proto_test_data;
-    // TODO: identify input / output types from model's input / output nodes
     for (auto& input_file : test_data.input_filenames_) {
       std::string input_data;
       LoadSingleFile(input_file, input_data);
+      if(input.type == ONNX_NAMESPACE::TensorProto) {
+        ONNX_NAMESPACE::TensorProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &input_proto, input_data.c_str(), input_data.size());
+      }
       // TODO: account for other types (SequenceProto, MapProto)
-      ONNX_NAMESPACE::TensorProto input_proto;
-      ONNX_NAMESPACE::ParseProtoFromBytes(
-          &input_proto, input_data.c_str(), input_data.size());
       proto_test_data.inputs_.emplace_back(std::move(input_proto));
     }
     for (auto& output_file : test_data.output_filenames_) {
