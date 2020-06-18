@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
 #include "onnx/proto_utils.h"

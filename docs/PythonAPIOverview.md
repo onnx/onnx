@@ -202,19 +202,6 @@ converted_model = version_converter.convert_version(original_model, <int target_
 print('The model after conversion:\n{}'.format(converted_model))
 ```
 
-## Utility Functions
-### Polishing the Model
-Function `polish_model` runs model checker, optimizer, shape inference engine on the model,
-and also strips the doc_string for you.
-```python
-import onnx
-import onnx.utils
-
-
-model = onnx.load('path/to/the/model.onnx')
-polished_model = onnx.utils.polish_model(model)
-```
-
 ## Tools
 ### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
