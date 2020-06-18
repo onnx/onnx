@@ -835,6 +835,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, IsNaN);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, NonZero);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, GatherND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, DequantizeLinear);
 
 // Iterate over schema from ai.onnx version 13
 class OpSet_Onnx_ver13 {
@@ -917,6 +919,8 @@ class OpSet_Onnx_ver13 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, NonZero)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, GatherND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, DequantizeLinear)>());
   }
 };
 
