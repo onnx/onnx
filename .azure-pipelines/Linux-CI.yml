@@ -41,30 +41,31 @@ jobs:
 
   - script: |
       python -m pip install --upgrade pip
-      python -m pip install --quiet -U dos2unix
       python -m pip install numpy
       git submodule update --init --recursive
       set ONNX_ML=${onnx_ml}
       set DEBUG=${onnx_debug}
       set ONNX_BUILD_TESTS=1
       set USE_MSVC_STATIC_RUNTIME=0
-      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      set CMAKE_ARGS=-DONNX_WERROR=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      set ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
+      .setuptools-cmake-build/onnx_gtests
+      .setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
     displayName: 'Install ONNX and dependencies'
 
-
   - script: |
-      pip install --quiet pytest nbval flake8
+      pip install --quiet pytest nbval flake8 dos2unix
       pytest
       flake8
       find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
-      git status
-      git diff --exit-code
+
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
       python onnx/backend/test/stat_coverage.py
       backend-test-tools generate-data
+
       git status
       git diff --exit-code
     displayName: 'Run ONNX tests'
