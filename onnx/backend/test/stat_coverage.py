@@ -133,7 +133,8 @@ def gen_model_test_coverage(schemas, f, ml):
     # Need to grab associated nodes
     attrs = dict()  # type: Dict[Text, Dict[Text, List[Any]]]
     model_paths = []  # type: List[Any]
-    for rt in load_model_tests(kind='real'):
+    data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
+    for rt in load_model_tests(data_dir=data_dir, kind='real'):
         model_dir = Runner.prepare_model_data(rt)
         model_paths.append(os.path.join(model_dir, 'model.onnx'))
     model_paths.sort()
