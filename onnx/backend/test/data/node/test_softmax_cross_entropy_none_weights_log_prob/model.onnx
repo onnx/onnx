@@ -1,26 +1,0 @@
-backend-test:Ý
-E
-x
-y
-wzlog_prob"SoftmaxCrossEntropyLoss*
-	reduction"none 0test_softmax_cross_entropy_none_weights_log_probZ
-x
-
-
-Z
-y
-
-
-Z
-w
-
-
-b
-z
-
-
-b
-log_prob
-
-
-B

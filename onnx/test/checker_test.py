@@ -356,7 +356,7 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(checker.ValidationError, checker.check_model, model, True)
 
-    def test_check_modle_inconsistent_type(self):  # type: () -> None
+    def test_check_model_inconsistent_type(self):  # type: () -> None
         N = 10
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.INT32, [N])
