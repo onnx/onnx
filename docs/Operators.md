@@ -4187,14 +4187,24 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="DequantizeLinear"></a><a name="dequantizelinear">**DequantizeLinear**</a>
 
-  The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
-  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
+  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
+  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantizations.
   'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">DequantizeLinear-10</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
+</dl>
 
 #### Inputs (2 - 3)
 
@@ -4202,9 +4212,9 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>x</tt> : T</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
 <dt><tt>x_scale</tt> : tensor(float)</dt>
-<dd>Scale for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T</dt>
-<dd>Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization. It's optional. 0 is the default value when it's not specified.</dd>
+<dd>Zero point for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization. It's optional. 0 is the default value when it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -4225,12 +4235,43 @@ This version of the operator has been available since version 10 of the default 
 #### Examples
 
 <details>
+<summary>axis</summary>
+
+```python
+node = onnx.helper.make_node('DequantizeLinear',
+                             inputs=['x', 'x_scale', 'x_zero_point'],
+                             outputs=['y'],)
+
+# 1-D tensor zero point and scale of size equal to axis 1 of the input tensor
+x = np.array([[[[3, 89],
+                [34, 200],
+                [74, 59]],
+
+               [[5, 24],
+                [24, 87],
+                [32, 13]],
+
+               [[245, 99],
+                [4, 142],
+                [121, 102]], ], ], dtype=np.uint8)
+x_scale = np.array([2, 4, 5], dtype=np.float32)
+x_zero_point = np.array([84, 24, 196], dtype=np.uint8)
+y = (x.astype(np.float32) - x_zero_point.reshape(1, 3, 1, 1).astype(np.float32)) * x_scale.reshape(1, 3, 1, 1)
+
+expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
+       name='test_dequantizelinear_axis')
+```
+
+</details>
+
+
+<details>
 <summary>dequantizelinear</summary>
 
 ```python
 node = onnx.helper.make_node('DequantizeLinear',
-    inputs=['x', 'x_scale', 'x_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'x_scale', 'x_zero_point'],
+                             outputs=['y'],)
 
 # scalar zero point and scale
 x = np.array([0, 3, 128, 255]).astype(np.uint8)
@@ -12548,13 +12589,23 @@ expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale
 
 ### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
 
-  The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
-  The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor. The scale factor can be a scalar
+  (per-tensor/layer quantization), or a 1-D tensor for per-axis quantization. The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
+  For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
   For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">QuantizeLinear-10</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
+</dl>
 
 #### Inputs (2 - 3)
 
@@ -12562,9 +12613,9 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
 <dt><tt>y_scale</tt> : tensor(float)</dt>
-<dd>Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. Default value is uint8 typed 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get 'y'. It can be a scalar, which means a per-tensor/layer quantization, or a 1-D tensor for per-axis quantization. Default value is uint8 typed 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -12587,12 +12638,42 @@ This version of the operator has been available since version 10 of the default 
 #### Examples
 
 <details>
+<summary>axis</summary>
+
+```python
+node = onnx.helper.make_node('QuantizeLinear',
+                             inputs=['x', 'y_scale', 'y_zero_point'],
+                             outputs=['y'],)
+
+x = np.array([[[[-162, 10],
+                [-100, 232],
+                [-20, -50]],
+
+               [[-76, 0],
+                [0, 252],
+                [32, -44]],
+
+               [[245, -485],
+                [-960, -270],
+                [-375, -470]], ], ], dtype=np.float32)
+y_scale = np.array([2, 4, 5], dtype=np.float32)
+y_zero_point = np.array([84, 24, 196], dtype=np.uint8)
+y = (x / y_scale.reshape(1, 3, 1, 1) + y_zero_point.reshape(1, 3, 1, 1)).astype(np.uint8)
+
+expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+       name='test_quantizelinear_axis')
+```
+
+</details>
+
+
+<details>
 <summary>quantizelinear</summary>
 
 ```python
 node = onnx.helper.make_node('QuantizeLinear',
-    inputs=['x', 'y_scale', 'y_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'y_scale', 'y_zero_point'],
+                             outputs=['y'],)
 
 x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
 y_scale = np.float32(2)
