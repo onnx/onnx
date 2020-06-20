@@ -15,7 +15,7 @@ DATA_DIR = os.path.join(
 
 
 def load_model_tests(
-    data_dir=None,  # type: Text
+    data_dir=None,  # type: Optional[Text]
     kind=None,  # type: Optional[Text]
 ):  # type: (...) -> List[TestCase]
     '''Load model test cases from on-disk data files.
