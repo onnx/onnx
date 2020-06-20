@@ -90,8 +90,8 @@ def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
             return False
     return True
 
-
-backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
+data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../backend/test/data')
+backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__, data_dir=data_dir)
 if os.getenv('APPVEYOR'):
     backend_test.exclude(r'(test_vgg19|test_zfnet)')
 if platform.architecture()[0] == '32bit':
