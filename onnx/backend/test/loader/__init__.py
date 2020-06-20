@@ -15,12 +15,13 @@ DATA_DIR = os.path.join(
 
 
 def load_model_tests(
-    data_dir=DATA_DIR,  # type: Text
+    data_dir=None,  # type: Text
     kind=None,  # type: Optional[Text]
 ):  # type: (...) -> List[TestCase]
     '''Load model test cases from on-disk data files.
     '''
-
+    if data_dir is None:
+        data_dir = DATA_DIR
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
         raise ValueError("kind must be one of {}".format(supported_kinds))

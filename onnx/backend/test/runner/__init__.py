@@ -51,7 +51,7 @@ def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callab
 
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None, data_dir=None):  # type: (Type[Backend], Optional[str]) -> None
+    def __init__(self, backend, parent_module=None, data_dir=None):  # type: (Type[Backend], Optional[str], Optional[str]) -> None
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
@@ -63,24 +63,19 @@ class Runner(object):
         # {category: {name: func}}
         self._test_items = defaultdict(dict)  # type: Dict[Text, Dict[Text, TestItem]]
 
-        if data_dir is None:
-            for rt in load_model_tests(data_dir=data_dir, kind='node'):
-                self._add_model_test(rt, 'Node')
-        else:
-            for rt in load_model_tests(data_dir=data_dir, kind='node'):
-                self._add_model_test(rt, 'Node')
-            
+        for rt in load_model_tests(data_dir=data_dir, kind='node'):
+            self._add_model_test(rt, 'Node')
 
-        for rt in load_model_tests(kind='real'):
+        for rt in load_model_tests(data_dir=data_dir, kind='real'):
             self._add_model_test(rt, 'Real')
 
-        for rt in load_model_tests(kind='simple'):
+        for rt in load_model_tests(data_dir=data_dir, kind='simple'):
             self._add_model_test(rt, 'Simple')
 
-        for ct in load_model_tests(kind='pytorch-converted'):
+        for ct in load_model_tests(data_dir=data_dir, kind='pytorch-converted'):
             self._add_model_test(ct, 'PyTorchConverted')
 
-        for ot in load_model_tests(kind='pytorch-operator'):
+        for ot in load_model_tests(data_dir=data_dir, kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
 
     def _get_test_case(self, name):  # type: (Text) -> Type[unittest.TestCase]
