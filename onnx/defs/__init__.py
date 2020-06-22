@@ -11,6 +11,7 @@ from typing import List, Dict
 
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = 'ai.onnx.ml'
+AI_ONNX_PREVIEW_TRAINING_DOMAIN = 'ai.onnx.preview.training'
 
 
 has = C.has_schema
