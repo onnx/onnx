@@ -1,0 +1,50 @@
+backend-test:¶
+‹
+xnSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Max"	ReduceMax*
+axes@ 
+è
+x
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_MaxnSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Sub"Sub
+å
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_SubnSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Exp"Exp
+÷
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_ExpmSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_RS"	ReduceSum*
+axes@ 
+Ô
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Exp
+mSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_RSnSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Div"Div
+å
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_DivnSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Log"Log
+„
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Loglog_prob"Identity
+Å
+nSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expanded_functionX_Log
+yz"NegativeLogLikelihoodLoss*
+	reduction"none *
+ignore_indexûÿÿÿÿÿÿÿÿ Htest_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob_expandedZ
+x
+
+
+
+
+
+Z
+y
+
+
+
+
+b
+z
+
+
+
+
+b&
+log_prob
+
+
+
+
+
+B
