@@ -16,6 +16,9 @@ ONNX version (you are using):
 ### What is the problem that this feature solves?
 Please detail the discrepancy with our current functionality.
 
+### Describe the alternatives you have considered
+A clear and concise description of any alternative solutions or features you've considered
+
 ### Describe the feature
 Why is this feature necessary? What does it accomplish?
 
