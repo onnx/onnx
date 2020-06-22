@@ -13,12 +13,12 @@ assignees: ''
 ### Describe the operator
 Why is this operator necessary? What does it accomplish?
 
-### Can this opeator be constructed using existing onnx operators?
+### Can this operator be constructed using existing onnx operators?
 If so, why not add it as a function?
 
 ### Is this operator used by any model currently? Which one?
 
-### Are you willing to contribute it (Y/N):
+### Are you willing to contribute it? (Y/N)
 
 ### Notes
 Any additional information
