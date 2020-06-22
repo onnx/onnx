@@ -11,7 +11,7 @@ assignees: ''
 ### Describe the bug
 Please describe the bug clearly and concisely
 
-### System Information
+### System information
 - OS Platform and Distribution (*e.g. Linux Ubuntu 16.04*):  
 - ONNX version (*e.g. 1.7*):  
 - Python version:
@@ -29,6 +29,9 @@ model = onnx.load('model.onnx')
 ...
 ```
 - Attach the ONNX model to the issue (where applicable)
+
+### Expected behavior
+A clear and concise description of what you expected to happen.
 
 ### Notes
 
