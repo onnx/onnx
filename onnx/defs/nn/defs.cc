@@ -189,11 +189,12 @@ void convPoolShapeInference(
 
 std::vector<std::string> GetSupportedDataTypesForPoolingOps(bool supports8bit) {
   if (supports8bit) {
-    return {"tensor(float16)",
-            "tensor(float)",
-            "tensor(double)",
-            "tensor(int8)",
-            "tensor(uint8)"};
+    return {
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(int8)",
+        "tensor(uint8)"};
   }
   return {"tensor(float16)", "tensor(float)", "tensor(double)"};
 }
@@ -1491,47 +1492,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver12_doc = R"DOC(
-Carries out batch normalization as described in the paper https://arxiv.org/abs/1502.03167.
-There is three required inputs 'X', 'mean' and 'var', in addition to one optional input 'training_mode'.
-Note that 'mean' and 'var' are expected to be the estimated statistics in inference mode (training_mode=False, default),
-and the running statistics in training mode (traning_mode=True).
-There is one required output 'Y' and four optional outputs : 'output_mean', 'output_var', 'saved_mean', 'saved_var' used for training.
+static const char* BatchNormalization_ver9_doc = R"DOC(
+Carries out batch normalization as described in the paper
+https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+there are multiple cases for the number of outputs, which we list below:
 
-The output and statistics are updated as follows when training_mode=True:
-```
-saved_mean = ReducedMean(X, axis=all_except_channel_index)
-saved_var =  ReducedVar(X, axis=all_except_channel_index)
-
-output_mean = mean * momentum + saved_mean * (1 - momentum)
-output_var = var * momentum + saved_var * (1 - momentum)
-
-Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
-```
-
-When training_mode=False:
-```
-saved_mean = ReducedMean(X, axis=all_except_channel_index)
-saved_var =  ReducedVar(X, axis=all_except_channel_index)
-
-output_mean = mean
-output_var = var
-
-Y = (X - mean) / sqrt(var + epsilon) * scale + B
-```
+Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+Output case #2: Y (test mode)
 
 For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization operator.
+to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    12,
+    9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(GET_OP_DOC_STR(
-            std::string(BatchNormalization_ver12_doc) +
-            GenerateOptionalArgumentsDoc()))
+        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1540,7 +1518,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "momentum",
             "Factor used in computing the running mean and variance."
-            "e.g., output_mean = mean * momentum + saved_mean * (1 - momentum).",
+            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
         .Input(
@@ -1565,139 +1543,41 @@ ONNX_OPERATOR_SET_SCHEMA(
             "var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
-        .Input(
-            5,
-            "training_mode",
-            "If set to true, run spatial batch normalization in training mode, default is false.",
-            "T1",
-            OpSchema::Optional)
         .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
-            "output_mean",
-            "The running mean when training_mode=True, "
-            "or the estimated mean when training_mode=False (Tensor of shape (C)).",
+            "mean",
+            "The running mean after the BatchNormalization operator.",
             "T",
             OpSchema::Optional)
         .Output(
             2,
-            "output_var",
-            "The running variance when training_mode=True, "
-            "or the estimated variance when training_mode=False (Tensor of shape (C)).",
+            "var",
+            "The running variance after the BatchNormalization operator.",
             "T",
             OpSchema::Optional)
         .Output(
             3,
             "saved_mean",
-            "Saved mean used during training to speed up gradient computation (Tensor of shape (C)).",
+            "Saved mean used during training to speed up gradient "
+            "computation.",
             "T",
             OpSchema::Optional)
         .Output(
             4,
             "saved_var",
-            "Saved variance used during training to speed up gradient computation (Tensor of shape (C)).",
+            "Saved variance used during training to speed up "
+            "gradient computation.",
             "T",
             OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(bool)"},
-            "Constrain input 'training_mode' types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasInputShape(ctx, 0)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-            auto& x_input_shape = getInputShape(ctx, 0);
-            int num_channels = 1;
-            if (static_cast<int>(x_input_shape.dim_size()) > 1 &&
-                x_input_shape.dim(1).has_dim_value()) {
-              num_channels = static_cast<int>(x_input_shape.dim(1).dim_value());
-            }
-
-            if (hasInputShape(ctx, 1)) {
-              auto& scale_input_shape = getInputShape(ctx, 1);
-              if (static_cast<int>(scale_input_shape.dim_size()) != 1 ||
-                  !scale_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(scale_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
-            }
-
-            if (hasInputShape(ctx, 2)) {
-              auto& b_input_shape = getInputShape(ctx, 2);
-              if (static_cast<int>(b_input_shape.dim_size()) != 1 ||
-                  !b_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(b_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
-            }
-
-            if (hasInputShape(ctx, 3)) {
-              auto& mean_input_shape = getInputShape(ctx, 3);
-              if (static_cast<int>(mean_input_shape.dim_size() != 1) ||
-                  !mean_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(mean_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
-            }
-
-            if (hasInputShape(ctx, 4)) {
-              auto& var_input_shape = getInputShape(ctx, 4);
-              if (static_cast<int>(var_input_shape.dim_size()) != 1 ||
-                  !var_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(var_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
-            }
-
-            if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
-              auto& mode_input_shape = getInputShape(ctx, 5);
-              // if mode is not scalar or tensor of rank 1, fail shape inference
-              if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
-                if (static_cast<int>(mode_input_shape.dim_size()) > 1 ||
-                    !mode_input_shape.dim(0).has_dim_value() ||
-                    static_cast<int>(mode_input_shape.dim(0).dim_value()) !=
-                        1) {
-                  fail_shape_inference(
-                      "Training_mode is not a scalar boolean.");
-                }
-              }
-            }
-
-            if (ctx.getNumOutputs() > 1) {
-              TensorShapeProto outputs_shape;
-              *outputs_shape.add_dim() = x_input_shape.dim(1); // channel
-
-              propagateElemTypeFromInputToOutput(ctx, 0, 1);
-              updateOutputShape(ctx, 1, outputs_shape);
-
-              if (ctx.getNumOutputs() > 2) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 2);
-                updateOutputShape(ctx, 2, outputs_shape);
-              }
-
-              if (ctx.getNumOutputs() > 3) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 3);
-                updateOutputShape(ctx, 3, outputs_shape);
-              }
-
-              if (ctx.getNumOutputs() > 4) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 4);
-                updateOutputShape(ctx, 4, outputs_shape);
-              }
-            }
-          }
+          propagateShapeAndTypeFromFirstInput(ctx);
+          // TODO in training mode, it may be possible to infer some of
+          // the other outputs as well.
         }));
 
 static const char* InstanceNormalization_ver6_doc = R"DOC(
@@ -1779,11 +1659,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* Dropout_ver12_doc = R"DOC(
-Dropout takes an input floating-point tensor and an input ratio (floating-point scalar), and produces two tensor outputs,
-output (floating-point tensor) and mask (`Tensor<bool>`). The output Y will be a random dropout;
+static const char* Dropout_ver13_doc = R"DOC(
+Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
+output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
 Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-the user can simply replace this Dropout with an Identity operator.
+the user can simply not pass `training_mode` input or set it to false.
 ```
 output = scale * data * mask,
 ```
@@ -1795,10 +1675,10 @@ scale = 1. / (1. - ratio).
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
-    12,
+    13,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(Dropout_ver12_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(Dropout_ver13_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -1811,14 +1691,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The ratio of random dropout, with value in [0, 1). If this input was not set, "
             "or if it was set to 0, the output would be a simple copy of the input. "
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
-            "the case during training.",
+            "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
+            OpSchema::Optional)
+        .Input(
+            2,
+            "training_mode",
+            "If set to true then it indicates dropout is being used for training. It is an optional value hence unless "
+            "specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where "
+            "nothing will be dropped from the input data and if mask is requested as output it will contain all ones.",
+            "T2",
             OpSchema::Optional)
         .Output(0, "output", "The output.", "T")
         .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
             "T1",
@@ -1840,6 +1731,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Ratio of Dropout must be a scalar.");
             }
           }
+
+          if (ctx.getNumInputs() > 2 && hasInputShape(ctx, 2)) {
+            auto& training_mode_input_shape = getInputShape(ctx, 2);
+            if (static_cast<int>(training_mode_input_shape.dim_size()) != 0) {
+              fail_shape_inference(
+                  "training_mode of Dropout must be a scalar.");
+            }
+          }
+
           if (ctx.getNumOutputs() == 2) {
             updateOutputElemType(ctx, 1, TensorProto::BOOL);
             if (hasNInputShapes(ctx, 1)) {
@@ -1878,7 +1778,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrains input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Flatten_ver11_doc = R"DOC(
+static const char* Flatten_ver13_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1886,9 +1786,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    11,
+    13,
     OpSchema()
-        .SetDoc(Flatten_ver11_doc)
+        .SetDoc(Flatten_ver13_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
@@ -1900,7 +1800,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output to all tensor types.")
         .Attr(
             "axis",
@@ -1934,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* LRN_ver1_doc = R"DOC(
+static const char* LRN_ver13_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
@@ -1949,7 +1849,7 @@ Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[
 
 ONNX_OPERATOR_SET_SCHEMA(
     LRN,
-    1,
+    13,
     OpSchema()
         .Attr("size", "The number of channels to sum over", AttributeProto::INT)
         .Attr("alpha", "Scaling parameter.", AttributeProto::FLOAT, 0.0001f)
@@ -1977,10 +1877,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrain input and output "
             " types to float tensors.")
-        .SetDoc(LRN_ver1_doc)
+        .SetDoc(LRN_ver13_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* TfIdfVectorizer_ver9_doc = R"DOC(
@@ -2187,7 +2090,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, output_shape);
         }));
 
-static const char* mvn_ver9_doc = R"DOC(
+static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
@@ -2196,9 +2099,9 @@ static std::vector<int64_t> mvn_default_axes = {0, 2, 3};
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
-    9,
+    13,
     OpSchema()
-        .SetDoc(mvn_ver9_doc)
+        .SetDoc(mvn_ver13_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .Attr(
@@ -2211,7 +2114,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             mvn_default_axes)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
         .FunctionBody(FunctionBodyHelper::BuildNodes(
             {// nodes: {outputs, op, inputs, attributes}

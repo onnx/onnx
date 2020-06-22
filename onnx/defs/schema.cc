@@ -6,10 +6,11 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
-#include "onnx/defs/operator_sets-training.h"
+#include "onnx/defs/operator_sets_training.h"
+#include "onnx/defs/operator_sets_preview.h"
 
 #ifdef ONNX_ML
-#include "onnx/defs/operator_sets-ml.h"
+#include "onnx/defs/operator_sets_ml.h"
 #endif
 
 #include "onnx/common/assertions.h"
@@ -58,6 +59,10 @@ bool OpSchema::FormalParameter::GetIsHomogeneous() const {
 
 int OpSchema::FormalParameter::GetMinArity() const {
   return min_arity_;
+}
+
+OpSchema::DifferentiationCategory OpSchema::FormalParameter::GetDifferentiationCategory() const {
+  return differentiation_category_;
 }
 
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
@@ -576,7 +581,8 @@ OpSchema& OpSchema::Input(
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
@@ -590,7 +596,8 @@ OpSchema& OpSchema::Input(
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -601,7 +608,8 @@ OpSchema& OpSchema::Input(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Input(
       n,
       std::string(name),
@@ -613,7 +621,8 @@ OpSchema& OpSchema::Input(
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::Output(
@@ -623,7 +632,8 @@ OpSchema& OpSchema::Output(
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
@@ -637,7 +647,8 @@ OpSchema& OpSchema::Output(
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -648,7 +659,8 @@ OpSchema& OpSchema::Output(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Output(
       n,
       std::string(name),
@@ -660,7 +672,8 @@ OpSchema& OpSchema::Output(
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -934,6 +947,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
       // Invoke register of training operators.
       RegisterOnnxTrainingOperatorSetSchema();
+
+      // Invoke register of experimental operators.
+      RegisterOnnxPreviewOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =
