@@ -7,7 +7,7 @@ Templates shall be added and maintained for creating Issues.
 Following templates shall be added
 * Report a bug
 * Ask a question
-* Propose a new feature, new or updated operator, or other enhancement
+* Propose a new feature or other enhancement
 
 
 ## Label issues
@@ -19,7 +19,7 @@ Following templates shall be added
 ### Rules for label naming scheme
 
 * Only lower case alphabets must be used.
-* Whenever there are multiple words they must be separated by a hyphen '-'.
+* Whenever there are multiple words they must be separated by a space ' '.
 * Names must be descriptive.
 
 ### Label tags
@@ -28,7 +28,7 @@ Along with other repo specific labels following labels shall be added.
 * bug
 * question
 * enhancement
-* good-first-issue
+* good first issue
 * documentation
 
 
