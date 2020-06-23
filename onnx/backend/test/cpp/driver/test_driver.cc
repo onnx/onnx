@@ -199,28 +199,40 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   st.test_case_name_ = t.test_case_name_;
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
-  ONNX_NAMESPACE::ValueInfoProto input = &st.model_.graph.input;
-  ONNX_NAMESPACE::ValueInfoProto output = &st.model_.graph.output;
+  const int num_inputs = &st.model_.graph.input_size();
+  const int num_outputs = &st.model_.graph.output_size();
+  int test_data_counter = 0;
   for (auto& test_data : t.test_data_) {
     ResolvedTestData proto_test_data;
     for (auto& input_file : test_data.input_filenames_) {
-      std::string input_data;
+      std::string input_data, input_info;
       LoadSingleFile(input_file, input_data);
-      if(input.type == ONNX_NAMESPACE::TensorProto) {
+      input_info = &st.model_.graph.get_input(test_data_counter);
+      printf("%s\n", input_info);
+      if(input_info.type == ONNX_NAMESPACE::TensorProto) {
         ONNX_NAMESPACE::TensorProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
       }
-      // TODO: account for other types (SequenceProto, MapProto)
+      else if(input_info.type == ONNX_NAMESPACE::SequenceProto) {
+        ONNX_NAMESPACE::SequenceProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &input_proto, input_data.c_str(), input_data.size());
+      }
+      else if(input_info.type == ONNX_NAMESPACE::MapProto) {
+        ONNX_NAMESPACE::MapProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &input_proto, input_data.c_str(), input_data.size());
+      }
       proto_test_data.inputs_.emplace_back(std::move(input_proto));
     }
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data = "";
       LoadSingleFile(output_file, output_data);
-      // TODO: account for other types (SequenceProto, MapProto)
-      ONNX_NAMESPACE::TensorProto output_proto;
-      ONNX_NAMESPACE::ParseProtoFromBytes(
-          &output_proto, output_data.c_str(), output_data.size());
+      if(input.type == ONNX_NAMESPACE::TensorProto) {
+        ONNX_NAMESPACE::TensorProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
       proto_test_data.outputs_.emplace_back(std::move(output_proto));
     }
     st.proto_test_data_.emplace_back(std::move(proto_test_data));
