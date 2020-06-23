@@ -45,9 +45,11 @@ def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
         return '{}.{}'.format(domain, schema_name)
     return schema_name
 
+
 def format_versions(versions):
     return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                                v.since_version) for v in versions[::-1]))
+
 
 def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     assert isinstance(v, OpSchema.AttrType)
