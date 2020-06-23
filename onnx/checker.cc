@@ -228,11 +228,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_field
 }
 
-void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
+void check_sequence(const SequenceProto& sequence) {
   enforce_has_repeated_field(sequence, values);
 }
 
-void check_map(const MapProto& map, const CheckerContext& ctx) {
+void check_map(const MapProto& map) {
   enforce_has_repeated_field(map, pairs);
 }
 
