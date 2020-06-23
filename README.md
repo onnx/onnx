@@ -4,7 +4,10 @@
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=master)
 [![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=CircleCI%20Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7979c71a2ca990cad669313fd5fa52533b7dada1
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard

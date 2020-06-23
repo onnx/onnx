@@ -4,18 +4,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-import platform
 
 import numpy as np  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
-
-if platform.system() != 'AIX' and sys.byteorder != 'little':
-    raise RuntimeError(
-        'Numpy helper for tensor/ndarray is not available on big endian '
-        'systems yet.')
 
 
 def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.complex64]
@@ -50,6 +44,9 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
 
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
+        if sys.byteorder == 'big':
+            # Convert endian from little to big
+            convert_endian(tensor)
         return np.frombuffer(
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
@@ -114,6 +111,9 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
             "Numpy data type not understood yet: {}".format(str(arr.dtype)))
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
+    if sys.byteorder == 'big':
+        # Convert endian from big to little
+        convert_endian(tensor)
 
     return tensor
 
@@ -220,3 +220,13 @@ def from_dict_to_map(dict, name=None):  # type: (Dict[Any, Any], Optional[Text])
         kv_pair = helper.make_key_value_pair(key, key_type, val, val_type)
         map.pairs.append(kv_pair)
     return map
+
+def convert_endian(tensor):  # type: (TensorProto) -> None
+    """
+    call to convert endianess of raw data in tensor.
+    @params
+    TensorProto: TensorProto to be converted.
+    """
+    tensor_dtype = tensor.data_type
+    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
+    tensor.raw_data = np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
