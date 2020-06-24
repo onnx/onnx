@@ -5,6 +5,7 @@
 #include "onnx/onnxifi_loader.h"
 #include "onnx/onnxifi_utils.h"
 #include "onnx/string_utils.h"
+#include "onnx/onnx-data_pb.h"
 
 #include "gtest/gtest.h"
 namespace ONNX_NAMESPACE {

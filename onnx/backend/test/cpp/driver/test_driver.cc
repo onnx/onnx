@@ -229,7 +229,8 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data = "";
       LoadSingleFile(output_file, output_data);
-      if(input.type == ONNX_NAMESPACE::TensorProto) {
+      output_info = &st.model_.graph().get_output(test_data_counter);
+      if(output_info.type == ONNX_NAMESPACE::TensorProto) {
         ONNX_NAMESPACE::TensorProto output_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &output_proto, output_data.c_str(), output_data.size());
