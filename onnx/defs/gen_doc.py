@@ -46,7 +46,7 @@ def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
     return schema_name
 
 
-def format_versions(versions):
+def format_versions(versions): # type: (Sequence[OpSchema]) -> Text
     return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                                v.since_version) for v in versions[::-1]))
 
