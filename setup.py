@@ -275,7 +275,7 @@ class clean(distutils.command.clean.clean):
         import shutil
         with open('.gitignore', 'r') as f:
             ignores = f.read()
-            pat = re.compile(r'^#( START KEEP_WHEN_CLEAN )?')
+            pat = re.compile(r'^#( START KEEP_WHEN_CLEAN)?')
             for wildcard in filter(None, ignores.split('\n')):
                 match = pat.match(wildcard)
                 # if matching target line; stop reading
