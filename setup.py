@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from distutils.spawn import find_executable
 from distutils import sysconfig, log
+import distutils.command.clean
 import setuptools
 import setuptools.command.build_py
 import setuptools.command.develop
@@ -267,6 +268,28 @@ class mypy_type_check(ONNXCommand):
         sys.exit(returncode)
 
 
+class clean(distutils.command.clean.clean):
+    def run(self):
+        import glob
+        import re
+        import shutil
+        with open('.gitignore', 'r') as f:
+            ignores = f.read()
+            pat = re.compile(r'^#( START KEEP_WHEN_CLEAN )?')
+            for wildcard in filter(None, ignores.split('\n')):
+                match = pat.match(wildcard)
+                # if matching target line; stop reading
+                if match and match.group(1):
+                    break
+                else:
+                    for filename in glob.glob(wildcard):
+                        if os.path.isfile(filename):
+                            os.remove(filename)
+                        else:
+                            shutil.rmtree(filename, ignore_errors=True)
+
+        distutils.command.clean.clean.run(self)
+
 cmdclass = {
     'create_version': create_version,
     'cmake_build': cmake_build,
@@ -274,6 +297,7 @@ cmdclass = {
     'develop': develop,
     'build_ext': build_ext,
     'typecheck': mypy_type_check,
+    'clean': clean,
 }
 
 ################################################################################

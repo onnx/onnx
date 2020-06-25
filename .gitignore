@@ -53,9 +53,6 @@ onnx/*_pb.pyi
 # PyCharm files
 .idea
 
-# Visual Studio Code files
-.vscode
-
 # OSX dir files
 .DS_Store
 
@@ -88,12 +85,19 @@ onnx/examples/.coverage.nbval
 .pytest_cache
 test_report
 
-# autocomplete
-.ycm_extra_conf.py
-
 # test coverage data files
 *.gcov
 
 .mypy_cache
 virtualenv
 venv
+
+# START KEEP_WHEN_CLEAN
+# Below files won't be removed from "python setup.py clean"
+
+# Visual Studio (Code) files
+.vscode
+.vs
+
+# autocomplete
+.ycm_extra_conf.py
