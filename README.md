@@ -197,6 +197,14 @@ After installing pytest, use the following command to run tests.
 pytest
 ```
 
+# Clean
+
+The following command can help you clean all build files:
+
+```
+python setup.py clean
+```
+
 # Development
 
 Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.

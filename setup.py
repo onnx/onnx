@@ -270,7 +270,6 @@ class mypy_type_check(ONNXCommand):
 
 class clean(distutils.command.clean.clean):
     def run(self):
-        import glob
         import re
         import shutil
         with open('.gitignore', 'r') as f:
