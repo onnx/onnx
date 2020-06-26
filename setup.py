@@ -289,6 +289,7 @@ class clean(distutils.command.clean.clean):
 
         distutils.command.clean.clean.run(self)
 
+
 cmdclass = {
     'create_version': create_version,
     'cmake_build': cmake_build,
