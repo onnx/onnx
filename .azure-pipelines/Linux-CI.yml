@@ -44,11 +44,9 @@ jobs:
       python -m pip install --quiet -U dos2unix
       python -m pip install numpy
       git submodule update --init --recursive
-      set ONNX_ML=${onnx_ml}
-      set DEBUG=${onnx_debug}
-      set ONNX_BUILD_TESTS=1
-      set USE_MSVC_STATIC_RUNTIME=0
-      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      export ONNX_ML=${onnx_ml}
+      export DEBUG=${onnx_debug}
+      export ONNX_BUILD_TESTS=1
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
 

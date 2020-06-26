@@ -29,10 +29,8 @@ jobs:
       python -m pip install numpy
       conda install -c conda-forge pybind11 protobuf
       brew install protobuf
-      set ONNX_ML=${onnx_ml}
-      set ONNX_BUILD_TESTS=1
-      set USE_MSVC_STATIC_RUNTIME=0
-      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      export ONNX_ML=${onnx_ml}
+      export ONNX_BUILD_TESTS=1
       python setup.py --quiet install
     displayName: 'Install dependencies and ONNX'
 
