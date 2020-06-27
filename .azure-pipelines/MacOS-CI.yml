@@ -27,7 +27,7 @@ jobs:
       git submodule update --init --recursive
       python -m pip install --upgrade setuptools
       python -m pip install numpy
-      conda install -c conda-forge pybind11 protobuf
+      conda install -y -c conda-forge pybind11 protobuf
       brew install protobuf
       export ONNX_ML=${onnx_ml}
       export ONNX_BUILD_TESTS=1
