@@ -422,6 +422,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("Pow",
+        OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<Dropout_11_12>());
 
       /******** 12 -> 11 ********/
