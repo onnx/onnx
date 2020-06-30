@@ -60,12 +60,12 @@ C = A + B
 ```
 For the sake of simplicity, assume `A` and `B` are same-shape vector.
 ```
-A = [a1, a2]
-B = [b1, b2]
-C = [c1, c2]
+A = [a1, a2]^T
+B = [b1, b2]^T
+C = [c1, c2]^T
 ```
-Let `X = [a1, a2, b1, b2]^T` and `Y = [c1, c2]^T` and consider Add as a function which maps `X` to `Y`.
 Here we use the symbol `^T` to denote transpose of the attached matrix or vector.
+Let `X = [a1, a2, b1, b2]^T` and `Y = [c1, c2]^T` and consider Add as a function which maps `X` to `Y`.
 Then, this function's Jacobian matrix is a 4-by-2 matrix,
 ```
 J = [[dc1/da1, dc2/da1],
