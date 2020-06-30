@@ -64,7 +64,8 @@ A = [a1, a2]
 B = [b1, b2]
 C = [c1, c2]
 ```
-Let `X = [a1, a2, b1, b2]` and `Y = [c1, c2]` and consider Add as a function which maps `X` to `Y`.
+Let `X = [a1, a2, b1, b2]^T` and `Y = [c1, c2]^T` and consider Add as a function which maps `X` to `Y`.
+Here we use the symbol `^T` to denote transpose of the attached matrix or vector.
 Then, this function's Jacobian matrix is a 4-by-2 matrix,
 ```
 J = [[dc1/da1, dc2/da1],
@@ -78,22 +79,22 @@ J = [[dc1/da1, dc2/da1],
 ```
 If
 ```
-dL/dC = [dL/dc1, dL/dc2],
+dL/dC = [dL/dc1, dL/dc2]^T,
 ```
-then `dL/dA = [dL/da1, dL/da2]` and `dL/dB = [dL/db1, dL/db2]` can be computed from elements in
+then `dL/dA = [dL/da1, dL/da2]^T` and `dL/dB = [dL/db1, dL/db2]^T` can be computed from elements in
 ```
   [[dL/da1], [dL/da2], [dL/db1], [dL/db2]]
 = J * dL/dC
 = [[dL/dc1], [dL/dc1], [dL/dc2], [dL/dc2]]
 ```
 where `*` is standard matrix multiplication.
-If `dL/dC = [0.2, 0.8]`, then `dL/dA = [0.2, 0.2]` and `dL/dB = [0.8, 0.8]`.
+If `dL/dC = [0.2, 0.8]^T`, then `dL/dA = [0.2, 0.2]^T` and `dL/dB = [0.8, 0.8]^T`.
 Notice that the procedure to compute `dL/dA` and `dL/dB` from `dL/dC` is usually called backward of an operator.
 We can see backward operator of Add takes `dL/dC` as an input and produces two outputs `dL/dA` and `dL/dB`.
 This example can be extended to cover all tensors when shape broadcasting is not needed.
 If broadcasting happens, the broadcasted element's gradient is the sum of all associated elements' gradient in its **non-broadcasting** case.
 Let's consider the above example again.
-If `B = [b]` becomes an 1-element vector, `B` may be broadcasted to `[b1, b1]` and `dL/dB = [dL/ db] = [dL/db1 + dL/db2]`.
+If `B = [b]^T` becomes an 1-element vector, `B` may be broadcasted to `[b1, b1]^T` and `dL/dB = [dL/ db]^T = [dL/db1 + dL/db2]^T`.
 For high-dimensional tensors, this is in fact a ReduceSum operation along all expanded axes.
 
 ## Method 3: Do the Math Using Auto-differentiation Libraries
