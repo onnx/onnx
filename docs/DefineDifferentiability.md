@@ -73,8 +73,8 @@ J = [[dc1/da1, dc2/da1],
      [dc1/db1, dc2/db1],
      [dc1/db2, dc2/db2]]
   = [[1, 0],
-     [1, 0],
      [0, 1],
+     [1, 0],
      [0, 1]]
 ```
 If
@@ -85,17 +85,15 @@ then `dL/dA = [dL/da1, dL/da2]^T` and `dL/dB = [dL/db1, dL/db2]^T` can be comput
 ```
   [[dL/da1], [dL/da2], [dL/db1], [dL/db2]]
 = J * dL/dC
-= [[dL/dc1], [dL/dc1], [dL/dc2], [dL/dc2]]
+= [[dL/dc1], [dL/dc2], [dL/dc1], [dL/dc2]]
 ```
 where `*` is standard matrix multiplication.
-If `dL/dC = [0.2, 0.8]^T`, then `dL/dA = [0.2, 0.2]^T` and `dL/dB = [0.8, 0.8]^T`.
+If `dL/dC = [0.2, 0.8]^T`, then `dL/dA = [0.2, 0.8]^T` and `dL/dB = [0.2, 0.8]^T`.
 Notice that the procedure to compute `dL/dA` and `dL/dB` from `dL/dC` is usually called backward of an operator.
 We can see backward operator of Add takes `dL/dC` as an input and produces two outputs `dL/dA` and `dL/dB`.
-This example can be extended to cover all tensors when shape broadcasting is not needed.
+Consequently, all of `A`, `B`, and `C` are differentiable.
+By flattening tensor into 1-D vector, this example can be extended to cover all tensors when shape broadcasting is not needed.
 If broadcasting happens, the broadcasted element's gradient is the sum of all associated elements' gradient in its **non-broadcasting** case.
 Let's consider the above example again.
-If `B = [b]^T` becomes an 1-element vector, `B` may be broadcasted to `[b1, b1]^T` and `dL/dB = [dL/ db]^T = [dL/db1 + dL/db2]^T`.
+If `B = [b]^T` becomes an 1-element vector, `B` may be broadcasted to `[b1, b2]^T` and `dL/dB = [dL/ db]^T = [dL/db1 + dL/db2]^T`.
 For high-dimensional tensors, this is in fact a ReduceSum operation along all expanded axes.
-
-## Method 3: Do the Math Using Auto-differentiation Libraries
-If the considered operator is not directly available in any existing framework, the author can demonstrate that the gradient function of the considered operator exists using any auto-differentiation library. Of course, the author needs to provide runnable Python scripts and enough details for a smooth review process. It’s similar to the first method, but the author replaces Pytorch with their own auto-differentiation library.
