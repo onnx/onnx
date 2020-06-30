@@ -498,23 +498,8 @@ void check_node(
         ") has zero input and zero output.");
   }
 
-  // Put the removed experimental ops here
-  static std::set<std::string> experimental_ops = {"ATen",
-                                                   "Affine",
-                                                   "ConstantFill",
-                                                   "Crop",
-                                                   "DynamicSlice",
-                                                   "GRUUnit",
-                                                   "GivenTensorFill",
-                                                   "ImageScaler",
-                                                   "ParametricSoftplus",
-                                                   "Scale",
-                                                   "ScaledTanh"};
-  if (experimental_ops.count(node.op_type())) {
-    std::cerr << "Warning: " << node.op_type() << " was a removed "
-              << "experimental ops. In the future, we may directly "
-              << "reject this operator. Please update your model as soon "
-              << "as possible." << std::endl;
+  // If encounter experimental op, stop checking
+  if (checkIsExperimental(node.op_type())) {
     return;
   }
 
@@ -812,6 +797,30 @@ void check_model(const std::string& model_path) {
 void check_model(const ModelProto& model) {
   CheckerContext ctx;
   check_model(model, ctx);
+}
+
+
+std::set<std::string> experimental_ops = {"ATen",
+                                          "Affine",
+                                          "ConstantFill",
+                                          "Crop",
+                                          "DynamicSlice",
+                                          "GRUUnit",
+                                          "GivenTensorFill",
+                                          "ImageScaler",
+                                          "ParametricSoftplus",
+                                          "Scale",
+                                          "ScaledTanh"};
+
+bool checkIsExperimental(std::string node_op_type) {
+  if (experimental_ops.count(node_op_type)) {
+    std::cerr << "Warning: " << node_op_type << " was a removed "
+              << "experimental ops. In the future, we may directly "
+              << "reject this operator. Please update your model as soon "
+              << "as possible." << std::endl;
+    return true;
+  }
+  return false;  
 }
 
 #undef fail_check

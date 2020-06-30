@@ -1,6 +1,6 @@
 #include "onnx/shape_inference/implementation.h"
-
 #include "onnx/string_utils.h"
+#include "onnx/checker.h"
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
@@ -184,6 +184,14 @@ static void InferShapesImpl(
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
   }
+
+  // If encounter experimental op, stop checking
+  for (const auto& n : g->node()) {
+    if (checker::checkIsExperimental(n.op_type())) {
+      return;
+    }
+  }
+
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
       if (n.op_type() != "Constant" || n.output().size() != 1) {
