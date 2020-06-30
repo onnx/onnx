@@ -8,6 +8,9 @@ assignees: ''
 ---
 # Bug Report
 
+### Is the issue related to model conversion?
+If onnx checker reports issues with this model then this is most probably related to the converter used to convert the original framework model to onnx. Please create this bug in the converter github repo to get the best help.
+
 ### Describe the bug
 Please describe the bug clearly and concisely
 
