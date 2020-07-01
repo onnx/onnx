@@ -201,29 +201,35 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   const int num_inputs = &st.model_.graph().input_size();
   const int num_outputs = &st.model_.graph().output_size();
   int test_data_counter = 0;
+  std::string tensor_str = "Tensor";
+  std::string sequence_str = "Sequence";
+  std::string map_str = "Map";
   for (auto& test_data : t.test_data_) {
     ResolvedTestData proto_test_data;
     for (auto& input_file : test_data.input_filenames_) {
-      std::string input_data, input_info;
+      std::string input_data;
+      ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
-      input_info = &st.model_.graph().get_input(test_data_counter);
-      printf("%s\n", input_info);
-      if(input_info.type == ONNX_NAMESPACE::TensorProto) {
+      input_info = &st.model_.graph().input(test_data_counter);
+      if(input_info.doc_string().find(tensor_str) != string::npos) {
         ONNX_NAMESPACE::TensorProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
-      else if(input_info.type == ONNX_NAMESPACE::SequenceProto) {
+      else if(input_info.doc_string().find(sequence_str) != string::npos) {
         ONNX_NAMESPACE::SequenceProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
-      else if(input_info.type == ONNX_NAMESPACE::MapProto) {
+      else if(input_info.doc_string().find(map_str) != string::npos) {
         ONNX_NAMESPACE::MapProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
-      proto_test_data.inputs_.emplace_back(std::move(input_proto));
+      test_data_counter++;
     }
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data = "";
