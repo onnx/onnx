@@ -101,7 +101,7 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     return node_list
 
 
-def _extract_value_info(input, name, ele_type=None):  # type: (np.ndarray, Text, np.dtype) -> onnx.ValueInfoProto
+def _extract_value_info(input, name, ele_type=None):  # type: (Union[List, np.ndarray], Text, np.dtype) -> onnx.ValueInfoProto
     if isinstance(input, list):
         return onnx.helper.make_sequence_value_info(
             name=name,

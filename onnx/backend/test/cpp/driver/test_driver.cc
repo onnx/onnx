@@ -209,7 +209,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
       input_info = st.model_.graph().input(test_data_counter);
-      if(input_info.doc_string().find(tensor_str) != std::string::npos) {
+      if(typeid(input_info.type()) == typeid(ONNX_NAMESPACE::TypeProto::Tensor)) {
         ONNX_NAMESPACE::TensorProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
