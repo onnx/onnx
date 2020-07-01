@@ -58,8 +58,8 @@ struct UnsolvedTestCase {
  *	Data loading is resolved, this class may contains large chunk of data.
  */
 struct ResolvedTestData {
-  std::vector<ONNX_NAMESPACE::TensorProto> inputs_;
-  std::vector<ONNX_NAMESPACE::TensorProto> outputs_;
+  std::vector<std::any> inputs_;
+  std::vector<std::any> outputs_;
 };
 
 /**
