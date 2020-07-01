@@ -198,8 +198,6 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   st.test_case_name_ = t.test_case_name_;
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
-  const int num_inputs = &st.model_.graph().input_size();
-  const int num_outputs = &st.model_.graph().output_size();
   int test_data_counter = 0;
   std::string tensor_str = "Tensor";
   std::string sequence_str = "Sequence";
@@ -210,20 +208,20 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       std::string input_data;
       ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
-      input_info = &st.model_.graph().input(test_data_counter);
-      if(input_info.doc_string().find(tensor_str) != string::npos) {
+      input_info = st.model_.graph().input(test_data_counter);
+      if(input_info.doc_string().find(tensor_str) != std::string::npos) {
         ONNX_NAMESPACE::TensorProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
         proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
-      else if(input_info.doc_string().find(sequence_str) != string::npos) {
+      else if(input_info.doc_string().find(sequence_str) != std::string::npos) {
         ONNX_NAMESPACE::SequenceProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
         proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
-      else if(input_info.doc_string().find(map_str) != string::npos) {
+      else if(input_info.doc_string().find(map_str) != std::string::npos) {
         ONNX_NAMESPACE::MapProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
@@ -234,13 +232,10 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data = "";
       LoadSingleFile(output_file, output_data);
-      output_info = &st.model_.graph().get_output(test_data_counter);
-      if(output_info.type == ONNX_NAMESPACE::TensorProto) {
-        ONNX_NAMESPACE::TensorProto output_proto;
-        ONNX_NAMESPACE::ParseProtoFromBytes(
-            &output_proto, output_data.c_str(), output_data.size());
+      ONNX_NAMESPACE::TensorProto output_proto;
+      ONNX_NAMESPACE::ParseProtoFromBytes(
+          &output_proto, output_data.c_str(), output_data.size());
       proto_test_data.outputs_.emplace_back(std::move(output_proto));
-    }
     st.proto_test_data_.emplace_back(std::move(proto_test_data));
   }
   return st;
