@@ -27,7 +27,6 @@ bool FileExists(const std::string& filename) {
   }
 #endif
   return true;
-}
 
 void TestDriver::SetDefaultDir(const std::string& s) {
   default_dir_ = s;
