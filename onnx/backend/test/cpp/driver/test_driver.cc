@@ -219,13 +219,13 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
         ONNX_NAMESPACE::SequenceProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
-        proto_test_data.inputs_.emplace_back(std::move(input_proto));
+        proto_test_data.seq_inputs_.emplace_back(std::move(input_proto));
       }
       else if(input_info.doc_string().find(map_str) != std::string::npos) {
         ONNX_NAMESPACE::MapProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
-        proto_test_data.inputs_.emplace_back(std::move(input_proto));
+        proto_test_data.map_inputs_.emplace_back(std::move(input_proto));
       }
       test_data_counter++;
     }
