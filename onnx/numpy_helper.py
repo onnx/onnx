@@ -221,6 +221,7 @@ def from_dict_to_map(dict, name=None):  # type: (Dict[Any, Any], Optional[Text])
         map.pairs.append(kv_pair)
     return map
 
+
 def convert_endian(tensor):  # type: (TensorProto) -> None
     """
     call to convert endianess of raw data in tensor.
