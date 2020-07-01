@@ -215,13 +215,13 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
             &input_proto, input_data.c_str(), input_data.size());
         proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
-      else if(input_info.doc_string().find(sequence_str) != std::string::npos) {
+      else if(typeid(input_info.type()) == typeid(ONNX_NAMESPACE::TypeProto::Sequence)) {
         ONNX_NAMESPACE::SequenceProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
         proto_test_data.seq_inputs_.emplace_back(std::move(input_proto));
       }
-      else if(input_info.doc_string().find(map_str) != std::string::npos) {
+      else if(typeid(input_info.type()) == typeid(ONNX_NAMESPACE::TypeProto::Map)) {
         ONNX_NAMESPACE::MapProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
@@ -235,19 +235,19 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       ONNX_NAMESPACE::ValueInfoProto output_info;
       output_info = st.model_.graph().output(test_data_counter);
       LoadSingleFile(output_file, output_data);
-      if(output_info.doc_string().find(tensor_str) != std::string::npos) {
+      if(typeid(output_info.type()) == typeid(ONNX_NAMESPACE::TypeProto::Tensor)) {
         ONNX_NAMESPACE::TensorProto output_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &output_proto, output_data.c_str(), output_data.size());
         proto_test_data.outputs_.emplace_back(std::move(output_proto));
       }
-      else if(output_info.doc_string().find(sequence_str) != std::string::npos) {
+      else if(typeid(output_info.type()) == typeid(ONNX_NAMESPACE::TypeProto::Sequence)) {
         ONNX_NAMESPACE::SequenceProto output_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &output_proto, output_data.c_str(), output_data.size());
         proto_test_data.seq_outputs_.emplace_back(std::move(output_proto));
       }
-      else if(output_info.doc_string().find(map_str) != std::string::npos) {
+      else if(typeid(output_info.type()) == typeid(ONNX_NAMESPACE::TypeProto::Map)) {
         ONNX_NAMESPACE::MapProto output_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &output_proto, output_data.c_str(), output_data.size());
