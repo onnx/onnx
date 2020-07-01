@@ -47,7 +47,8 @@ jobs:
       export DEBUG=${onnx_debug}
       export ONNX_BUILD_TESTS=1
       export USE_MSVC_STATIC_RUNTIME=0
-      export CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      export CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNXIFI_DUMMY_BACKEND=ON
+      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
 
@@ -57,8 +58,8 @@ jobs:
       flake8
       find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
 
-      .setuptools-cmake-build/onnx_gtests
-      .setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
+      ./.setuptools-cmake-build/onnx_gtests
+      ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
 
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
