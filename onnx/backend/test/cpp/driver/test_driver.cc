@@ -27,7 +27,7 @@ bool FileExists(const std::string& filename) {
   }
 #endif
   return true;
-
+}
 void TestDriver::SetDefaultDir(const std::string& s) {
   default_dir_ = s;
 }
@@ -252,6 +252,7 @@ std::vector<ResolvedTestCase> LoadAllTestCases(
     st.push_back(LoadSingleTestCase(i));
   }
   return st;
+ }
 }
 
 } // namespace testing
