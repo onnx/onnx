@@ -58,8 +58,12 @@ struct UnsolvedTestCase {
  *	Data loading is resolved, this class may contains large chunk of data.
  */
 struct ResolvedTestData {
-  std::vector<std::any> inputs_;
-  std::vector<std::any> outputs_;
+  std::vector<std::TensorProto> inputs_;
+  std::vector<std::SequenceProto> seq_inputs_;
+  std::vector<std::MapProto> map_inputs_;
+  std::vector<std::TensorProto> outputs_;
+  std::vector<std::SequenceProto> seq_inputs_;
+  std::vector<std::MapProto> map_inputs_;
 };
 
 /**
