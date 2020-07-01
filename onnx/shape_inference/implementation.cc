@@ -187,7 +187,9 @@ static void InferShapesImpl(
 
   // If encounter experimental op, stop checking
   for (const auto& n : g->node()) {
-    if (checker::checkIsExperimental(n.op_type())) {
+    if (checker::check_is_experimental_op(n.op_type())) {
+      std::cerr << "Warning: Checker does not support models with experimental ops: "
+            << n.op_type() << std::endl;
       return;
     }
   }

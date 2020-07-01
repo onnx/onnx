@@ -499,7 +499,9 @@ void check_node(
   }
 
   // If encounter experimental op, stop checking
-  if (checkIsExperimental(node.op_type())) {
+  if (check_is_experimental_op(node.op_type())) {
+    std::cerr << "Warning: Checker does not support models with experimental ops: "
+          << node.op_type() << std::endl;
     return;
   }
 
@@ -812,15 +814,8 @@ std::set<std::string> experimental_ops = {"ATen",
                                           "Scale",
                                           "ScaledTanh"};
 
-bool checkIsExperimental(std::string node_op_type) {
-  if (experimental_ops.count(node_op_type)) {
-    std::cerr << "Warning: " << node_op_type << " was a removed "
-              << "experimental ops. In the future, we may directly "
-              << "reject this operator. Please update your model as soon "
-              << "as possible." << std::endl;
-    return true;
-  }
-  return false;  
+bool check_is_experimental_op(std::string node_op_type) {
+  return (experimental_ops.count(node_op_type))? true:false;
 }
 
 #undef fail_check
