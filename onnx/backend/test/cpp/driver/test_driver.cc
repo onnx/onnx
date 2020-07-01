@@ -254,7 +254,6 @@ std::vector<ResolvedTestCase> LoadAllTestCases(
     st.push_back(LoadSingleTestCase(i));
   }
   return st;
- }
 }
 
 } // namespace testing
