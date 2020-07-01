@@ -256,7 +256,6 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       test_data_counter++;
     }
     st.proto_test_data_.emplace_back(std::move(proto_test_data));
-    }
   }
   return st;
 }
