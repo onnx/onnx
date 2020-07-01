@@ -229,13 +229,32 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       }
       test_data_counter++;
     }
+    test_data_counter = 0;
     for (auto& output_file : test_data.output_filenames_) {
-      std::string output_data = "";
+      std::string output_data;
+      ONNX_NAMESPACE::ValueInfoProto output_info;
+      output_info = st.model_.graph().output(test_data_counter);
       LoadSingleFile(output_file, output_data);
-      ONNX_NAMESPACE::TensorProto output_proto;
-      ONNX_NAMESPACE::ParseProtoFromBytes(
-          &output_proto, output_data.c_str(), output_data.size());
-      proto_test_data.outputs_.emplace_back(std::move(output_proto));
+      if(output_info.doc_string().find(tensor_str) != std::string::npos) {
+        ONNX_NAMESPACE::TensorProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.outputs_.emplace_back(std::move(output_proto));
+      }
+      else if(output_info.doc_string().find(sequence_str) != std::string::npos) {
+        ONNX_NAMESPACE::SequenceProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.seq_outputs_.emplace_back(std::move(output_proto));
+      }
+      else if(output_info.doc_string().find(map_str) != std::string::npos) {
+        ONNX_NAMESPACE::MapProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.map_outputs_.emplace_back(std::move(output_proto));
+      }
+      test_data_counter++;
+    }
     st.proto_test_data_.emplace_back(std::move(proto_test_data));
     }
   }
