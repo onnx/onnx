@@ -208,6 +208,7 @@ static void InferShapesImpl(
       }
   }
   std::vector<std::string> inference_errors;
+   bool has_unsupported_op = false; // check whether exist unsupported ops
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -215,21 +216,21 @@ static void InferShapesImpl(
       continue;
     }
     auto domain_version = dit->second;
-
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
         n, valueTypesByName, inputDataByName, &graphInferenceContext);    
     if (!schema) {
+      has_unsupported_op = true;
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
         
-        // checker does not support experimental operators
+        // checker does not support unsupported/experimental operators 
         // so it won't consider it as an error
-        if (has_experimental_op) {
+        if (has_unsupported_op||has_experimental_op) {
           continue;
         }
         // Continue with inference for remaining nodes
@@ -241,9 +242,10 @@ static void InferShapesImpl(
         InferShapeForFunctionNode(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
-        // checker does not support experimental operators
+
+        // checker does not support unsupported/experimental operators 
         // so it won't consider it as an error
-        if (has_experimental_op) {
+        if (has_unsupported_op||has_experimental_op) {
           continue;
         }
         // Continue with inference for remaining nodes
