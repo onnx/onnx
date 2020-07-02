@@ -240,8 +240,8 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
   }
 }
 
-// Check Key Value pairs for MapProto (analogous to TensorProto data checks)
-// and call check_sequence_map_element to verify the values.
+// Check Key Value pairs for MapProto and call check_sequence_map_element
+// to verify the values.
 void check_key_value_pair(
   const KeyValuePair& kv_pair,
   const CheckerContext& ctx,
@@ -263,16 +263,21 @@ void check_sequence_map_element(
   const SequenceMapElement& seq_map_elem,
   const CheckerContext& ctx,
   const std::string& seq_map_name) {
+    enforce_has_field(seq_map_elem, elem_type)
     if (seq_map_elem.elem_type() == SequenceMapElement::TENSOR) {
+      enforce_has_field(seq_map_elem, tensor_value);
       check_tensor(seq_map_elem.tensor_value(), ctx);
     }
     else if (seq_map_elem.elem_type() == SequenceMapElement::SPARSE_TENSOR) {
+      enforce_has_field(seq_map_elem, sparse_tensor_value);
       check_sparse_tensor(seq_map_elem.sparse_tensor_value(), ctx);
     }
     else if (seq_map_elem.elem_type() == SequenceMapElement::SEQUENCE) {
+      enforce_has_field(seq_map_elem, sequence_value)
       check_sequence(seq_map_elem.sequence_value(), ctx);
     }
     else if (seq_map_elem.elem_type() == SequenceMapElement::MAP) {
+      enforce_has_field(seq_map_elem, map_value)
       check_map(seq_map_elem.map_value(), ctx);
     } else {
       fail_check(
