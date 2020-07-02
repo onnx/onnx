@@ -209,9 +209,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
       input_info = st.model_.graph().input(test_data_counter);
-      std::cout << "process input"; 
       if(input_info.type().has_tensor_type()) {
-        std::cout << "Tensor input";
         ONNX_NAMESPACE::TensorProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
