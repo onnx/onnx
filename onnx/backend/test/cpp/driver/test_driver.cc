@@ -216,6 +216,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
         proto_test_data.inputs_.emplace_back(std::move(input_proto));
       }
       else if(input_info.type().has_sequence_type()) {
+        cout << "Hello"; 
         ONNX_NAMESPACE::SequenceProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(
             &input_proto, input_data.c_str(), input_data.size());
