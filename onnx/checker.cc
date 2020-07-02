@@ -273,11 +273,11 @@ void check_sequence_map_element(
       check_sparse_tensor(seq_map_elem.sparse_tensor_value(), ctx);
     }
     else if (seq_map_elem.elem_type() == SequenceMapElement::SEQUENCE) {
-      enforce_has_field(seq_map_elem, sequence_value)
+      enforce_has_field(seq_map_elem, sequence_value);
       check_sequence(seq_map_elem.sequence_value(), ctx);
     }
     else if (seq_map_elem.elem_type() == SequenceMapElement::MAP) {
-      enforce_has_field(seq_map_elem, map_value)
+      enforce_has_field(seq_map_elem, map_value);
       check_map(seq_map_elem.map_value(), ctx);
     } else {
       fail_check(
