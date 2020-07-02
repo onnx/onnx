@@ -245,13 +245,13 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 void check_key_value_pair(
   const KeyValuePair& kv_pair,
   const CheckerContext& ctx,
-  const std::& map_name) {
+  const std::string& map_name) {
   enforce_has_field(kv_pair, key_type);
   if (kv_pair.key_type() == TensorProto::UNDEFINED) {
     fail_check(
         "setting key_type field (map name: ",
         map_name,
-        " to UNDEFINED is not allowed");
+        ") to UNDEFINED is not allowed");
   }
   enforce_has_field(kv_pair, value);
   check_sequence_map_element(kv_pair.value(), ctx, map_name);
@@ -276,7 +276,7 @@ void check_sequence_map_element(
       check_map(seq_map_elem.map_value(), ctx);
     } else {
       fail_check(
-          "SequenceMapElement ( Structure name: "
+          "SequenceMapElement ( Structure name: ",
           seq_map_name,
           ", elem_type: ",
           seq_map_elem.elem_type(),
