@@ -230,19 +230,22 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
 void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
   for (const SequenceMapElement& seq_map_elem : sequence.values()) {
-    check_sequence_map_element(seq_map_elem, sequence.name());
+    check_sequence_map_element(seq_map_elem, ctx, sequence.name());
   }
 }
 
 void check_map(const MapProto& map, const CheckerContext& ctx) {
   for (const KeyValuePair& kv_pair : map.pairs()) {
-    check_key_value_pair(kv_pair, map.name());
+    check_key_value_pair(kv_pair, ctx, map.name());
   }
 }
 
 // Check Key Value pairs for MapProto (analogous to TensorProto data checks)
 // and call check_sequence_map_element to verify the values.
-void check_key_value_pair(const KeyValuePair& kv_pair, const std::string map_name) {
+void check_key_value_pair(
+  const KeyValuePair& kv_pair,
+  const CheckerContext& ctx,
+  const std::& map_name) {
   enforce_has_field(kv_pair, key_type);
   if (kv_pair.key_type() == TensorProto::UNDEFINED) {
     fail_check(
@@ -251,14 +254,15 @@ void check_key_value_pair(const KeyValuePair& kv_pair, const std::string map_nam
         " to UNDEFINED is not allowed");
   }
   enforce_has_field(kv_pair, value);
-  check_sequence_map_element(kv_pair.value(), map_name);
+  check_sequence_map_element(kv_pair.value(), ctx, map_name);
 }
 
 // Check that the underlying values for SequenceProto and MapProto are
 // valid by calling the respective check functions on the SequenceMapElements.
 void check_sequence_map_element(
   const SequenceMapElement& seq_map_elem,
-  const std::String seq_map_name) {
+  const CheckerContext& ctx,
+  const std::string& seq_map_name) {
     if (seq_map_elem.elem_type() == SequenceMapElement::TENSOR) {
       check_tensor(seq_map_elem.tensor_value(), ctx);
     }
