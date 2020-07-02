@@ -188,8 +188,8 @@ static void InferShapesImpl(
   // If encounter experimental op, stop checking
   for (const auto& n : g->node()) {
     if (checker::check_is_experimental_op(n.op_type())) {
-      std::cerr << "Warning: Checker does not support models with experimental ops: "
-            << n.op_type() << std::endl;
+      std::cerr << "Warning: Shape inference does not support"
+            << " models with experimental operators: " << n.op_type() << std::endl;
       has_experimental_op = true;
     }
   }
@@ -221,6 +221,8 @@ static void InferShapesImpl(
     InferenceContextImpl ctx(
         n, valueTypesByName, inputDataByName, &graphInferenceContext);    
     if (!schema) {
+      std::cerr << "Warning: Shape inference does not support this operator: "
+      << n.op_type() << std::endl;
       has_unsupported_op = true;
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
