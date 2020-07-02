@@ -97,3 +97,7 @@ message MapProto {
 
   repeated KeyValuePair pairs = 2;
 }
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
+
