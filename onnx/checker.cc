@@ -263,7 +263,7 @@ void check_sequence_map_element(
   const SequenceMapElement& seq_map_elem,
   const CheckerContext& ctx,
   const std::string& seq_map_name) {
-    enforce_has_field(seq_map_elem, elem_type)
+    enforce_has_field(seq_map_elem, elem_type);
     if (seq_map_elem.elem_type() == SequenceMapElement::TENSOR) {
       enforce_has_field(seq_map_elem, tensor_value);
       check_tensor(seq_map_elem.tensor_value(), ctx);
