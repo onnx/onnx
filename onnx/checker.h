@@ -122,9 +122,11 @@ void check_sparse_tensor(
     const SparseTensorProto& sparse_tensor,
     const CheckerContext&);
 void check_sequence(
-    const SequenceProto& sequence);
+    const SequenceProto& sequence,
+    const CheckerContext&);
 void check_map(
-    const MapProto& map);
+    const MapProto& map,
+    const CheckerContext&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,

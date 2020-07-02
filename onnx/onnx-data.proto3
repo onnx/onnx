@@ -25,7 +25,7 @@ message SequenceMapElement {
     MAP = 4;
   }
   // The data type of the element.
-  // This field MUST have a valid TensorProto.DataType value
+  // This field MUST have a valid SequenceMapElement.DataType value
   int32 elem_type = 1;
 
   TensorProto tensor_value = 2;
@@ -97,7 +97,3 @@ message MapProto {
 
   repeated KeyValuePair pairs = 2;
 }
-
-// For using protobuf-lite
-option optimize_for = LITE_RUNTIME;
-
