@@ -184,13 +184,13 @@ static void InferShapesImpl(
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
   }
-
+  bool has_experimental_op = false;
   // If encounter experimental op, stop checking
   for (const auto& n : g->node()) {
     if (checker::check_is_experimental_op(n.op_type())) {
       std::cerr << "Warning: Checker does not support models with experimental ops: "
             << n.op_type() << std::endl;
-      return;
+      has_experimental_op = true;
     }
   }
 
@@ -226,6 +226,12 @@ static void InferShapesImpl(
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
+        
+        // checker does not support experimental operators
+        // so it won't consider it as an error
+        if (has_experimental_op) {
+          continue;
+        }
         // Continue with inference for remaining nodes
         inference_errors.push_back(std::string(ex.what()));
         continue;
@@ -235,6 +241,11 @@ static void InferShapesImpl(
         InferShapeForFunctionNode(
           schema->GetFunction(), schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
+        // checker does not support experimental operators
+        // so it won't consider it as an error
+        if (has_experimental_op) {
+          continue;
+        }
         // Continue with inference for remaining nodes
         inference_errors.push_back(std::string(function_ex.what()));
         continue;
