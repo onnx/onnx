@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 145/164 (88.41%, 5 generators excluded) common operators.
+Node tests have covered 146/164 (89.02%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3500,29 +3500,7 @@ expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 
 
 ### FFT
-There are 6 test cases, listed as following:
-<details>
-<summary>dim_1d</summary>
-
-```python
-node = onnx.helper.make_node(
-    'FFT',
-    inputs=['X'],
-    outputs=['Y'],
-)
-
-input_data = np.array([[[1., 0.2], [0, 3], [1, 0]]], dtype=np.float64)
-
-# Convert to complex
-input_data_complex = input_data.view(dtype=np.complex128)[:,:,0]
-fft_result = np.fft.fft(input_data_complex)
-expected_output = np.stack([fft_result.real, fft_result.imag], axis=2)
-
-expect(node, inputs=[input_data], outputs=[expected_output],
-       name='test_fft_1d')
-```
-
-</details>
+There are 3 test cases, listed as following:
 <details>
 <summary>dim_1d</summary>
 
@@ -3564,50 +3542,6 @@ expected_output = np.stack([fft_result.real, fft_result.imag], axis=3)
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_fft_2d')
-```
-
-</details>
-<details>
-<summary>dim_2d</summary>
-
-```python
-node = onnx.helper.make_node(
-    'FFT',
-    inputs=['X'],
-    outputs=['Y'],
-)
-
-input_data = np.array([[[[1., 2.], [0, 0.5]], [[0, 0.7], [1.3, 0.4]]]], dtype=np.float64)
-
-# Convert to complex
-input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,0]
-fft_result = np.fft.fft2(input_data_complex)
-expected_output = np.stack([fft_result.real, fft_result.imag], axis=3)
-
-expect(node, inputs=[input_data], outputs=[expected_output],
-       name='test_fft_2d')
-```
-
-</details>
-<details>
-<summary>dim_3d</summary>
-
-```python
-node = onnx.helper.make_node(
-    'FFT',
-    inputs=['X'],
-    outputs=['Y'],
-)
-
-input_data = np.random.randn(1,3,4,5,2).astype(np.float64)
-
-# Convert to complex
-input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,:,0]
-fft_result = np.fft.fftn(input_data_complex, (1, 2, 3))
-expected_output = np.stack([fft_result.real, fft_result.imag], axis=4)
-
-expect(node, inputs=[input_data], outputs=[expected_output],
-       name='test_fft_3d')
 ```
 
 </details>
@@ -4633,6 +4567,76 @@ node = onnx.helper.make_node(
 y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_negative_axis')
+```
+
+</details>
+
+
+### IFFT
+There are 3 test cases, listed as following:
+<details>
+<summary>dim_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.array([[[1., 0.2], [0, 3], [1, 0]]], dtype=np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,0]
+fft_result = np.fft.ifft(input_data_complex)
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=2)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_1d')
+```
+
+</details>
+<details>
+<summary>dim_2d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.array([[[[1., 2.], [0, 0.5]], [[0, 0.7], [1.3, 0.4]]]], dtype=np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,0]
+fft_result = np.fft.ifft2(input_data_complex)
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=3)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_2d')
+```
+
+</details>
+<details>
+<summary>dim_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.random.randn(1,3,4,5,2).astype(np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,:,0]
+fft_result = np.fft.ifftn(input_data_complex, (1, 2, 3))
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=4)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_3d')
 ```
 
 </details>
@@ -13545,9 +13549,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### GreaterOrEqual (call for test cases)
-
-
-### IFFT (call for test cases)
 
 
 ### If (call for test cases)
