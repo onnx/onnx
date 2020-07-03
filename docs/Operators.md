@@ -50,6 +50,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-9">9</a>|
+|<a href="#FFT">FFT</a>|<a href="Changelog.md#FFT-13">13</a>|
 |<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
 |<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
@@ -63,6 +64,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
+|<a href="#IFFT">IFFT</a>|<a href="Changelog.md#IFFT-13">13</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
@@ -5532,6 +5534,195 @@ expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 </details>
 
 
+### <a name="FFT"></a><a name="fft">**FFT**</a>
+
+  Fast Fourier Transform.
+  
+  This implementation suppose the DFT (Discrete Fourier Transform) defined by
+  ```
+  A_k =  \sum_{m=0}^{n-1} a_m \exp\left\{-2\pi i{mk \over n}\right\}
+  \qquad k = 0,\ldots,n-1.
+  ```
+
+#### Version
+
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>signal_ndim</tt> : int (default is 1)</dt>
+<dd>The number of dimension of the input signal.Values can be 1, 2 or 3.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>A complex signal of dimension signal_ndim.The last dimension of the tensor should be 2,representing the real and imaginary components of complex numbers,and should have at least signal_ndim + 2 dimensions.The first dimension is the batch dimension.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The fourier transform of the input vector,using the same format as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>dim_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.array([[[1., 0.2], [0, 3], [1, 0]]], dtype=np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,0]
+fft_result = np.fft.fft(input_data_complex)
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=2)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_1d')
+```
+
+</details>
+
+
+<details>
+<summary>dim_1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.array([[[1., 0.2], [0, 3], [1, 0]]], dtype=np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,0]
+fft_result = np.fft.fft(input_data_complex)
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=2)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_1d')
+```
+
+</details>
+
+
+<details>
+<summary>dim_2d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.array([[[[1., 2.], [0, 0.5]], [[0, 0.7], [1.3, 0.4]]]], dtype=np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,0]
+fft_result = np.fft.fft2(input_data_complex)
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=3)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_2d')
+```
+
+</details>
+
+
+<details>
+<summary>dim_2d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.array([[[[1., 2.], [0, 0.5]], [[0, 0.7], [1.3, 0.4]]]], dtype=np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,0]
+fft_result = np.fft.fft2(input_data_complex)
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=3)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_2d')
+```
+
+</details>
+
+
+<details>
+<summary>dim_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.random.randn(1,3,4,5,2).astype(np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,:,0]
+fft_result = np.fft.fftn(input_data_complex, (1, 2, 3))
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=4)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_3d')
+```
+
+</details>
+
+
+<details>
+<summary>dim_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    'FFT',
+    inputs=['X'],
+    outputs=['Y'],
+)
+
+input_data = np.random.randn(1,3,4,5,2).astype(np.float64)
+
+# Convert to complex
+input_data_complex = input_data.view(dtype=np.complex128)[:,:,:,:,0]
+fft_result = np.fft.fftn(input_data_complex, (1, 2, 3))
+expected_output = np.stack([fft_result.real, fft_result.imag], axis=4)
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_fft_3d')
+```
+
+</details>
+
+
 ### <a name="Flatten"></a><a name="flatten">**Flatten**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -7361,6 +7552,49 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="IFFT"></a><a name="ifft">**IFFT**</a>
+
+  Inverse Fast Fourier Transform.
+  
+  This implementation suppose the inverse DFT (Discrete Fourier Transform) defined by
+  ```
+  a_m = \frac{1}{n}\sum_{k=0}^{n-1}A_k\exp\left\{2\pi i{mk\over n}\right\}
+  \qquad m = 0,\ldots,n-1.
+  ```
+
+#### Version
+
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>signal_ndim</tt> : int (default is 1)</dt>
+<dd>The number of dimension of the input signal.Values can be 1, 2 or 3.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>A complex signal of dimension signal_ndim.The last dimension of the tensor should be 2,representing the real and imaginary components of complex numbers,and should have at least signal_ndim + 2 dimensions.The first dimension is the batch dimension.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The fourier transform of the input vector,using the same format as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="Identity"></a><a name="identity">**Identity**</a>

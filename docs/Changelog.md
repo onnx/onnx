@@ -15557,6 +15557,48 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensors.</dd>
 </dl>
 
+### <a name="FFT-13"></a>**FFT-13**</a>
+
+  Fast Fourier Transform.
+  
+  This implementation suppose the DFT (Discrete Fourier Transform) defined by
+  ```
+  A_k =  \sum_{m=0}^{n-1} a_m \exp\left\{-2\pi i{mk \over n}\right\}
+  \qquad k = 0,\ldots,n-1.
+  ```
+
+#### Version
+
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>signal_ndim</tt> : int (default is 1)</dt>
+<dd>The number of dimension of the input signal.Values can be 1, 2 or 3.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>A complex signal of dimension signal_ndim.The last dimension of the tensor should be 2,representing the real and imaginary components of complex numbers,and should have at least signal_ndim + 2 dimensions.The first dimension is the batch dimension.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The fourier transform of the input vector,using the same format as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Flatten-13"></a>**Flatten-13**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -16084,6 +16126,48 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="IFFT-13"></a>**IFFT-13**</a>
+
+  Inverse Fast Fourier Transform.
+  
+  This implementation suppose the inverse DFT (Discrete Fourier Transform) defined by
+  ```
+  a_m = \frac{1}{n}\sum_{k=0}^{n-1}A_k\exp\left\{2\pi i{mk\over n}\right\}
+  \qquad m = 0,\ldots,n-1.
+  ```
+
+#### Version
+
+This version of the operator has been available since version 13 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>signal_ndim</tt> : int (default is 1)</dt>
+<dd>The number of dimension of the input signal.Values can be 1, 2 or 3.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>A complex signal of dimension signal_ndim.The last dimension of the tensor should be 2,representing the real and imaginary components of complex numbers,and should have at least signal_ndim + 2 dimensions.The first dimension is the batch dimension.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The fourier transform of the input vector,using the same format as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
