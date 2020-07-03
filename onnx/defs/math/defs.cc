@@ -2609,7 +2609,7 @@ A_k =  \sum_{m=0}^{n-1} a_m \exp\left\{-2\pi i{mk \over n}\right\}
 
 ONNX_OPERATOR_SET_SCHEMA(
     FFT,
-    12,
+    13,
     OpSchema()
         .SetDoc(FFT_ver13_doc)
         .Attr(
@@ -2631,7 +2631,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "The fourier transform of the input vector,"
-            "using the same format.",
+            "using the same format as the input.",
             "T")
         .TypeConstraint(
             "T",
@@ -2684,8 +2684,8 @@ a_m = \frac{1}{n}\sum_{k=0}^{n-1}A_k\exp\left\{2\pi i{mk\over n}\right\}
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    FFT,
-    12,
+    IFFT,
+    13,
     OpSchema()
         .SetDoc(IFFT_ver13_doc)
         .Attr(
@@ -2707,7 +2707,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "The fourier transform of the input vector,"
-            "using the same format.",
+            "using the same format as the input.",
             "T")
         .TypeConstraint(
             "T",
