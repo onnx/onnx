@@ -56,7 +56,7 @@ class IFFT(Base):
             outputs=['Y'],
         )
 
-        input_data = np.random.randn(1,3,4,5,2).astype(np.float64)
+        input_data = np.random.randn(1, 3, 4, 5, 2).astype(np.float64)
 
         # Convert to complex
         input_data_complex = input_data.view(dtype=np.complex128)[:, :, :, :, 0]
