@@ -6,10 +6,11 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
-#include "onnx/defs/operator_sets-training.h"
+#include "onnx/defs/operator_sets_training.h"
+#include "onnx/defs/operator_sets_preview.h"
 
 #ifdef ONNX_ML
-#include "onnx/defs/operator_sets-ml.h"
+#include "onnx/defs/operator_sets_ml.h"
 #endif
 
 #include "onnx/common/assertions.h"
@@ -27,36 +28,6 @@ DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
   return instance;
 }
 #endif
-
-OpSchema::FormalParameter::FormalParameter(
-    std::string name,
-    DataTypeSet allowed_type_set,
-    std::string type_str,
-    std::string description,
-    FormalParameterOption param_option,
-    bool is_homogeneous,
-    int min_arity)
-    : name_(std::move(name)),
-      type_set_(std::move(allowed_type_set)),
-      type_str_(std::move(type_str)),
-      description_(std::move(description)),
-      param_option_(param_option),
-      is_homogeneous_(is_homogeneous),
-      min_arity_(min_arity) {}
-
-OpSchema::FormalParameter::FormalParameter(
-    std::string name,
-    std::string description,
-    std::string type_str,
-    FormalParameterOption param_option,
-    bool is_homogeneous,
-    int min_arity)
-    : name_(std::move(name)),
-      type_str_(std::move(type_str)),
-      description_(std::move(description)),
-      param_option_(param_option),
-      is_homogeneous_(is_homogeneous),
-      min_arity_(min_arity) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -88,6 +59,10 @@ bool OpSchema::FormalParameter::GetIsHomogeneous() const {
 
 int OpSchema::FormalParameter::GetMinArity() const {
   return min_arity_;
+}
+
+OpSchema::DifferentiationCategory OpSchema::FormalParameter::GetDifferentiationCategory() const {
+  return differentiation_category_;
 }
 
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
@@ -441,11 +416,6 @@ OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   return *this;
 }
 
-OpSchema& OpSchema::SetDoc(std::string doc) {
-  doc_ = std::move(doc);
-  return *this;
-}
-
 // Functions to specify name for the operator schema.
 OpSchema& OpSchema::SetName(std::string name) {
   name_ = std::move(name);
@@ -607,21 +577,27 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
-    std::string description,
+    const std::string& description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
   inputs_[n] = FormalParameter(
       std::move(name),
-      std::move(description),
+#ifndef __ONNX_NO_DOC_STRINGS
+      description,
+#else
+      std::string(),
+#endif
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -632,35 +608,47 @@ OpSchema& OpSchema::Input(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Input(
       n,
       std::string(name),
+#ifndef __ONNX_NO_DOC_STRINGS
       std::string(description),
+#else
+      std::string(),
+#endif
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
-    std::string description,
+    const std::string& description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
   outputs_[n] = FormalParameter(
       std::move(name),
-      std::move(description),
+#ifndef __ONNX_NO_DOC_STRINGS
+      description,
+#else
+      std::string(),
+#endif
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -671,15 +659,21 @@ OpSchema& OpSchema::Output(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Output(
       n,
       std::string(name),
+#ifndef __ONNX_NO_DOC_STRINGS
       std::string(description),
+#else
+      std::string(),
+#endif
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -747,7 +741,7 @@ bool OpSchema::BuildContextDependentFunction(
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
     new_node->CopyFrom(node);
   }
@@ -953,6 +947,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
       // Invoke register of training operators.
       RegisterOnnxTrainingOperatorSetSchema();
+
+      // Invoke register of experimental operators.
+      RegisterOnnxPreviewOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =
