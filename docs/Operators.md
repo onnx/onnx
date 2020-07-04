@@ -8677,7 +8677,7 @@ expect(node, inputs=[x], outputs=[y],
   the scan_outputs from the previous layer, possibly going through several
   point-wise operators (e.g. dropout, residual connections, linear layer).
   
-  The input/output of subgrpah (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
+  The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
 
 #### Version
 
