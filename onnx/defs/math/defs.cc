@@ -49,29 +49,24 @@ std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
 The operator computes the {name} ({description}) values for each layer in the batch
  of the given input.
 
-The input does not need to explicitly be a 2D vector; rather, it will be
-coerced into one. For an arbitrary n-dimensional tensor
-input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-the axis provided, then input will be coerced into a 2-dimensional tensor with
-dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-case where axis=1, this means the input tensor will be coerced into a 2D tensor
-of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-Each of these dimensions must be matched correctly, or else the operator
-will throw errors. The output tensor has the same shape
+The input does not need to explicitly be a 2D vector. The "axis" attribute
+indicates the dimension along which {name} will be performed.
+The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
                         ReplaceAll(doc, "{name}", name);
                         ReplaceAll(doc, "{description}", description););
+    std::string axis_attr;
+    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
+"Describes the dimension {name} will be performed on."
+"Negative value means counting dimensions "
+"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+)DOC";
+                        ReplaceAll(axis_attr, "{name}", name);
+                        ReplaceAll(axis_attr, "{description}", description););
     schema.SetDoc(doc);
     schema.Attr(
-        "axis",
-        "Describes the axis of the inputs when coerced "
-        "to 2D; defaults to one because the 0th axis most likely describes "
-        "the batch_size. Negative value means counting dimensions "
-        "from the back. Accepted range is [-r, r-1] where r = rank(input).",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
+        "axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
     schema.Input(
         0,
         "input",
@@ -104,7 +99,7 @@ and contains the {name} values of the corresponding input.
       const TensorShapeProto& input_shape =
           ctx.getInputType(0)->tensor_type().shape();
       int r = input_shape.dim_size();
-      int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+      int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
       if (axis < -r || axis >= r) {
         fail_shape_inference(
             "'axis' must be in [",
@@ -821,14 +816,120 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
     13,
-    OpSchema().FillUsing(
-        SoftmaxFamilyDocGenerator("softmax", "normalized exponential")));
+    OpSchema()
+        .FillUsing(
+            SoftmaxFamilyDocGenerator("softmax", "normalized exponential"))
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+               const OpSchema& schema,
+               FunctionProto& functionProto) -> bool {
+              const auto axis = ctx.getAttribute("axis")->i();
+              auto func_nodes = FunctionBodyHelper::BuildNodes({
+                  // clang-format off
+                {
+                    {"X_ReduceMax"},
+                    "ReduceMax",
+                    {"input"},
+                    {
+                        MakeAttribute("axes", std::vector<int64_t>({axis})),
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"X_Sub"},
+                    "Sub",
+                    {"X", "X_ReduceMax"},
+                },
+                {
+                    {"X_Exp"},
+                    "Exp",
+                    {"X_Sub"},
+                },
+                {
+                    {"X_ReduceSum"},
+                    "ReduceSum",
+                    {"X_Exp"},
+                    {
+                        MakeAttribute("axes", std::vector<int64_t>({axis})),
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"output"},
+                    "Div",
+                    {"X_Exp", "X_ReduceSum"},
+                },
+                  // clang-format on
+              });
+              for (const auto& node : func_nodes) {
+                auto new_node = functionProto.add_node();
+                new_node->CopyFrom(node);
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
-    OpSchema().FillUsing(
-        SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax")));
+    OpSchema()
+        .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax"))
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+               const OpSchema& schema,
+               FunctionProto& functionProto) -> bool {
+              const auto axis = ctx.getAttribute("axis")->i();
+              auto func_nodes = FunctionBodyHelper::BuildNodes({
+                  // clang-format off
+                {
+                    {"X_ReduceMax"},
+                    "ReduceMax",
+                    {"input"},
+                    {
+                        MakeAttribute("axes", std::vector<int64_t>({axis})),
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"X_Sub"},
+                    "Sub",
+                    {"X", "X_ReduceMax"},
+                },
+                {
+                    {"X_Exp"},
+                    "Exp",
+                    {"X_Sub"},
+                },
+                {
+                    {"X_ReduceSum"},
+                    "ReduceSum",
+                    {"X_Exp"},
+                    {
+                        MakeAttribute("axes", std::vector<int64_t>({axis})),
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"X_Log"},
+                    "Log",
+                    {"X_ReduceSum"},
+                },
+                {
+                    {"output"},
+                    "Sub",
+                    {"X_Sub", "X_Log"},
+                },
+                  // clang-format on
+              });
+              for (const auto& node : func_nodes) {
+                auto new_node = functionProto.add_node();
+                new_node->CopyFrom(node);
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
