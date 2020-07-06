@@ -35,7 +35,8 @@ class LogSoftmax(Base):
 
     @staticmethod
     def export_logsoftmax_axis():  # type: () -> None
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
+        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]
+                     ).astype(np.float32)
         # expected output
         # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
         # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
@@ -98,4 +99,3 @@ class LogSoftmax(Base):
         )
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_default_axis')
-

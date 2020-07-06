@@ -33,7 +33,8 @@ class Softmax(Base):
 
     @staticmethod
     def export_softmax_axis():  # type: () -> None
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
+        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]
+                     ).astype(np.float32)
         # expected output
         # [[0.032058604 0.08714432  0.23688284  0.6439143  ]
         # [0.032058604 0.08714432  0.23688284  0.6439143  ]]
@@ -96,4 +97,3 @@ class Softmax(Base):
         )
         expect(node, inputs=[x], outputs=[y],
                name='test_softmax_default_axis')
-

@@ -26,7 +26,8 @@ class Hardmax(Base):
             outputs=['y'],
         )
 
-        x = np.array([[3, 0, 1, 2], [2, 5, 1, 0], [0, 1, 3, 2], [0, 1, 2, 3]]).astype(np.float32)
+        x = np.array([[3, 0, 1, 2], [2, 5, 1, 0], [0, 1, 3, 2],
+                      [0, 1, 2, 3]]).astype(np.float32)
         # expect result:
         # [[1. 0. 0. 0.]
         # [0. 1. 0. 0.]
@@ -95,4 +96,3 @@ class Hardmax(Base):
         )
         expect(node, inputs=[x], outputs=[y],
                name='test_hardmax_default_axis')
-
