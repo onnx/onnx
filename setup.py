@@ -293,7 +293,7 @@ ext_modules = [
 
 # Exclude test data while building ONNX
 if ONNX_EXCLUDE_TESTS:
-    packages = setuptools.find_packages(exclude='onnx.backend.test*')    
+    packages = setuptools.find_packages(exclude='onnx.backend.test*')
 # no need to do fancy stuff so far
 else:
     packages = setuptools.find_packages()
