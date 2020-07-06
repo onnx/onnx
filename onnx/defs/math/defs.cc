@@ -838,7 +838,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {
                     {"X_Sub"},
                     "Sub",
-                    {"X", "X_ReduceMax"},
+                    {"input", "X_ReduceMax"},
                 },
                 {
                     {"X_Exp"},
@@ -894,7 +894,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {
                     {"X_Sub"},
                     "Sub",
-                    {"X", "X_ReduceMax"},
+                    {"input", "X_ReduceMax"},
                 },
                 {
                     {"X_Exp"},
