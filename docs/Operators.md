@@ -73,7 +73,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
-|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
 |<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-1">1</a>|
 |<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
@@ -141,7 +140,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-9">9</a>|
 |<a href="#Size">Size</a>|<a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
-|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
@@ -169,9 +167,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-12">12</a>|
+|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|
+|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
 
 ### ai.onnx.preview.training
@@ -7228,16 +7228,9 @@ expect(node, inputs=[x], outputs=[y],
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input.
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which hardmax will be performed.
+  The output tensor has the same shape
   and contains the hardmax values of the corresponding input.
 
 #### Version
@@ -7249,8 +7242,12 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">1</a>, <a href
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+"Describes the dimension hardmax will be performed on."
+"Negative value means counting dimensions "
+"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+</dd>
 </dl>
 
 #### Inputs
@@ -7288,13 +7285,20 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([[3, 0, 1, 2], [2, 5, 1, 0], [0, 1, 3, 2], [0, 1, 2, 3]]).astype(np.float32)
-y = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]).astype(np.float32)
+# expect result:
+# [[1. 0. 0. 0.]
+# [0. 1. 0. 0.]
+# [0. 0. 1. 0.]
+# [0. 0. 0. 1.]]
+y = hardmax(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_example')
 
 # For multiple occurrences of the maximal values, the first occurrence is selected for one-hot output
 x = np.array([[3, 3, 3, 1]]).astype(np.float32)
-y = np.array([[1, 0, 0, 0]]).astype(np.float32)
+# expect result:
+# [[1, 0, 0, 0]]
+y = hardmax(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_one_hot')
 ```
@@ -7306,9 +7310,6 @@ expect(node, inputs=[x], outputs=[y],
 <summary>hardmax_axis</summary>
 
 ```python
-def hardmax_2d(x):  # type: (np.ndarray) -> np.ndarray
-    return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
-
 x = np.random.randn(3, 4, 5).astype(np.float32)
 node = onnx.helper.make_node(
     'Hardmax',
@@ -7316,7 +7317,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=0,
 )
-y = hardmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
+y = hardmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_0')
 
@@ -7326,18 +7327,9 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=1,
 )
-y = hardmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
+y = hardmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_1')
-
-# default axis is 1
-node = onnx.helper.make_node(
-    'Hardmax',
-    inputs=['x'],
-    outputs=['y'],
-)
-expect(node, inputs=[x], outputs=[y],
-       name='test_hardmax_default_axis')
 
 node = onnx.helper.make_node(
     'Hardmax',
@@ -7345,7 +7337,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=2,
 )
-y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+y = hardmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_2')
 
@@ -7355,9 +7347,18 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=-1,
 )
-y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+y = hardmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_negative_axis')
+
+# default axis is -1
+node = onnx.helper.make_node(
+    'Hardmax',
+    inputs=['x'],
+    outputs=['y'],
+)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardmax_default_axis')
 ```
 
 </details>
@@ -8397,16 +8398,9 @@ expect(node, inputs=[x], outputs=[y],
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input.
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which logsoftmax will be performed.
+  The output tensor has the same shape
   and contains the logsoftmax values of the corresponding input.
 
 #### Version
@@ -8418,8 +8412,12 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a h
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+"Describes the dimension logsoftmax will be performed on."
+"Negative value means counting dimensions "
+"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+</dd>
 </dl>
 
 #### Inputs
@@ -8456,8 +8454,9 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([[-1, 0, 1]]).astype(np.float32)
-# expected output [[-2.40760589, -1.40760589, -0.40760589]]
-y = x - np.log(np.sum(np.exp(x), axis=1))
+# expected output
+# [[-2.4076061 -1.407606  -0.407606 ]]
+y = logsoftmax(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_example_1')
 ```
@@ -8469,15 +8468,11 @@ expect(node, inputs=[x], outputs=[y],
 <summary>logsoftmax_axis</summary>
 
 ```python
-def logsoftmax_2d(x):  # type: (np.ndarray) -> np.ndarray
-    max_x = np.max(x, axis=1).reshape((-1, 1))
-    exp_x = np.exp(x - max_x)
-    return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
-
 x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-# expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
-#                 [-3.4401896, -2.4401896, -1.44018972, -0.44018969]]
-y = logsoftmax_2d(x)
+# expected output
+# [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
+# [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
+y = logsoftmax(x)
 
 node = onnx.helper.make_node(
     'LogSoftmax',
@@ -8494,7 +8489,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=0,
 )
-y = logsoftmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
+y = logsoftmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_axis_0')
 
@@ -8504,18 +8499,9 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=1,
 )
-y = logsoftmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
+y = logsoftmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_axis_1')
-
-# default axis is 1
-node = onnx.helper.make_node(
-    'LogSoftmax',
-    inputs=['x'],
-    outputs=['y'],
-)
-expect(node, inputs=[x], outputs=[y],
-       name='test_logsoftmax_default_axis')
 
 node = onnx.helper.make_node(
     'LogSoftmax',
@@ -8523,7 +8509,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=2,
 )
-y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+y = logsoftmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_axis_2')
 
@@ -8533,9 +8519,18 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=-1,
 )
-y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+y = logsoftmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_negative_axis')
+
+# default axis is -1
+node = onnx.helper.make_node(
+    'LogSoftmax',
+    inputs=['x'],
+    outputs=['y'],
+)
+expect(node, inputs=[x], outputs=[y],
+       name='test_logsoftmax_default_axis')
 ```
 
 </details>
@@ -18383,16 +18378,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input.
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which softmax will be performed.
+  The output tensor has the same shape
   and contains the softmax values of the corresponding input.
 
 #### Version
@@ -18404,8 +18392,12 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+"Describes the dimension softmax will be performed on."
+"Negative value means counting dimensions "
+"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+</dd>
 </dl>
 
 #### Inputs
@@ -18443,7 +18435,7 @@ node = onnx.helper.make_node(
 )
 x = np.array([[-1, 0, 1]]).astype(np.float32)
 # expected output [[0.09003058, 0.24472848, 0.66524094]]
-y = np.exp(x) / np.sum(np.exp(x), axis=1)
+y = softmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_example')
 ```
@@ -18455,15 +18447,11 @@ expect(node, inputs=[x], outputs=[y],
 <summary>softmax_axis</summary>
 
 ```python
-def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
-    max_x = np.max(x, axis=1).reshape((-1, 1))
-    exp_x = np.exp(x - max_x)
-    return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
-
 x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-# expected output [[0.0320586, 0.08714432, 0.23688284, 0.64391428],
-#                 [0.0320586, 0.08714432, 0.23688284, 0.64391428]]
-y = softmax_2d(x)
+# expected output
+# [[0.032058604 0.08714432  0.23688284  0.6439143  ]
+# [0.032058604 0.08714432  0.23688284  0.6439143  ]]
+y = softmax(x)
 
 node = onnx.helper.make_node(
     'Softmax',
@@ -18480,7 +18468,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=0,
 )
-y = softmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
+y = softmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_axis_0')
 
@@ -18490,18 +18478,9 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=1,
 )
-y = softmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
+y = softmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_axis_1')
-
-# default axis is 1
-node = onnx.helper.make_node(
-    'Softmax',
-    inputs=['x'],
-    outputs=['y'],
-)
-expect(node, inputs=[x], outputs=[y],
-       name='test_softmax_default_axis')
 
 node = onnx.helper.make_node(
     'Softmax',
@@ -18509,7 +18488,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=2,
 )
-y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+y = softmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_axis_2')
 
@@ -18519,9 +18498,18 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=-1,
 )
-y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+y = softmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_negative_axis')
+
+# default axis is -1
+node = onnx.helper.make_node(
+    'Softmax',
+    inputs=['x'],
+    outputs=['y'],
+)
+expect(node, inputs=[x], outputs=[y],
+       name='test_softmax_default_axis')
 ```
 
 </details>

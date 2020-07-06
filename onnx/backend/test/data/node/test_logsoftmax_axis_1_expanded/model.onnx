@@ -1,0 +1,29 @@
+backend-test:™
+l
+x>LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_ReduceMax"	ReduceMax*
+axes@ *
+keepdims 
+µ
+4LogSoftmax_test_logsoftmax_axis_1_expanded_functionX
+>LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_ReduceMax8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Sub"Sub
+y
+8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Sub8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Exp"Exp
+£
+8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Exp>LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_ReduceSum"	ReduceSum*
+axes@ *
+keepdims 
+
+>LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_ReduceSum8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Log"Log
+|
+8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Sub
+8LogSoftmax_test_logsoftmax_axis_1_expanded_functionX_Logy"Subtest_logsoftmax_axis_1_expandedZ
+x
+
+
+
+b
+y
+
+
+
+B

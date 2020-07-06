@@ -1,0 +1,27 @@
+backend-test:Ì
+x
+xALogSoftmax_test_logsoftmax_example_1_expanded_functionX_ReduceMax"	ReduceMax*
+axes@ÿÿÿÿÿÿÿÿÿ *
+keepdims 
+¾
+7LogSoftmax_test_logsoftmax_example_1_expanded_functionX
+ALogSoftmax_test_logsoftmax_example_1_expanded_functionX_ReduceMax;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_Sub"Sub
+
+;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_Sub;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_Exp"Exp
+²
+;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_ExpALogSoftmax_test_logsoftmax_example_1_expanded_functionX_ReduceSum"	ReduceSum*
+axes@ÿÿÿÿÿÿÿÿÿ *
+keepdims 
+…
+ALogSoftmax_test_logsoftmax_example_1_expanded_functionX_ReduceSum;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_Log"Log
+‚
+;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_Sub
+;LogSoftmax_test_logsoftmax_example_1_expanded_functionX_Logy"Sub"test_logsoftmax_example_1_expandedZ
+x
+
+
+b
+y
+
+
+B

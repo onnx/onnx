@@ -1,0 +1,27 @@
+backend-test:ß
+f
+x8Softmax_test_softmax_axis_2_expanded_functionX_ReduceMax"	ReduceMax*
+axes@ *
+keepdims 
+£
+.Softmax_test_softmax_axis_2_expanded_functionX
+8Softmax_test_softmax_axis_2_expanded_functionX_ReduceMax2Softmax_test_softmax_axis_2_expanded_functionX_Sub"Sub
+m
+2Softmax_test_softmax_axis_2_expanded_functionX_Sub2Softmax_test_softmax_axis_2_expanded_functionX_Exp"Exp
+—
+2Softmax_test_softmax_axis_2_expanded_functionX_Exp8Softmax_test_softmax_axis_2_expanded_functionX_ReduceSum"	ReduceSum*
+axes@ *
+keepdims 
+v
+2Softmax_test_softmax_axis_2_expanded_functionX_Exp
+8Softmax_test_softmax_axis_2_expanded_functionX_ReduceSumy"Divtest_softmax_axis_2_expandedZ
+x
+
+
+
+b
+y
+
+
+
+B

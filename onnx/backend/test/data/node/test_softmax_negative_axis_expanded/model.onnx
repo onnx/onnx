@@ -1,0 +1,27 @@
+backend-test:¿
+v
+x?Softmax_test_softmax_negative_axis_expanded_functionX_ReduceMax"	ReduceMax*
+axes@ÿÿÿÿÿÿÿÿÿ *
+keepdims 
+¸
+5Softmax_test_softmax_negative_axis_expanded_functionX
+?Softmax_test_softmax_negative_axis_expanded_functionX_ReduceMax9Softmax_test_softmax_negative_axis_expanded_functionX_Sub"Sub
+{
+9Softmax_test_softmax_negative_axis_expanded_functionX_Sub9Softmax_test_softmax_negative_axis_expanded_functionX_Exp"Exp
+®
+9Softmax_test_softmax_negative_axis_expanded_functionX_Exp?Softmax_test_softmax_negative_axis_expanded_functionX_ReduceSum"	ReduceSum*
+axes@ÿÿÿÿÿÿÿÿÿ *
+keepdims 
+„
+9Softmax_test_softmax_negative_axis_expanded_functionX_Exp
+?Softmax_test_softmax_negative_axis_expanded_functionX_ReduceSumy"Div#test_softmax_negative_axis_expandedZ
+x
+
+
+
+b
+y
+
+
+
+B

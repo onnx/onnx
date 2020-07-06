@@ -823,7 +823,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
                FunctionProto& functionProto) -> bool {
-              const auto axis = ctx.getAttribute("axis")->i();
+              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
               auto func_nodes = FunctionBodyHelper::BuildNodes({
                   // clang-format off
                 {
@@ -879,7 +879,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
                FunctionProto& functionProto) -> bool {
-              const auto axis = ctx.getAttribute("axis")->i();
+              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
               auto func_nodes = FunctionBodyHelper::BuildNodes({
                   // clang-format off
                 {

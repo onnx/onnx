@@ -10,14 +10,14 @@ from ..base import Base
 from . import expect
 
 
-class Softmax(Base):
-    @staticmethod
-    def softmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
-        x_max = np.max(x, axis=axis, keepdims=True)
-        tmp = np.exp(x - x_max)
-        s = np.sum(tmp, axis=axis, keepdims=True)
-        return tmp / s
+def softmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
+    x_max = np.max(x, axis=axis, keepdims=True)
+    tmp = np.exp(x - x_max)
+    s = np.sum(tmp, axis=axis, keepdims=True)
+    return tmp / s
 
+
+class Softmax(Base):
     @staticmethod
     def export():  # type: () -> None
         node = onnx.helper.make_node(
