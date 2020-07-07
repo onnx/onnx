@@ -298,7 +298,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(8)));
 
       /******** 8 -> 7 ********/  
-      /* Should the adapters for Max, Min, Mean be CompatiblAdapter here? */
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
         OpSetID(8), OpSetID(7)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
