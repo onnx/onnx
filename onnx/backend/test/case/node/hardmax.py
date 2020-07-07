@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def hardmax(x, axis=-1):
+def hardmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
     x_argmax = np.argmax(x, axis=axis)
     y = np.zeros_like(x)
     np.put_along_axis(y, np.expand_dims(x_argmax, axis=axis), 1, axis=axis)
