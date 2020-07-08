@@ -170,7 +170,10 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
   assert(t.TensorDataTypeToTypeStr().end() != iter);
-  return iter->second;
+  if (t.TensorDataTypeToTypeStr().end() != iter) {
+    return iter->second;
+  }
+  return std::string();
 }
 
 void DataTypeUtils::FromString(
