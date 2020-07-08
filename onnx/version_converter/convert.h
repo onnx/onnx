@@ -104,10 +104,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         }
       }
 
-      std::vector<TensorProto_DataType> broadcast_unallowed_types = {
-        TensorProto_DataType_INT32, TensorProto_DataType_INT64,
-        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64};
-
       /******** 3 -> 4 ********/
       registerAdapter(make_unique<Concat_3_4>());
 
@@ -188,62 +184,29 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
 
       /******** 6 -> 5 ********/
+      std::vector<TensorProto_DataType> broadcast_unallowed_types = {
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64};
+      std::vector<TensorProto_DataType> int_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_UINT16,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16,
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+      std::vector<TensorProto_DataType> neg_unallowed_types = {
+        TensorProto_DataType_INT32, TensorProto_DataType_INT8,
+        TensorProto_DataType_UINT16, TensorProto_DataType_INT64};
       registerAdapter(make_unique<TypeRestriction>("Add",
         OpSetID(6), OpSetID(5), broadcast_unallowed_types));
       registerAdapter(make_unique<TypeRestriction>("Mul",
         OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Gemm",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Relu",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Sum",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Dropout",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Abs",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Ceil",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Clip",
+      registerAdapter(make_unique<TypeRestriction>("Sub",
         OpSetID(6), OpSetID(5), broadcast_unallowed_types));
       registerAdapter(make_unique<TypeRestriction>("Div",
         OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Elu",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Exp",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Floor",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("HardSigmoid",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("InstanceNormalization",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("LeakyRelu",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Log",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Max",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Mean",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Min",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("Abs",
+        OpSetID(6), OpSetID(5), int_unallowed_types));
       registerAdapter(make_unique<TypeRestriction>("Neg",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("PRelu",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Reciprocal",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Selu",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Sigmoid",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Sqrt",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Sub",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Tanh",
-        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+        OpSetID(6), OpSetID(5), neg_unallowed_types));
       registerAdapter(make_unique<BatchNormalization_6_5>());
 
       /******** 6 -> 7 ********/
@@ -426,11 +389,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Dropout_11_12>());
 
       /******** 12 -> 11 ********/
-      std::vector<TensorProto_DataType> int_unallowed_types = {
-        TensorProto_DataType_UINT8, TensorProto_DataType_UINT16,
-        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64,
-        TensorProto_DataType_INT8, TensorProto_DataType_INT16,
-        TensorProto_DataType_INT32, TensorProto_DataType_INT64};
       registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
         OpSetID(12), OpSetID(11)));
       registerAdapter(make_unique<TypeRestriction>("Clip", 
