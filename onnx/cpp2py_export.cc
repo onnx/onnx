@@ -62,7 +62,22 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
         return py::bytes(bytes);
+      })
+      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
+      .def("get_context_dependent_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+
+        std::string func_bytes = "";
+        if (op->HasContextDependentFunction()) {
+          FunctionBodyBuildContextImpl ctx(proto);
+          FunctionProto func_proto;
+          op->BuildContextDependentFunction(ctx, func_proto);
+          func_proto.SerializeToString(&func_bytes);
+        }
+        return py::bytes(func_bytes);
       });
+;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -90,6 +105,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("Optional", OpSchema::Optional)
       .value("Variadic", OpSchema::Variadic);
 
+  py::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory")
+      .value("Unknown", OpSchema::Unknown)
+      .value("Differentiable", OpSchema::Differentiable)
+      .value("NonDifferentiable", OpSchema::NonDifferentiable);
+
   py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
       .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
@@ -98,7 +118,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "description", &OpSchema::FormalParameter::GetDescription)
       .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
       .def_property_readonly(
-          "isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous);
+          "isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
+      .def_property_readonly(
+        "differentiationCategory",
+        &OpSchema::FormalParameter::GetDifferentiationCategory);
 
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)
@@ -255,7 +278,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const py::bytes& bytes, const std::vector<std::string>& names) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        auto const result = optimization::Optimize(std::move(proto), names);
+        auto const result = optimization::Optimize(proto, names);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);
@@ -267,7 +290,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         auto const result =
-            optimization::OptimizeFixed(std::move(proto), names);
+            optimization::OptimizeFixed(proto, names);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);

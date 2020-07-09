@@ -556,6 +556,8 @@ Frontends should emit multi-layer RNNs as a series of While operators (with
 time being the inner looping dimension), with each successive layer consuming
 the scan_outputs from the previous layer, possibly going through several
 point-wise operators (e.g. dropout, residual connections, linear layer).
+
+The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -809,4 +811,5 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+
 } // namespace ONNX_NAMESPACE

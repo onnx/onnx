@@ -24,6 +24,10 @@ struct EliminateIdentity final : public PredicateBasedPass {
   }
   bool runTransform(Node* node, Graph&, NodeDestroyType& destroy_current)
       override {
+
+    if (node->output()->has_sizes()) {
+        node->input()->setSizes(node->output()->sizes());
+    }
     node->output()->replaceAllUsesWith(node->input());
     destroy_current = NodeDestroyType::DestroyOne;
     return true;

@@ -87,7 +87,7 @@ class TestOptimizer(unittest.TestCase):
                         self._visit_all_nodes_recursive(gr, fn)
 
     def test_get_available_passes(self):  # type: () -> None
-        # FIXME does not garantees to be listing all
+        # FIXME does not guarantees to be listing all
         graph = helper.make_graph([], "dummy_graph", [], [])
         list_of_passes = onnx.optimizer.get_available_passes()
         assert isinstance(list_of_passes, (list)) and len(list_of_passes) > 0
@@ -122,6 +122,21 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node[2].attribute[0].g.output) == 2
         assert optimized_model.graph.node[2].attribute[0].g.output[1].name == "_Y"
 
+    def test_eliminate_identity_graph_output(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["A"])
+        identity = helper.make_node("Identity", ["A"], ["B"])
+        graph = helper.make_graph(
+            [add, identity],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (5,))])
+        optimized_model = self._optimized(graph, ["eliminate_identity"])
+
+        for node in optimized_model.graph.node:
+            assert node.op_type != "Identity"
+        assert len(optimized_model.graph.node) == 1
+
     def test_eliminate_identity_multiple_uses(self):  # type: () -> None
         identity = helper.make_node("Identity", ["X"], ["Y"])
         add = helper.make_node("Add", ["Z", "Y"], ["A"])
@@ -137,6 +152,23 @@ class TestOptimizer(unittest.TestCase):
         for node in optimized_model.graph.node:
             assert node.op_type != "Identity"
         assert len(optimized_model.graph.node) == 2
+
+    def test_nop_transpose_graph_output(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["A"])
+        trans = helper.make_node("Transpose", ["A"], ["B"], perm=[0, 1])
+        graph = helper.make_graph(
+            [add, trans],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (2, 3))])
+        # The existence of shape infos of graoh outputs is checked in _optimized
+        optimized_model = self._optimized(graph, ["eliminate_nop_transpose"])
+
+        def check_transpose(node):  # type: (NodeProto) -> None
+            assert node.op_type != "Transpose"
+        self._visit_all_nodes_recursive(optimized_model.graph, check_transpose)
+        assert len(optimized_model.graph.node) == 1
 
     def test_nop_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])]
@@ -192,6 +224,28 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.output) == 1
         assert optimized_model.graph.output[0].name == "X"
         assert len(optimized_model.graph.node) == 0
+
+    def test_nop_pad_graph_output(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["A"])
+        pad = helper.make_node("Pad", ["A", "Pads"], ["B"])
+        graph = helper.make_graph(
+            [add, pad],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Pads", TensorProto.INT64, (2,))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor("Pads", TensorProto.INT64,
+                dims=(2,),
+                vals=np.array([0, 0]).astype(np.int64).tobytes(),
+                raw=True)])
+        # The existence of shape infos of graoh outputs is checked in _optimized
+        optimized_model = self._optimized(graph, ["eliminate_nop_pad"])
+
+        def check_pad(node):  # type: (NodeProto) -> None
+            assert node.op_type != "Pad"
+        self._visit_all_nodes_recursive(optimized_model.graph, check_pad)
+        assert len(optimized_model.graph.node) == 1
 
     def test_nop_pad(self):  # type: () -> None
         nodes = [helper.make_node("Pad", ["X", "Pads"], ["Y"])]
@@ -388,7 +442,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_concats(self):  # type: () -> None
         nodes = [helper.make_node("Concat", ["A", "B", "C"], ["X"], axis=0),
                  helper.make_node("Concat", ["D", "E", "F"], ["Y"], axis=0),
-                 helper.make_node("Concat", ["X", "Y"], ["Z"], axis=0)]
+                 helper.make_node("Concat", ["X", "G", "Y"], ["Z"], axis=0)]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -397,13 +451,16 @@ class TestOptimizer(unittest.TestCase):
             helper.make_tensor_value_info("C", TensorProto.FLOAT, (2, 3, 4)),
             helper.make_tensor_value_info("D", TensorProto.FLOAT, (4, 3, 4)),
             helper.make_tensor_value_info("E", TensorProto.FLOAT, (2, 3, 4)),
-            helper.make_tensor_value_info("F", TensorProto.FLOAT, (4, 3, 4))],
+            helper.make_tensor_value_info("F", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("G", TensorProto.FLOAT, (4, 3, 4))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (18, 3, 4))])
         optimized_model = self._optimized(
             graph, ["fuse_consecutive_concats"], True)  # two passes are needed to simplify the graph to its simplest state.
 
         assert len(optimized_model.graph.node) == 1
-        assert len(optimized_model.graph.node[0].input) == 6
+        assert len(optimized_model.graph.node[0].input) == 7
+        assert optimized_model.graph.node[0].input == [
+            "A", "B", "C", "G", "D", "E", "F"]
         assert optimized_model.graph.node[0].op_type == "Concat"
 
     def test_fuse_concats_different_axis(self):  # type: () -> None
@@ -451,6 +508,24 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 4
         # Transpose
         assert len(optimized_model.graph.node[3].attribute[0].g.node) == 1
+
+    def test_fuse_transpose_default_graph_output(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["A"])
+        trans1 = helper.make_node("Transpose", ["A"], ["B"])
+        trans2 = helper.make_node("Transpose", ["B"], ["C"])
+        graph = helper.make_graph(
+            [add, trans1, trans2],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("C", TensorProto.FLOAT, (2, 3))])
+        # The existence of shape infos of graoh outputs is checked in _optimized
+        optimized_model = self._optimized(graph, ["fuse_consecutive_transposes"])
+
+        def check_transpose(node):  # type: (NodeProto) -> None
+            assert node.op_type != "Transpose"
+        self._visit_all_nodes_recursive(optimized_model.graph, check_transpose)
+        assert len(optimized_model.graph.node) == 1
 
     def test_fuse_transpose_default(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"])
@@ -1598,6 +1673,38 @@ class TestOptimizer(unittest.TestCase):
                                 assert optimized_model.graph == graph
 
     def test_eliminate_nop_dropout(self):  # type: () -> None
+        node = helper.make_node("Dropout", ["X"], ["Y"])
+        node1 = helper.make_node("Log", ["Y"], ["Z"])
+        graph = helper.make_graph(
+            [node, node1],
+            "test",
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 7))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7))])
+        optimized_model = self._optimized(
+            graph, ["eliminate_nop_dropout"], False)
+
+        # we don't want to eliminate the dropoutin opset 12,
+        # even when it';s an optional parameter (defaults to 0)
+        assert optimized_model.graph == graph
+
+    def test_eliminate_nop_dropout_opset11_graph_output(self):  # type: () -> None
+        node = helper.make_node("Log", ["X"], ["Y"])
+        node1 = helper.make_node("Dropout", ["Y"], ["Z"], ratio=0.0)
+        graph = helper.make_graph(
+            [node, node1],
+            "test",
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 7))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7))])
+        optimized_model = self._optimized(
+            graph, ["eliminate_nop_dropout"], False, opset_imports=[helper.make_opsetid("", 11)])
+
+        assert len(optimized_model.graph.output) == 1
+        assert len(optimized_model.graph.node) == 1
+        assert optimized_model.graph.node[0].op_type == "Log"
+
+    def test_eliminate_nop_dropout_opset11(self):  # type: () -> None
         for ratio in [0.0, 0.5]:
             node = helper.make_node("Dropout", ["X"], ["Y"], ratio=ratio)
             node1 = helper.make_node("Log", ["Y"], ["Z"])
@@ -1608,7 +1715,7 @@ class TestOptimizer(unittest.TestCase):
                     "X", TensorProto.FLOAT, (5, 7))],
                 [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7))])
             optimized_model = self._optimized(
-                graph, ["eliminate_nop_dropout"], False)
+                graph, ["eliminate_nop_dropout"], False, opset_imports=[helper.make_opsetid("", 11)])
 
             if ratio > 0.0:
                 assert optimized_model.graph == graph
