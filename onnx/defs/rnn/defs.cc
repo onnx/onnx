@@ -212,14 +212,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, input_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, hidden_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "B",
@@ -333,14 +341,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, input_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, hidden_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "B",
@@ -460,14 +476,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for the gates. Concatenation of `W[iofc]` and "
             "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
             "`[num_directions, 4*hidden_size, input_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[iofc]` and "
             "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 4*hidden_size, hidden_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "B",
