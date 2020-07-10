@@ -1,4 +1,4 @@
-# A Short Guide on Defining Differentiability for ONNX operators
+# A Short Guide on The Differentiability Tag for ONNX operators
 
 The differentiability definition of an operator consists of several aspects.
 
