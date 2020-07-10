@@ -14,7 +14,7 @@ The differentiability definition of an operator consists of several aspects.
 - The math equation to compute the Jacobian matrix (or tensor). If a variable (input or output) is differentiable or not is judged by math. If the Jacobian matrix (or tensor) exists, then the considered operator has some differentiable inputs and outputs.
 
 There are several strategies to implement auto-differentiation such as forward accumulation, backward accumulation, and dual variable.
-Because most deep learning frameworks are backward-based, the reviewers should ensure the PR authors provide enough details on that.
+Because most deep learning frameworks are backward-based, the reviewers should ensure the PR authors of tags provide enough details on that.
 We present a couple of methods below to verify the differentiability for ONNX operator.
 
 ### Method 1: Reuse Existing Deep Learning Frameworks
