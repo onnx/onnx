@@ -8,7 +8,7 @@ The differentiability definition of an operator consists of several aspects.
 
 There are several strategies to implement auto-differentiation such as forward accumulation, backward accumulation, and dual variable.
 Because most deep learning frameworks are backward-based, the reviewers should ensure the PR authors provide enough details on that.
-Subsequently, we discuss several methods to verify the differentiability for ONNX operator.
+We present a couple of methods below to verify the differentiability for ONNX operator.
 
 ## Method 1: Reuse Existing Deep Learning Frameworks
 The first way is to show that the considered operator's backward operation exists in an existing framework such as Pytorch or Tensorflow. In this case, the author should provide a runnable python script which computes the backward pass of the considered operator. The author should also point out how to map the Pytorch or Tensor code to ONNX format (for example, the author can call `torch.onnx.export` to save an ONNX model). The following script shows the differentiability of ONNX Reshape using  Pytorch.
