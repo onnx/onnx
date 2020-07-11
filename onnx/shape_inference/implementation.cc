@@ -85,7 +85,7 @@ void checkShapesAndTypes(
   const auto inferredTypeCase = inferredType.value_case();
   const auto existingTypeCase = existingType.value_case();
   if (inferredTypeCase == TypeProto::ValueCase::VALUE_NOT_SET || existingTypeCase == TypeProto::ValueCase::VALUE_NOT_SET) {
-    // nothing to check; will assign inferredType to undefined exisitingType 
+    // nothing to check; will assign inferredType to undefined existingType 
     return; 
   }
   if (inferredTypeCase != existingTypeCase) {
@@ -176,7 +176,9 @@ static void InferShapesImpl(
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
   for (auto& vi : *g->mutable_output()) {
-    // Save names of output with undefined types; No matter vi has type or not
+    // Some output type might be undefined 
+    // To assgin inferred type to them,
+    // Also save names of output with undefined types
     valueTypesByName[vi.name()] = vi.mutable_type(); 
   }
 
@@ -282,8 +284,7 @@ static void InferShapesImpl(
           existingType = vi->mutable_type();
         }
 
-        // Now we can merge pre-existing and inferred info, without
-        // further need for error-checking.
+        // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
 
         // Make merged info available to further inference.
