@@ -111,9 +111,8 @@ DataType DataTypeUtils::ToType(const std::string& type_str) {
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   auto it = GetTypeStrToProtoMap().find(*data_type);
-  assert(it != GetTypeStrToProtoMap().end());
   if (GetTypeStrToProtoMap().end() == it) {
-    throw std::runtime_error("Invalid data type.");
+    throw std::invalid_argument("Invalid data type.");
   }
   return it->second;
 }
@@ -172,9 +171,8 @@ std::string DataTypeUtils::ToString(
 std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
-  assert(t.TensorDataTypeToTypeStr().end() != iter);
   if (t.TensorDataTypeToTypeStr().end() == iter) {
-    throw std::runtime_error("Invalid tensor data type.");
+    throw std::invalid_argument("Invalid tensor data type.");
   }
   return iter->second;
 }
