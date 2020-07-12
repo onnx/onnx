@@ -32,10 +32,9 @@ elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
   brew update
   brew install ccache protobuf
   if [ "${PYTHON_VERSION}" == "python3" ]; then
-    # install python@3.6.5_1
-    brew upgrade python
-    brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/f2a764ef944b1080be64bd88dca9a1d80130c558/Formula/python.rb
-    brew switch python 3.6.5_1
+    # install python@3.6.5
+    brew unlink python
+    brew install --ignore-dependencies https://raw.githubusercontent.com/Homebrew/homebrew-core/f2a764ef944b1080be64bd88dca9a1d80130c558/Formula/python.rb
   fi
 else
   echo Unknown OS: $TRAVIS_OS_NAME
