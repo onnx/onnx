@@ -350,6 +350,26 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceL1",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceL2",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceLogSum",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceLogSumExp",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMax",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMean",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMin",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceProd",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceSum",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceSumSquare",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Softmax",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
@@ -373,6 +393,26 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceL1",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceL2",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceLogSum",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceLogSumExp",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMax",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMean",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMin",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceProd",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceSum",
+        OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceSumSquare",
+        OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Softmax",
         OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
@@ -393,9 +433,15 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<CompatibleAdapter>("Pow",
         OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMax",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("ReduceMin",
+        OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<Dropout_11_12>());
 
       /******** 12 -> 11 ********/
+      std::vector<TensorProto_DataType> maxpool_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_INT8};
       registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
         OpSetID(12), OpSetID(11)));
       registerAdapter(make_unique<TypeRestriction>("Clip", 
@@ -404,9 +450,11 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(12), OpSetID(11), int_unallowed_types));
       registerAdapter(make_unique<TypeRestriction>("Max", 
         OpSetID(12), OpSetID(11), int_unallowed_types));
-      std::vector<TensorProto_DataType> maxpool_unallowed_types = {
-        TensorProto_DataType_UINT8, TensorProto_DataType_INT8};
       registerAdapter(make_unique<TypeRestriction>("MaxPool", 
+        OpSetID(12), OpSetID(11), maxpool_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("ReduceMax", 
+        OpSetID(12), OpSetID(11), maxpool_unallowed_types));
+      registerAdapter(make_unique<TypeRestriction>("ReduceMin", 
         OpSetID(12), OpSetID(11), maxpool_unallowed_types));
     }
 
