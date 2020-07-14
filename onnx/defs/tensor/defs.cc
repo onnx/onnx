@@ -45,7 +45,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "input",
             "Input tensor to be cast.",
-            "T1"
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -624,7 +624,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "starts",
             "1-D tensor of starting indices of corresponding axis in `axes`",
             "Tind",
-            OpSchema::Single
+            OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
@@ -1893,7 +1893,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "input",
             "Input tensor of any shape.",
-            "T")
+            "T",
             OpSchema::Single,
             true,
             1,
@@ -2280,7 +2280,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'off_value' values in the output tensor."
             "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
             "T1",
-            OpSchema::Single)
+            OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
