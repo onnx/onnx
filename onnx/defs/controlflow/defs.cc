@@ -337,9 +337,9 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
       const bool is_loop_state_var = i < num_loop_state_vars;
 
-      if (!subgraph_output_type->has_tensor_type()) {
+      if (!subgraph_output_type->has_tensor_type() || !subgraph_output_type->has_sequence_type()) {
         fail_type_inference(
-            "Loop 'body' subgraph outputs should all be tensors but output ",
+            "Loop 'body' subgraph outputs should all be tensors or sequences but output ",
             i,
             " was ",
             subgraph_output_type->value_case());
@@ -422,7 +422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver11_doc = R"DOC(
+static const char* Loop_ver13_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -512,13 +512,13 @@ C-style code:
       for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
         /* Implicitly-defined code: bind actual parameter values
            to formal parameter variables of loop-body */
-        bool keepgoing_in = keepgoing_out; 
+        bool keepgoing_in = keepgoing_out;
         bool b_in = b_out;
 
         /* User-defined code (loop body) */
         int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
         b_out = a - b_in;
-        keepgoing_out = my_local > b_out; 
+        keepgoing_out = my_local > b_out;
         user_defined_val = b_in + b_in; // b_in and b_out are different variables
         /* End user-defined code */
 
@@ -562,9 +562,9 @@ The input/output of subgraph (produced by loop node) matching is based on order 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    11,
+    13,
     OpSchema()
-        .SetDoc(Loop_ver11_doc)
+        .SetDoc(Loop_ver13_doc)
         .Input(
             0,
             "M",
@@ -590,7 +590,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs",
+            "Final N loop carried dependency values then K scan_outputs. "
+            "Scan outputs must be Tensors.",
             "V",
             OpSchema::Variadic,
             false)
@@ -604,7 +605,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             " if the dimensions or data type of these scan_outputs change across loop"
             " iterations.",
             AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint(
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "All Tensor and Sequence types")
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
@@ -713,7 +722,7 @@ be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it dire
 values are computed in the outer graph, they need to be passed in as extra state_variables.
 
     graph rnn-encoding {
-      %H_0 = ... 
+      %H_0 = ...
       %X = ...
       %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
       return %Y, %Y_h
