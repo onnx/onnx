@@ -342,6 +342,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ConvTranspose",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Equal",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Flatten",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Gemm",
@@ -377,6 +379,12 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<Clip_10_11>());
 
       /******** 11 -> 10 ********/
+      std::vector<TensorProto_DataType> equal_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_UINT16,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16,
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_FLOAT,
+        TensorProto_DataType_DOUBLE};
       registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
         OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Concat",
@@ -387,6 +395,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("ConvTranspose",
         OpSetID(11), OpSetID(10)));
+      registerAdapter(make_unique<TypeRestriction>("Equal",
+        OpSetID(11), OpSetID(10), equal_unallowed_types));
       registerAdapter(make_unique<CompatibleAdapter>("Flatten",
         OpSetID(11), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax",
