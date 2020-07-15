@@ -90,7 +90,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "X",
         "The input sequences packed (and potentially padded) into one 3-D "
         "tensor with the shape of `[seq_length, batch_size, input_size]`.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         4,
         "sequence_lens",
@@ -98,7 +102,10 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
-        OpSchema::Optional);
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.Input(
         5,
         "initial_h",
@@ -112,14 +119,20 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "A tensor that concats all the intermediate output values of the hidden. "
         "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
         "T",
-        OpSchema::Optional);
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         1,
         "Y_h",
         "The last output value of the hidden. It has shape "
         "`[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -236,7 +249,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
             "to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
 static const char* GRU_ver7_doc = R"DOC(
@@ -365,7 +381,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
             "- assumed to be 0",
             "T",
-            OpSchema::Optional)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
 static const char* LSTM_ver7_doc = R"DOC(
@@ -500,7 +519,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
             "specified - assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             6,
             "initial_c",
@@ -516,7 +538,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
             "assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("LSTM"))
         .Output(
             2,
@@ -524,5 +549,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional));
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable));
 } // namespace ONNX_NAMESPACE
