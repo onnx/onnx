@@ -50,14 +50,16 @@ def _form_and_sanitize_docstring(s):  # type: (Text) -> Text
 def GetOpNodeProducer(embed_docstring=False, **kwargs):  # type: (bool, **Any) -> _NodeProducer
     def ReallyGetOpNode(op, op_id):  # type: (NodeProto, int) -> pydot.Node
         if op.name:
-            node_name = '%s/%s (op#%d)' % (op.name, op.op_type, op_id)
+            node_name = [f'{op.name}/{op.op_type} (op#{op_id})']
         else:
-            node_name = '%s (op#%d)' % (op.op_type, op_id)
-        for i, input in enumerate(op.input):
-            node_name += '\n input' + str(i) + ' ' + input
-        for i, output in enumerate(op.output):
-            node_name += '\n output' + str(i) + ' ' + output
-        node = pydot.Node(node_name, **kwargs)
+            node_name = [f'{op.op_type} (op#{op_id})']
+
+        for i, inp in enumerate(op.input):
+            node_name.append(f'input{i} {inp}')
+        for i, outp in enumerate(op.output):
+            node_name.append(f'output{i} {outp}')
+            
+        node = pydot.Node('\n '.join(node_name), **kwargs)
         if embed_docstring:
             url = _form_and_sanitize_docstring(op.doc_string)
             node.set_URL(url)
