@@ -185,6 +185,23 @@ static void InferShapesImpl(
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
+    TypeProto_Tensor* tensor_type;
+    auto iter = valueTypesByName.find(tp.name());
+    if (iter != valueTypesByName.end()) {
+      tensor_type = valueTypesByName[tp.name()]->mutable_tensor_type();
+    }
+    else {
+      ValueInfoProto *temp = g->add_input();
+      temp->set_name(tp.name());
+      valueTypesByName[tp.name()]= temp->mutable_type();
+      tensor_type = valueTypesByName[tp.name()]->mutable_tensor_type();
+    }
+    tensor_type->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
+    TensorShapeProto* shape = tensor_type->mutable_shape();
+    shape->clear_dim();
+    for (int i = 0 ; i < tp.dims_size(); ++i) {
+      shape->add_dim()->set_dim_value(tp.dims(i)); 
+    }
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
