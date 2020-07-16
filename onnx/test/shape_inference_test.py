@@ -44,36 +44,6 @@ class TestShapeInference(unittest.TestCase):
                 nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
         return helper.make_graph(nodes, "test", input_value_infos, [], initializer=initializer, value_info=value_info)
 
-    def _make_graph_without_input(self,
-                    seed_values,  # type: Sequence[Union[Text, Tuple[Text, TensorProto.DataType, Any]]]
-                    nodes,  # type: List[NodeProto]
-                    value_info,  # type: List[ValueInfoProto]
-                    initializer=None  # type: Optional[Sequence[TensorProto]]
-                    ):  # type: (...) -> GraphProto
-        if initializer is None:
-            initializer = []
-        names_in_initializer = set(x.name for x in initializer)
-        input_value_infos = []
-        # If the starting values are not also initializers,
-        # introduce the starting values as the output of reshape,
-        # so that the sizes are guaranteed to be unknown
-        for seed_value in seed_values:
-            if isinstance(seed_value, tuple):
-                seed_name = seed_value[0]
-                seed_value_info = make_tensor_value_info(*seed_value)
-            else:
-                seed_name = seed_value
-                seed_value_info = make_empty_tensor_value_info(seed_value)
-
-            if seed_name in names_in_initializer:
-                input_value_infos.append(seed_value_info)
-            else:
-                value_info.append(seed_value_info)
-                input_value_infos.append(make_tensor_value_info('SEED_' + seed_name, TensorProto.UNDEFINED, ()))
-                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, TensorProto.UNDEFINED, ()))
-                nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
-        return helper.make_graph(nodes, "test", [], [], initializer=initializer, value_info=value_info)
-
     def _inferred(self, graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         kwargs[str('producer_name')] = 'onnx-test'
         orig_model = helper.make_model(graph, **kwargs)
