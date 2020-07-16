@@ -55,10 +55,9 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      pip install --quiet pytest nbval flake8 dos2unix
+      pip install --quiet pytest nbval flake8
       pytest
       flake8
-      find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
 
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
