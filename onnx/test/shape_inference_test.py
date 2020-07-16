@@ -44,6 +44,36 @@ class TestShapeInference(unittest.TestCase):
                 nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
         return helper.make_graph(nodes, "test", input_value_infos, [], initializer=initializer, value_info=value_info)
 
+    def _make_graph_without_input(self,
+                    seed_values,  # type: Sequence[Union[Text, Tuple[Text, TensorProto.DataType, Any]]]
+                    nodes,  # type: List[NodeProto]
+                    value_info,  # type: List[ValueInfoProto]
+                    initializer=None  # type: Optional[Sequence[TensorProto]]
+                    ):  # type: (...) -> GraphProto
+        if initializer is None:
+            initializer = []
+        names_in_initializer = set(x.name for x in initializer)
+        input_value_infos = []
+        # If the starting values are not also initializers,
+        # introduce the starting values as the output of reshape,
+        # so that the sizes are guaranteed to be unknown
+        for seed_value in seed_values:
+            if isinstance(seed_value, tuple):
+                seed_name = seed_value[0]
+                seed_value_info = make_tensor_value_info(*seed_value)
+            else:
+                seed_name = seed_value
+                seed_value_info = make_empty_tensor_value_info(seed_value)
+
+            if seed_name in names_in_initializer:
+                input_value_infos.append(seed_value_info)
+            else:
+                value_info.append(seed_value_info)
+                input_value_infos.append(make_tensor_value_info('SEED_' + seed_name, TensorProto.UNDEFINED, ()))
+                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, TensorProto.UNDEFINED, ()))
+                nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
+        return helper.make_graph(nodes, "test", [], [], initializer=initializer, value_info=value_info)
+
     def _inferred(self, graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         kwargs[str('producer_name')] = 'onnx-test'
         orig_model = helper.make_model(graph, **kwargs)
@@ -3232,6 +3262,21 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
+    def test_infer_with_initializer_without_input(self):
+        # This is for testing new IR: some tensors can only exist in initializer and not in input
+        # So shape_inference should make use of initializer shapes
+        shape = (8, 7)
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
+
+        graph = helper.make_graph(nodes, "test", inputs=[], outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        inferred_model = onnx.shape_inference.infer_shapes(original_model)
+        
+        # If shape inference fails, it will throw IndexError
+        z_tenor = inferred_model.graph.value_info.pop()
+        z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
+        assert z_shape == shape
 
 if __name__ == '__main__':
     unittest.main()

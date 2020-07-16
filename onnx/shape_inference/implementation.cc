@@ -185,19 +185,26 @@ static void InferShapesImpl(
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
-    TypeProto_Tensor* tensor_type;
+    
+    // This is for testing new IR: some tensors can only exist in initializer and not in input
+    // So shape_inference should make use of initializer shapes
+    // Store initializer shape info in value_info as well
+    TypeProto_Tensor* newTensorFromInitializer;
     auto iter = valueTypesByName.find(tp.name());
+    // If it already exists in input, simply use the original input
     if (iter != valueTypesByName.end()) {
-      tensor_type = valueTypesByName[tp.name()]->mutable_tensor_type();
+      newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
     }
+    // If not, add a new input
     else {
-      ValueInfoProto *temp = g->add_input();
-      temp->set_name(tp.name());
-      valueTypesByName[tp.name()]= temp->mutable_type();
-      tensor_type = valueTypesByName[tp.name()]->mutable_tensor_type();
+      ValueInfoProto *newValueForInitializer = g->add_input();
+      newValueForInitializer->set_name(tp.name());
+      valueTypesByName[tp.name()]= newValueForInitializer->mutable_type();
+      newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
     }
-    tensor_type->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
-    TensorShapeProto* shape = tensor_type->mutable_shape();
+    // set the shape according to the initializer shape info
+    newTensorFromInitializer->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
+    TensorShapeProto* shape = newTensorFromInitializer->mutable_shape();
     shape->clear_dim();
     for (int i = 0 ; i < tp.dims_size(); ++i) {
       shape->add_dim()->set_dim_value(tp.dims(i)); 
