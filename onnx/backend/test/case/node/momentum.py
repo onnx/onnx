@@ -11,7 +11,7 @@ from ..base import Base
 from . import expect
 
 
-def apply_momentum(t, r, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
+def apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Coefficient of gradient should be 1 at the first iteration.
@@ -23,7 +23,7 @@ def apply_momentum(t, r, x, g, v, norm_coefficient, alpha, beta):  # type: ignor
     return x_new, v_new
 
 
-def apply_nesterov(t, r, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
+def apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Coefficient of gradient should be 1 at the first iteration.
@@ -96,7 +96,7 @@ class Momentum(Base):
         g = np.array([-0.94, -2.5], dtype=np.float32)
         v = np.array([1.7, 3.6], dtype=np.float32)
 
-        # Compute expected outputs of Adagrad.
+        # Compute expected outputs of Momentum.
         x_new, v_new = apply_nesterov(r, t, x, g, v,
                                       norm_coefficient, alpha, beta)
 

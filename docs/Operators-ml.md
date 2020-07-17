@@ -3,25 +3,32 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
-* ai.onnx.ml
-  * <a href="#ai.onnx.ml.ArrayFeatureExtractor">ai.onnx.ml.ArrayFeatureExtractor</a>
-  * <a href="#ai.onnx.ml.Binarizer">ai.onnx.ml.Binarizer</a>
-  * <a href="#ai.onnx.ml.CastMap">ai.onnx.ml.CastMap</a>
-  * <a href="#ai.onnx.ml.CategoryMapper">ai.onnx.ml.CategoryMapper</a>
-  * <a href="#ai.onnx.ml.DictVectorizer">ai.onnx.ml.DictVectorizer</a>
-  * <a href="#ai.onnx.ml.FeatureVectorizer">ai.onnx.ml.FeatureVectorizer</a>
-  * <a href="#ai.onnx.ml.Imputer">ai.onnx.ml.Imputer</a>
-  * <a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>
-  * <a href="#ai.onnx.ml.LinearClassifier">ai.onnx.ml.LinearClassifier</a>
-  * <a href="#ai.onnx.ml.LinearRegressor">ai.onnx.ml.LinearRegressor</a>
-  * <a href="#ai.onnx.ml.Normalizer">ai.onnx.ml.Normalizer</a>
-  * <a href="#ai.onnx.ml.OneHotEncoder">ai.onnx.ml.OneHotEncoder</a>
-  * <a href="#ai.onnx.ml.SVMClassifier">ai.onnx.ml.SVMClassifier</a>
-  * <a href="#ai.onnx.ml.SVMRegressor">ai.onnx.ml.SVMRegressor</a>
-  * <a href="#ai.onnx.ml.Scaler">ai.onnx.ml.Scaler</a>
-  * <a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a>
-  * <a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a>
-  * <a href="#ai.onnx.ml.ZipMap">ai.onnx.ml.ZipMap</a>
+For an operator input/output's differentiability, it can be differentiable,
+            non-differentiable, or undefined. If a variable's differentiability
+            is not specified, that variable has undefined differentiability.
+
+### ai.onnx.ml
+|**Operator**|**Since version**|
+|-|-|
+|<a href="#ai.onnx.ml.ArrayFeatureExtractor">ai.onnx.ml.ArrayFeatureExtractor</a>|<a href="Changelog-ml.md#ai.onnx.ml.ArrayFeatureExtractor-1">1</a>|
+|<a href="#ai.onnx.ml.Binarizer">ai.onnx.ml.Binarizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Binarizer-1">1</a>|
+|<a href="#ai.onnx.ml.CastMap">ai.onnx.ml.CastMap</a>|<a href="Changelog-ml.md#ai.onnx.ml.CastMap-1">1</a>|
+|<a href="#ai.onnx.ml.CategoryMapper">ai.onnx.ml.CategoryMapper</a>|<a href="Changelog-ml.md#ai.onnx.ml.CategoryMapper-1">1</a>|
+|<a href="#ai.onnx.ml.DictVectorizer">ai.onnx.ml.DictVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.DictVectorizer-1">1</a>|
+|<a href="#ai.onnx.ml.FeatureVectorizer">ai.onnx.ml.FeatureVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.FeatureVectorizer-1">1</a>|
+|<a href="#ai.onnx.ml.Imputer">ai.onnx.ml.Imputer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Imputer-1">1</a>|
+|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
+|<a href="#ai.onnx.ml.LinearClassifier">ai.onnx.ml.LinearClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearClassifier-1">1</a>|
+|<a href="#ai.onnx.ml.LinearRegressor">ai.onnx.ml.LinearRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearRegressor-1">1</a>|
+|<a href="#ai.onnx.ml.Normalizer">ai.onnx.ml.Normalizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Normalizer-1">1</a>|
+|<a href="#ai.onnx.ml.OneHotEncoder">ai.onnx.ml.OneHotEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.OneHotEncoder-1">1</a>|
+|<a href="#ai.onnx.ml.SVMClassifier">ai.onnx.ml.SVMClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMClassifier-1">1</a>|
+|<a href="#ai.onnx.ml.SVMRegressor">ai.onnx.ml.SVMRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMRegressor-1">1</a>|
+|<a href="#ai.onnx.ml.Scaler">ai.onnx.ml.Scaler</a>|<a href="Changelog-ml.md#ai.onnx.ml.Scaler-1">1</a>|
+|<a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>|
+|<a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>|
+|<a href="#ai.onnx.ml.ZipMap">ai.onnx.ml.ZipMap</a>|<a href="Changelog-ml.md#ai.onnx.ml.ZipMap-1">1</a>|
+
 
 ## ai.onnx.ml
 ### <a name="ai.onnx.ml.ArrayFeatureExtractor"></a><a name="ai.onnx.ml.arrayfeatureextractor">**ai.onnx.ml.ArrayFeatureExtractor**</a>
@@ -357,7 +364,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">ai.onnx.ml.LabelEncoder-1</a>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>
 
 #### Attributes
 

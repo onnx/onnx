@@ -1,34 +1,0 @@
-backend-test:„
-
-k
-xNSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Max"	ReduceMax*
-axes@ 
-¨
-x
-NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_MaxNSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Sub"Sub
-¥
-NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_SubNSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Exp"Exp
-·
-NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_ExpMSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_RS"	ReduceSum*
-axes@ 
-ô
-NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Exp
-MSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_RSNSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Div"Div
-¥
-NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_DivNSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Log"Log
-‡
-NSoftmaxCrossEntropyLoss_test_softmax_cross_entropy_none_expanded_functionX_Log
-yz"NegativeLogLikelihoodLoss*
-	reduction"none (test_softmax_cross_entropy_none_expandedZ
-x
-
-
-Z
-y
-
-
-b
-z
-
-
-B

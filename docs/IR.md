@@ -3,7 +3,9 @@ Open Neural Network Exchange - ONNX
 
 __Purpose__
 
-This document contains the normative specification of the semantics of ONNX. The .proto and .proto3 files found under the ‘onnx’ folder form the normative specification of its syntax. Commentary found in the .proto and .proto3 files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
+This document contains the normative specification of the semantics of ONNX. 
+
+The `.proto` and `.proto3` files found under the ‘onnx’ folder form the normative specification of its syntax authored in the [Protocol Buffers](https://developers.google.com/protocol-buffers) definition language. Commentary found in the `.proto` and `.proto3` files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
 
 __Notes on model validation__
 
@@ -71,7 +73,7 @@ An implementation MAY extend ONNX by adding operators expressing semantics beyon
 
 ### Models
 
-The top-level ONNX construct is a ‘Model.’
+The top-level ONNX construct is a ‘Model.’, and is represented in protocol buffers as the type `onnx.ModelProto`
 
 The main purpose of the model structure is to associate metadata with a graph, which is what contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model, generate logging messages, error reports, etc. Further, the metadata is useful to tools, such as IDEs and model galleries, which need it for informing humans about a given model’s purpose and characteristics.
 
@@ -91,6 +93,18 @@ Each model has the following components:
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
+ 
+__Note: Exploring an ONNX file__
+
+You can use the `protoc` tool that is part of the Protocol Buffers distribution to examine the contents of an ONNX file, you do so like this:
+
+```
+$ protoc --decode=onnx.ModelProto onnx.proto < yourfile.onnx
+```
+
+Where `onnx.proto` is the file that is part of this repository.
+
+Alternatively, you can use a tool like [Netron](https://github.com/lutzroeder/netron) to explore the ONNX file.
 
 ### Model Semantics
 
@@ -164,8 +178,8 @@ Graphs have the following properties:
 |Name|Type|Description|
 |---|---|---|
 name|string|The name of the model graph.
-node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
-initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value.
+node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies. It is in topological order.
+initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value. It may not be in topological order. 
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
@@ -294,6 +308,8 @@ Each node referring to an operator with optional outputs MUST provide a name for
 #### External Tensor Data
 
 The raw data for large constant tensors, such as initializers, MAY be serialised in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
+
+More details can be found in [ExternalData.md](ExternalData.md).
 
 ## Standard data types
 
