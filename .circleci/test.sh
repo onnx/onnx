@@ -10,7 +10,7 @@ python collect_env.py
 # install torchvision from master
 # the one on pypi requires cuda
 pip install numpy
-pip install --pre torch -f https://download.pytorch.org/whl/nightly/cu102/torch_nightly.html
+pip install --pre torch -f https://download.pytorch.org/whl/nightly/cu102/torchvision-0.8.0.dev20200717-cp37-cp37m-linux_x86_64.whl
 pip install -q git+https://github.com/pytorch/vision.git
 
 cd /tmp/pytorch
