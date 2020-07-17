@@ -1,0 +1,83 @@
+language: generic
+
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python2 ONNX_ML=0
+      language: python
+      python: "2.7"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3 ONNX_ML=0
+      language: python
+      python: "3.6"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3 ONNX_ML=0 ONNX_DEBUG=1
+      language: python
+      python: "3.6"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3 ONNX_ML=1 ONNX_DEBUG=1
+      language: python
+      python: "3.6"
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python2 ONNX_ML=0
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python3 ONNX_ML=0
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python2
+      language: python
+      python: "2.7"
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python3
+      language: python
+      python: "3.6"
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python2
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python3
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python3 ONNX_DEBUG=1
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python2 LITE=1
+      language: python
+      python: "2.7"
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python2 LITE=1
+
+env:
+  global:
+    - PB_VERSION=2.6.1
+
+before_install:
+  - ./.travis/before_install.sh
+
+install:
+  - ./.travis/install.sh
+
+script:
+  - ./.travis/script.sh
+
+after_success:
+  - ./.travis/after_success.sh
+
+after_failure:
+  - ./.travis/after_failure.sh
+
+cache:
+  - timeout: 300
+  - directories:
+    - $BUILD_CCACHE_DIR
+    - $HOME/.ccache
+    - $HOME/.cache/pb
