@@ -4,14 +4,12 @@ set -ex
 
 source /tmp/venv/bin/activate
 
-wget https://raw.githubusercontent.com/pytorch/pytorch/master/torch/utils/collect_env.py
-python collect_env.py
-
 # install torchvision from master
 # the one on pypi requires cuda
-pip install numpy
-pip install --pre torch -f https://download.pytorch.org/whl/nightly/cu102/torchvision-0.8.0.dev20200717-cp37-cp37m-linux_x86_64.whl
-pip install -q git+https://github.com/pytorch/vision.git
+# Currently the master branch of pytorch/vision is not stable
+# Should set it back to the master if the issue from master branch has been resovled
+# Therefore use certain commit on 07/06/2020 for
+pip install -vvv git+https://github.com/pytorch/vision.git@86b6c3e22e9d7d8b0fa25d08704e6a31a364973
 
 cd /tmp/pytorch
 CI=1 exec "scripts/onnx/test.sh"
