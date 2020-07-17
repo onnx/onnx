@@ -4,6 +4,7 @@ set -ex
 
 source /tmp/venv/bin/activate
 
+pip install -q git+https://github.com/pytorch/pytorch.git
 # install torchvision from master
 # the one on pypi requires cuda
 pip install -q git+https://github.com/pytorch/vision.git
