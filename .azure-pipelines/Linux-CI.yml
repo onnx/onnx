@@ -60,8 +60,6 @@ jobs:
       export CMAKE_ARGS=-DONNXIFI_DUMMY_BACKEND=ON -DONNX_USE_LITE_PROTO=${onnx_lite}
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
-      .setuptools-cmake-build/onnx_gtests
-      .setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
     displayName: 'Install ONNX and dependencies'
 
   - script: |
