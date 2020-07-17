@@ -32,7 +32,9 @@ elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
   brew update
   brew install ccache protobuf
   if [ "${PYTHON_VERSION}" == "python3" ]; then
-    # install python@3.6.5
+    # For mypy, if you want to target the latest Python version, you will have to use that latest version to run mypy
+    # Therefore, if travis-ci need to test 3.8 in the future, it will need to install py3.8 here
+    # Simply install python@3.6.5 for now
     brew unlink python
     brew install --ignore-dependencies https://raw.githubusercontent.com/Homebrew/homebrew-core/f2a764ef944b1080be64bd88dca9a1d80130c558/Formula/python.rb
   fi
