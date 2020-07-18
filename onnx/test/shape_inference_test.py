@@ -3242,11 +3242,12 @@ class TestShapeInference(unittest.TestCase):
         graph = helper.make_graph(nodes, "test", inputs=[], outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
         inferred_model = onnx.shape_inference.infer_shapes(original_model)
-        
+
         # If shape inference fails, it will throw IndexError
         z_tenor = inferred_model.graph.value_info.pop()
         z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
         assert z_shape == shape
+
 
 if __name__ == '__main__':
     unittest.main()
