@@ -193,7 +193,8 @@ static void InferShapesImpl(
     auto iter = valueTypesByName.find(tp.name());
     // If it already exists in input, simply use the original input
     if (iter != valueTypesByName.end()) {
-      newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
+      continue; // skip if shape info exists in input 
+      // newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
     }
     // If not, add a new input
     else {
