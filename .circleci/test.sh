@@ -5,8 +5,8 @@ set -ex
 source /tmp/venv/bin/activate
 
 # update libpng for pytorch/vision
-apt-get update -y
-apt-get install -y libpng16-16
+sudo apt-get update -y
+sudo apt-get install -y libpng16-16
 
 # install torchvision from master
 # the one on pypi requires cuda
