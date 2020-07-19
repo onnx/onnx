@@ -5,6 +5,7 @@ set -ex
 source /tmp/venv/bin/activate
 
 # update libpng for pytorch/vision
+sudo apt install update -y
 sudo apt install libpng16-16 -y
 
 # install torchvision from master
