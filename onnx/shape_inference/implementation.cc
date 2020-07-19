@@ -186,7 +186,7 @@ static void InferShapesImpl(
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
     
-    // This is for testing new IR: some tensors can only exist in initializer and not in input
+    // Support new IR: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well
     TypeProto_Tensor* newTensorFromInitializer;
