@@ -1374,13 +1374,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& shape_initializer_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (shape_initializer_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64)
+                (shape_initializer->data_type() != TensorProto::INT64 &&
+                 shape_initializer->data_type() != TensorProto::INT32))
               fail_shape_inference(
-                  "'shape' input must be 1D tensor of type INT64");
+                  "'shape' input must be 1D tensor of type INT64 or INT32");
 
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
-            const auto& shape_data = ParseData<int64_t>(shape_initializer);
+            const auto& shape_data = GetIntInitializerData(shape_initializer);
 
             TensorShapeProto second_shape;
             for (const auto& e : shape_data) {

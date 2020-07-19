@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "tensor_proto_util.h"
+#include <sstream>
 #include <vector>
 #include "onnx/common/platform_helpers.h"
 
@@ -85,5 +86,22 @@ DEFINE_PARSE_DATA(int32_t, int32_data)
 DEFINE_PARSE_DATA(int64_t, int64_data)
 DEFINE_PARSE_DATA(float, float_data)
 DEFINE_PARSE_DATA(double, double_data)
+
+const std::vector<int64_t> GetIntInitializerData(const TensorProto* tensor) {
+  std::vector<int64_t> vec;
+  if (tensor->data_type() == TensorProto::INT64) {
+    const auto& data = ParseData<int64_t>(tensor);
+    vec.insert(vec.end(), data.begin(), data.end());
+  } else if (tensor->data_type() == TensorProto::INT32) {
+    const auto& data = ParseData<int32_t>(tensor);
+    vec.insert(vec.end(), data.begin(), data.end());
+  } else {
+    // unaccepted data type
+    std::ostringstream oss;
+    oss << "Only supports `int32_t` or `int64_t` inputs " << tensor->name();
+    throw std::invalid_argument(oss.str());
+  }
+  return vec;
+}
 
 } // namespace ONNX_NAMESPACE
