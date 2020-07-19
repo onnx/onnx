@@ -3232,7 +3232,7 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
-    def test_infer_with_initializer_without_input(self):
+    def test_infer_with_initializer_without_input(self):  # type: () -> None
         # This is for testing new IR: some tensors can only exist in initializer and not in input
         # So shape_inference should make use of initializer shapes
         shape = (8, 7)
