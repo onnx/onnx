@@ -337,7 +337,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
       const bool is_loop_state_var = i < num_loop_state_vars;
 
-      if (!subgraph_output_type->has_tensor_type() || !subgraph_output_type->has_sequence_type()) {
+      if (!subgraph_output_type->has_tensor_type() && !subgraph_output_type->has_sequence_type()) {
         fail_type_inference(
             "Loop 'body' subgraph outputs should all be tensors or sequences but output ",
             i,
