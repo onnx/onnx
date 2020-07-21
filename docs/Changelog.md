@@ -12076,11 +12076,9 @@ This version of the operator has been available since version 11 of the default 
   
     output = 
     [
-        [
-            [0.0, 0.0, 1.0, 1.2],
-            [0.0, 0.0, 2.3, 3.4],
-            [0.0, 0.0, 4.5, 5.7],
-        ],
+        [0.0, 0.0, 1.0, 1.2],
+        [0.0, 0.0, 2.3, 3.4],
+        [0.0, 0.0, 4.5, 5.7],
     ]
   
   
@@ -12098,11 +12096,9 @@ This version of the operator has been available since version 11 of the default 
   
     output = 
     [
-        [
-            [1.0, 1.2, 1.0, 1.2],
-            [2.3, 3.4, 2.3, 3.4],
-            [4.5, 5.7, 4.5, 5.7],
-        ],
+        [1.0, 1.2, 1.0, 1.2],
+        [2.3, 3.4, 2.3, 3.4],
+        [4.5, 5.7, 4.5, 5.7],
     ]
   
   
@@ -12120,11 +12116,9 @@ This version of the operator has been available since version 11 of the default 
   
     output = 
     [
-        [
-            [1.0, 1.0, 1.0, 1.2],
-            [2.3, 2.3, 2.3, 3.4],
-            [4.5, 4.5, 4.5, 5.7],
-        ],
+        [1.0, 1.0, 1.0, 1.2],
+        [2.3, 2.3, 2.3, 3.4],
+        [4.5, 4.5, 4.5, 5.7],
     ]
   
 
@@ -16653,11 +16647,9 @@ This version of the operator has been available since version 13 of the default 
   
     output = 
     [
-        [
-            [0.0, 0.0, 1.0, 1.2],
-            [0.0, 0.0, 2.3, 3.4],
-            [0.0, 0.0, 4.5, 5.7],
-        ],
+        [0.0, 0.0, 1.0, 1.2],
+        [0.0, 0.0, 2.3, 3.4],
+        [0.0, 0.0, 4.5, 5.7],
     ]
   
   
@@ -16675,11 +16667,9 @@ This version of the operator has been available since version 13 of the default 
   
     output = 
     [
-        [
-            [1.0, 1.2, 1.0, 1.2],
-            [2.3, 3.4, 2.3, 3.4],
-            [4.5, 5.7, 4.5, 5.7],
-        ],
+        [1.0, 1.2, 1.0, 1.2],
+        [2.3, 3.4, 2.3, 3.4],
+        [4.5, 5.7, 4.5, 5.7],
     ]
   
   
@@ -16697,11 +16687,9 @@ This version of the operator has been available since version 13 of the default 
   
     output = 
     [
-        [
-            [1.0, 1.0, 1.0, 1.2],
-            [2.3, 2.3, 2.3, 3.4],
-            [4.5, 4.5, 4.5, 5.7],
-        ],
+        [1.0, 1.0, 1.0, 1.2],
+        [2.3, 2.3, 2.3, 3.4],
+        [4.5, 4.5, 4.5, 5.7],
     ]
   
 
