@@ -549,7 +549,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Single,
+            OpSchema::Optional,
             true,
             1,
             OpSchema::Differentiable));
