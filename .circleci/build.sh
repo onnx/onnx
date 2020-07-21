@@ -4,9 +4,6 @@ set -ex
 
 export MAX_JOBS=8
 
-# update libpng for pytorch/vision
-sudo apt install -y libturbojpeg-dev
-
 # setup sccache wrappers
 if hash sccache 2>/dev/null; then
     SCCACHE_BIN_DIR="/tmp/sccache"
