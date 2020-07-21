@@ -5,7 +5,6 @@ set -ex
 export MAX_JOBS=8
 
 # update libpng for pytorch/vision
-sudo apt-get update -y
 sudo apt install -y libturbojpeg-dev
 
 # setup sccache wrappers
