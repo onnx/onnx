@@ -2208,14 +2208,14 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T1</dt>
+<dt><tt>input</tt> (differentiable) : T1</dt>
 <dd>Input tensor to be cast.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T2</dt>
+<dt><tt>output</tt> (differentiable) : T2</dt>
 <dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
 </dl>
 
@@ -4077,14 +4077,14 @@ Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">1</a>, <a
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].</dd>
 </dl>
 
@@ -6017,16 +6017,16 @@ Other versions of this operator: <a href="Changelog.md#Gather-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : Tind</dt>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of int32/int64 indices, of any rank q. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + (r - 1).</dd>
 </dl>
 
@@ -6179,16 +6179,16 @@ Other versions of this operator: <a href="Changelog.md#GatherElements-11">11</a>
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : Tind</dt>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of int32/int64 indices, with the same rank r as the input. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of the same shape as indices.</dd>
 </dl>
 
@@ -6400,16 +6400,16 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a h
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : tensor(int64)</dt>
+<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
 </dl>
 
@@ -7376,14 +7376,14 @@ Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor to copy input into.</dd>
 </dl>
 
@@ -7584,14 +7584,14 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
 <dd>input</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T2</dt>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
 <dd>output</dd>
 </dl>
 
@@ -7676,14 +7676,14 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
 <dd>input</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T2</dt>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
 <dd>output</dd>
 </dl>
 
@@ -11536,14 +11536,14 @@ Other versions of this operator: <a href="Changelog.md#NonZero-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>input</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : tensor(int64)</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>output</dd>
 </dl>
 
@@ -11675,18 +11675,18 @@ Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>indices</tt> : T1</dt>
+<dt><tt>indices</tt> (non-differentiable) : T1</dt>
 <dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
-<dt><tt>depth</tt> : T2</dt>
+<dt><tt>depth</tt> (non-differentiable) : T2</dt>
 <dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
-<dt><tt>values</tt> : T3</dt>
+<dt><tt>values</tt> (non-differentiable) : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T3</dt>
+<dt><tt>output</tt> (non-differentiable) : T3</dt>
 <dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
 </dl>
 
@@ -12105,18 +12105,18 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Input tensor.</dd>
-<dt><tt>pads</tt> : tensor(int64)</dt>
+<dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
-<dt><tt>constant_value</tt> (optional) : T</dt>
+<dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
 <dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor after padding.</dd>
 </dl>
 
@@ -17128,18 +17128,18 @@ Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : Tind</dt>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
-<dt><tt>updates</tt> : T</dt>
+<dt><tt>updates</tt> (non-differentiable) : T</dt>
 <dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1 (same rank as input).</dd>
 </dl>
 
@@ -17301,18 +17301,18 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : tensor(int64)</dt>
+<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Tensor of rank q >= 1.</dd>
-<dt><tt>updates</tt> : T</dt>
+<dt><tt>updates</tt> (non-differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 </dl>
 
@@ -18155,22 +18155,22 @@ Other versions of this operator: <a href="Changelog.md#Slice-1">1</a>, <a href="
 #### Inputs (3 - 5)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of data to extract slices from.</dd>
-<dt><tt>starts</tt> : Tind</dt>
+<dt><tt>starts</tt> (non-differentiable) : Tind</dt>
 <dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
-<dt><tt>ends</tt> : Tind</dt>
+<dt><tt>ends</tt> (non-differentiable) : Tind</dt>
 <dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
-<dt><tt>axes</tt> (optional) : Tind</dt>
+<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
 <dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
-<dt><tt>steps</tt> (optional) : Tind</dt>
+<dt><tt>steps</tt> (optional, non-differentiable) : Tind</dt>
 <dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Sliced data tensor.</dd>
 </dl>
 
@@ -19759,14 +19759,14 @@ Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].</dd>
 </dl>
 
@@ -20976,16 +20976,16 @@ Other versions of this operator: <a href="Changelog.md#Tile-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of any shape.</dd>
-<dt><tt>repeats</tt> : T1</dt>
+<dt><tt>repeats</tt> (non-differentiable) : T1</dt>
 <dd>1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
@@ -21263,14 +21263,14 @@ Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>transposed</tt> : T</dt>
+<dt><tt>transposed</tt> (differentiable) : T</dt>
 <dd>Transposed output.</dd>
 </dl>
 
@@ -21422,20 +21422,20 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>A N-D input tensor that is to be processed.</dd>
 </dl>
 
 #### Outputs (1 - 4)
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
-<dt><tt>indices</tt> (optional) : tensor(int64)</dt>
+<dt><tt>indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
-<dt><tt>inverse_indices</tt> (optional) : tensor(int64)</dt>
+<dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
-<dt><tt>counts</tt> (optional) : tensor(int64)</dt>
+<dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing the count of each element of 'Y' in input 'X'</dd>
 </dl>
 
@@ -21632,14 +21632,14 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>expanded</tt> : T</dt>
+<dt><tt>expanded</tt> (differentiable) : T</dt>
 <dd>Reshaped tensor with same data as input.</dd>
 </dl>
 
@@ -21823,18 +21823,18 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>condition</tt> : B</dt>
+<dt><tt>condition</tt> (non-differentiable) : B</dt>
 <dd>When True (nonzero), yield X, otherwise yield Y</dd>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>values selected at indices where condition is True</dd>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>values selected at indices where condition is False</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of shape equal to the broadcasted shape of condition, X, and Y.</dd>
 </dl>
 
