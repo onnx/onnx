@@ -129,7 +129,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "The last output value of the hidden. It has shape "
         "`[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Single,
+        OpSchema::Optional,
         true,
         1,
         OpSchema::Differentiable);
