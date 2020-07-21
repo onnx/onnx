@@ -102,7 +102,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
-        OpSchema::Single,
+        OpSchema::Optional,
         true,
         1,
         OpSchema::NonDifferentiable);
