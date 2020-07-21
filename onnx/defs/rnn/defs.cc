@@ -519,7 +519,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
             "specified - assumed to be 0.",
             "T",
-            OpSchema::Single,
+            OpSchema::Optional,
             true,
             1,
             OpSchema::Differentiable)
