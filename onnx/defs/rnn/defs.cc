@@ -119,7 +119,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "A tensor that concats all the intermediate output values of the hidden. "
         "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
         "T",
-        OpSchema::Single,
+        OpSchema::Optional,
         true,
         1,
         OpSchema::Differentiable);
