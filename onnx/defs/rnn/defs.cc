@@ -538,7 +538,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
             "assumed to be 0.",
             "T",
-            OpSchema::Single,
+            OpSchema::Optional,
             true,
             1,
             OpSchema::Differentiable)
