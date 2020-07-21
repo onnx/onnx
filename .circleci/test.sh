@@ -5,8 +5,8 @@ set -ex
 source /tmp/venv/bin/activate
 
 # update libpng for pytorch/vision
-wget http://ftp.br.debian.org/debian/pool/main/libj/libjpeg-turbo/libturbojpeg0_2.0.5-1_arm64.deb
-sudo apt install ./libturbojpeg0_2.0.5-1_arm64.deb
+wget http://ftp.br.debian.org/debian/pool/main/libj/libjpeg-turbo/libturbojpeg0_2.0.5-1_amd64.deb
+sudo apt install ./libturbojpeg0_2.0.5-1_amd64.deb
 #sudo apt install ./libturbojpeg0-dev_1.5.1-2_amd64.deb
 apt list --installed | grep -E "lib(png|jpeg)"
 
