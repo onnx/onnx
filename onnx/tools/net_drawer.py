@@ -58,7 +58,6 @@ def GetOpNodeProducer(embed_docstring=False, **kwargs):  # type: (bool, **Any) -
             node_name.append(f'input{i} {inp}')
         for i, outp in enumerate(op.output):
             node_name.append(f'output{i} {outp}')
-            
         node = pydot.Node('\n '.join(node_name), **kwargs)
         if embed_docstring:
             url = _form_and_sanitize_docstring(op.doc_string)
