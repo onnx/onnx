@@ -50,7 +50,7 @@ jobs:
       export DEBUG=${onnx_debug}
       export ONNX_ML=${onnx_ml}
       export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON"
-      if [ "${onnx_lite}" == 1 ]; then
+      if [ ${onnx_lite} ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
