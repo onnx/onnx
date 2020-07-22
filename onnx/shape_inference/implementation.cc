@@ -183,6 +183,7 @@ static void InferShapesImpl(
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
+  GraphProto inputGraph; // to not modify original graph; use temp graph  
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
     
@@ -196,9 +197,9 @@ static void InferShapesImpl(
       continue; // skip if shape info exists in input 
       // newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
     }
-    // If not, add a new input
+    // If not, add a new input into temp graph
     else {
-      ValueInfoProto *newValueForInitializer = g->add_input();
+      ValueInfoProto *newValueForInitializer = inputGraph.add_input();
       newValueForInitializer->set_name(tp.name());
       valueTypesByName[tp.name()]= newValueForInitializer->mutable_type();
       newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
