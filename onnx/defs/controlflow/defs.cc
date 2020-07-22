@@ -345,6 +345,14 @@ void LoopInferenceFunction(InferenceContext& ctx) {
             subgraph_output_type->value_case());
       }
 
+      if (!is_loop_state_var && !subgraph_output_type->has_tensor_type()) {
+        fail_type_inference(
+            "Loop 'body' subgraph scan outputs should all be tensors but output ",
+            i,
+            " was ",
+            subgraph_output_type->value_case());
+      }
+
       // if there's an existing type check it matches. otherwise propagate
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
