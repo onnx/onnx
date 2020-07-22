@@ -54,7 +54,7 @@ jobs:
       export ONNX_BUILD_TESTS=1
       export DEBUG=${onnx_debug}
       export ONNX_ML=${onnx_ml}
-      export CMAKE_ARGS='-DONNX_USE_LITE_PROTO=${onnx_lite} -DONNXIFI_DUMMY_BACKEND=ON'
+      export CMAKE_ARGS='-DONNXIFI_DUMMY_BACKEND=ON -DONNX_USE_LITE_PROTO='${onnx_lite}
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install dependencies and ONNX'
