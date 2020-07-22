@@ -17,21 +17,16 @@ jobs:
         onnx_ml: 1
         onnx_debug: 0
         onnx_lite: 'OFF'
-      py27-ml-lite:
-        python.version: '2.7'
-        onnx_ml: 1
-        onnx_debug: 0
-        onnx_lite: 'ON'
       py36:
         python.version: '3.6'
         onnx_ml: 0
         onnx_debug: 0
         onnx_lite: 'OFF'
-      py36-ml:
+      py36-ml-lite:
         python.version: '3.6'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 'OFF'
+        onnx_lite: 'ON'
       py36-ml-debug:
         python.version: '3.6'
         onnx_ml: 1
