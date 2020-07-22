@@ -11,32 +11,32 @@ jobs:
         python.version: '2.7'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 'OFF'
+        onnx_lite: 0
       py36:
         python.version: '3.6'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 'OFF'
+        onnx_lite: 0
       py36-ml-lite:
         python.version: '3.6'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 'ON'
+        onnx_lite: 1
       py37:
         python.version: '3.7'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 'OFF'
+        onnx_lite: 0
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 'OFF'
+        onnx_lite: 0
       py37-ml-debug:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 1
-        onnx_lite: 'OFF'
+        onnx_lite: 0
     maxParallel: 6
 
   steps:
@@ -57,7 +57,10 @@ jobs:
       export ONNX_ML=${onnx_ml}
       export DEBUG=${onnx_debug}
       export ONNX_BUILD_TESTS=1
-      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_USE_LITE_PROTO=${onnx_lite}""
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON"
+      if [ "${onnx_lite}" == 1 ]; then
+        export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+      fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
