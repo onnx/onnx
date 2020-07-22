@@ -271,6 +271,17 @@ class TestHelperNodeFunctions(unittest.TestCase):
         dupe.value = 'Other'
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
+    def test_model_irversion(self):  # type: () -> None
+        def test(opset_version, ir_version):  # type: (int, int) -> None
+            graph = helper.make_graph([], "my graph", [], [])
+            model = helper.make_model_gen_version(graph, opset_imports=[helper.make_opsetid("", opset_version)])
+            self.assertEqual(model.ir_version, ir_version)
+        # opset version 9 requires minimum ir_version 4, etc.
+        test(9, 4)
+        test(10, 5)
+        test(11, 6)
+        test (12, 7)
+
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
