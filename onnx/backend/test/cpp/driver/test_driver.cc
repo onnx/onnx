@@ -108,7 +108,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
         }
       } while (_findnext(lf, &file) == 0);
     } catch (const std::exception& e) {
-      std::cerr << "Error occured while reading directory. " << e.what()
+      std::cerr << "Error occurred while reading directory. " << e.what()
                 << std::endl;
       _findclose(lf);
       throw;
@@ -152,7 +152,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
                   << std::endl;
       }
     }
-    std::cerr << "Error: exception occured: " << e.what() << std::endl;
+    std::cerr << "Error: exception occurred: " << e.what() << std::endl;
     throw;
   }
   if (directory != NULL) {

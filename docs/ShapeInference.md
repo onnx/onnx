@@ -35,13 +35,13 @@ OpSchema& Opschema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFun
 ```
 
 `InferenceFunction` is defined in
-[shape_inference.h](onnx/defs/shape_inference.h), along with the core
+[shape_inference.h](/onnx/defs/shape_inference.h), along with the core
 interface struct `InferenceContext` and an assortment of helper
 methods. `InferenceContext` is the core struct which is provided to
 your inference function. It allows accessing information about the
 operator's inputs, and also allows writing out inferred information.
 
-To see numerous examples, search for occurences of
+To see numerous examples, search for occurrences of
 `TypeAndShapeInferenceFunction` in the codebase. One that is
 relatively involved is the implementation for `Concat`, in
 onnx/defs/tensor/defs.cc.
@@ -60,7 +60,7 @@ inferred to produce a result of shape `(12, 2)`, but `Concat` on
 tensors of shapes `(5, 2)` and `(N, 2)` will simply produce `(M, 2)`,
 rather than containing a representation of `N+5`. Note that differing
 unknown symbolic values will be propagated, so the `M` here represents
-an unknown quantity that is the same as other occurences of `M`.
+an unknown quantity that is the same as other occurrences of `M`.
 
 These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more
