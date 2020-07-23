@@ -160,7 +160,8 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
-    bool check_type,
+    const int ir_version,
+    const bool check_type,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
@@ -183,33 +184,31 @@ static void InferShapesImpl(
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
-  GraphProto inputGraph; // to not modify original graph; use temp graph  
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
     
-    // Support new IR: some tensors can only exist in initializer and not in input
-    // So shape_inference should make use of initializer shapes
-    // Store initializer shape info in value_info as well
-    TypeProto_Tensor* newTensorFromInitializer;
-    auto iter = valueTypesByName.find(tp.name());
-    // If it already exists in input, simply use the original input
-    if (iter != valueTypesByName.end()) {
-      continue; // skip if shape info exists in input 
-      // newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
-    }
-    // If not, add a new input into temp graph
-    else {
-      ValueInfoProto *newValueForInitializer = inputGraph.add_input();
-      newValueForInitializer->set_name(tp.name());
-      valueTypesByName[tp.name()]= newValueForInitializer->mutable_type();
-      newTensorFromInitializer = valueTypesByName[tp.name()]->mutable_tensor_type();
-    }
+    // Consider the tensors from the initializer
+    TypeProto *initializerType = new TypeProto();
+    TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
     // set the shape according to the initializer shape info
-    newTensorFromInitializer->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
-    TensorShapeProto* shape = newTensorFromInitializer->mutable_shape();
-    shape->clear_dim();
-    for (int i = 0 ; i < tp.dims_size(); ++i) {
-      shape->add_dim()->set_dim_value(tp.dims(i)); 
+    if (tp.dims_size() != 0) {
+      initializerTensorType->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
+      TensorShapeProto* shape = initializerTensorType->mutable_shape();
+      for (int i = 0 ; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i)); 
+      }
+    }
+    auto iter = valueTypesByName.find(tp.name());
+    // If it already exists in input, check input and initializer is sync
+    if (iter != valueTypesByName.end()) {
+        checkShapesAndTypes(*initializerTensorType, *valueTypesByName[tp.name()]->mutable_tensor_type());
+        mergeShapesAndTypes(*initializerTensorType, valueTypesByName[tp.name()]->mutable_tensor_type());
+    }
+    // Support IR>=4: some tensors can only exist in initializer and not in input
+    // So shape_inference should make use of initializer shapes
+    // Store initializer shape info in value_info as well    
+    else if (ir_version >= 4){
+      valueTypesByName[tp.name()]= initializerType;
     }
   }
   // Collect data from constant nodes.
@@ -225,7 +224,7 @@ static void InferShapesImpl(
           }
       }
   }
-
+  
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -314,20 +313,22 @@ static void InferShapesImpl(
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    bool check_type,
+    const int ir_version,
+    const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
+      ir_version,
       check_type,
       schema_registry);
 }
 
 void InferShapes(
     ModelProto& m,
-    bool check_type,
+    const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   std::unordered_map<std::string, int> opset_imports;
@@ -340,6 +341,7 @@ void InferShapes(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
+      m.ir_version(),
       check_type,
       schema_registry);
 }

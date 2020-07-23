@@ -11,6 +11,7 @@ import onnx.shape_inference
 import unittest
 import os
 import numpy as np  # type: ignore
+import pytest
 
 
 class TestShapeInference(unittest.TestCase):
@@ -3232,8 +3233,8 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
-    def test_infer_with_initializer_without_input(self):  # type: () -> None
-        # This is for testing new IR: some tensors can only exist in initializer and not in input
+    def test_infer_with_initializer_without_input_above_ir4(self):  # type: () -> None
+        # This is for testing IR>=4: some tensors can only exist in initializer and not in input
         # So shape_inference should make use of initializer shapes
         shape = (8, 7)
         nodes = [make_node('Add', ['x', 'y'], 'z')]
@@ -3248,6 +3249,32 @@ class TestShapeInference(unittest.TestCase):
         z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
         assert z_shape == shape
 
+    def test_infer_with_initializer_without_input_below_ir4(self):  # type: () -> None
+        # This is for testing IR<4: tensors must exist both in initializer and input
+        # So shape_inference should not make use of initializer shapes
+        shape = (8, 7)
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
+
+        graph = helper.make_graph(nodes, "test", inputs=[], outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        original_model.ir_version = 3 # test ir_version <4
+        inferred_model = onnx.shape_inference.infer_shapes(original_model)
+        # Cannot infer from initializer; nothing in value_info
+        with pytest.raises(IndexError):
+            inferred_model.graph.value_info.pop()
+    def test_infer_initializer_input_mismatch(self):  # type: () -> None
+        # Catch error if initializer and input mismatch
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer_shape = (8, 7)
+        input_shape = (-4, 3)
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape)]
+
+        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        # Inferred shape and existing shape differ in dimension 0
+        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)         
 
 if __name__ == '__main__':
     unittest.main()
