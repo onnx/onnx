@@ -19,7 +19,7 @@ import numpy as np  # type: ignore
 VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
 VersionTableType = List[VersionRowType]
 
-# This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions 
+# This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
 VERSION_TABLE = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version

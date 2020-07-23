@@ -280,7 +280,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test(9, 4)
         test(10, 5)
         test(11, 6)
-        test (12, 7)
+        test(12, 7)
 
 
 class TestHelperTensorFunctions(unittest.TestCase):
