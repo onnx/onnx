@@ -3258,11 +3258,12 @@ class TestShapeInference(unittest.TestCase):
 
         graph = helper.make_graph(nodes, "test", inputs=[], outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
-        original_model.ir_version = 3 # test ir_version <4
+        original_model.ir_version = 3  # test ir_version <4
         inferred_model = onnx.shape_inference.infer_shapes(original_model)
         # Cannot infer from initializer; nothing in value_info
         with pytest.raises(IndexError):
             inferred_model.graph.value_info.pop()
+
     def test_infer_initializer_input_mismatch(self):  # type: () -> None
         # Catch error if initializer and input mismatch
         nodes = [make_node('Add', ['x', 'y'], 'z')]
@@ -3274,7 +3275,8 @@ class TestShapeInference(unittest.TestCase):
         graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
         # Inferred shape and existing shape differ in dimension 0
-        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)         
+        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
+
 
 if __name__ == '__main__':
     unittest.main()

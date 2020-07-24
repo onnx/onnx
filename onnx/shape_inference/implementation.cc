@@ -191,6 +191,7 @@ static void InferShapesImpl(
     TypeProto *initializerType = new TypeProto();
     TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
     // set the shape according to the initializer shape info
+    // if the shape info of initializer is not empty 
     if (tp.dims_size() != 0) {
       initializerTensorType->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
       TensorShapeProto* shape = initializerTensorType->mutable_shape();
@@ -200,16 +201,18 @@ static void InferShapesImpl(
     }
     auto iter = valueTypesByName.find(tp.name());
     // If it already exists in input, check input and initializer is sync
+    // use shape info from input (input has priority over initializer)
     if (iter != valueTypesByName.end()) {
         checkShapesAndTypes(*initializerTensorType, *valueTypesByName[tp.name()]->mutable_tensor_type());
-        mergeShapesAndTypes(*initializerTensorType, valueTypesByName[tp.name()]->mutable_tensor_type());
     }
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well    
     else if (ir_version >= 4){
       valueTypesByName[tp.name()]= initializerType;
+      continue;
     }
+    free(initializerType);
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
