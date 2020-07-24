@@ -29,8 +29,8 @@
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
-#include "onnx/version_converter/adapters/rnn_11_12.h"
-#include "onnx/version_converter/adapters/rnn_12_11.h"
+#include "onnx/version_converter/adapters/rnn_12_13.h"
+#include "onnx/version_converter/adapters/rnn_13_12.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -221,8 +221,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<MaxPool_8_7>());
       registerAdapter(make_unique<CompatibleAdapter>("Cast",
         OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<RNN_11_12>());
-      registerAdapter(make_unique<RNN_12_11>());
+      registerAdapter(make_unique<RNN_12_13>());
+      registerAdapter(make_unique<RNN_13_12>());
     }
 
     ModelProto convert_version(

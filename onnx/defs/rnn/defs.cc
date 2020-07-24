@@ -147,7 +147,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver12_doc = R"DOC(
+static const char* RNN_ver13_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -212,10 +212,10 @@ Equations (Default: f=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
-    12,
+    13,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(RNN_ver12_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(RNN_ver13_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -248,7 +248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver12_doc = R"DOC(
+static const char* GRU_ver13_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -325,10 +325,10 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
-    12,
+    13,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(GRU_ver12_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(GRU_ver13_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -369,7 +369,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver12_doc = R"DOC(
+static const char* LSTM_ver13_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -454,10 +454,10 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
-    12,
+    13,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(LSTM_ver12_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(LSTM_ver13_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "

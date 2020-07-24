@@ -1132,10 +1132,10 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type_to
         assert converted_model.opset_import[0].version == to_opset
 
-    # Test RNN Adapter: 11 -> 12
-    def test_rnn_11_12(self):  # type: () -> None
-        from_opset = 11
-        to_opset = 12
+    # Test RNN Adapter: 12 -> 13
+    def test_rnn_12_13(self):  # type: () -> None
+        from_opset = 12
+        to_opset = 13
         data_type = TensorProto.FLOAT
 
         seq_length = 1
@@ -1167,10 +1167,10 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].attribute) == 2
         assert converted_model.graph.node[0].attribute[1].name == "time_major"
 
-    # Test RNN Adapter: 12 -> 11
+    # Test RNN Adapter: 13 -> 12
     def test_rnn_12_11(self):  # type: () -> None
-        from_opset = 12
-        to_opset = 11
+        from_opset = 13
+        to_opset = 12
         data_type = TensorProto.FLOAT
 
         seq_length = 1
