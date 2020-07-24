@@ -9,7 +9,7 @@ assignees: ''
 # Bug Report
 
 ### Is the issue related to model conversion?
-If the ONNX checker reports issues with this model then this is most probably related to the converter used to convert the original framework model to ONNX. Please create this bug in the appropriate converter's GITHUB repo (pytorch, tensorflow-onnx, sklearn-onnx, keras-onnx, onnxmltools) to get the best help.
+If the ONNX checker reports issues with this model then this is most probably related to the converter used to convert the original framework model to ONNX. Please create this bug in the appropriate converter's GitHub repo (pytorch, tensorflow-onnx, sklearn-onnx, keras-onnx, onnxmltools) to get the best help.
 
 ### Describe the bug
 Please describe the bug clearly and concisely
