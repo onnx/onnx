@@ -169,6 +169,11 @@ static void InferShapesImpl(
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
+  auto find_op = opset_imports.find("");
+  if (find_op == opset_imports.end()) {
+    find_op = opset_imports.find("ai.onnx");
+  }
+  int opset_version = (find_op != opset_imports.end()) ? find_op->second : 9;
 
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type())
@@ -208,7 +213,7 @@ static void InferShapesImpl(
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well    
-    else if (ir_version >= 4){
+    else if (ir_version >= 4 && opset_version >= 9){
       valueTypesByName[tp.name()]= initializerType;
       continue;
     }
