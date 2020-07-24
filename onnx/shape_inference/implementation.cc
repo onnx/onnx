@@ -193,7 +193,7 @@ static void InferShapesImpl(
     // set the shape according to the initializer shape info
     // if the shape info of initializer is not empty 
     if (tp.dims_size() != 0) {
-      initializerTensorType->set_elem_type(TensorProto_DataType_FLOAT);
+      initializerTensorType->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
       TensorShapeProto* shape = initializerTensorType->mutable_shape();
       for (int i = 0 ; i < tp.dims_size(); ++i) {
         shape->add_dim()->set_dim_value(tp.dims(i)); 
