@@ -213,11 +213,10 @@ static void InferShapesImpl(
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well    
-    else if (false) { //ir_version >= 4 && opset_version >= 9){
+    else if (ir_version >= 4 && opset_version >= 9){
       valueTypesByName[tp.name()]= initializerType;
       continue;
     }
-    free(initializerType);
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
@@ -313,9 +312,11 @@ static void InferShapesImpl(
     } catch (const std::runtime_error& err) {
       std::string op_name = n.has_name() ? n.name() : "no name";
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
+      free(initializerType);
       throw;
     }
   }
+  free(initializerType);
 }
 
 void InferShapes(
