@@ -54,9 +54,13 @@ jobs:
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
       git submodule update --init --recursive
-      export ONNX_ML='$(onnx_ml)'
-      export DEBUG='$(onnx_debug)'
       export ONNX_BUILD_TESTS=1
+      if [ '$(onnx_debug)' == '1' ]; then
+        export DEBUG=1
+      fi
+      if [ '$(onnx_ml)' == '1' ]; then
+        export ONNX_ML=1
+      fi
       export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
