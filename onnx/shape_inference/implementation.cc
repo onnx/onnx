@@ -213,7 +213,7 @@ static void InferShapesImpl(
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well    
-    else if (ir_version >= 4 && opset_version >= 9){
+    else if (false) { //ir_version >= 4 && opset_version >= 9){
       valueTypesByName[tp.name()]= initializerType;
       continue;
     }
