@@ -28,10 +28,10 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
     std::vector<int64_t> ret;
     ret.reserve(t1.size());
     for (size_t i = 0; i < t1.size(); i++) {
-      ONNX_ASSERT(t1[i] < static_cast<int64_t>(t2.size()));
+      ONNX_ASSERT(t2[i] < static_cast<int64_t>(t1.size()));
       ONNX_ASSERT(
-          t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
-      ret.push_back(t2[static_cast<size_t>(t1[i])]);
+          t1[static_cast<size_t>(t2[i])] < static_cast<int64_t>(t1.size()));
+      ret.push_back(t1[static_cast<size_t>(t2[i])]);
     }
     return ret;
   }
@@ -48,6 +48,9 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
       // One special case (two consecutive transposes with no perm,
       // since we do not have the shape information here, we have
       // to eliminate two transpose together.
+      if (n->output()->has_sizes()) {
+          origInput->node()->input()->setSizes(n->output()->sizes());
+      }
       n->replaceAllUsesWith(origInput->node()->input()->node());
       destroy_current = NodeDestroyType::DestroyTwo;
       return true;

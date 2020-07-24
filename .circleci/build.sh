@@ -21,12 +21,12 @@ fi
 # setup virtualenv
 VENV_DIR=/tmp/venv
 PYTHON="$(which python)"
-if [[ "${CIRCLE_JOB}" =~ py((2|3)\\.?[0-9]?\\.?[0-9]?) ]]; then
+if [[ "${CIRCLE_JOB}" =~ py((2|3)\.?[0-9]?\.?[0-9]?) ]]; then
     PYTHON=$(which "python${BASH_REMATCH[1]}")
 fi
 $PYTHON -m virtualenv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
-pip install -U pip setuptools
+pip install -U pip==19 setuptools
 
 # setup onnx as the submodule of pytorch
 PYTORCH_DIR=/tmp/pytorch
@@ -39,9 +39,11 @@ cp -r "$PWD" "$ONNX_DIR"
 # install ninja to speedup the build
 pip install ninja
 
-# install everything
+# install pytorch
 cd $PYTORCH_DIR
 ./scripts/onnx/install-develop.sh
+# install onnxruntime
+pip install -i https://test.pypi.org/simple/ ort-nightly==1.3.1.dev202006254
 
 # report sccache hit/miss stats
 if hash sccache 2>/dev/null; then

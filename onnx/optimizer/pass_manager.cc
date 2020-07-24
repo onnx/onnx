@@ -14,7 +14,7 @@ void GeneralPassManager::add(std::shared_ptr<Pass> pass) {
 }
 
 std::shared_ptr<PassManagerAnalysis> GeneralPassManager::run(Graph& graph) {
-  for (std::shared_ptr<Pass> pass : this->passes) {
+  for (const std::shared_ptr<Pass>& pass : this->passes) {
     auto pass_analysis = pass->runPass(graph);
   }
   return std::shared_ptr<PassManagerAnalysis>(new EmptyPassManagerAnalysis());
@@ -25,7 +25,7 @@ std::shared_ptr<PassManagerAnalysis> FixedPointPassManager::run(Graph& graph) {
 
   do {
     fixed_point_optimization_done = false;
-    for (std::shared_ptr<Pass> pass : this->passes) {
+    for (const std::shared_ptr<Pass>& pass : this->passes) {
       std::shared_ptr<PostPassAnalysis> analysis = pass->runPass(graph);
       if (pass->getPassAnalysisType() == PassAnalysisType::Empty) {
         continue;
