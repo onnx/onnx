@@ -71,7 +71,9 @@ A given operator is identified by a three-tuple: `(domain, op_type, and op_versi
 
 * Adding/removing/reordering inputs or outputs.
 
-* Adding/removing types supported by inputs and outputs, and changing types used by attributes.
+* Removing types supported by inputs or outputs.
+
+* Changing types used by attributes.
 
 * Supporting new behavior even when the existing parameter signature is otherwise identical (e.g. implicitly supporting tensor broadcasting in the Mean operator).
 
@@ -79,6 +81,8 @@ The following are not breaking:
 
 * Clarifications of specification ambiguities to match prevailing
   implementation practice.
+
+* Adding new type to inputs or outputs.
 
 If the semantics of an operator or function are changed, you MUST create a new operator; the `op_version` of the new
 operator id MUST be greater than any extant `op_version` for the
