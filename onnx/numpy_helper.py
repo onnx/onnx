@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import sys
 
 import numpy as np  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto, TypeProto, SequenceMapElement
+from onnx import TensorProto, MapProto, SequenceProto, TypeProto
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
@@ -118,7 +118,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     return tensor
 
 
-def to_list_from_sequence(sequence):  # type: (SequenceProto) -> List[Any]
+def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     """Converts a sequence def to a Python list.
 
     Inputs:
@@ -127,22 +127,22 @@ def to_list_from_sequence(sequence):  # type: (SequenceProto) -> List[Any]
         lst: the converted list.
     """
     lst = []
-    for elem in sequence.values:
-        elem_type = elem.elem_type
-        value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
-        value = getattr(elem, value_field)
-        if elem_type == SequenceMapElement.TENSOR or elem_type == SequenceMapElement.SPARSE_TENSOR:
+    elem_type = sequence.elem_type
+    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    values = getattr(sequence, value_field)
+    for value in values:
+        if elem_type == Sequence.TENSOR or elem_type == Sequence.SPARSE_TENSOR:
             lst.append(to_array(value))
-        elif elem_type == SequenceMapElement.SEQUENCE:
-            lst.append(to_list_from_sequence(value))
-        elif elem_type == SequenceMapElement.MAP:
-            lst.append(to_dict_from_map(value))
+        elif elem_type == Sequence.SEQUENCE:
+            lst.append(to_list(value))
+        elif elem_type == Sequence.MAP:
+            lst.append(to_dict(value))
         else:
             raise TypeError("The element type in the input sequence is not supported.")
     return lst
 
 
-def from_list_to_sequence(lst, name=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
+def from_list(lst, name=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
     """Converts a list into a sequence def.
 
     Inputs:
@@ -154,20 +154,26 @@ def from_list_to_sequence(lst, name=None):  # type: (List[Any], Optional[Text]) 
     sequence = SequenceProto()
     if name:
         sequence.name = name
-    for elem in lst:
-        if isinstance(elem, np.ndarray):
-            sequence.values.append(helper.make_sequence_map_element(from_array(elem), SequenceMapElement.TENSOR))
-        elif isinstance(elem, list):
-            sequence.values.append(helper.make_sequence_map_element(from_list_to_sequence(elem), SequenceMapElement.SEQUENCE))
-        elif isinstance(elem, dict):
-            sequence.values.append(helper.make_sequence_map_element(from_dict_to_map(elem), SequenceMapElement.MAP))
-        else:
-            raise TypeError("The element type in the input sequence is not a list, "
-                            "dictionary, or np.ndarray and is not supported.")
+    elem_type = type(lst[0])
+    if not all(isinstance(elem, elem_type) for elem in lst):
+        raise TypeError("The element type in the input list is not the same "
+                        "for all elements and therefore is not supported as a sequence.")
+    if isinstance(elem_type, np.ndarray):
+        for tensor in lst:
+            sequence.tensor_values.append(helper.make_tensor(from_array(tensor)))
+    elif isinstance(elem_type, list):
+        for sequence in lst:
+            sequence.sequence_values.append(helper.make_sequence(from_list(elem)))
+    elif isinstance(elem_type, dict):
+        for map in lst:
+            sequence.map_values.append(helper.make_map(from_dict(elem)))
+    else:
+        raise TypeError("The element type in the input list is not a list, "
+                        "dictionary, or np.ndarray and is not supported.")
     return sequence
 
 
-def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
+def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     """Converts a map def to a Python dictionary.
 
     Inputs:
@@ -175,29 +181,17 @@ def to_dict_from_map(map):  # type: (MapProto) -> np.ndarray[Any]
     Returns:
         dict: the converted dictionary.
     """
-    dict = {}
-    for kv_pair in map.pairs:
-        key_type = kv_pair.key_type
-        key_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
-        key = getattr(kv_pair, key_field)
-
-        seq_map_elem = kv_pair.value
-        value_type = seq_map_elem.elem_type
-        value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[value_type]
-        value = getattr(seq_map_elem, value_field)
-
-        if value_type == SequenceMapElement.TENSOR or value_type == SequenceMapElement.SPARSE_TENSOR:
-            dict[key] = to_array(value)
-        elif value_type == SequenceMapElement.MAP:
-            dict[key] = to_dict_from_map(value)
-        elif value_type == SequenceMapElement.SEQUENCE:
-            dict[key] = to_list_from_sequence(value)
-        else:
-            raise TypeError("The value type of elements in the Map is not supported.")
-    return dict
+    keys = to_list(map.keys)
+    values = to_list(map.values)
+    if len(keys) != len(values):
+        raise IndexError("Length of keys and values for MapProto (map name: ",
+                        map.name(),
+                        ") are not the same.")
+    dictionary = dict(zip(keys, values))
+    return dictionary
 
 
-def from_dict_to_map(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> MapProto
+def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> MapProto
     """Converts a Python dictionary into a map def.
 
     Inputs:
@@ -209,16 +203,36 @@ def from_dict_to_map(dict, name=None):  # type: (Dict[Any, Any], Optional[Text])
     map = MapProto()
     if name:
         map.name = name
-    for key, val in dict.items():
-        key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[key.dtype]
-        if isinstance(val, np.ndarray):
-            val_type = SequenceMapElement.TENSOR
-        elif isinstance(val, list):
-            val_type = SequenceMapElement.SEQUENCE
-        elif isinstance(val, dict):
-            val_type = SequenceMapElement.MAP
-        kv_pair = helper.make_key_value_pair(key, key_type, val, val_type)
-        map.pairs.append(kv_pair)
+    keys = list(dict.keys())
+    raw_key_type = type(keys[0])
+    key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[np.array(keys)[0].dtype]
+
+    if not all(isinstance(key, raw_key_type) for key in keys):
+        raise TypeError("The key type in the input dictionary is not the same "
+                        "for all keys and therefore is not valid as a map.")
+    key_seq = from_list(keys)
+
+    values = list(dict.values())
+    raw_value_type = type(values[0])
+    if not all(isinstance(val, raw_value_type) for val in values):
+        raise TypeError("The value type in the input dictionary is not the same "
+                        "for all values and therefore is not valid as a map.")
+
+    value_seq = from_list(values)
+    if isinstance(values[0], np.ndarray):
+        value_type = Sequence.TENSOR
+    elif isinstance(values[0], list):
+        value_type = Sequence.SEQUENCE
+    elif isinstance(values[0], dict):
+        value_type = Sequence.MAP
+    else:
+        raise TypeError("The value type in the input dictionary is not a list, "
+                        "dictionary, or np.ndarray and is not supported.")
+
+    map.key_type = key_type
+    map.keys = key_seq
+    map.value_type = value_type
+    map.values = value_seq
     return map
 
 

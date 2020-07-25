@@ -10,8 +10,7 @@ from six import text_type, integer_types, binary_type
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, IR_VERSION
-from onnx import SequenceProto, MapProto, SequenceMapElement, KeyValuePair
+    TypeProto, SequenceProto, MapProto, IR_VERSION
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -192,73 +191,37 @@ def make_sparse_tensor(
 
 def make_sequence(
         name,  # type: Text
-        values,   # type: Sequence[SequenceMapElement]
+        elem_type, # type: int
+        values,   # type: Sequence[Any]
 ):  # type: (...) -> SequenceProto
     '''
-    Make a Sequence with specified SequenceMapElement value arguments.
+    Make a Sequence with specified value arguments.
     '''
     sequence = SequenceProto()
     sequence.name = name
-    sequence.values.extend(values)
+    sequence.elem_type = elem_type
+    values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    getattr(sequence, values_field).CopyFrom(values)
     return sequence
 
 
 def make_map(
         name,  # type: Text
-        pairs   # type: Sequence[KeyValuePair]
+        key_type,  # type: int
+        keys,  # type: Sequence[Any]
+        value_type,  # type: int
+        values   # type: Sequence[Any]
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
     '''
     map = MapProto()
     map.name = name
-    map.pairs.extend(pairs)
+    map.key_type = key_type
+    map.keys.CopyFrom(keys)
+    map.value_type = value_type
+    map.values.CopyFrom(values)
     return map
-
-
-def make_key_value_pair(
-        key,  # type: Any
-        key_type,  # type: int
-        value,  # type: Any
-        value_type,  # type: int
-        raw=False  # type: bool
-):  # type: (...) -> KeyValuePair
-    '''
-    Make a KeyValuePair element for MapProto.
-    If raw is False, this function will choose the corresponding proto
-    field to store the key based on data_type. If raw is True, use "raw_key"
-    proto field to store the key, and values should be of type bytes in
-    this case.
-    '''
-    kv_pair = KeyValuePair()
-
-    if key_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_key to store string type"
-
-    if raw:
-        kv_pair.raw_data = key
-    else:
-        storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[key_type]
-        getattr(kv_pair, storage_field).CopyFrom(key)
-
-    getattr(kv_pair, value).CopyFrom(make_sequence_map_element(value, value_type))
-    kv_pair.key_type = key_type
-
-    return kv_pair
-
-
-def make_sequence_map_element(
-        value,  # type: Any
-        value_type  # type: int
-):  # type: (...) -> SequenceMapElement
-    '''
-    Make a sequence map element to store values for SequenceProto and MapProto.
-    '''
-    seq_map_elem = SequenceMapElement()
-    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[value_type]
-    getattr(seq_map_elem, value_field).CopyFrom(value)
-    seq_map_elem.elem_type = value_type
-    return seq_map_elem
 
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
