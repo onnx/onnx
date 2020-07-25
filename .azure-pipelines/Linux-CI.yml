@@ -47,7 +47,7 @@ jobs:
     inputs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version) protobuf'
+      packageSpecs: 'python=$(python.version) protobuf protobuf-compiler libprotoc-dev'
 
   - script: |
       python -m pip install --upgrade pip
