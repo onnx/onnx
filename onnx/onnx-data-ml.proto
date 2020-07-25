@@ -25,7 +25,7 @@ message SequenceMapElement {
     MAP = 4;
   }
   // The data type of the element.
-  // This field MUST have a valid TensorProto.DataType value
+  // This field MUST have a valid SequenceMapElement.DataType value
   optional int32 elem_type = 1;
 
   optional TensorProto tensor_value = 2;

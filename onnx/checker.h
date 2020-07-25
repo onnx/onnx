@@ -122,9 +122,19 @@ void check_sparse_tensor(
     const SparseTensorProto& sparse_tensor,
     const CheckerContext&);
 void check_sequence(
-    const SequenceProto& sequence);
+    const SequenceProto& sequence,
+    const CheckerContext&);
 void check_map(
-    const MapProto& map);
+    const MapProto& map,
+    const CheckerContext&);
+void check_key_value_pair(
+    const KeyValuePair& kv_pair,
+    const CheckerContext&,
+    const std::string&);
+void check_sequence_map_element(
+    const SequenceMapElement& seq_map_elem,
+    const CheckerContext&,
+    const std::string&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,

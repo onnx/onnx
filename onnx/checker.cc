@@ -228,12 +228,65 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_field
 }
 
-void check_sequence(const SequenceProto& sequence) {
-  enforce_has_repeated_field(sequence, values);
+void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
+  for (const SequenceMapElement& seq_map_elem : sequence.values()) {
+    check_sequence_map_element(seq_map_elem, ctx, sequence.name());
+  }
 }
 
-void check_map(const MapProto& map) {
-  enforce_has_repeated_field(map, pairs);
+void check_map(const MapProto& map, const CheckerContext& ctx) {
+  for (const KeyValuePair& kv_pair : map.pairs()) {
+    check_key_value_pair(kv_pair, ctx, map.name());
+  }
+}
+
+// Check Key Value pairs for MapProto and call check_sequence_map_element
+// to verify the values.
+void check_key_value_pair(
+  const KeyValuePair& kv_pair,
+  const CheckerContext& ctx,
+  const std::string& map_name) {
+  enforce_has_field(kv_pair, key_type);
+  if (kv_pair.key_type() == TensorProto::UNDEFINED) {
+    fail_check(
+        "setting key_type field (map name: ",
+        map_name,
+        ") to UNDEFINED is not allowed");
+  }
+  enforce_has_field(kv_pair, value);
+  check_sequence_map_element(kv_pair.value(), ctx, map_name);
+}
+
+// Check that the underlying values for SequenceProto and MapProto are
+// valid by calling the respective check functions on the SequenceMapElements.
+void check_sequence_map_element(
+  const SequenceMapElement& seq_map_elem,
+  const CheckerContext& ctx,
+  const std::string& seq_map_name) {
+    enforce_has_field(seq_map_elem, elem_type);
+    if (seq_map_elem.elem_type() == SequenceMapElement::TENSOR) {
+      enforce_has_field(seq_map_elem, tensor_value);
+      check_tensor(seq_map_elem.tensor_value(), ctx);
+    }
+    else if (seq_map_elem.elem_type() == SequenceMapElement::SPARSE_TENSOR) {
+      enforce_has_field(seq_map_elem, sparse_tensor_value);
+      check_sparse_tensor(seq_map_elem.sparse_tensor_value(), ctx);
+    }
+    else if (seq_map_elem.elem_type() == SequenceMapElement::SEQUENCE) {
+      enforce_has_field(seq_map_elem, sequence_value);
+      check_sequence(seq_map_elem.sequence_value(), ctx);
+    }
+    else if (seq_map_elem.elem_type() == SequenceMapElement::MAP) {
+      enforce_has_field(seq_map_elem, map_value);
+      check_map(seq_map_elem.map_value(), ctx);
+    } else {
+      fail_check(
+          "SequenceMapElement ( Structure name: ",
+          seq_map_name,
+          ", elem_type: ",
+          seq_map_elem.elem_type(),
+          ") is not have a valid element type.");
+    }
 }
 
 // Check that the index data stored in a SparseTensorProto is valid.

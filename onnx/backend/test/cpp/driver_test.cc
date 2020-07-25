@@ -218,19 +218,19 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
         ONNX_NAMESPACE::checker::check_tensor(input, ctx);
       }
       for (auto input : proto_test_data.seq_inputs_) {
-        ONNX_NAMESPACE::checker::check_sequence(input);
+        ONNX_NAMESPACE::checker::check_sequence(input, ctx);
       }
       for (auto input : proto_test_data.map_inputs_) {
-        ONNX_NAMESPACE::checker::check_map(input);
+        ONNX_NAMESPACE::checker::check_map(input, ctx);
       }
       for (auto output : proto_test_data.outputs_) {
         ONNX_NAMESPACE::checker::check_tensor(output, ctx);
       }
       for (auto output : proto_test_data.seq_outputs_) {
-        ONNX_NAMESPACE::checker::check_sequence(output);
+        ONNX_NAMESPACE::checker::check_sequence(output, ctx);
       }
       for (auto output : proto_test_data.map_outputs_) {
-        ONNX_NAMESPACE::checker::check_map(output);
+        ONNX_NAMESPACE::checker::check_map(output, ctx);
       }
     }
     if (!ONNXIFI_DUMMY_BACKEND) {
