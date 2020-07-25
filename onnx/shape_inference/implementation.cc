@@ -159,10 +159,10 @@ static void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
-    const std::unordered_map<std::string, int>& opset_imports,
-    const int ir_version,
+    const std::unordered_map<std::string, int>& opset_imports, 
     const bool check_type,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const int ir_version = IR_VERSION  // default the latest one
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
@@ -173,8 +173,8 @@ static void InferShapesImpl(
   if (find_op == opset_imports.end()) {
     find_op = opset_imports.find("ai.onnx");
   }
+  // default initialzer can be used 
   int opset_version = (find_op != opset_imports.end()) ? find_op->second : 9;
-
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type())
       valueTypesByName[vi.name()] = vi.mutable_type();
@@ -321,7 +321,6 @@ static void InferShapesImpl(
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    const int ir_version,
     const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
@@ -329,7 +328,6 @@ void InferShapes(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
-      ir_version,
       check_type,
       schema_registry);
 }
@@ -349,9 +347,9 @@ void InferShapes(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
-      m.ir_version(),
       check_type,
-      schema_registry);
+      schema_registry,
+      m.ir_version());
 }
 
 void InferShapeForFunctionNode(

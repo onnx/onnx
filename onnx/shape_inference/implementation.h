@@ -191,7 +191,6 @@ void InferShapes(
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    const int ir_version,
     const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
