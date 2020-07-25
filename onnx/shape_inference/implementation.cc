@@ -193,7 +193,8 @@ static void InferShapesImpl(
     inputDataByName[tp.name()] = &tp;
     
     // Consider the tensors from the initializer
-    TypeProto *initializerType = new TypeProto();
+    ValueInfoProto *newValueForInitializer = new ValueInfoProto();
+    TypeProto *initializerType = newValueForInitializer->mutable_type();
     TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
     // set the shape according to the initializer shape info
     // if the shape info of initializer is not empty 
@@ -215,8 +216,8 @@ static void InferShapesImpl(
     // Store initializer shape info in value_info as well    
     else if (ir_version >= 4 && opset_version >= 9){
       valueTypesByName[tp.name()]= initializerType;
-      continue;
     }
+    free(newValueForInitializer);
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
@@ -312,11 +313,9 @@ static void InferShapesImpl(
     } catch (const std::runtime_error& err) {
       std::string op_name = n.has_name() ? n.name() : "no name";
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
-      free(initializerType);
       throw;
     }
   }
-  free(initializerType);
 }
 
 void InferShapes(
