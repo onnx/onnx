@@ -47,11 +47,11 @@ jobs:
     inputs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version) protobuf protobuf-compiler libprotoc-dev'
+      packageSpecs: 'python=$(python.version) protobuf'
 
   - script: |
       python -m pip install --upgrade pip
-      sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
+      sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix protobuf-compiler libprotoc-dev
       python -m pip install numpy
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
