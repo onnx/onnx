@@ -82,7 +82,7 @@ The following are not breaking:
 * Clarifications of specification ambiguities to match prevailing
   implementation practice.
 
-* Adding new type to inputs or outputs.
+* Adding new type to inputs or outputs. Earlier such changes were considered breaking changes requiring an increase in the version-number. However, in practice, the cost of increasing the version-number in this situation outweighs the benefits. This is particularly so since backends, in practice, rarely guarantee complete coverage of all types that exist in the standard.
 
 If the semantics of an operator or function are changed, you MUST create a new operator; the `op_version` of the new
 operator id MUST be greater than any extant `op_version` for the
