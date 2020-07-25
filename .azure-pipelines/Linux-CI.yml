@@ -47,7 +47,8 @@ jobs:
     inputs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version) -c conda-forge protobuf'
+      packageSpecs: 'python=$(python.version)'
+      installOptions: '-c conda-forge protobuf'
 
   - script: |
       python -m pip install --upgrade pip
