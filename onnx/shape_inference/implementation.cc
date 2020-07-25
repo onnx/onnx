@@ -217,7 +217,7 @@ static void InferShapesImpl(
     else if (ir_version >= 4 && opset_version >= 9){
       valueTypesByName[tp.name()]= initializerType;
     }
-    free(newValueForInitializer);
+    delete(newValueForInitializer);
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
