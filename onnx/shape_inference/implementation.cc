@@ -169,7 +169,7 @@ static void InferShapesImpl(
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
-  int onnx_opset_count = 0;
+  unsigned int onnx_opset_count = 0;
   // default initialzer can be used 
   int opset_version = 9;
   // search onnx domain: empty or ai.onnx
