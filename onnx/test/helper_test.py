@@ -272,15 +272,25 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self):  # type: () -> None
-        def test(opset_version, ir_version):  # type: (int, int) -> None
+        def mk_model(opset_versions):
             graph = helper.make_graph([], "my graph", [], [])
-            model = helper.make_model_gen_version(graph, opset_imports=[helper.make_opsetid("", opset_version)])
+            return helper.make_model_gen_version(graph, opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
+
+        def test(opset_versions, ir_version):  # type: (int, int) -> None
+            model = mk_model(opset_versions)
             self.assertEqual(model.ir_version, ir_version)
-        # opset version 9 requires minimum ir_version 4, etc.
-        test(9, 4)
-        test(10, 5)
-        test(11, 6)
-        test(12, 7)
+        # opset version 9 requires minimum ir_version 4
+        test([("", 9)], 4)
+        test([("", 10)], 5)
+        test([("", 11)], 6)
+        test([("", 12)], 7)
+        # standard opset can be referred to using empty-string or "ai.onnx"
+        test([("ai.onnx", 9)], 4)
+        test([("ai.onnx.ml", 2)], 6)
+        test([("ai.onnx.training", 1)], 7)
+        # helper should pick *max* IR version required from all opsets specified.
+        test([("", 10), ("ai.onnx.ml", 2)], 6)
+        self.assertRaises(ValueError, mk_model, [("", 100)])
 
 
 class TestHelperTensorFunctions(unittest.TestCase):

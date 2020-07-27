@@ -43,7 +43,8 @@ def create_op_set_id_version_map(table):  # type: (VersionTableType) -> VersionM
 
     def process(release_version, ir_version, *args):  # type: (Text, int, Any) -> None
         for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):
-            result[pair] = ir_version
+            if (pair not in result):
+                result[pair] = ir_version
     for row in table:
         process(*row)
     return result
@@ -60,7 +61,8 @@ def find_min_ir_version_for(opsetidlist):  # type: (List[OperatorSetIdProto]) ->
         key = (domain if domain else 'ai.onnx', version)
         if (key in OP_SET_ID_VERSION_MAP):
             return OP_SET_ID_VERSION_MAP[key]
-        return default_min_version
+        else:
+            raise ValueError("Unsupported opset-version.")
     if (opsetidlist):
         return max([find_min(x.domain, x.version) for x in opsetidlist])
     return default_min_version  # if no opsets specified
