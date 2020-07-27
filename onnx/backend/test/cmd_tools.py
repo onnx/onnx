@@ -49,10 +49,10 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
                         if isinstance(input, dict):
-                            f.write(numpy_helper.from_dict_to_map(
+                            f.write(numpy_helper.from_dict(
                                 input, case.model.graph.input[j].name).SerializeToString())
                         elif isinstance(input, list):
-                            f.write(numpy_helper.from_list_to_sequence(
+                            f.write(numpy_helper.from_list(
                                 input, case.model.graph.input[j].name).SerializeToString())
                         else:
                             f.write(numpy_helper.from_array(
@@ -61,10 +61,10 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
                         if isinstance(output, dict):
-                            f.write(numpy_helper.from_dict_to_map(
+                            f.write(numpy_helper.from_dict(
                                 output, case.model.graph.output[j].name).SerializeToString())
                         elif isinstance(output, list):
-                            f.write(numpy_helper.from_list_to_sequence(
+                            f.write(numpy_helper.from_list(
                                 output, case.model.graph.output[j].name).SerializeToString())
                         else:
                             f.write(numpy_helper.from_array(
