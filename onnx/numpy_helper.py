@@ -163,10 +163,10 @@ def from_list(lst, name=None):  # type: (List[Any], Optional[Text]) -> SequenceP
             sequence.tensor_values.append(helper.make_tensor(from_array(tensor)))
     elif isinstance(elem_type, list):
         for sequence in lst:
-            sequence.sequence_values.append(helper.make_sequence(from_list(elem)))
+            sequence.sequence_values.append(helper.make_sequence(from_list(sequence)))
     elif isinstance(elem_type, dict):
         for map in lst:
-            sequence.map_values.append(helper.make_map(from_dict(elem)))
+            sequence.map_values.append(helper.make_map(from_dict(map)))
     else:
         raise TypeError("The element type in the input list is not a list, "
                         "dictionary, or np.ndarray and is not supported.")
