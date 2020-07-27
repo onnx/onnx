@@ -31,7 +31,6 @@
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
-#include "onnx/version_converter/adapters/argmax_argmin_11_12.h"
 #include "onnx/version_converter/adapters/argmax_argmin_12_11.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
@@ -439,8 +438,10 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(11), OpSetID(10)));
 
       /******** 11 -> 12 ********/
-      registerAdapter(make_unique<ArgMaxArgMin_11_12>("ArgMax"));
-      registerAdapter(make_unique<ArgMaxArgMin_11_12>("ArgMin"));
+      registerAdapter(make_unique<CompatibleAdapter>("ArgMax",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("ArgMin",
+        OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
         OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<CompatibleAdapter>("Constant",
