@@ -24,6 +24,7 @@ message SequenceProto {
   optional string name = 1;
 
   enum DataType {
+    UNDEFINED = 0;
     TENSOR = 1;
     SPARSE_TENSOR = 2;
     SEQUENCE = 3;
@@ -71,7 +72,7 @@ message MapProto {
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING
   SequenceProto keys = 3;
 
-  // The data type of the key.
+  // The data type of the value.
   // This field MUST have a valid SequenceProto.DataType value of
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE
   optional int32 value_type = 4;
