@@ -41,25 +41,33 @@ jobs:
 
   - script: |
       python -m pip install --upgrade pip
-      python -m pip install --quiet -U dos2unix
+      sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
       git submodule update --init --recursive
-      set ONNX_ML=${onnx_ml}
-      set DEBUG=${onnx_debug}
-      set ONNX_BUILD_TESTS=1
-      set USE_MSVC_STATIC_RUNTIME=0
-      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+      export ONNX_ML=${onnx_ml}
+      export DEBUG=${onnx_debug}
+      export ONNX_BUILD_TESTS=1
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON"
+      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
 
 
   - script: |
-      pip install --quiet pytest nbval flake8
-      pytest
+      # lint python code
+      pip install --quiet flake8
       flake8
+      if [ $? -ne 0 ]; then
+        echo "flake8 returned failures"
+        exit 1
+      fi
+
+      # check line endings to be UNIX
       find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
       git status
       git diff --exit-code
+      
+      # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
@@ -67,4 +75,43 @@ jobs:
       backend-test-tools generate-data
       git status
       git diff --exit-code
+
+      # Do not hardcode onnx's namespace in the c++ source code, so that
+      # other libraries who statically link with onnx can hide onnx symbols
+      # in a private namespace.
+      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+      # onnx python api tests
+      pip install --quiet pytest nbval
+      pytest
+      if [ $? -ne 0 ]; then
+        echo "pytest failed"
+        exit 1
+      fi
+
+      # onnx c++ API tests
+      export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+      ./.setuptools-cmake-build/onnx_gtests
+      if [ $? -ne 0 ]; then
+        echo "onnx_gtests failed"
+        exit 1
+      fi
+
+      ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
+      if [ $? -ne 0 ]; then
+        echo "onnxifi_test_driver_gtests failed"
+        exit 1
+      fi
+
+      # Mypy only works with Python 3
+      if [ "$(python.version)" != "2.7" ]; then
+        # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
+        pip uninstall -y onnx
+        ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install --no-use-pep517 -e .[mypy]
+        python setup.py --quiet typecheck
+        pip uninstall -y onnx
+        rm -rf .setuptools-cmake-build
+        ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
+      fi
     displayName: 'Run ONNX tests'
