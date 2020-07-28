@@ -214,11 +214,22 @@ def make_map(
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
+
+    Criteria for conversion:
+    - Keys and Values must have the same number of elements
+    - Every key in keys must be of the same type
+    - Every value in values must be of the same type
     '''
     map = MapProto()
+    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32, \
+                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16, \
+                           TensorProto.UINT32, TensorProto.UINT64]
     map.name = name
     map.key_type = key_type
-    map.keys.CopyFrom(keys)
+    if key_type == TensorProto.STRING:
+        map.string_keys.CopyFrom(keys)
+    elif key_type in valid_key_int_types:
+        map.keys.CopyFrom(keys)
     map.value_type = value_type
     map.values.CopyFrom(values)
     return map

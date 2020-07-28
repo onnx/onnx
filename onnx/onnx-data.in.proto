@@ -63,9 +63,14 @@ message MapProto {
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING
   optional int32 key_type = 2;
 
-  // Every element of keys has to be a tensor of one of the following data types
-  // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING
-  SequenceProto keys = 3;
+  // Every element of keys has to be one of the following data types
+  // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING.
+  // The integer cases are represented by the repeated int64 field keys below.
+  optional repeated int64 keys = 3;
+
+  // If keys are strings, they are represented by the repeated bytes field
+  // string_keys below.
+  optional repeated bytes string_keys = 4;
 
   // The data type of the value.
   // This field MUST have a valid SequenceProto.DataType value of

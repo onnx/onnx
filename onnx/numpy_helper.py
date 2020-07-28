@@ -203,14 +203,18 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
     map = MapProto()
     if name:
         map.name = name
-    keys = list(dict.keys())
-    raw_key_type = type(keys[0])
-    key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[np.array(keys)[0].dtype]
+    keys = np.array(list(dict.keys()))
+    raw_key_type = keys[0].dtype
+    key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[raw_key_type]
+
+    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32, \
+                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16, \
+                           TensorProto.UINT32, TensorProto.UINT64]
 
     if not all(isinstance(key, raw_key_type) for key in keys):
         raise TypeError("The key type in the input dictionary is not the same "
                         "for all keys and therefore is not valid as a map.")
-    key_seq = from_list(keys)
+    key_seq = from_array(keys)
 
     values = list(dict.values())
     raw_value_type = type(values[0])
@@ -230,7 +234,10 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
                         "dictionary, or np.ndarray and is not supported.")
 
     map.key_type = key_type
-    map.keys = key_seq
+    if key_type == TensorProto.STRING:
+        map.string_keys = key_seq
+    elif key_type in valid_key_int_types:
+        map.keys = key_seq
     map.value_type = value_type
     map.values = value_seq
     return map

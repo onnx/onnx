@@ -294,13 +294,19 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
         ") to UNDEFINED is not allowed");
   }
 
-  enforce_has_field(map, keys);
-  check_sequence(map.keys(), ctx);
+  int num_keys = 0;
+  if (!map.has_keys()) {
+    check_repeated_field(map.keys(), TensorProto::INT64);
+    num_keys = map.keys().size();
+  } else if (!map.has_string_keys()) {
+    check_repeated_field(map.string_keys(), TensorProto::STRING);
+    num_keys = map.string_keys().size();
+  }
 
   enforce_has_field(map, values);
   check_sequence(map.values(), ctx);
 
-  if (map.keys().size() != map.values().size()){
+  if (num_keys != map.values().size()){
     fail_check(
         "Length of map keys and map values are not the same (map name: ",
         map.name(),
