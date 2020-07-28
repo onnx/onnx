@@ -133,6 +133,10 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
 def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
+    # We do not want to generate the onnx-data-ml.proto files for onnx-data.in.proto,
+    # as there is no change between onnx-data.proto and the ML version.
+    if 'onnx-data' in proto_in:
+        do_onnx_ml = False
     if do_onnx_ml:
         proto_base = "{}_{}-ml".format(stem, package_name) if need_rename else "{}-ml".format(stem)
     else:

@@ -8,7 +8,7 @@ import "onnx/onnx.proto";
 
 // This file contains the proto definitions for MapProto and
 // SequenceProto. These protos are used to represent the data structures
-// of maps and sequences in test data or can be used by ModelProto.
+// of maps and sequence for use in test data or ModelProto.
 
 // Sequences
 //
