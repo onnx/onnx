@@ -110,6 +110,10 @@ jobs:
         pip uninstall -y onnx
         ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install --no-use-pep517 -e .[mypy]
         python setup.py --quiet typecheck
+        if [ $? -ne 0 ]; then
+          echo "type check failed"
+          exit 1
+        fi
         pip uninstall -y onnx
         rm -rf .setuptools-cmake-build
         ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
