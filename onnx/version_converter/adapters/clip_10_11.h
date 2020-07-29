@@ -20,14 +20,14 @@ class Clip_10_11 final : public Adapter {
         node->removeAttribute(kmin);
       }
       if(has_max) {
-        if(!has_min) {attrToInput(graph, node, "min", std::numeric_limits<float>::lowest())}
+        if(!has_min) {attrToInput(graph, node, "min", std::numeric_limits<float>::lowest());}
         attrToInput(graph, node, "max", node->f(kmax));
         node->removeAttribute(kmax);
       }
     }
 
     void attrToInput(std::shared_ptr<Graph> graph, Node *node, const std::string name, 
-      float val) {
+      float val) const {
       Tensor t;
       t.elem_type() = TensorProto_DataType_FLOAT;
       auto& data = t.floats();
