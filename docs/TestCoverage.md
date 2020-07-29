@@ -2730,14 +2730,43 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### DequantizeLinear
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>axis</summary>
+
+```python
+node = onnx.helper.make_node('DequantizeLinear',
+                             inputs=['x', 'x_scale', 'x_zero_point'],
+                             outputs=['y'],)
+
+# 1-D tensor zero point and scale of size equal to axis 1 of the input tensor
+x = np.array([[[[3, 89],
+                [34, 200],
+                [74, 59]],
+
+               [[5, 24],
+                [24, 87],
+                [32, 13]],
+
+               [[245, 99],
+                [4, 142],
+                [121, 102]], ], ], dtype=np.uint8)
+x_scale = np.array([2, 4, 5], dtype=np.float32)
+x_zero_point = np.array([84, 24, 196], dtype=np.uint8)
+y = (x.astype(np.float32) - x_zero_point.reshape(1, 3, 1, 1).astype(np.float32)) * x_scale.reshape(1, 3, 1, 1)
+
+expect(node, inputs=[x, x_scale, x_zero_point], outputs=[y],
+       name='test_dequantizelinear_axis')
+```
+
+</details>
 <details>
 <summary>dequantizelinear</summary>
 
 ```python
 node = onnx.helper.make_node('DequantizeLinear',
-    inputs=['x', 'x_scale', 'x_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'x_scale', 'x_zero_point'],
+                             outputs=['y'],)
 
 # scalar zero point and scale
 x = np.array([0, 3, 128, 255]).astype(np.uint8)
@@ -6311,7 +6340,7 @@ expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
 
 </details>
 <details>
-<summary>input_shape_is_NCd1_ignore_index</summary>
+<summary>input_shape_is_NCd1_ii</summary>
 
 ```python
 reduction = 'mean'
@@ -6333,12 +6362,12 @@ target[0][0] = np.int64(1)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1_ignore_index')
+    name='test_nllloss_NCd1_ii')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1_mean_weight_negative_ignore_index</summary>
+<summary>input_shape_is_NCd1_mean_weight_negative_ii</summary>
 
 ```python
 reduction = 'mean'
@@ -6365,7 +6394,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1_mean_weight_negative_ignore_index')
+    name='test_nllloss_NCd1_mean_weight_negative_ii')
 ```
 
 </details>
@@ -6395,7 +6424,7 @@ expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_lo
 
 </details>
 <details>
-<summary>input_shape_is_NCd1_weight_ignore_index</summary>
+<summary>input_shape_is_NCd1_weight_ii</summary>
 
 ```python
 reduction = 'mean'
@@ -6418,7 +6447,7 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1_weight_ignore_index')
+    name='test_nllloss_NCd1_weight_ii')
 ```
 
 </details>
@@ -6447,7 +6476,7 @@ expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2_no_weight_reduction_mean_ignore_index</summary>
+<summary>input_shape_is_NCd1d2_no_weight_reduction_mean_ii</summary>
 
 ```python
 reduction = 'mean'
@@ -6469,7 +6498,7 @@ target[0][0][0] = np.int64(1)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1d2_no_weight_reduction_mean_ignore_index')
+    name='test_nllloss_NCd1d2_no_weight_reduction_mean_ii')
 ```
 
 </details>
@@ -6597,7 +6626,7 @@ expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_lo
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2_with_weight_reduction_sum_ignore_index</summary>
+<summary>input_shape_is_NCd1d2_with_weight_reduction_sum_ii</summary>
 
 ```python
 reduction = 'sum'
@@ -6620,12 +6649,12 @@ weight = np.random.rand(C).astype(np.float32)
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1d2_with_weight_reduction_sum_ignore_index')
+    name='test_nllloss_NCd1d2_with_weight_reduction_sum_ii')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index</summary>
+<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ii</summary>
 
 ```python
 reduction = 'none'
@@ -6650,12 +6679,12 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     ignore_index=ignore_index)
 
 expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1d2d3_none_no_weight_negative_ignore_index')
+    name='test_nllloss_NCd1d2d3_none_no_weight_negative_ii')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2d3_sum_weight_high_ignore_index</summary>
+<summary>input_shape_is_NCd1d2d3_sum_weight_high_ii</summary>
 
 ```python
 reduction = 'sum'
@@ -6682,7 +6711,7 @@ negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     ignore_index=ignore_index)
 
 expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-    name='test_nllloss_NCd1d2d3_sum_weight_high_ignore_index')
+    name='test_nllloss_NCd1d2d3_sum_weight_high_ii')
 ```
 
 </details>
@@ -7557,14 +7586,42 @@ expect(node, inputs=[a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale
 
 
 ### QuantizeLinear
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>axis</summary>
+
+```python
+node = onnx.helper.make_node('QuantizeLinear',
+                             inputs=['x', 'y_scale', 'y_zero_point'],
+                             outputs=['y'],)
+
+x = np.array([[[[-162, 10],
+                [-100, 232],
+                [-20, -50]],
+
+               [[-76, 0],
+                [0, 252],
+                [32, -44]],
+
+               [[245, -485],
+                [-960, -270],
+                [-375, -470]], ], ], dtype=np.float32)
+y_scale = np.array([2, 4, 5], dtype=np.float32)
+y_zero_point = np.array([84, 24, 196], dtype=np.uint8)
+y = (x / y_scale.reshape(1, 3, 1, 1) + y_zero_point.reshape(1, 3, 1, 1)).astype(np.uint8)
+
+expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
+       name='test_quantizelinear_axis')
+```
+
+</details>
 <details>
 <summary>quantizelinear</summary>
 
 ```python
 node = onnx.helper.make_node('QuantizeLinear',
-    inputs=['x', 'y_scale', 'y_zero_point'],
-    outputs=['y'],)
+                             inputs=['x', 'y_scale', 'y_zero_point'],
+                             outputs=['y'],)
 
 x = np.array([0, 2, 3, 1000, -254, -1000]).astype(np.float32)
 y_scale = np.float32(2)
@@ -8136,7 +8193,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=axes,
                         keepdims=keepdims == 1))
@@ -8147,7 +8204,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_default_axes_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=axes,
                         keepdims=keepdims == 1))
@@ -8173,7 +8230,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(
     np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 # print(reduced)
@@ -8185,7 +8242,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_do_not_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(
     np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
@@ -8211,7 +8268,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -8224,7 +8281,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -8251,7 +8308,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -8264,7 +8321,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_negative_axes_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -11031,7 +11088,7 @@ expect(node, inputs=[x], outputs=[y],
 ### SoftmaxCrossEntropyLoss
 There are 34 test cases, listed as following:
 <details>
-<summary>input_shape_is_NCd1_mean_weight_negative_ignore_index</summary>
+<summary>input_shape_is_NCd1_mean_weight_negative_ii</summary>
 
 ```python
 reduction = 'mean'
@@ -11056,12 +11113,12 @@ sce = softmaxcrossentropy(x,
                           reduction=reduction,
                           ignore_index=ignore_index)
 
-expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1_mean_weight_negative_ignore_index')
+expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1_mean_weight_negative_ii')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1_mean_weight_negative_ignore_index_log_prob</summary>
+<summary>input_shape_is_NCd1_mean_weight_negative_ii_log_prob</summary>
 
 ```python
 reduction = 'mean'
@@ -11087,12 +11144,12 @@ loss, log_prob = softmaxcrossentropy(x,
                           ignore_index=ignore_index,
                           get_log_prob=True)
 
-expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1_mean_weight_negative_ignore_index_log_prob')
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1_mean_weight_negative_ii_log_prob')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index</summary>
+<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ii</summary>
 
 ```python
 reduction = 'none'
@@ -11115,12 +11172,12 @@ sce = softmaxcrossentropy(x,
                           reduction=reduction,
                           ignore_index=ignore_index)
 
-expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_NCd1d2d3_none_no_weight_negative_ignore_index')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_NCd1d2d3_none_no_weight_negative_ii')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob</summary>
+<summary>input_shape_is_NCd1d2d3_none_no_weight_negative_ii_log_prob</summary>
 
 ```python
 reduction = 'none'
@@ -11144,12 +11201,12 @@ loss, log_prob = softmaxcrossentropy(x,
                           ignore_index=ignore_index,
                           get_log_prob=True)
 
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_none_no_weight_negative_ignore_index_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_none_no_weight_negative_ii_log_prob')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2d3_sum_weight_high_ignore_index</summary>
+<summary>input_shape_is_NCd1d2d3_sum_weight_high_ii</summary>
 
 ```python
 reduction = 'sum'
@@ -11174,12 +11231,12 @@ sce = softmaxcrossentropy(x,
                           reduction=reduction,
                           ignore_index=ignore_index)
 
-expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1d2d3_sum_weight_high_ignore_index')
+expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1d2d3_sum_weight_high_ii')
 ```
 
 </details>
 <details>
-<summary>input_shape_is_NCd1d2d3_sum_weight_high_ignore_index_log_prob</summary>
+<summary>input_shape_is_NCd1d2d3_sum_weight_high_ii_log_prob</summary>
 
 ```python
 reduction = 'sum'
@@ -11205,7 +11262,7 @@ loss, log_prob = softmaxcrossentropy(x,
                           ignore_index=ignore_index,
                           get_log_prob=True)
 
-expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_sum_weight_high_ignore_index_log_prob')
+expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_sum_weight_high_ii_log_prob')
 ```
 
 </details>
@@ -11416,7 +11473,7 @@ expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_l
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_no_weights_ignore_index</summary>
+<summary>softmaxcrossentropy_mean_no_weights_ii</summary>
 
 ```python
 # Define operator attributes.
@@ -11440,12 +11497,12 @@ labels[0] = np.int64(2)
 sce = softmaxcrossentropy(x, labels, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ignore_index')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ii')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_no_weights_ignore_index_3d</summary>
+<summary>softmaxcrossentropy_mean_no_weights_ii_3d</summary>
 
 ```python
 # Define operator attributes.
@@ -11469,12 +11526,12 @@ labels[0][0] = np.int64(2)
 sce = softmaxcrossentropy(x, labels, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ignore_index_3d')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ii_3d')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_no_weights_ignore_index_3d_log_prob</summary>
+<summary>softmaxcrossentropy_mean_no_weights_ii_3d_log_prob</summary>
 
 ```python
 # Define operator attributes.
@@ -11498,12 +11555,12 @@ labels[0][0] = np.int64(2)
 loss, log_prob = softmaxcrossentropy(x, labels, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ignore_index_3d_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ii_3d_log_prob')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_no_weights_ignore_index_4d</summary>
+<summary>softmaxcrossentropy_mean_no_weights_ii_4d</summary>
 
 ```python
 # Define operator attributes.
@@ -11527,12 +11584,12 @@ labels[0][0][0] = np.int64(2)
 sce = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ignore_index_4d')
+expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ii_4d')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_no_weights_ignore_index_4d_log_prob</summary>
+<summary>softmaxcrossentropy_mean_no_weights_ii_4d_log_prob</summary>
 
 ```python
 # Define operator attributes.
@@ -11556,12 +11613,12 @@ labels[0][0][0] = np.int64(2)
 loss, log_prob = softmaxcrossentropy(x, labels, reduction=reduction, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ignore_index_4d_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ii_4d_log_prob')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_no_weights_ignore_index_log_prob</summary>
+<summary>softmaxcrossentropy_mean_no_weights_ii_log_prob</summary>
 
 ```python
 # Define operator attributes.
@@ -11585,7 +11642,7 @@ labels[0] = np.int64(2)
 loss, log_prob = softmaxcrossentropy(x, labels, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ignore_index_log_prob')
+expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ii_log_prob')
 ```
 
 </details>
@@ -11617,7 +11674,7 @@ expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_wei
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_weights_ignore_index</summary>
+<summary>softmaxcrossentropy_mean_weights_ii</summary>
 
 ```python
 # Define operator attributes.
@@ -11642,12 +11699,12 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ignore_index')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ii')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_weights_ignore_index_3d</summary>
+<summary>softmaxcrossentropy_mean_weights_ii_3d</summary>
 
 ```python
 # Define operator attributes.
@@ -11672,12 +11729,12 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ignore_index_3d')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ii_3d')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_weights_ignore_index_3d_log_prob</summary>
+<summary>softmaxcrossentropy_mean_weights_ii_3d_log_prob</summary>
 
 ```python
 # Define operator attributes.
@@ -11702,12 +11759,12 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ignore_index_3d_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ii_3d_log_prob')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_weights_ignore_index_4d</summary>
+<summary>softmaxcrossentropy_mean_weights_ii_4d</summary>
 
 ```python
 # Define operator attributes.
@@ -11732,12 +11789,12 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 sce = softmaxcrossentropy(x, labels, reduction=reduction, weight=weights, ignore_index=ignore_index)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ignore_index_4d')
+expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ii_4d')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_weights_ignore_index_4d_log_prob</summary>
+<summary>softmaxcrossentropy_mean_weights_ii_4d_log_prob</summary>
 
 ```python
 # Define operator attributes.
@@ -11762,12 +11819,12 @@ weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, reduction=reduction, weight=weights, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ignore_index_4d_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ii_4d_log_prob')
 ```
 
 </details>
 <details>
-<summary>softmaxcrossentropy_mean_weights_ignore_index_log_prob</summary>
+<summary>softmaxcrossentropy_mean_weights_ii_log_prob</summary>
 
 ```python
 # Define operator attributes.
@@ -11792,7 +11849,7 @@ weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 loss, log_prob = softmaxcrossentropy(x, labels, weight=weights, ignore_index=ignore_index, get_log_prob=True)
 
 # Check results
-expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ignore_index_log_prob')
+expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ii_log_prob')
 ```
 
 </details>
