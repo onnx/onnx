@@ -10,7 +10,14 @@ export LD_LIBRARY_PATH="${top_dir}/.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
 
 # onnx python API tests
-pip install --quiet pytest nbval
+if [ "${PYTHON_VERSION}" == "python2" ]; then
+  pip install --quiet pytest nbval
+else
+  # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
+  # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
+  pip install --quiet pytest==5.4.3 nbval
+fi
+
 pytest
 
 # lint python code
