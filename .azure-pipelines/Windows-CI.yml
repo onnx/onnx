@@ -54,6 +54,10 @@ jobs:
 
       python setup.py --quiet install
       pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed"
+      )
+
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
