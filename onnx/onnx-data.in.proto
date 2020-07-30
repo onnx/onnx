@@ -32,19 +32,19 @@ message SequenceProto {
 
   // For TensorProto values.
   // When this field is present, the elem_type field MUST be TENSOR.
-  optional repeated TensorProto tensor_values = 3;
+  repeated TensorProto tensor_values = 3;
 
   // For SparseTensorProto values.
   // When this field is present, the elem_type field MUST be SPARSE_TENSOR.
-  optional repeated SparseTensorProto sparse_tensor_values = 4;
+  repeated SparseTensorProto sparse_tensor_values = 4;
 
   // For SequenceProto values, allowing sequences to be of themselves.
   // When this field is present, the elem_type field MUST be SEQUENCE.
-  optional repeated SequenceProto sequence_values = 5;
+  repeated SequenceProto sequence_values = 5;
 
   // For MapProto values.
   // When this field is present, the elem_type field MUST be MAP.
-  optional repeated MapProto map_values = 6;
+  repeated MapProto map_values = 6;
 
 }
 
@@ -66,16 +66,16 @@ message MapProto {
   // Every element of keys has to be one of the following data types
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING.
   // The integer cases are represented by the repeated int64 field keys below.
-  optional repeated int64 keys = 3;
+  repeated int64 keys = 3;
 
   // If keys are strings, they are represented by the repeated bytes field
   // string_keys below.
-  optional repeated bytes string_keys = 4;
+  repeated bytes string_keys = 4;
 
   // The data type of the value.
   // This field MUST have a valid SequenceProto.DataType value of
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE
   optional int32 value_type = 4;
 
-  SequenceProto values = 5;
+  optional SequenceProto values = 5;
 }
