@@ -231,25 +231,21 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
   enforce_has_field(sequence, elem_type);
   if (sequence.elem_type() == SequenceProto::TENSOR) {
-    enforce_has_field(sequence, tensor_values);
     for (const TensorProto& tensor : sequence.tensor_values()) {
       check_tensor(tensor, ctx);
     }
   }
   else if (sequence.elem_type() == SequenceProto::SPARSE_TENSOR) {
-    enforce_has_field(sequence, sparse_tensor_values);
     for (const SparseTensorProto& sparse_tensor : sequence.sparse_tensor_values()) {
       check_sparse_tensor(sparse_tensor, ctx);
     }
   }
   else if (sequence.elem_type() == SequenceProto::SEQUENCE) {
-    enforce_has_field(sequence, sequence_values);
     for (const SequenceProto& seq : sequence.sequence_values()) {
       check_sequence(seq, ctx);
     }
   }
   else if (sequence.elem_type() == SequenceProto::MAP) {
-    enforce_has_field(sequence, map_values);
     for (const MapProto& map : sequence.map_values()) {
       check_map(map, ctx);
     }
