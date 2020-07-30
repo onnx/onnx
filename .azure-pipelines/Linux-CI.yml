@@ -101,7 +101,14 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
       # onnx python api tests
-      pip install --quiet pytest nbval
+      if [ "$(python.version)" == "2.7" ]; then
+        pip install --quiet pytest nbval
+      else
+        # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
+        # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
+        pip install --quiet pytest==5.4.3 nbval
+      fi
+
       pytest
       if [ $? -ne 0 ]; then
         echo "pytest failed"
@@ -128,6 +135,10 @@ jobs:
         pip uninstall -y onnx
         ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install --no-use-pep517 -e .[mypy]
         python setup.py --quiet typecheck
+        if [ $? -ne 0 ]; then
+          echo "type check failed"
+          exit 1
+        fi
         pip uninstall -y onnx
         rm -rf .setuptools-cmake-build
         ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
