@@ -142,20 +142,28 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     return lst
 
 
-def from_list(lst, name=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
+def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
     """Converts a list into a sequence def.
 
     Inputs:
         lst: a Python list
         name: (optional) the name of the sequence.
+        dtype: (optional) type of element in the input list, used for specifying
+                          sequence values when converting an empty list.
     Returns:
         sequence: the converted sequence def.
     """
     sequence = SequenceProto()
     if name:
         sequence.name = name
-    elem_type = type(lst[0])
-    if not all(isinstance(elem, elem_type) for elem in lst):
+
+    if dtype:
+        elem_type = dtype
+    else:
+        elem_type = type(lst[0])
+    sequence.elem_type = elem_type
+
+    if (not dtype) and (not all(isinstance(elem, elem_type) for elem in lst)):
         raise TypeError("The element type in the input list is not the same "
                         "for all elements and therefore is not supported as a sequence.")
     if isinstance(elem_type, np.ndarray):
