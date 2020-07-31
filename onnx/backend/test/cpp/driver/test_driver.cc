@@ -199,9 +199,6 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
   int test_data_counter = 0;
-  std::string tensor_str = "Tensor";
-  std::string sequence_str = "Sequence";
-  std::string map_str = "Map";
   for (auto& test_data : t.test_data_) {
     ResolvedTestData proto_test_data;
     for (auto& input_file : test_data.input_filenames_) {
