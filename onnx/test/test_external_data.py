@@ -287,11 +287,11 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
         model = onnx.load_model(self.model_filename, load_external_data=False)
         try:
             load_external_data_for_model(model, self.temp_dir)  # Exceeds maximum protobuf
+            self.assertRaises(ValueError, checker.check_model, model)  # checker catches 2GB models and throw error
         except MemoryError:
             print("Warning: Because of the hardware limitation (memory), this test was not executed.")
+            self.assertRaises(ValueError, checker.check_model, model)  # checker catch
             return
-        self.assertRaises(ValueError, checker.check_model, model)  # checker catches 2GB models and throw error
-
 
 if __name__ == '__main__':
     unittest.main()
