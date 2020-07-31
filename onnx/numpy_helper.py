@@ -168,13 +168,13 @@ def from_list(lst, name=None, dtype=np.ndarray):  # type: (List[Any], Optional[T
                         "for all elements and therefore is not supported as a sequence.")
     if isinstance(elem_type, np.ndarray):
         for tensor in lst:
-            sequence.tensor_values.append(helper.make_tensor(from_array(tensor)))
+            sequence.tensor_values.append(from_array(tensor))
     elif isinstance(elem_type, list):
         for sequence in lst:
-            sequence.sequence_values.append(helper.make_sequence(from_list(sequence)))
+            sequence.sequence_values.append(from_list(sequence))
     elif isinstance(elem_type, dict):
         for map in lst:
-            sequence.map_values.append(helper.make_map(from_dict(map)))
+            sequence.map_values.append(from_dict(map))
     else:
         raise TypeError("The element type in the input list is not a list, "
                         "dictionary, or np.ndarray and is not supported.")
