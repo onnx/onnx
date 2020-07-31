@@ -9,7 +9,7 @@ class ArgMaxArgMin_12_11 final : public Adapter {
     explicit ArgMaxArgMin_12_11(const std::string& op_name)
       : Adapter(op_name, OpSetID(12), OpSetID(11)) {}
 
-    void adapt_argmax_argmin_12_11(std::shared_ptr<Graph> graph, Node* node) const {
+    void adapt_argmax_argmin_12_11(Node* node) const {
     	Symbol select_last_index = Symbol("select_last_index");
 	    if (node->hasAttribute(select_last_index)) {
 	      ONNX_ASSERTM(node->i(select_last_index) == 0,
@@ -18,8 +18,8 @@ class ArgMaxArgMin_12_11 final : public Adapter {
 	    }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-	    adapt_argmax_argmin_12_11(graph, node);
+    void adapt(std::shared_ptr<Graph> , Node* node) const override {
+	    adapt_argmax_argmin_12_11(node);
     }
 };
 
