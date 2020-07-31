@@ -272,7 +272,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self):  # type: () -> None
-        def mk_model(opset_versions):
+        def mk_model(opset_versions):  # type: (List[Tuple[Text, int]]) -> ModelProto
             graph = helper.make_graph([], "my graph", [], [])
             return helper.make_model_gen_version(graph, opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
 

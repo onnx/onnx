@@ -21,7 +21,7 @@ VersionTableType = List[VersionRowType]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
-VERSION_TABLE = [
+VERSION_TABLE : VersionTableType = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
     ('1.0', 3, 1, 1),
     ('1.1', 3, 5, 1),
@@ -39,7 +39,7 @@ VersionMapType = Dict[Tuple[Text, int], int]
 
 # create a map from (opset-domain, opset-version) to ir-version from above table
 def create_op_set_id_version_map(table):  # type: (VersionTableType) -> VersionMapType
-    result = dict()
+    result = dict() # type: VersionMapType
 
     def process(release_version, ir_version, *args):  # type: (Text, int, Any) -> None
         for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):
