@@ -190,8 +190,8 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        name,  # type: Text
-        elem_type, # type: int
+        name,   # type: Text
+        elem_type,   # type: int
         values,   # type: Sequence[Any]
 ):  # type: (...) -> SequenceProto
     '''
@@ -206,10 +206,10 @@ def make_sequence(
 
 
 def make_map(
-        name,  # type: Text
-        key_type,  # type: int
-        keys,  # type: Sequence[Any]
-        value_type,  # type: int
+        name,   # type: Text
+        key_type,   # type: int
+        keys,   # type: Sequence[Any]
+        value_type,   # type: int
         values   # type: Sequence[Any]
 ):  # type: (...) -> MapProto
     '''
@@ -221,8 +221,8 @@ def make_map(
     - Every value in values must be of the same type
     '''
     map = MapProto()
-    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32, \
-                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16, \
+    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32,
+                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16,
                            TensorProto.UINT32, TensorProto.UINT64]
     map.name = name
     map.key_type = key_type

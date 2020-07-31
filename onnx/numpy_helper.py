@@ -207,8 +207,8 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
     raw_key_type = keys[0].dtype
     key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[raw_key_type]
 
-    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32, \
-                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16, \
+    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32,
+                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16,
                            TensorProto.UINT32, TensorProto.UINT64]
 
     if not all(isinstance(key, raw_key_type) for key in keys):
