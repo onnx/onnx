@@ -290,24 +290,42 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
         ") to UNDEFINED is not allowed");
   }
 
+
+  #define check_repeated_field(field, type) \
+    if (map.field##_size() > 0) {          \
+      ++used_fields;                        \
+      check_type(type);                     \
+    }
+
+    check_repeated_field(keys, TensorProto::INT64);
+    check_repeated_field(string_keys, TensorProto::STRING);
+
+  #undef check_repeated_field
+
+    // Normally, used_fields is expected to be 1.
+    if (used_fields > 1) {
+      fail_check(
+          "Map (name: ",
+          map.name(),
+          ") should not contain more than one keys field.");
+    }
+
   int num_keys = 0;
   if (!map.has_keys()) {
-    check_repeated_field(map.keys(), TensorProto::INT64);
-    num_keys = map.keys().size();
+    num_keys = map.keys_size();
   } else if (!map.has_string_keys()) {
-    check_repeated_field(map.string_keys(), TensorProto::STRING);
-    num_keys = map.string_keys().size();
+    num_keys = map.string_keys_size();
   }
 
-  enforce_has_field(map, values);
-  check_sequence(map.values(), ctx);
+  // if map.key_type == tensor -> tensor_values_size()
+  // check_sequence(map.values(), ctx);
 
-  if (num_keys != map.values().size()){
-    fail_check(
-        "Length of map keys and map values are not the same (map name: ",
-        map.name(),
-        ")");
-  }
+  // if (num_keys != map.values_size()){
+  //   fail_check(
+  //       "Length of map keys and map values are not the same (map name: ",
+  //       map.name(),
+  //       ")");
+  // }
 }
 
 // Check that the index data stored in a SparseTensorProto is valid.
