@@ -290,8 +290,8 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
             self.assertRaises(ValueError, checker.check_model, model)  # checker catches 2GB models and throw error
         except MemoryError:
             print("Warning: Because of the hardware limitation (memory), this test was not executed.")
-            self.assertRaises(ValueError, checker.check_model, model)  # checker catch
             return
+
 
 if __name__ == '__main__':
     unittest.main()
