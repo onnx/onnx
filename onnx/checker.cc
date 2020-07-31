@@ -291,41 +291,39 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
   }
 
 
-  #define check_repeated_field(field, type) \
-    if (map.field##_size() > 0) {          \
-      ++used_fields;                        \
-      check_type(type);                     \
-    }
-
-    check_repeated_field(keys, TensorProto::INT64);
-    check_repeated_field(string_keys, TensorProto::STRING);
-
-  #undef check_repeated_field
-
-    // Normally, used_fields is expected to be 1.
-    if (used_fields > 1) {
-      fail_check(
-          "Map (name: ",
-          map.name(),
-          ") should not contain more than one keys field.");
-    }
-
-  int num_keys = 0;
-  if (!map.has_keys()) {
-    num_keys = map.keys_size();
-  } else if (!map.has_string_keys()) {
-    num_keys = map.string_keys_size();
+  // MapProto will use either keys or string_keys, so only one should be > 0.
+  if ((map.keys_size() > 0) && (map.string_keys_size() > 0)) {
+    fail_check(
+        "Map (name: ",
+        map.name(),
+        ") should not contain more than one keys field.");
   }
 
-  // if map.key_type == tensor -> tensor_values_size()
-  // check_sequence(map.values(), ctx);
+  int num_keys = map.keys_size() + map.string_keys_size();
+  int num_values = 0;
 
-  // if (num_keys != map.values_size()){
-  //   fail_check(
-  //       "Length of map keys and map values are not the same (map name: ",
-  //       map.name(),
-  //       ")");
-  // }
+  enforce_has_field(map, values);
+  check_sequence(map.values(), ctx);
+
+  if (map.value_type() == SequenceProto::TENSOR) {
+    num_values = map.values().tensor_values_size();
+  }
+  else if (map.value_type() == SequenceProto::SPARSE_TENSOR) {
+    num_values = map.values().sparse_tensor_values_size();
+  }
+  else if (map.value_type() == SequenceProto::SEQUENCE) {
+    num_values = map.values().sequence_values_size();
+  }
+  else if (map.value_type() == SequenceProto::MAP) {
+    num_values = map.values().map_values_size();
+  }
+
+  if (num_keys != num_values){
+    fail_check(
+        "Length of map keys and map values are not the same (map name: ",
+        map.name(),
+        ")");
+  }
 }
 
 // Check that the index data stored in a SparseTensorProto is valid.

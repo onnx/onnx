@@ -163,6 +163,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     set(ABS_FILE ${ROOT_DIR}/${INFILE})
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
+    # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
     if(ONNX_ML AND NOT(FILE_WE STREQUAL "onnx-data"))
       if(ONNX_NAMESPACE STREQUAL "onnx")
         set(GENERATED_FILE_WE "${FILE_WE}-ml")
