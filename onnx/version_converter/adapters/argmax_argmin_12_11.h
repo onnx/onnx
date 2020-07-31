@@ -13,7 +13,7 @@ class ArgMaxArgMin_12_11 final : public Adapter {
     	Symbol select_last_index = Symbol("select_last_index");
 	    if (node->hasAttribute(select_last_index)) {
 	      ONNX_ASSERTM(node->i(select_last_index) == 0,
-	          "select_last_index != 0 is not supported in version 11");
+	          "opset version 11 only supports select_last_index == 0");
 	      node->removeAttribute(select_last_index);
 	    }
     }
