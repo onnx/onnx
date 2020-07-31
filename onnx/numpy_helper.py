@@ -163,7 +163,7 @@ def from_list(lst, name=None, dtype=np.ndarray):  # type: (List[Any], Optional[T
         elem_type = type(lst[0])
     sequence.elem_type = elem_type
 
-    if (not all(isinstance(elem, elem_type) for elem in lst):
+    if (not all(isinstance(elem, elem_type) for elem in lst)):
         raise TypeError("The element type in the input list is not the same "
                         "for all elements and therefore is not supported as a sequence.")
     if isinstance(elem_type, np.ndarray):
