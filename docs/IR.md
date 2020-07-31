@@ -190,7 +190,7 @@ Each main (top-level) graph MUST define the names and types of its inputs and ou
 Name|Type|Description
 |---|---|---|
 name|string|The name of the value/parameter.
-type|Type|The type of the value.
+type|Type|The type of the value **including shape information**.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
 Nested subgraphs (specified as attribute values) MUST define the names of its inputs and outputs
@@ -370,7 +370,9 @@ Which is referenced by the Tensor type message:
   }
 ```
 
-The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
+The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for a node input, a tensor value of any shape may be passed from the caller. When the shape property is absent for a node output, the caller should expect that the output value may be of any shape. 
+
+Note that node input and output can be completely absent from the graph (and can be filled by shape inference), but graph input and output must always specify a shape.
 
 Each size in the list MAY be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. A dimension MAY have neither dim_value nor dim_param set. Such a dimension represents an unknown dimension unrelated to other unknown dimensions.
 
