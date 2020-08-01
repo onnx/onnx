@@ -886,6 +886,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // Add customized domain to min/max version.
     // Onnx partners are able to use onnx operator schema api to
     // register customized op in their own domain.
+    // Can optionally specify last_release_version (to make it similar to
+    // standard ONNX domains as above). Custom-domains are free to interpret
+    // this as appropriate (that is, as relative to releases of custom-domain
+    // as opposed to ONNX releases).
     void AddDomainToVersion(
         const std::string& domain,
         int min_version,
