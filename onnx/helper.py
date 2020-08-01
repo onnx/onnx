@@ -32,14 +32,14 @@ VERSION_TABLE = [
     ('1.5.0', 5, 10, 1),
     ('1.6.0', 6, 11, 2),
     ('1.7.0', 7, 12, 2, 1)
-]  # type: VersionTableType 
+]  # type: VersionTableType
 
 VersionMapType = Dict[Tuple[Text, int], int]
 
 
 # create a map from (opset-domain, opset-version) to ir-version from above table
 def create_op_set_id_version_map(table):  # type: (VersionTableType) -> VersionMapType
-    result = dict() # type: VersionMapType
+    result = dict()  # type: VersionMapType
 
     def process(release_version, ir_version, *args):  # type: (Text, int, Any) -> None
         for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):

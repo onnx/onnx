@@ -8,8 +8,8 @@ import random
 import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto
-from typing import Text, Any, List
+from onnx import AttributeProto, TensorProto, GraphProto, ModelProto
+from typing import Text, Any, List, Tuple
 
 import unittest
 
