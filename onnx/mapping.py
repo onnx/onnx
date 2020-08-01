@@ -68,7 +68,7 @@ STORAGE_ELEMENT_TYPE_TO_FIELD = {
 }
 
 PYTHON_TYPE_TO_ELEMENT_TYPE = {
-    np.ndarray : int(SequenceProto.TENSOR),
-    list : int(SequenceProto.SEQUENCE),
-    dict : int(SequenceProto.MAP)
+    np.ndarray: int(SequenceProto.TENSOR),
+    list: int(SequenceProto.SEQUENCE),
+    dict: int(SequenceProto.MAP)
 }
