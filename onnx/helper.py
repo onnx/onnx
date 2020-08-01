@@ -21,7 +21,7 @@ VersionTableType = List[VersionRowType]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
-VERSION_TABLE : VersionTableType = [
+VERSION_TABLE = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
     ('1.0', 3, 1, 1),
     ('1.1', 3, 5, 1),
@@ -32,7 +32,7 @@ VERSION_TABLE : VersionTableType = [
     ('1.5.0', 5, 10, 1),
     ('1.6.0', 6, 11, 2),
     ('1.7.0', 7, 12, 2, 1)
-]
+]  # type: VersionTableType 
 
 VersionMapType = Dict[Tuple[Text, int], int]
 
