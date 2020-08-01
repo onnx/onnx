@@ -3248,6 +3248,14 @@ class TestShapeInference(unittest.TestCase):
         z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
         assert z_shape == shape
 
+    def not_infer_empty_input_from_initializer(self, original_model):
+        # After shape inference, it won't update input from initializer
+        # So the inferred value info is empty
+
+        inferred_model = onnx.shape_inference.infer_shapes(original_model)
+        # Cannot infer from initializer; nothing in value_info; pop fail
+        self.assertRaises(IndexError, inferred_model.graph.value_info.pop)
+
     def test_infer_with_initializer_without_input_below_ir4(self):  # type: () -> None
         # This is for testing IR<4: tensors must exist both in initializer and input
         # So shape_inference should not make use of initializer shapes
@@ -3255,12 +3263,42 @@ class TestShapeInference(unittest.TestCase):
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
 
-        graph = helper.make_graph(nodes, "test", inputs=[], outputs=[], initializer=initializer, value_info=[])
+        graph = helper.make_graph(nodes, 'test', inputs=[], outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
-        original_model.ir_version = 3  # test ir_version <4
-        inferred_model = onnx.shape_inference.infer_shapes(original_model)
-        # Cannot infer from initializer; nothing in value_info; pop fail
-        self.assertRaises(IndexError, inferred_model.graph.value_info.pop)
+        original_model.ir_version = 3  # test ir_version < 4
+
+        self.not_infer_empty_input_from_initializer(original_model)
+
+    def test_infer_with_initializer_without_input_below_opset9(self):  # type: () -> None
+        # This is for testing models using opset<9: tensors must exist both in initializer and input
+        # So shape_inference should not make use of initializer shapes
+        # ir_version 4 uses opset 9
+
+        shape = (8, 7)
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
+
+        graph = helper.make_graph(nodes, 'test', inputs=[], outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        new_import = original_model.opset_import.add()
+        new_import.version = 8  # test opset < 9
+
+        self.not_infer_empty_input_from_initializer(original_model)
+
+    def test_infer_with_initializer_without_input_other_domain_opset(self):  # type: () -> None
+        # This is for testing models using opset from other domain: tensors must exist both in initializer and input
+        # So shape_inference should not make use of initializer shapes
+
+        shape = (8, 7)
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
+
+        graph = helper.make_graph(nodes, 'test', inputs=[], outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        new_import = original_model.opset_import.add()
+        new_import.domain = 'org.pytorch._caffe2'  # test opeset from other domain
+
+        self.not_infer_empty_input_from_initializer(original_model)
 
     def test_infer_initializer_input_mismatch(self):  # type: () -> None
         # Catch error if initializer and input mismatch
@@ -3270,7 +3308,7 @@ class TestShapeInference(unittest.TestCase):
         initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
         inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape)]
 
-        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        graph = helper.make_graph(nodes, 'test', inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
         # Inferred shape and existing shape differ in dimension 0
         self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
