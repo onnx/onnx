@@ -3232,23 +3232,35 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
+    def prepare_input_initializer_tensors(self, initializer_shape, input_shape):  # type: ignore
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        if initializer_shape is None:
+            initializer = []
+        else:
+            initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
+                make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        if input_shape is None:
+            inputs = []
+        else:
+            inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),  # type: ignore
+                helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
+
+        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        return helper.make_model(graph)
+
     def test_infer_with_initializer_without_input_above_ir4(self):  # type: () -> None
         # This is for testing IR>=4: some tensors can only exist in initializer and not in input
         # So shape_inference should make use of initializer shapes
-        shape = (8, 7)
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
-        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
-
-        graph = helper.make_graph(nodes, "test", inputs=[], outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
+        initializer_shape = (8, 7)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
         inferred_model = onnx.shape_inference.infer_shapes(original_model)
 
         # If shape inference fails, it will throw IndexError
         z_tenor = inferred_model.graph.value_info.pop()
         z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
-        assert z_shape == shape
+        assert z_shape == initializer_shape
 
-    def not_infer_empty_input_from_initializer(self, original_model):
+    def not_infer_empty_input_from_initializer(self, original_model):  # type: (ModelProto) -> None
         # After shape inference, it won't update input from initializer
         # So the inferred value info is empty
 
@@ -3259,12 +3271,8 @@ class TestShapeInference(unittest.TestCase):
     def test_infer_with_initializer_without_input_below_ir4(self):  # type: () -> None
         # This is for testing IR<4: tensors must exist both in initializer and input
         # So shape_inference should not make use of initializer shapes
-        shape = (8, 7)
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
-        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
-
-        graph = helper.make_graph(nodes, 'test', inputs=[], outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
+        initializer_shape = (8, 7)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
         original_model.ir_version = 3  # test ir_version < 4
 
         self.not_infer_empty_input_from_initializer(original_model)
@@ -3273,13 +3281,8 @@ class TestShapeInference(unittest.TestCase):
         # This is for testing models using opset<9: tensors must exist both in initializer and input
         # So shape_inference should not make use of initializer shapes
         # ir_version 4 uses opset 9
-
-        shape = (8, 7)
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
-        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
-
-        graph = helper.make_graph(nodes, 'test', inputs=[], outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
+        initializer_shape = (8, 7)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
         new_import = original_model.opset_import.add()
         new_import.version = 8  # test opset < 9
 
@@ -3288,13 +3291,8 @@ class TestShapeInference(unittest.TestCase):
     def test_infer_with_initializer_without_input_other_domain_opset(self):  # type: () -> None
         # This is for testing models using opset from other domain: tensors must exist both in initializer and input
         # So shape_inference should not make use of initializer shapes
-
-        shape = (8, 7)
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
-        initializer = [make_tensor("x", TensorProto.FLOAT, shape, ()), make_tensor("y", TensorProto.FLOAT, shape, ())]
-
-        graph = helper.make_graph(nodes, 'test', inputs=[], outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
+        initializer_shape = (8, 7)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
         new_import = original_model.opset_import.add()
         new_import.domain = 'org.pytorch._caffe2'  # test opeset from other domain
 
@@ -3302,54 +3300,30 @@ class TestShapeInference(unittest.TestCase):
 
     def test_infer_initializer_input_mismatch(self):  # type: () -> None
         # Catch error if initializer and input mismatch
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7)
         input_shape = (-4, 3)
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
-
-        graph = helper.make_graph(nodes, 'test', inputs=inputs, outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         # Inferred shape and existing shape differ in dimension 0
         self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
 
     def test_infer_initializer_input_consistency_all_none(self):  # type: () -> None
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7)
         input_shape = (None, None)  # accepatble
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
-            make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),
-            helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
 
-        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
         onnx.shape_inference.infer_shapes(original_model)
 
     def test_infer_initializer_input_consistency_single_none(self):  # type: () -> None
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7)
         input_shape = (None, 7)  # accepatble
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
-            make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),
-            helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
 
-        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
         onnx.shape_inference.infer_shapes(original_model)
 
     def test_infer_initializer_input_consistency_differnt_rank(self):  # type: () -> None
-        nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7, 9)
         input_shape = (None, 7)  # accepatble
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
-            make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x',
-            TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
-
-        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
-        original_model = helper.make_model(graph)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         # Inferred shape and existing shape differ in rank: (3) vs (2)
         self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
 
