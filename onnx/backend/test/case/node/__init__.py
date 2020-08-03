@@ -105,7 +105,7 @@ def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], 
     if isinstance(input, list):
         return onnx.helper.make_sequence_value_info(
             name=name,
-            elem_type=ele_type if ele_type else onnx.mapping.SEQUENCE_RAW_TYPE_TO_ELEMENT_TYPE[type(input[0])],
+            elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
             shape=None
         )
     return onnx.helper.make_tensor_value_info(
