@@ -18,7 +18,6 @@ from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 import pytest  # type: ignore
-import sys
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
