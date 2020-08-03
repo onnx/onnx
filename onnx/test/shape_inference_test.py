@@ -3317,8 +3317,10 @@ class TestShapeInference(unittest.TestCase):
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7)
         input_shape = (None, None)  # accepatble
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
+            make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),
+            helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
 
         graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
@@ -3328,8 +3330,10 @@ class TestShapeInference(unittest.TestCase):
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7)
         input_shape = (None, 7)  # accepatble
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
+            make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),
+            helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
 
         graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
@@ -3339,8 +3343,10 @@ class TestShapeInference(unittest.TestCase):
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         initializer_shape = (8, 7, 9)
         input_shape = (None, 7)  # accepatble
-        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
+            make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x',
+            TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
 
         graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
