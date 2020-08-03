@@ -210,7 +210,7 @@ def make_map(
         key_type,   # type: int
         keys,   # type: List[Any]
         value_type,   # type: int
-        values   # type: List[Any]
+        values   # type: SequenceProto
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
