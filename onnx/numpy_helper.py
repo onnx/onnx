@@ -142,7 +142,7 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     return lst
 
 
-def from_list(lst, name=None, dtype=np.ndarray):  # type: (List[Any], Optional[Text]) -> SequenceProto
+def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
     """Converts a list into a sequence def.
 
     Inputs:
@@ -157,27 +157,30 @@ def from_list(lst, name=None, dtype=np.ndarray):  # type: (List[Any], Optional[T
     if name:
         sequence.name = name
 
-    if len(lst) == 0:
+    if dtype:
         elem_type = dtype
+    elif len(lst) > 0:
+        elem_type = mapping.SEQUENCE_RAW_TYPE_TO_ELEMENT_TYPE[lst[0].dtype]
     else:
-        elem_type = type(lst[0])
+        elem_type = SequenceProto.TENSOR
     sequence.elem_type = elem_type
 
-    if (not all(isinstance(elem, elem_type) for elem in lst)):
+    if len(lst) > 0 and (not all(elem.dtype == lst[0].dtype for elem in lst)):
         raise TypeError("The element type in the input list is not the same "
                         "for all elements and therefore is not supported as a sequence.")
-    if isinstance(elem_type, np.ndarray):
+
+    if elem_type == SequenceProto.TENSOR:
         for tensor in lst:
             sequence.tensor_values.append(from_array(tensor))
-    elif isinstance(elem_type, list):
+    elif elem_type == SequenceProto.SEQUENCE:
         for sequence in lst:
             sequence.sequence_values.append(from_list(sequence))
-    elif isinstance(elem_type, dict):
+    elif elem_type == SequenceProto.MAP:
         for map in lst:
             sequence.map_values.append(from_dict(map))
     else:
-        raise TypeError("The element type in the input list is not a list, "
-                        "dictionary, or np.ndarray and is not supported.")
+        raise TypeError("The element type in the input list is not a tensor, "
+                        "sequence, or map and is not supported.")
     return sequence
 
 
