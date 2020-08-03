@@ -18,6 +18,7 @@ from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 import pytest  # type: ignore
+import sys
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -289,7 +290,7 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
             load_external_data_for_model(model, self.temp_dir)  # Exceeds maximum protobuf
             self.assertRaises(ValueError, checker.check_model, model)  # checker catches 2GB models and throw error
         except MemoryError:
-            print("Warning: Because of the hardware limitation (memory), this test was not executed.")
+            sys.stderr.write("Warning: Because of the hardware limitation (memory), this test was not executed.")
             return
 
 
