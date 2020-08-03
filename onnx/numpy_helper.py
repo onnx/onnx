@@ -131,11 +131,11 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
     values = getattr(sequence, value_field)
     for value in values:
-        if elem_type == Sequence.TENSOR or elem_type == Sequence.SPARSE_TENSOR:
+        if elem_type == SequenceProto.TENSOR or elem_type == SequenceProto.SPARSE_TENSOR:
             lst.append(to_array(value))
-        elif elem_type == Sequence.SEQUENCE:
+        elif elem_type == SequenceProto.SEQUENCE:
             lst.append(to_list(value))
-        elif elem_type == Sequence.MAP:
+        elif elem_type == SequenceProto.MAP:
             lst.append(to_dict(value))
         else:
             raise TypeError("The element type in the input sequence is not supported.")
@@ -181,8 +181,8 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], 
         for tensor in lst:
             sequence.tensor_values.extend([from_array(tensor)])
     elif elem_type == SequenceProto.SEQUENCE:
-        for sequence in lst:
-            sequence.sequence_values.extend([from_list(sequence)])
+        for seq in lst:
+            sequence.sequence_values.extend([from_list(seq)])
     elif elem_type == SequenceProto.MAP:
         for map in lst:
             sequence.map_values.extend([from_dict(map)])
@@ -200,13 +200,17 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     Returns:
         dict: the converted dictionary.
     """
-    keys = to_list(map.keys)
-    values = to_list(map.values)
-    if len(keys) != len(values):
+    if map.key_type == TensorProto.STRING:
+        key_list = map.string_keys
+    else:
+        key_list = map.keys
+
+    value_list = to_list(map.values)
+    if len(key_list) != len(value_list):
         raise IndexError("Length of keys and values for MapProto (map name: ",
                         map.name(),
                         ") are not the same.")
-    dictionary = dict(zip(keys, values))
+    dictionary = dict(zip(key_list, value_list))
     return dictionary
 
 
@@ -243,11 +247,11 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
 
     value_seq = from_list(values)
     if isinstance(values[0], np.ndarray):
-        value_type = Sequence.TENSOR
+        value_type = SequenceProto.TENSOR
     elif isinstance(values[0], list):
-        value_type = Sequence.SEQUENCE
+        value_type = SequenceProto.SEQUENCE
     elif isinstance(values[0], dict):
-        value_type = Sequence.MAP
+        value_type = SequenceProto.MAP
     else:
         raise TypeError("The value type in the input dictionary is not a list, "
                         "dictionary, or np.ndarray and is not supported.")

@@ -227,11 +227,11 @@ def make_map(
     map.name = name
     map.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys.CopyFrom(keys)
+        map.string_keys = keys
     elif key_type in valid_key_int_types:
-        map.keys.CopyFrom(keys)
+        map.keys = keys
     map.value_type = value_type
-    map.values.CopyFrom(values)
+    map.values = values
     return map
 
 
