@@ -3306,11 +3306,45 @@ class TestShapeInference(unittest.TestCase):
         initializer_shape = (8, 7)
         input_shape = (-4, 3)
         initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
-        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape)]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
 
         graph = helper.make_graph(nodes, 'test', inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         original_model = helper.make_model(graph)
         # Inferred shape and existing shape differ in dimension 0
+        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
+
+    def test_infer_initializer_input_consistency_all_none(self):  # type: () -> None
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer_shape = (8, 7)
+        input_shape = (None, None)  # accepatble
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+
+        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        onnx.shape_inference.infer_shapes(original_model)
+
+    def test_infer_initializer_input_consistency_single_none(self):  # type: () -> None
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer_shape = (8, 7)
+        input_shape = (None, 7)  # accepatble
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+
+        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        onnx.shape_inference.infer_shapes(original_model)
+
+    def test_infer_initializer_input_consistency_differnt_rank(self):  # type: () -> None
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        initializer_shape = (8, 7, 9)
+        input_shape = (None, 7)  # accepatble
+        initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()), make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape), helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+
+        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        original_model = helper.make_model(graph)
+        # Inferred shape and existing shape differ in rank: (3) vs (2)
         self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
 
 
