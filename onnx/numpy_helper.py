@@ -159,23 +159,23 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text]) 
 
     if dtype:
         elem_type = dtype
-    elif len(lst) > 0:
-        first_elem = lst[0]
-        if isinstance(first_elem, dict):
-            elem_type = SequenceProto.MAP
-        elif isinstance(first_elem, list):
-            elem_type = SequenceProto.SEQUENCE
-        elif isinstance(first_elem, np.ndarray):
-            elem_type = SequenceProto.TENSOR
     else:
         # if empty input list and no dtype specified
         # choose sequence of tensors on default
         elem_type = SequenceProto.TENSOR
+    # elif len(lst) > 0:
+    #     first_elem = lst[0]
+    #     if isinstance(first_elem, dict):
+    #         elem_type = SequenceProto.MAP
+    #     elif isinstance(first_elem, list):
+    #         elem_type = SequenceProto.SEQUENCE
+    #     elif isinstance(first_elem, np.ndarray):
+    #         elem_type = SequenceProto.TENSOR
     sequence.elem_type = elem_type
 
-    if (len(lst) > 0) and (elem_type == SequenceProto.TENSOR) and not (all(elem.dtype == lst[0].dtype) for elem in lst):
-        raise TypeError("The element type in the input list is not the same "
-                        "for all tensor elements and therefore is not supported as a sequence.")
+    # if (len(lst) > 0) and (elem_type == SequenceProto.TENSOR) and not (all(elem.dtype == lst[0].dtype) for elem in lst):
+    #     raise TypeError("The element type in the input list is not the same "
+    #                     "for all tensor elements and therefore is not supported as a sequence.")
 
     if elem_type == SequenceProto.TENSOR:
         for tensor in lst:
