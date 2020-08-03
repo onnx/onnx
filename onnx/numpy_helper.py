@@ -257,9 +257,9 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
 
     map.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys = keys
+        map.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
-        map.keys = keys
+        map.keys.extend(keys)
     map.value_type = value_type
     map.values.CopyFrom(value_seq)
     return map

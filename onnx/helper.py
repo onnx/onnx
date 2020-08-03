@@ -208,9 +208,9 @@ def make_sequence(
 def make_map(
         name,   # type: Text
         key_type,   # type: int
-        keys,   # type: Sequence[Any]
+        keys,   # type: List[Any]
         value_type,   # type: int
-        values   # type: Sequence[Any]
+        values   # type: List[Any]
 ):  # type: (...) -> MapProto
     '''
     Make a Map with specified key-value pair arguments.
@@ -227,11 +227,11 @@ def make_map(
     map.name = name
     map.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys = keys
+        map.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
-        map.keys = keys
+        map.keys.extend(keys)
     map.value_type = value_type
-    map.values.CopyFrom(from_list(values))
+    map.values.CopyFrom(values)
     return map
 
 
