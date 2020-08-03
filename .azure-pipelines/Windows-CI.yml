@@ -53,7 +53,7 @@ jobs:
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 
       python setup.py --quiet install
-      pytest
+      pytest -s
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
         EXIT 1
