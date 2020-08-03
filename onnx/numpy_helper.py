@@ -208,7 +208,7 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     value_list = to_list(map.values)
     if len(key_list) != len(value_list):
         raise IndexError("Length of keys and values for MapProto (map name: ",
-                        map.name(),
+                        map.name,
                         ") are not the same.")
     dictionary = dict(zip(key_list, value_list))
     return dictionary
@@ -226,8 +226,8 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
     map = MapProto()
     if name:
         map.name = name
-    keys = np.array(list(dict.keys()))
-    raw_key_type = keys[0].dtype
+    keys = list(dict.keys())
+    raw_key_type = np.array(keys[0]).dtype
     key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[raw_key_type]
 
     valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32,
@@ -237,7 +237,6 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
     if not all(isinstance(key, raw_key_type) for key in keys):
         raise TypeError("The key type in the input dictionary is not the same "
                         "for all keys and therefore is not valid as a map.")
-    key_seq = from_array(keys)
 
     values = list(dict.values())
     raw_value_type = type(values[0])
@@ -258,11 +257,11 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
 
     map.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys = key_seq
+        map.string_keys = keys
     elif key_type in valid_key_int_types:
-        map.keys = key_seq
+        map.keys = keys
     map.value_type = value_type
-    map.values = value_seq
+    map.values.CopyFrom(value_seq)
     return map
 
 

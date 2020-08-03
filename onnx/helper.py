@@ -231,7 +231,7 @@ def make_map(
     elif key_type in valid_key_int_types:
         map.keys = keys
     map.value_type = value_type
-    map.values = values
+    map.values.CopyFrom(from_list(values))
     return map
 
 
