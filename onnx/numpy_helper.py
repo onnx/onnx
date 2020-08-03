@@ -126,7 +126,7 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     Returns:
         lst: the converted list.
     """
-    lst = []
+    lst = []  # type: List[Any]
     elem_type = sequence.elem_type
     value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
     values = getattr(sequence, value_field)
@@ -200,7 +200,7 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     Returns:
         dict: the converted dictionary.
     """
-    key_list = []
+    key_list = []  # type: List[Any]
     if map.key_type == TensorProto.STRING:
         key_list = map.string_keys[:]
     else:
