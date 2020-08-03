@@ -142,7 +142,7 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     return lst
 
 
-def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text]) -> SequenceProto
+def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], Optional[int]) -> SequenceProto
     """Converts a list into a sequence def.
 
     Inputs:
