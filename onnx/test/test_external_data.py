@@ -18,6 +18,7 @@ from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 import pytest  # type: ignore
+import sys
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -285,7 +286,8 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
     # 2GB models would fail onnx.checker with ModelProto but pass with model path
     # Currently Windows-CI with Azure Pipelines has memory limitation
     # load_external_data_for_model will throw MemoryError for >2GB models. So simply skip this test if Windows.
-    @pytest.mark.skipif(os.name == 'nt', reason="Because of the hardware limitation (memory) in Windows-CI, this test was not executed.")
+    @pytest.mark.skipif(sys.platform.startswith("win"),
+        reason="Because of the hardware limitation (memory) in Windows-CI, this test was not executed.")  # type: ignore
     def test_check_model_by_model(self):  # type: () -> None
         model = onnx.load_model(self.model_filename, load_external_data=False)
         load_external_data_for_model(model, self.temp_dir)  # Exceeds maximum protobuf
