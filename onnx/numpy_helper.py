@@ -160,12 +160,12 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text]) 
     if dtype:
         elem_type = dtype
     elif len(lst) > 0:
-        elem_type = mapping.SEQUENCE_RAW_TYPE_TO_ELEMENT_TYPE[lst[0].dtype]
+        elem_type = mapping.SEQUENCE_RAW_TYPE_TO_ELEMENT_TYPE[type(lst[0])]
     else:
         elem_type = SequenceProto.TENSOR
     sequence.elem_type = elem_type
 
-    if len(lst) > 0 and (not all(elem.dtype == lst[0].dtype for elem in lst)):
+    if len(lst) > 0 and (not all(elem.dtype == type(lst[0]) for elem in lst)):
         raise TypeError("The element type in the input list is not the same "
                         "for all elements and therefore is not supported as a sequence.")
 
