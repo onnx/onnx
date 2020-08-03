@@ -179,13 +179,13 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text]) 
 
     if elem_type == SequenceProto.TENSOR:
         for tensor in lst:
-            sequence.tensor_values.append(from_array(tensor))
+            sequence.tensor_values.extend([from_array(tensor)])
     elif elem_type == SequenceProto.SEQUENCE:
         for sequence in lst:
-            sequence.sequence_values.append(from_list(sequence))
+            sequence.sequence_values.extend([from_list(sequence)])
     elif elem_type == SequenceProto.MAP:
         for map in lst:
-            sequence.map_values.append(from_dict(map))
+            sequence.map_values.extend([from_dict(map)])
     else:
         raise TypeError("The element type in the input list is not a tensor, "
                         "sequence, or map and is not supported.")
