@@ -3235,15 +3235,15 @@ class TestShapeInference(unittest.TestCase):
     def prepare_input_initializer_tensors(self, initializer_shape, input_shape):  # type: ignore
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         if initializer_shape is None:
-            initializer = []
+            initializer = []  # type: ignore
         else:
-            initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),
+            initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),  # type: ignore
                 make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
         if input_shape is None:
-            inputs = []
+            inputs = []  # type: ignore
         else:
             inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),  # type: ignore
-                helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]  # type: ignore
+                helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
 
         graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
         return helper.make_model(graph)
