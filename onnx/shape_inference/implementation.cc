@@ -170,18 +170,15 @@ static void InferShapesImpl(
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
   unsigned int onnx_opset_count = 0;
-  // default initialzer can be used 
-  int opset_version = 9;
+
   // search onnx domain: empty or ai.onnx
   auto find_op = opset_imports.find("");
   if (find_op != opset_imports.end()) {
     ++onnx_opset_count;
-    opset_version = find_op->second;
   }
   find_op = opset_imports.find("ai.onnx");
   if (find_op != opset_imports.end()) {
     ++onnx_opset_count;
-    opset_version = find_op->second;
   }
   // whether graph is using ops from other domains
   bool use_other_domain = (onnx_opset_count != opset_imports.size());
@@ -202,6 +199,7 @@ static void InferShapesImpl(
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
+    // opsets from other domains are not applied by the new IR
     if (use_other_domain) {
       continue;
     }
@@ -226,7 +224,7 @@ static void InferShapesImpl(
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well    
-    else if (ir_version >= 4 && opset_version >= 9){
+    else if (ir_version >= 4){
       valueTypesByName[tp.name()]= initializerType;
       continue;
     }
