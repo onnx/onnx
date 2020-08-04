@@ -276,7 +276,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
             graph = helper.make_graph([], "my graph", [], [])
             return helper.make_model_gen_version(graph, opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
 
-        def test(opset_versions, ir_version):  # type: (int, int) -> None
+        def test(opset_versions, ir_version):  # type: (List[Tuple[Text, int]], int) -> None
             model = mk_model(opset_versions)
             self.assertEqual(model.ir_version, ir_version)
         # opset version 9 requires minimum ir_version 4
