@@ -112,7 +112,10 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Optional initial value of the hidden. If not specified - assumed "
         "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.Output(
         0,
         "Y",
@@ -529,7 +532,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Optional initial value of the cell. If not specified - assumed "
             "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             7,
             "P",
