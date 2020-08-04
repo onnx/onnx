@@ -200,6 +200,7 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     Returns:
         dict: the converted dictionary.
     """
+    key_list = []  # type: List[Any]
     if map.key_type == TensorProto.STRING:
         key_list = list(map.string_keys)
     else:
