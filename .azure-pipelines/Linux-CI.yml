@@ -62,7 +62,7 @@ jobs:
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
-      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON"
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
