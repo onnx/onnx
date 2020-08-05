@@ -65,6 +65,7 @@ linux_default: &linux_default
   - run:
       name: Test
       no_output_timeout: "1h"
+      build_environment: "ort1-py3.6"
       command: |
         docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -u jenkins $(cat .docker_pid) .circleci/test.sh
 
