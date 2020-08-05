@@ -3277,16 +3277,6 @@ class TestShapeInference(unittest.TestCase):
 
         self.not_infer_empty_input_from_initializer(original_model)
 
-    def test_infer_with_initializer_without_input_other_domain_opset(self):  # type: () -> None
-        # This is for testing models using opset from other domain: tensors must exist both in initializer and input
-        # So shape_inference should not make use of initializer shapes
-        initializer_shape = (8, 7)
-        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
-        new_import = original_model.opset_import.add()
-        new_import.domain = 'org.pytorch._caffe2'  # test opeset from other domain
-
-        self.not_infer_empty_input_from_initializer(original_model)
-
     def test_infer_initializer_input_mismatch(self):  # type: () -> None
         # Catch error if initializer and input mismatch
         initializer_shape = (8, 7)
