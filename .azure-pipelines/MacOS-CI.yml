@@ -79,6 +79,10 @@ jobs:
 
       git status
       git diff --exit-code
+      if [ $? -ne 0 ]; then
+        echo "git diff returned failures"
+        exit 1
+      fi
 
       # Do not hardcode onnx's namespace in the c++ source code, so that
       # other libraries who statically link with onnx can hide onnx symbols

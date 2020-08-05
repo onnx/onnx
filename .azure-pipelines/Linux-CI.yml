@@ -48,11 +48,11 @@ jobs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
       packageSpecs: 'python=$(python.version)'
+      installOptions: '-c conda-forge protobuf'
 
   - script: |
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
-      conda install -c anaconda -y protobuf
       python -m pip install numpy
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
@@ -93,6 +93,10 @@ jobs:
 
       git status
       git diff --exit-code
+      if [ $? -ne 0 ]; then
+        echo "git diff returned failures"
+        exit 1
+      fi
 
       # Do not hardcode onnx's namespace in the c++ source code, so that
       # other libraries who statically link with onnx can hide onnx symbols
