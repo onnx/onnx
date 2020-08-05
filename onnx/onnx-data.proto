@@ -100,3 +100,6 @@ message MapProto {
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE.
   optional SequenceProto values = 5;
 }
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
