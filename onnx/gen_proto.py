@@ -133,10 +133,8 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
 def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
-    if do_onnx_ml:
-        proto_base = "{}_{}-ml".format(stem, package_name) if need_rename else "{}-ml".format(stem)
-    else:
-        proto_base = "{}_{}".format(stem, package_name) if need_rename else "{}".format(stem)
+    t1, t2 = ("{}_{}-ml", "{}-ml") if do_onnx_ml else ("{}_{}", "{}")
+    proto_base = t1.format(stem, package_name) if need_rename else t2.format(stem)
     proto = qualify("{}.proto".format(proto_base), pardir=output)
     proto3 = qualify("{}.proto3".format(proto_base), pardir=output)
 
@@ -165,10 +163,8 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
                 os.remove(pb3_file)
 
         if need_rename:
-            if do_onnx_ml:
-                proto_header = qualify("{}-ml.pb.h".format(stem), pardir=output)
-            else:
-                proto_header = qualify("{}.pb.h".format(stem), pardir=output)
+            fname = "{}-ml.pb.h" if do_onnx_ml else "{}.pb.h"
+            proto_header = qualify(fname.format(stem), pardir=output)
             print("Writing {}".format(proto_header))
             with io.open(proto_header, 'w', newline='') as fout:
                 fout.write("#pragma once\n")
@@ -180,10 +176,8 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
     if need_rename:
         pb2_py = qualify('{}_pb2.py'.format(proto_base.replace('-', '_')), pardir=output)
     else:
-        if do_onnx_ml:
-            pb2_py = qualify('{}_ml_pb2.py'.format(stem.replace('-', '_')), pardir=output)
-        else:
-            pb2_py = qualify('{}_pb2.py'.format(stem.replace('-', '_')), pardir=output)
+        fname = '{}_ml_pb2.py' if do_onnx_ml else '{}_pb2.py'
+        pb2_py = qualify(fname.format(stem.replace('-', '_')), pardir=output)
 
     print('generating {}'.format(pb_py))
     with open(pb_py, 'w') as f:
