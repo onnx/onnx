@@ -126,7 +126,7 @@ jobs:
         ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
       fi
     displayName: 'Run ONNX tests'
-- script: |
+  - script: |
       export ONNX_ML=0
       
       # setup onnx as the submodule of pytorch
