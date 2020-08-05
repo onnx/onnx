@@ -246,22 +246,12 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
                         "for all values and therefore is not valid as a map.")
 
     value_seq = from_list(values)
-    if isinstance(values[0], np.ndarray):
-        value_type = SequenceProto.TENSOR
-    elif isinstance(values[0], list):
-        value_type = SequenceProto.SEQUENCE
-    elif isinstance(values[0], dict):
-        value_type = SequenceProto.MAP
-    else:
-        raise TypeError("The value type in the input dictionary is not a list, "
-                        "dictionary, or np.ndarray and is not supported.")
 
     map.key_type = key_type
     if key_type == TensorProto.STRING:
         map.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map.keys.extend(keys)
-    map.value_type = value_type
     map.values.CopyFrom(value_seq)
     return map
 

@@ -282,15 +282,6 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
         " is not allowed");
   }
 
-  enforce_has_field(map, value_type);
-  if (map.value_type() == SequenceProto::UNDEFINED) {
-    fail_check(
-        "setting value_type field (map name: ",
-        map.name(),
-        ") to UNDEFINED is not allowed");
-  }
-
-
   // MapProto will use either keys or string_keys, so only one should be > 0.
   if ((map.keys_size() > 0) && (map.string_keys_size() > 0)) {
     fail_check(
@@ -305,16 +296,16 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
   enforce_has_field(map, values);
   check_sequence(map.values(), ctx);
 
-  if (map.value_type() == SequenceProto::TENSOR) {
+  if (map.values().elem_type() == SequenceProto::TENSOR) {
     num_values = map.values().tensor_values_size();
   }
-  else if (map.value_type() == SequenceProto::SPARSE_TENSOR) {
+  else if (map.values().elem_type() == SequenceProto::SPARSE_TENSOR) {
     num_values = map.values().sparse_tensor_values_size();
   }
-  else if (map.value_type() == SequenceProto::SEQUENCE) {
+  else if (map.values().elem_type() == SequenceProto::SEQUENCE) {
     num_values = map.values().sequence_values_size();
   }
-  else if (map.value_type() == SequenceProto::MAP) {
+  else if (map.values().elem_type() == SequenceProto::MAP) {
     num_values = map.values().map_values_size();
   }
 

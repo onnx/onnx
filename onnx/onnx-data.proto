@@ -9,7 +9,7 @@
 syntax = "proto2";
 
 package onnx;
-import "onnx/onnx-ml.proto";
+import "onnx/onnx.proto";
 
 // This file contains the proto definitions for MapProto and
 // SequenceProto. These protos are used to represent the data structures
@@ -77,14 +77,5 @@ message MapProto {
   // string_keys below.
   repeated bytes string_keys = 4;
 
-  // The data type of the value.
-  // This field MUST have a valid SequenceProto.DataType value of
-  // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE
-  optional int32 value_type = 5;
-
   optional SequenceProto values = 6;
 }
-
-// For using protobuf-lite
-option optimize_for = LITE_RUNTIME;
-

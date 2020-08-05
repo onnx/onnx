@@ -209,7 +209,6 @@ def make_map(
         name,   # type: Text
         key_type,   # type: int
         keys,   # type: List[Any]
-        value_type,   # type: int
         values   # type: SequenceProto
 ):  # type: (...) -> MapProto
     '''
@@ -230,7 +229,6 @@ def make_map(
         map.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map.keys.extend(keys)
-    map.value_type = value_type
     map.values.CopyFrom(values)
     return map
 
