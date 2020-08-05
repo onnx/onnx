@@ -291,7 +291,7 @@ static void InferShapesImpl(
         valueTypesByName[n.output(i)] = existingType;
       }
     } catch (const std::runtime_error& err) {
-      std::cerr << getErrorWithNodeInfo(n, err);
+      std::cerr << getErrorWithNodeInfo(n, err) << std::endl;
       throw;
     }
   }
@@ -492,7 +492,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
   std::string op_name = n.has_name() ? n.name() : "no name";
-  return "(op_type:" + n.op_type() + ", name:" + op_name + "): " + err.what() + '\n';
+  return "(op_type:" + n.op_type() + ", name:" + op_name + "): " + err.what();
 }
 
 } // namespace shape_inference
