@@ -128,13 +128,13 @@ jobs:
     displayName: 'Run ONNX tests'
   - script: |
       export ONNX_ML=0
-      
+      export ONNX_DIR=$PWD
       # setup onnx as the submodule of pytorch
       cd ..
       git clone --recursive --quiet https://github.com/pytorch/pytorch.git
-      ONNX_DIR="pytorch/third_party/onnx"
-      rm -rf "$ONNX_DIR"
-      cp -r "$PWD/onnx" "$ONNX_DIR"
+      TORCH_ONNX_DIR="pytorch/third_party/onnx"
+      rm -rf "$TORCH_ONNX_DIR"
+      cp -r "$ONNX_DIR" "$TORCH_ONNX_DIR"
       
       # install ninja to speedup the build
       pip install ninja
