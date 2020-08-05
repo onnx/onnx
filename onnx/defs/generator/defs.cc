@@ -231,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
             // output.
-            if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            if (ctx.getInputType(0) != nullptr && ctx.getInputType(0)->tensor_type().has_shape()) {
               auto& input_shape = getInputShape(ctx, 0);
               auto input_shape_dim_size = input_shape.dim_size();
               if (input_shape_dim_size > 1) {
