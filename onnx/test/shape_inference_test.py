@@ -3232,6 +3232,33 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
+    def test_fft_ndim_one(self):  # type: () -> None
+        input_shape = (1, 10, 2)
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, input_shape)],
+            [make_node('FFT', ['X'], ['Y'])],
+            []
+        )
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, input_shape)])
+
+    def test_fft_ndim_two(self):  # type: () -> None
+        input_shape = (1, 10, 20, 2)
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, input_shape)],
+            [make_node('FFT', ['X'], ['Y'], signal_ndim=2)],
+            []
+        )
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, input_shape)])
+
+    def test_fft_ndim_three(self):  # type: () -> None
+        input_shape = (1, 10, 20, 30, 2)
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, input_shape)],
+            [make_node('FFT', ['X'], ['Y'], signal_ndim=3)],
+            []
+        )
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, input_shape)])
+
 
 if __name__ == '__main__':
     unittest.main()
