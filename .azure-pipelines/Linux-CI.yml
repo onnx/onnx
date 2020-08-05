@@ -126,3 +126,36 @@ jobs:
         ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
       fi
     displayName: 'Run ONNX tests'
+- script: |
+      export ONNX_ML=0
+      
+      # setup onnx as the submodule of pytorch
+      cd ..
+      git clone --recursive --quiet https://github.com/pytorch/pytorch.git
+      ONNX_DIR="pytorch/third_party/onnx"
+      rm -rf "$ONNX_DIR"
+      cp -r "$PWD/onnx" "$ONNX_DIR"
+      
+      # install ninja to speedup the build
+      pip install ninja
+
+      # install pytorch
+      cd pytorch
+      ./scripts/onnx/install-develop.sh
+      # install onnxruntime
+      pip install -i https://test.pypi.org/simple/ ort-nightly==1.3.1.dev202006254
+
+      # install new libturbojpeg for pytorch/vision
+      wget http://ftp.br.debian.org/debian/pool/main/libj/libjpeg-turbo/libturbojpeg0_1.5.2-2+b1_amd64.deb
+      sudo apt install ./libturbojpeg0_1.5.2-2+b1_amd64.deb -y
+
+      # install torchvision from master
+      # the one on pypi requires cuda
+      pip install -q git+https://github.com/pytorch/vision.git
+      ./scripts/onnx/test.sh
+      if [ $? -ne 0 ]; then
+        echo "pytorch/onnx tests failed"
+        exit 1
+      fi
+
+    displayName: 'Run pytorch/onnx tests'
