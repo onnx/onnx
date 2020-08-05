@@ -238,7 +238,7 @@ static void InferShapesImpl(
           continue;
         }
         // Continue with inference for remaining nodes
-        inference_errors.push_back(std::string(ex.what()));
+        inference_errors.push_back(getErrorWithNodeInfo(n, ex));
         continue;
       }
     } else if (schema->HasFunction()) {
@@ -253,7 +253,7 @@ static void InferShapesImpl(
           continue;
         }
         // Continue with inference for remaining nodes
-        inference_errors.push_back(std::string(function_ex.what()));
+        inference_errors.push_back(getErrorWithNodeInfo(n, function_ex));
         continue;
       }
     } else {
@@ -291,8 +291,7 @@ static void InferShapesImpl(
         valueTypesByName[n.output(i)] = existingType;
       }
     } catch (const std::runtime_error& err) {
-      std::string op_name = n.has_name() ? n.name() : "no name";
-      std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
+      std::cerr << getErrorWithNodeInfo(n, err);
       throw;
     }
   }
@@ -489,6 +488,11 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   }
 
   return graphOutputTypes;
+}
+
+std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
+  std::string op_name = n.has_name() ? n.name() : "no name";
+  return "(op_type:" + n.op_type() + ", name:" + op_name + "): " + err.what() + '\n';
 }
 
 } // namespace shape_inference

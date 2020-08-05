@@ -200,5 +200,7 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
 
+std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE
