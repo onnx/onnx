@@ -20,7 +20,6 @@ merge_with_master: &merge_with_master
 
       git checkout -f ${GIT_COMMIT}
       git reset --hard ${GIT_COMMIT}
-      git merge --no-edit --no-ff ${GIT_MERGE_TARGET}
     fi
 
 update_submodule: &update_submodule
