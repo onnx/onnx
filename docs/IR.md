@@ -185,13 +185,15 @@ input|ValueInfo[]|The input “parameters” of the graph, possibly initialized 
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
 
-Each main (top-level) graph MUST define the names, types and shapes of its inputs and outputs, which are specified as ‘value info’ structures. The main graph inputs and outputs are required to have a shape, indicating the rank, even though the exact dimensions need not be specified.
+ValueInfo has the following properties:
 
 Name|Type|Description
 |---|---|---|
 name|string|The name of the value/parameter.
 type|Type|The type of the value **including shape information**.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
+
+Each main (top-level) graph MUST define the names, types and shapes of its inputs and outputs, which are specified as ‘value info’ structures. The main graph inputs and outputs are required to have a shape, indicating the rank, even though the exact dimensions need not be specified.
 
 Nested subgraphs (specified as attribute values) MUST define the names of its inputs and outputs
 and MAY define the types of its inputs and outputs.
