@@ -49,7 +49,7 @@ python onnx/gen_proto.py -l --ml
 python onnx/backend/test/stat_coverage.py
 backend-test-tools generate-data
 git status
-git diff --exit-code
+git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
 
 # Do not hardcode onnx's namespace in the c++ source code, so that
 # other libraries who statically link with onnx can hide onnx symbols
