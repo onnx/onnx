@@ -228,6 +228,95 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_field
 }
 
+void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
+  enforce_has_field(sequence, elem_type);
+  if (sequence.elem_type() == SequenceProto::TENSOR) {
+    for (const TensorProto& tensor : sequence.tensor_values()) {
+      check_tensor(tensor, ctx);
+    }
+  }
+  else if (sequence.elem_type() == SequenceProto::SPARSE_TENSOR) {
+    for (const SparseTensorProto& sparse_tensor : sequence.sparse_tensor_values()) {
+      check_sparse_tensor(sparse_tensor, ctx);
+    }
+  }
+  else if (sequence.elem_type() == SequenceProto::SEQUENCE) {
+    for (const SequenceProto& seq : sequence.sequence_values()) {
+      check_sequence(seq, ctx);
+    }
+  }
+  else if (sequence.elem_type() == SequenceProto::MAP) {
+    for (const MapProto& map : sequence.map_values()) {
+      check_map(map, ctx);
+    }
+  } else {
+    fail_check(
+        "Sequence ( Structure name: ",
+        sequence.name(),
+        ", elem_type: ",
+        sequence.elem_type(),
+        ") is not have a valid element type.");
+  }
+}
+
+void check_map(const MapProto& map, const CheckerContext& ctx) {
+  enforce_has_field(map, key_type);
+  if (map.key_type() == TensorProto::UNDEFINED) {
+    fail_check(
+        "setting key_type field (map name: ",
+        map.name(),
+        ") to UNDEFINED is not allowed");
+  }
+  // Check if key is a valid type, specifically INT8, INT16, INT32, INT64,
+  // UINT8, UINT16, UINT32, UINT64, or STRING.
+  if ((map.key_type() == TensorProto::FLOAT) ||
+      (map.key_type() == TensorProto::BOOL) ||
+      (map.key_type() == TensorProto::FLOAT16) ||
+      (map.key_type() == TensorProto::COMPLEX64) ||
+      (map.key_type() == TensorProto::COMPLEX128)) {
+    fail_check(
+        "setting key_type field (map name: ",
+        map.name(),
+        ") to invalid TensorProto key_type ",
+        map.key_type(),
+        " is not allowed");
+  }
+
+  // MapProto will use either keys or string_keys, so only one should be > 0.
+  if ((map.keys_size() > 0) && (map.string_keys_size() > 0)) {
+    fail_check(
+        "Map (name: ",
+        map.name(),
+        ") should not contain more than one keys field.");
+  }
+
+  int num_keys = map.keys_size() + map.string_keys_size();
+  int num_values = 0;
+
+  enforce_has_field(map, values);
+  check_sequence(map.values(), ctx);
+
+  if (map.values().elem_type() == SequenceProto::TENSOR) {
+    num_values = map.values().tensor_values_size();
+  }
+  else if (map.values().elem_type() == SequenceProto::SPARSE_TENSOR) {
+    num_values = map.values().sparse_tensor_values_size();
+  }
+  else if (map.values().elem_type() == SequenceProto::SEQUENCE) {
+    num_values = map.values().sequence_values_size();
+  }
+  else if (map.values().elem_type() == SequenceProto::MAP) {
+    num_values = map.values().map_values_size();
+  }
+
+  if (num_keys != num_values){
+    fail_check(
+        "Length of map keys and map values are not the same (map name: ",
+        map.name(),
+        ")");
+  }
+}
+
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.
