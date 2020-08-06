@@ -8,9 +8,10 @@ import numbers
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
-    NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
-import onnx.defs as defs
+from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
+    TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
+    TypeProto, SequenceProto, MapProto, IR_VERSION
+from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
@@ -248,6 +249,50 @@ def make_sparse_tensor(
     sparse.indices.CopyFrom(indices)
     sparse.dims.extend(dims)
     return sparse
+
+
+def make_sequence(
+        name,   # type: Text
+        elem_type,   # type: int
+        values,   # type: Sequence[Any]
+):  # type: (...) -> SequenceProto
+    '''
+    Make a Sequence with specified value arguments.
+    '''
+    sequence = SequenceProto()
+    sequence.name = name
+    sequence.elem_type = elem_type
+    values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    getattr(sequence, values_field).CopyFrom(values)
+    return sequence
+
+
+def make_map(
+        name,   # type: Text
+        key_type,   # type: int
+        keys,   # type: List[Any]
+        values   # type: SequenceProto
+):  # type: (...) -> MapProto
+    '''
+    Make a Map with specified key-value pair arguments.
+
+    Criteria for conversion:
+    - Keys and Values must have the same number of elements
+    - Every key in keys must be of the same type
+    - Every value in values must be of the same type
+    '''
+    map = MapProto()
+    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32,
+                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16,
+                           TensorProto.UINT32, TensorProto.UINT64]
+    map.name = name
+    map.key_type = key_type
+    if key_type == TensorProto.STRING:
+        map.string_keys.extend(keys)
+    elif key_type in valid_key_int_types:
+        map.keys.extend(keys)
+    map.values.CopyFrom(values)
+    return map
 
 
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
