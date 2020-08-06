@@ -42,19 +42,18 @@ jobs:
   steps:
   - script: sudo install -d -m 0777 /home/vsts/.conda/envs
     displayName: Fix Conda permissions
-    
+
   - task: CondaEnvironment@1
     inputs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version) protobuf'
+      packageSpecs: 'python=$(python.version)'
+      installOptions: '-c conda-forge protobuf'
 
   - script: |
       python -m pip install --upgrade pip
-      conda config --set always_yes yes --set changeps1 no
-      conda install -c conda-forge protobuf
-      conda list
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
+      sudo apt-get install -y --no-install-recommends protobuf-compiler libprotoc-dev
       python -m pip install numpy
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
