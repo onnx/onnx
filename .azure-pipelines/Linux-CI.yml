@@ -48,7 +48,9 @@ jobs:
 
   - script: |
       python -m pip install --upgrade pip
+      conda config --set always_yes yes --set changeps1 no
       conda install -c conda-forge protobuf
+      conda list
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
       git submodule update --init --recursive
