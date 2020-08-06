@@ -10840,7 +10840,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>x</tt> : T</dt>
 <dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : T2</dt>
-<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+<dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
 </dl>
 
 #### Outputs

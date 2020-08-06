@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import sys
 import re
 
-from typing import List, Text, Sequence, Any
+from typing import List, Text, Sequence, Any, Union
 import numpy as np  # type: ignore
 
 import onnx
@@ -101,11 +101,19 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     return node_list
 
 
-def _extract_value_info(arr, name, ele_type=None):  # type: (np.ndarray, Text, np.dtype) -> onnx.ValueInfoProto
+def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], np.ndarray], Text, np.dtype) -> onnx.ValueInfoProto
+    if isinstance(input, list):
+        # TODO: Account for recursive sequence case. Right now, this function supports
+        # Sequences of Tensors.
+        return onnx.helper.make_sequence_value_info(
+            name=name,
+            elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
+            shape=None
+        )
     return onnx.helper.make_tensor_value_info(
         name=name,
-        elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
-        shape=arr.shape)
+        elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
+        shape=input.shape)
 
 
 def expect(node,  # type: onnx.NodeProto
