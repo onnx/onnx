@@ -67,5 +67,5 @@ jobs:
       pip install --quiet -e .[mypy]
       python setup.py typecheck
 
-      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+      git diff --exit-code  -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
     displayName: Install and test ONNX
