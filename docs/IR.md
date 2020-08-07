@@ -372,9 +372,9 @@ Which is referenced by the Tensor type message:
   }
 ```
 
-The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for a node input, a tensor value of any shape may be passed from the caller. When the shape property is absent in the type of a value, it indicates that the corresponding runtime value
-may have any shape. However, types with a missing shape are not permitted in all contexts. In particular,
-the inputs and outputs of a model (top-level graphs) are required to *have* a shape, indicating the rank of inputs and outputs,
+The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. This sub-section describes how to interpret a missing-shape or a shape with missing dimensions etc.
+However, specific usage contexts may impose further constraints on a type and shape.
+For example, the inputs and outputs of a model (top-level graph) are required to *have* a shape, indicating the rank of inputs and outputs,
 even though the exact dimensions need not be specified.
 
 Each size in the list MAY be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. A dimension MAY have neither dim_value nor dim_param set. Such a dimension represents an unknown dimension unrelated to other unknown dimensions.
