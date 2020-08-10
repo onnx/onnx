@@ -43,10 +43,9 @@ jobs:
   - script: sudo install -d -m 0777 /home/vsts/.conda/envs
     displayName: Fix Conda permissions
 
-  - bash: |
-      conda init bash
+  - script: |
       conda create -y -q -n 'py$(python.version)' 'python=$(python.version)'
-      conda activate 'py$(python.version)'
+      call activate 'py$(python.version)'
       conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
     displayName: Create Conda env
 
