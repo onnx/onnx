@@ -882,7 +882,7 @@ private:
       return std::find(initializer_names_.begin(), initializer_names_.end(), name) != initializer_names_.end();
   }
   size_t getNextUnique() {
-      std::string next_unique_name = ONNX_NAMESPACE::to_string(next_unique_);
+      std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
       while(isNameInAnyInitializer(next_unique_name) || isNameInAnyNode(next_unique_name)) {
           next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
       }
