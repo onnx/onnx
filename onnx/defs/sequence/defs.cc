@@ -255,8 +255,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if(nullptr == input0_type) {
               fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
           }
-          auto elem_type = input0_type->sequence_type().elem_type().tensor_type().elem_type();
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(elem_type);
+          ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
         }));
 
 static const char* SequenceErase_ver11_doc = R"DOC(
