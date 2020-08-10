@@ -40,9 +40,9 @@ jobs:
     maxParallel: 6
 
   steps:
-    - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
-      displayName: 'Add conda to PATH'
-
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: 'Add conda to PATH'
+    
   - script: |
       conda create -y -q -n 'py$(python.version)' 'python=$(python.version)'
       call activate 'py$(python.version)'
