@@ -40,20 +40,14 @@ jobs:
     maxParallel: 6
 
   steps:
-  - script: sudo install -d -m 0777 /home/vsts/.conda/envs
-    displayName: Fix Conda permissions
-
-  - task: CondaEnvironment@1
-    inputs:
-      createCustomEnvironment: true
-      environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version)'
-      installOptions: '-c conda-forge protobuf'
+  - script: script: conda create --yes --quiet --name py$(python.version) python=$(python.version)
+    displayName: Create Anaconda environment
 
   - script: |
+      call activate py$(python.version)
+      conda install --yes --quiet --name py$(python.version) -c conda-forge protobuf
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
-      sudo apt-get install -y --no-install-recommends protobuf-compiler libprotoc-dev
       python -m pip install numpy
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
@@ -72,6 +66,7 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
+      call activate py$(python.version)
       # lint python code
       pip install --quiet flake8
       flake8
