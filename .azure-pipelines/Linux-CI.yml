@@ -42,11 +42,15 @@ jobs:
   steps:
   - script: sudo install -d -m 0777 /home/vsts/.conda/envs
     displayName: Fix Conda permissions
-    
-  - script: |
+
+  - bash: |
+      conda init bash
       conda create -y -q -n 'py$(python.version)' 'python=$(python.version)'
       conda activate 'py$(python.version)'
       conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
+    displayName: Create Conda env
+
+    - script: |
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
