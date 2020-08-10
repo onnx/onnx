@@ -3272,7 +3272,8 @@ class TestShapeInference(unittest.TestCase):
         # This is for testing IR<4: tensors must exist both in initializer and input
         # So shape_inference should not make use of initializer shapes
         initializer_shape = (8, 7)
-        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
+        input_shape = None
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         original_model.ir_version = 3  # test ir_version < 4
 
         self.not_infer_empty_input_from_initializer(original_model)
@@ -3280,7 +3281,7 @@ class TestShapeInference(unittest.TestCase):
     def test_infer_initializer_input_mismatch(self):  # type: () -> None
         # Catch error if initializer and input mismatch
         initializer_shape = (8, 7)
-        input_shape = (-4, 3)
+        input_shape = (4, 3)
         original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         # Inferred shape and existing shape differ in dimension 0
         self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)

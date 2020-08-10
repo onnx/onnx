@@ -200,5 +200,7 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
 
+void deleteCreatedTensors(std::vector<TypeProto*> initializerTypeList);
+
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

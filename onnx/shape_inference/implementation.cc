@@ -184,6 +184,8 @@ static void InferShapesImpl(
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
+  // save for free memory
+  std::vector<TypeProto*> initializerTypeList; 
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
     // Consider the tensors from the initializer
@@ -192,7 +194,7 @@ static void InferShapesImpl(
     // set the shape according to the initializer shape info
     // if the shape info of initializer is not empty 
     if (tp.dims_size() != 0) {
-      initializerTensorType->set_elem_type(tp.data_type()); // TensorProto_DataType_FLOAT
+      initializerTensorType->set_elem_type(tp.data_type());
       TensorShapeProto* shape = initializerTensorType->mutable_shape();
       for (int i = 0 ; i < tp.dims_size(); ++i) {
         shape->add_dim()->set_dim_value(tp.dims(i)); 
@@ -209,6 +211,7 @@ static void InferShapesImpl(
     // Store initializer shape info in value_info as well    
     else if (ir_version >= 4){
       valueTypesByName[tp.name()]= initializerType;
+      initializerTypeList.push_back(initializerType);
       continue;
     }
     delete(initializerType);
@@ -307,9 +310,11 @@ static void InferShapesImpl(
     } catch (const std::runtime_error& err) {
       std::string op_name = n.has_name() ? n.name() : "no name";
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
+      deleteCreatedTensors(initializerTypeList);
       throw;
     }
   }
+  deleteCreatedTensors(initializerTypeList);
 }
 
 void InferShapes(
@@ -501,6 +506,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   return graphOutputTypes;
 }
-
+void deleteCreatedTensors(std::vector<TypeProto*> initializerTypeList) {
+  for (TypeProto* initializerType: initializerTypeList) {
+    delete(initializerType);
+  }
+}
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE
