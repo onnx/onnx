@@ -41,6 +41,7 @@ jobs:
 
   steps:
   - script: |
+      conda init
       conda create -y -q -n 'py$(python.version)' 'python=$(python.version)'
       conda activate 'py$(python.version)'
       conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
