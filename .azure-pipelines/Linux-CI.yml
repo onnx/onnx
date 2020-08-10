@@ -40,12 +40,10 @@ jobs:
     maxParallel: 6
 
   steps:
-  - script: script: conda create --yes --quiet --name 'py$(python.version)' 'python=$(python.version)''
-    displayName: Create Anaconda environment
-
   - script: |
-      call activate py$(python.version)
-      conda install --yes --quiet --name 'py$(python.version)' -c conda-forge protobuf
+      conda create -y -q -n 'py$(python.version)' 'python=$(python.version)'
+      conda activate 'py$(python.version)'
+      conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
