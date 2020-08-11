@@ -48,6 +48,7 @@ jobs:
       conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
       source activate 'py$(python.version)'
       if [ '$(onnx_lite)' == '1' ]; then
+        sudo apt-get update
         sudo apt-get install libprotobuf-lite10
       fi
       python -m pip install --upgrade pip
