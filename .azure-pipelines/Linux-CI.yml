@@ -45,7 +45,7 @@ jobs:
 
   - script: |
       conda create -y -q -n 'py$(python.version)' python=$(python.version)
-      conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
+      conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf libprotobuf=3.11.3
       source activate 'py$(python.version)'
       conda list
       python -m pip install --upgrade pip
