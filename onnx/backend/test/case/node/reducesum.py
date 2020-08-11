@@ -130,7 +130,9 @@ class ReduceSum(Base):
             'ReduceSum',
             inputs=['data', 'axes'],
             outputs=['reduced'],
-            keepdims=keepdims)
+            keepdims=keepdims,
+            axes=[0],  # should be ignored
+            )
 
         data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)        
         axes = np.array([1], dtype=np.int64) 

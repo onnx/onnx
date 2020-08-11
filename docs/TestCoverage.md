@@ -9238,7 +9238,9 @@ node = onnx.helper.make_node(
     'ReduceSum',
     inputs=['data', 'axes'],
     outputs=['reduced'],
-    keepdims=keepdims)
+    keepdims=keepdims,
+    axes=[0],  # should be ignored
+    )
 
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)        
 axes = np.array([1], dtype=np.int64) 
@@ -12623,6 +12625,7 @@ node = onnx.helper.make_node(
     inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
     axis=1,
+    split=[3, 3]  # should be ignored
 )
 
 expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
@@ -12736,6 +12739,7 @@ node = onnx.helper.make_node(
     'Squeeze',
     inputs=['x', 'axes'],
     outputs=['y'],
+    axes=[1],  # should be ignored
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
 axes = np.array([0], dtype=np.int64)
@@ -13640,7 +13644,7 @@ node = onnx.helper.make_node(
     'Unsqueeze',
     inputs=['x', 'axes'],
     outputs=['y'],
-
+    axes=[0],  # should be ignored
 )
 y = np.expand_dims(x, axis=1)
 y = np.expand_dims(y, axis=4)

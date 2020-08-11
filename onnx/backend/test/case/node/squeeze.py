@@ -45,6 +45,7 @@ class Squeeze(Base):
             'Squeeze',
             inputs=['x', 'axes'],
             outputs=['y'],
+            axes=[1],  # should be ignored
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
         axes = np.array([0], dtype=np.int64)

@@ -117,6 +117,7 @@ class Split(Base):
             inputs=['input', 'split'],
             outputs=['output_1', 'output_2'],
             axis=1,
+            split=[3, 3]  # should be ignored
         )
 
         expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),

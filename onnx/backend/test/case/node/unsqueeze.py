@@ -100,7 +100,7 @@ class Unsqueeze(Base):
             'Unsqueeze',
             inputs=['x', 'axes'],
             outputs=['y'],
-            
+            axes=[0],  # should be ignored
         )
         y = np.expand_dims(x, axis=1)
         y = np.expand_dims(y, axis=4)
