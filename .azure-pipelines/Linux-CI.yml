@@ -46,7 +46,8 @@ jobs:
   - script: |
       conda create -y -q -n 'py$(python.version)' python=$(python.version) -c conda-forge protobuf
       source activate 'py$(python.version)'
-      sudo apt list | grep protobuf
+      sudo apt list
+      conda list
       protoc --version
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
