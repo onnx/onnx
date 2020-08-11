@@ -42,7 +42,7 @@ jobs:
   steps:
   - script: |
       sudo apt-get install virtualenv
-      python -m venv py$(python.version) -p 'python$(python.version)'
+      python -m virtualenv py$(python.version) -p 'python$(python.version)'
       source py$(python.version)/bin/activate
       sudo apt-get install protobuf protobuf-compiler libprotoc-dev
       python -m pip install --upgrade pip
