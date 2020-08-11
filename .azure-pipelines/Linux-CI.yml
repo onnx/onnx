@@ -40,16 +40,19 @@ jobs:
     maxParallel: 6
 
   steps:
-  - bash: echo "##vso[task.prependpath]$CONDA/bin"
-    displayName: Add conda to PATH
+  - script: sudo install -d -m 0777 /home/vsts/.conda/envs
+    displayName: Fix Conda permissions
+  
+  - task: CondaEnvironment@1
+    inputs:
+      createCustomEnvironment: true
+      environmentName: 'py$(python.version)'
+      packageSpecs: 'python=$(python.version) protobuf=3.11.3 libprotobuf=3.11.3'
 
   - script: |
-      conda create -y -q -n 'py$(python.version)' python=$(python.version)
-      conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
       source activate 'py$(python.version)'
       conda list
       protoc --version
-      echo $PATH
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
