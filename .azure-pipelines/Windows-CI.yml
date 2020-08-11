@@ -41,7 +41,9 @@ jobs:
   - script: |
       call activate py$(python.version)
       python -m pip install --upgrade pip
-      python -m pip install --quiet pytest nbval numpy
+      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
+      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
+      python -m pip install --quiet pytest==5.4.3 nbval numpy
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
@@ -52,6 +54,11 @@ jobs:
 
       python setup.py --quiet install
       pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed"
+        EXIT 1
+      )
+
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
