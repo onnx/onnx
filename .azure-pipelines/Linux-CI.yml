@@ -74,7 +74,7 @@ jobs:
       
       # lint python code
       pip install --quiet flake8
-      flake8
+      flake8 onnx
       if [ $? -ne 0 ]; then
         echo "flake8 returned failures"
         exit 1
