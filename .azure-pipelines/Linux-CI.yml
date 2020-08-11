@@ -40,8 +40,8 @@ jobs:
     maxParallel: 6
 
   steps:
-  - script: sudo install -d -m 0777 /home/vsts/.conda/envs
-    displayName: Fix Conda permissions
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
 
   - script: |
       conda create -y -q -n py$(python.version) python=$(python.version)
