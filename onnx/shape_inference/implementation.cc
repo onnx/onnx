@@ -159,9 +159,10 @@ static void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
-    const std::unordered_map<std::string, int>& opset_imports,
-    bool check_type,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    const std::unordered_map<std::string, int>& opset_imports, 
+    const bool check_type,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const int ir_version = IR_VERSION  // default the latest one
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
@@ -183,8 +184,37 @@ static void InferShapesImpl(
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
+  // save for free memory
+  std::vector<TypeProto*> initializerTypeList; 
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
+    // Consider the tensors from the initializer
+    TypeProto *initializerType = new TypeProto();
+    TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
+    // set the shape according to the initializer shape info
+    // if the shape info of initializer is not empty 
+    if (tp.dims_size() != 0) {
+      initializerTensorType->set_elem_type(tp.data_type());
+      TensorShapeProto* shape = initializerTensorType->mutable_shape();
+      for (int i = 0 ; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i)); 
+      }
+    }
+    auto iter = valueTypesByName.find(tp.name());
+    // If it already exists in input, check input and initializer is sync
+    // use shape info from input (input has priority over initializer)
+    if (iter != valueTypesByName.end()) {
+        checkShapesAndTypes(*initializerTensorType, *valueTypesByName[tp.name()]->mutable_tensor_type());
+    }
+    // Support IR>=4: some tensors can only exist in initializer and not in input
+    // So shape_inference should make use of initializer shapes
+    // Store initializer shape info in value_info as well    
+    else if (ir_version >= 4){
+      valueTypesByName[tp.name()]= initializerType;
+      initializerTypeList.push_back(initializerType);
+      continue;
+    }
+    delete(initializerType);
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
@@ -199,7 +229,7 @@ static void InferShapesImpl(
           }
       }
   }
-
+  
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -280,15 +310,17 @@ static void InferShapesImpl(
     } catch (const std::runtime_error& err) {
       std::string op_name = n.has_name() ? n.name() : "no name";
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
+      deleteCreatedTypes(initializerTypeList);
       throw;
     }
   }
+  deleteCreatedTypes(initializerTypeList);
 }
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    bool check_type,
+    const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   InferShapesImpl(
@@ -301,7 +333,7 @@ void InferShapes(
 
 void InferShapes(
     ModelProto& m,
-    bool check_type,
+    const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   std::unordered_map<std::string, int> opset_imports;
@@ -315,7 +347,8 @@ void InferShapes(
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       check_type,
-      schema_registry);
+      schema_registry,
+      m.ir_version());
 }
 
 void InferShapeForFunctionNode(
@@ -473,6 +506,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   return graphOutputTypes;
 }
-
+void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList) {
+  for (TypeProto* initializerType: initializerTypeList) {
+    delete(initializerType);
+  }
+}
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE
