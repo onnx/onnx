@@ -43,7 +43,7 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
-      addToPath: true 
+      addToPath: true
 
   - script: |
       python -m pip install --upgrade pip
@@ -71,7 +71,7 @@ jobs:
 
   - script: |
       source py$(python.version)/bin/activate
-      
+
       # lint python code
       pip install --quiet flake8
       flake8 onnx
