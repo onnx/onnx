@@ -47,10 +47,7 @@ jobs:
       conda create -y -q -n 'py$(python.version)' python=$(python.version)
       conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
       source activate 'py$(python.version)'
-      if [ '$(onnx_lite)' == '1' ]; then
-        sudo apt-get update
-        sudo apt-get install libprotobuf-lite10
-      fi
+      conda list
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
