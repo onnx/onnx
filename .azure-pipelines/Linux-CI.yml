@@ -40,9 +40,14 @@ jobs:
     maxParallel: 6
 
   steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      addToPath: true 
+
   - script: |
       sudo apt-get install virtualenv
-      python$(python.version) -m virtualenv py$(python.version)
+      python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
       sudo apt-get install protobuf protobuf-compiler libprotoc-dev
       python -m pip install --upgrade pip
