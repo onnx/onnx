@@ -465,6 +465,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            1,
+            "split",
+            "Optional length of each output. "
+            "See attribute 'split' for details."
+            "Attribute value is ignored if both input and attribute are specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "outputs",
@@ -485,7 +496,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr(
+            "split",
+            "length of each output. Values should be >= 0.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
         .SetDoc(Split_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -524,7 +539,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          if (getRepeatedAttribute(ctx, "split", split)) {
+          size_t num_inputs = ctx.getNumInputs();
+          if (num_inputs == 2) { //'split' is input
+            auto split_proto = ctx.getInputData(1);
+            if (split_proto == nullptr) {
+              // skip if split is not an initializer
+              return;
+            }
+            split = ParseData<int64_t>(split_proto);
+          } else if (getRepeatedAttribute(ctx, "split", split)) {
+            //'split' is attribute
             if (split.size() != ctx.getNumOutputs()) {
               fail_shape_inference(
                   "Mismatch between number of splits (",
@@ -545,7 +569,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   split_dim_value,
                   ")");
             }
-          } else {
+          } else { //neither input or attribute value available for 'split'
             int num_outputs = static_cast<int>(ctx.getNumOutputs());
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
@@ -1553,6 +1577,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tensors with at least max(dims) dimensions.",
             "T",
             OpSchema::Single)
+        .Input(
+            1,
+            "axes",
+            "Axes to squeeze. "
+            "Refer the attribute 'axes' for details. "
+            "Attribute value will be ignored if both input and attribute are specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "squeezed",
@@ -1570,8 +1605,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
-            return;
+          size_t num_inputs = ctx.getNumInputs();
+          if (num_inputs == 2) { //'axes' is input
+            auto axes_proto = ctx.getInputData(1);
+            if (axes_proto == nullptr) {
+              // skip if axes is not an initializer
+              return;
+            }
+            axes = ParseData<int64_t>(axes_proto);
+          } else { //'axes' is attribute
+            if (!getRepeatedAttribute(ctx, "axes", axes)) {
+              return;
+            }
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -1639,6 +1684,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            1,
+            "axes",
+            "Axes to unsqueeze. "
+            "Refer the attribute 'axes' for details. "
+            "Attribute value will be ignored if both input and attribute are specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "expanded",
@@ -1659,10 +1715,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
-            return;
+          size_t num_inputs = ctx.getNumInputs();
+          if (num_inputs == 2) { //'axes' is input
+            auto axes_proto = ctx.getInputData(1);
+            if (axes_proto == nullptr) {
+              // skip if axes is not an initializer
+              return;
+            }
+            axes = ParseData<int64_t>(axes_proto);
+          } else { //'axes' is attribute
+            if (!getRepeatedAttribute(ctx, "axes", axes)) {
+              return;
+            }
           }
-
           // validate 'axes' for duplicate entries
           std::unordered_set<int64_t> unique_values;
           for (const auto val : axes) {

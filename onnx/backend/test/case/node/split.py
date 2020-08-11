@@ -105,3 +105,22 @@ class Split(Base):
 
         expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
         expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
+
+    @staticmethod
+    def export_2d_split_input():  # type: () -> None
+        input = np.array([[1., 2., 3., 4., 5., 6.],
+                          [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
+        split = np.array([2, 4]).astype(np.int64)
+
+        node = onnx.helper.make_node(
+            'Split',
+            inputs=['input', 'split'],
+            outputs=['output_1', 'output_2'],
+            axis=1,
+        )
+
+        expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
+                            np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
+
+        expect(node, inputs=[input, split], outputs=[
+               y for y in expected_outputs], name='test_split_input_variable_parts_2d')

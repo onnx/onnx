@@ -17206,13 +17206,17 @@ This version of the operator has been available since version 13 of the default 
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes.When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. See attribute 'axes' for details. Attribute 'axes' is ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs
@@ -18251,11 +18255,13 @@ This version of the operator has been available since version 13 of the default 
 <dd>length of each output. Values should be >= 0.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional length of each output. See attribute 'split' for details.Attribute value is ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -18321,11 +18327,13 @@ This version of the operator has been available since version 13 of the default 
 <dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Axes to squeeze. Refer the attribute 'axes' for details. Attribute value will be ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs
@@ -18534,11 +18542,13 @@ This version of the operator has been available since version 13 of the default 
 <dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Axes to unsqueeze. Refer the attribute 'axes' for details. Attribute value will be ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs

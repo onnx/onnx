@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <functional>
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -22,7 +23,8 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(
 
 std::function<void(OpSchema&)> ReduceDocGenerator(
     const char* name,
-    bool supports_8bit_datatypes = false) {
+    bool supports_8bit_datatypes = false,
+    bool axes_input = false) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -46,6 +48,23 @@ False instead of True.)DOC";
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(0, "data", "An input tensor.", "T");
+    if (axes_input) {
+      schema.Attr(
+          "noop_with_empty_axes",
+          "Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes."
+          "When axes is empty and this attribute is set to true, input tensor will not be reduced,"
+          "and the output tensor would be equivalent to input tensor.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0));
+      schema.Input(
+          1,
+          "axes",
+          "Optional input list of integers, along which to reduce. "
+          "See attribute 'axes' for details. "
+          "Attribute 'axes' is ignored if both input and attribute are specified.",
+          "tensor(int64)",
+          OpSchema::Optional);
+    }
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
@@ -69,10 +88,21 @@ False instead of True.)DOC";
       auto output_shape =
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
-      auto axes_proto = ctx.getAttribute("axes");
-      if (axes_proto)
-        axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
-
+      size_t num_inputs = ctx.getNumInputs();
+      if (num_inputs == 1) {
+        auto axes_proto = ctx.getAttribute("axes");
+        if (axes_proto) {
+          axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
+        }
+      } else if (num_inputs == 2) { // axes is input
+        auto axes_proto = ctx.getInputData(1);
+        if (axes_proto == nullptr) {
+          // skip if axes is not an initializer
+          return;
+        }
+        std::vector<int64_t> axes_values = ParseData<int64_t>(axes_proto);
+        axes.assign(axes_values.begin(), axes_values.end());
+      }
       for (size_t i = 0; i < axes.size(); ++i) {
         if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
           fail_shape_inference(
@@ -81,7 +111,6 @@ False instead of True.)DOC";
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
-      // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() &&
@@ -112,7 +141,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,
     13,
-    OpSchema().FillUsing(ReduceDocGenerator("sum")));
+    OpSchema().FillUsing(ReduceDocGenerator("sum", false, true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSumSquare,

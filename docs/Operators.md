@@ -14747,13 +14747,17 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes.When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. See attribute 'axes' for details. Attribute 'axes' is ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs
@@ -14772,6 +14776,39 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 
 
 #### Examples
+
+<details>
+<summary>axes_input_no_keepdims</summary>
+
+```python
+shape = [3, 2, 2]
+keepdims = 0
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data', 'axes'],
+    outputs=['reduced'],
+    keepdims=keepdims)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)        
+axes = np.array([1], dtype=np.int64) 
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+#print(reduced)
+#[[4., 6.]
+# [12., 14.]
+# [20., 22.]]
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_axes_input_no_keepdims_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_axes_input_no_keepdims_random')
+```
+
+</details>
+
 
 <details>
 <summary>default_axes_keepdims</summary>
@@ -14833,6 +14870,38 @@ data = np.random.uniform(-10, 10, shape).astype(np.float32)
 reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_do_not_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>empty_axes_input_noop</summary>
+
+```python
+shape = [3, 2, 2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data', 'axes'],
+    outputs=['reduced'],
+    keepdims=keepdims,
+    noop_with_empty_axes=True)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+axes = np.array([], dtype=np.int64) 
+reduced = np.array(data)
+#print(reduced)
+#[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_empty_axes_input_noop_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.array(data)
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_empty_axes_input_noop_random')
 ```
 
 </details>
@@ -20194,11 +20263,13 @@ Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="
 <dd>length of each output. Values should be >= 0.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional length of each output. See attribute 'split' for details.Attribute value is ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -20280,6 +20351,31 @@ expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
                     np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
+```
+
+</details>
+
+
+<details>
+<summary>2d_split_input</summary>
+
+```python
+input = np.array([[1., 2., 3., 4., 5., 6.],
+                  [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
+split = np.array([2, 4]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input', 'split'],
+    outputs=['output_1', 'output_2'],
+    axis=1,
+)
+
+expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
+                    np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
+
+expect(node, inputs=[input, split], outputs=[
+       y for y in expected_outputs], name='test_split_input_variable_parts_2d')
 ```
 
 </details>
@@ -20470,11 +20566,13 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href
 <dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Axes to squeeze. Refer the attribute 'axes' for details. Attribute value will be ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs
@@ -20509,6 +20607,26 @@ y = np.squeeze(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_squeeze')
+```
+
+</details>
+
+
+<details>
+<summary>squeeze_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Squeeze',
+    inputs=['x', 'axes'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+axes = np.array([0], dtype=np.int64)
+y = np.squeeze(x, axis=0)
+
+expect(node, inputs=[x, axes], outputs=[y],
+    name='test_squeeze_axes_input')
 ```
 
 </details>
@@ -22024,11 +22142,13 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 <dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Axes to unsqueeze. Refer the attribute 'axes' for details. Attribute value will be ignored if both input and attribute are specified.</dd>
 </dl>
 
 #### Outputs
@@ -22047,6 +22167,29 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 
 
 #### Examples
+
+<details>
+<summary>unsqueeze_input</summary>
+
+```python
+x = np.random.randn(3, 4, 5).astype(np.float32)
+axes=np.array([1, 4]).astype(np.int64)
+
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x', 'axes'],
+    outputs=['y'],
+
+)
+y = np.expand_dims(x, axis=1)
+y = np.expand_dims(y, axis=4)
+
+expect(node, inputs=[x, axes], outputs=[y],
+       name='test_unsqueeze_axes_input')
+```
+
+</details>
+
 
 <details>
 <summary>unsqueeze_negative_axes</summary>
