@@ -40,20 +40,16 @@ jobs:
     maxParallel: 6
 
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-
-  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
 
-  - script: conda create --yes --quiet --name py$(python.version) -c conda-forge python=$(python.version) numpy libprotobuf=3.11.3 protobuf
-    displayName: Create Anaconda environment
-
   - script: |
-      source activate py$(python.version)
+      conda create -y -q -n 'py$(python.version)' python=$(python.version)
+      conda install -y -q -n 'py$(python.version)' -c conda-forge protobuf
+      source activate 'py$(python.version)'
       conda list
       protoc --version
+      echo $PATH
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
@@ -74,7 +70,7 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      source activate py$(python.version)
+      source activate 'py$(python.version)'
       # lint python code
       pip install --quiet flake8
       flake8
