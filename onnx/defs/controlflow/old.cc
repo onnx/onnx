@@ -1406,4 +1406,129 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction1));
 
+void IfInferenceFunction_11(InferenceContext& ctx) {
+  // there are no inputs so we just need to run the subgraph inferencing for
+  // then/else subgraphs and apply those to the outputs.
+  std::vector<const TypeProto*> subgraph_input_types; // none
+  std::vector<const TensorProto*> input_data; // none
+
+  std::vector<const TypeProto*> then_output_types;
+  std::vector<const TypeProto*> else_output_types;
+
+  // Run inferencing on the subgraph
+  GraphInferencer* graphInferencer =
+      ctx.getGraphAttributeInferencer("then_branch");
+  if (graphInferencer) {
+    then_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
+  if (graphInferencer) {
+    else_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  auto num_outputs = ctx.getNumOutputs();
+  auto num_then_outputs = then_output_types.size();
+  auto num_else_outputs = else_output_types.size();
+
+  // the output types for then and else should be the same
+  if (num_then_outputs != num_else_outputs) {
+    fail_type_inference(
+        "then_branch and else_branch produce different number of outputs. ",
+        num_then_outputs,
+        " != ",
+        num_else_outputs);
+  }
+
+  if (num_then_outputs != num_outputs) {
+    fail_type_inference(
+        "If node has ",
+        num_outputs,
+        " but subgraphs produce ",
+        num_then_outputs);
+  }
+
+  for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
+    auto then_output = then_output_types[i];
+    auto else_output = else_output_types[i];
+
+    if (then_output->value_case() != else_output->value_case()) {
+      fail_type_inference(
+          "Mismatched type for output ",
+          i,
+          " then=",
+          then_output->value_case(),
+          " else=",
+          else_output->value_case());
+    }
+
+    auto* if_output = ctx.getOutputType(i);
+    *if_output = *then_output;
+
+    if (then_output->has_tensor_type()) {
+      auto then_elem_type = then_output->tensor_type().elem_type();
+      auto else_elem_type = else_output->tensor_type().elem_type();
+
+      if (then_elem_type != else_elem_type) {
+        fail_type_inference(
+            "Mismatched tensor element type for output ",
+            i,
+            " then=",
+            then_elem_type,
+            " else=",
+            else_elem_type);
+      }
+
+      UnionShapeInfo(
+          else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
+    }
+  }
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    If,
+    11,
+    OpSchema()
+        .SetDoc("If conditional")
+        .Input(0, "cond", "Condition for the if", "B")
+        .Output(
+            0,
+            "outputs",
+            "Values that are live-out to the enclosing scope. The return values in "
+            "the `then_branch` and `else_branch` must be of the same data type. "
+            "The `then_branch` and `else_branch` may produce tensors with the same "
+            "element type and different shapes. "
+            "If corresponding outputs from the then-branch and the else-branch have "
+            "static shapes S1 and S2, then the shape of the corresponding output "
+            "variable of the if-node (if present) must be compatible with both S1 "
+            "and S2 as it represents the union of both possible shapes."
+            "For example, if in a model file, the the first "
+            "output of `then_branch` is typed float tensor with shape [2] and the "
+            "first output of `else_branch` is another float tensor with shape [3], "
+            "If's first output should have (a) no shape set, or (b) "
+            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
+            "a shape of rank 1 with a unique `dim_param`. "
+            "In contrast, the first output cannot have the shape [2] since [2] and "
+            "[3] are not compatible.",
+            "V",
+            OpSchema::Variadic,
+            false)
+        .Attr(
+            "then_branch",
+            "Graph to run if condition is true. Has N outputs: values you wish to "
+            "be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the else_branch.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "else_branch",
+            "Graph to run if condition is false. Has N outputs: values you wish to"
+            " be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the then_branch.",
+            AttributeProto::GRAPH)
+        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
+        .TypeAndShapeInferenceFunction(IfInferenceFunction_11));
+
 } // namespace ONNX_NAMESPACE

@@ -263,6 +263,23 @@ void IfInferenceFunction(InferenceContext& ctx) {
 
       UnionShapeInfo(
           else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
+    } else if (then_output->has_sequence_type() && then_output->sequence_type().elem_type().has_tensor_type()) {
+      auto then_elem_type = then_output->sequence_type().elem_type().tensor_type().elem_type();
+      auto else_elem_type = else_output->sequence_type().elem_type().tensor_type().elem_type();
+
+      if (then_elem_type != else_elem_type) {
+        fail_type_inference(
+            "Mismatched tensor element type for output ",
+            i,
+            " then=",
+            then_elem_type,
+            " else=",
+            else_elem_type);
+      }
+
+      UnionShapeInfo(
+          else_output->sequence_type().elem_type().tensor_type().shape(),
+          *if_output->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type());
     }
   }
 }
@@ -388,7 +405,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    11,
+    13,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
@@ -426,7 +443,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
             AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint(
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "All Tensor and Sequence types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
