@@ -4,12 +4,13 @@ set -ex
 
 source /tmp/venv/bin/activate
 
+# install new libturbojpeg for pytorch/vision
+wget http://ftp.br.debian.org/debian/pool/main/libj/libjpeg-turbo/libturbojpeg0_1.5.2-2+b1_amd64.deb
+sudo apt install ./libturbojpeg0_1.5.2-2+b1_amd64.deb -y
+
 # install torchvision from master
 # the one on pypi requires cuda
-# Currently the master branch of pytorch/vision is not stable
-# Should set it back to the master if the issue from master branch has been resovled
-# Therefore use certain commit on 07/06/2020 for now
-pip install -q git+https://github.com/pytorch/vision.git@86b6c3e22e9d7d8b0fa25d08704e6a31a364973b
+pip install -q git+https://github.com/pytorch/vision.git
 
 cd /tmp/pytorch
 CI=1 exec "scripts/onnx/test.sh"
