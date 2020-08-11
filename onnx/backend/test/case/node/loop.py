@@ -120,7 +120,6 @@ class Loop(Base):
         expect(node, inputs=[trip_count, cond, y], outputs=[res_y, res_scan],
                name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
 
-
     @staticmethod
     def export_loop_13():  # type: () -> None
         # Given a tensor x of values [x1, ..., xN],

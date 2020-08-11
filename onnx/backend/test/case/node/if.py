@@ -64,7 +64,6 @@ class Loop(Base):
         expect(if_node, inputs=[cond], outputs=[res], name='test_if',
             opset_imports=[onnx.helper.make_opsetid("", 11)])
 
-
     @staticmethod
     def export_if_seq():  # type: () -> None
         # Given a bool scalar input cond.
