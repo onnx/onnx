@@ -3260,23 +3260,20 @@ class TestShapeInference(unittest.TestCase):
         z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
         assert z_shape == initializer_shape
 
-    def not_infer_empty_input_from_initializer(self, original_model):  # type: (ModelProto) -> None
-        # After shape inference, it won't update input from initializer
-        # So the inferred value info is empty
-
-        inferred_model = onnx.shape_inference.infer_shapes(original_model)
-        # Cannot infer from initializer; nothing in value_info; pop fail
-        self.assertRaises(IndexError, inferred_model.graph.value_info.pop)
-
     def test_infer_with_initializer_without_input_below_ir4(self):  # type: () -> None
         # This is for testing IR<4: tensors must exist both in initializer and input
         # So shape_inference should not make use of initializer shapes
+        # Use (None, None) as empty input
         initializer_shape = (8, 7)
-        input_shape = None
+        input_shape = (None, None)
         original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         original_model.ir_version = 3  # test ir_version < 4
 
-        self.not_infer_empty_input_from_initializer(original_model)
+        inferred_model = onnx.shape_inference.infer_shapes(original_model)
+        z_tenor = inferred_model.graph.value_info.pop()
+        z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
+        # If the input is not updated by the initializer, the output shape will keep empty (0, 0)
+        assert z_shape == (0, 0)
 
     def test_infer_initializer_input_mismatch(self):  # type: () -> None
         # Catch error if initializer and input mismatch
