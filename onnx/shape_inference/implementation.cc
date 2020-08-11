@@ -310,11 +310,11 @@ static void InferShapesImpl(
     } catch (const std::runtime_error& err) {
       std::string op_name = n.has_name() ? n.name() : "no name";
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
-      deleteCreatedTensors(initializerTypeList);
+      deleteCreatedTypes(initializerTypeList);
       throw;
     }
   }
-  deleteCreatedTensors(initializerTypeList);
+  deleteCreatedTypes(initializerTypeList);
 }
 
 void InferShapes(
@@ -506,7 +506,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   return graphOutputTypes;
 }
-void deleteCreatedTensors(std::vector<TypeProto*> initializerTypeList) {
+void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList) {
   for (TypeProto* initializerType: initializerTypeList) {
     delete(initializerType);
   }
