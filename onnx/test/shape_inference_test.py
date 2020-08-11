@@ -3231,6 +3231,78 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
+    def prepare_input_initializer_tensors(self, initializer_shape, input_shape):  # type: ignore
+        nodes = [make_node('Add', ['x', 'y'], 'z')]
+        if initializer_shape is None:
+            initializer = []  # type: ignore
+        else:
+            initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),  # type: ignore
+                make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+        if input_shape is None:
+            inputs = []  # type: ignore
+        else:
+            inputs = [helper.make_tensor_value_info('x', TensorProto.FLOAT, input_shape),  # type: ignore
+                helper.make_tensor_value_info('y', TensorProto.FLOAT, input_shape)]
+
+        graph = helper.make_graph(nodes, "test", inputs=inputs, outputs=[], initializer=initializer, value_info=[])
+        return helper.make_model(graph)
+
+    def test_infer_with_initializer_without_input_above_ir4(self):  # type: () -> None
+        # This is for testing IR>=4: some tensors can only exist in initializer and not in input
+        # So shape_inference should make use of initializer shapes
+        initializer_shape = (8, 7)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
+        inferred_model = onnx.shape_inference.infer_shapes(original_model)
+
+        # If shape inference fails, it will throw IndexError
+        z_tenor = inferred_model.graph.value_info.pop()
+        z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
+        assert z_shape == initializer_shape
+
+    def test_infer_with_initializer_without_input_below_ir4(self):  # type: () -> None
+        # This is for testing IR<4: tensors must exist both in initializer and input
+        # So shape_inference should not make use of initializer shapes
+        # Use (None, None) as empty input
+        initializer_shape = (8, 7)
+        input_shape = (None, None)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
+        original_model.ir_version = 3  # test ir_version < 4
+
+        inferred_model = onnx.shape_inference.infer_shapes(original_model)
+        z_tenor = inferred_model.graph.value_info.pop()
+        z_shape = (z_tenor.type.tensor_type.shape.dim[0].dim_value, z_tenor.type.tensor_type.shape.dim[1].dim_value)
+        # If the input is not updated by the initializer, the output shape will keep empty (0, 0)
+        assert z_shape == (0, 0)
+
+    def test_infer_initializer_input_mismatch(self):  # type: () -> None
+        # Catch error if initializer and input mismatch
+        initializer_shape = (8, 7)
+        input_shape = (4, 3)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
+        # Inferred shape and existing shape differ in dimension 0
+        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
+
+    def test_infer_initializer_input_consistency_all_none(self):  # type: () -> None
+        initializer_shape = (8, 7)
+        input_shape = (None, None)  # accepatble
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
+
+        onnx.shape_inference.infer_shapes(original_model)
+
+    def test_infer_initializer_input_consistency_single_none(self):  # type: () -> None
+        initializer_shape = (8, 7)
+        input_shape = (None, 7)  # accepatble
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
+
+        onnx.shape_inference.infer_shapes(original_model)
+
+    def test_infer_initializer_input_consistency_differnt_rank(self):  # type: () -> None
+        initializer_shape = (8, 7, 9)
+        input_shape = (None, 7)  # accepatble
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
+        # Inferred shape and existing shape differ in rank: (3) vs (2)
+        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, original_model)
+
 
 if __name__ == '__main__':
     unittest.main()

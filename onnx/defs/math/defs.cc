@@ -1719,7 +1719,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axis",
-            "(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
+            "A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. "
             "Negative value means counting dimensions from the back.",
             "T2")
         .Output(
