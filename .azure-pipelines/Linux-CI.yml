@@ -46,13 +46,12 @@ jobs:
       addToPath: true 
 
   - script: |
-      sudo apt-get install virtualenv
+      python -m pip install --upgrade pip
+      python -m pip install virtualenv numpy
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
       sudo apt-get install protobuf protobuf-compiler libprotoc-dev
-      python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
-      python -m pip install numpy
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
