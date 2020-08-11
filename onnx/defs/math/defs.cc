@@ -42,12 +42,15 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
     const char* name,
-    const char* description) {
+    const char* description,
+    const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
- of the given input.
+ of the given input:
+
+ {equation}
 
 The input does not need to explicitly be a 2D vector. The "axis" attribute
 indicates the dimension along which {name} will be performed.
@@ -55,7 +58,8 @@ The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
                         ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{description}", description););
+                        ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
     POPULATE_OP_DOC_STR(axis_attr = R"DOC(
 "Describes the dimension {name} will be performed on."
@@ -818,7 +822,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .FillUsing(
-            SoftmaxFamilyDocGenerator("softmax", "normalized exponential"))
+            SoftmaxFamilyDocGenerator("softmax", "normalized exponential", "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
@@ -874,7 +878,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
     OpSchema()
-        .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax"))
+        .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax", "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
@@ -936,7 +940,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema().FillUsing(SoftmaxFamilyDocGenerator(
         "hardmax",
-        "1 for the first maximum value, and 0 for all others")));
+        "1 for the first maximum value, and 0 for all others",
+        "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
 
 static const char* Softsign_ver1_doc = R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.

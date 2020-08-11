@@ -7227,7 +7227,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input.
+   of the given input:
+  
+   Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which hardmax will be performed.
@@ -8398,7 +8400,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input.
+   of the given input:
+  
+   LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which logsoftmax will be performed.
@@ -18414,7 +18418,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input.
+   of the given input:
+  
+   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which softmax will be performed.

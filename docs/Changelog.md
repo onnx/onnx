@@ -16037,7 +16037,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Hardmax-13"></a>**Hardmax-13**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input.
+   of the given input:
+  
+   Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which hardmax will be performed.
@@ -16259,7 +16261,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="LogSoftmax-13"></a>**LogSoftmax-13**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input.
+   of the given input:
+  
+   LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which logsoftmax will be performed.
@@ -17850,7 +17854,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Softmax-13"></a>**Softmax-13**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input.
+   of the given input:
+  
+   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
   indicates the dimension along which softmax will be performed.
