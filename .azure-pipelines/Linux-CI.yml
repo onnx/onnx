@@ -51,8 +51,9 @@ jobs:
     displayName: Create Anaconda environment
 
   - script: |
-      call activate py$(python.version)
+      source activate py$(python.version)
       conda list
+      protoc --version
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
@@ -73,7 +74,7 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      call activate py$(python.version)
+      source activate py$(python.version)
       # lint python code
       pip install --quiet flake8
       flake8
