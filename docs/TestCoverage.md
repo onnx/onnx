@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 144/162 (88.89%, 5 generators excluded) common operators.
+Node tests have covered 145/162 (89.51%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2523,7 +2523,7 @@ node = onnx.helper.make_node(
     outputs=['y']
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([1., 3., 6., 10., 15.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d')
@@ -2541,7 +2541,7 @@ node = onnx.helper.make_node(
     exclusive=1
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([0., 1., 3., 6., 10.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d_exclusive')
@@ -2559,7 +2559,7 @@ node = onnx.helper.make_node(
     reverse=1
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([15., 14., 12., 9., 5.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d_reverse')
@@ -2574,10 +2574,11 @@ node = onnx.helper.make_node(
     'CumSum',
     inputs=['x', 'axis'],
     outputs=['y'],
-    reverse=1
+    reverse=1,
+    exclusive=1
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([14., 12., 9., 5., 0.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d_reverse_exclusive')
@@ -2594,7 +2595,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_axis_0')
@@ -2611,7 +2612,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
-axis = np.array([1]).astype(np.int32)
+axis = np.int32(1)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_axis_1')
@@ -2628,7 +2629,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
-axis = np.array([-1]).astype(np.int32)
+axis = np.int32(-1)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_negative_axis')
@@ -8193,7 +8194,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=axes,
                         keepdims=keepdims == 1))
@@ -8204,7 +8205,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_default_axes_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=axes,
                         keepdims=keepdims == 1))
@@ -8230,7 +8231,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(
     np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 # print(reduced)
@@ -8242,7 +8243,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_do_not_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(
     np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
@@ -8268,7 +8269,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -8281,7 +8282,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -8308,7 +8309,7 @@ node = onnx.helper.make_node(
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-    dtype=np.float32)
+    dtype=np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -8321,7 +8322,7 @@ expect(node, inputs=[data], outputs=[reduced],
       name='test_reduce_log_sum_exp_negative_axes_keepdims_example')
 
 np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
+data = np.random.uniform(-10, 10, shape).astype(np.double)
 reduced = np.log(np.sum(np.exp(data),
                         axis=tuple(axes),
                         keepdims=keepdims == 1))
@@ -10607,6 +10608,45 @@ y = np.clip(x, 0, np.inf) * default_gamma + \
     (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
 expect(node, inputs=[x], outputs=[y],
        name='test_selu_default')
+```
+
+</details>
+
+
+### SequenceInsert
+There are 1 test cases, listed as following:
+<details>
+<summary>sequenceinsert</summary>
+
+```python
+test_cases = {
+    'at_back': [np.array([10, 11, 12])],
+    'at_front': [np.array([-2, -1, 0]), np.array([0])]
+}
+sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
+
+for test_name, test_inputs in test_cases.items():
+    tensor = test_inputs[0]
+
+    if len(test_inputs) > 1:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor', 'position'],
+            outputs=['output_sequence']
+        )
+        position = test_inputs[1]
+        inserted = sequence_insert_reference_implementation(sequence, tensor, position)
+        expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
+               name='test_sequence_insert_' + test_name)
+    else:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor'],
+            outputs=['output_sequence']
+        )
+        inserted = sequence_insert_reference_implementation(sequence, tensor)
+        expect(node, inputs=[sequence, tensor], outputs=[inserted],
+               name='test_sequence_insert_' + test_name)
 ```
 
 </details>
@@ -13454,9 +13494,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### SequenceErase (call for test cases)
-
-
-### SequenceInsert (call for test cases)
 
 
 ### SequenceLength (call for test cases)
