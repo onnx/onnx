@@ -31,7 +31,7 @@ jobs:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 1
+        onnx_lite: 0
       py37-ml-debug:
         python.version: '3.7'
         onnx_ml: 1
@@ -47,8 +47,7 @@ jobs:
     inputs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version)'
-      installOptions: '-c conda-forge protobuf=3.11.3'
+      packageSpecs: 'python=$(python.version) protobuf=3.11.3 libprotobuf=3.11.3'
 
   - script: |
       conda list
