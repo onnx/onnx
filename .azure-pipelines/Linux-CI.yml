@@ -73,7 +73,6 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      source activate 'py$(python.version)'
       # lint python code
       pip install --quiet flake8
       flake8
