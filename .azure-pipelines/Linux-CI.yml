@@ -46,11 +46,7 @@ jobs:
   - script: |
       conda create -y -q -n py$(python.version) python=$(python.version)
       source activate py$(python.version)
-      conda install -y -q -n py$(python.version) -c conda-forge protobuf
-    displayName: Create Conda env
-
-  - script: |
-      source activate py$(python.version)
+      conda install -y -c conda-forge protobuf
       python -m pip install --upgrade pip
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       python -m pip install numpy
