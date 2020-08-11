@@ -47,10 +47,10 @@ jobs:
     inputs:
       createCustomEnvironment: true
       environmentName: 'py$(python.version)'
-      packageSpecs: 'python=$(python.version) protobuf=3.11.3 libprotobuf=3.11.3'
+      packageSpecs: 'python=$(python.version)'
+      installOptions: '-c conda-forge protobuf=3.11.3'
 
   - script: |
-      source activate 'py$(python.version)'
       conda list
       protoc --version
       python -m pip install --upgrade pip
