@@ -11,22 +11,22 @@ jobs:
         python.version: '2.7'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
+        onnx_lite: 0
       py36:
         python.version: '3.6'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
+        onnx_lite: 0
       py36-ml:
         python.version: '3.6'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 1
+        onnx_lite: 0
       py37:
         python.version: '3.7'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
+        onnx_lite: 0
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
