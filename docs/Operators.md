@@ -9066,7 +9066,7 @@ node = onnx.helper.make_node(
 )
 
 trip_count = np.array(5).astype(np.int64)
-seq_empty = []
+seq_empty = []  # type: List[Any]
 seq_res = [x[:int(i)] for i in x]
 cond = np.array(1).astype(np.bool)
 expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
