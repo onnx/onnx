@@ -59,9 +59,9 @@ and contains the {name} values of the corresponding input.
                         ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
     POPULATE_OP_DOC_STR(axis_attr = R"DOC(
-"Describes the dimension {name} will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension {name} will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 )DOC";
                         ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
