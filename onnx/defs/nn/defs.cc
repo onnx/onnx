@@ -281,7 +281,11 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "in effect, the operation expects the input "
         "data tensor to arrive with the dimension denotation "
         "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -289,7 +293,11 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "the input tensor. Dimensions will vary based "
         "on various kernel, stride, and pad sizes. Floor value of "
         "the dimension is used",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForPoolingOps(supports8bit),
@@ -357,7 +365,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "and the indices do not consider padding. "
             "So the values in indices are in [0, N x C x D1 x ... x Dn).",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
@@ -672,19 +683,31 @@ std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the "
         "width of the data.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         1,
         "rois",
         "RoIs (Regions of Interest) to pool over. Should "
         "be a 2-D tensor of shape (num_rois, 5) given as "
         "[[batch_id, x1, y1, x2, y2], ...].",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.Output(
         0,
         "Y",
         "RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -719,7 +742,11 @@ computes the output.)DOC";
         "in effect, the operation expects input data tensor "
         "to arrive with the dimension denotation of [DATA_BATCH, "
         "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         1,
         "W",
@@ -737,20 +764,31 @@ computes the output.)DOC";
         "X.shape[1] == (W.shape[1] * group) == C "
         "(assuming zero based indices for the shape array). "
         "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         2,
         "B",
         "Optional 1D bias to be added to the convolution, has size of M.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
         "Output data tensor that contains the result of the "
         "convolution. The output dimensions are functions "
         "of the kernel size, stride size, and pad lengths.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},

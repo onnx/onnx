@@ -185,13 +185,15 @@ input|ValueInfo[]|The input “parameters” of the graph, possibly initialized 
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
 
-Each main (top-level) graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
+ValueInfo has the following properties:
 
 Name|Type|Description
 |---|---|---|
 name|string|The name of the value/parameter.
-type|Type|The type of the value.
+type|Type|The type of the value **including shape information**.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
+
+Each main (top-level) graph MUST define the names, types and shapes of its inputs and outputs, which are specified as ‘value info’ structures. The main graph inputs and outputs are required to have a shape, indicating the rank, even though the exact dimensions need not be specified.
 
 Nested subgraphs (specified as attribute values) MUST define the names of its inputs and outputs
 and MAY define the types of its inputs and outputs.
@@ -370,7 +372,10 @@ Which is referenced by the Tensor type message:
   }
 ```
 
-The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
+The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent in the type of a value (including node input),
+it indicates that the corresponding runtime value may have any shape. This sub-section describes how to interpret a missing-shape or a shape with missing dimensions etc. However, specific usage contexts may impose further constraints on a type and shape.
+For example, the inputs and outputs of a model (top-level graph) are required to *have* a shape, indicating the rank of inputs and outputs,
+even though the exact dimensions need not be specified.
 
 Each size in the list MAY be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. A dimension MAY have neither dim_value nor dim_param set. Such a dimension represents an unknown dimension unrelated to other unknown dimensions.
 
