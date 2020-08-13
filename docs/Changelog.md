@@ -16041,9 +16041,9 @@ This version of the operator has been available since version 13 of the default 
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which hardmax will be performed.
+  indicates the dimension along which {name} will be performed.
   The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+  and contains the {name} values of the corresponding input.
 
 #### Version
 
@@ -16054,9 +16054,9 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-"Describes the dimension hardmax will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension Hardmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -16259,14 +16259,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="LogSoftmax-13"></a>**LogSoftmax-13**</a>
 
-  The operator computes the logsoftmax values for the given input:
+  The operator computes the log of softmax values for the given input:
   
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which logsoftmax will be performed.
+  indicates the dimension along which {name} will be performed.
   The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+  and contains the {name} values of the corresponding input.
 
 #### Version
 
@@ -16277,9 +16277,9 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-"Describes the dimension logsoftmax will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension LogSoftmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -17851,14 +17851,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Softmax-13"></a>**Softmax-13**</a>
 
-  The operator computes the softmax values for the given input:
+  The operator computes the normalized exponential values for the given input:
   
    Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which softmax will be performed.
+  indicates the dimension along which {name} will be performed.
   The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+  and contains the {name} values of the corresponding input.
 
 #### Version
 
@@ -17869,9 +17869,9 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-"Describes the dimension softmax will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension Softmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 

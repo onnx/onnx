@@ -7231,9 +7231,9 @@ expect(node, inputs=[x], outputs=[y],
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which hardmax will be performed.
+  indicates the dimension along which {name} will be performed.
   The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+  and contains the {name} values of the corresponding input.
 
 #### Version
 
@@ -7246,9 +7246,9 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">1</a>, <a href
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-"Describes the dimension hardmax will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension Hardmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -8398,14 +8398,14 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
-  The operator computes the logsoftmax values for the given input:
+  The operator computes the log of softmax values for the given input:
   
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which logsoftmax will be performed.
+  indicates the dimension along which {name} will be performed.
   The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+  and contains the {name} values of the corresponding input.
 
 #### Version
 
@@ -8418,9 +8418,9 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a h
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-"Describes the dimension logsoftmax will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension LogSoftmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -18415,14 +18415,14 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
 
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
-  The operator computes the softmax values for the given input:
+  The operator computes the normalized exponential values for the given input:
   
    Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which softmax will be performed.
+  indicates the dimension along which {name} will be performed.
   The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+  and contains the {name} values of the corresponding input.
 
 #### Version
 
@@ -18435,9 +18435,9 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-"Describes the dimension softmax will be performed on."
-"Negative value means counting dimensions "
-"from the back. Accepted range is [-r, r-1] where r = rank(input).",
+Describes the dimension Softmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
