@@ -92,7 +92,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if(nullptr == input_type){
                 fail_type_inference("Input type for input at index ", i, " is null. Type info is expected.");
             }
-            input_elem_types.emplace_back(ctx.getInputType(i)->tensor_type().elem_type());
+            input_elem_types.emplace_back(input_type->tensor_type().elem_type());
           }
           if (std::adjacent_find(input_elem_types.begin(), input_elem_types.end(), std::not_equal_to<int>()) != input_elem_types.end()) {
             // not all input elem types are the same.
