@@ -41,6 +41,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 }
 
 std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
+    const char* name,
     const char* description,
     const char* equation) {
   return [=](OpSchema& schema) {
@@ -818,7 +819,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .FillUsing(
-            SoftmaxFamilyDocGenerator("normalized exponential", "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
+            SoftmaxFamilyDocGenerator("Softmax", "normalized exponential", "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
@@ -874,7 +875,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
     OpSchema()
-        .FillUsing(SoftmaxFamilyDocGenerator("log of softmax", "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
+        .FillUsing(SoftmaxFamilyDocGenerator("LogSoftmax", "log of softmax", "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
@@ -935,6 +936,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
     13,
     OpSchema().FillUsing(SoftmaxFamilyDocGenerator(
+        "Hardmax",
         "hardmax",
         "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
 
