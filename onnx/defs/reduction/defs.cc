@@ -37,12 +37,6 @@ False instead of True.)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
-        "axes",
-        "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
-        AttributeProto::INTS,
-        OPTIONAL_VALUE);
-    schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
@@ -51,7 +45,7 @@ False instead of True.)DOC";
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
-          "Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes."
+          "Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. "
           "When axes is empty and this attribute is set to true, input tensor will not be reduced,"
           "and the output tensor would be equivalent to input tensor.",
           AttributeProto::INT,
@@ -60,10 +54,19 @@ False instead of True.)DOC";
           1,
           "axes",
           "Optional input list of integers, along which to reduce. "
-          "See attribute 'axes' for details. "
-          "Attribute 'axes' is ignored if both input and attribute are specified.",
+          "The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, "
+          "else act as an Identity op when 'noop_with_empty_axes' is true. "
+          "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
           OpSchema::Optional);
+    }
+    else{
+      schema.Attr(
+          "axes",
+          "A list of integers, along which to reduce. The default is to reduce over "
+          "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
+          AttributeProto::INTS,
+          OPTIONAL_VALUE);
     }
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
@@ -89,12 +92,7 @@ False instead of True.)DOC";
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
       size_t num_inputs = ctx.getNumInputs();
-      if (num_inputs == 1) {
-        auto axes_proto = ctx.getAttribute("axes");
-        if (axes_proto) {
-          axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
-        }
-      } else if (num_inputs == 2) { // axes is input
+      if (num_inputs == 2) { // axes is input
         auto axes_proto = ctx.getInputData(1);
         if (axes_proto == nullptr) {
           // skip if axes is not an initializer
