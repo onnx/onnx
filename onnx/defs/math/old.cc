@@ -820,7 +820,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // For shape inference (and rank inference), we need both input shape
           // and values in 'shape' tensor
           const auto* shape_initializer = ctx.getInputData(1);
-          if (hasNInputShapes(ctx, 1) && nullptr != shape_initializer) {
+          if (hasNInputShapes(ctx, 2) && nullptr != shape_initializer) {
             const auto& shape_initializer_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (shape_initializer_shape.dim_size() != 1 ||
