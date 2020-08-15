@@ -1473,7 +1473,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // For shape inference (and rank inference), we need both input shape
           // and values in 'shape' tensor
           const auto* shape_initializer = ctx.getInputData(1);
-          if (hasNInputShapes(ctx, 1) && nullptr != shape_initializer) {
+          if (hasNInputShapes(ctx, 2) && nullptr != shape_initializer) {
             const auto& shape_initializer_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (shape_initializer_shape.dim_size() != 1 ||
@@ -2305,7 +2305,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+          if (hasNInputShapes(ctx, 2)) {
             const TensorShapeProto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
             const TensorShapeProto& target_shape =
@@ -2334,7 +2334,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     "Input and target dimension value mismatch.")
             }
 
-            if (ctx.getNumInputs() == 3) {
+            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
               const TensorShapeProto& weight_shape =
                   ctx.getInputType(2)->tensor_type().shape();
               if (weight_shape.dim_size() != 1)
