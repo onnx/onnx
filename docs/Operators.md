@@ -466,16 +466,16 @@ Other versions of this operator: <a href="Changelog.md#And-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -1979,16 +1979,16 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>First operand, input to be shifted.</dd>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Second operand, amounts of shift.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Z</tt> : T</dt>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -5146,16 +5146,16 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -6991,16 +6991,16 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">1</a>, <a href
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -7110,16 +7110,16 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -8193,16 +8193,16 @@ Other versions of this operator: <a href="Changelog.md#Less-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -8312,16 +8312,16 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -11588,14 +11588,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -11822,16 +11822,16 @@ Other versions of this operator: <a href="Changelog.md#Or-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -21948,16 +21948,16 @@ Other versions of this operator: <a href="Changelog.md#Xor-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
