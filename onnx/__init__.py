@@ -5,9 +5,11 @@ from __future__ import unicode_literals
 
 import os
 
+from .onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
+from .onnx_data_pb import * # noqa
 from .version import version as __version__  # noqa
 
 # Import common subpackages so they're available when you 'import onnx'
@@ -66,7 +68,7 @@ def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) 
         result = proto.SerializeToString()
         return result
     else:
-        raise ValueError('No SerializeToString method is detected. '
+        raise TypeError('No SerializeToString method is detected. '
                          'neither proto is a str.\ntype is {}'.format(type(proto)))
 
 
@@ -102,6 +104,8 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
 def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[bytes], Text], Optional[Any], bool) -> ModelProto
     '''
     Loads a serialized ModelProto into memory
+    load_external_data is true if the external data under the same directory of the model and load the external data
+    If not, users need to call load_external_data_for_model with directory to load
 
     @params
     f can be a file-like object (has "read" function) or a string containing a file name

@@ -6,6 +6,27 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
+std::string getValueCaseString(const TypeProto& type) {
+  switch (type.value_case()) {
+    case TypeProto::ValueCase::kTensorType:
+      return "tensor_type";
+    case TypeProto::ValueCase::kSequenceType:
+      return "sequence_type";
+    case TypeProto::ValueCase::kMapType:
+      return "map_type";
+#ifdef ONNX_ML
+    case TypeProto::ValueCase::kOpaqueType:
+      return "opaque_type";
+    case TypeProto::ValueCase::kSparseTensorType:
+      return "sparse_tensor_type";
+#endif
+    case TypeProto::ValueCase::VALUE_NOT_SET:
+      return "NOT_SET";
+    default:
+      return ONNX_NAMESPACE::to_string(type.value_case());
+  }
+}
+
 std::string getElemTypeString(const TypeProto_Tensor& type) {
 #ifndef ONNX_USE_LITE_PROTO
     const std::string type_str = TensorProto::DataType_Name(
@@ -58,6 +79,32 @@ void checkShapesAndTypes(
   }
 }
 
+void checkShapesAndTypes(
+    const TypeProto& inferredType,
+    const TypeProto& existingType) {
+  const auto inferredTypeCase = inferredType.value_case();
+  const auto existingTypeCase = existingType.value_case();
+  if (inferredTypeCase != existingTypeCase) {
+    fail_type_inference(
+      "type case mismatch. existing=",
+      getValueCaseString(existingType),
+      " inferred=",
+      getValueCaseString(inferredType));
+  }
+
+  if (inferredType.has_tensor_type() && existingType.has_tensor_type()) {
+    checkShapesAndTypes(inferredType.tensor_type(), existingType.tensor_type());
+  } else if (inferredType.has_sequence_type() && existingType.has_sequence_type()) {
+    checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
+  } else {
+    fail_type_inference(
+      "type case unsupported. existing=",
+      existingTypeCase,
+      " inferred=",
+      inferredTypeCase);
+  }
+}
+
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType) {
@@ -96,12 +143,26 @@ void mergeShapesAndTypes(
   }
 }
 
+void mergeShapesAndTypes(
+    const TypeProto& inferredType,
+    TypeProto* existingType) {
+  if (inferredType.has_tensor_type()) {
+    mergeShapesAndTypes(inferredType.tensor_type(), existingType->mutable_tensor_type());
+  } else if (inferredType.has_sequence_type()) {
+    mergeShapesAndTypes(
+      inferredType.sequence_type().elem_type(),
+      existingType->mutable_sequence_type()->mutable_elem_type());
+  }
+}
+
 static void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
-    const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    const std::unordered_map<std::string, int>& opset_imports, 
+    const bool check_type,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const int ir_version = IR_VERSION  // default the latest one
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
@@ -123,8 +184,37 @@ static void InferShapesImpl(
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
+  // save for free memory
+  std::vector<TypeProto*> initializerTypeList; 
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
+    // Consider the tensors from the initializer
+    TypeProto *initializerType = new TypeProto();
+    TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
+    // set the shape according to the initializer shape info
+    // if the shape info of initializer is not empty 
+    if (tp.dims_size() != 0) {
+      initializerTensorType->set_elem_type(tp.data_type());
+      TensorShapeProto* shape = initializerTensorType->mutable_shape();
+      for (int i = 0 ; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i)); 
+      }
+    }
+    auto iter = valueTypesByName.find(tp.name());
+    // If it already exists in input, check input and initializer is sync
+    // use shape info from input (input has priority over initializer)
+    if (iter != valueTypesByName.end()) {
+        checkShapesAndTypes(*initializerTensorType, *valueTypesByName[tp.name()]->mutable_tensor_type());
+    }
+    // Support IR>=4: some tensors can only exist in initializer and not in input
+    // So shape_inference should make use of initializer shapes
+    // Store initializer shape info in value_info as well    
+    else if (ir_version >= 4){
+      valueTypesByName[tp.name()]= initializerType;
+      initializerTypeList.push_back(initializerType);
+      continue;
+    }
+    delete(initializerType);
   }
   // Collect data from constant nodes.
   for (const auto& n : g->node()) {
@@ -139,7 +229,7 @@ static void InferShapesImpl(
           }
       }
   }
-
+  
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -176,16 +266,24 @@ static void InferShapesImpl(
 	}
 
     try {
+      if (check_type) {
+        schema->CheckInputOutputType(ctx);
+      }
       for (int i = 0; i < n.output_size(); ++i) {
-        if (!ctx.getOutputType(i)->has_tensor_type()) {
+        const auto* inferredType = ctx.getOutputType(i);
+        if (!inferredType->has_tensor_type() &&
+            !inferredType->has_sequence_type()) {
           continue;
         }
-        const auto& inferredType = ctx.getOutputType(i)->tensor_type();
 
-        // Bail out early if shape inference does nothing useful.
-        if (inferredType.elem_type() == TensorProto::UNDEFINED &&
-            !inferredType.has_shape()) {
-          continue;
+        if (inferredType->has_tensor_type()) {
+          const auto& inferredTensorType = inferredType->tensor_type();
+
+          // Bail out early if shape inference does nothing useful.
+          if (inferredTensorType.elem_type() == TensorProto::UNDEFINED &&
+              !inferredTensorType.has_shape()) {
+            continue;
+          }
         }
 
         // Find any pre-existing type and shape info. If there is such,
@@ -195,7 +293,7 @@ static void InferShapesImpl(
         TypeProto* existingType = nullptr;
         if (iter != valueTypesByName.end()) {
           existingType = iter->second;
-          checkShapesAndTypes(inferredType, existingType->tensor_type());
+          checkShapesAndTypes(*inferredType, *existingType);
         } else {
           auto vi = g->add_value_info();
           vi->set_name(n.output(i));
@@ -204,7 +302,7 @@ static void InferShapesImpl(
 
         // Now we can merge pre-existing and inferred info, without
         // further need for error-checking.
-        mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
+        mergeShapesAndTypes(*inferredType, existingType);
 
         // Make merged info available to further inference.
         valueTypesByName[n.output(i)] = existingType;
@@ -212,25 +310,30 @@ static void InferShapesImpl(
     } catch (const std::runtime_error& err) {
       std::string op_name = n.has_name() ? n.name() : "no name";
       std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
+      deleteCreatedTypes(initializerTypeList);
       throw;
     }
   }
+  deleteCreatedTypes(initializerTypeList);
 }
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
+    const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
+      check_type,
       schema_registry);
 }
 
 void InferShapes(
     ModelProto& m,
+    const bool check_type,
     const ISchemaRegistry* schema_registry
     ) {
   std::unordered_map<std::string, int> opset_imports;
@@ -243,7 +346,9 @@ void InferShapes(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
-      schema_registry);
+      check_type,
+      schema_registry,
+      m.ir_version());
 }
 
 void InferShapeForFunctionNode(
@@ -257,7 +362,7 @@ void InferShapeForFunctionNode(
   std::vector<TypeProto> temp_types_cache(func->input_size());
   for (int i = 0; i < func->input_size(); ++i) {
     temp_types_cache[i] = *ctx.getInputType(i);
-    temp_valueTypesByName[func->input().Get(i)] = &temp_types_cache.back();
+    temp_valueTypesByName[func->input().Get(i)] = &temp_types_cache[i];
   }
   // Get a temporary initial value map
   std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
@@ -282,10 +387,12 @@ void InferShapeForFunctionNode(
     NodeProto copy_n(n);
     // Add attribute information into the temporary node
     copy_n.clear_attribute();
-    for (auto attr : n.attribute()) {
+    for (const auto& attr : n.attribute()) {
       if (attr.has_ref_attr_name()) {
         if (attr_map.count(attr.ref_attr_name())) {
-          copy_n.add_attribute()->CopyFrom(*attr_map[attr.ref_attr_name()]);
+          auto copy_attr = *attr_map[attr.ref_attr_name()];
+          copy_attr.set_name(attr.name());
+          copy_n.add_attribute()->CopyFrom(copy_attr);
         }
       } else {
         copy_n.add_attribute()->CopyFrom(attr);
@@ -368,7 +475,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
           "Graph input #",
           i,
           " is tensor type, but provided type is ",
-          inferredInput->value_case());
+          getValueCaseString(*inferredInput));
 
     const auto& inferredType = inferredInput->tensor_type();
 
@@ -389,6 +496,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
+      false,
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
@@ -398,6 +506,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   return graphOutputTypes;
 }
-
+void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList) {
+  for (TypeProto* initializerType: initializerTypeList) {
+    delete(initializerType);
+  }
+}
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

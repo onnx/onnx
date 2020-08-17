@@ -111,7 +111,9 @@ DataType DataTypeUtils::ToType(const std::string& type_str) {
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   auto it = GetTypeStrToProtoMap().find(*data_type);
-  assert(it != GetTypeStrToProtoMap().end());
+  if (GetTypeStrToProtoMap().end() == it) {
+    throw std::invalid_argument("Invalid data type.");
+  }
   return it->second;
 }
 
@@ -126,7 +128,6 @@ std::string DataTypeUtils::ToString(
       return left + "tensor(" +
           ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" + right;
     }
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kSequenceType: {
       return ToString(
           type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
@@ -138,6 +139,7 @@ std::string DataTypeUtils::ToString(
       return ToString(
           type_proto.map_type().value_type(), left + map_str, ")" + right);
     }
+#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
       static const std::string empty;
       std::string result;
@@ -169,7 +171,9 @@ std::string DataTypeUtils::ToString(
 std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
-  assert(t.TensorDataTypeToTypeStr().end() != iter);
+  if (t.TensorDataTypeToTypeStr().end() == iter) {
+    throw std::invalid_argument("Invalid tensor data type.");
+  }
   return iter->second;
 }
 
@@ -178,7 +182,6 @@ void DataTypeUtils::FromString(
     TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
-#ifdef ONNX_ML
   if (s.LStrip("seq")) {
     s.ParensWhitespaceStrip();
     return FromString(
@@ -198,7 +201,9 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(v.Data(), v.Size()),
         *type_proto.mutable_map_type()->mutable_value_type());
-  } else if (s.LStrip("opaque")) {
+  } else
+#ifdef ONNX_ML
+      if (s.LStrip("opaque")) {
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
     if (!s.Empty()) {

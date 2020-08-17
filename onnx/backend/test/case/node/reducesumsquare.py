@@ -92,3 +92,31 @@ class ReduceSumSquare(Base):
         reduced = np.sum(np.square(data), axis=axes, keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_default_axes_keepdims_random')
+
+    @staticmethod
+    def export_negative_axes_keepdims():  # type: () -> None
+        shape = [3, 2, 2]
+        axes = [-2]
+        keepdims = 1
+
+        node = onnx.helper.make_node(
+            'ReduceSumSquare',
+            inputs=['data'],
+            outputs=['reduced'],
+            axes=axes,
+            keepdims=keepdims)
+
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+        reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+        # print(reduced)
+        #[[[10., 20.s]]
+        # [[74., 100.]]
+        # [[202., 244.]]]
+
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_example')
+
+        np.random.seed(0)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
+        reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_negative_axes_keepdims_random')

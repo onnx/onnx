@@ -17,7 +17,7 @@ import os
 import shlex
 import subprocess
 import sys
-import struct
+import platform
 from textwrap import dedent
 import multiprocessing
 
@@ -41,7 +41,11 @@ extras_require = {}
 # Global variables for controlling the build variant
 ################################################################################
 
+# Default value is set to TRUE\1 to keep the settings same as the current ones.
+# However going forward the recomemded way to is to set this to False\0
+USE_MSVC_STATIC_RUNTIME = bool(os.getenv('USE_MSVC_STATIC_RUNTIME', '1') == '1')
 ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
+ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 
@@ -135,10 +139,14 @@ class cmake_build(setuptools.Command):
     built = False
 
     def initialize_options(self):
-        self.jobs = multiprocessing.cpu_count()
+        self.jobs = None
 
     def finalize_options(self):
-        self.jobs = int(self.jobs)
+        if sys.version_info[0] >= 3:
+            self.set_undefined_options('build', ('parallel', 'jobs'))
+        if self.jobs is None and os.getenv("MAX_JOBS") is not None:
+            self.jobs = os.getenv("MAX_JOBS")
+        self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
 
     def run(self):
         if cmake_build.built:
@@ -172,14 +180,17 @@ class cmake_build(setuptools.Command):
                     # passing python version to window in order to
                     # find python in cmake
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
-                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
                 ])
-                if 8 * struct.calcsize("P") == 64:
-                    # Temp fix for CI
-                    # TODO: need a better way to determine generator
-                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
+                if USE_MSVC_STATIC_RUNTIME:
+                    cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
+                if platform.architecture()[0] == '64bit':
+                    cmake_args.extend(['-A', 'x64', '-T', 'host=x64'])
+                else:
+                    cmake_args.extend(['-A', 'Win32', '-T', 'host=x86'])
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
+            if ONNX_VERIFY_PROTO3:
+                cmake_args.append('-DONNX_VERIFY_PROTO3=1')
             if ONNX_BUILD_TESTS:
                 cmake_args.append('-DONNX_BUILD_TESTS=ON')
             if 'CMAKE_ARGS' in os.environ:
@@ -286,7 +297,7 @@ install_requires.extend([
     'protobuf',
     'numpy',
     'six',
-    'typing>=3.6.4',
+    'typing>=3.6.4; python_version < "3.5"',
     'typing-extensions>=3.6.2.1',
 ])
 
@@ -298,8 +309,6 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
-tests_require.append('typing')
-tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
@@ -316,13 +325,14 @@ setuptools.setup(
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
+    license='MIT',
     include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
     extras_require=extras_require,
-    author='bddppq',
-    author_email='jbai@fb.com',
+    author='ONNX',
+    author_email='onnx-technical-discuss@lists.lfai.foundation',
     url='https://github.com/onnx/onnx',
     entry_points={
         'console_scripts': [

@@ -10,6 +10,27 @@ onnx_model = onnx.load('path/to/the/model.onnx')
 Runnable IPython notebooks:
 - [load_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/load_model.ipynb)
 
+## Loading an ONNX Model with External Data
+
+
+* [Default] If the external data is under the same directory of the model, simply use `onnx.load()`
+```python
+import onnx
+
+onnx_model = onnx.load('path/to/the/model.onnx')
+```
+
+* If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load()`
+
+```python
+import onnx
+from onnx.external_data_helper import load_external_data_for_model
+
+onnx_model = onnx.load('path/to/the/model.onnx', load_external_data=False)
+load_external_data_for_model(onnx_model, 'data/directory/path/')
+# Then the onnx_model has loaded the external data from the specific directory
+```
+
 ## Saving an ONNX Model
 ```python
 import onnx
@@ -38,7 +59,7 @@ print('TensorProto:\n{}'.format(tensor))
 
 # Convert the TensorProto to a Numpy array
 new_array = numpy_helper.to_array(tensor)
-print('After round trip, Numpy array:\n{}\n'.format(numpy_array))
+print('After round trip, Numpy array:\n{}\n'.format(new_array))
 
 # Save the TensorProto
 with open('tensor.pb', 'wb') as f:
@@ -65,26 +86,28 @@ from onnx import AttributeProto, TensorProto, GraphProto
 
 
 # Create one input (ValueInfoProto)
-X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [1, 2])
+X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [3, 2])
+pads = helper.make_tensor_value_info('pads', TensorProto.FLOAT, [1, 4])
+
+value = helper.make_tensor_value_info('value', AttributeProto.FLOAT, [1])
+
 
 # Create one output (ValueInfoProto)
-Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 4])
+Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [3, 4])
 
-# Create a node (NodeProto)
+# Create a node (NodeProto) - This is based on Pad-11
 node_def = helper.make_node(
     'Pad', # node name
-    ['X'], # inputs
+    ['X', 'pads', 'value'], # inputs
     ['Y'], # outputs
     mode='constant', # attributes
-    value=1.5,
-    pads=[0, 1, 0, 1],
 )
 
 # Create the graph (GraphProto)
 graph_def = helper.make_graph(
     [node_def],
     'test-model',
-    [X],
+    [X, pads, value],
     [Y],
 )
 
@@ -115,6 +138,17 @@ print('The model is checked!')
 ```
 Runnable IPython notebooks:
 - [check_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/check_model.ipynb)
+
+### Checking a Large ONNX Model >2GB
+Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory. 
+
+```python
+import onnx
+
+onnx.checker.check_model('path/to/the/model.onnx')
+# onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
+```
+
 
 ## Optimizing an ONNX Model
 ```python
@@ -213,4 +247,20 @@ import onnx.utils
 
 model = onnx.load('path/to/the/model.onnx')
 polished_model = onnx.utils.polish_model(model)
+```
+
+## Tools
+### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
+Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
+to the provided values in the parameter. You could provide both static and dynamic dimension size,
+by using dim_param. For more information on static and dynamic dimension size, checkout [Tensor Shapes](IR.md#tensor-shapes).
+
+The function runs model checker after the input/output sizes are updated.
+```python
+import onnx
+from onnx.tools import update_model_dims
+
+model = onnx.load('path/to/the/model.onnx')
+# Here both 'seq', 'batch' and -1 are dynamic using dim_param.
+variable_length_model = update_model_dims.update_inputs_outputs_dims(model, {'input_name': ['seq', 'batch', 3, -1]}, {'output_name': ['seq', 'batch', 1, -1]})
 ```

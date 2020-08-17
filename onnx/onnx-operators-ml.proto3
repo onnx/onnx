@@ -36,7 +36,7 @@ enum OperatorStatus {
 message FunctionProto {
   // The name of the function, similar usage of op_type in OperatorProto.
   string name = 1;
-  
+
   // The first version of a function set which contains this function.
   // When there's any breaking change for this function, the function set
   // contains the function needs to bump its version, and since_version of
@@ -59,11 +59,22 @@ message FunctionProto {
 
   // The attributes of the function.
   repeated string attribute= 6;
-  
+
   // The nodes in the function.
   repeated NodeProto node = 7;
   // A human-readable documentation for this function. Markdown is allowed.
   string doc_string = 8;
+
+  // The OperatorSets this function body (graph) relies on.
+  // A FunctionProto body (graph) may implicitly rely on the OperatorSet that
+  // this function belongs to. It can also explicitly rely on more OperatorSets
+  // with this field specified.
+  //
+  // All nodes in the function body (graph) will bind against the operator
+  // with the same-domain/same-op_type operator with the HIGHEST version
+  // in the referenced operator sets. This means at most one version can be relied
+  // for one domain.
+  repeated OperatorSetIdProto opset_import = 9;
 }
 
 // An OperatorProto represents the immutable specification of the signature
@@ -84,8 +95,7 @@ message FunctionProto {
 //   *since_version* is the version of the operator set that
 //      this operator was initially declared in.
 //
-message OperatorProto {  
-
+message OperatorProto {
   // The name of the operator within a domain.
   // This field MUST be present in this version of the IR.
   string op_type = 1;
@@ -139,7 +149,7 @@ message OperatorSetProto {
   // All OperatorSetProtos indicate the version of the IR syntax and semantics
   // they adhere to. It is always IR_VERSION.
   // This field MUST be present in this version of the IR
-  int32 ir_version = 2;
+  int64 ir_version = 2;
 
   // The prerelease component of the SemVer of the IR.
   // This field MAY be absent in this version of the IR
@@ -164,8 +174,13 @@ message OperatorSetProto {
   // The operators specified by this operator set.
   // The (name, version) MUST be unique across all OperatorProtos in operator
   repeated OperatorProto operator = 8;
-  
+
   // The functions specified by this operator set.
   // The (name, version) MUST be unique across all OperatorProtos/FunctionProtos in operator/functions
   repeated FunctionProto functions = 9;
 }
+
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
+
