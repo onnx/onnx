@@ -100,7 +100,7 @@ enum Version {
   // - Add message TrainingInfoProto to store initialization
   //   method and training algorithm. The execution of TrainingInfoProto
   //   can modify the values of mutable variables.
-  // - Make inference graph callable from TrainingInfoProto via GraphCall operator.
+  // - Implicitly add inference graph into each TrainingInfoProto's algorithm.
   IR_VERSION = 0x0000000000000007;
 }
 
@@ -212,7 +212,7 @@ message NodeProto {
 // TrainingInfoProto stores information for training a model.
 // In particular, this defines two functionalities: an initialization-step
 // and a training-algorithm-step. Initialization resets the model
-// back to its original state as if no training has been consumed.
+// back to its original state as if no training has been performed.
 // Training algorithm improves the model based on input data.
 //
 // The semantics of the initialization-step is that the initializers
@@ -240,20 +240,23 @@ message TrainingInfoProto {
   // iteration to zero.
   //
   // By default, this field is an empty graph and its evaluation does not
-  // produce any output.
+  // produce any output. Thus, no initializer would be changed by default.
   GraphProto initialization = 1;
 
   // This field represents a training algorithm step. Given required inputs,
   // it computes outputs to update initializers in its own or inference graph's
-  // initializer lists. In general, this graph contains loss node, gradient node,
-  // optimizer node, increment of iteration count, and some calls to the inference
-  // graph.
+  // initializer lists. In general, this field contains loss node, gradient node,
+  // optimizer node, increment of iteration count.
   //
-  // The field algorithm.node is the only place the user can use GraphCall
-  // operator. The only callable graph is the one stored in ModelProto.graph.
+  // In runtime, the training graph, "algorithm", is always combined with
+  // the inference graph, "ModelProto.graph". That is, the actual
+  // input/initializer/output/node/value_info/sparse_initializer list of
+  // training graph is the concatenation of
+  // "ModelProto.graph.input/initializer/output/node/value_info/sparse_initializer"
+  // and "algorithm.input/initializer/output/node/value_info/sparse_initializer".
   //
   // By default, this field is an empty graph and its evaluation does not
-  // produce any output.
+  // produce any output. The default training graph never update any initializers.
   GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
@@ -285,23 +288,16 @@ message TrainingInfoProto {
   // be multiple key-value pairs in "update_binding".
   //
   // The initializers appears as keys in "update_binding" are considered
-  // mutable and globally-visible variables. This implies some behaviors
+  // mutable variables. This implies some behaviors
   // as described below.
   //
-  //  1. We have only unique keys in all "update_binding"s so that two global
+  //  1. We have only unique keys in all "update_binding"s so that two
   //     variables may not have the same name. This ensures that one
-  //     global variable is assigned up to once.
+  //     variable is assigned up to once.
   //  2. The keys must appear in names of "ModelProto.graph.initializer" or
   //     "TrainingInfoProto.algorithm.initializer".
-  //  3. The values must be output names of "algorithm".
-  //  4. If an optional input of a graph is omitted when using GraphCall, the
-  //     global variable with the same name may be used.
-  //  5. When using GraphCall, the users always can pass values to optional 
-  //     inputs of the called graph even if the associated initializers appears
-  //     as keys in "update_binding"s.
-  //  6. The graphs in TrainingInfoProto's can use global variables as
-  //     their operator inputs.
-  //  7. Mutable variables are initialized to the value specified by the
+  //  3. The values must be output names of "algorithm" or "ModelProto.graph.output".
+  //  4. Mutable variables are initialized to the value specified by the
   //     corresponding initializer, and then potentially updated by
   //     "initializer_binding"s and "update_binding"s in "TrainingInfoProto"s.
   //
