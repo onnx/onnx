@@ -255,8 +255,8 @@ static void InferShapesImpl(
     InferenceContextImpl ctx(
         n, valueTypesByName, inputDataByName, &graphInferenceContext);    
     if (!schema) {
-      std::cerr << "Warning: Shape inference does not support this operator: "
-      << n.op_type() << std::endl;
+      std::cerr << "Warning: Unsupported operator " << n.op_type() 
+        << ". No schema registered for this operator." << std::endl;
       has_unsupported_op = true;
       continue;
     } else if (schema->has_type_and_shape_inference_function()){
@@ -526,8 +526,8 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 }
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
-  std::string op_name = n.has_name() ? n.name() : "no name";
-  return "(op_type:" + n.op_type() + ", name:" + op_name + "): " + err.what();
+  std::string op_name = n.has_name() ? (", node name: " + n.name()) : "";
+  return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }
 
 void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList) {
