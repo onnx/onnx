@@ -147,5 +147,7 @@ void check_function(
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
 
+bool check_is_experimental_op(std::string node_op_type);
+
 } // namespace checker
 } // namespace ONNX_NAMESPACE
