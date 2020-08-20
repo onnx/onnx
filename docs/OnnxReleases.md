@@ -11,7 +11,13 @@ Release Checklist:
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
     * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
 * Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
-* Make sure the VERSION_NUMBER file has up-to-date version - https://github.com/onnx/onnx/blob/master/VERSION_NUMBER
+* Make sure that the Release version number information is up-to-date in the following places:
+[VERSION_NUMBER file](https://github.com/onnx/onnx/blob/master/VERSION_NUMBER) and
+[version.h](../onnx/common/version.h)
+* Make sure that the IR version number and opset version numbers are up-to-date in
+[ONNX proto files](../onnx/onnx.in.proto),
+[Versioning.md](Versioning.md) and
+[helper.py](../onnx/helper.py).
 * Make sure all operators version are even number, if opset version is odd number then increment it and update all corresponding OPs.
 * Make sure all the git submodules are updated
     * ``git submodule update –init``

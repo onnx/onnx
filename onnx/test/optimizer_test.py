@@ -28,12 +28,12 @@ class TestOptimizer(unittest.TestCase):
                            output_types  # type: Sequence[Tuple[TensorProto.DataType, Sequence[int], Text]]
                            ):  # type: (...) -> List[NodeProto]
         zero = helper.make_tensor(
-            "trip_count_value", TensorProto.INT32, (), [10])
+            "trip_count_value", TensorProto.INT64, (), [10])
         true = helper.make_tensor("condition", TensorProto.BOOL, (), [True])
         # lcd is a dummy loop-carried dependency that only exists because
         # right now the schema checker is broken and assumes a variadic
         # input needs at least one value.
-        graph_inputs = [helper.make_tensor_value_info("i", TensorProto.INT32, ()),
+        graph_inputs = [helper.make_tensor_value_info("i", TensorProto.INT64, ()),
                         helper.make_tensor_value_info("cond", TensorProto.BOOL, ())]
         for type, shape, name in input_types:
             graph_inputs.append(
@@ -490,8 +490,8 @@ class TestOptimizer(unittest.TestCase):
             [helper.make_node("Transpose", ["_X"], ["_Y2"], perm=[1, 0, 2]),
              helper.make_node("Transpose", ["_Y2"], ["_Y3"], perm=[2, 0, 1]),
              helper.make_node("Transpose", ["_Y3"], ["_Y4"], perm=[2, 0, 1])],
-            [(TensorProto.FLOAT, (2, 3), "X")],
-            [(TensorProto.FLOAT, (2, 3), "Y4")]))
+            [(TensorProto.FLOAT, (2, 3, 4), "X")],
+            [(TensorProto.FLOAT, (2, 4, 3), "Y4")]))
         graph = helper.make_graph(
             nodes,
             "test",
