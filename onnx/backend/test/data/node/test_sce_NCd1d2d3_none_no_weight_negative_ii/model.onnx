@@ -1,9 +1,9 @@
-backend-test:ë
+backend-test:á
 V
 x
 yz"SoftmaxCrossEntropyLoss*
 ignore_indexûÿÿÿÿÿÿÿÿ *
-	reduction"none 6test_sce_NCd1d2d3_none_no_weight_negative_ignore_indexZ
+	reduction"none ,test_sce_NCd1d2d3_none_no_weight_negative_iiZ
 x
 
 
@@ -22,4 +22,4 @@ V
 
 
 
-B
+B

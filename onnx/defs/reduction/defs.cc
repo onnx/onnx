@@ -59,8 +59,7 @@ False instead of True.)DOC";
           "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
           OpSchema::Optional);
-    }
-    else{
+    } else {
       schema.Attr(
           "axes",
           "A list of integers, along which to reduce. The default is to reduce over "
@@ -81,26 +80,39 @@ False instead of True.)DOC";
         return;
       }
 
-      int64_t keep_dims = 1;
+      int64_t keep_dims = 1, noop_with_empty_axes = 0;
       auto attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      int64_t input_ndim = input_shape.dim_size();
-      auto output_shape =
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto noop_attr_proto = ctx.getAttribute("noop_with_empty_axes");
+      if (noop_attr_proto) {
+        noop_with_empty_axes = noop_attr_proto->i();
+      }
       std::vector<int64_t> axes;
       size_t num_inputs = ctx.getNumInputs();
       if (num_inputs == 2) { // axes is input
-        auto axes_proto = ctx.getInputData(1);
-        if (axes_proto == nullptr) {
+        const TensorProto* axesInitializer = ctx.getInputData(1);
+        if (axesInitializer == nullptr) {
           // skip if axes is not an initializer
           return;
         }
-        std::vector<int64_t> axes_values = ParseData<int64_t>(axes_proto);
+        std::vector<int64_t> axes_values = ParseData<int64_t>(axesInitializer);
         axes.assign(axes_values.begin(), axes_values.end());
+      } else { // axes is attribute
+        auto axes_proto = ctx.getAttribute("axes");
+        if (axes_proto)
+          axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
       }
+      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      if (noop_with_empty_axes && axes.empty()) {
+        propagateShapeFromInputToOutput(ctx, 0, 0);
+        return;
+      }
+      int64_t input_ndim = input_shape.dim_size();
+      auto output_shape =
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
       for (size_t i = 0; i < axes.size(); ++i) {
         if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
           fail_shape_inference(
