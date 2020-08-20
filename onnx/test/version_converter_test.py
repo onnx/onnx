@@ -22,10 +22,11 @@ class TestVersionConverter(unittest.TestCase):
             initial_version,  # type: OperatorSetIdProto
             target_version  # type: int
     ):  # type: (...) -> ModelProto
-        orig_model = helper.make_model(graph, producer_name='onnx-test', opset_imports=[initial_version])
+        orig_model = helper.make_model(
+            graph, producer_name='onnx-test', opset_imports=[initial_version])
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
-                target_version)
+                                                                 target_version)
         checker.check_model(converted_model)
         return converted_model
 
@@ -33,8 +34,8 @@ class TestVersionConverter(unittest.TestCase):
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
             nodes = [helper.make_node('Add', ["W", "Z"], ["shape"]),
-                        helper.make_node('Reshape', ["X", "shape"], ["A"]),
-                        helper.make_node('Add', ["A", "W"], ["Y"])]
+                     helper.make_node('Reshape', ["X", "shape"], ["A"]),
+                     helper.make_node('Add', ["A", "W"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
                 "test",
@@ -104,7 +105,8 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Add Adapter: 5 -> 8, requiring insertion of an Unsqueeze node
     def test_add_5_8_with_unsqueeze(self):  # type: () -> None
-        nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"], axis=0, broadcast=1)]
+        nodes = [helper.make_node('Add', ["X1", "X2"], [
+                                  "Y"], axis=0, broadcast=1)]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -211,7 +213,7 @@ class TestVersionConverter(unittest.TestCase):
     # Test BatchNormalization Adapter: 8 -> 5
     def test_batch_normalization_8_5(self):  # type: () -> None
         nodes = [helper.make_node('BatchNormalization', ["X", "scale", "B",
-            "mean", "var"], ["Y"])]
+                                                         "mean", "var"], ["Y"])]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -230,7 +232,7 @@ class TestVersionConverter(unittest.TestCase):
     # Test BatchNormalization Adapter: 5 -> 8
     def test_batch_normalization_5_8(self):  # type: () -> None
         nodes = [helper.make_node('BatchNormalization', ["X", "scale", "B",
-            "mean", "var"], ["Y"])]
+                                                         "mean", "var"], ["Y"])]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -249,7 +251,7 @@ class TestVersionConverter(unittest.TestCase):
     # Test Concat Adapter: 3 -> 5
     def test_concat_3_5(self):  # type: () -> None
         nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
-            "X4", "X5"], ["Y"])]
+                                             "X4", "X5"], ["Y"])]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -268,7 +270,7 @@ class TestVersionConverter(unittest.TestCase):
     # Test Concat Adapter: 5 -> 3
     def test_concat_5_3(self):  # type: () -> None
         nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
-            "X4", "X5"], ["Y"], axis=0)]
+                                             "X4", "X5"], ["Y"], axis=0)]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -287,9 +289,9 @@ class TestVersionConverter(unittest.TestCase):
     # Test Reshape Adapter: 6 -> 4
     def test_reshape_6_4(self):  # type: () -> None
         nodes = [helper.make_node('Constant', [], ["shape"],
-                    value=helper.make_tensor("", TensorProto.INT64, [1],
-                        [5])),
-                    helper.make_node('Reshape', ["X", "shape"], ["Y"])]
+                                  value=helper.make_tensor("", TensorProto.INT64, [1],
+                                                           [5])),
+                 helper.make_node('Reshape', ["X", "shape"], ["Y"])]
         graph = helper.make_graph(
             nodes,
             "test",
@@ -318,14 +320,17 @@ class TestVersionConverter(unittest.TestCase):
     # Test Sum Adapter: 7 -> 8
     def test_sum_7_8(self):  # type: () -> None
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
-            "data_3", "data_4"], ["sum"])]
+                                          "data_3", "data_4"], ["sum"])]
         graph = helper.make_graph(
             nodes,
             "test",
             [helper.make_tensor_value_info("data_0", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_1", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_2", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_3", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_2", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_3", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("data_4", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
@@ -337,14 +342,17 @@ class TestVersionConverter(unittest.TestCase):
     # Test Sum Adapter: 5 -> 8
     def test_sum_5_8(self):  # type: () -> None
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
-            "data_3", "data_4"], ["sum"])]
+                                          "data_3", "data_4"], ["sum"])]
         graph = helper.make_graph(
             nodes,
             "test",
             [helper.make_tensor_value_info("data_0", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_1", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_2", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_3", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_2", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_3", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("data_4", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
@@ -356,14 +364,17 @@ class TestVersionConverter(unittest.TestCase):
     # Test Sum Adapter: 8 -> 5
     def test_sum_8_5(self):  # type: () -> None
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
-            "data_3", "data_4"], ["sum"])]
+                                          "data_3", "data_4"], ["sum"])]
         graph = helper.make_graph(
             nodes,
             "test",
             [helper.make_tensor_value_info("data_0", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_1", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_2", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("data_3", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_2", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info(
+                    "data_3", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("data_4", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
@@ -374,11 +385,13 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test AveragePool Adapter: 1 -> 8
     def test_averagepool_up(self):  # type: () -> None
-        nodes = [helper.make_node('AveragePool', ["X"], ["Y"], kernel_shape=[1, 1])]
+        nodes = [helper.make_node('AveragePool', ["X"], [
+                                  "Y"], kernel_shape=[1, 1])]
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 5, 5, 5))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 1), 8)
@@ -388,11 +401,13 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test AveragePool Adapter: 8 -> 1
     def test_averagepool_down(self):  # type: () -> None
-        nodes = [helper.make_node('AveragePool', ["X"], ["Y"], kernel_shape=[1, 1])]
+        nodes = [helper.make_node('AveragePool', ["X"], [
+                                  "Y"], kernel_shape=[1, 1])]
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 5, 5, 5))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 8), 1)
@@ -447,7 +462,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type, data_shape)],
             [onnx.helper.make_tensor_value_info("Y", data_type, data_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Max"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -472,7 +488,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type, data_shape)],
             [onnx.helper.make_tensor_value_info("Y", data_type, data_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Min"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -497,7 +514,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type, data_shape)],
             [onnx.helper.make_tensor_value_info("Y", data_type, data_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Mean"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -509,7 +527,8 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 5, 5, 5))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 1), 8)
@@ -523,7 +542,8 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 5, 5, 5))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 8), 1)
@@ -547,7 +567,8 @@ class TestVersionConverter(unittest.TestCase):
         x = helper.make_tensor_value_info("x", data_type, input_shape)
         scale = helper.make_tensor_value_info("s", data_type, [input_shape[1]])
         B = helper.make_tensor_value_info("bias", data_type, [input_shape[1]])
-        mean = helper.make_tensor_value_info("mean", data_type, [input_shape[1]])
+        mean = helper.make_tensor_value_info(
+            "mean", data_type, [input_shape[1]])
         var = helper.make_tensor_value_info("var", data_type, [input_shape[1]])
         y = helper.make_tensor_value_info("y", data_type, input_shape)
 
@@ -558,7 +579,8 @@ class TestVersionConverter(unittest.TestCase):
             [y]
         )
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == to_opset
@@ -577,17 +599,21 @@ class TestVersionConverter(unittest.TestCase):
 
         input_shape = (2, 3, 4, 5)
         x = onnx.helper.make_tensor_value_info("X", data_type, input_shape)
-        scale = onnx.helper.make_tensor_value_info("scale", data_type, [input_shape[1]])
+        scale = onnx.helper.make_tensor_value_info(
+            "scale", data_type, [input_shape[1]])
         B = onnx.helper.make_tensor_value_info("B", data_type, [input_shape[1]])
-        mean = onnx.helper.make_tensor_value_info("mean", data_type, [input_shape[1]])
-        var = onnx.helper.make_tensor_value_info("var", data_type, [input_shape[1]])
+        mean = onnx.helper.make_tensor_value_info(
+            "mean", data_type, [input_shape[1]])
+        var = onnx.helper.make_tensor_value_info(
+            "var", data_type, [input_shape[1]])
         y = onnx.helper.make_tensor_value_info("Y", data_type, input_shape)
 
         graph = onnx.helper.make_graph(
             nodes, "test_batchnormalization", [x, scale, B, mean, var], [y]
         )
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == to_opset
@@ -613,7 +639,8 @@ class TestVersionConverter(unittest.TestCase):
             [],
             [onnx.helper.make_tensor_value_info("Y", data_type, output_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -640,7 +667,8 @@ class TestVersionConverter(unittest.TestCase):
             [],
             [onnx.helper.make_tensor_value_info("Y", data_type, output_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -665,7 +693,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type, [2, 3, 4])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [2, 12])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Flatten"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -690,7 +719,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type, [2, 3, 4])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [2, 12])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[1].op_type == "Flatten"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -716,7 +746,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("Slope", data_type, input_shape)],
             [onnx.helper.make_tensor_value_info("Y", data_type, input_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "PRelu"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -742,7 +773,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("Slope", data_type, input_shape)],
             [onnx.helper.make_tensor_value_info("Y", data_type, input_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[2].op_type == "PRelu"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -768,7 +800,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X2", data_type, input_shape)],
             [onnx.helper.make_tensor_value_info("Y", TensorProto.BOOL, input_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Greater"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == TensorProto.BOOL
@@ -794,7 +827,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X2", data_type, input_shape)],
             [onnx.helper.make_tensor_value_info("Y", TensorProto.BOOL, input_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[2].op_type == "Greater"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == TensorProto.BOOL
@@ -820,7 +854,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X2", data_type, input_shape)],
             [onnx.helper.make_tensor_value_info("Y", TensorProto.BOOL, input_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Less"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == TensorProto.BOOL
@@ -846,7 +881,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X2", data_type, input_shape)],
             [onnx.helper.make_tensor_value_info("Y", TensorProto.BOOL, input_shape)])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[2].op_type == "Less"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == TensorProto.BOOL
@@ -871,7 +907,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X2", data_type, [4, 3])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [3, 3])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "MatMul"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -896,7 +933,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X2", data_type, [4, 3])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [3, 3])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[2].op_type == "MatMul"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -922,7 +960,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X3", data_type, [3, 3])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [3, 3])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Gemm"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -948,7 +987,8 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("X3", data_type, [3, 3])],
             [onnx.helper.make_tensor_value_info("Y", data_type, [3, 3])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[3].op_type == "Gemm"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type
@@ -975,7 +1015,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])]
         )
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert len(converted_model.graph.node) == 1
         assert converted_model.graph.node[0].op_type == "Upsample"
@@ -984,7 +1025,8 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
-    def helper_upsample_with_initializer(self, raw_scale=False):  # type: (bool) -> None
+    # type: (bool) -> None
+    def helper_upsample_with_initializer(self, raw_scale=False):
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -997,7 +1039,8 @@ class TestVersionConverter(unittest.TestCase):
         )]
 
         scale_value = [1.0, 1.0, 2.0, 3.0]
-        scale_tensor = onnx.helper.make_tensor("Scales", onnx.TensorProto.FLOAT, [4], bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
+        scale_tensor = onnx.helper.make_tensor("Scales", onnx.TensorProto.FLOAT, [4], bytes(
+            struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
 
         graph = helper.make_graph(
             nodes,
@@ -1007,7 +1050,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             [scale_tensor])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Upsample"
         assert len(converted_model.graph.initializer) == 0
@@ -1016,13 +1060,15 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
-    def helper_upsample_with_constant(self, raw_scale=False):  # type: (bool) -> None
+    # type: (bool) -> None
+    def helper_upsample_with_constant(self, raw_scale=False):
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
 
         scale_value = [1.0, 1.0, 2.0, 3.0]
-        scale_tensor = onnx.helper.make_tensor("const_value", onnx.TensorProto.FLOAT, [4], bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
+        scale_tensor = onnx.helper.make_tensor("const_value", onnx.TensorProto.FLOAT, [4], bytes(
+            struct.pack("4f", *scale_value)) if raw_scale else scale_value, raw_scale)
         nodes = [
             onnx.helper.make_node(
                 'Constant',
@@ -1042,7 +1088,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             value_info=[onnx.helper.make_tensor_value_info("Constant_Output", data_type, [4])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert len(converted_model.graph.node) == 1
         assert converted_model.graph.node[0].op_type == "Upsample"
@@ -1072,8 +1119,10 @@ class TestVersionConverter(unittest.TestCase):
         to_opset = 9
         data_type = TensorProto.FLOAT
 
-        node1 = onnx.helper.make_node("Add", inputs=["sum_in", "next"], outputs=["sum_out"],)
-        node2 = onnx.helper.make_node("Identity", inputs=["sum_out"], outputs=["scan_out"],)
+        node1 = onnx.helper.make_node(
+            "Add", inputs=["sum_in", "next"], outputs=["sum_out"],)
+        node2 = onnx.helper.make_node(
+            "Identity", inputs=["sum_out"], outputs=["scan_out"],)
         g = onnx.helper.make_graph(
             [node1, node2],
             "scan_body",
@@ -1092,7 +1141,8 @@ class TestVersionConverter(unittest.TestCase):
         )]
 
         seq_lens = onnx.helper.make_empty_tensor_value_info(" ")
-        initial = onnx.helper.make_tensor_value_info("initial", data_type, [1, 2])
+        initial = onnx.helper.make_tensor_value_info(
+            "initial", data_type, [1, 2])
         x = onnx.helper.make_tensor_value_info("x", data_type, [1, 3, 2])
         y = onnx.helper.make_tensor_value_info("y", data_type, [1, 2])
         z = onnx.helper.make_tensor_value_info("z", data_type, [1, 3, 2])
@@ -1101,7 +1151,8 @@ class TestVersionConverter(unittest.TestCase):
             nodes, "test_scan_8_9", [seq_lens, initial, x], [y, z]
         )
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Scan"
         assert converted_model.opset_import[0].version == to_opset
@@ -1126,7 +1177,8 @@ class TestVersionConverter(unittest.TestCase):
             [onnx.helper.make_tensor_value_info("X", data_type_from, [2, 3])],
             [onnx.helper.make_tensor_value_info("Y", data_type_to, [2, 3])])
 
-        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset)
 
         assert converted_model.graph.node[0].op_type == "Cast"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type_to
@@ -1165,7 +1217,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Split"
         assert converted_model.opset_import[0].version == 13
 
-        #Test AxesInputToAttribute Adapter: 13 -> 12
+    # Test AxesInputToAttribute Adapter: 13 -> 12
     def test_axes_input_to_attr_13_12(self):  # type: () -> None
         nodes = [helper.make_node('Constant', [], ["axes"],
                                   value=helper.make_tensor("", TensorProto.INT64, [1],
@@ -1195,6 +1247,7 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "ReduceSum"
         assert converted_model.opset_import[0].version == 13
+
 
 if __name__ == '__main__':
     unittest.main()
