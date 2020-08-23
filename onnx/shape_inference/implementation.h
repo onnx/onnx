@@ -200,6 +200,8 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
 
+std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+
 void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList);
 
 } // namespace shape_inference
