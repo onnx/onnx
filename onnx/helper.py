@@ -17,6 +17,57 @@ from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 import numpy as np  # type: ignore
 
+VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
+VersionTableType = List[VersionRowType]
+
+# This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
+# Both must be updated whenever a new version of ONNX is released.
+VERSION_TABLE = [
+    # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
+    ('1.0', 3, 1, 1),
+    ('1.1', 3, 5, 1),
+    ('1.1.2', 3, 6, 1),
+    ('1.2', 3, 7, 1),
+    ('1.3', 3, 8, 1),
+    ('1.4.1', 4, 9, 1),
+    ('1.5.0', 5, 10, 1),
+    ('1.6.0', 6, 11, 2),
+    ('1.7.0', 7, 12, 2, 1)
+]  # type: VersionTableType
+
+VersionMapType = Dict[Tuple[Text, int], int]
+
+
+# create a map from (opset-domain, opset-version) to ir-version from above table
+def create_op_set_id_version_map(table):  # type: (VersionTableType) -> VersionMapType
+    result = dict()  # type: VersionMapType
+
+    def process(release_version, ir_version, *args):  # type: (Text, int, Any) -> None
+        for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):
+            if (pair not in result):
+                result[pair] = ir_version
+    for row in table:
+        process(*row)
+    return result
+
+
+OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
+
+
+# Given list of opset ids, determine minimum IR version required
+def find_min_ir_version_for(opsetidlist):  # type: (List[OperatorSetIdProto]) -> int
+    default_min_version = 3
+
+    def find_min(domain, version):  # type: (Union[Text, None], int) -> int
+        key = (domain if domain else 'ai.onnx', version)
+        if (key in OP_SET_ID_VERSION_MAP):
+            return OP_SET_ID_VERSION_MAP[key]
+        else:
+            raise ValueError("Unsupported opset-version.")
+    if (opsetidlist):
+        return max([find_min(x.domain, x.version) for x in opsetidlist])
+    return default_min_version  # if no opsets specified
+
 
 def make_node(
         op_type,  # type: Text
@@ -126,6 +177,17 @@ def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         # TODO: Does this work with repeated fields?
         setattr(model, k, v)
     return model
+
+
+# An extension of make_model that infers an IR_VERSION for the model,
+# if not specified, using a best-effort-basis.
+def make_model_gen_version(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
+    ir_version_field = str('ir_version')
+    if (ir_version_field not in kwargs):
+        opset_imports_field = str('opset_imports')
+        imports = (kwargs[opset_imports_field] if opset_imports_field in kwargs else [])
+        kwargs[ir_version_field] = find_min_ir_version_for(imports)
+    return make_model(graph, **kwargs)
 
 
 def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) -> None
