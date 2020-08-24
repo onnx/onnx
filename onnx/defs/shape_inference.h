@@ -857,8 +857,8 @@ inline void UnionTypeInfo(
       }
 
       UnionShapeInfo(
-          source_elem_type.sequence_type().elem_type().tensor_type().shape(),
-          *target_elem_type.mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type());
+          source_type.sequence_type().elem_type().tensor_type().shape(),
+          *target_type.mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type());
     }
   }
 }
