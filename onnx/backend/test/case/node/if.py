@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-class Loop(Base):
+class If(Base):
 
     @staticmethod
     def export_if():  # type: () -> None

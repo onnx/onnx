@@ -805,4 +805,62 @@ inline void UnionShapeInfo(
   }
 }
 
+// target-type = Union (target-type, source-type)
+// target and source are required to have the same type.
+// Example 1: same tensor type, different shape
+//    source: tensor elem_type: int64, shape: (2, 3, 4, 'x')
+//    target: tensor elem_type: int64, shape: (2, 'y', 5, 'x')
+//    output: tensor elem_type: int64, shape: (2, None, None, 'x')
+// Example 2: same sequence type, different shape
+//    source: sequence of tensor, elem_type: float, shape: (2, 3, 4)
+//    target: sequence of tensor, elem_type: float, shape: None
+//    output: sequence of tensor, elem_type: float, shape: None
+inline void UnionTypeInfo(
+    const TypeProto& source_type,
+    TypeProto& target_type) {
+  if (source_type.value_case() != target_type.value_case()) {
+    fail_type_inference(
+        "Mismatched type:",
+        " source=",
+        source_type.value_case(),
+        " target=",
+        target_type.value_case());
+  }
+
+  if (target_type.has_tensor_type()) {
+    auto source_elem_type = source_type.tensor_type().elem_type();
+    auto target_elem_type = target_type.tensor_type().elem_type();
+
+    if (source_elem_type != target_elem_type) {
+      fail_type_inference(
+          "Mismatched tensor element type:",
+          " source=",
+          source_elem_type,
+          " target=",
+          target_elem_type);
+    }
+
+    UnionShapeInfo(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
+  } else if (target_type.has_sequence_type()) {
+    if (source_type.sequence_type().elem_type().has_tensor_type() &&
+        target_type.sequence_type().elem_type().has_tensor_type()) {
+      auto source_elem_type = source_type.sequence_type().elem_type().tensor_type().elem_type();
+      auto target_elem_type = target_type.sequence_type().elem_type().tensor_type().elem_type();
+
+      if (source_elem_type != target_elem_type) {
+        fail_type_inference(
+            "Mismatched tensor element type:",
+            " source=",
+            source_elem_type,
+            " target=",
+            target_elem_type);
+      }
+
+      UnionShapeInfo(
+          source_elem_type.sequence_type().elem_type().tensor_type().shape(),
+          *target_elem_type.mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type());
+    }
+  }
+}
+
 } // namespace ONNX_NAMESPACE
