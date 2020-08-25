@@ -225,8 +225,8 @@ message NodeProto {
 // training algorithm's step. After the execution of a
 // TrainingInfoProto.algorithm, the initializers specified by "update_binding"
 // may be immediately updated. If the targeted training algorithm contains
-// consecutive update stages (such as block coordinate descent methods),
-// the user needs to create a TrainingInfoProto for each stage.
+// consecutive update steps (such as block coordinate descent methods),
+// the user needs to create a TrainingInfoProto for each step.
 message TrainingInfoProto {
   // This field describes a graph to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
@@ -248,15 +248,20 @@ message TrainingInfoProto {
   // initializer lists. In general, this field contains loss node, gradient node,
   // optimizer node, increment of iteration count.
   //
-  // In runtime, the training graph, "algorithm", is always combined with
-  // the inference graph, "ModelProto.graph". That is, the actual
+  // An execution of the training algorithm step is performed by executing the
+  // graph obtained by combining the inference graph (namely "ModelProto.graph")
+  // and the "algorithm" graph. That is, the actual the actual
   // input/initializer/output/node/value_info/sparse_initializer list of
-  // training graph is the concatenation of
+  // the training graph is the concatenation of
   // "ModelProto.graph.input/initializer/output/node/value_info/sparse_initializer"
-  // and "algorithm.input/initializer/output/node/value_info/sparse_initializer".
+  // and "algorithm.input/initializer/output/node/value_info/sparse_initializer"
+  // in that order. This combined graph must satisfy the normal ONNX conditions.
+  // For example, an input of a node in the "algorithm" graph may reference the
+  // output of a node in the inference graph (but not the other way round).
   //
   // By default, this field is an empty graph and its evaluation does not
-  // produce any output. The default training graph never update any initializers.
+  // produce any output. Evaluating the default training step never
+  // update any initializers.
   GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
