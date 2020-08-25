@@ -270,7 +270,15 @@ void LoopInferenceFunction(InferenceContext& ctx) {
     // inferencing
     temporary_type_protos.push_back(*ctx.getInputType(i));
     auto& input_type = temporary_type_protos.back();
-    input_type.mutable_tensor_type()->clear_shape();
+
+    if (input_type.has_tensor_type()) {
+      input_type.mutable_tensor_type()->clear_shape();
+    } else if (input_type.has_sequence_type()) {
+      auto& seq_type = *input_type.mutable_sequence_type();
+      if (seq_type.has_elem_type() && seq_type.elem_type().has_tensor_type()) {
+        seq_type.mutable_elem_type()->mutable_tensor_type()->clear_shape();
+      }
+    }
 
     subgraph_input_types.push_back(&input_type);
   }
