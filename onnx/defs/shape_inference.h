@@ -952,21 +952,7 @@ inline void UnionTypeInfo(
   } else if (target_type.has_sequence_type()) {
     if (source_type.sequence_type().elem_type().has_tensor_type() &&
         target_type.sequence_type().elem_type().has_tensor_type()) {
-      auto source_elem_type = source_type.sequence_type().elem_type().tensor_type().elem_type();
-      auto target_elem_type = target_type.sequence_type().elem_type().tensor_type().elem_type();
-
-      if (source_elem_type != target_elem_type) {
-        fail_type_inference(
-            "Mismatched tensor element type:",
-            " source=",
-            source_elem_type,
-            " target=",
-            target_elem_type);
-      }
-
-      UnionShapeInfo(
-          source_type.sequence_type().elem_type().tensor_type().shape(),
-          *target_type.mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type());
+      UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
     }
   }
 }
