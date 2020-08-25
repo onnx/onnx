@@ -587,23 +587,10 @@ void check_node(
         ") has zero input and zero output.");
   }
 
-  // Put the removed experimental ops here
-  static std::set<std::string> experimental_ops = {"ATen",
-                                                   "Affine",
-                                                   "ConstantFill",
-                                                   "Crop",
-                                                   "DynamicSlice",
-                                                   "GRUUnit",
-                                                   "GivenTensorFill",
-                                                   "ImageScaler",
-                                                   "ParametricSoftplus",
-                                                   "Scale",
-                                                   "ScaledTanh"};
-  if (experimental_ops.count(node.op_type())) {
-    std::cerr << "Warning: " << node.op_type() << " was a removed "
-              << "experimental ops. In the future, we may directly "
-              << "reject this operator. Please update your model as soon "
-              << "as possible." << std::endl;
+  // If encounter experimental op, stop checking
+  if (check_is_experimental_op(node.op_type())) {
+    std::cerr << "Warning: Checker does not support models with experimental ops: "
+          << node.op_type() << std::endl;
     return;
   }
 
@@ -901,6 +888,23 @@ void check_model(const std::string& model_path) {
 void check_model(const ModelProto& model) {
   CheckerContext ctx;
   check_model(model, ctx);
+}
+
+
+std::set<std::string> experimental_ops = {"ATen",
+                                          "Affine",
+                                          "ConstantFill",
+                                          "Crop",
+                                          "DynamicSlice",
+                                          "GRUUnit",
+                                          "GivenTensorFill",
+                                          "ImageScaler",
+                                          "ParametricSoftplus",
+                                          "Scale",
+                                          "ScaledTanh"};
+
+bool check_is_experimental_op(std::string node_op_type) {
+  return (experimental_ops.count(node_op_type))? true:false;
 }
 
 #undef fail_check
