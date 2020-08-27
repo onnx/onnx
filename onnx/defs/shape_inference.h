@@ -929,10 +929,13 @@ inline void UnionTypeInfo(
 
     UnionShapeInfo(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
   } else if (target_type.has_sequence_type()) {
-    if (source_type.sequence_type().elem_type().has_tensor_type() &&
-        target_type.sequence_type().elem_type().has_tensor_type()) {
-      UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
+    if (!source_type.sequence_type().has_elem_type()) {
+      fail_type_inference("source sequence type missing element type.");
     }
+    if (!target_type.sequence_type().has_elem_type()) {
+      fail_type_inference("target sequence type missing element type.");
+    }
+    UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
   }
 }
 
