@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 145/162 (89.51%, 5 generators excluded) common operators.
+Node tests have covered 147/162 (90.74%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4527,6 +4527,134 @@ expect(node, inputs=[data], outputs=[data],
 </details>
 
 
+### If
+There are 2 test cases, listed as following:
+<details>
+<summary>if</summary>
+
+```python
+# Given a bool scalar input cond.
+# return constant tensor x if cond is True, otherwise return constant tensor y.
+
+then_out = onnx.helper.make_tensor_value_info('then_out', onnx.TensorProto.FLOAT, [5])
+else_out = onnx.helper.make_tensor_value_info('else_out', onnx.TensorProto.FLOAT, [5])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+y = np.array([5, 4, 3, 2, 1]).astype(np.float32)
+
+then_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['then_out'],
+    value=onnx.numpy_helper.from_array(x)
+)
+
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['else_out'],
+    value=onnx.numpy_helper.from_array(y)
+)
+
+then_body = onnx.helper.make_graph(
+    [then_const_node],
+    'then_body',
+    [],
+    [then_out]
+)
+
+else_body = onnx.helper.make_graph(
+    [else_const_node],
+    'else_body',
+    [],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['res'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+cond = np.array(1).astype(np.bool)
+res = x if cond else y
+expect(if_node, inputs=[cond], outputs=[res], name='test_if',
+    opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+<details>
+<summary>if_seq</summary>
+
+```python
+# Given a bool scalar input cond.
+# return constant sequence x if cond is True, otherwise return constant sequence y.
+
+then_out = onnx.helper.make_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
+else_out = onnx.helper.make_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
+
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+y = [np.array([5, 4, 3, 2, 1]).astype(np.float32)]
+
+then_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.numpy_helper.from_array(x[0])
+)
+
+then_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['x'],
+    outputs=['then_out']
+)
+
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['y'],
+    value=onnx.numpy_helper.from_array(y[0])
+)
+
+else_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['y'],
+    outputs=['else_out']
+)
+
+then_body = onnx.helper.make_graph(
+    [then_const_node, then_seq_node],
+    'then_body',
+    [],
+    [then_out]
+)
+
+else_body = onnx.helper.make_graph(
+    [else_const_node, else_seq_node],
+    'else_body',
+    [],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['res'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+cond = np.array(1).astype(np.bool)
+res = x if cond else y
+expect(if_node, inputs=[cond], outputs=[res], name='test_if_seq',
+    opset_imports=[onnx.helper.make_opsetid("", 13)])
+```
+
+</details>
+
+
 ### InstanceNormalization
 There are 1 test cases, listed as following:
 <details>
@@ -5052,6 +5180,230 @@ node = onnx.helper.make_node(
 y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_negative_axis')
+```
+
+</details>
+
+
+### Loop
+There are 2 test cases, listed as following:
+<details>
+<summary>loop_11</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN], and initial tensor y
+# sum up its elements using a scan
+# returning the final state (y+x1+x2+...+xN) as well the scan_output
+# [y+x1, y+x1+x2, ..., y+x1+x2+...+xN]
+
+y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
+y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+y = np.array([-2]).astype(np.float32)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+i_add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+start_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['iter_count'],
+    outputs=['slice_start'],
+    axes=[0]
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end'],
+    outputs=['slice_end'],
+    axes=[0]
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+y_add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['y_in', 'slice_out'],
+    outputs=['y_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+scan_identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['y_out'],
+    outputs=['scan_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, x_const_node, one_const_node, i_add_node,
+     start_unsqueeze_node, end_unsqueeze_node, slice_node, y_add_node,
+     scan_identity_node],
+    'loop_body',
+    [iter_count, cond_in, y_in],
+    [cond_out, y_out, scan_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'y'],
+    outputs=['res_y', 'res_scan'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+res_y = np.array([13]).astype(np.float32)
+cond = np.array(1).astype(np.bool)
+res_scan = np.array([-1, 1, 4, 8, 13]).astype(np.float32).reshape((5, 1))
+expect(node, inputs=[trip_count, cond, y], outputs=[res_y, res_scan],
+       name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+<details>
+<summary>loop_13</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN],
+# Return a sequence of tensors of
+#   [[x1], [x1, x2], ..., [x1, ..., xN]]
+
+seq_in = onnx.helper.make_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
+seq_out = onnx.helper.make_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+zero_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['slice_start'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_zero',
+        data_type=onnx.TensorProto.INT64,
+        dims=(1,),
+        vals=[0]
+    )
+)
+
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end'],
+    outputs=['slice_end'],
+    axes=[0]
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+insert_node = onnx.helper.make_node(
+    'SequenceInsert',
+    inputs=['seq_in', 'slice_out'],
+    outputs=['seq_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, x_const_node, one_const_node, zero_const_node, add_node,
+     end_unsqueeze_node, slice_node, insert_node],
+    'loop_body',
+    [iter_count, cond_in, seq_in],
+    [cond_out, seq_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'seq_empty'],
+    outputs=['seq_res'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+seq_empty = []  # type: List[Any]
+seq_res = [x[:int(i)] for i in x]
+cond = np.array(1).astype(np.bool)
+expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
+       name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
+       input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
 ```
 
 </details>
@@ -13451,13 +13803,7 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GreaterOrEqual (call for test cases)
 
 
-### If (call for test cases)
-
-
 ### LessOrEqual (call for test cases)
-
-
-### Loop (call for test cases)
 
 
 ### LpNormalization (call for test cases)
