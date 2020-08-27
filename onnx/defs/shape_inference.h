@@ -153,6 +153,10 @@ multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
   return dim;
 }
 
+void propagateElemTypeWithValidation(
+    const TypeProto* input_type,
+    TypeProto* output_type);
+
 inline void propagateTensorElemTypeWithValidation(
     const TypeProto* input_type,
     TypeProto* output_type) {
@@ -209,38 +213,13 @@ inline void propagateSequenceElemTypeWithValidation(
   }
 
   auto input_seq_type = input_type->sequence_type();
-  if (input_seq_type.has_elem_type() && input_seq_type.elem_type().has_tensor_type()) {
-    auto input_seq_ten_type = input_seq_type.elem_type().tensor_type();
-    if (input_seq_ten_type.elem_type() == TensorProto::UNDEFINED) {
-      fail_type_inference("Element type of input was unknown");
-    }
 
-    bool isValidCase = [&]()->bool{
-      if (output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-        return true;
-      }
-      auto out_seq_type = output_type->sequence_type();
-      if (!out_seq_type.has_elem_type()) {
-        return true;
-      }
-      if (out_seq_type.elem_type().value_case() == TypeProto::VALUE_NOT_SET ||
-          out_seq_type.elem_type().value_case() == TypeProto::kTensorType) {
-        return true;
-      }
-      return false;
-    }();
-
-    if (isValidCase) {
-      output_type->mutable_sequence_type()
-          ->mutable_elem_type()
-          ->mutable_tensor_type()
-          ->set_elem_type(input_seq_ten_type.elem_type());
-    } else {
-      // This is not expected to happen
-      fail_type_inference(
-          "Output was expected to have sequence[tensor] type. Got ",
-          output_type->value_case());
-    }
+  if (input_seq_type.has_elem_type()) {
+    propagateElemTypeWithValidation(
+        &input_seq_type.elem_type(),
+        output_type->mutable_sequence_type()->mutable_elem_type());
+  } else {
+    fail_type_inference("Element type of input was unknown");
   }
 }
 
