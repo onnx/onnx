@@ -64,7 +64,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
-|<a href="#If">If</a>|<a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#If">If</a>|<a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
@@ -74,7 +74,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
-|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
+|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
 |<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-1">1</a>|
 |<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
 |<a href="#MatMul">MatMul</a>|<a href="Changelog.md#MatMul-13">13</a>, <a href="Changelog.md#MatMul-9">9</a>, <a href="Changelog.md#MatMul-1">1</a>|
@@ -7426,9 +7426,9 @@ expect(node, inputs=[data], outputs=[data],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#If-1">1</a>
+Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>
 
 #### Attributes
 
@@ -7456,11 +7456,141 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>All Tensor types</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>All Tensor and Sequence types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>if</summary>
+
+```python
+# Given a bool scalar input cond.
+# return constant tensor x if cond is True, otherwise return constant tensor y.
+
+then_out = onnx.helper.make_tensor_value_info('then_out', onnx.TensorProto.FLOAT, [5])
+else_out = onnx.helper.make_tensor_value_info('else_out', onnx.TensorProto.FLOAT, [5])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+y = np.array([5, 4, 3, 2, 1]).astype(np.float32)
+
+then_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['then_out'],
+    value=onnx.numpy_helper.from_array(x)
+)
+
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['else_out'],
+    value=onnx.numpy_helper.from_array(y)
+)
+
+then_body = onnx.helper.make_graph(
+    [then_const_node],
+    'then_body',
+    [],
+    [then_out]
+)
+
+else_body = onnx.helper.make_graph(
+    [else_const_node],
+    'else_body',
+    [],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['res'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+cond = np.array(1).astype(np.bool)
+res = x if cond else y
+expect(if_node, inputs=[cond], outputs=[res], name='test_if',
+    opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>if_seq</summary>
+
+```python
+# Given a bool scalar input cond.
+# return constant sequence x if cond is True, otherwise return constant sequence y.
+
+then_out = onnx.helper.make_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
+else_out = onnx.helper.make_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
+
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+y = [np.array([5, 4, 3, 2, 1]).astype(np.float32)]
+
+then_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.numpy_helper.from_array(x[0])
+)
+
+then_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['x'],
+    outputs=['then_out']
+)
+
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['y'],
+    value=onnx.numpy_helper.from_array(y[0])
+)
+
+else_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['y'],
+    outputs=['else_out']
+)
+
+then_body = onnx.helper.make_graph(
+    [then_const_node, then_seq_node],
+    'then_body',
+    [],
+    [then_out]
+)
+
+else_body = onnx.helper.make_graph(
+    [else_const_node, else_seq_node],
+    'else_body',
+    [],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['res'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+cond = np.array(1).astype(np.bool)
+res = x if cond else y
+expect(if_node, inputs=[cond], outputs=[res], name='test_if_seq',
+    opset_imports=[onnx.helper.make_opsetid("", 13)])
+```
+
+</details>
 
 
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
@@ -8633,13 +8763,13 @@ expect(node, inputs=[x], outputs=[y],
         for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
           /* Implicitly-defined code: bind actual parameter values
              to formal parameter variables of loop-body */
-          bool keepgoing_in = keepgoing_out; 
+          bool keepgoing_in = keepgoing_out;
           bool b_in = b_out;
   
           /* User-defined code (loop body) */
           int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
           b_out = a - b_in;
-          keepgoing_out = my_local > b_out; 
+          keepgoing_out = my_local > b_out;
           user_defined_val = b_in + b_in; // b_in and b_out are different variables
           /* End user-defined code */
   
@@ -8682,9 +8812,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>
 
 #### Attributes
 
@@ -8708,19 +8838,245 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>
 
 <dl>
 <dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Final N loop carried dependency values then K scan_outputs</dd>
+<dd>Final N loop carried dependency values then K scan_outputs. Scan outputs must be Tensors.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>All Tensor types</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>All Tensor and Sequence types</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>tensor of int64, which should be a scalar.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>loop_11</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN], and initial tensor y
+# sum up its elements using a scan
+# returning the final state (y+x1+x2+...+xN) as well the scan_output
+# [y+x1, y+x1+x2, ..., y+x1+x2+...+xN]
+
+y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
+y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+y = np.array([-2]).astype(np.float32)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+i_add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+start_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['iter_count'],
+    outputs=['slice_start'],
+    axes=[0]
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end'],
+    outputs=['slice_end'],
+    axes=[0]
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+y_add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['y_in', 'slice_out'],
+    outputs=['y_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+scan_identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['y_out'],
+    outputs=['scan_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, x_const_node, one_const_node, i_add_node,
+     start_unsqueeze_node, end_unsqueeze_node, slice_node, y_add_node,
+     scan_identity_node],
+    'loop_body',
+    [iter_count, cond_in, y_in],
+    [cond_out, y_out, scan_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'y'],
+    outputs=['res_y', 'res_scan'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+res_y = np.array([13]).astype(np.float32)
+cond = np.array(1).astype(np.bool)
+res_scan = np.array([-1, 1, 4, 8, 13]).astype(np.float32).reshape((5, 1))
+expect(node, inputs=[trip_count, cond, y], outputs=[res_y, res_scan],
+       name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>loop_13</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN],
+# Return a sequence of tensors of
+#   [[x1], [x1, x2], ..., [x1, ..., xN]]
+
+seq_in = onnx.helper.make_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
+seq_out = onnx.helper.make_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+zero_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['slice_start'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_zero',
+        data_type=onnx.TensorProto.INT64,
+        dims=(1,),
+        vals=[0]
+    )
+)
+
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end'],
+    outputs=['slice_end'],
+    axes=[0]
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+insert_node = onnx.helper.make_node(
+    'SequenceInsert',
+    inputs=['seq_in', 'slice_out'],
+    outputs=['seq_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, x_const_node, one_const_node, zero_const_node, add_node,
+     end_unsqueeze_node, slice_node, insert_node],
+    'loop_body',
+    [iter_count, cond_in, seq_in],
+    [cond_out, seq_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'seq_empty'],
+    outputs=['seq_res'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+seq_empty = []  # type: List[Any]
+seq_res = [x[:int(i)] for i in x]
+cond = np.array(1).astype(np.bool)
+expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
+       name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
+       input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
+```
+
+</details>
 
 
 ### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
@@ -16763,7 +17119,7 @@ expect(node, inputs=[x], outputs=[y],
   values are computed in the outer graph, they need to be passed in as extra state_variables.
   
       graph rnn-encoding {
-        %H_0 = ... 
+        %H_0 = ...
         %X = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
         return %Y, %Y_h
