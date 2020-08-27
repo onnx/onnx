@@ -256,8 +256,18 @@ message TrainingInfoProto {
   // "ModelProto.graph.input/initializer/output/node/value_info/sparse_initializer"
   // and "algorithm.input/initializer/output/node/value_info/sparse_initializer"
   // in that order. This combined graph must satisfy the normal ONNX conditions.
-  // For example, an input of a node in the "algorithm" graph may reference the
-  // output of a node in the inference graph (but not the other way round).
+  // Now, let's provide a visualization of graph combination for clarity.
+  // Let the inference graph (i.e., "ModelProto.graph") be
+  //    tensor_a, tensor_b -> MatMul -> tensor_c -> Sigmoid -> tensor_d
+  // and the "algorithm" graph be
+  //    tensor_d -> Add -> tensor_e
+  // The combination process results
+  //    tensor_a, tensor_b -> MatMul -> tensor_c -> Sigmoid -> tensor_d -> Add -> tensor_e
+  //
+  // Notice that an input of a node in the "algorithm" graph may reference the
+  // output of a node in the inference graph (but not the other way round). Also, inference
+  // node cannot reference inputs of "algorithm". With these restrictions, inference graph 
+  // can always be run independently without training information.
   //
   // By default, this field is an empty graph and its evaluation does not
   // produce any output. Evaluating the default training step never
