@@ -24,25 +24,20 @@ class ReduceSum(Base):
             outputs=['reduced'],
             keepdims=keepdims)
 
-        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [
-                        [9, 10], [11, 12]]], dtype=np.float32)
-        reduced = np.sum(data, axis=tuple(
-            axes.tolist()), keepdims=keepdims == 1)
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+        reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
         #print(reduced)
         #[[4., 6.]
         # [12., 14.]
         # [20., 22.]]
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_do_not_keepdims_example')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
-        reduced = np.sum(data, axis=tuple(
-            axes.tolist()), keepdims=keepdims == 1)
+        reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_do_not_keepdims_random')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_random')
 
     @staticmethod
     def export_keepdims():  # type: () -> None
@@ -56,25 +51,20 @@ class ReduceSum(Base):
             outputs=['reduced'],
             keepdims=keepdims)
 
-        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [
-                        [9, 10], [11, 12]]], dtype=np.float32)
-        reduced = np.sum(data, axis=tuple(
-            axes.tolist()), keepdims=keepdims == 1)
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+        reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
         #print(reduced)
         #[[[4., 6.]]
         # [[12., 14.]]
         # [[20., 22.]]]
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_keepdims_example')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
-        reduced = np.sum(data, axis=tuple(
-            axes.tolist()), keepdims=keepdims == 1)
+        reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_keepdims_random')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_keepdims_random')
 
     @staticmethod
     def export_default_axes_keepdims():  # type: () -> None
@@ -88,21 +78,18 @@ class ReduceSum(Base):
             outputs=['reduced'],
             keepdims=keepdims)
 
-        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [
-                        [9, 10], [11, 12]]], dtype=np.float32)
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
         reduced = np.sum(data, axis=None, keepdims=keepdims == 1)
         #print(reduced)
         #[[[78.]]]
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_default_axes_keepdims_example')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sum(data, axis=None, keepdims=keepdims == 1)
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_default_axes_keepdims_random')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_random')
 
     @staticmethod
     def export_negative_axes_keepdims():  # type: () -> None
@@ -116,10 +103,8 @@ class ReduceSum(Base):
             outputs=['reduced'],
             keepdims=keepdims)
 
-        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [
-                        [9, 10], [11, 12]]], dtype=np.float32)
-        reduced = np.sum(data, axis=tuple(
-            axes.tolist()), keepdims=keepdims == 1)
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+        reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
         # print(reduced)
         #[[[4., 6.]]
         # [[12., 14.]]
@@ -148,8 +133,7 @@ class ReduceSum(Base):
             keepdims=keepdims,
             noop_with_empty_axes=True)
 
-        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [
-                        [9, 10], [11, 12]]], dtype=np.float32)
+        data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
         axes = np.array([], dtype=np.int64)
         reduced = np.array(data)
         #print(reduced)
@@ -162,5 +146,4 @@ class ReduceSum(Base):
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.array(data)
 
-        expect(node, inputs=[data, axes], outputs=[reduced],
-               name='test_reduce_sum_empty_axes_input_noop_random')
+        expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')

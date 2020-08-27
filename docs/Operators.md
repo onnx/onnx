@@ -14743,19 +14743,17 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 #### Attributes
 
 <dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
-<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -14774,41 +14772,6 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 
 
 #### Examples
-
-<details>
-<summary>axes_input_no_keepdims</summary>
-
-```python
-shape = [3, 2, 2]
-keepdims = 0
-
-node = onnx.helper.make_node(
-    'ReduceSum',
-    inputs=['data', 'axes'],
-    outputs=['reduced'],
-    keepdims=keepdims,
-    axes=[0],  # should be ignored
-    )
-
-data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)        
-axes = np.array([1], dtype=np.int64) 
-reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
-#print(reduced)
-#[[4., 6.]
-# [12., 14.]
-# [20., 22.]]
-
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_axes_input_no_keepdims_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
-
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_axes_input_no_keepdims_random')
-```
-
-</details>
-
 
 <details>
 <summary>default_axes_keepdims</summary>
@@ -14870,38 +14833,6 @@ data = np.random.uniform(-10, 10, shape).astype(np.float32)
 reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_do_not_keepdims_random')
-```
-
-</details>
-
-
-<details>
-<summary>empty_axes_input_noop</summary>
-
-```python
-shape = [3, 2, 2]
-keepdims = 1
-
-node = onnx.helper.make_node(
-    'ReduceSum',
-    inputs=['data', 'axes'],
-    outputs=['reduced'],
-    keepdims=keepdims,
-    noop_with_empty_axes=True)
-
-data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
-axes = np.array([], dtype=np.int64) 
-reduced = np.array(data)
-#print(reduced)
-#[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
-
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_empty_axes_input_noop_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.array(data)
-
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_empty_axes_input_noop_random')
 ```
 
 </details>
@@ -15168,17 +15099,19 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -15234,7 +15167,7 @@ expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_defau
 
 ```python
 shape = [3, 2, 2]
-axes = np.array([1], dtype=np.int64) 
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
@@ -15263,11 +15196,44 @@ expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_no
 
 
 <details>
+<summary>empty_axes_input_noop</summary>
+
+```python
+shape = [3, 2, 2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data', 'axes'],
+    outputs=['reduced'],
+    keepdims=keepdims,
+    noop_with_empty_axes=True)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+axes = np.array([], dtype=np.int64)
+reduced = np.array(data)
+#print(reduced)
+#[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_empty_axes_input_noop_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.array(data)
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
 shape = [3, 2, 2]
-axes = np.array([1], dtype=np.int64) 
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
@@ -15316,13 +15282,16 @@ reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 # [[12., 14.]]
 # [[20., 22.]]]
 
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_example')
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_negative_axes_keepdims_example')
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(
+    axes.tolist()), keepdims=keepdims == 1)
 
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_negative_axes_keepdims_random')
 ```
 
 </details>
@@ -20305,7 +20274,7 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
-    axis=0,            
+    axis=0,
 )
 
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
@@ -20334,12 +20303,12 @@ expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
-split=np.array([2, 4]).astype(np.int64)
+split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
-    axis=1,            
+    axis=1,
 )
 
 expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
@@ -20392,7 +20361,7 @@ split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
-    outputs=['output_1', 'output_2', 'output_3']            
+    outputs=['output_1', 'output_2', 'output_3']
 )
 
 expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
@@ -22162,7 +22131,7 @@ y = np.expand_dims(y, axis=4)
 y = np.expand_dims(y, axis=5)
 
 expect(node, inputs=[x, axes], outputs=[y],
-        name='test_unsqueeze_three_axes')
+       name='test_unsqueeze_three_axes')
 ```
 
 </details>
@@ -22184,7 +22153,7 @@ y = np.expand_dims(x, axis=1)
 y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x, axes], outputs=[y],
-        name='test_unsqueeze_two_axes')
+       name='test_unsqueeze_two_axes')
 ```
 
 </details>
@@ -22207,7 +22176,7 @@ y = np.expand_dims(y, axis=4)
 y = np.expand_dims(y, axis=5)
 
 expect(node, inputs=[x, axes], outputs=[y],
-        name='test_unsqueeze_unsorted_axes')
+       name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

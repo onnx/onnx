@@ -534,7 +534,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> split;
           size_t num_inputs = ctx.getNumInputs();
-          if (num_inputs == 2) { //'split' is input
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
             auto split_proto = ctx.getInputData(1);
             if (split_proto == nullptr) {
               // skip if split is not an initializer
@@ -561,7 +561,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   split_dim_value,
                   ")");
             }
-          } else { //no value available for 'split'
+          } else { // no value available for 'split'
             int num_outputs = static_cast<int>(ctx.getNumOutputs());
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
@@ -1591,7 +1591,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> axes;
           size_t num_inputs = ctx.getNumInputs();
-          if (num_inputs == 2) { //'axes' is input
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'axes' is input
             auto axes_proto = ctx.getInputData(1);
             if (axes_proto == nullptr) {
               // skip if axes is not an initializer

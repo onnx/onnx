@@ -8878,36 +8878,6 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_do_not_kee
 
 </details>
 <details>
-<summary>empty_axes_input_noop</summary>
-
-```python
-shape = [3, 2, 2]
-keepdims = 1
-
-node = onnx.helper.make_node(
-    'ReduceSum',
-    inputs=['data', 'axes'],
-    outputs=['reduced'],
-    keepdims=keepdims,
-    noop_with_empty_axes=True)
-
-data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
-axes = np.array([], dtype=np.int64) 
-reduced = np.array(data)
-#print(reduced)
-#[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
-
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_empty_axes_input_noop_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.array(data)
-
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_empty_axes_input_noop_random')
-```
-
-</details>
-<details>
 <summary>keepdims</summary>
 
 ```python
@@ -9261,7 +9231,7 @@ expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_defau
 
 ```python
 shape = [3, 2, 2]
-axes = np.array([1], dtype=np.int64) 
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
@@ -9288,11 +9258,42 @@ expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_no
 
 </details>
 <details>
+<summary>empty_axes_input_noop</summary>
+
+```python
+shape = [3, 2, 2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data', 'axes'],
+    outputs=['reduced'],
+    keepdims=keepdims,
+    noop_with_empty_axes=True)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+axes = np.array([], dtype=np.int64)
+reduced = np.array(data)
+#print(reduced)
+#[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_empty_axes_input_noop_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.array(data)
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+```
+
+</details>
+<details>
 <summary>keepdims</summary>
 
 ```python
 shape = [3, 2, 2]
-axes = np.array([1], dtype=np.int64) 
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
@@ -9339,13 +9340,16 @@ reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 # [[12., 14.]]
 # [[20., 22.]]]
 
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_example')
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_negative_axes_keepdims_example')
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(
+    axes.tolist()), keepdims=keepdims == 1)
 
-expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_negative_axes_keepdims_random')
 ```
 
 </details>
@@ -12534,7 +12538,7 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
-    axis=0,            
+    axis=0,
 )
 
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
@@ -12561,12 +12565,12 @@ expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
-split=np.array([2, 4]).astype(np.int64)
+split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
-    axis=1,            
+    axis=1,
 )
 
 expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
@@ -12615,7 +12619,7 @@ split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
-    outputs=['output_1', 'output_2', 'output_3']            
+    outputs=['output_1', 'output_2', 'output_3']
 )
 
 expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
@@ -13608,7 +13612,7 @@ y = np.expand_dims(y, axis=4)
 y = np.expand_dims(y, axis=5)
 
 expect(node, inputs=[x, axes], outputs=[y],
-        name='test_unsqueeze_three_axes')
+       name='test_unsqueeze_three_axes')
 ```
 
 </details>
@@ -13628,7 +13632,7 @@ y = np.expand_dims(x, axis=1)
 y = np.expand_dims(y, axis=4)
 
 expect(node, inputs=[x, axes], outputs=[y],
-        name='test_unsqueeze_two_axes')
+       name='test_unsqueeze_two_axes')
 ```
 
 </details>
@@ -13649,7 +13653,7 @@ y = np.expand_dims(y, axis=4)
 y = np.expand_dims(y, axis=5)
 
 expect(node, inputs=[x, axes], outputs=[y],
-        name='test_unsqueeze_unsorted_axes')
+       name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>
