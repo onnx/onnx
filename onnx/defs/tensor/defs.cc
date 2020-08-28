@@ -1690,10 +1690,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          if (!targetShapeInitializer) {
-            return;
-          }
           std::vector<int64_t> axes;
           auto axes_proto = ctx.getInputData(1);
           if (axes_proto == nullptr) {

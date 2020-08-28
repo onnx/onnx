@@ -97,13 +97,13 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
         Tensor t;
         t.elem_type() = TensorProto_DataType_INT64;
         auto& data = t.int64s();
-        // Turn shapes attribute into tensor
+        // Create axes input tensor
         for (int64_t axis : axes) {
           data.emplace_back(axis);
         }
         squeeze->addInput(conv_3rd_input);
-        Value* v = graph.addInitializerAndInput(t);
-        squeeze->addInput(v);
+        Value* axes_input = graph.addInitializerAndInput(t);
+        squeeze->addInput(axes_input);
         conv_3rd_input = squeeze->output();
         squeeze->insertBefore(orig_conv->node());
       }
@@ -145,13 +145,13 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
       Tensor t;
       t.elem_type() = TensorProto_DataType_INT64;
       auto& data = t.int64s();
-      // Turn shapes attribute into tensor
+      // Create axes input tensor
       for (int64_t axis : axes) {
         data.emplace_back(axis);
       }
       squeeze->addInput(orig_bias);
-      Value* v = graph.addInitializerAndInput(t);
-      squeeze->addInput(v);
+      Value* axes_input = graph.addInitializerAndInput(t);
+      squeeze->addInput(axes_input);
       squeeze->insertBefore(orig_conv->node());
       orig_conv->node()->addInput(squeeze->output());
     } else {

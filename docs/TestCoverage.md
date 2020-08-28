@@ -5351,6 +5351,18 @@ zero_const_node = onnx.helper.make_node(
     )
 )
 
+axes_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['axes'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_axes',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[0]
+    )
+)
+
 add_node = onnx.helper.make_node(
     'Add',
     inputs=['iter_count', 'one'],
@@ -5359,9 +5371,8 @@ add_node = onnx.helper.make_node(
 
 end_unsqueeze_node = onnx.helper.make_node(
     'Unsqueeze',
-    inputs=['end'],
-    outputs=['slice_end'],
-    axes=[0]
+    inputs=['end', 'axes'],
+    outputs=['slice_end']
 )
 
 slice_node = onnx.helper.make_node(
@@ -5384,7 +5395,7 @@ identity_node = onnx.helper.make_node(
 
 loop_body = onnx.helper.make_graph(
     [identity_node, x_const_node, one_const_node, zero_const_node, add_node,
-     end_unsqueeze_node, slice_node, insert_node],
+     axes_node, end_unsqueeze_node, slice_node, insert_node],
     'loop_body',
     [iter_count, cond_in, seq_in],
     [cond_out, seq_out]

@@ -18,7 +18,7 @@ class AxesInputToAttribute : public Adapter {
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if axes is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
-    // Get axes from initializer or constant operator, not actual axes
+    // Get axes from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];
     Node* node_ptr = const_val->node();
