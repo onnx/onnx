@@ -191,15 +191,13 @@ static void InferShapesImpl(
     // Consider the tensors from the initializer
     TypeProto *initializerType = new TypeProto();
     TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
+    initializerTensorType->set_elem_type(tp.data_type());
     // set the shape according to the initializer shape info
-    // if the shape info of initializer is not empty
-    if (tp.dims_size() != 0) {
-      initializerTensorType->set_elem_type(tp.data_type());
-      TensorShapeProto* shape = initializerTensorType->mutable_shape();
-      for (int i = 0 ; i < tp.dims_size(); ++i) {
-        shape->add_dim()->set_dim_value(tp.dims(i));
-      }
+    TensorShapeProto* shape = initializerTensorType->mutable_shape();
+    for (int i = 0 ; i < tp.dims_size(); ++i) {
+      shape->add_dim()->set_dim_value(tp.dims(i));
     }
+
     auto iter = valueTypesByName.find(tp.name());
     // If it already exists in input, check input and initializer is sync
     // use shape info from input (input has priority over initializer)
