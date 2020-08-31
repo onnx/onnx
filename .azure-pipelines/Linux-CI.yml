@@ -115,7 +115,7 @@ jobs:
       if [ "$(python.version)" != "2.7" ]; then
         # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
         pip uninstall -y onnx
-        ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install --no-use-pep517 -e .[mypy]
+        pip install --no-use-pep517 -e .[mypy]
         python setup.py --quiet typecheck
         if [ $? -ne 0 ]; then
           echo "type check failed"
@@ -123,6 +123,6 @@ jobs:
         fi
         pip uninstall -y onnx
         rm -rf .setuptools-cmake-build
-        ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
+        pip install .
       fi
     displayName: 'Run ONNX tests'
