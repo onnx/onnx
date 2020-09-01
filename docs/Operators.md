@@ -180,7 +180,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.preview.training.Adagrad">ai.onnx.preview.training.Adagrad</a>|<a href="Changelog.md#ai.onnx.preview.training.Adagrad-1">1</a>|
 |<a href="#ai.onnx.preview.training.Adam">ai.onnx.preview.training.Adam</a>|<a href="Changelog.md#ai.onnx.preview.training.Adam-1">1</a>|
 |<a href="#ai.onnx.preview.training.Gradient">ai.onnx.preview.training.Gradient</a>|<a href="Changelog.md#ai.onnx.preview.training.Gradient-1">1</a>|
-|<a href="#ai.onnx.preview.training.GraphCall">ai.onnx.preview.training.GraphCall</a>|<a href="Changelog.md#ai.onnx.preview.training.GraphCall-1">1</a>|
 |<a href="#ai.onnx.preview.training.Momentum">ai.onnx.preview.training.Momentum</a>|<a href="Changelog.md#ai.onnx.preview.training.Momentum-1">1</a>|
 
 
@@ -466,16 +465,16 @@ Other versions of this operator: <a href="Changelog.md#And-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -1979,16 +1978,16 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>First operand, input to be shifted.</dd>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Second operand, amounts of shift.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Z</tt> : T</dt>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -5146,16 +5145,16 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -6991,16 +6990,16 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">1</a>, <a href
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -7110,16 +7109,16 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -8323,16 +8322,16 @@ Other versions of this operator: <a href="Changelog.md#Less-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -8442,16 +8441,16 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -11944,14 +11943,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -12178,16 +12177,16 @@ Other versions of this operator: <a href="Changelog.md#Or-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -22304,16 +22303,16 @@ Other versions of this operator: <a href="Changelog.md#Xor-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -23080,130 +23079,6 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 ```
 
 </details>
-
-
-### <a name="ai.onnx.preview.training.GraphCall"></a><a name="ai.onnx.preview.training.graphcall">**ai.onnx.preview.training.GraphCall**</a>
-
-  The GraphCall operator invokes a graph inside TrainingInfoProto's
-  algorithm field. The GraphCall inputs and outputs are bound to those of
-  invoked graph by position. If a graph input has an initializer, that input
-  is considered optional. All graph outputs are optional.
-  
-  Below Python syntax is used for describing dictionary and list.
-  
-  Assume that ModelProto's graph field has
-  - name: "MyInferenceGraph"
-  - input: ["X", "W", "Z"]
-  - initializer: [W]
-  - output: ["Y"]
-  
-  as visualized below for inference.
-  
-  ```
-  X -----.
-         |
-         v
-  W --> Conv --> H --> Gemm --> Y
-                        ^
-                        |
-                        Z
-  ```
-  
-  Assume that the training algorithm contains
-  
-  - inputs: ["X_1", "Z_1", "C"]
-  - initializer: [T]
-  - outputs: ["W_new"]
-  
-  with a dictionary
-  
-  - update_binding: {"W": "W_new", "T": "T_new"}
-  
-  Inside the training algorithm graph, one can invoke the inference
-  graph via adding a GraphCall node with
-  
-  - inputs: ["X_1", "W", Z_1"]
-  - outputs: ["Y_1"]
-  - an attribute graph_name="MyInferenceGraph",
-  
-  The initializers, "W" and "T" in this case, in update_binding
-  are considered globally-visible and mutable variables, which
-  can be used as inputs of operators in the training graph.
-  
-  An example training algorithm graph may look like
-  
-  ```
-  .-------- W (a global and mutable variable from
-  |         |  the inference graph)
-  |         |
-  |   .-----'-----------.
-  |   |                 |
-  |   |                 v
-  |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph")
-  |   | |            |  |
-  |   | |            |  |
-  |   | |   Z_1 -----'  |
-  |   | |    |          V
-  |   | |    |         Y_1 ---> Loss ---> O
-  |   | |    |                    ^
-  |   | |    |                    |
-  |   | `--. |                    C
-  |   |    | |                    |
-  |   |    | |   .----------------'
-  |   |    | |   |
-  |   |    v v   v
-  |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1", "C"], y="O")
-  |        |
-  |        v
-  |      dO_dW (gradient of W)      1 (a scalar one)
-  |        |                        |
-  |        V                        v
-  |       Div <--- T ------------> Add ---> T_new
-  |        |    (T is the number of training iterations.
-  |        |     T is also globally visible and mutable.)
-  |        v
-  `-----> Sub ----> W_new
-  ```
-  
-  where Loss is a dummy node which computes the minimized objective function.
-  
-  The variable "W" is an optional input in the called graph.
-  If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
-  In this case, from the view of computation graph, the Conv operator invoked by
-  GraphCall's may be still connected the global "W" variable and therefore the
-  structure of the computation graph is unchanged.
-
-#### Version
-
-This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>graph_name</tt> : string (required)</dt>
-<dd>The invoked graph's name. The only allowed value is the name of the inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
-</dl>
-
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>Inputs</tt> (variadic, heterogeneous) : T</dt>
-<dd>Inputs fed to the invoked graph. The i-th input here goes to the i-th input of the invoked graph. To omit an optional input in this field, the user can drop it or use an empty string.</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>Outputs</tt> (variadic, heterogeneous) : T</dt>
-<dd>The outputs generated by the called graph. Its i-th value is bound to the i-th output of the called graph. Similar to the inputs, all outputs are optional.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Allow inputs and outputs to be any kind of tensor.</dd>
-</dl>
 
 
 ### <a name="ai.onnx.preview.training.Momentum"></a><a name="ai.onnx.preview.training.momentum">**ai.onnx.preview.training.Momentum**</a>
