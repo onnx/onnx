@@ -1198,8 +1198,7 @@ class TestVersionConverter(unittest.TestCase):
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
-        print(list(converted_model.graph.output[0].type.tensor_type.shape))
-        assert converted_model.graph.node[0].op_type == "GRU"
+        assert converted_model.graph.node[0].op_type == "RNN"
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 1
 
