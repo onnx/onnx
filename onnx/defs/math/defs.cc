@@ -56,6 +56,7 @@ indicates the dimension along which {name} will be performed.
 The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
+                        ReplaceAll(doc, "{name}", name);
                         ReplaceAll(doc, "{description}", description);
                         ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
