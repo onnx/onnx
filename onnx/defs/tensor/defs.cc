@@ -1574,10 +1574,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
-            return;
-          }
-
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
@@ -1675,10 +1671,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "'axes' attribute must not contain any duplicates");
             }
             unique_values.insert(val);
-          }
-
-          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
-            return;
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -2110,7 +2102,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
+            " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is specified, then set scales to empty data (zero shape) in this operator's input list.",
             "tensor(float)",
             OpSchema::Single)
         .Input(
@@ -2896,14 +2888,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // 'axis' is provided.
             int axis = static_cast<int>(axisAttr->i());
-            const TensorShapeProto& input_shape =
+            if(!xTensorProto->tensor_type().has_shape()) {
+              return;
+            }
+            const TensorShapeProto& input_shape = 
                 xTensorProto->tensor_type().shape();
             int rank = input_shape.dim_size();
             if (axis < 0)
               axis += rank;
-            if (axis < 0 || axis >= rank)
+            if (axis < 0 || axis >= rank){
               fail_shape_inference("Invalid value for attribute axis");
-
+            }
             // 'Y' has the same shape as 'X' except in the 'axis' dimension
             // which is unknown.
             for (int i = 0; i < input_shape.dim_size(); i++) {
