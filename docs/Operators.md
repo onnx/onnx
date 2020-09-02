@@ -7230,9 +7230,9 @@ expect(node, inputs=[x], outputs=[y],
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which {name} will be performed.
+  indicates the dimension along which Hardmax will be performed.
   The output tensor has the same shape
-  and contains the {name} values of the corresponding input.
+  and contains the Hardmax values of the corresponding input.
 
 #### Version
 
@@ -8532,9 +8532,9 @@ expect(node, inputs=[x], outputs=[y],
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which {name} will be performed.
+  indicates the dimension along which LogSoftmax will be performed.
   The output tensor has the same shape
-  and contains the {name} values of the corresponding input.
+  and contains the LogSoftmax values of the corresponding input.
 
 #### Version
 
@@ -18775,9 +18775,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
    Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
   The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which {name} will be performed.
+  indicates the dimension along which Softmax will be performed.
   The output tensor has the same shape
-  and contains the {name} values of the corresponding input.
+  and contains the Softmax values of the corresponding input.
 
 #### Version
 
