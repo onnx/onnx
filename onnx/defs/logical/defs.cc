@@ -29,9 +29,33 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         ReplaceAll(
             doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
-    schema.Input(0, "A", "First input operand for the logical operator.", "T");
-    schema.Input(1, "B", "Second input operand for the logical operator.", "T");
-    schema.Output(0, "C", "Result tensor.", "T1");
+    schema.Input(
+        0, 
+        "A", 
+        "First input operand for the logical operator.", 
+        "T", 
+        OpSchema::Single, 
+        true, 
+        1, 
+        OpSchema::NonDifferentiable);
+    schema.Input(
+        1,
+        "B",
+        "Second input operand for the logical operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Output(
+        0, 
+        "C", 
+        "Result tensor.", 
+        "T1",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
       updateOutputElemType(ctx, 0, TensorProto::BOOL);
@@ -150,8 +174,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Not_ver1_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
@@ -178,9 +218,33 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
             std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
-        .Input(0, "X", "First operand, input to be shifted.", "T")
-        .Input(1, "Y", "Second operand, amounts of shift.", "T")
-        .Output(0, "Z", "Output tensor", "T")
+        .Input(
+            0,
+            "X",
+            "First operand, input to be shifted.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "Y",
+            "Second operand, amounts of shift.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Z",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(uint8)",
