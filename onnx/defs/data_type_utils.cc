@@ -109,8 +109,6 @@ DataType DataTypeUtils::ToType(const std::string& type_str) {
 }
 
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
-  // If the DataType input is invalid, this function will return an empty TypeProto
-  // and return_value.value_case() will return TypeProto::VALUE_NOT_SET.
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   auto it = GetTypeStrToProtoMap().find(*data_type);
   if (GetTypeStrToProtoMap().end() == it) {
@@ -172,7 +170,6 @@ std::string DataTypeUtils::ToString(
 }
 
 std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
-  // If int32_t input is invalid, this function will return an empty string.
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
   if (t.TensorDataTypeToTypeStr().end() == iter) {
