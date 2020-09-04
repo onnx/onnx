@@ -587,7 +587,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string(Pow_ver13_doc) + GenerateBroadcastingDocMul()))
         .Input(0, "X", "First operand, base of the exponent.", "T")
         .Input(1, "Y", "Second operand, power of the exponent.", "T1")
-        .Output(0, "Z", "Output tensor (same size as X)", "T")
+        .Output(0, "Z", "Output tensor.", "T")
         .TypeConstraint(
             "T",
             {"tensor(int32)",
