@@ -19,15 +19,15 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (hidden_size_value > 0)
     hidden_size.set_dim_value(hidden_size_value);
 
-  auto time_major_value = getAttribute(ctx, "time_major", 1);
+  auto batch_major_value = getAttribute(ctx, "batch_major", 0);
 
   if (hasInputShape(ctx, 0)) {
     auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
-    seq_length = first_input_shape.dim((time_major_value == 1) ? 0 : 1);
-    batch_size = first_input_shape.dim((time_major_value == 1) ? 1 : 0);
+    seq_length = first_input_shape.dim((batch_major_value == 0) ? 0 : 1);
+    batch_size = first_input_shape.dim((batch_major_value == 0) ? 1 : 0);
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -36,7 +36,7 @@ void RNNShapeInference(InferenceContext& ctx) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-    if (time_major_value == 1) {      
+    if (batch_major_value == 0) {      
       auto dims = {seq_length, batch_size, hidden_size, num_directions};
       updateOutputShape(ctx, 0, dims);
     } else {
@@ -67,11 +67,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         AttributeProto::STRING,
         std::string("forward"));
     schema.Attr(
-        "time_major",
+        "batch_major",
         "The shape format of the input X and output Y. "
-        "If 1, the shapes are [seq_length, batch_size, input_size] and "
+        "If 0, the shapes are [seq_length, batch_size, input_size] and "
         "[seq_length, batch_size, hidden_size, num_directions] respectively."
-        "If not 1, the shapes are [batch_size, seq_length, input_size] and "
+        "If not 0, the shapes are [batch_size, seq_length, input_size] and "
         "[batch_size, seq_length, hidden_size, num_directions] respectively.",
         AttributeProto::INT,
         static_cast<int64_t>(1));

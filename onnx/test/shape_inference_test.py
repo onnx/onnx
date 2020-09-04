@@ -985,7 +985,7 @@ class TestShapeInference(unittest.TestCase):
              ('w', TensorProto.FLOAT, (hiddensize, inpsize, 1)),
              ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 1))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
-                time_major=0)],
+                batch_major=1)],
             [])
         self._assert_inferred(graph, [
             make_tensor_value_info('all', TensorProto.FLOAT, (batchsize, seqlen, hiddensize, 1)),

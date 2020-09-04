@@ -167,7 +167,7 @@ namespace ONNX_NAMESPACE {
   _(scales)                       \
   _(Upsample)                     \
   _(RNN)                          \
-  _(time_major)
+  _(batch_major)
  
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

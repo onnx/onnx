@@ -12,11 +12,11 @@ struct RNN_13_12 final : public Adapter {
     }
 
   void adapt_rnn_13_12(std::shared_ptr<Graph> graph, Node* node) const {
-      // Remove the time_major attribute
-      if (node->hasAttribute(ktime_major)) {
-        ONNX_ASSERTM(node->i(ktime_major) == 1, "RNN in Opset "
+      // Remove the batch_major attribute
+      if (node->hasAttribute(kbatch_major)) {
+        ONNX_ASSERTM(node->i(kbatch_major) == 0, "RNN in Opset "
             "Version 12 does not support batch major.");
-        node->removeAttribute(ktime_major);
+        node->removeAttribute(kbatch_major);
       }
   }
 

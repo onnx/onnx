@@ -20,7 +20,7 @@ class GRU_Helper():
         B = str('B')
         H_0 = str('initial_h')
         LBR = str('linear_before_reset')
-        TM = str('time_major')
+        BM = str('batch_major')
         number_of_gates = 3
 
         required_inputs = [X, W, R]
@@ -37,9 +37,9 @@ class GRU_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
-            tm = params[TM] if TM in params else 1
+            bm = params[BM] if BM in params else 0
             x = params[X]
-            x = x if tm == 1 else np.swapaxes(x, 0, 1)
+            x = x if bm == 0 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             lbr = params[LBR] if LBR in params else 0
@@ -50,7 +50,7 @@ class GRU_Helper():
             self.B = b
             self.H_0 = h_0
             self.LBR = lbr
-            self.TM = tm
+            self.BM = bm
 
         else:
             raise NotImplementedError()
@@ -93,7 +93,7 @@ class GRU_Helper():
         if self.num_directions == 1:
             Y[:, :, :, 0] = concatenated
 
-        return Y if self.TM == 1 else np.swapaxes(Y, 0, 1), Y[-1]
+        return Y if self.BM == 0 else np.swapaxes(Y, 0, 1), Y[-1]
 
 
 class GRU(Base):
@@ -186,19 +186,19 @@ class GRU(Base):
         hidden_size = 6
         number_of_gates = 3
         weight_scale = 0.2
-        time_major = 0
+        batch_major = 1
 
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R'],
             outputs=['Y', 'Y_h'],
             hidden_size=hidden_size,
-            time_major=time_major
+            batch_major=batch_major
         )
 
         W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
         R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
-        gru = GRU_Helper(X=input, W=W, R=R, time_major=time_major)
+        gru = GRU_Helper(X=input, W=W, R=R, batch_major=batch_major)
         Y, Y_h = gru.step()
         expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')

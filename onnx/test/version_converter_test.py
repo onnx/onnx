@@ -1165,7 +1165,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "RNN"
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 2
-        assert converted_model.graph.node[0].attribute[1].name == "time_major"
+        assert converted_model.graph.node[0].attribute[1].name == "batch_major"
 
     # Test RNN Adapter: 13 -> 12
     def test_rnn_12_11(self):  # type: () -> None
@@ -1184,7 +1184,7 @@ class TestVersionConverter(unittest.TestCase):
             inputs=['X', 'W', 'R'],
             outputs=['', 'Y_h'],
             hidden_size=hidden_size,
-            time_major=1,
+            batch_major=0,
         )]
 
         graph = helper.make_graph(

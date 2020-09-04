@@ -12,8 +12,8 @@ struct RNN_12_13 final : public Adapter {
     }
 
   void adapt_rnn_12_13(std::shared_ptr<Graph> graph, Node* node) const {
-      // Add the time_major attribute
-      node->i_(ktime_major, 1);
+      // Add the batch_major attribute
+      node->i_(kbatch_major, 0);
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

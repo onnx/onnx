@@ -5795,6 +5795,8 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
+<dt><tt>batch_major</tt> : int (default is 1)</dt>
+<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -5803,8 +5805,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>linear_before_reset</tt> : int (default is 0)</dt>
 <dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
-<dt><tt>time_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -5855,20 +5855,20 @@ input_size = 2
 hidden_size = 6
 number_of_gates = 3
 weight_scale = 0.2
-time_major = 0
+batch_major = 1
 
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R'],
     outputs=['Y', 'Y_h'],
     hidden_size=hidden_size,
-    time_major=time_major
+    batch_major=batch_major
 )
 
 W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
 R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R, time_major=time_major)
+gru = GRU_Helper(X=input, W=W, R=R, batch_major=batch_major)
 Y, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')
 ```
@@ -8096,6 +8096,8 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
+<dt><tt>batch_major</tt> : int (default is 1)</dt>
+<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -8104,8 +8106,6 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int (default is 0)</dt>
 <dd>Couple the input and forget gates if 1.</dd>
-<dt><tt>time_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -8162,20 +8162,20 @@ input_size = 2
 hidden_size = 7
 weight_scale = 0.3
 number_of_gates = 4
-time_major = 0
+batch_major = 1
 
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R'],
     outputs=['Y', 'Y_h'],
     hidden_size=hidden_size,
-    time_major=time_major
+    batch_major=batch_major
 )
 
 W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
 R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, time_major=time_major)
+lstm = LSTM_Helper(X=input, W=W, R=R, batch_major=batch_major)
 Y, Y_h = lstm.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_lstm_batchwise')
 ```
@@ -13189,14 +13189,14 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings (default is ['Tanh', 'Tanh'])</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
+<dt><tt>batch_major</tt> : int (default is 1)</dt>
+<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>time_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 1, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 1, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -13246,20 +13246,20 @@ input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 input_size = 2
 hidden_size = 4
 weight_scale = 0.5
-time_major = 0
+batch_major = 1
 
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R'],
     outputs=['Y', 'Y_h'],
     hidden_size=hidden_size,
-    time_major=time_major
+    batch_major=batch_major
 )
 
 W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
 R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R, time_major=time_major)
+rnn = RNN_Helper(X=input, W=W, R=R, batch_major=batch_major)
 Y, Y_h = rnn.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')
 ```
