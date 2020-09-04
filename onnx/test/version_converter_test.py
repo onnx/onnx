@@ -1168,7 +1168,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "batch_major"
 
     # Test RNN Adapter: 13 -> 12
-    def test_rnn_12_11(self):  # type: () -> None
+    def test_rnn_13_12(self):  # type: () -> None
         from_opset = 13
         to_opset = 12
         data_type = TensorProto.FLOAT
@@ -1191,10 +1191,10 @@ class TestVersionConverter(unittest.TestCase):
             nodes,
             "test_greater",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
-             onnx.helper.make_tensor_value_info("W", data_type, [hidden_size, input_size, num_directions]),
-             onnx.helper.make_tensor_value_info("R", data_type, [hidden_size, hidden_size, num_directions]),
-             onnx.helper.make_tensor_value_info("B", data_type, [2 * hidden_size, num_directions])],
-            [onnx.helper.make_tensor_value_info("Y_h", data_type, [batch_size, hidden_size, num_directions])])
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 2 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 

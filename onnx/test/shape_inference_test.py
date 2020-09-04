@@ -953,13 +953,13 @@ class TestShapeInference(unittest.TestCase):
     def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (hiddensize, inpsize, 1)),
-             ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 1))],
+             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize)],
             [])
         self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, batchsize, hiddensize, 1)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, hiddensize, 1))])
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
 
     def test_rnn_forward(self):  # type: () -> None
         self._rnn_forward(64, 32, 10, 4)
@@ -967,14 +967,14 @@ class TestShapeInference(unittest.TestCase):
     def _rnn_bidirectional(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (hiddensize, inpsize, 2)),
-             ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 2))],
+             ('w', TensorProto.FLOAT, (2, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (2, hiddensize, hiddensize))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 direction="bidirectional")],
             [])
         self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, batchsize, hiddensize, 2)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, hiddensize, 2))])
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 2, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (2, batchsize, hiddensize))])
 
     def test_rnn_batchwise(self):  # type: () -> None
         self._rnn_batchwise(64, 32, 10, 4)
@@ -982,14 +982,14 @@ class TestShapeInference(unittest.TestCase):
     def _rnn_batchwise(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (batchsize, seqlen, inpsize)),
-             ('w', TensorProto.FLOAT, (hiddensize, inpsize, 1)),
-             ('r', TensorProto.FLOAT, (hiddensize, hiddensize, 1))],
+             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 batch_major=1)],
             [])
         self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (batchsize, seqlen, hiddensize, 1)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, hiddensize, 1))])
+            make_tensor_value_info('all', TensorProto.FLOAT, (batchsize, 1, seqlen, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
 
     def test_rnn_bidirectional(self):  # type: () -> None
         self._rnn_bidirectional(64, 32, 10, 4)
@@ -997,14 +997,14 @@ class TestShapeInference(unittest.TestCase):
     def _lstm_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
-             ('w', TensorProto.FLOAT, (4 * hiddensize, inpsize, 1)),
-             ('r', TensorProto.FLOAT, (4 * hiddensize, hiddensize, 1))],
+             ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, 4 * hiddensize, hiddensize))],
             [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize)],
             [])
         self._assert_inferred(graph, [
-            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, batchsize, hiddensize, 1)),
-            make_tensor_value_info('hidden', TensorProto.FLOAT, (batchsize, hiddensize, 1)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, hiddensize, 1))])
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
+            make_tensor_value_info('hidden', TensorProto.FLOAT, (1, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
 
     def test_lstm_forward(self):  # type: () -> None
         self._lstm_forward(64, 32, 10, 4)
