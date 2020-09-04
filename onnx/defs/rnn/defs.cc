@@ -70,9 +70,9 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "batch_major",
         "The shape format of the input X and output Y. "
         "If 0, the shapes are [seq_length, batch_size, input_size] and "
-        "[seq_length, batch_size, hidden_size, num_directions] respectively."
+        "[seq_length, num_directions, batch_size, hidden_size] respectively."
         "If not 0, the shapes are [batch_size, seq_length, input_size] and "
-        "[batch_size, seq_length, hidden_size, num_directions] respectively.",
+        "[batch_size, num_directions, seq_length, hidden_size] respectively.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Attr(
@@ -137,7 +137,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         0,
         "Y",
         "A tensor that concats all the intermediate output values of the hidden. "
-        "It has shape `[seq_length, num_directtions, batch_size, hidden_size]`. ",
+        "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
         "T",
         OpSchema::Optional,
         true,
