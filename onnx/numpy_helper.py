@@ -58,11 +58,11 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         # F16 was stored as int32; Need view to get the original value
         if tensor_dtype == TensorProto.FLOAT16:
             return (
-                np.asarray(	
+                np.asarray(
                     tensor.int32_data,
                     dtype=np.uint16)
-                    .reshape(dims)
-                    .view(np.float16))
+                .reshape(dims)
+                .view(np.float16))
         # Otherwise simply use astype to convert; e.g., int->float, float->float
         else:
             return (
