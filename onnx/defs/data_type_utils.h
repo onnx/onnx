@@ -38,6 +38,8 @@ class DataTypeUtils final {
 
   static DataType ToType(const TypeProto& type_proto);
 
+  // If the DataType input is invalid, this function will return an empty TypeProto
+  // and return_value.value_case() will return TypeProto::VALUE_NOT_SET.
   static const TypeProto& ToTypeProto(const DataType& data_type);
 
  private:
@@ -52,6 +54,7 @@ class DataTypeUtils final {
       const std::string& left = "",
       const std::string& right = "");
 
+  // If int32_t input is invalid, this function will return an empty string.
   static std::string ToDataTypeString(
       int32_t tensor_data_type);
 
