@@ -225,16 +225,23 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
+    # Check number of vals specified equals tensor size
+    size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    for d in dims:
+        size = size * d
+    if (len(vals) != size):
+        raise ValueError("Number of values does not match tensor's size.")
+
     if (data_type == TensorProto.COMPLEX64
             or data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
+
     if raw:
         tensor.raw_data = vals
     else:
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
         getattr(tensor, field).extend(vals)
-
     tensor.dims.extend(dims)
     return tensor
 
