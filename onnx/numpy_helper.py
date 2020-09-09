@@ -55,7 +55,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         if (tensor_dtype == TensorProto.COMPLEX64
                 or tensor_dtype == TensorProto.COMPLEX128):
             data = combine_pairs_to_complex(data)
-        # F16 was stored as int32; Need view to get the original value
+        # F16 is stored as int32; Need view to get the original value
         if tensor_dtype == TensorProto.FLOAT16:
             return (
                 np.asarray(
