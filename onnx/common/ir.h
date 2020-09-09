@@ -591,6 +591,10 @@ public:
     return outputs_.back();
   }
 
+  void popOutput() {
+    outputs_.pop_back();
+  }
+
   void eraseOutput(size_t i);
 
   // Insert unattached 'this' node after 'n' in the topological order.
@@ -985,6 +989,11 @@ public:
   Value * addInput() {
     return input_->addOutput();
   }
+
+  void popInput() {
+    input_->popOutput();
+  }
+
   void eraseInput(size_t i) {
     input_->eraseOutput(i);
   }

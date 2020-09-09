@@ -266,6 +266,21 @@ std::unique_ptr<Graph> graphProtoToGraph(
       n->setDomain(np.domain());
     }
   }
+  // Add value_info from initializer
+  // Store for input recovery
+  int original_input_size = g->inputs().size();
+  for (int i = 0; i < gp.initializer_size(); ++i) {
+    auto vip = tensorProtoToTensor(gp.initializer(i));
+    auto v = g->addInput();
+    v->setElemType(vip.elem_type());
+    std::vector<Dimension> sizes;
+    for (auto size: vip.sizes()) {
+      sizes.push_back(size);
+    }
+    v->setSizes(sizes);
+    v->setUniqueName(vip.name());
+    value_by_name_of[vip.name()] = v;
+  }
 
   for (auto n : g->nodes()) {
     auto search = inputs_by_node.find(n);
@@ -324,7 +339,10 @@ std::unique_ptr<Graph> graphProtoToGraph(
     auto init = tensorProtoToTensor(gp.initializer(i));
     g->addInitializer(init, init.name());
   }
-
+  // remove those input come from initializer
+  while (original_input_size != g->inputs().size()) {
+    g->popInput();
+  }
   return g;
 }
 
