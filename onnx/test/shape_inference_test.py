@@ -1934,11 +1934,11 @@ class TestShapeInference(unittest.TestCase):
     def test_constantofshape_with_shape_zero(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
-                       value=make_tensor('shape', TensorProto.INT64, (3,), (0,))),
+                       value=make_tensor('shape', TensorProto.INT64, (1,), (0,))),
              make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.INT32, (1, ), (2, )))],
             [])
         self._assert_inferred(graph,
-            [make_tensor_value_info('shape', TensorProto.INT64, (3,)),
+            [make_tensor_value_info('shape', TensorProto.INT64, (1,)),
              make_tensor_value_info('y', TensorProto.INT32, (0,))])  # type: ignore
 
     def test_convinteger(self):  # type: () -> None
@@ -2649,7 +2649,7 @@ class TestShapeInference(unittest.TestCase):
              ('split', TensorProto.INT32, (2,))],
             [make_node('SplitToSequence', ['input', 'split'], ['output_sequence'])],
             [],
-            initializer=[make_tensor('split', TensorProto.INT32, (), (3, 3))])
+            initializer=[make_tensor('split', TensorProto.INT32, (2,), (3, 3))])
         self._assert_inferred(graph,
             [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (3, 4))])  # type: ignore
 
@@ -2685,7 +2685,7 @@ class TestShapeInference(unittest.TestCase):
              ('split', TensorProto.INT32, (2,))],
             [make_node('SplitToSequence', ['input', 'split'], ['output_sequence'], keepdims=0)],
             [],
-            initializer=[make_tensor('split', TensorProto.INT32, (), (3, 3))])
+            initializer=[make_tensor('split', TensorProto.INT32, (2,), (3, 3))])
         self._assert_inferred(graph,
             [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (3, 4))])  # type: ignore
 
@@ -2711,7 +2711,7 @@ class TestShapeInference(unittest.TestCase):
              ('split', TensorProto.INT32, (3,))],
             [make_node('SplitToSequence', ['input', 'split'], ['output_sequence'])],
             [],
-            initializer=[make_tensor('split', TensorProto.INT32, (), (2, 1, 3))])
+            initializer=[make_tensor('split', TensorProto.INT32, (3,), (2, 1, 3))])
         self._assert_inferred(graph,
             [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (None, 4))])  # type: ignore
 
@@ -3236,8 +3236,12 @@ class TestShapeInference(unittest.TestCase):
         if initializer_shape is None:
             initializer = []  # type: ignore
         else:
-            initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, ()),  # type: ignore
-                make_tensor("y", TensorProto.FLOAT, initializer_shape, ())]
+            size = 1
+            for d in initializer_shape:
+                size = size * d
+            vals = [0.0 for i in range(size)]
+            initializer = [make_tensor("x", TensorProto.FLOAT, initializer_shape, vals),  # type: ignore
+                make_tensor("y", TensorProto.FLOAT, initializer_shape, vals)]
         if input_shape is None:
             inputs = []  # type: ignore
         else:
