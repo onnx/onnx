@@ -274,15 +274,18 @@ std::unique_ptr<Graph> graphProtoToGraph(
   if (ir_version >= 4) {
     for (int i = 0; i < gp.initializer_size(); ++i) {
       auto vip = tensorProtoToTensor(gp.initializer(i));
-      auto v = g->addInput();
-      v->setElemType(vip.elem_type());
-      std::vector<Dimension> sizes;
-      for (auto size: vip.sizes()) {
-        sizes.push_back(size);
+      // Only update input if input does not exists
+      if (value_by_name_of.count(vip.name()) == 0) {
+        auto v = g->addInput();
+        v->setElemType(vip.elem_type());
+        std::vector<Dimension> sizes;
+        for (auto size: vip.sizes()) {
+          sizes.push_back(size);
+        }
+        v->setSizes(sizes);
+        v->setUniqueName(vip.name());
+        value_by_name_of[vip.name()] = v;
       }
-      v->setSizes(sizes);
-      v->setUniqueName(vip.name());
-      value_by_name_of[vip.name()] = v;
     }
   }
   for (auto n : g->nodes()) {
