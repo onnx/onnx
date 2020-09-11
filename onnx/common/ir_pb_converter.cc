@@ -270,7 +270,7 @@ std::unique_ptr<Graph> graphProtoToGraph(
   // If ir_version >= 4, initializer does not have to be included in input
   // Add value_info from initializer
   // Store for input recovery
-  uint original_input_size = g->inputs().size();
+  size_t original_input_size = g->inputs().size();
   if (ir_version >= 4) {
     for (int i = 0; i < gp.initializer_size(); ++i) {
       auto vip = tensorProtoToTensor(gp.initializer(i));
