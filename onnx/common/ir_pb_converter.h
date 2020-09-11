@@ -8,6 +8,8 @@
 
 namespace ONNX_NAMESPACE {
 
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, const uint ir_version);
+
 class ConvertError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
