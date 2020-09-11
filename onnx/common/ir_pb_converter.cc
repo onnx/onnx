@@ -345,9 +345,10 @@ std::unique_ptr<Graph> graphProtoToGraph(
     auto init = tensorProtoToTensor(gp.initializer(i));
     g->addInitializer(init, init.name());
   }
-  // remove those input come from initializer
-  while (original_input_size != g->inputs().size()) {
-    g->popInput();
+  // Remove those inputs come from initializer
+  // Stop removing when the input size is same as the original one
+  while (g->inputs().size() != original_input_size) {
+    g->removeLastInput();
   }
   return g;
 }
