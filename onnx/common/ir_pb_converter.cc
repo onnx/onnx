@@ -7,6 +7,8 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, const int ir_version);
+
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
 
@@ -88,7 +90,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const uint ir_version) {
+void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const int ir_version) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -161,7 +163,7 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const u
   }
 }
 
-void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const uint ir_version) {
+void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
@@ -184,7 +186,7 @@ std::vector<Dimension> tensorShapeProtoToDimensions(
 std::unique_ptr<Graph> graphProtoToGraph(
     const ONNX_NAMESPACE::GraphProto& gp,
     bool nested,
-    const uint ir_version) {
+    const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
