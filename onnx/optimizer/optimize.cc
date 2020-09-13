@@ -11,6 +11,10 @@ GlobalPassRegistry Optimizer::passes;
 Optimizer::Optimizer(
     const std::vector<std::string>& names,
     const bool fixed_point) {
+  std::cout
+      << "WARNING: ONNX Optimizer has been moved to https://github.com/onnx/optimizer. "
+      << "The optimizer code in onnx/onnx repo will be removed in 1.9 release."
+      << std::endl;
   if (fixed_point) {
     this->pass_manager =
         std::shared_ptr<FixedPointPassManager>(new FixedPointPassManager());
