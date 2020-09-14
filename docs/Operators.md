@@ -64,7 +64,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
-|<a href="#If">If</a>|<a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#If">If</a>|<a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
@@ -74,7 +74,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
-|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
+|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
 |<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-1">1</a>|
 |<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
 |<a href="#MatMul">MatMul</a>|<a href="Changelog.md#MatMul-13">13</a>, <a href="Changelog.md#MatMul-9">9</a>, <a href="Changelog.md#MatMul-1">1</a>|
@@ -180,7 +180,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.preview.training.Adagrad">ai.onnx.preview.training.Adagrad</a>|<a href="Changelog.md#ai.onnx.preview.training.Adagrad-1">1</a>|
 |<a href="#ai.onnx.preview.training.Adam">ai.onnx.preview.training.Adam</a>|<a href="Changelog.md#ai.onnx.preview.training.Adam-1">1</a>|
 |<a href="#ai.onnx.preview.training.Gradient">ai.onnx.preview.training.Gradient</a>|<a href="Changelog.md#ai.onnx.preview.training.Gradient-1">1</a>|
-|<a href="#ai.onnx.preview.training.GraphCall">ai.onnx.preview.training.GraphCall</a>|<a href="Changelog.md#ai.onnx.preview.training.GraphCall-1">1</a>|
 |<a href="#ai.onnx.preview.training.Momentum">ai.onnx.preview.training.Momentum</a>|<a href="Changelog.md#ai.onnx.preview.training.Momentum-1">1</a>|
 
 
@@ -466,16 +465,16 @@ Other versions of this operator: <a href="Changelog.md#And-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -1979,16 +1978,16 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>First operand, input to be shifted.</dd>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Second operand, amounts of shift.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Z</tt> : T</dt>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -3871,7 +3870,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>x</tt> : T</dt>
 <dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> : T2</dt>
-<dd>(Optional) A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+<dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
 </dl>
 
 #### Outputs
@@ -3903,7 +3902,7 @@ node = onnx.helper.make_node(
     outputs=['y']
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([1., 3., 6., 10., 15.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d')
@@ -3923,7 +3922,7 @@ node = onnx.helper.make_node(
     exclusive=1
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([0., 1., 3., 6., 10.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d_exclusive')
@@ -3943,7 +3942,7 @@ node = onnx.helper.make_node(
     reverse=1
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([15., 14., 12., 9., 5.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d_reverse')
@@ -3960,10 +3959,11 @@ node = onnx.helper.make_node(
     'CumSum',
     inputs=['x', 'axis'],
     outputs=['y'],
-    reverse=1
+    reverse=1,
+    exclusive=1
 )
 x = np.array([1., 2., 3., 4., 5.]).astype(np.float64)
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([14., 12., 9., 5., 0.]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_1d_reverse_exclusive')
@@ -3982,7 +3982,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
-axis = np.array([0]).astype(np.int32)
+axis = np.int32(0)
 y = np.array([1., 2., 3., 5., 7., 9.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_axis_0')
@@ -4001,7 +4001,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
-axis = np.array([1]).astype(np.int32)
+axis = np.int32(1)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_axis_1')
@@ -4020,7 +4020,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float64).reshape((2, 3))
-axis = np.array([-1]).astype(np.int32)
+axis = np.int32(-1)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_negative_axis')
@@ -5145,16 +5145,16 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -5808,26 +5808,26 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 #### Inputs (3 - 6)
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>W</tt> : T</dt>
+<dt><tt>W</tt> (differentiable) : T</dt>
 <dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
-<dt><tt>R</tt> : T</dt>
+<dt><tt>R</tt> (differentiable) : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
-<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
+<dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (0 - 2)
 
 <dl>
-<dt><tt>Y</tt> (optional) : T</dt>
+<dt><tt>Y</tt> (optional, differentiable) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
-<dt><tt>Y_h</tt> (optional) : T</dt>
+<dt><tt>Y_h</tt> (optional, differentiable) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -6990,16 +6990,16 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">1</a>, <a href
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -7109,16 +7109,16 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -7425,9 +7425,9 @@ expect(node, inputs=[data], outputs=[data],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#If-1">1</a>
+Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>
 
 #### Attributes
 
@@ -7455,11 +7455,141 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>All Tensor types</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>All Tensor and Sequence types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>if</summary>
+
+```python
+# Given a bool scalar input cond.
+# return constant tensor x if cond is True, otherwise return constant tensor y.
+
+then_out = onnx.helper.make_tensor_value_info('then_out', onnx.TensorProto.FLOAT, [5])
+else_out = onnx.helper.make_tensor_value_info('else_out', onnx.TensorProto.FLOAT, [5])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+y = np.array([5, 4, 3, 2, 1]).astype(np.float32)
+
+then_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['then_out'],
+    value=onnx.numpy_helper.from_array(x)
+)
+
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['else_out'],
+    value=onnx.numpy_helper.from_array(y)
+)
+
+then_body = onnx.helper.make_graph(
+    [then_const_node],
+    'then_body',
+    [],
+    [then_out]
+)
+
+else_body = onnx.helper.make_graph(
+    [else_const_node],
+    'else_body',
+    [],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['res'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+cond = np.array(1).astype(np.bool)
+res = x if cond else y
+expect(if_node, inputs=[cond], outputs=[res], name='test_if',
+    opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>if_seq</summary>
+
+```python
+# Given a bool scalar input cond.
+# return constant sequence x if cond is True, otherwise return constant sequence y.
+
+then_out = onnx.helper.make_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
+else_out = onnx.helper.make_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
+
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+y = [np.array([5, 4, 3, 2, 1]).astype(np.float32)]
+
+then_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.numpy_helper.from_array(x[0])
+)
+
+then_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['x'],
+    outputs=['then_out']
+)
+
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['y'],
+    value=onnx.numpy_helper.from_array(y[0])
+)
+
+else_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['y'],
+    outputs=['else_out']
+)
+
+then_body = onnx.helper.make_graph(
+    [then_const_node, then_seq_node],
+    'then_body',
+    [],
+    [then_out]
+)
+
+else_body = onnx.helper.make_graph(
+    [else_const_node, else_seq_node],
+    'else_body',
+    [],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['res'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+cond = np.array(1).astype(np.bool)
+res = x if cond else y
+expect(if_node, inputs=[cond], outputs=[res], name='test_if_seq',
+    opset_imports=[onnx.helper.make_opsetid("", 13)])
+```
+
+</details>
 
 
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
@@ -7946,32 +8076,32 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>
 #### Inputs (3 - 8)
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>W</tt> : T</dt>
+<dt><tt>W</tt> (differentiable) : T</dt>
 <dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
-<dt><tt>R</tt> : T</dt>
+<dt><tt>R</tt> (differentiable) : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
+<dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>initial_c</tt> (optional) : T</dt>
+<dt><tt>initial_c</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>P</tt> (optional) : T</dt>
+<dt><tt>P</tt> (optional, differentiable) : T</dt>
 <dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (0 - 3)
 
 <dl>
-<dt><tt>Y</tt> (optional) : T</dt>
+<dt><tt>Y</tt> (optional, differentiable) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
-<dt><tt>Y_h</tt> (optional) : T</dt>
+<dt><tt>Y_h</tt> (optional, differentiable) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>Y_c</tt> (optional) : T</dt>
+<dt><tt>Y_c</tt> (optional, differentiable) : T</dt>
 <dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -8192,16 +8322,16 @@ Other versions of this operator: <a href="Changelog.md#Less-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -8311,16 +8441,16 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -8632,13 +8762,13 @@ expect(node, inputs=[x], outputs=[y],
         for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
           /* Implicitly-defined code: bind actual parameter values
              to formal parameter variables of loop-body */
-          bool keepgoing_in = keepgoing_out; 
+          bool keepgoing_in = keepgoing_out;
           bool b_in = b_out;
   
           /* User-defined code (loop body) */
           int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
           b_out = a - b_in;
-          keepgoing_out = my_local > b_out; 
+          keepgoing_out = my_local > b_out;
           user_defined_val = b_in + b_in; // b_in and b_out are different variables
           /* End user-defined code */
   
@@ -8681,9 +8811,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>
 
 #### Attributes
 
@@ -8707,19 +8837,245 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>
 
 <dl>
 <dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Final N loop carried dependency values then K scan_outputs</dd>
+<dd>Final N loop carried dependency values then K scan_outputs. Scan outputs must be Tensors.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>All Tensor types</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>All Tensor and Sequence types</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>tensor of int64, which should be a scalar.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>loop_11</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN], and initial tensor y
+# sum up its elements using a scan
+# returning the final state (y+x1+x2+...+xN) as well the scan_output
+# [y+x1, y+x1+x2, ..., y+x1+x2+...+xN]
+
+y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
+y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+y = np.array([-2]).astype(np.float32)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+i_add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+start_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['iter_count'],
+    outputs=['slice_start'],
+    axes=[0]
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end'],
+    outputs=['slice_end'],
+    axes=[0]
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+y_add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['y_in', 'slice_out'],
+    outputs=['y_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+scan_identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['y_out'],
+    outputs=['scan_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, x_const_node, one_const_node, i_add_node,
+     start_unsqueeze_node, end_unsqueeze_node, slice_node, y_add_node,
+     scan_identity_node],
+    'loop_body',
+    [iter_count, cond_in, y_in],
+    [cond_out, y_out, scan_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'y'],
+    outputs=['res_y', 'res_scan'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+res_y = np.array([13]).astype(np.float32)
+cond = np.array(1).astype(np.bool)
+res_scan = np.array([-1, 1, 4, 8, 13]).astype(np.float32).reshape((5, 1))
+expect(node, inputs=[trip_count, cond, y], outputs=[res_y, res_scan],
+       name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>loop_13</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN],
+# Return a sequence of tensors of
+#   [[x1], [x1, x2], ..., [x1, ..., xN]]
+
+seq_in = onnx.helper.make_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
+seq_out = onnx.helper.make_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+zero_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['slice_start'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_zero',
+        data_type=onnx.TensorProto.INT64,
+        dims=(1,),
+        vals=[0]
+    )
+)
+
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end'],
+    outputs=['slice_end'],
+    axes=[0]
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+insert_node = onnx.helper.make_node(
+    'SequenceInsert',
+    inputs=['seq_in', 'slice_out'],
+    outputs=['seq_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, x_const_node, one_const_node, zero_const_node, add_node,
+     end_unsqueeze_node, slice_node, insert_node],
+    'loop_body',
+    [iter_count, cond_in, seq_in],
+    [cond_out, seq_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'seq_empty'],
+    outputs=['seq_res'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+seq_empty = []  # type: List[Any]
+seq_res = [x[:int(i)] for i in x]
+cond = np.array(1).astype(np.bool)
+expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
+       name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
+       input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
+```
+
+</details>
 
 
 ### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
@@ -11587,14 +11943,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -11821,16 +12177,16 @@ Other versions of this operator: <a href="Changelog.md#Or-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -12778,26 +13134,26 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>
 #### Inputs (3 - 6)
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>W</tt> : T</dt>
+<dt><tt>W</tt> (differentiable) : T</dt>
 <dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
-<dt><tt>R</tt> : T</dt>
+<dt><tt>R</tt> (differentiable) : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
+<dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (0 - 2)
 
 <dl>
-<dt><tt>Y</tt> (optional) : T</dt>
+<dt><tt>Y</tt> (optional, differentiable) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
-<dt><tt>Y_h</tt> (optional) : T</dt>
+<dt><tt>Y_h</tt> (optional, differentiable) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -15276,7 +15632,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dt><tt>roi</tt> : T2</dt>
 <dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
 <dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is specified, then set scales to empty data (zero shape) in this operator's input list.</dd>
 <dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
 <dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
 </dl>
@@ -16762,7 +17118,7 @@ expect(node, inputs=[x], outputs=[y],
   values are computed in the outer graph, they need to be passed in as extra state_variables.
   
       graph rnn-encoding {
-        %H_0 = ... 
+        %H_0 = ...
         %X = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
         return %Y, %Y_h
@@ -17632,6 +17988,45 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>sequenceinsert</summary>
+
+```python
+test_cases = {
+    'at_back': [np.array([10, 11, 12])],
+    'at_front': [np.array([-2, -1, 0]), np.array([0])]
+}
+sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
+
+for test_name, test_inputs in test_cases.items():
+    tensor = test_inputs[0]
+
+    if len(test_inputs) > 1:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor', 'position'],
+            outputs=['output_sequence']
+        )
+        position = test_inputs[1]
+        inserted = sequence_insert_reference_implementation(sequence, tensor, position)
+        expect(node, inputs=[sequence, tensor, position], outputs=[inserted],
+               name='test_sequence_insert_' + test_name)
+    else:
+        node = onnx.helper.make_node(
+            'SequenceInsert',
+            inputs=['sequence', 'tensor'],
+            outputs=['output_sequence']
+        )
+        inserted = sequence_insert_reference_implementation(sequence, tensor)
+        expect(node, inputs=[sequence, tensor], outputs=[inserted],
+               name='test_sequence_insert_' + test_name)
+```
+
+</details>
 
 
 ### <a name="SequenceLength"></a><a name="sequencelength">**SequenceLength**</a>
@@ -21908,16 +22303,16 @@ Other versions of this operator: <a href="Changelog.md#Xor-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
 <dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -22684,130 +23079,6 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
 ```
 
 </details>
-
-
-### <a name="ai.onnx.preview.training.GraphCall"></a><a name="ai.onnx.preview.training.graphcall">**ai.onnx.preview.training.GraphCall**</a>
-
-  The GraphCall operator invokes a graph inside TrainingInfoProto's
-  algorithm field. The GraphCall inputs and outputs are bound to those of
-  invoked graph by position. If a graph input has an initializer, that input
-  is considered optional. All graph outputs are optional.
-  
-  Below Python syntax is used for describing dictionary and list.
-  
-  Assume that ModelProto's graph field has
-  - name: "MyInferenceGraph"
-  - input: ["X", "W", "Z"]
-  - initializer: [W]
-  - output: ["Y"]
-  
-  as visualized below for inference.
-  
-  ```
-  X -----.
-         |
-         v
-  W --> Conv --> H --> Gemm --> Y
-                        ^
-                        |
-                        Z
-  ```
-  
-  Assume that the training algorithm contains
-  
-  - inputs: ["X_1", "Z_1", "C"]
-  - initializer: [T]
-  - outputs: ["W_new"]
-  
-  with a dictionary
-  
-  - update_binding: {"W": "W_new", "T": "T_new"}
-  
-  Inside the training algorithm graph, one can invoke the inference
-  graph via adding a GraphCall node with
-  
-  - inputs: ["X_1", "W", Z_1"]
-  - outputs: ["Y_1"]
-  - an attribute graph_name="MyInferenceGraph",
-  
-  The initializers, "W" and "T" in this case, in update_binding
-  are considered globally-visible and mutable variables, which
-  can be used as inputs of operators in the training graph.
-  
-  An example training algorithm graph may look like
-  
-  ```
-  .-------- W (a global and mutable variable from
-  |         |  the inference graph)
-  |         |
-  |   .-----'-----------.
-  |   |                 |
-  |   |                 v
-  |   | .-- X_1 --> GraphCall(graph_name="MyInferenceGraph")
-  |   | |            |  |
-  |   | |            |  |
-  |   | |   Z_1 -----'  |
-  |   | |    |          V
-  |   | |    |         Y_1 ---> Loss ---> O
-  |   | |    |                    ^
-  |   | |    |                    |
-  |   | `--. |                    C
-  |   |    | |                    |
-  |   |    | |   .----------------'
-  |   |    | |   |
-  |   |    v v   v
-  |   `--> Gradient(xs=["W"], zs=["X_1", "Z_1", "C"], y="O")
-  |        |
-  |        v
-  |      dO_dW (gradient of W)      1 (a scalar one)
-  |        |                        |
-  |        V                        v
-  |       Div <--- T ------------> Add ---> T_new
-  |        |    (T is the number of training iterations.
-  |        |     T is also globally visible and mutable.)
-  |        v
-  `-----> Sub ----> W_new
-  ```
-  
-  where Loss is a dummy node which computes the minimized objective function.
-  
-  The variable "W" is an optional input in the called graph.
-  If the user omits it, the input list of GraphCall becomes ["X_1", "", "Z_1"].
-  In this case, from the view of computation graph, the Conv operator invoked by
-  GraphCall's may be still connected the global "W" variable and therefore the
-  structure of the computation graph is unchanged.
-
-#### Version
-
-This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>graph_name</tt> : string (required)</dt>
-<dd>The invoked graph's name. The only allowed value is the name of the inference graph, which is stored in "ModelProto.graph.name" in the ONNX model format.</dd>
-</dl>
-
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>Inputs</tt> (variadic, heterogeneous) : T</dt>
-<dd>Inputs fed to the invoked graph. The i-th input here goes to the i-th input of the invoked graph. To omit an optional input in this field, the user can drop it or use an empty string.</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>Outputs</tt> (variadic, heterogeneous) : T</dt>
-<dd>The outputs generated by the called graph. Its i-th value is bound to the i-th output of the called graph. Similar to the inputs, all outputs are optional.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Allow inputs and outputs to be any kind of tensor.</dd>
-</dl>
 
 
 ### <a name="ai.onnx.preview.training.Momentum"></a><a name="ai.onnx.preview.training.momentum">**ai.onnx.preview.training.Momentum**</a>

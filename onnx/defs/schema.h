@@ -851,7 +851,8 @@ class ISchemaRegistry {
  */
 class OpSchemaRegistry final : public ISchemaRegistry {
  public:
-  // A singleton class to store domain to min/max op_set version map.
+  // A singleton class to store domain to min/max op_set version map, as well as
+  // domain to last-release op_set version map.
   class DomainToVersionRange final {
    public:
     DomainToVersionRange() {
@@ -865,22 +866,43 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // versining is not meaningful and that domain should have only one
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      // Version corresponding last release of ONNX. Update this to match with
+      // the max version above in a *release* version of ONNX. But in other versions,
+      // the max version may be ahead of the last-release-version.
+      last_release_version_map_[ONNX_DOMAIN] = 12;
+      last_release_version_map_[AI_ONNX_ML_DOMAIN] = 2;
+      last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
+      last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
       return map_;
     }
 
+    const std::unordered_map<std::string, int>& LastReleaseVersionMap() const {
+      return last_release_version_map_;
+    }
+
     // Add customized domain to min/max version.
     // Onnx partners are able to use onnx operator schema api to
     // register customized op in their own domain.
+    // Can optionally specify last_release_version (to make it similar to
+    // standard ONNX domains as above). Custom-domains are free to interpret
+    // this as appropriate (that is, as relative to releases of custom-domain
+    // as opposed to ONNX releases).
     void AddDomainToVersion(
         const std::string& domain,
         int min_version,
-        int max_version) {
+        int max_version,
+        int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       assert(map_.end() == map_.find(domain));
       map_[domain] = std::make_pair(min_version, max_version);
+      // If a last-release-version is not explicitly specified, use max as last-release-version.
+      if (last_release_version == -1)
+        last_release_version = max_version;
+      assert(last_release_version_map_.end() == last_release_version_map_.find(domain));
+      last_release_version_map_[domain] = last_release_version;
     }
 
     static DomainToVersionRange& Instance();
@@ -888,6 +910,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
     std::unordered_map<std::string, std::pair<int, int>> map_;
+
+    // Key: domain. Value: most recent release opset version. Note that
+    // the highest opset version may be ahead of the most recent release's opset version.
+    std::unordered_map<std::string, int> last_release_version_map_;
 
     std::mutex mutex_;
   };

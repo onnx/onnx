@@ -231,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
             // output.
-            if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            if (hasInputShape(ctx, 0)) {
               auto& input_shape = getInputShape(ctx, 0);
               auto input_shape_dim_size = input_shape.dim_size();
               if (input_shape_dim_size > 1) {
@@ -241,15 +241,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (input_shape.dim(0).has_dim_value()) {
                 const auto& input_shape_dim_value =
                     input_shape.dim(0).dim_value();
-                if (input_shape_dim_value > 0) {
-                  auto final_output_shape = ctx.getOutputType(0)
-                                                ->mutable_tensor_type()
-                                                ->mutable_shape();
-                  for (int i = 0; i < input_shape_dim_value; ++i) {
-                    auto newdim = final_output_shape->add_dim();
-                    (void)(newdim); // To eliminate "unused variable" compiler
-                                    // warning.
-                  }
+                auto final_output_shape = ctx.getOutputType(0)
+                                              ->mutable_tensor_type()
+                                              ->mutable_shape();
+                for (int i = 0; i < input_shape_dim_value; ++i) {
+                  auto newdim = final_output_shape->add_dim();
+                  (void)(newdim); // To eliminate "unused variable" compiler
+                                  // warning.
                 }
               }
             }
@@ -414,7 +412,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
@@ -464,7 +462,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
