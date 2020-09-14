@@ -1549,6 +1549,16 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 64, 36, 36))])
 
+    def test_conv_transpose_with_pads_and_auto_pads(self):  # type: () -> None
+        # This test should fail because pads cannot be used simultaneously with auto_pad
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (1, 1, 2, 2)),
+             ('W', TensorProto.FLOAT, (1, 1, 3, 3)),
+             ('B', TensorProto.FLOAT, (1, ))],
+            [make_node('ConvTranspose', ['X', 'W', 'B'], 'Y', auto_pad="SAME_UPPER", strides=[1, 1], pads=[0, 1, 1, 0])],
+            [])
+        self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, helper.make_model(graph))
+
     def test_mvn_function_output_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16))],
