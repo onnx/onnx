@@ -82,7 +82,7 @@ struct FuseConsecutiveSqueezes final : public PredicateBasedPass {
 
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
-    t.sizes() = std::vector<int64_t>{combined_axes.size()};
+    t.sizes() = std::vector<int64_t>{static_cast<int64_t>(combined_axes.size())};
     auto& data = t.int64s();
     for (auto a : combined_axes) {
       data.emplace_back(a);
