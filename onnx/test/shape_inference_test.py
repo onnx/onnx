@@ -1931,6 +1931,13 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.UINT8, (None, None, None))])  # type: ignore
 
+    def test_constantofshape_without_input_shape_scalar(self):  # type: () -> None
+        graph = self._make_graph([('shape', TensorProto.INT64, (0, ))],
+            [make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.UINT8, (1, ), (2, )))],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.UINT8, ())])  # type: ignore
+
     def test_constantofshape_with_shape_zero(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
