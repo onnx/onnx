@@ -71,6 +71,30 @@ private:
     raw_data_ = std::string(other.raw_data_.data(), other.raw_data_.size());
   }
 
+  Tensor& operator = (const Tensor &ohther){
+    if(this != &other){
+        is_segment_ = other.is_segment_;
+        segment_begin_ = other.segment_begin_;
+        segment_end_ = other.segment_end_;
+        has_name_ = other.has_name_;
+        elem_type_ = other.elem_type_;
+        sizes_ = other.sizes_;
+        float_data_ = other.float_data_;
+        double_data_ = other.double_data_;
+        int32_data_ = other.int32_data_;
+        int64_data_ = other.int64_data_;
+        is_raw_data_ = other.is_raw_data_;
+        // Deep copy. Avoid copy on write when using gcc<5.0
+        string_data_.resize(other.string_data_.size());
+        for(unsigned int i=0; i<other.string_data_.size(); ++i) {
+            string_data_[i] = std::string( other.string_data_[i].data(), other.string_data_[i].size() );
+        }
+        name_ = std::string(other.name_.data(), other.name_.size());
+        raw_data_ = std::string(other.raw_data_.data(), other.raw_data_.size());
+    }
+    return *this
+  }
+
   const std::vector<int64_t>& sizes() const {
     return sizes_;
   }
