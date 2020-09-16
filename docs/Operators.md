@@ -1874,13 +1874,13 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional, differentiable) : T</dt>
+<dt><tt>mean</tt> (optional, non-differentiable) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>var</tt> (optional, differentiable) : T</dt>
+<dt><tt>var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>saved_mean</tt> (optional, differentiable) : T</dt>
+<dt><tt>saved_mean</tt> (optional, non-differentiable) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation.</dd>
-<dt><tt>saved_var</tt> (optional, differentiable) : T</dt>
+<dt><tt>saved_var</tt> (optional, non-differentiable) : T</dt>
 <dd>Saved variance used during training to speed up gradient computation.</dd>
 </dl>
 
@@ -3283,7 +3283,7 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (2 - 4)
 
 <dl>
-<dt><tt>x</tt> (differentiable) : T1</dt>
+<dt><tt>x</tt> (non-differentiable) : T1</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 <dt><tt>w</tt> (differentiable) : T2</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
@@ -4482,7 +4482,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
-<dt><tt>ratio</tt> (optional, differentiable) : T1</dt>
+<dt><tt>ratio</tt> (optional, non-differentiable) : T1</dt>
 <dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
 <dt><tt>training_mode</tt> (optional, non-differentiable) : T2</dt>
 <dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
@@ -4493,7 +4493,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional, differentiable) : T2</dt>
+<dt><tt>mask</tt> (optional, non-differentiable) : T2</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -9020,6 +9020,18 @@ zero_const_node = onnx.helper.make_node(
     )
 )
 
+axes_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['axes'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_axes',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[0]
+    )
+)
+
 add_node = onnx.helper.make_node(
     'Add',
     inputs=['iter_count', 'one'],
@@ -9028,9 +9040,8 @@ add_node = onnx.helper.make_node(
 
 end_unsqueeze_node = onnx.helper.make_node(
     'Unsqueeze',
-    inputs=['end'],
-    outputs=['slice_end'],
-    axes=[0]
+    inputs=['end', 'axes'],
+    outputs=['slice_end']
 )
 
 slice_node = onnx.helper.make_node(
@@ -9053,7 +9064,7 @@ identity_node = onnx.helper.make_node(
 
 loop_body = onnx.helper.make_graph(
     [identity_node, x_const_node, one_const_node, zero_const_node, add_node,
-     end_unsqueeze_node, slice_node, insert_node],
+     axes_node, end_unsqueeze_node, slice_node, insert_node],
     'loop_body',
     [iter_count, cond_in, seq_in],
     [cond_out, seq_out]
@@ -10075,9 +10086,9 @@ Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>
 <dl>
 <dt><tt>X</tt> (differentiable) : T1</dt>
 <dd>Input data tensor that has to be unpooled. This tensor is typically the first output of the MaxPool op.Dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non-image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
-<dt><tt>I</tt> (differentiable) : T2</dt>
+<dt><tt>I</tt> (non-differentiable) : T2</dt>
 <dd>Input data tensor containing the indices corresponding to elements in the first input tensor X.This tensor is typically the second output of the MaxPool op.Dimensions must be the same as input tensor X. The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, assuming row-major storage. Also, the linear indices should not consider padding. So the values in indices are in the range [0, N x C x D1 x ... x Dn).</dd>
-<dt><tt>output_shape</tt> (optional, differentiable) : T2</dt>
+<dt><tt>output_shape</tt> (optional, non-differentiable) : T2</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, 'pads' values are ignored.</dd>
 </dl>
 
@@ -15099,17 +15110,19 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -15134,27 +15147,27 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 
 ```python
 shape = [3, 2, 2]
-axes = None
+axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     'ReduceSum',
-    inputs=['data'],
+    inputs=['data', 'axes'],
     outputs=['reduced'],
     keepdims=keepdims)
 
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
-reduced = np.sum(data, axis=axes, keepdims=keepdims == 1)
+reduced = np.sum(data, axis=None, keepdims=keepdims == 1)
 #print(reduced)
 #[[[78.]]]
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_example')
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_example')
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=axes, keepdims=keepdims == 1)
+reduced = np.sum(data, axis=None, keepdims=keepdims == 1)
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_random')
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_random')
 ```
 
 </details>
@@ -15165,30 +15178,62 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_default_axe
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     'ReduceSum',
-    inputs=['data'],
+    inputs=['data', 'axes'],
     outputs=['reduced'],
-    axes=axes,
     keepdims=keepdims)
 
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
-reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 #print(reduced)
 #[[4., 6.]
 # [12., 14.]
 # [20., 22.]]
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_example')
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_example')
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_random')
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>empty_axes_input_noop</summary>
+
+```python
+shape = [3, 2, 2]
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data', 'axes'],
+    outputs=['reduced'],
+    keepdims=keepdims,
+    noop_with_empty_axes=True)
+
+data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
+axes = np.array([], dtype=np.int64)
+reduced = np.array(data)
+#print(reduced)
+#[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_empty_axes_input_noop_example')
+
+np.random.seed(0)
+data = np.random.uniform(-10, 10, shape).astype(np.float32)
+reduced = np.array(data)
+
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
 ```
 
 </details>
@@ -15199,30 +15244,29 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_do_not_keep
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     'ReduceSum',
-    inputs=['data'],
+    inputs=['data', 'axes'],
     outputs=['reduced'],
-    axes=axes,
     keepdims=keepdims)
 
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
-reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 #print(reduced)
 #[[[4., 6.]]
 # [[12., 14.]]
 # [[20., 22.]]]
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_example')
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_keepdims_example')
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_random')
+expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_keepdims_random')
 ```
 
 </details>
@@ -15233,30 +15277,32 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     'ReduceSum',
-    inputs=['data'],
+    inputs=['data', 'axes'],
     outputs=['reduced'],
-    axes=axes,
     keepdims=keepdims)
 
 data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32)
-reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(axes.tolist()), keepdims=keepdims == 1)
 # print(reduced)
 #[[[4., 6.]]
 # [[12., 14.]]
 # [[20., 22.]]]
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_example')
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_negative_axes_keepdims_example')
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(data, axis=tuple(axes), keepdims=keepdims == 1)
+reduced = np.sum(data, axis=tuple(
+    axes.tolist()), keepdims=keepdims == 1)
 
-expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_negative_axes_keepdims_random')
+expect(node, inputs=[data, axes], outputs=[reduced],
+       name='test_reduce_sum_negative_axes_keepdims_random')
 ```
 
 </details>
@@ -20176,7 +20222,7 @@ Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
 ### <a name="Split"></a><a name="split">**Split**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'.
+  'axis'. Lengths of the parts can be specified using input 'split'.
   Otherwise, the tensor is split to equal sized parts.
 
 #### Version
@@ -20190,15 +20236,15 @@ Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
-<dt><tt>split</tt> : list of ints</dt>
-<dd>length of each output. Values should be >= 0.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional length of each output. Values should be >= 0.Sum of the values must be equal to the dim value at 'axis' specified.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -20234,16 +20280,16 @@ node = onnx.helper.make_node(
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
 
+split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
-    inputs=['input'],
+    inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
     axis=0,
-    split=[2, 4]
 )
 
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
 ```
 
 </details>
@@ -20268,18 +20314,18 @@ expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
+split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
-    inputs=['input'],
+    inputs=['input', 'split'],
     outputs=['output_1', 'output_2'],
     axis=1,
-    split=[2, 4]
 )
 
 expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
                     np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
 
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
 ```
 
 </details>
@@ -20301,15 +20347,15 @@ node = onnx.helper.make_node(
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_default_axis')
 
+split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
-    inputs=['input'],
-    outputs=['output_1', 'output_2'],
-    split=[2, 4]
+    inputs=['input', 'split'],
+    outputs=['output_1', 'output_2']
 )
 
 expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
 ```
 
 </details>
@@ -20322,15 +20368,15 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 input = np.array([]).astype(np.float32)
 
 # Split emtpy tensor to tensors of size zero
+split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
-    inputs=['input'],
-    outputs=['output_1', 'output_2', 'output_3'],
-    split=[0, 0, 0]
+    inputs=['input', 'split'],
+    outputs=['output_1', 'output_2', 'output_3']
 )
 
 expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
 ```
 
 </details>
@@ -20453,7 +20499,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Squeeze"></a><a name="squeeze">**Squeeze**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
-  Takes a  parameter `axes` with a list of axes to squeeze.
+  Takes an input `axes` with a list of axes to squeeze.
   If `axes` is not provided, all the single dimensions will be removed from
   the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 
@@ -20463,18 +20509,13 @@ This version of the operator has been available since version 13 of the default 
 
 Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href="Changelog.md#Squeeze-11">11</a>
 
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
-</dl>
-
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -20500,14 +20541,14 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href
 ```python
 node = onnx.helper.make_node(
     'Squeeze',
-    inputs=['x'],
+    inputs=['x', 'axes'],
     outputs=['y'],
-    axes=[0],
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+axes = np.array([0], dtype=np.int64)
 y = np.squeeze(x, axis=0)
 
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, axes], outputs=[y],
        name='test_squeeze')
 ```
 
@@ -20520,13 +20561,13 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Squeeze',
-    inputs=['x'],
+    inputs=['x', 'axes'],
     outputs=['y'],
-    axes=[-2],
 )
 x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+axes = np.array([-2], dtype=np.int64)
 y = np.squeeze(x, axis=-2)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, axes], outputs=[y],
        name='test_squeeze_negative_axes')
 ```
 
@@ -21045,14 +21086,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input for n-gram extraction</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (differentiable) : T1</dt>
+<dt><tt>Y</tt> (non-differentiable) : T1</dt>
 <dd>Ngram results</dd>
 </dl>
 
@@ -21999,13 +22040,13 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
 ### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
-  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
   
   For example:
     Given an input tensor (`data`) of shape [3, 4, 5], then
     Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
   
-  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
   The order of values in `axes` does not matter and can come in any order. 
@@ -22017,18 +22058,13 @@ This version of the operator has been available since version 13 of the default 
 
 Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a href="Changelog.md#Unsqueeze-11">11</a>
 
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
+<dt><tt>axes</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Outputs
@@ -22054,13 +22090,13 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 ```python
 node = onnx.helper.make_node(
     'Unsqueeze',
-    inputs=['x'],
+    inputs=['x', 'axes'],
     outputs=['y'],
-    axes=[-2],
 )
 x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+axes = np.array([-2]).astype(np.int64)
 y = np.expand_dims(x, axis=-2)
-expect(node, inputs=[x], outputs=[y],
+expect(node, inputs=[x, axes], outputs=[y],
        name='test_unsqueeze_negative_axes')
 ```
 
@@ -22074,15 +22110,15 @@ expect(node, inputs=[x], outputs=[y],
 x = np.random.randn(3, 4, 5).astype(np.float32)
 
 for i in range(x.ndim):
+    axes = np.array([i]).astype(np.int64)
     node = onnx.helper.make_node(
         'Unsqueeze',
-        inputs=['x'],
+        inputs=['x', 'axes'],
         outputs=['y'],
-        axes=[i],
     )
     y = np.expand_dims(x, axis=i)
 
-    expect(node, inputs=[x], outputs=[y],
+    expect(node, inputs=[x, axes], outputs=[y],
            name='test_unsqueeze_axis_' + str(i))
 ```
 
@@ -22094,19 +22130,19 @@ for i in range(x.ndim):
 
 ```python
 x = np.random.randn(3, 4, 5).astype(np.float32)
+axes = np.array([2, 4, 5]).astype(np.int64)
 
 node = onnx.helper.make_node(
     'Unsqueeze',
-    inputs=['x'],
+    inputs=['x', 'axes'],
     outputs=['y'],
-    axes=[2, 4, 5],
 )
 y = np.expand_dims(x, axis=2)
 y = np.expand_dims(y, axis=4)
 y = np.expand_dims(y, axis=5)
 
-expect(node, inputs=[x], outputs=[y],
-        name='test_unsqueeze_three_axes')
+expect(node, inputs=[x, axes], outputs=[y],
+       name='test_unsqueeze_three_axes')
 ```
 
 </details>
@@ -22117,18 +22153,18 @@ expect(node, inputs=[x], outputs=[y],
 
 ```python
 x = np.random.randn(3, 4, 5).astype(np.float32)
+axes = np.array([1, 4]).astype(np.int64)
 
 node = onnx.helper.make_node(
     'Unsqueeze',
-    inputs=['x'],
+    inputs=['x', 'axes'],
     outputs=['y'],
-    axes=[1, 4],
 )
 y = np.expand_dims(x, axis=1)
 y = np.expand_dims(y, axis=4)
 
-expect(node, inputs=[x], outputs=[y],
-        name='test_unsqueeze_two_axes')
+expect(node, inputs=[x, axes], outputs=[y],
+       name='test_unsqueeze_two_axes')
 ```
 
 </details>
@@ -22139,19 +22175,19 @@ expect(node, inputs=[x], outputs=[y],
 
 ```python
 x = np.random.randn(3, 4, 5).astype(np.float32)
+axes = np.array([5, 4, 2]).astype(np.int64)
 
 node = onnx.helper.make_node(
     'Unsqueeze',
-    inputs=['x'],
+    inputs=['x', 'axes'],
     outputs=['y'],
-    axes=[5, 4, 2],
 )
 y = np.expand_dims(x, axis=2)
 y = np.expand_dims(y, axis=4)
 y = np.expand_dims(y, axis=5)
 
-expect(node, inputs=[x], outputs=[y],
-        name='test_unsqueeze_unsorted_axes')
+expect(node, inputs=[x, axes], outputs=[y],
+       name='test_unsqueeze_unsorted_axes')
 ```
 
 </details>

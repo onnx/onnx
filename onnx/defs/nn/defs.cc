@@ -533,7 +533,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "output_shape",
@@ -543,7 +543,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "output",
@@ -1090,7 +1090,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             1,
             "w",
@@ -1737,7 +1737,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             2,
             "var",
@@ -1746,7 +1746,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             3,
             "saved_mean",
@@ -1756,7 +1756,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             4,
             "saved_var",
@@ -1766,7 +1766,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1937,7 +1937,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "training_mode",
@@ -1966,7 +1966,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)",
@@ -2227,7 +2227,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "Y",
@@ -2236,7 +2236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(string)", "tensor(int32)", "tensor(int64)"},
