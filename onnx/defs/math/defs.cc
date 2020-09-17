@@ -1945,10 +1945,15 @@ bool BuildContextDependentFunctionBody(
        {MakeAttribute("value", ToDimensionOneTensor(1))}});
 
   body.push_back(
+      {{"axes"},
+       "Constant",
+       {},
+       {MakeAttribute("value", ToDimensionOneInt64Tensor(1))}});
+
+  body.push_back(
       {{"expanded_target"},
        "Unsqueeze",
-       {"target"},
-       {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+       {"target", "axes"}});
 
   if (ctx.getAttribute("ignore_index") == nullptr) {
     body.push_back(
@@ -1969,14 +1974,12 @@ bool BuildContextDependentFunctionBody(
         body.push_back(
             {{"loss"},
              "Squeeze",
-             {"loss_N1dd"},
-             {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+             {"loss_N1dd", "axes"}});
       } else {
         body.push_back(
             {{"loss_Ndd"},
              "Squeeze",
-             {"loss_N1dd"},
-             {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+             {"loss_N1dd", "axes"}});
         if (ctx.getAttribute("reduction")->s() == "mean") {
           body.push_back(
               {{"loss"},
@@ -1996,8 +1999,7 @@ bool BuildContextDependentFunctionBody(
       body.push_back(
           {{"loss_unweighted"},
            "Squeeze",
-           {"loss_N1dd"},
-           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+           {"loss_N1dd", "axes"}});
       if (ctx.getAttribute("reduction")->s() == "none") {
         body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
       } else {
@@ -2077,8 +2079,7 @@ bool BuildContextDependentFunctionBody(
       body.push_back(
           {{"squeeze_mask"},
            "Squeeze",
-           {"mask"},
-           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+           {"mask", "axes"}});
 
       body.push_back(
           {{"const_one_float"},
@@ -2103,15 +2104,13 @@ bool BuildContextDependentFunctionBody(
       body.push_back(
           {{"weight_gather"},
            "Squeeze",
-           {"weight_gather_temp_1"},
-           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+           {"weight_gather_temp_1", "axes"}});
     }
 
     body.push_back(
         {{"loss_unweighted"},
          "Squeeze",
-         {"loss_N1dd"},
-         {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+         {"loss_N1dd", "axes"}});
     if (ctx.getAttribute("reduction")->s() == "none") {
       body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
     } else {
@@ -2457,6 +2456,11 @@ bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.push_back(
+      {{"axes"},
+       "Constant",
+       {},
+       {MakeAttribute("value", ToDimensionOneInt64Tensor(1))}});
 
   body.push_back(
       {{"X_Max"},
@@ -2466,11 +2470,7 @@ bool BuildContextDependentFunctionBodySCE(
 
   body.push_back({{"X_Sub"}, "Sub", {"scores", "X_Max"}});
   body.push_back({{"X_Exp"}, "Exp", {"X_Sub"}});
-  body.push_back(
-      {{"X_RS"},
-       "ReduceSum",
-       {"X_Exp"},
-       {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp", "axes"}});
   body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
   body.push_back({{"X_Log"}, "Log", {"X_Div"}});
 
