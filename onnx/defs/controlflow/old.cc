@@ -599,28 +599,31 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
       if (is_loop_state_var) {
         // shape may change across iterations so ignore.
       } else {
-        // per iteration output. first dimension will be number of iterations
-        // but we don't know that value yet
-        TypeProto inferred_type(*subgraph_output_type);
-        auto* mutable_inferred_tensor_type =
-            inferred_type.mutable_tensor_type();
-        auto* mutable_inferred_shape =
-            mutable_inferred_tensor_type->mutable_shape();
+        // propogate shape
+        if (subgraph_output_type->tensor_type().has_shape()) {
+          // per iteration output. first dimension will be number of iterations
+          // but we don't know that value yet
+          TypeProto inferred_type(*subgraph_output_type);
+          auto* mutable_inferred_tensor_type =
+              inferred_type.mutable_tensor_type();
+          auto* mutable_inferred_shape =
+              mutable_inferred_tensor_type->mutable_shape();
 
-        mutable_inferred_shape->clear_dim();
+          mutable_inferred_shape->clear_dim();
 
-        // add empty dimension for number of iterations
-        mutable_inferred_shape->add_dim();
+          // add empty dimension for number of iterations
+          mutable_inferred_shape->add_dim();
 
-        // add dimensions from subgraph output shape
-        for (const auto& dim :
-             subgraph_output_type->tensor_type().shape().dim()) {
-          (*mutable_inferred_shape->add_dim()) = dim;
+          // add dimensions from subgraph output shape
+          for (const auto& dim :
+               subgraph_output_type->tensor_type().shape().dim()) {
+            (*mutable_inferred_shape->add_dim()) = dim;
+          }
+
+          mergeInShapeInfo(
+              *mutable_inferred_tensor_type,
+              *loop_output_type->mutable_tensor_type());
         }
-
-        mergeInShapeInfo(
-            *mutable_inferred_tensor_type,
-            *loop_output_type->mutable_tensor_type());
       }
     }
   }
@@ -880,28 +883,31 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
       if (is_loop_state_var) {
         // shape may change across iterations so ignore.
       } else {
-        // per iteration output. first dimension will be number of iterations
-        // but we don't know that value yet
-        TypeProto inferred_type(*subgraph_output_type);
-        auto* mutable_inferred_tensor_type =
-            inferred_type.mutable_tensor_type();
-        auto* mutable_inferred_shape =
-            mutable_inferred_tensor_type->mutable_shape();
+        // propogate shape
+        if (subgraph_output_type->tensor_type().has_shape()) {
+          // per iteration output. first dimension will be number of iterations
+          // but we don't know that value yet
+          TypeProto inferred_type(*subgraph_output_type);
+          auto* mutable_inferred_tensor_type =
+              inferred_type.mutable_tensor_type();
+          auto* mutable_inferred_shape =
+              mutable_inferred_tensor_type->mutable_shape();
 
-        mutable_inferred_shape->clear_dim();
+          mutable_inferred_shape->clear_dim();
 
-        // add empty dimension for number of iterations
-        mutable_inferred_shape->add_dim();
+          // add empty dimension for number of iterations
+          mutable_inferred_shape->add_dim();
 
-        // add dimensions from subgraph output shape
-        for (const auto& dim :
-             subgraph_output_type->tensor_type().shape().dim()) {
-          (*mutable_inferred_shape->add_dim()) = dim;
+          // add dimensions from subgraph output shape
+          for (const auto& dim :
+               subgraph_output_type->tensor_type().shape().dim()) {
+            (*mutable_inferred_shape->add_dim()) = dim;
+          }
+
+          mergeInShapeInfo(
+              *mutable_inferred_tensor_type,
+              *loop_output_type->mutable_tensor_type());
         }
-
-        mergeInShapeInfo(
-            *mutable_inferred_tensor_type,
-            *loop_output_type->mutable_tensor_type());
       }
     }
   }
