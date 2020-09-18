@@ -223,7 +223,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
                        COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
-                       DEPENDS ${INFILE}
+                       DEPENDS ${INFILE} ${ONNX_PROTOC_EXECUTABLE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
                        VERBATIM)
     message("Generated: ${GENERATED_PROTO}")
