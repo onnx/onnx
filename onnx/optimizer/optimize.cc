@@ -12,8 +12,9 @@ Optimizer::Optimizer(
     const std::vector<std::string>& names,
     const bool fixed_point) {
   std::cout
-      << "WARNING: ONNX Optimizer has been moved to https://github.com/onnx/optimizer. "
-      << "The optimizer code in onnx/onnx repo will be removed in 1.9 release."
+      << "WARNING: ONNX Optimizer has been moved to https://github.com/onnx/optimizer.\n"
+      << "All further enhancements and fixes to optimizers will be done in this new repo.\n"
+      << "The optimizer code in onnx/onnx repo will be removed in 1.9 release.\n"
       << std::endl;
   if (fixed_point) {
     this->pass_manager =
