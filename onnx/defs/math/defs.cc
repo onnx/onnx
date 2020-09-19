@@ -42,36 +42,33 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
     const char* name,
-    const char* description) {
+    const char* description,
+    const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-The operator computes the {name} ({description}) values for each layer in the batch
- of the given input.
+The operator computes the {description} values for the given input:
 
-The input does not need to explicitly be a 2D vector; rather, it will be
-coerced into one. For an arbitrary n-dimensional tensor
-input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-the axis provided, then input will be coerced into a 2-dimensional tensor with
-dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-case where axis=1, this means the input tensor will be coerced into a 2D tensor
-of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-Each of these dimensions must be matched correctly, or else the operator
-will throw errors. The output tensor has the same shape
+ {equation}
+
+The input does not need to explicitly be a 2D vector. The "axis" attribute
+indicates the dimension along which {name} will be performed.
+The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
                         ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{description}", description););
+                        ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{equation}", equation););
+    std::string axis_attr;
+    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
+Describes the dimension {name} will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+)DOC";
+                        ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr(
-        "axis",
-        "Describes the axis of the inputs when coerced "
-        "to 2D; defaults to one because the 0th axis most likely describes "
-        "the batch_size. Negative value means counting dimensions "
-        "from the back. Accepted range is [-r, r-1] where r = rank(input).",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
+        "axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
     schema.Input(
         0,
         "input",
@@ -104,7 +101,7 @@ and contains the {name} values of the corresponding input.
       const TensorShapeProto& input_shape =
           ctx.getInputType(0)->tensor_type().shape();
       int r = input_shape.dim_size();
-      int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+      int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
       if (axis < -r || axis >= r) {
         fail_shape_inference(
             "'axis' must be in [",
@@ -445,6 +442,18 @@ static float celu_default_alpha = 1.0;
 
 TensorProto ToDimensionOneFloatTensor(float value) {
   auto t = ToTensor(std::vector<float>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+TensorProto ToDimensionOneTensor(int32_t value) {
+  auto t = ToTensor(std::vector<int32_t>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+TensorProto ToDimensionOneInt64Tensor(int64_t value) {
+  auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
   return t;
 }
@@ -821,21 +830,138 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
     13,
-    OpSchema().FillUsing(
-        SoftmaxFamilyDocGenerator("softmax", "normalized exponential")));
+    OpSchema()
+        .FillUsing(
+            SoftmaxFamilyDocGenerator("Softmax", "normalized exponential", "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+               const OpSchema& schema,
+               FunctionProto& functionProto) -> bool {
+              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              auto func_nodes = FunctionBodyHelper::BuildNodes({
+                  // clang-format off
+                {
+                    {"axes"},
+                    "Constant",
+                    {},
+                    {MakeAttribute("value", ToDimensionOneInt64Tensor(axis))}
+                },
+                {
+                    {"X_ReduceMax"},
+                    "ReduceMax",
+                    {"input"},
+                    {
+                        MakeAttribute("axes", std::vector<int64_t>({axis})),
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"X_Sub"},
+                    "Sub",
+                    {"input", "X_ReduceMax"},
+                },
+                {
+                    {"X_Exp"},
+                    "Exp",
+                    {"X_Sub"},
+                },
+                {
+                    {"X_ReduceSum"},
+                    "ReduceSum",
+                    {"X_Exp", "axes"},
+                    {
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"output"},
+                    "Div",
+                    {"X_Exp", "X_ReduceSum"},
+                },
+                  // clang-format on
+              });
+              for (const auto& node : func_nodes) {
+                auto new_node = functionProto.add_node();
+                new_node->CopyFrom(node);
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
-    OpSchema().FillUsing(
-        SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax")));
+    OpSchema()
+        .FillUsing(SoftmaxFamilyDocGenerator("LogSoftmax", "log of softmax", "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+               const OpSchema& schema,
+               FunctionProto& functionProto) -> bool {
+              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              auto func_nodes = FunctionBodyHelper::BuildNodes({
+                  // clang-format off
+                {
+                    {"axes"},
+                    "Constant",
+                    {},
+                    {MakeAttribute("value", ToDimensionOneInt64Tensor(axis))}
+                },
+                {
+                    {"X_ReduceMax"},
+                    "ReduceMax",
+                    {"input"},
+                    {
+                        MakeAttribute("axes", std::vector<int64_t>({axis})),
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"X_Sub"},
+                    "Sub",
+                    {"input", "X_ReduceMax"},
+                },
+                {
+                    {"X_Exp"},
+                    "Exp",
+                    {"X_Sub"},
+                },
+                {
+                    {"X_ReduceSum"},
+                    "ReduceSum",
+                    {"X_Exp", "axes"},
+                    {
+                        MakeAttribute("keepdims", (int64_t)1)
+                    }
+                },
+                {
+                    {"X_Log"},
+                    "Log",
+                    {"X_ReduceSum"},
+                },
+                {
+                    {"output"},
+                    "Sub",
+                    {"X_Sub", "X_Log"},
+                },
+                  // clang-format on
+              });
+              for (const auto& node : func_nodes) {
+                auto new_node = functionProto.add_node();
+                new_node->CopyFrom(node);
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
     13,
     OpSchema().FillUsing(SoftmaxFamilyDocGenerator(
+        "Hardmax",
         "hardmax",
-        "1 for the first maximum value, and 0 for all others")));
+        "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
 
 static const char* Softsign_ver1_doc = R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
@@ -1914,18 +2040,6 @@ Example 3:
     // print(loss)
     // -1.57
 )DOC";
-
-TensorProto ToDimensionOneTensor(int32_t value) {
-  auto t = ToTensor(std::vector<int32_t>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-TensorProto ToDimensionOneInt64Tensor(int64_t value) {
-  auto t = ToTensor(std::vector<int64_t>({value}));
-  t.add_dims(1);
-  return t;
-}
 
 bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
