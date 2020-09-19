@@ -16034,20 +16034,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Hardmax-13"></a>**Hardmax-13**</a>
 
-  The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input.
+  The operator computes the hardmax values for the given input:
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
+  
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which Hardmax will be performed.
+  The output tensor has the same shape
+  and contains the Hardmax values of the corresponding input.
 
 #### Version
 
@@ -16056,8 +16050,12 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+Describes the dimension Hardmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+</dd>
 </dl>
 
 #### Inputs
@@ -16299,20 +16297,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="LogSoftmax-13"></a>**LogSoftmax-13**</a>
 
-  The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input.
+  The operator computes the log of softmax values for the given input:
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
+  
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which LogSoftmax will be performed.
+  The output tensor has the same shape
+  and contains the LogSoftmax values of the corresponding input.
 
 #### Version
 
@@ -16321,8 +16313,12 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+Describes the dimension LogSoftmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+</dd>
 </dl>
 
 #### Inputs
@@ -18073,20 +18069,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Softmax-13"></a>**Softmax-13**</a>
 
-  The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input.
+  The operator computes the normalized exponential values for the given input:
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
+  
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which Softmax will be performed.
+  The output tensor has the same shape
+  and contains the Softmax values of the corresponding input.
 
 #### Version
 
@@ -18095,8 +18085,12 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+Describes the dimension Softmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+</dd>
 </dl>
 
 #### Inputs
