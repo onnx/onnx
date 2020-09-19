@@ -446,6 +446,18 @@ TensorProto ToDimensionOneFloatTensor(float value) {
   return t;
 }
 
+TensorProto ToDimensionOneTensor(int32_t value) {
+  auto t = ToTensor(std::vector<int32_t>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+TensorProto ToDimensionOneInt64Tensor(int64_t value) {
+  auto t = ToTensor(std::vector<int64_t>({value}));
+  t.add_dims(1);
+  return t;
+}
+
 bool BuildContextDependentFunctionBodyCelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -829,6 +841,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto func_nodes = FunctionBodyHelper::BuildNodes({
                   // clang-format off
                 {
+                    {"axes"},
+                    "Constant",
+                    {},
+                    {MakeAttribute("value", ToDimensionOneInt64Tensor(axis))}
+                },
+                {
                     {"X_ReduceMax"},
                     "ReduceMax",
                     {"input"},
@@ -850,9 +868,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {
                     {"X_ReduceSum"},
                     "ReduceSum",
-                    {"X_Exp"},
+                    {"X_Exp", "axes"},
                     {
-                        MakeAttribute("axes", std::vector<int64_t>({axis})),
                         MakeAttribute("keepdims", (int64_t)1)
                     }
                 },
@@ -885,6 +902,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto func_nodes = FunctionBodyHelper::BuildNodes({
                   // clang-format off
                 {
+                    {"axes"},
+                    "Constant",
+                    {},
+                    {MakeAttribute("value", ToDimensionOneInt64Tensor(axis))}
+                },
+                {
                     {"X_ReduceMax"},
                     "ReduceMax",
                     {"input"},
@@ -906,9 +929,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {
                     {"X_ReduceSum"},
                     "ReduceSum",
-                    {"X_Exp"},
+                    {"X_Exp", "axes"},
                     {
-                        MakeAttribute("axes", std::vector<int64_t>({axis})),
                         MakeAttribute("keepdims", (int64_t)1)
                     }
                 },
@@ -2018,18 +2040,6 @@ Example 3:
     // print(loss)
     // -1.57
 )DOC";
-
-TensorProto ToDimensionOneTensor(int32_t value) {
-  auto t = ToTensor(std::vector<int32_t>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-TensorProto ToDimensionOneInt64Tensor(int64_t value) {
-  auto t = ToTensor(std::vector<int64_t>({value}));
-  t.add_dims(1);
-  return t;
-}
 
 bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
