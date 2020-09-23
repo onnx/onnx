@@ -7190,7 +7190,7 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -14685,7 +14685,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -16965,7 +16965,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints

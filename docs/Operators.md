@@ -12575,7 +12575,7 @@ Other versions of this operator: <a href="Changelog.md#Pow-1">1</a>, <a href="Ch
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
