@@ -241,15 +241,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (input_shape.dim(0).has_dim_value()) {
                 const auto& input_shape_dim_value =
                     input_shape.dim(0).dim_value();
-                if (input_shape_dim_value > 0) {
-                  auto final_output_shape = ctx.getOutputType(0)
-                                                ->mutable_tensor_type()
-                                                ->mutable_shape();
-                  for (int i = 0; i < input_shape_dim_value; ++i) {
-                    auto newdim = final_output_shape->add_dim();
-                    (void)(newdim); // To eliminate "unused variable" compiler
-                                    // warning.
-                  }
+                auto final_output_shape = ctx.getOutputType(0)
+                                              ->mutable_tensor_type()
+                                              ->mutable_shape();
+                for (int i = 0; i < input_shape_dim_value; ++i) {
+                  auto newdim = final_output_shape->add_dim();
+                  (void)(newdim); // To eliminate "unused variable" compiler
+                                  // warning.
                 }
               }
             }

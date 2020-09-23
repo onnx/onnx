@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Split_ver13_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. Lengths of the parts can be specified using argument 'split'.
+'axis'. Lengths of the parts can be specified using input 'split'.
 Otherwise, the tensor is split to equal sized parts.
 )DOC";
 
@@ -465,6 +465,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            1,
+            "split",
+            "Optional length of each output. Values should be >= 0."
+            "Sum of the values must be equal to the dim value at 'axis' specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "outputs",
@@ -485,7 +495,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -524,7 +533,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          if (getRepeatedAttribute(ctx, "split", split)) {
+          size_t num_inputs = ctx.getNumInputs();
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
+            auto split_proto = ctx.getInputData(1);
+            if (split_proto == nullptr) {
+              // skip if split is not an initializer
+              return;
+            }
+            split = ParseData<int64_t>(split_proto);
             if (split.size() != ctx.getNumOutputs()) {
               fail_shape_inference(
                   "Mismatch between number of splits (",
@@ -545,7 +561,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   split_dim_value,
                   ")");
             }
-          } else {
+          } else { // no value available for 'split'
             int num_outputs = static_cast<int>(ctx.getNumOutputs());
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
@@ -1019,7 +1035,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1134,7 +1150,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1247,7 +1263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1531,7 +1547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Squeeze_ver13_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
-Takes a  parameter `axes` with a list of axes to squeeze.
+Takes an input `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
 the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 )DOC";
@@ -1540,12 +1556,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     13,
     OpSchema()
-        .Attr(
-            "axes",
-            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
         .SetDoc(Squeeze_ver13_doc)
         .Input(
             0,
@@ -1553,6 +1563,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Tensors with at least max(dims) dimensions.",
             "T",
             OpSchema::Single)
+        .Input(
+            1,
+            "axes",
+            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "squeezed",
@@ -1570,7 +1590,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          size_t num_inputs = ctx.getNumInputs();
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'axes' is input
+            auto axes_proto = ctx.getInputData(1);
+            if (axes_proto == nullptr) {
+              // skip if axes is not an initializer
+              return;
+            }
+            axes = ParseData<int64_t>(axes_proto);
+          } else { // axes not specified
             return;
           }
 
@@ -1607,13 +1635,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Unsqueeze_ver13_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
-Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
 For example:
   Given an input tensor (`data`) of shape [3, 4, 5], then
   Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
 
-The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
 The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
 Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
 The order of values in `axes` does not matter and can come in any order. 
@@ -1624,11 +1652,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     13,
     OpSchema()
-        .Attr(
-            "axes",
-            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
-            AttributeProto::INTS)
         .SetDoc(Unsqueeze_ver13_doc)
         .Input(
             0,
@@ -1639,6 +1662,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            1,
+            "axes",
+            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "expanded",
@@ -1657,12 +1690,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          auto axes_proto = ctx.getInputData(1);
+          if (axes_proto == nullptr) {
+            // skip if axes is not an initializer
             return;
           }
-
+          axes = ParseData<int64_t>(axes_proto);
+          
           // validate 'axes' for duplicate entries
           std::unordered_set<int64_t> unique_values;
           for (const auto val : axes) {
