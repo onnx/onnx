@@ -17762,7 +17762,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
-<dt><tt>updates</tt> (non-differentiable) : T</dt>
+<dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
 </dl>
 
@@ -17852,7 +17852,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Tensor of rank q >= 1.</dd>
-<dt><tt>updates</tt> (non-differentiable) : T</dt>
+<dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
 </dl>
 

@@ -1035,7 +1035,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1150,7 +1150,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1263,7 +1263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
