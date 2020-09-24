@@ -61,6 +61,7 @@ private:
   , double_data_(other.double_data_)
   , int32_data_(other.int32_data_)
   , int64_data_(other.int64_data_)
+  , uint64_data_(other.uint64_data_)
   , is_raw_data_(other.is_raw_data_) {
     // Deep copy. Avoid copy on write when using gcc<5.0
     string_data_.resize(other.string_data_.size());
