@@ -4,37 +4,40 @@
 #pragma once
 
 #include "onnx/version_converter/BaseConverter.h"
-#include "onnx/version_converter/adapters/no_previous_version.h"
-#include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
-#include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
-#include "onnx/version_converter/adapters/type_restriction.h"
-#include "onnx/version_converter/adapters/compatible.h"
-#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
-#include "onnx/version_converter/adapters/gemm_7_6.h"
-#include "onnx/version_converter/adapters/gemm_6_7.h"
+#include "onnx/version_converter/adapters/argmax_argmin_12_11.h"
+#include "onnx/version_converter/adapters/averagepool_7_6.h"
+#include "onnx/version_converter/adapters/axes_attribute_to_input.h"
+#include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_8_9.h"
-#include "onnx/version_converter/adapters/set_is_test.h"
-#include "onnx/version_converter/adapters/concat_3_4.h"
-#include "onnx/version_converter/adapters/reshape_5_4.h"
-#include "onnx/version_converter/adapters/reshape_4_5.h"
-#include "onnx/version_converter/adapters/sum_8_7.h"
-#include "onnx/version_converter/adapters/averagepool_7_6.h"
-#include "onnx/version_converter/adapters/dropout_6_7.h"
-#include "onnx/version_converter/adapters/maxpool_8_7.h"
-#include "onnx/version_converter/adapters/extend_supported_types.h"
-#include "onnx/version_converter/adapters/upsample_9_8.h"
-#include "onnx/version_converter/adapters/upsample_8_9.h"
-#include "onnx/version_converter/adapters/scan_9_8.h"
-#include "onnx/version_converter/adapters/scan_8_9.h"
+#include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
+#include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
+#include "onnx/version_converter/adapters/compatible.h"
+#include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
-#include "onnx/version_converter/adapters/argmax_argmin_12_11.h"
+#include "onnx/version_converter/adapters/dropout_6_7.h"
+#include "onnx/version_converter/adapters/extend_supported_types.h"
+#include "onnx/version_converter/adapters/gemm_6_7.h"
+#include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
+#include "onnx/version_converter/adapters/reshape_4_5.h"
+#include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/rnn_12_13.h"
 #include "onnx/version_converter/adapters/rnn_13_12.h"
-
+#include "onnx/version_converter/adapters/scan_8_9.h"
+#include "onnx/version_converter/adapters/scan_9_8.h"
+#include "onnx/version_converter/adapters/set_is_test.h"
+#include "onnx/version_converter/adapters/split_12_13.h"
+#include "onnx/version_converter/adapters/split_13_12.h"
+#include "onnx/version_converter/adapters/sum_8_7.h"
+#include "onnx/version_converter/adapters/type_restriction.h"
+#include "onnx/version_converter/adapters/upsample_8_9.h"
+#include "onnx/version_converter/adapters/upsample_9_8.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -486,11 +489,28 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(12), OpSetID(11), maxpool_unallowed_types));
 
       /******** 12 -> 13 ********/
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Constant", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<AxesAttributeToInput>(
+          "ReduceSum", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<AxesAttributeToInput>(
+          "Squeeze", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<AxesAttributeToInput>(
+          "Unsqueeze", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<RNN_12_13>());
+      registerAdapter(make_unique<Split_12_13>());
 
       /******** 13 -> 12 ********/
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Constant", OpSetID(13), OpSetID(12)));
+      registerAdapter(make_unique<AxesInputToAttribute>(
+          "ReduceSum", OpSetID(13), OpSetID(12)));
+      registerAdapter(make_unique<AxesInputToAttribute>(
+          "Squeeze", OpSetID(13), OpSetID(12)));
+      registerAdapter(make_unique<AxesInputToAttribute>(
+          "Unsqueeze", OpSetID(13), OpSetID(12)));
       registerAdapter(make_unique<RNN_13_12>());
-
+      registerAdapter(make_unique<Split_13_12>());
     }
 
     ModelProto convert_version(

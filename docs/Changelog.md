@@ -7190,7 +7190,7 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -14685,7 +14685,7 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -16170,20 +16170,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Hardmax-13"></a>**Hardmax-13**</a>
 
-  The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
-   of the given input.
+  The operator computes the hardmax values for the given input:
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+   Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
+  
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which Hardmax will be performed.
+  The output tensor has the same shape
+  and contains the Hardmax values of the corresponding input.
 
 #### Version
 
@@ -16192,8 +16186,12 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+Describes the dimension Hardmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+</dd>
 </dl>
 
 #### Inputs
@@ -16585,20 +16583,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="LogSoftmax-13"></a>**LogSoftmax-13**</a>
 
-  The operator computes the logsoftmax (log of softmax) values for each layer in the batch
-   of the given input.
+  The operator computes the log of softmax values for the given input:
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+   LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
+  
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which LogSoftmax will be performed.
+  The output tensor has the same shape
+  and contains the LogSoftmax values of the corresponding input.
 
 #### Version
 
@@ -16607,8 +16599,12 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+Describes the dimension LogSoftmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+</dd>
 </dl>
 
 #### Inputs
@@ -17255,7 +17251,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>Z</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -17825,17 +17821,19 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -18172,7 +18170,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
-<dt><tt>updates</tt> (non-differentiable) : T</dt>
+<dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
 </dl>
 
@@ -18262,7 +18260,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Tensor of rank q >= 1.</dd>
-<dt><tt>updates</tt> (non-differentiable) : T</dt>
+<dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
 </dl>
 
@@ -18479,20 +18477,14 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Softmax-13"></a>**Softmax-13**</a>
 
-  The operator computes the softmax (normalized exponential) values for each layer in the batch
-   of the given input.
+  The operator computes the normalized exponential values for the given input:
   
-  The input does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then input will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the input tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors. The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
+  
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which Softmax will be performed.
+  The output tensor has the same shape
+  and contains the Softmax values of the corresponding input.
 
 #### Version
 
@@ -18501,8 +18493,12 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>
+Describes the dimension Softmax will be performed on. 
+Negative value means counting dimensions 
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
+</dd>
 </dl>
 
 #### Inputs
@@ -18643,7 +18639,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Split-13"></a>**Split-13**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'.
+  'axis'. Lengths of the parts can be specified using input 'split'.
   Otherwise, the tensor is split to equal sized parts.
 
 #### Version
@@ -18655,15 +18651,15 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
-<dt><tt>split</tt> : list of ints</dt>
-<dd>length of each output. Values should be >= 0.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional length of each output. Values should be >= 0.Sum of the values must be equal to the dim value at 'axis' specified.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -18714,7 +18710,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Squeeze-13"></a>**Squeeze-13**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
-  Takes a  parameter `axes` with a list of axes to squeeze.
+  Takes an input `axes` with a list of axes to squeeze.
   If `axes` is not provided, all the single dimensions will be removed from
   the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 
@@ -18722,18 +18718,13 @@ This version of the operator has been available since version 13 of the default 
 
 This version of the operator has been available since version 13 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
-</dl>
-
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -18919,13 +18910,13 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Unsqueeze-13"></a>**Unsqueeze-13**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
-  Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+  Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
   
   For example:
     Given an input tensor (`data`) of shape [3, 4, 5], then
     Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
   
-  The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
   The order of values in `axes` does not matter and can come in any order. 
@@ -18935,18 +18926,13 @@ This version of the operator has been available since version 13 of the default 
 
 This version of the operator has been available since version 13 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
+<dt><tt>axes</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Outputs
