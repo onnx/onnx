@@ -514,7 +514,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in effect, the operation expects the input "
             "data tensor to arrive with the dimension denotation "
             "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "I",
@@ -525,19 +529,30 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, "
             "assuming row-major storage. Also, the linear indices should not consider padding. "
             "So the values in indices are in the range [0, N x C x D1 x ... x Dn).",
-            "T2")
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "output_shape",
             "The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, "
             "'pads' values are ignored.",
             "T2",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "output",
             "Output data tensor that contains the result of the unpooling.",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -592,14 +607,22 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "dimensions are in the form of "
         "(N x C x D1 x D2 ... Dn), where N is the "
         "batch size.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
         "Output data tensor from Lp pooling across the input "
         "tensor. Dimensions will vary based on various kernel, stride, and pad "
         "sizes.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -858,17 +881,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in effect, the operation expects input data tensor "
             "to arrive with the dimension denotation of [DATA_BATCH, "
             "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "x_scale",
             "Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            "tensor(float)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "x_zero_point",
             "Zero point tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "w",
@@ -886,41 +921,68 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X.shape[1] == (W.shape[1] * group) == C "
             "(assuming zero based indices for the shape array). "
             "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
-            "T2")
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             4,
             "w_scale",
             "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
-            "tensor(float)")
+            "tensor(float)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             5,
             "w_zero_point",
             "Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
-            "T2")
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             6,
             "y_scale",
             "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            "tensor(float)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             7,
             "y_zero_point",
             "Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
-            "T3")
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             8,
             "B",
             "Optional 1D bias to be added to the convolution, has size of M. "
             "Bias must be quantized using scale = x_scale * w_scale and zero_point = 0",
             "T4",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             0,
             "y",
             "Output data tensor that contains the result of the "
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
-            "T3")
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -1024,7 +1086,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in effect, the operation expects input data tensor "
             "to arrive with the dimension denotation of [DATA_BATCH, "
             "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             1,
             "w",
@@ -1042,13 +1108,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X.shape[1] == (W.shape[1] * group) == C "
             "(assuming zero based indices for the shape array). "
             "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
-            "T2")
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "x_zero_point",
             "Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.",
             "T1",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "w_zero_point",
@@ -1056,14 +1129,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number "
             "of elements should be equal to the number of output channels (M)",
             "T2",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             0,
             "y",
             "Output data tensor that contains the result of the "
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
-            "T3")
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -1191,10 +1271,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
     }
-    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
-    if (nullptr != auto_pad_attr) {
-      fail_shape_inference("The pads attribute cannot be used simultaneously with auto_pad attribute");
-    }
   } else {
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
@@ -1317,7 +1393,11 @@ output_shape can also be explicitly specified in which case pads values are auto
         ", where N is the batch size, C is the number of channels, and"
         " H and W are the height and width. Note that this is for the 2D image. "
         "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         1,
         "W",
@@ -1330,13 +1410,20 @@ output_shape can also be explicitly specified in which case pads values are auto
         "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
         "The number of channels in the output should be equal to W.shape[1] * group "
         "(assuming zero based indices of the shape array)",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         2,
         "B",
         "Optional 1D bias to be added to the convolution, has size of M.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1345,7 +1432,11 @@ output_shape can also be explicitly specified in which case pads values are auto
         "pad lengths and group count. "
         "The number of channels in the output should be equal to W.shape[1] * group "
         "(assuming zero based indices of the shape array)",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1456,7 +1547,11 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         "of the data. For non image case, the dimensions are "
         "in the form of (N x C x D1 x D2 ... Dn), "
         "where N is the batch size.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1464,7 +1559,11 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         "tensor. The output tensor has the same rank as the input. "
         "The first two dimensions of output shape are the same as "
         "the input (N x C), while the other dimensions are all 1.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1510,7 +1609,11 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         "of the data. For non image case, the dimensions are "
         "in the form of (N x C x D1 x D2 ... Dn), "
         "where N is the batch size.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1518,7 +1621,11 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         "tensor. The output tensor has the same rank as the input. "
         "The first two dimensions of output shape are the same as "
         "the input (N x C), while the other dimensions are all 1.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1572,46 +1679,94 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
             "For image data, input dimensions become (N x C x H x W). "
             "The op also accepts single dimension input of size N in which case C is assumed to be 1",
-            "T")
-        .Input(1, "scale", "Scale tensor of shape (C).", "T")
-        .Input(2, "B", "Bias tensor of shape (C).", "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "scale", 
+            "Scale tensor of shape (C).", 
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "B",
+            "Bias tensor of shape (C).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "mean",
             "running (training) or estimated (testing) mean tensor of shape (C).",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             4,
             "var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
-            "T")
-        .Output(0, "Y", "The output tensor of the same shape as X", "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "The output tensor of the same shape as X",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             1,
             "mean",
             "The running mean after the BatchNormalization operator.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             2,
             "var",
             "The running variance after the BatchNormalization operator.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             3,
             "saved_mean",
             "Saved mean used during training to speed up gradient "
             "computation.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             4,
             "saved_var",
             "Saved variance used during training to speed up "
             "gradient computation.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1652,18 +1807,38 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dimensions are in the form of "
             "(N x C x D1 x D2 ... Dn), where N is the batch "
             "size.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "scale",
             "The input 1-dimensional scale tensor of size C.",
-            "T")
-        .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "B",
+            "The input 1-dimensional bias tensor of size C.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
             "The output tensor of the same shape as input.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1680,8 +1855,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
     1,
     OpSchema()
-        .Input(0, "input", "Input matrix", "T")
-        .Output(0, "output", "Matrix after normalization", "T")
+        .Input(
+            0,
+            "input",
+            "Input matrix",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Matrix after normalization",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1726,7 +1917,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::INT,
             OPTIONAL_VALUE)
-        .Input(0, "data", "The input data as Tensor.", "T")
+        .Input(
+            0,
+            "data",
+            "The input data as Tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "ratio",
@@ -1735,7 +1934,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
             "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "training_mode",
@@ -1743,9 +1945,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where "
             "nothing will be dropped from the input data and if mask is requested as output it will contain all ones.",
             "T2",
-            OpSchema::Optional)
-        .Output(0, "output", "The output.", "T")
-        .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "The output.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            1,
+            "mask",
+            "The output mask.",
+            "T2",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)",
@@ -1812,8 +2033,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The bias value added to output. Default is 0.",
             AttributeProto::FLOAT,
             0.0f)
-        .Input(0, "input", "The input data as Tensor.", "T")
-        .Output(0, "output", "The output.", "T")
+        .Input(
+            0,
+            "input",
+            "The input data as Tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The output.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
@@ -1831,7 +2068,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Flatten_ver13_doc)
-        .Input(0, "input", "A tensor of rank >= axis.", "T")
+        .Input(
+            0,
+            "input",
+            "A tensor of rank >= axis.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1839,7 +2084,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "with input dimensions up to axis flattened to the outer dimension "
             "of the output and remaining input dimensions flattened into the inner "
             "dimension of the output.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -1911,12 +2160,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in effect, the operation expects the input "
             "data tensor to arrive with the dimension denotation "
             "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Output(
             0,
             "Y",
             "Output tensor, which has the shape and type as input tensor",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)",
@@ -1962,8 +2219,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     TfIdfVectorizer,
     9,
     OpSchema()
-        .Input(0, "X", "Input for n-gram extraction", "T")
-        .Output(0, "Y", "Ngram results", "T1")
+        .Input(
+            0,
+            "X",
+            "Input for n-gram extraction",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "Ngram results",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(string)", "tensor(int32)", "tensor(int64)"},
@@ -2144,8 +2417,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(mvn_ver13_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Attr(
             "axes",
             "A list of integers, along which to reduce. The default is to "
