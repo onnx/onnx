@@ -1393,7 +1393,11 @@ output_shape can also be explicitly specified in which case pads values are auto
         ", where N is the batch size, C is the number of channels, and"
         " H and W are the height and width. Note that this is for the 2D image. "
         "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         1,
         "W",
@@ -1406,13 +1410,20 @@ output_shape can also be explicitly specified in which case pads values are auto
         "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
         "The number of channels in the output should be equal to W.shape[1] * group "
         "(assuming zero based indices of the shape array)",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         2,
         "B",
         "Optional 1D bias to be added to the convolution, has size of M.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1421,7 +1432,11 @@ output_shape can also be explicitly specified in which case pads values are auto
         "pad lengths and group count. "
         "The number of channels in the output should be equal to W.shape[1] * group "
         "(assuming zero based indices of the shape array)",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
