@@ -594,6 +594,7 @@ inline void bidirectionalBroadcastShapeInference(
     const TensorShapeProto& shapeR,
     TensorShapeProto& resultShape) {
   std::vector<const TensorShapeProto*> shapes;
+  shapes.reserve(2);
   shapes.push_back(&shapeL);
   shapes.push_back(&shapeR);
   multidirectionalBroadcastShapeInference(shapes, resultShape);

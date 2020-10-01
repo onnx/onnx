@@ -1048,6 +1048,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
+    r.reserve(4);
     for (auto& x : map()) {
       for (auto& y : x.second) {
         for (auto& z : y.second) {
@@ -1060,6 +1061,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static const std::vector<OpSchema> get_all_schemas() {
     std::vector<OpSchema> r;
+    r.reserve(4);
     for (auto& x : map()) {
       for (auto& y : x.second) {
         auto& version2schema = y.second;

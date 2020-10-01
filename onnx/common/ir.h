@@ -890,7 +890,7 @@ public:
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
   }
-  void eraseInitializer(std::string name) {
+  void eraseInitializer(const std::string &name) {
     initializers_.erase(
         std::remove_if(
             initializers_.begin(),
@@ -1046,7 +1046,7 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(std::move(initializerCopy), name);
+    addInitializer(std::move(initializerCopy), std::move(name));
     return new_init;
   }
 
@@ -1085,7 +1085,7 @@ public:
 
   void setName(std::string name) {
     has_name_ = true;
-    name_ = name;
+    name_ = std::move(name);
   }
 
   friend std::ostream& operator<<(std::ostream & out, const Graph & g);
@@ -1131,6 +1131,7 @@ inline const Graph * Value::owningGraph() const {
 
 inline void Value::replaceAllUsesWith(Value * newValue) {
   ONNX_ASSERT(owningGraph() == newValue->owningGraph());
+  newValue->uses_.reserve(uses().size());
   for(auto u : uses()) {
     u.user->inputs_[u.offset] = newValue;
     newValue->uses_.push_back(u);

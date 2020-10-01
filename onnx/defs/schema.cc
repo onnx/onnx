@@ -96,9 +96,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      if (type_constraints.find(type_str) == type_constraints.end()) {
+      auto it = type_constraints.find(type_str);
+      if (it == type_constraints.end()) {
         type_constraints[type_str] = *type_proto;
-      } else if (type_constraints[type_str] != *type_proto) {
+      } else if (it->second != *type_proto) {
         fail_check(
             param.GetName(),
             " has inconsistent type ",
@@ -400,14 +401,14 @@ OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   num_outputs_allowed_ =
       [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
-    return allowed_output_nums.count(n);
+    return allowed_output_nums.find(n) != allowed_output_nums.end();
   };
   return *this;
 }
 
 OpSchema& OpSchema::TypeAndShapeInferenceFunction(
     InferenceFunction inferenceFunction) {
-  tensor_inference_function_ = inferenceFunction;
+  tensor_inference_function_ = std::move(inferenceFunction);
   return *this;
 }
 
@@ -727,7 +728,7 @@ void OpSchema::ParseAndSetTypes(
 
 OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
     ContextDependentFunctionBodyBuilder functionBuilder) {
-  functionBuilder_ = functionBuilder;
+  functionBuilder_ = std::move(functionBuilder);
   return *this;
 }
 

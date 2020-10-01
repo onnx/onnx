@@ -567,6 +567,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("The input is not evenly splittable");
             }
             int chunk_size = split_dim_value / num_outputs;
+            split.reserve(ctx.getNumOutputs());
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
               split.push_back(chunk_size);
             }
@@ -910,6 +911,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
+            perm.reserve(shape.dim_size());
             for (int i = shape.dim_size() - 1; i >= 0; --i)
               perm.push_back(i);
           } else if (!perm.empty()) {
@@ -2586,6 +2588,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
           if (hasNInputShapes(ctx, 3)) {
             std::vector<const TensorShapeProto*> shapes;
+            shapes.reserve(3);
             shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
             shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
             shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
