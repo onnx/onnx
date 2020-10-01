@@ -178,7 +178,7 @@ struct Attributes {
     return This();
   }
   bool hasAttributes() const {
-    return values_.size() > 0;
+    return !values_.empty();
   }
   // The names are returned in order, since name actually is the index.
   std::vector<Symbol> attributeNames() const {
@@ -494,7 +494,7 @@ public:
   }
   bool hasUses() const {
     for(auto o : outputs()) {
-      if(o->uses().size() > 0)
+      if(!o->uses().empty())
         return true;
     }
     return false;
@@ -1150,7 +1150,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
 
 inline void Node::eraseOutput(size_t i) {
   ONNX_ASSERT(i < outputs_.size());
-  ONNX_ASSERT(outputs_[i]->uses().size() == 0);
+  ONNX_ASSERT(outputs_[i]->uses().empty());
   Value * n = outputs_[i];
   outputs_.erase(outputs_.begin() + i);
   owningGraph()->freeValue(n);
@@ -1183,7 +1183,7 @@ inline bool Node::isBefore(Node* n) {
 
 inline void Node::destroy() {
   ONNX_ASSERT(inGraphList());
-  while(outputs().size() > 0)
+  while(!outputs().empty())
     eraseOutput(outputs().size() - 1);
   removeAllInputs();
   removeFromList();

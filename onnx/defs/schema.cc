@@ -210,7 +210,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
     if (in_idx >= static_cast<int>(inputs_.size())) {
-      if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
+      if (!inputs_.empty() && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
         break;
       } else {
@@ -236,7 +236,7 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
-      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
+      if (!outputs_.empty() && Variadic == outputs_.back().GetOption()) {
         // The last output formal parameter should be variadic.
         break;
       } else {
@@ -875,9 +875,9 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& name = p.GetName();
         const auto& description = p.GetDescription();
         const auto& type_str = p.GetTypeStr();
-        out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+        out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
+            << (!description.empty() ? description : "(no doc)") << " : "
+            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
@@ -891,9 +891,9 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& name = p.GetName();
         const auto& description = p.GetDescription();
         const auto& type_str = p.GetTypeStr();
-        out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+        out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
+            << (!description.empty() ? description : "(no doc)") << " : "
+            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
