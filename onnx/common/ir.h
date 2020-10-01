@@ -418,7 +418,7 @@ protected:
   Node(Graph * graph_, NodeKind kind_); //defined after graph
 
 public:
-  bool has_name() {
+  bool has_name() const {
     return has_name_;
   }
   const std::string& name() const {
@@ -428,7 +428,7 @@ public:
     has_name_ = true;
     name_ = std::move(name);
   }
-  bool has_domain() {
+  bool has_domain() const {
     return has_domain_;
   }
   const std::string& domain() const {
@@ -441,7 +441,7 @@ public:
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -875,7 +875,7 @@ public:
   , has_name_(false)
   , has_doc_string_(false) {}
 
-  bool has_doc_string() {
+  bool has_doc_string() const {
     return has_doc_string_;
   }
   const std::string& docString() {
