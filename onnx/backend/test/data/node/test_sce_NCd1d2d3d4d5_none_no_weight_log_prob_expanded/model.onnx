@@ -1,4 +1,6 @@
-backend-test:¨
+backend-test:ö
+|[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionaxes"Constant*
+value*: 
 y
 x\SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Max"	ReduceMax*
 axes@ 
@@ -7,9 +9,9 @@ y
 \SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Max\SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Sub"Sub
 Á
 \SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Sub\SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp"Exp
-Ó
-\SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_RS"	ReduceSum*
-axes@ 
+£
+\SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionaxes[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_RS"	ReduceSum
 ž
 \SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Exp
 [SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_RS\SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded_functionX_Div"Div
@@ -54,4 +56,4 @@ r
 
 
 
-B
+B
