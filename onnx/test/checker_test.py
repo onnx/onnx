@@ -328,6 +328,16 @@ class TestChecker(unittest.TestCase):
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
+    def test_check_sparse_tensor_no_name(self):  # type: () -> None
+        # values tensor name is empty
+        values = [13, 17, 19]
+        sparse = SparseTensorProto()
+        sparse.dims.extend([100])
+        nnz = len(values)
+        sparse.values.CopyFrom(helper.make_tensor('', TensorProto.INT64, (nnz,), values))
+        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, [3], [9, 27, 81]))
+        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+
     def test_check_sparse_matmul(self):  # type: () -> None
         M = 5
         N = 10

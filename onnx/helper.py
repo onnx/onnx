@@ -133,9 +133,12 @@ def make_graph(
     initializer=None,  # type: Optional[Sequence[TensorProto]]
     doc_string=None,  # type: Optional[Text]
     value_info=[],  # type: Sequence[ValueInfoProto]
+    sparse_initializer=None, # type: Optional[Sequence[SparseTensorProto]]
 ):  # type: (...) -> GraphProto
     if initializer is None:
         initializer = []
+    if sparse_initializer is None:
+        sparse_initializer = []
     if value_info is None:
         value_info = []
     graph = GraphProto()
@@ -144,6 +147,7 @@ def make_graph(
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
+    graph.sparse_initializer.extend(sparse_initializer)
     graph.value_info.extend(value_info)
     if doc_string:
         graph.doc_string = doc_string

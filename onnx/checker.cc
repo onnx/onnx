@@ -424,6 +424,13 @@ void check_sparse_tensor(
 
   const TensorProto& values = sparse_tensor_proto.values();
   check_tensor(values, ctx);
+  // SparseTensors names are stored as values names
+  // and this is important for use as inputs or sparse initializers
+  enforce_has_field(values, name);
+  if (values.name().empty()) {
+    fail_check(
+        "Sparse tensor values must have a non-empty name");
+  }
 
   // values must be a tensor of shape [NNZ]
   // Currently we restrict the value associated with a particular index-tuple
