@@ -15672,11 +15672,9 @@ This version of the operator has been available since version 13 of the default 
     ]
     axis = 1,
     output = [
-        [
-            [1.0, 1.9],
-            [2.3, 3.9],
-            [4.5, 5.9],
-        ],
+            [[1.0, 1.9]],
+            [[2.3, 3.9]],
+            [[4.5, 5.9]],
     ]
   ```
 
