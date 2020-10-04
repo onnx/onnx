@@ -27,7 +27,7 @@ class TestUtilityFunctions(unittest.TestCase):
         self.assertEqual(len(polished_def.graph.node), 1)
         self.assertFalse(polished_def.graph.node[0].HasField('doc_string'))
 
-    def test_extract(self):  # type: () -> None
+    def test_extract_model(self):  # type: () -> None
         def create_tensor(name):  # type: ignore
             return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
         A0 = create_tensor("A0")
@@ -58,10 +58,10 @@ class TestUtilityFunctions(unittest.TestCase):
         p1 = os.path.join(tdir, "extracted.onnx")
         input_names = ["B0", "B1", "B2"]
         output_names = ["C0", "C1"]
-        onnx.utils.extract(p0, p1, input_names, output_names)
+        onnx.utils.extract_model(p0, p1, input_names, output_names)
 
         m1 = onnx.load(p1)
-        self.assertEqual(m1.producer_name, 'onnx.utils.extract')
+        self.assertEqual(m1.producer_name, 'onnx.utils.extract_model')
         self.assertEqual(m1.ir_version, m0.ir_version)
         self.assertEqual(m1.opset_import, m0.opset_import)
         self.assertEqual(len(m1.graph.node), 2)
