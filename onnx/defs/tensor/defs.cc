@@ -2128,13 +2128,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "roi",
             "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
             "T2",
-            OpSchema::Single)
+            OpSchema::Optional)
         .Input(
             2,
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
+            " be the same as the rank of input 'X'. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(
