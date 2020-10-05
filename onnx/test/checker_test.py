@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
 
-from typing import Sequence
+from typing import Sequence, Text
 import numpy as np  # type: ignore
 
 from onnx import checker, helper
@@ -88,6 +88,24 @@ class TestChecker(unittest.TestCase):
 
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
+
+    def test_check_graph_duplicate_init_names(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        graph.initializer.extend([self._sample_float_tensor])
+        graph.initializer[0].name = 'X'
+
+        # Add sparse initializer with the same name as above
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], 'X')
+        graph.sparse_initializer.extend([sparse])
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
     def test_check_graph_optional_input(self):  # type: () -> None
         # GivenTensorFill's input is marked optional, hence it is used in this test.
@@ -289,12 +307,16 @@ class TestChecker(unittest.TestCase):
                     shape,  # type: Sequence[int]
                     values,  # type: Sequence[int]
                     indices_shape,  # type: Sequence[int]
-                    indices  # type: Sequence[int]
+                    indices,  # type: Sequence[int]
+                    name=None  # type: Text
                     ):  # type: (...) -> SparseTensorProto
         sparse = SparseTensorProto()
         sparse.dims.extend(shape)
         nnz = len(values)
-        sparse.values.CopyFrom(helper.make_tensor('spval', TensorProto.INT64, (nnz,), values))
+        if name is None:
+            name = 'spval'
+
+        sparse.values.CopyFrom(helper.make_tensor(name, TensorProto.INT64, (nnz,), values))
         sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
         return sparse
 
@@ -329,13 +351,8 @@ class TestChecker(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
     def test_check_sparse_tensor_no_name(self):  # type: () -> None
-        # values tensor name is empty
-        values = [13, 17, 19]
-        sparse = SparseTensorProto()
-        sparse.dims.extend([100])
-        nnz = len(values)
-        sparse.values.CopyFrom(helper.make_tensor('', TensorProto.INT64, (nnz,), values))
-        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, [3], [9, 27, 81]))
+        # Sparse Tensor name is empty
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], '')
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
     def test_check_sparse_matmul(self):  # type: () -> None
