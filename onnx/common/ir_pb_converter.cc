@@ -276,15 +276,9 @@ std::unique_ptr<Graph> graphProtoToGraph(
       auto vip = tensorProtoToTensor(gp.initializer(i));
       // Only update input if input does not exists
       if (value_by_name_of.count(vip.name()) == 0) {
-        auto v = g->addInput();
-        v->setElemType(vip.elem_type());
-        std::vector<Dimension> sizes;
-        for (auto size: vip.sizes()) {
-          sizes.push_back(size);
-        }
-        v->setSizes(sizes);
-        v->setUniqueName(vip.name());
-        value_by_name_of[vip.name()] = v;
+        // Add temp input from initializer to get valid value_info
+        Value* added_input = g->addInitializerAndInput(vip);
+        value_by_name_of[vip.name()] = added_input;
       }
     }
   }
