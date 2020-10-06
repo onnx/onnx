@@ -9363,20 +9363,20 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (2 - 4)
 
 <dl>
-<dt><tt>x</tt> (non-differentiable) : T1</dt>
+<dt><tt>x</tt> : T1</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
-<dt><tt>w</tt> (differentiable) : T2</dt>
+<dt><tt>w</tt> : T2</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
-<dt><tt>x_zero_point</tt> (optional, differentiable) : T1</dt>
+<dt><tt>x_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>w_zero_point</tt> (optional, differentiable) : T2</dt>
+<dt><tt>w_zero_point</tt> (optional) : T2</dt>
 <dd>Zero point tensor for input 'w'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M)</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> (differentiable) : T3</dt>
+<dt><tt>y</tt> : T3</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 
@@ -9762,30 +9762,30 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (8 - 9)
 
 <dl>
-<dt><tt>x</tt> (differentiable) : T1</dt>
+<dt><tt>x</tt> : T1</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
-<dt><tt>x_scale</tt> (differentiable) : tensor(float)</dt>
+<dt><tt>x_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>x_zero_point</tt> (differentiable) : T1</dt>
+<dt><tt>x_zero_point</tt> : T1</dt>
 <dd>Zero point tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>w</tt> (differentiable) : T2</dt>
+<dt><tt>w</tt> : T2</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
-<dt><tt>w_scale</tt> (differentiable) : tensor(float)</dt>
+<dt><tt>w_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
-<dt><tt>w_zero_point</tt> (differentiable) : T2</dt>
+<dt><tt>w_zero_point</tt> : T2</dt>
 <dd>Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).</dd>
-<dt><tt>y_scale</tt> (differentiable) : tensor(float)</dt>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>y_zero_point</tt> (differentiable) : T3</dt>
+<dt><tt>y_zero_point</tt> : T3</dt>
 <dd>Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>B</tt> (optional, differentiable) : T4</dt>
+<dt><tt>B</tt> (optional) : T4</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> (differentiable) : T3</dt>
+<dt><tt>y</tt> : T3</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 

@@ -881,29 +881,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in effect, the operation expects input data tensor "
             "to arrive with the dimension denotation of [DATA_BATCH, "
             "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T1")
         .Input(
             1,
             "x_scale",
             "Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "tensor(float)")
         .Input(
             2,
             "x_zero_point",
             "Zero point tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T1")
         .Input(
             3,
             "w",
@@ -921,68 +909,41 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X.shape[1] == (W.shape[1] * group) == C "
             "(assuming zero based indices for the shape array). "
             "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T2")
         .Input(
             4,
             "w_scale",
             "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
-            "tensor(float)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "tensor(float)")
         .Input(
             5,
             "w_zero_point",
             "Zero point tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T2")
         .Input(
             6,
             "y_scale",
             "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "tensor(float)")
         .Input(
             7,
             "y_zero_point",
             "Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
-            "T3",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T3")
         .Input(
             8,
             "B",
             "Optional 1D bias to be added to the convolution, has size of M. "
             "Bias must be quantized using scale = x_scale * w_scale and zero_point = 0",
             "T4",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Optional)
         .Output(
             0,
             "y",
             "Output data tensor that contains the result of the "
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
-            "T3",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T3")
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -1086,11 +1047,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in effect, the operation expects input data tensor "
             "to arrive with the dimension denotation of [DATA_BATCH, "
             "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+            "T1")
         .Input(
             1,
             "w",
@@ -1108,20 +1065,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X.shape[1] == (W.shape[1] * group) == C "
             "(assuming zero based indices for the shape array). "
             "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T2")
         .Input(
             2,
             "x_zero_point",
             "Zero point tensor for input 'x'. It's optional and default value is 0. It's a scalar, which means a per-tensor/layer quantization.",
             "T1",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Optional)
         .Input(
             3,
             "w_zero_point",
@@ -1129,21 +1079,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number "
             "of elements should be equal to the number of output channels (M)",
             "T2",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::Differentiable)
+            OpSchema::Optional)
         .Output(
             0,
             "y",
             "Output data tensor that contains the result of the "
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
-            "T3",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+            "T3")
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
