@@ -601,6 +601,7 @@ message SparseTensorProto {
   // The sequence of non-default values are encoded as a tensor of shape [NNZ].
   // The default-value is zero for numeric tensors, and empty-string for string tensors.
   // values must have a non-empty name present which serves as a name for SparseTensorProto
+  // when used in sparse_initializer list.
   optional TensorProto values = 1;
 
   // The indices of the non-default values, which may be stored in one of two formats.

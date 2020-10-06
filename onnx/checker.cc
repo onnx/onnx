@@ -419,12 +419,6 @@ void check_sparse_tensor(
 
   const TensorProto& values = sparse_tensor_proto.values();
   check_tensor(values, ctx);
-  // SparseTensors make use of values name
-  // and this is important for use as inputs or sparse initializers
-  enforce_has_field(values, name);
-  if (values.name().empty()) {
-    fail_check("Sparse tensor values must have a non-empty name");
-  }
 
   // values must be a tensor of shape [NNZ]
   // Currently we restrict the value associated with a particular index-tuple
@@ -670,31 +664,41 @@ void check_graph(
       initializer_name_checker;
 
   for (const auto& init : graph.initializer()) {
+    enforce_has_field(init, name);
     const auto& name = init.name();
+    if (name.empty()) {
+      fail_check("Tensor initializers must have a non-empty name");
+    }
+
+    if (!initializer_name_checker.insert(std::cref(name)).second) {
+      fail_check(name + " initializer name is not unique");
+    }
+
+    check_tensor(init, ctx);
+
     if (ctx.get_ir_version() <= 0x00000003) {
       // Initializers are a subset of graph inputs for IR_VERSION <= 3
       if (!lex_ctx.this_graph_has(name)) {
         fail_check(name + " in initializer but not in graph input");
       }
     } else {
-      if (!initializer_name_checker.insert(std::cref(name)).second) {
-        fail_check(name + " initializer name is not unique");
-      }
       // An initializer is allowed to have the same name as an input,
       // but is not required to (for IR_VERSION >= 4)
       lex_ctx.add(name);
     }
-    check_tensor(init, ctx);
   }
 
   for (const auto& sparse_init : graph.sparse_initializer()) {
-    check_sparse_tensor(sparse_init, ctx);
     const auto& name = sparse_init.values().name();
+    if (name.empty()) {
+      fail_check("Sparse tensor initializers must have a non-empty name");
+    }
     if (!initializer_name_checker.insert(std::cref(name)).second) {
       fail_check(
           name +
           " sparse initializer name is not unique across initializers and sparse_initializers");
     }
+    check_sparse_tensor(sparse_init, ctx);
     lex_ctx.add(name);
   }
 

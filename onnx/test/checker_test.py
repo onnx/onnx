@@ -350,11 +350,6 @@ class TestChecker(unittest.TestCase):
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
-    def test_check_sparse_tensor_no_name(self):  # type: () -> None
-        # Sparse Tensor name is empty
-        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], '')
-        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
-
     def test_check_sparse_matmul(self):  # type: () -> None
         M = 5
         N = 10
