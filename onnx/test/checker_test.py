@@ -24,6 +24,21 @@ class TestChecker(unittest.TestCase):
             vals=np_array.reshape(6).tolist()
         )
 
+    def make_sparse(self,
+                    shape,  # type: Sequence[int]
+                    values,  # type: Sequence[int]
+                    indices_shape,  # type: Sequence[int]
+                    indices,  # type: Sequence[int]
+                    name='spval'  # type: Text
+                    ):  # type: (...) -> SparseTensorProto
+        sparse = SparseTensorProto()
+        sparse.dims.extend(shape)
+        nnz = len(values)
+
+        sparse.values.CopyFrom(helper.make_tensor(name, TensorProto.INT64, (nnz,), values))
+        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
+        return sparse
+
     def test_check_node(self):  # type: () -> None
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
@@ -88,6 +103,36 @@ class TestChecker(unittest.TestCase):
 
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
+
+    def test_check_graph_empty_initializer_name(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        # Supply no name for the initializer
+        graph.initializer.extend([self._sample_float_tensor])
+        graph.initializer[0].name = ''
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
+    def test_check_graph_empty_sparse_initializer_name(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        # Supply no name for the sparse_initializer
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], '')
+        graph.sparse_initializer.extend([sparse])
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
     def test_check_graph_duplicate_init_names(self):  # type: () -> None
         node = helper.make_node(
@@ -302,23 +347,6 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test',
                                   opset_imports=[onnx_id])
         checker.check_model(model)
-
-    def make_sparse(self,
-                    shape,  # type: Sequence[int]
-                    values,  # type: Sequence[int]
-                    indices_shape,  # type: Sequence[int]
-                    indices,  # type: Sequence[int]
-                    name=None  # type: Text
-                    ):  # type: (...) -> SparseTensorProto
-        sparse = SparseTensorProto()
-        sparse.dims.extend(shape)
-        nnz = len(values)
-        if name is None:
-            name = 'spval'
-
-        sparse.values.CopyFrom(helper.make_tensor(name, TensorProto.INT64, (nnz,), values))
-        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
-        return sparse
 
     def test_check_sparse_tensor(self):  # type: () -> None
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81])

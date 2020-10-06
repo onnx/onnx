@@ -689,7 +689,9 @@ void check_graph(
   }
 
   for (const auto& sparse_init : graph.sparse_initializer()) {
-    const auto& name = sparse_init.values().name();
+    const auto& values = sparse_init.values();
+    enforce_has_field(values, name);
+    const auto& name = values.name();
     if (name.empty()) {
       fail_check("Sparse tensor initializers must have a non-empty name");
     }
