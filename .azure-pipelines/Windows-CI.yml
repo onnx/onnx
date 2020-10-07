@@ -36,9 +36,9 @@ jobs:
     displayName: Add conda to PATH
 
   - script: |
-      conda create --yes --quiet --name py$(python.version)
+      conda create --yes --quiet --name py$(python.version) -c conda-forge python=$(python.version)
       call activate py$(python.version)
-      conda install python=$(python.version) -y -c conda-forge numpy libprotobuf=3.11.3 protobuf
+      conda install -c conda-forge numpy libprotobuf=3.11.3 protobuf
       python -m pip install --upgrade pip
       # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
       # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
