@@ -45,18 +45,30 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                 data_set_dir = os.path.join(
                     output_dir, 'test_data_set_{}'.format(i))
                 prepare_dir(data_set_dir)
-                for j, input_np in enumerate(inputs):
-                    tensor = numpy_helper.from_array(
-                        input_np, case.model.graph.input[j].name)
+                for j, input in enumerate(inputs):
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
-                        f.write(tensor.SerializeToString())
-                for j, output_np in enumerate(outputs):
-                    tensor = numpy_helper.from_array(
-                        output_np, case.model.graph.output[j].name)
+                        if isinstance(input, dict):
+                            f.write(numpy_helper.from_dict(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                        elif isinstance(input, list):
+                            f.write(numpy_helper.from_list(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                        else:
+                            f.write(numpy_helper.from_array(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                for j, output in enumerate(outputs):
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
-                        f.write(tensor.SerializeToString())
+                        if isinstance(output, dict):
+                            f.write(numpy_helper.from_dict(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        elif isinstance(output, list):
+                            f.write(numpy_helper.from_list(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        else:
+                            f.write(numpy_helper.from_array(
+                                output, case.model.graph.output[j].name).SerializeToString())
 
 
 def parse_args():  # type: () -> argparse.Namespace

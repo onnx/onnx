@@ -25,6 +25,54 @@
 #include "onnx/onnx-operators_pb.h"
 namespace ONNX_NAMESPACE {
 
+struct FunctionBodyBuildContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual bool hasInput(int i) const = 0;
+  virtual bool hasOutput(int i) const = 0;
+  virtual ~FunctionBodyBuildContext() {}
+};
+
+struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
+  FunctionBodyBuildContextImpl(NodeProto& node_proto)
+      : node_proto_(node_proto) {
+    for (auto& attr : *node_proto.mutable_attribute()) {
+      attributesByName_[attr.name()] = &attr;
+    }
+  }
+
+  const AttributeProto* getAttribute(const std::string& name) const {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
+
+  bool hasInput(int i) const {
+    if (i >= node_proto_.input_size())
+      return false;
+    return node_proto_.input(i) != "";
+  }
+
+  bool hasOutput(int i) const {
+    if (i >= node_proto_.output_size())
+      return false;
+    return node_proto_.output(i) != "";
+  }
+
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+
+  NodeProto node_proto_;
+};
+
+using FunctionBodyQueryFunction =
+    std::function<bool(FunctionBodyBuildContext&)>;
+
+class OpSchema;
+using ContextDependentFunctionBodyBuilder = std::function<
+    bool(const FunctionBodyBuildContext&, const OpSchema&, FunctionProto&)>;
+
 class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -94,6 +142,20 @@ class OpSchema final {
     Variadic = 2,
   };
 
+  enum DifferentiationCategory : uint8_t {
+    // Whether this formal parameter is differentiable or not cannot
+    // be statically determined. It also covers variadic formal
+    // parameters which contain both of differentiable and
+    // non-differentiable variables.
+    Unknown = 0,
+    // This formal parameter is differentiable. That is, this formal
+    // parameter can be differentiable input of Gradient operator.
+    Differentiable = 1,
+    // This formal parameter is not differentiable. That is, this formal
+    // parameter can not be differentiable input of Gradient operator.
+    NonDifferentiable = 2
+  };
+
   // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter final {
@@ -103,20 +165,49 @@ class OpSchema final {
 
     explicit FormalParameter(
         std::string name,
-        DataTypeSet type_set,
+        DataTypeSet allowed_type_set,
         std::string type_str,
-        std::string description,
+        const std::string& description,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
-        int min_arity = 1);
+        int min_arity = 1,
+        DifferentiationCategory differentiation_category = Unknown)
+        : name_(std::move(name)),
+          type_set_(std::move(allowed_type_set)),
+          type_str_(std::move(type_str)),
+#ifndef __ONNX_NO_DOC_STRINGS
+          description_(description),
+#endif
+          param_option_(param_option),
+          is_homogeneous_(is_homogeneous),
+          min_arity_(min_arity),
+          differentiation_category_(differentiation_category) {
+#ifdef __ONNX_NO_DOC_STRINGS
+      ONNX_UNUSED_PARAMETER(description);
+#endif
+    }
 
     explicit FormalParameter(
         std::string name,
-        std::string description,
+        const std::string& description,
         std::string type_str,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
-        int min_arity = 1);
+        int min_arity = 1,
+        DifferentiationCategory differentiation_category = Unknown)
+        : name_(std::move(name)),
+          type_str_(std::move(type_str)),
+#ifndef __ONNX_NO_DOC_STRINGS
+          description_(description),
+#endif
+          param_option_(param_option),
+          is_homogeneous_(is_homogeneous),
+          min_arity_(min_arity),
+          differentiation_category_(differentiation_category) {
+#ifdef __ONNX_NO_DOC_STRINGS
+      ONNX_UNUSED_PARAMETER(description);
+#endif
+    }
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -138,6 +229,9 @@ class OpSchema final {
 
     // Get minimum arity. Applicable only in the Variadic case.
     int GetMinArity() const;
+
+    // Get the differentiation property of this formal parameter.
+    DifferentiationCategory GetDifferentiationCategory() const;
 
    private:
     friend class OpSchema;
@@ -168,6 +262,11 @@ class OpSchema final {
 
     // Minimum number of parameters expected. Applicable only for Variadic.
     int min_arity_;
+
+    // True if this parameter can be an differentiable inputs of Gradient.
+    // Otherwise, using this parameter as an differentiable inputs of Gradient
+    // is prohibited.
+    DifferentiationCategory differentiation_category_;
   };
 
   enum class SupportType : uint8_t {
@@ -210,6 +309,9 @@ class OpSchema final {
   const char* doc() const {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
+
+  // Check if input and output types fall into valid set and match each other
+  void CheckInputOutputType(struct InferenceContext&) const;
 
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
@@ -281,7 +383,14 @@ class OpSchema final {
     return *this;
   }
 
-  OpSchema& SetDoc(std::string doc);
+  OpSchema& SetDoc(const std::string& doc) {
+#ifndef __ONNX_NO_DOC_STRINGS
+    doc_ = doc;
+#else
+    ONNX_UNUSED_PARAMETER(doc);
+#endif
+    return *this;
+  }
 
   // Functions to specify name for the operator schema.
   OpSchema& SetName(const char* name);
@@ -416,11 +525,12 @@ class OpSchema final {
   OpSchema& Input(
       int n,
       std::string name,
-      std::string description,
+      const std::string& description,
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -430,16 +540,18 @@ class OpSchema final {
       const char* type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   OpSchema& Output(
       int n,
       std::string name,
-      std::string description,
+      const std::string& description,
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -449,7 +561,8 @@ class OpSchema final {
       const char* type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
-      int min_arity = 1);
+      int min_arity = 1,
+      DifferentiationCategory differentiation_category = Unknown);
 
   OpSchema& TypeConstraint(
       std::string type_str,
@@ -465,6 +578,20 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
+  static const std::vector<std::string>&
+  numeric_types_for_math_reduction_with_bfloat() {
+    static const std::vector<std::string>
+        numeric_types_for_math_reduction_with_bfloat = {"tensor(uint32)",
+                                                        "tensor(uint64)",
+                                                        "tensor(int32)",
+                                                        "tensor(int64)",
+                                                        "tensor(float16)",
+                                                        "tensor(float)",
+                                                        "tensor(double)",
+                                                        "tensor(bfloat16)"};
+    return numeric_types_for_math_reduction_with_bfloat;
+  }
+
   static const std::vector<std::string>& numeric_types_for_math_reduction() {
     static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
@@ -475,6 +602,23 @@ class OpSchema final {
         "tensor(float)",
         "tensor(double)"};
     return numeric_types_for_math_reduction;
+  }
+
+  static const std::vector<std::string>& all_numeric_types_with_bfloat() {
+    static const std::vector<std::string> all_numeric_types_with_bfloat = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(bfloat16)"};
+    return all_numeric_types_with_bfloat;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -527,6 +671,27 @@ class OpSchema final {
         "tensor(complex64)",
         "tensor(complex128)"};
     return all_tensor_types;
+  }
+
+  static const std::vector<std::string>& all_tensor_types_with_bfloat() {
+    static const std::vector<std::string> all_tensor_types_with_bfloat = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
+    return all_tensor_types_with_bfloat;
   }
 
   static const std::vector<std::string>& all_tensor_sequence_types() {
@@ -615,8 +780,22 @@ class OpSchema final {
   }
 
   OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+  OpSchema& FunctionBody(
+      const std::vector<NodeProto>& func_nodes,
+      const std::vector<OperatorSetIdProto>& opsets);
 
   const FunctionProto* GetFunction() const;
+
+  bool HasContextDependentFunction() const {
+    return functionBuilder_ != nullptr;
+  }
+
+  OpSchema& SetContextDependentFunctionBodyBuilder(
+      ContextDependentFunctionBodyBuilder);
+
+  bool BuildContextDependentFunction(
+      const FunctionBodyBuildContext& ctx,
+      FunctionProto& functionProto) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -624,12 +803,12 @@ class OpSchema final {
   // efficiency.
   void Finalize();
 
+  // Build function with information stored in opschema
+  void BuildFunction(FunctionProto& function_body) const;
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-
-  // Build function with information stored in opschema
-  void BuildFunction();
 
   std::string name_;
   std::string file_;
@@ -655,6 +834,7 @@ class OpSchema final {
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   FunctionProto function_body_;
+  ContextDependentFunctionBodyBuilder functionBuilder_;
 };
 
 // Map type to store operator schemas. The format is,
@@ -678,31 +858,61 @@ class ISchemaRegistry {
  */
 class OpSchemaRegistry final : public ISchemaRegistry {
  public:
-  // A singleton class to store domain to min/max op_set version map.
+  // A singleton class to store domain to min/max op_set version map, as well as
+  // domain to last-release op_set version map.
   class DomainToVersionRange final {
    public:
     DomainToVersionRange() {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 11);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 13);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
+      map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      // ONNX's preview domain contains operators subject to change, so
+      // versining is not meaningful and that domain should have only one
+      // version.
+      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      // Version corresponding last release of ONNX. Update this to match with
+      // the max version above in a *release* version of ONNX. But in other
+      // versions, the max version may be ahead of the last-release-version.
+      last_release_version_map_[ONNX_DOMAIN] = 12;
+      last_release_version_map_[AI_ONNX_ML_DOMAIN] = 2;
+      last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
+      last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
       return map_;
     }
 
+    const std::unordered_map<std::string, int>& LastReleaseVersionMap() const {
+      return last_release_version_map_;
+    }
+
     // Add customized domain to min/max version.
     // Onnx partners are able to use onnx operator schema api to
     // register customized op in their own domain.
+    // Can optionally specify last_release_version (to make it similar to
+    // standard ONNX domains as above). Custom-domains are free to interpret
+    // this as appropriate (that is, as relative to releases of custom-domain
+    // as opposed to ONNX releases).
     void AddDomainToVersion(
         const std::string& domain,
         int min_version,
-        int max_version) {
+        int max_version,
+        int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       assert(map_.end() == map_.find(domain));
       map_[domain] = std::make_pair(min_version, max_version);
+      // If a last-release-version is not explicitly specified, use max as
+      // last-release-version.
+      if (last_release_version == -1)
+        last_release_version = max_version;
+      assert(
+          last_release_version_map_.end() ==
+          last_release_version_map_.find(domain));
+      last_release_version_map_[domain] = last_release_version;
     }
 
     static DomainToVersionRange& Instance();
@@ -710,6 +920,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
     std::unordered_map<std::string, std::pair<int, int>> map_;
+
+    // Key: domain. Value: most recent release opset version. Note that
+    // the highest opset version may be ahead of the most recent release's opset
+    // version.
+    std::unordered_map<std::string, int> last_release_version_map_;
 
     std::mutex mutex_;
   };
@@ -886,6 +1101,14 @@ OpSchema GetOpSchema();
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
+#define ONNX_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(                             \
+      name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
+
+#define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(                                     \
+      name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
+
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
 // normally included in operator sets and registered in OpSchemaRegistry::map().
@@ -936,6 +1159,10 @@ class DbgOperatorSetTracker {
 #define ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name) \
   name##_##domain##_ver##ver
 
+// Naming convention for preview operator schema classes
+#define ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(ver, name) \
+  ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreview, ver, name)
+
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
@@ -981,5 +1208,50 @@ inline std::string GenerateBroadcastingDocUni(
       " for more details please check [the doc](Broadcasting.md).";
   return ret;
 }
+
+/*
+ * Macros for setting operator documentation
+ * Use this macro for simple SetDoc() calls that generate documentation
+ * directly. This is the macro to use in almost all cases.
+ * Sample usage guidelines:
+ * const char* doc_str = "foo";
+ * SetDoc(GET_OP_DOC_STR(doc_str))
+ *
+ * SetDoc(GET_OP_DOC_STR(
+            std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+ */
+#ifndef __ONNX_NO_DOC_STRINGS
+#define GET_OP_DOC_STR(doc_str) (doc_str)
+#else
+#define GET_OP_DOC_STR(doc_str) ("")
+#endif
+
+/*
+ * Use this macro when the documentation needs to be populated in some
+ * complicated way like string substitutions, etc before calling SetDoc.
+ * Sample usage guidelines:
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
+Returns the tensor resulted from performing the `{name}` logical operation
+elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting
+support).
+
+{broadcast_doc}
+)DOC";
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    schema.SetDoc(doc);
+ *
+ */
+#ifndef __ONNX_NO_DOC_STRINGS
+#define POPULATE_OP_DOC_STR(DocPopulatorCode) \
+  do {                                        \
+    DocPopulatorCode                          \
+  } while (0)
+#else
+#define POPULATE_OP_DOC_STR(DocPopulatorCode)
+#endif
 
 } // namespace ONNX_NAMESPACE

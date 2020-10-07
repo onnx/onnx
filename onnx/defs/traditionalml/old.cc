@@ -37,7 +37,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "classes_strings",
             "A list of labels.",
             AttributeProto::STRINGS,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "default_int64",
             "An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",

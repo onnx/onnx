@@ -28,7 +28,6 @@ bool FileExists(const std::string& filename) {
 #endif
   return true;
 }
-
 void TestDriver::SetDefaultDir(const std::string& s) {
   default_dir_ = s;
 }
@@ -108,7 +107,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
         }
       } while (_findnext(lf, &file) == 0);
     } catch (const std::exception& e) {
-      std::cerr << "Error occured while reading directory. " << e.what()
+      std::cerr << "Error occurred while reading directory. " << e.what()
                 << std::endl;
       _findclose(lf);
       throw;
@@ -152,7 +151,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
                   << std::endl;
       }
     }
-    std::cerr << "Error: exception occured: " << e.what() << std::endl;
+    std::cerr << "Error: exception occurred: " << e.what() << std::endl;
     throw;
   }
   if (directory != NULL) {
@@ -199,25 +198,59 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   st.test_case_name_ = t.test_case_name_;
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
-
+  int test_data_counter = 0;
   for (auto& test_data : t.test_data_) {
     ResolvedTestData proto_test_data;
-
     for (auto& input_file : test_data.input_filenames_) {
       std::string input_data;
+      ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
-      ONNX_NAMESPACE::TensorProto input_proto;
-      ONNX_NAMESPACE::ParseProtoFromBytes(
-          &input_proto, input_data.c_str(), input_data.size());
-      proto_test_data.inputs_.emplace_back(std::move(input_proto));
+      input_info = st.model_.graph().input(test_data_counter);
+      if(input_info.type().has_tensor_type()) {
+        ONNX_NAMESPACE::TensorProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.inputs_.emplace_back(std::move(input_proto));
+      }
+      else if(input_info.type().has_sequence_type()) {
+        ONNX_NAMESPACE::SequenceProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.seq_inputs_.emplace_back(std::move(input_proto));
+      }
+      else if(input_info.type().has_map_type()) {
+        ONNX_NAMESPACE::MapProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.map_inputs_.emplace_back(std::move(input_proto));
+      }
+      test_data_counter++;
     }
+    test_data_counter = 0;
     for (auto& output_file : test_data.output_filenames_) {
-      std::string output_data = "";
+      std::string output_data;
+      ONNX_NAMESPACE::ValueInfoProto output_info;
+      output_info = st.model_.graph().output(test_data_counter);
       LoadSingleFile(output_file, output_data);
-      ONNX_NAMESPACE::TensorProto output_proto;
-      ONNX_NAMESPACE::ParseProtoFromBytes(
-          &output_proto, output_data.c_str(), output_data.size());
-      proto_test_data.outputs_.emplace_back(std::move(output_proto));
+      if(output_info.type().has_tensor_type()) {
+        ONNX_NAMESPACE::TensorProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.outputs_.emplace_back(std::move(output_proto));
+      }
+      else if(output_info.type().has_sequence_type()) {
+        ONNX_NAMESPACE::SequenceProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.seq_outputs_.emplace_back(std::move(output_proto));
+      }
+      else if(output_info.type().has_map_type()) {
+        ONNX_NAMESPACE::MapProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(
+            &output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.map_outputs_.emplace_back(std::move(output_proto));
+      }
+      test_data_counter++;
     }
     st.proto_test_data_.emplace_back(std::move(proto_test_data));
   }

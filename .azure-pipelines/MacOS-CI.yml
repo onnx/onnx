@@ -1,0 +1,122 @@
+trigger:
+- master
+
+jobs:
+- job: 'Test'
+  pool:
+    vmImage: 'macOS-10.14'
+  strategy:
+    matrix:
+      py27:
+        python.version: '2.7'
+        onnx_ml: 0
+        onnx_debug: 0
+        onnx_lite: 1
+      py27-ml:
+        python.version: '2.7'
+        onnx_ml: 1
+        onnx_debug: 0
+        onnx_lite: 1
+      py36:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_debug: 0
+        onnx_lite: 1
+      py36-ml:
+        python.version: '3.6'
+        onnx_ml: 1
+        onnx_debug: 0
+        onnx_lite: 1
+      py36-ml-debug:
+        python.version: '3.6'
+        onnx_ml: 1
+        onnx_debug: 1
+        onnx_lite: 0
+    maxParallel: 6
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: |
+      git submodule update --init --recursive
+      python -m pip install --upgrade setuptools
+      python -m pip install numpy
+      conda install -y -c conda-forge pybind11 protobuf
+      brew update
+      brew install protobuf
+      export ONNX_BUILD_TESTS=1
+      if [ '$(onnx_debug)' == '1' ]; then
+        export DEBUG=1
+      fi
+      if [ '$(onnx_ml)' == '1' ]; then
+        export ONNX_ML=1
+      fi
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+      if [ '$(onnx_lite)' == '1' ]; then
+        export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+      fi
+      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+      python setup.py --quiet install
+    displayName: 'Install dependencies and ONNX'
+
+  - script: |
+      # lint python code
+      pip install --quiet flake8
+      flake8
+      if [ $? -ne 0 ]; then
+        echo "flake8 returned failures"
+        exit 1
+      fi
+
+      # check auto-gen files up-to-date
+      python onnx/defs/gen_doc.py
+      python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --ml
+      python onnx/backend/test/stat_coverage.py
+      backend-test-tools generate-data
+
+      git status
+      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+      if [ $? -ne 0 ]; then
+        echo "git diff returned failures"
+        exit 1
+      fi
+
+      # Do not hardcode onnx's namespace in the c++ source code, so that
+      # other libraries who statically link with onnx can hide onnx symbols
+      # in a private namespace.
+      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+      # onnx python api tests
+      if [ "$(python.version)" == "2.7" ]; then
+        pip install --quiet pytest nbval
+      else
+        # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
+        # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
+        pip install --quiet pytest==5.4.3 nbval
+      fi
+
+      pytest
+      if [ $? -ne 0 ]; then
+        echo "pytest failed"
+        exit 1
+      fi
+
+      # onnx c++ API tests
+      export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+      ./.setuptools-cmake-build/onnx_gtests
+      if [ $? -ne 0 ]; then
+        echo "onnx_gtests failed"
+        exit 1
+      fi
+
+      ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
+      if [ $? -ne 0 ]; then
+        echo "onnxifi_test_driver_gtests failed"
+        exit 1
+      fi
+
+    displayName: 'Run ONNX Tests'
