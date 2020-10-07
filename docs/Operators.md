@@ -1857,30 +1857,30 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dt><tt>scale</tt> : T</dt>
+<dt><tt>scale</tt> (differentiable) : T</dt>
 <dd>Scale tensor of shape (C).</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>mean</tt> : T</dt>
+<dt><tt>mean</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>var</tt> : T</dt>
+<dt><tt>var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
 #### Outputs (1 - 5)
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional) : T</dt>
+<dt><tt>mean</tt> (optional, non-differentiable) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>var</tt> (optional) : T</dt>
+<dt><tt>var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dt><tt>saved_mean</tt> (optional, non-differentiable) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation.</dd>
-<dt><tt>saved_var</tt> (optional) : T</dt>
+<dt><tt>saved_var</tt> (optional, non-differentiable) : T</dt>
 <dd>Saved variance used during training to speed up gradient computation.</dd>
 </dl>
 
@@ -3395,18 +3395,18 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
-<dt><tt>W</tt> : T</dt>
+<dt><tt>W</tt> (differentiable) : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M/group x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, pad lengths and group count. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
 </dl>
 
@@ -4480,20 +4480,20 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href
 #### Inputs (1 - 3)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
-<dt><tt>ratio</tt> (optional) : T1</dt>
+<dt><tt>ratio</tt> (optional, non-differentiable) : T1</dt>
 <dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
-<dt><tt>training_mode</tt> (optional) : T2</dt>
+<dt><tt>training_mode</tt> (optional, non-differentiable) : T2</dt>
 <dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
 
 #### Outputs (1 - 2)
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T2</dt>
+<dt><tt>mask</tt> (optional, non-differentiable) : T2</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -5554,14 +5554,14 @@ Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>A tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
 </dl>
 
@@ -6793,14 +6793,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
@@ -6878,14 +6878,14 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
@@ -6910,14 +6910,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
@@ -7620,18 +7620,18 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
-<dt><tt>scale</tt> : T</dt>
+<dt><tt>scale</tt> (differentiable) : T</dt>
 <dd>The input 1-dimensional scale tensor of size C.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as input.</dd>
 </dl>
 
@@ -7885,14 +7885,14 @@ Other versions of this operator: <a href="Changelog.md#LRN-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor, which has the shape and type as input tensor</dd>
 </dl>
 
@@ -9108,14 +9108,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input matrix</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Matrix after normalization</dd>
 </dl>
 
@@ -9159,14 +9159,14 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from Lp pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
 </dl>
 
@@ -10083,18 +10083,18 @@ Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> (differentiable) : T1</dt>
 <dd>Input data tensor that has to be unpooled. This tensor is typically the first output of the MaxPool op.Dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non-image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
-<dt><tt>I</tt> : T2</dt>
+<dt><tt>I</tt> (non-differentiable) : T2</dt>
 <dd>Input data tensor containing the indices corresponding to elements in the first input tensor X.This tensor is typically the second output of the MaxPool op.Dimensions must be the same as input tensor X. The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, assuming row-major storage. Also, the linear indices should not consider padding. So the values in indices are in the range [0, N x C x D1 x ... x Dn).</dd>
-<dt><tt>output_shape</tt> (optional) : T2</dt>
+<dt><tt>output_shape</tt> (optional, non-differentiable) : T2</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, 'pads' values are ignored.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T1</dt>
+<dt><tt>output</tt> (differentiable) : T1</dt>
 <dd>Output data tensor that contains the result of the unpooling.</dd>
 </dl>
 
@@ -10256,14 +10256,14 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -18196,14 +18196,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output.</dd>
 </dl>
 
@@ -21080,14 +21080,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input for n-gram extraction</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T1</dt>
+<dt><tt>Y</tt> (non-differentiable) : T1</dt>
 <dd>Ngram results</dd>
 </dl>
 
