@@ -32,25 +32,36 @@ jobs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
 
-  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
-    displayName: Add conda to PATH
-
-  - script: conda create --yes --quiet --name py$(python.version) -c conda-forge python=$(python.version) numpy libprotobuf=3.11.3
-    displayName: Create Anaconda environment
-
   - script: |
       call activate py$(python.version)
       python -m pip install --upgrade pip
       # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
       # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
       python -m pip install --quiet pytest==5.4.3 nbval numpy
-
+      
+      set ONNX_DIR=%cd%
+      # build protobuf locally
+      cd ..
+      git clone https://github.com/protocolbuffers/protobuf.git
+      cd protobuf
+      set PROTO_INSTALL_DIR=%cd%\install
+      git checkout 3.12.x
+      cd cmake
+      # Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
+      cmake -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=%PROTO_INSTALL_DIR%
+      # For example:
+      # cmake -G "Visual Studio 16 2019" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=..\install
+      msbuild protobuf.sln /m /p:Configuration=Release
+      msbuild INSTALL.vcxproj /p:Configuration=Release      
+      cd ONNX_DIR
+      set PATH=%PROTO_INSTALL_DIR%\bin;%PATH%
+      
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
       set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
       set USE_MSVC_STATIC_RUNTIME=0
-      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
+      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
       python setup.py --quiet install
       pytest
