@@ -184,12 +184,14 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
+    const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
+    const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
     );
 
@@ -197,6 +199,10 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
+
+std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+
+void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

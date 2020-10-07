@@ -106,7 +106,7 @@ typedef uint64_t onnxBitfield;
 /**
  * Type for pointers or handles for memory buffers.
  * This type is intended to work not only for CPU-addressable memory, but also
- * for device memory. uint64_t ensures the API can accomodate Vulkan buffers.
+ * for device memory. uint64_t ensures the API can accommodate Vulkan buffers.
  */
 typedef uint64_t onnxPointer;
 
@@ -1744,7 +1744,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * once the function returns.
  *
  * Calls to onnxRunGraph WILL use input and output locations specified in the
- * preceeding onnxSetGraphIO on the same graph. Asynchronous graph executions
+ * preceding onnxSetGraphIO on the same graph. Asynchronous graph executions
  * that were in-flight before onnxSetGraphIO call will continue to use buffer
  * locations that were current when these graph executions started. An ONNXIFI
  * implementation MAY block inside onnxSetGraphIO until all in-flight graph
