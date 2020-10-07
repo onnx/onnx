@@ -36,7 +36,7 @@ jobs:
     displayName: Add conda to PATH
 
   - script: |
-      conda create --yes --quiet --name py$(python.version) -c conda-forge python=$(python.version)
+      conda create --yes --quiet --name py$(python.version)
       call activate py$(python.version)
       conda install -c conda-forge numpy libprotobuf=3.11.3 protobuf
       python -m pip install --upgrade pip
