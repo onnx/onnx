@@ -33,24 +33,17 @@ jobs:
       architecture: 'x64'
 
   - script: |
-      call activate py$(python.version)
       python -m pip install --upgrade pip
-      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
       python -m pip install --quiet pytest==5.4.3 nbval numpy
       
       set ONNX_DIR=%cd%
-      # build protobuf locally
       cd ..
       git clone https://github.com/protocolbuffers/protobuf.git
       cd protobuf
       set PROTO_INSTALL_DIR=%cd%\install
       git checkout 3.12.x
       cd cmake
-      # Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
       cmake -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=%PROTO_INSTALL_DIR%
-      # For example:
-      # cmake -G "Visual Studio 16 2019" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=..\install
       msbuild protobuf.sln /m /p:Configuration=Release
       msbuild INSTALL.vcxproj /p:Configuration=Release      
       cd ONNX_DIR
