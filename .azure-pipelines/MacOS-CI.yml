@@ -42,7 +42,7 @@ jobs:
   - script: |
       git submodule update --init --recursive
       python -m pip install --upgrade setuptools
-      python -m pip install numpy
+      python -m pip install numpy psutil
       conda install -y -c conda-forge pybind11 protobuf
       brew update
       brew install protobuf
