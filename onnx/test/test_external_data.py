@@ -19,7 +19,7 @@ from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 import pytest  # type: ignore
 import sys
-import psutil
+import psutil  # type: ignore
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
