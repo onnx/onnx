@@ -19,7 +19,6 @@ from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 import pytest  # type: ignore
 import sys
-import psutil  # type: ignore
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -286,14 +285,14 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
 
     # 2GB models would fail onnx.checker with ModelProto but pass with model path
     # Currently Windows-CI with Azure Pipelines has memory limitation
-    # load_external_data_for_model will throw MemoryError for >2GB models. So simply skip this test if Windows.
-    @pytest.mark.skipif((psutil.virtual_memory()[4] >> 30) < 2,  # type: ignore
-        reason="Because of the free memory is smaller than 2GB, this test was not executed.")
+    # load_external_data_for_model will throw MemoryError for >2GB models
     def test_check_model_by_model(self):  # type: () -> None
-        print(psutil.virtual_memory())
-        model = onnx.load_model(self.model_filename, load_external_data=False)
-        load_external_data_for_model(model, self.temp_dir)  # Exceeds maximum protobuf
-        self.assertRaises(ValueError, checker.check_model, model)  # checker catches 2GB models and throw error
+        with pytest.raises((ValueError, MemoryError)):
+            # might throw MemoryError based on protobuf version
+            model = onnx.load_model(self.model_filename, load_external_data=False)
+            load_external_data_for_model(model, self.temp_dir)  # Exceeds maximum protobuf
+            # checker catches 2GB models and throw ValueError
+            checker.check_model(model)
 
 
 if __name__ == '__main__':
