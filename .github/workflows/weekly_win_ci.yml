@@ -48,5 +48,17 @@ jobs:
           $Env:ONNX_ML=1
           $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.architecture }}-windows-static"
           python setup.py --quiet install
+      - name: Install latest ONNX and dependencies
+        run: |
+          $Env:USE_MSVC_STATIC_RUNTIME=1
+          $Env:ONNX_ML=1
+          $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.architecture }}-windows-static"
+          python setup.py --quiet install
+      - name: Test all models with onnx.checker and onnx.shape_inference
+        run: |
+          cd ..
+          git clone https://github.com/onnx/models.git
+          cd models
+          python ../onnx/workflow_scripts/test_model_zoo.py
 
     

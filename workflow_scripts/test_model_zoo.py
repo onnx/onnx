@@ -6,6 +6,8 @@ import subprocess
 import sys
 import time
 
+cwd_path = Path.cwd()
+
 
 def run_lfs_install():
     result = subprocess.run(['git', 'lfs', 'install'], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -13,12 +15,16 @@ def run_lfs_install():
 
 
 def pull_lfs_file(file_name):
-    result = subprocess.run(['GIT_TRACE=1', 'git', 'lfs', 'pull', '--include', file_name, '--exclude', '\'\''], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(['git', 'lfs', 'pull', '--include', file_name, '--exclude', '\'\''], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print('LFS pull completed with return code= {}'.format(result.returncode))
 
 
+def run_lfs_prune():
+    result = subprocess.run(['git', 'lfs', 'prune'], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print('LFS prune completed with return code= {}'.format(result.returncode))
+
+
 def main():
-    cwd_path = Path.cwd()
     parser = argparse.ArgumentParser(description='Test settings')
     # default: test all models in the repo
     # if test_dir is specified, only test files under that specified path
@@ -66,7 +72,10 @@ def main():
             onnx.checker.check_model(inferred_model)
             onnx.checker.check_model(inferred_model, True)
             # remove the model to save space in CIs
-            if os.path.exists(model_path): os.remove(model_path)
+            if os.path.exists(model_path):
+                os.remove(model_path)
+            # clean git lfs cache
+            run_lfs_prune()
 
             print('[PASS]: {} is checked by onnx. '.format(model_name))
 
