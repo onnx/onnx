@@ -217,6 +217,21 @@ print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model
 Runnable IPython notebooks:
 - [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
 
+### Shape inference a Large ONNX Model >2GB
+Current shape_inference supports models with external data, but for those models larger than 2GB, please use the model path for onnx.shape_inference.infer_shapes_path and the external data needs to be under the same directory. You can specify the output path for saving the inferred model; otherwise, the default output path is same as the original model path.
+
+```python
+import onnx
+
+# output the inferred model to the original model path
+onnx.shape_inference.infer_shapes_path('path/to/the/model.onnx')
+
+# output the inferred model to the specified model path
+onnx.shape_inference.infer_shapes_path('path/to/the/model.onnx', 'output/inferred/model.onnx')
+
+# inferred_model = onnx.shape_inference.infer_shapes(loaded_onnx_model) will fail if given >2GB model
+```
+
 ## Converting Version of an ONNX Model within Default Domain (""/"ai.onnx")
 ```python
 import onnx
