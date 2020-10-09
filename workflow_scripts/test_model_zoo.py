@@ -19,11 +19,6 @@ def pull_lfs_file(file_name):
     print('LFS pull completed with return code= {}'.format(result.returncode))
 
 
-def run_lfs_prune():
-    result = subprocess.run(['git', 'lfs', 'prune'], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print('LFS prune completed with return code= {}'.format(result.returncode))
-
-
 def main():
     parser = argparse.ArgumentParser(description='Test settings')
     # default: test all models in the repo
@@ -73,9 +68,7 @@ def main():
             onnx.checker.check_model(inferred_model, True)
             # remove the model to save space in CIs
             if os.path.exists(model_path):
-                os.remove(model_path)
-            # clean git lfs cache
-            run_lfs_prune()
+                    os.remove(model_path)
 
             print('[PASS]: {} is checked by onnx. '.format(model_name))
 
