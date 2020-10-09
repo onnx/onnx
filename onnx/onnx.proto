@@ -421,8 +421,9 @@ message GraphProto {
   optional string name = 2;   // namespace Graph
 
   // A list of named tensor values, used to specify constant inputs of the graph.
-  // Each TensorProto entry must have a distinct name (between initializer and sparse_initializer)
-  // that MAY also appear in the input list.
+  // Each initializer (both TensorProto as well SparseTensorProto) MUST have a name.
+  // The name MUST be unique across both initializer and sparse_initializer,
+  // but the name MAY also appear in the input list.
   repeated TensorProto initializer = 5;
 
   // Initializers (see above) stored in sparse format.
