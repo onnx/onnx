@@ -8,19 +8,22 @@ import time
 
 cwd_path = Path.cwd()
 
+
 def run_lfs_install():
     result = subprocess.run(['git', 'lfs', 'install'], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print('Git LFS install completed with return code= {}'.format(result.returncode))
+
 
 def pull_lfs_file(file_name):
     result = subprocess.run(['git', 'lfs', 'pull', '--include', file_name, '--exclude', '\'\''], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print('LFS pull completed with return code= {}'.format(result.returncode))
 
+
 def main():
     parser = argparse.ArgumentParser(description='Test settings')
     # default: test all models in the repo
     # if test_dir is specified, only test files under that specified path
-    parser.add_argument('--test_dir', required=False, default='', type=str, 
+    parser.add_argument('--test_dir', required=False, default='', type=str,
                         help='Directory path for testing. e.g., text, vision')
     args = parser.parse_args()
     parent_dir = []
@@ -52,7 +55,7 @@ def main():
         print('-----------------Testing: {}-----------------'.format(model_name))
         try:
             pull_lfs_file(model_path)
-            
+
             # check original inferred
             model = onnx.load(model_path)
             onnx.checker.check_model(model)
@@ -74,13 +77,12 @@ def main():
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
 
-
     if len(failed_models) == 0:
         print('{} models have been checked.'.format(len(model_list)))
     else:
         print('In all {} models, {} models failed.'.format(len(model_list), len(failed_models)))
         sys.exit(1)
-      
+
 
 if __name__ == '__main__':
     main()
