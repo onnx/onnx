@@ -1,0 +1,48 @@
+# Weekly ci workflow for model zoo.
+# Runs model checker for all models
+
+name: Weekly CI with latest onnx.checker
+
+# Triggers the workflow on push or pull request events but only for the master branch
+on:
+  # test this PR for now, remove it before the merge
+  pull_request:
+    branches: [ master ]  
+  schedule:
+    # run weekly on Sunday 23:59
+    - cron:  '59 23 * * SUN'
+
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+        architecture: ['x64']
+        onnx-version: ['1.7']
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout repo
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Install latest ONNX and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests
+          python -m pip install numpy protobuf
+          sudo apt-get install protobuf-compiler libprotoc-dev
+          git submodule update --init --recursive
+          export ONNX_BUILD_TESTS=1
+          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+          python setup.py --quiet install
+
+
+    
