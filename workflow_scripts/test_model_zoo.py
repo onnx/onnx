@@ -56,19 +56,14 @@ def main():
         try:
             pull_lfs_file(model_path)
 
-            # check original inferred
+            # check onnx model
             model = onnx.load(model_path)
-            onnx.checker.check_model(model)
             # stricter onnx.checker with onnx.shape_inference
             onnx.checker.check_model(model, True)
 
-            # check inferred model as well
-            inferred_model = onnx.shape_inference.infer_shapes(model)
-            onnx.checker.check_model(inferred_model)
-            onnx.checker.check_model(inferred_model, True)
             # remove the model to save space in CIs
             if os.path.exists(model_path):
-                    os.remove(model_path)
+                os.remove(model_path)
 
             print('[PASS]: {} is checked by onnx. '.format(model_name))
 
