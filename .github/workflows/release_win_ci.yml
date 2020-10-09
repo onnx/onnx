@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - rel-*
+  # test this PR for now, remove it before the merge
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
