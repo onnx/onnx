@@ -149,10 +149,10 @@ class OpSchema final {
     // non-differentiable variables.
     Unknown = 0,
     // This formal parameter is differentiable. That is, this formal
-    // parameter can be differentiable input of Gradient operator. 
+    // parameter can be differentiable input of Gradient operator.
     Differentiable = 1,
     // This formal parameter is not differentiable. That is, this formal
-    // parameter can not be differentiable input of Gradient operator. 
+    // parameter can not be differentiable input of Gradient operator.
     NonDifferentiable = 2
   };
 
@@ -182,6 +182,9 @@ class OpSchema final {
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
           differentiation_category_(differentiation_category) {
+#ifdef __ONNX_NO_DOC_STRINGS
+      ONNX_UNUSED_PARAMETER(description);
+#endif
     }
 
     explicit FormalParameter(
@@ -201,6 +204,9 @@ class OpSchema final {
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
           differentiation_category_(differentiation_category) {
+#ifdef __ONNX_NO_DOC_STRINGS
+      ONNX_UNUSED_PARAMETER(description);
+#endif
     }
 
     // Get formal parameter name.
@@ -572,16 +578,17 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
-    static const std::vector<std::string> numeric_types_for_math_reduction_with_bfloat = {
-        "tensor(uint32)",
-        "tensor(uint64)",
-        "tensor(int32)",
-        "tensor(int64)",
-        "tensor(float16)",
-        "tensor(float)",
-        "tensor(double)",
-        "tensor(bfloat16)"};
+  static const std::vector<std::string>&
+  numeric_types_for_math_reduction_with_bfloat() {
+    static const std::vector<std::string>
+        numeric_types_for_math_reduction_with_bfloat = {"tensor(uint32)",
+                                                        "tensor(uint64)",
+                                                        "tensor(int32)",
+                                                        "tensor(int64)",
+                                                        "tensor(float16)",
+                                                        "tensor(float)",
+                                                        "tensor(double)",
+                                                        "tensor(bfloat16)"};
     return numeric_types_for_math_reduction_with_bfloat;
   }
 
@@ -867,8 +874,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // Version corresponding last release of ONNX. Update this to match with
-      // the max version above in a *release* version of ONNX. But in other versions,
-      // the max version may be ahead of the last-release-version.
+      // the max version above in a *release* version of ONNX. But in other
+      // versions, the max version may be ahead of the last-release-version.
       last_release_version_map_[ONNX_DOMAIN] = 12;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 2;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
@@ -898,10 +905,13 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       std::lock_guard<std::mutex> lock(mutex_);
       assert(map_.end() == map_.find(domain));
       map_[domain] = std::make_pair(min_version, max_version);
-      // If a last-release-version is not explicitly specified, use max as last-release-version.
+      // If a last-release-version is not explicitly specified, use max as
+      // last-release-version.
       if (last_release_version == -1)
         last_release_version = max_version;
-      assert(last_release_version_map_.end() == last_release_version_map_.find(domain));
+      assert(
+          last_release_version_map_.end() ==
+          last_release_version_map_.find(domain));
       last_release_version_map_[domain] = last_release_version;
     }
 
@@ -912,7 +922,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     std::unordered_map<std::string, std::pair<int, int>> map_;
 
     // Key: domain. Value: most recent release opset version. Note that
-    // the highest opset version may be ahead of the most recent release's opset version.
+    // the highest opset version may be ahead of the most recent release's opset
+    // version.
     std::unordered_map<std::string, int> last_release_version_map_;
 
     std::mutex mutex_;
