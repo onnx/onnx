@@ -371,9 +371,6 @@ def make_attribute(
             # (and converts the ints to floats).
             attr.floats.extend(float(v) for v in value)
             attr.type = AttributeProto.FLOATS
-            # Turn np.int32/64 into Python built-in int.
-            attr.ints.extend(int(v) for v in value)
-            attr.type = AttributeProto.INTS
         elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
             attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
