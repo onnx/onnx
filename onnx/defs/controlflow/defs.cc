@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include <assert.h>
+
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
@@ -245,6 +247,7 @@ void IfInferenceFunction(InferenceContext& ctx) {
 
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
+  assert(num_inputs >= 2);
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;

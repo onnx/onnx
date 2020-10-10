@@ -96,14 +96,15 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      auto it = type_constraints.find(type_str);
-      if (it == type_constraints.end()) {
-        type_constraints[type_str] = *type_proto;
-      } else if (it->second != *type_proto) {
-        fail_check(
+      auto p = type_constraints.emplace(type_str, *type_proto);
+      if (!p.second) {
+        // failed to insert a new element due to a duplication, now check consistency
+        if (p.first->second != *type_proto) {
+          fail_check(
             param.GetName(),
             " has inconsistent type ",
             *Utils::DataTypeUtils::ToType(*param_type));
+        }
       }
     }
   } // for inputs
@@ -401,7 +402,7 @@ OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   num_outputs_allowed_ =
       [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
-    return allowed_output_nums.find(n) != allowed_output_nums.end();
+    return allowed_output_nums.count(n) > 0;
   };
   return *this;
 }

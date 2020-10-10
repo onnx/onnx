@@ -78,7 +78,6 @@ void convPoolShapeInference(
   } else {
     auto second_input_shape =
         ctx.getInputType(input2Idx)->tensor_type().shape();
-    kernel_shape.reserve(second_input_shape.dim_size() - 2);
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
         return;
@@ -1172,7 +1171,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     }
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
-    kernel_shape.reserve(second_input_shape.dim_size() - 2);
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
         return;

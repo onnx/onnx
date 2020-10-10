@@ -466,7 +466,6 @@ bool BuildContextDependentFunctionBodyCelu(
   float alpha = ctx.getAttribute("alpha") != nullptr
       ? ctx.getAttribute("alpha")->f()
       : celu_default_alpha;
-  body.reserve(4);
   body.push_back(
       {{"alpha"},
        "Constant",
@@ -2048,7 +2047,6 @@ bool BuildContextDependentFunctionBody(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.reserve(16);
   body.push_back(
       {{"const_zero"},
        "Constant",

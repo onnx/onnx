@@ -2588,7 +2588,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
           if (hasNInputShapes(ctx, 3)) {
             std::vector<const TensorShapeProto*> shapes;
-            shapes.reserve(3);
             shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
             shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
             shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
