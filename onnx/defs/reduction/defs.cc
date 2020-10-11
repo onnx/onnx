@@ -256,7 +256,7 @@ The type of the output tensor is integer.)DOC";
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::NonDifferentiable);
     schema.TypeConstraint(
         "T",
         OpSchema::all_numeric_types_with_bfloat(),
