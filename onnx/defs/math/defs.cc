@@ -365,7 +365,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)",
@@ -2306,7 +2306,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             1, 
             "a_scale", 
@@ -2315,7 +2315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             2, 
             "a_zero_point", 
@@ -2324,7 +2324,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             3, 
             "b", 
@@ -2333,7 +2333,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             4, 
             "b_scale", 
@@ -2342,7 +2342,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             5, 
             "b_zero_point", 
@@ -2351,7 +2351,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             6, 
             "y_scale", 
@@ -2360,7 +2360,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             7, 
             "y_zero_point", 
@@ -2369,7 +2369,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0, 
             "y", 
@@ -2378,7 +2378,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -2440,7 +2440,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             1, 
             "B", 
@@ -2449,7 +2449,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "a_zero_point",
@@ -2460,7 +2460,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             3,
             "b_zero_point",
@@ -2471,7 +2471,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0, 
             "Y", 
@@ -2480,7 +2480,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -3043,7 +3043,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "weight",
@@ -3053,7 +3053,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0, 
             "loss", 

@@ -5666,7 +5666,7 @@ Other versions of this operator: <a href="Changelog.md#Floor-1">1</a>, <a href="
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -9261,20 +9261,20 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (2 - 4)
 
 <dl>
-<dt><tt>A</tt> (differentiable) : T1</dt>
+<dt><tt>A</tt> (non-differentiable) : T1</dt>
 <dd>N-dimensional matrix A</dd>
-<dt><tt>B</tt> (differentiable) : T2</dt>
+<dt><tt>B</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional matrix B</dd>
-<dt><tt>a_zero_point</tt> (optional, differentiable) : T1</dt>
+<dt><tt>a_zero_point</tt> (optional, non-differentiable) : T1</dt>
 <dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
-<dt><tt>b_zero_point</tt> (optional, differentiable) : T2</dt>
+<dt><tt>b_zero_point</tt> (optional, non-differentiable) : T2</dt>
 <dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (differentiable) : T3</dt>
+<dt><tt>Y</tt> (non-differentiable) : T3</dt>
 <dd>Matrix multiply results from A * B</dd>
 </dl>
 
@@ -11028,9 +11028,9 @@ This version of the operator has been available since version 12 of the default 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).</dd>
-<dt><tt>target</tt> (differentiable) : Tind</dt>
+<dt><tt>target</tt> (non-differentiable) : Tind</dt>
 <dd>Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C). If ignore_index is specified, it may have a value outside [0, C) and the target values should either be in the range [0, C) or have the value ignore_index.</dd>
-<dt><tt>weight</tt> (optional, differentiable) : T</dt>
+<dt><tt>weight</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional rescaling weight tensor. If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.</dd>
 </dl>
 
@@ -12847,28 +12847,28 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>a</tt> (differentiable) : T1</dt>
+<dt><tt>a</tt> (non-differentiable) : T1</dt>
 <dd>N-dimensional quantized matrix a</dd>
-<dt><tt>a_scale</tt> (differentiable) : tensor(float)</dt>
+<dt><tt>a_scale</tt> (non-differentiable) : tensor(float)</dt>
 <dd>scale of quantized input a</dd>
-<dt><tt>a_zero_point</tt> (differentiable) : T1</dt>
+<dt><tt>a_zero_point</tt> (non-differentiable) : T1</dt>
 <dd>zero point of quantized input a</dd>
-<dt><tt>b</tt> (differentiable) : T2</dt>
+<dt><tt>b</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional quantized matrix b</dd>
-<dt><tt>b_scale</tt> (differentiable) : tensor(float)</dt>
+<dt><tt>b_scale</tt> (non-differentiable) : tensor(float)</dt>
 <dd>scale of quantized input b</dd>
-<dt><tt>b_zero_point</tt> (differentiable) : T2</dt>
+<dt><tt>b_zero_point</tt> (non-differentiable) : T2</dt>
 <dd>zero point of quantized input b</dd>
-<dt><tt>y_scale</tt> (differentiable) : tensor(float)</dt>
+<dt><tt>y_scale</tt> (non-differentiable) : tensor(float)</dt>
 <dd>scale of quantized output y</dd>
-<dt><tt>y_zero_point</tt> (differentiable) : T3</dt>
+<dt><tt>y_zero_point</tt> (non-differentiable) : T3</dt>
 <dd>zero point of quantized output y</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> (differentiable) : T3</dt>
+<dt><tt>y</tt> (non-differentiable) : T3</dt>
 <dd>Quantized matrix multiply results from a * b</dd>
 </dl>
 
