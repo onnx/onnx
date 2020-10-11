@@ -14952,14 +14952,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dt><tt>reduced</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -14998,14 +14998,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dt><tt>reduced</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -17078,14 +17078,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17121,14 +17121,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17164,14 +17164,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17207,14 +17207,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17250,14 +17250,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17293,14 +17293,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17336,14 +17336,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17379,14 +17379,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17422,16 +17422,16 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs (1 - 2)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -17467,14 +17467,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
