@@ -1,6 +1,8 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 #include "onnx/checker.h"
+#include <fstream>
+
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
@@ -158,7 +160,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
-    const bool check_type,
+    const bool check_type,  // check the type-equality for input and output
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION  // default the latest one
     ) {
@@ -292,6 +294,7 @@ static void InferShapesImpl(
 	}
 
     try {
+      // check the type-equality for input and output
       if (check_type) {
         schema->CheckInputOutputType(ctx);
       }
@@ -369,6 +372,44 @@ void InferShapes(
       check_type,
       schema_registry,
       m.ir_version());
+}
+
+void InferShapes(
+  const std::string& model_path,
+  const bool check_type,
+  const std::string& save_path,
+  const ISchemaRegistry* schema_registry
+  ) {
+  ModelProto model;
+  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
+  if (!model_stream.good()) {
+    fail_check(
+        "Unable to open model file:",
+        model_path,
+        ". Please check if it is a valid file.");
+  }
+  std::string data{std::istreambuf_iterator<char>{model_stream},
+                   std::istreambuf_iterator<char>{}};
+  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
+    fail_check(
+        "Unable to parse model from file:",
+        model_path,
+        ". Please check if it is a valid protobuf file of model.");
+  }
+  InferShapes(model, check_type, schema_registry);
+  // Save the inferred model to the original model path
+  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
+  std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::string model_string;
+  try {
+    model.SerializeToString(&model_string);
+    output << model_string;
+  } catch (...) {
+    fail_check(
+    "Unable to save inferred model to the target path:",
+    save_path);
+  }
+  
 }
 
 void InferShapeForFunctionNode(
