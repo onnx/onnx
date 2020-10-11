@@ -247,7 +247,7 @@ The type of the output tensor is integer.)DOC";
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::NonDifferentiable);
     schema.Output(
         0,
         "reduced",
