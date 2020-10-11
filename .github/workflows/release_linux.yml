@@ -1,4 +1,4 @@
-name: WindowsRelease
+name: LinuxRelease
 
 on:
   push:
@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
-        architecture: ['x64', 'x86']
+        python-version: [3.7] # [3.5, 3.6, 3.7, 3.8]
+        architecture: ['x64'] # ['x64', 'x86']s
     steps:
     - uses: actions/checkout@v2
     - name: Checkout submodules
