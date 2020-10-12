@@ -45,7 +45,6 @@ jobs:
         source py$(python.version)/bin/activate
         python -m pip install numpy protobuf
         sudo apt-get install protobuf-compiler libprotoc-dev
-        sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix       
     - name: Build wheel
       run: |
         $Env:ONNX_BUILD_TESTS=1
