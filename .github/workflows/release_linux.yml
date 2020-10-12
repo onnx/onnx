@@ -45,7 +45,7 @@ jobs:
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
       run: |
         python setup.py bdist_wheel
-        Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+        # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         # Remove pytest for now
         # pytest
     - uses: actions/upload-artifact@v1
