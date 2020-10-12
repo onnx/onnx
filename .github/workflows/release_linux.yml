@@ -38,11 +38,12 @@ jobs:
         python -m pip install numpy protobuf
         sudo apt-get install protobuf-compiler libprotoc-dev
     - name: Build wheel
+      env:
+        ONNX_BUILD_TESTS: 1
+        USE_MSVC_STATIC_RUNTIME: 1
+        ONNX_ML: 1
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
       run: |
-        $Env:ONNX_BUILD_TESTS=1
-        $Env:USE_MSVC_STATIC_RUNTIME=1
-        $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         # Remove pytest for now

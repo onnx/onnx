@@ -32,13 +32,15 @@ jobs:
       run: |
         python -m pip install --upgrade setuptools
         python -m pip install numpy
-        conda install -y -c conda-forge pybind11 protobuf  
+        brew update
+        brew install protobuf
     - name: Build wheel
+      env:
+        ONNX_BUILD_TESTS: 1
+        USE_MSVC_STATIC_RUNTIME: 1
+        ONNX_ML: 1
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
-        $Env:ONNX_BUILD_TESTS=1
-        $Env:USE_MSVC_STATIC_RUNTIME=1
-        $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
         python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         # Remove pytest for now
