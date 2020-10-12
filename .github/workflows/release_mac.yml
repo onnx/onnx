@@ -31,9 +31,8 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade setuptools
-        conda install -y -c conda-forge pybind11 protobuf
-        sudo brew update
-        sudo brew install protobuf
+        python -m pip install numpy
+        conda install -y -c conda-forge pybind11 protobuf  
     - name: Build wheel
       run: |
         $Env:ONNX_BUILD_TESTS=1
