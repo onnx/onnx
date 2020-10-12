@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - rel-*
-  # test this PR for now, remove it before the merge
-  pull_request:
-    branches: [ master ]
+
 
 jobs:
   build:
@@ -49,7 +47,7 @@ jobs:
         python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         pytest
-        # upload to PyPI automatically
+        # TODO: upload to PyPI automatically
     - uses: actions/upload-artifact@v1
       with:
         name: wheels

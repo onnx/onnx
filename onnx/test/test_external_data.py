@@ -245,6 +245,9 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
 
+# The following test will fail in some platforms
+# because >2GB proto python object is not allowed
+# Disable it for now and it should be fixed after 1.8 Release
 """
 class TestLarge2GBExternalData(TestLoadExternalDataBase):
 
