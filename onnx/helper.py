@@ -133,9 +133,12 @@ def make_graph(
     initializer=None,  # type: Optional[Sequence[TensorProto]]
     doc_string=None,  # type: Optional[Text]
     value_info=[],  # type: Sequence[ValueInfoProto]
+    sparse_initializer=None,  # type: Optional[Sequence[SparseTensorProto]]
 ):  # type: (...) -> GraphProto
     if initializer is None:
         initializer = []
+    if sparse_initializer is None:
+        sparse_initializer = []
     if value_info is None:
         value_info = []
     graph = GraphProto()
@@ -144,6 +147,7 @@ def make_graph(
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
+    graph.sparse_initializer.extend(sparse_initializer)
     graph.value_info.extend(value_info)
     if doc_string:
         graph.doc_string = doc_string
@@ -358,13 +362,15 @@ def make_attribute(
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
-        if all(isinstance(v, float) for v in value):
-            attr.floats.extend(value)
-            attr.type = AttributeProto.FLOATS
-        elif all(isinstance(v, numbers.Integral) for v in value):
+        if all(isinstance(v, numbers.Integral) for v in value):
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
+        elif all(isinstance(v, numbers.Real) for v in value):
+            # Since ints and floats are members of Real, this allows a mix of ints and floats
+            # (and converts the ints to floats).
+            attr.floats.extend(float(v) for v in value)
+            attr.type = AttributeProto.FLOATS
         elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
             attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
