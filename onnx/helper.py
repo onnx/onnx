@@ -10,7 +10,7 @@ from six import text_type, integer_types, binary_type
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION
+    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -19,6 +19,7 @@ import numpy as np  # type: ignore
 
 VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
 VersionTableType = List[VersionRowType]
+AssignmentBindingType = List[Tuple[Text, Text]]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
@@ -733,3 +734,22 @@ def strip_doc_string(proto):  # type: (google.protobuf.message.Message) -> None
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
                 strip_doc_string(getattr(proto, descriptor.name))
+
+
+def make_training_info(algorithm, algorithm_bindings, initialization, initialization_bindings):  # type: (GraphProto, AssignmentBindingType, GraphProto, AssignmentBindingType) -> TrainingInfoProto
+    training_info = TrainingInfoProto()
+    training_info.algorithm.CopyFrom(algorithm)
+    for k, v in algorithm_bindings:
+        binding = training_info.update_binding.add()
+        binding.key = k
+        binding.value = v
+
+    if initialization:
+        training_info.initialization.CopyFrom(initialization)
+    if initialization_bindings:
+        for k, v in initialization_bindings:
+            binding = training_info.initialization_binding
+            binding.key = k
+            binding.value = v
+    
+    return training_info
