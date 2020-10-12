@@ -283,16 +283,6 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
             model_file.write(model.SerializeToString())
         return model_filename, model
 
-    # 2GB models would fail onnx.checker with ModelProto but pass with model path
-    # Currently Windows-CI with Azure Pipelines has memory limitation
-    # load_external_data_for_model will throw MemoryError for >2GB models. So simply skip this test if Windows.
-    @pytest.mark.skipif(sys.platform.startswith("win"),  # type: ignore
-        reason="Because of the hardware limitation (memory) in Windows-CI, this test was not executed.")
-    def test_check_model_by_model(self):  # type: () -> None
-        model = onnx.load_model(self.model_filename, load_external_data=False)
-        load_external_data_for_model(model, self.temp_dir)  # Exceeds maximum protobuf
-        self.assertRaises(ValueError, checker.check_model, model)  # checker catches 2GB models and throw error
-
 
 if __name__ == '__main__':
     unittest.main()
