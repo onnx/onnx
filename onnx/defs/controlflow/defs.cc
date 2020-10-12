@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include <assert.h>
+
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
@@ -56,6 +58,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   temporary_type_protos.reserve(num_inputs);
 
   std::vector<const TypeProto*> subgraph_input_types;
+  subgraph_input_types.reserve(num_inputs);
 
   TensorShapeProto_Dimension sequence_len_dim;
 
@@ -113,6 +116,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
+    input_data.reserve(num_inputs);
     for (size_t i = 0; i < num_inputs; ++i) {
       // ctx.getInputData(i), the input to scan, does not represent the input to
       // scan body. So, we pass in null, to represent an unknown value.
@@ -243,9 +247,11 @@ void IfInferenceFunction(InferenceContext& ctx) {
 
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
+  assert(num_inputs >= 2);
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
+  subgraph_input_types.reserve(num_inputs);
 
   std::vector<TypeProto> temporary_type_protos;
   temporary_type_protos.reserve(num_inputs - 2);
