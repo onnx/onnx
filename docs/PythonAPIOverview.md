@@ -257,12 +257,31 @@ Function `polish_model` runs model checker, optimizer, shape inference engine on
 and also strips the doc_string for you.
 ```python
 import onnx
-import onnx.utils
 
 
 model = onnx.load('path/to/the/model.onnx')
 polished_model = onnx.utils.polish_model(model)
 ```
+
+### Extracting Sub-model with Inputs Outputs Tensor Names
+
+Function `extract_model()` extracts sub-model from an ONNX model.
+The sub-model is defined by the names of the input and output tensors *exactly*.
+
+```python
+import onnx
+
+input_path = 'path/to/the/original/model.onnx'
+output_path = 'path/to/save/the/extracted/model.onnx'
+input_names = ['input_0', 'input_1', 'input_2']
+output_names = ['output_0', 'output_1']
+
+onnx.utils.extract_model(input_path, output_path, input_names, output_names)
+```
+
+Note: For control-flow operators, e.g. If and Loop, the _boundary of sub-model_,
+which is defined by the input and output tensors, should not _cut through_ the
+subgraph that is connected to the _main graph_ as attributes of these operators.
 
 ## Tools
 ### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
