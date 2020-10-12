@@ -199,14 +199,14 @@ Other versions of this operator: <a href="Changelog.md#Abs-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -272,14 +272,14 @@ This version of the operator has been available since version 7 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The arccosine of the input tensor computed element-wise</dd>
 </dl>
 
@@ -328,14 +328,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The hyperbolic arccosine values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -388,16 +388,16 @@ Other versions of this operator: <a href="Changelog.md#Add-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>First operand.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T</dt>
+<dt><tt>C</tt> (differentiable) : T</dt>
 <dd>Result, has same element type as two inputs</dd>
 </dl>
 
@@ -604,14 +604,14 @@ Other versions of this operator: <a href="Changelog.md#ArgMax-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dt><tt>reduced</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -865,14 +865,14 @@ Other versions of this operator: <a href="Changelog.md#ArgMin-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dt><tt>reduced</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -1107,14 +1107,14 @@ This version of the operator has been available since version 7 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The arcsine of the input tensor computed element-wise</dd>
 </dl>
 
@@ -1163,14 +1163,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The hyperbolic arcsine values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -1219,14 +1219,14 @@ This version of the operator has been available since version 7 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The arctangent of the input tensor computed element-wise</dd>
 </dl>
 
@@ -1275,14 +1275,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The hyperbolic arctangent values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -1857,30 +1857,30 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dt><tt>scale</tt> : T</dt>
+<dt><tt>scale</tt> (differentiable) : T</dt>
 <dd>Scale tensor of shape (C).</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>mean</tt> : T</dt>
+<dt><tt>mean</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>var</tt> : T</dt>
+<dt><tt>var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
 #### Outputs (1 - 5)
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional) : T</dt>
+<dt><tt>mean</tt> (optional, non-differentiable) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>var</tt> (optional) : T</dt>
+<dt><tt>var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dt><tt>saved_mean</tt> (optional, non-differentiable) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation.</dd>
-<dt><tt>saved_var</tt> (optional) : T</dt>
+<dt><tt>saved_var</tt> (optional, non-differentiable) : T</dt>
 <dd>Saved variance used during training to speed up gradient computation.</dd>
 </dl>
 
@@ -2330,14 +2330,14 @@ Other versions of this operator: <a href="Changelog.md#Ceil-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -2399,14 +2399,14 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -2469,18 +2469,18 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">1</a>, <a href="C
 #### Inputs (1 - 3)
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor whose elements to be clipped</dd>
-<dt><tt>min</tt> (optional) : T</dt>
+<dt><tt>min</tt> (optional, non-differentiable) : T</dt>
 <dd>Minimum value, under which element is replaced by min. It must be a scalar(tensor of empty shape).</dd>
-<dt><tt>max</tt> (optional) : T</dt>
+<dt><tt>max</tt> (optional, non-differentiable) : T</dt>
 <dd>Maximum value, above which element is replaced by max. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Output tensor with clipped input elements</dd>
 </dl>
 
@@ -3395,18 +3395,18 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
-<dt><tt>W</tt> : T</dt>
+<dt><tt>W</tt> (differentiable) : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M/group x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, pad lengths and group count. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
 </dl>
 
@@ -3727,14 +3727,14 @@ This version of the operator has been available since version 7 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The cosine of the input tensor computed element-wise</dd>
 </dl>
 
@@ -3783,14 +3783,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The hyperbolic cosine values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -3867,16 +3867,16 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>x</tt> : T</dt>
+<dt><tt>x</tt> (differentiable) : T</dt>
 <dd>An input tensor that is to be processed.</dd>
-<dt><tt>axis</tt> : T2</dt>
+<dt><tt>axis</tt> (non-differentiable) : T2</dt>
 <dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T</dt>
+<dt><tt>y</tt> (differentiable) : T</dt>
 <dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
 </dl>
 
@@ -4306,14 +4306,14 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -4380,16 +4380,16 @@ Other versions of this operator: <a href="Changelog.md#Div-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>First operand.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T</dt>
+<dt><tt>C</tt> (differentiable) : T</dt>
 <dd>Result, has same element type as two inputs</dd>
 </dl>
 
@@ -4480,20 +4480,20 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href
 #### Inputs (1 - 3)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
-<dt><tt>ratio</tt> (optional) : T1</dt>
+<dt><tt>ratio</tt> (optional, non-differentiable) : T1</dt>
 <dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
-<dt><tt>training_mode</tt> (optional) : T2</dt>
+<dt><tt>training_mode</tt> (optional, non-differentiable) : T2</dt>
 <dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
 
 #### Outputs (1 - 2)
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> (optional) : T2</dt>
+<dt><tt>mask</tt> (optional, non-differentiable) : T2</dt>
 <dd>The output mask.</dd>
 </dl>
 
@@ -4878,7 +4878,7 @@ expect(node, inputs=[X], outputs=[Y, Y_Scale, Y_ZeroPoint],
   
   ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
   
-  where the reduce-sum performs a summation over all the indices occurring in in the input terms (term1, term2)
+  where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
   that do not occur in the output-term.
   
   The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
@@ -4912,14 +4912,14 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>Inputs</tt> (variadic) : T</dt>
+<dt><tt>Inputs</tt> (variadic, differentiable) : T</dt>
 <dd>Operands</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Output</tt> : T</dt>
+<dt><tt>Output</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -5063,15 +5063,15 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>1D input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D input tensor</dd>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>1D output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -5223,14 +5223,14 @@ Other versions of this operator: <a href="Changelog.md#Erf-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The error function of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
 </dl>
 
@@ -5276,14 +5276,14 @@ Other versions of this operator: <a href="Changelog.md#Exp-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The exponential of the input tensor computed element-wise</dd>
 </dl>
 
@@ -5341,16 +5341,16 @@ Other versions of this operator: <a href="Changelog.md#Expand-8">8</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
-<dt><tt>shape</tt> : tensor(int64)</dt>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -5554,14 +5554,14 @@ Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>A tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
 </dl>
 
@@ -5659,14 +5659,14 @@ Other versions of this operator: <a href="Changelog.md#Floor-1">1</a>, <a href="
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -6528,18 +6528,18 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">1</a>, <a href="C
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
-<dt><tt>C</tt> (optional) : T</dt>
+<dt><tt>C</tt> (optional, differentiable) : T</dt>
 <dd>Optional input tensor C. If not specified, the computation is done as if C is a scalar 0. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor of shape (M, N).</dd>
 </dl>
 
@@ -6793,14 +6793,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
@@ -6878,14 +6878,14 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
@@ -6910,14 +6910,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from pooling across the input tensor. The output tensor has the same rank as the input. The first two dimensions of output shape are the same as the input (N x C), while the other dimensions are all 1.</dd>
 </dl>
 
@@ -7156,14 +7156,14 @@ Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -7254,14 +7254,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
@@ -7620,18 +7620,18 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
-<dt><tt>scale</tt> : T</dt>
+<dt><tt>scale</tt> (differentiable) : T</dt>
 <dd>The input 1-dimensional scale tensor of size C.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as input.</dd>
 </dl>
 
@@ -7885,14 +7885,14 @@ Other versions of this operator: <a href="Changelog.md#LRN-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor, which has the shape and type as input tensor</dd>
 </dl>
 
@@ -8243,14 +8243,14 @@ Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -8480,14 +8480,14 @@ Other versions of this operator: <a href="Changelog.md#Log-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The natural log of the input tensor computed element-wise</dd>
 </dl>
 
@@ -8556,14 +8556,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
@@ -9108,14 +9108,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input matrix</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Matrix after normalization</dd>
 </dl>
 
@@ -9159,14 +9159,14 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from Lp pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
 </dl>
 
@@ -9191,16 +9191,16 @@ Other versions of this operator: <a href="Changelog.md#MatMul-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>N-dimensional matrix A</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>N-dimensional matrix B</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Matrix multiply results from A * B</dd>
 </dl>
 
@@ -9261,20 +9261,20 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs (2 - 4)
 
 <dl>
-<dt><tt>A</tt> : T1</dt>
+<dt><tt>A</tt> (non-differentiable) : T1</dt>
 <dd>N-dimensional matrix A</dd>
-<dt><tt>B</tt> : T2</dt>
+<dt><tt>B</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional matrix B</dd>
-<dt><tt>a_zero_point</tt> (optional) : T1</dt>
+<dt><tt>a_zero_point</tt> (optional, non-differentiable) : T1</dt>
 <dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
-<dt><tt>b_zero_point</tt> (optional) : T2</dt>
+<dt><tt>b_zero_point</tt> (optional, non-differentiable) : T2</dt>
 <dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T3</dt>
+<dt><tt>Y</tt> (non-differentiable) : T3</dt>
 <dd>Matrix multiply results from A * B</dd>
 </dl>
 
@@ -9340,14 +9340,14 @@ Other versions of this operator: <a href="Changelog.md#Max-1">1</a>, <a href="Ch
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
+<dt><tt>data_0</tt> (variadic, differentiable) : T</dt>
 <dd>List of tensors for max.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>max</tt> : T</dt>
+<dt><tt>max</tt> (differentiable) : T</dt>
 <dd>Output tensor.</dd>
 </dl>
 
@@ -10083,18 +10083,18 @@ Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> (differentiable) : T1</dt>
 <dd>Input data tensor that has to be unpooled. This tensor is typically the first output of the MaxPool op.Dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non-image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
-<dt><tt>I</tt> : T2</dt>
+<dt><tt>I</tt> (non-differentiable) : T2</dt>
 <dd>Input data tensor containing the indices corresponding to elements in the first input tensor X.This tensor is typically the second output of the MaxPool op.Dimensions must be the same as input tensor X. The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, assuming row-major storage. Also, the linear indices should not consider padding. So the values in indices are in the range [0, N x C x D1 x ... x Dn).</dd>
-<dt><tt>output_shape</tt> (optional) : T2</dt>
+<dt><tt>output_shape</tt> (optional, non-differentiable) : T2</dt>
 <dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, 'pads' values are ignored.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T1</dt>
+<dt><tt>output</tt> (differentiable) : T1</dt>
 <dd>Output data tensor that contains the result of the unpooling.</dd>
 </dl>
 
@@ -10177,14 +10177,14 @@ Other versions of this operator: <a href="Changelog.md#Mean-1">1</a>, <a href="C
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
+<dt><tt>data_0</tt> (variadic, differentiable) : T</dt>
 <dd>List of tensors for mean.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>mean</tt> : T</dt>
+<dt><tt>mean</tt> (differentiable) : T</dt>
 <dd>Output tensor.</dd>
 </dl>
 
@@ -10256,14 +10256,14 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -10327,14 +10327,14 @@ Other versions of this operator: <a href="Changelog.md#Min-1">1</a>, <a href="Ch
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
+<dt><tt>data_0</tt> (variadic, differentiable) : T</dt>
 <dd>List of tensors for min.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>min</tt> : T</dt>
+<dt><tt>min</tt> (differentiable) : T</dt>
 <dd>Output tensor.</dd>
 </dl>
 
@@ -10437,16 +10437,16 @@ Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>Dividend tensor</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
 <dd>Divisor tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T</dt>
+<dt><tt>C</tt> (differentiable) : T</dt>
 <dd>Remainder tensor</dd>
 </dl>
 
@@ -10748,16 +10748,16 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>First operand.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T</dt>
+<dt><tt>C</tt> (differentiable) : T</dt>
 <dd>Result, has same element type as two inputs</dd>
 </dl>
 
@@ -10876,14 +10876,14 @@ Other versions of this operator: <a href="Changelog.md#Neg-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -11026,18 +11026,18 @@ This version of the operator has been available since version 12 of the default 
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).</dd>
-<dt><tt>target</tt> : Tind</dt>
+<dt><tt>target</tt> (non-differentiable) : Tind</dt>
 <dd>Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C). If ignore_index is specified, it may have a value outside [0, C) and the target values should either be in the range [0, C) or have the value ignore_index.</dd>
-<dt><tt>weight</tt> (optional) : T</dt>
+<dt><tt>weight</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional rescaling weight tensor. If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>loss</tt> : T</dt>
+<dt><tt>loss</tt> (differentiable) : T</dt>
 <dd>The negative log likelihood loss</dd>
 </dl>
 
@@ -12312,16 +12312,16 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">1</a>, <a href="
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
-<dt><tt>slope</tt> : T</dt>
+<dt><tt>slope</tt> (differentiable) : T</dt>
 <dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor (same size as X)</dd>
 </dl>
 
@@ -12565,17 +12565,17 @@ Other versions of this operator: <a href="Changelog.md#Pow-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>First operand, base of the exponent.</dd>
-<dt><tt>Y</tt> : T1</dt>
+<dt><tt>Y</tt> (differentiable) : T1</dt>
 <dd>Second operand, power of the exponent.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Z</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dt><tt>Z</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -12847,28 +12847,28 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>a</tt> : T1</dt>
+<dt><tt>a</tt> (non-differentiable) : T1</dt>
 <dd>N-dimensional quantized matrix a</dd>
-<dt><tt>a_scale</tt> : tensor(float)</dt>
+<dt><tt>a_scale</tt> (non-differentiable) : tensor(float)</dt>
 <dd>scale of quantized input a</dd>
-<dt><tt>a_zero_point</tt> : T1</dt>
+<dt><tt>a_zero_point</tt> (non-differentiable) : T1</dt>
 <dd>zero point of quantized input a</dd>
-<dt><tt>b</tt> : T2</dt>
+<dt><tt>b</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional quantized matrix b</dd>
-<dt><tt>b_scale</tt> : tensor(float)</dt>
+<dt><tt>b_scale</tt> (non-differentiable) : tensor(float)</dt>
 <dd>scale of quantized input b</dd>
-<dt><tt>b_zero_point</tt> : T2</dt>
+<dt><tt>b_zero_point</tt> (non-differentiable) : T2</dt>
 <dd>zero point of quantized input b</dd>
-<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dt><tt>y_scale</tt> (non-differentiable) : tensor(float)</dt>
 <dd>scale of quantized output y</dd>
-<dt><tt>y_zero_point</tt> : T3</dt>
+<dt><tt>y_zero_point</tt> (non-differentiable) : T3</dt>
 <dd>zero point of quantized output y</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T3</dt>
+<dt><tt>y</tt> (non-differentiable) : T3</dt>
 <dd>Quantized matrix multiply results from a * b</dd>
 </dl>
 
@@ -13589,14 +13589,14 @@ Other versions of this operator: <a href="Changelog.md#Reciprocal-1">1</a>, <a h
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -13661,14 +13661,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -13860,14 +13860,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14072,14 +14072,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14190,14 +14190,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14401,14 +14401,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14581,14 +14581,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14762,14 +14762,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14941,14 +14941,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -15118,16 +15118,16 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 #### Inputs (1 - 2)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -15334,14 +15334,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -15503,14 +15503,14 @@ Other versions of this operator: <a href="Changelog.md#Relu-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -17020,14 +17020,14 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -17783,14 +17783,14 @@ Other versions of this operator: <a href="Changelog.md#Selu-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -18196,14 +18196,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output.</dd>
 </dl>
 
@@ -18271,14 +18271,14 @@ Other versions of this operator: <a href="Changelog.md#Sigmoid-1">1</a>, <a href
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -18330,14 +18330,14 @@ Other versions of this operator: <a href="Changelog.md#Sign-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The sign of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
 </dl>
 
@@ -18381,14 +18381,14 @@ This version of the operator has been available since version 7 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The sine of the input tensor computed element-wise</dd>
 </dl>
 
@@ -18437,14 +18437,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The hyperbolic sine values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -18845,14 +18845,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
@@ -19010,20 +19010,20 @@ Other versions of this operator: <a href="Changelog.md#SoftmaxCrossEntropyLoss-1
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>scores</tt> : T</dt>
+<dt><tt>scores</tt> (differentiable) : T</dt>
 <dd>The predicted outputs with shape [batch_size, class_size], or [batch_size, class_size, D1, D2 , ..., Dk], where K is the number of dimensions.</dd>
-<dt><tt>labels</tt> : Tind</dt>
+<dt><tt>labels</tt> (non-differentiable) : Tind</dt>
 <dd>The ground truth output tensor, with shape [batch_size], or [batch_size, D1, D2, ..., Dk], where K is the number of dimensions. Labels element value shall be in range of [0, C). If ignore_index is specified, it may have a value outside [0, C) and the label values should either be in the range [0, C) or have the value ignore_index.</dd>
-<dt><tt>weights</tt> (optional) : T</dt>
+<dt><tt>weights</tt> (optional, non-differentiable) : T</dt>
 <dd>A manual rescaling weight given to each class. If given, it has to be a 1D Tensor assigning weight to each of the classes. Otherwise, it is treated as if having all ones.</dd>
 </dl>
 
 #### Outputs (1 - 2)
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Weighted loss float Tensor. If reduction is 'none', this has the shape of [batch_size], or [batch_size, D1, D2, ..., Dk] in case of K-dimensional loss. Otherwise, it is a scalar.</dd>
-<dt><tt>log_prob</tt> (optional) : T</dt>
+<dt><tt>log_prob</tt> (optional, differentiable) : T</dt>
 <dd>Log probability tensor. If the output of softmax is prob, its value is log(prob).</dd>
 </dl>
 
@@ -20071,14 +20071,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>1D input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>1D input tensor</dd>
 </dl>
 
@@ -20127,14 +20127,14 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -20445,14 +20445,14 @@ Other versions of this operator: <a href="Changelog.md#Sqrt-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -20764,16 +20764,16 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">1</a>, <a href="Ch
 #### Inputs
 
 <dl>
-<dt><tt>A</tt> : T</dt>
+<dt><tt>A</tt> (differentiable) : T</dt>
 <dd>First operand.</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> : T</dt>
+<dt><tt>C</tt> (differentiable) : T</dt>
 <dd>Result, has same element type as two inputs</dd>
 </dl>
 
@@ -20848,14 +20848,14 @@ Other versions of this operator: <a href="Changelog.md#Sum-1">1</a>, <a href="Ch
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
+<dt><tt>data_0</tt> (variadic, differentiable) : T</dt>
 <dd>List of tensors for sum.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>sum</tt> : T</dt>
+<dt><tt>sum</tt> (differentiable) : T</dt>
 <dd>Output tensor.</dd>
 </dl>
 
@@ -20917,14 +20917,14 @@ This version of the operator has been available since version 7 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The tangent of the input tensor computed element-wise</dd>
 </dl>
 
@@ -20975,14 +20975,14 @@ Other versions of this operator: <a href="Changelog.md#Tanh-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>The hyperbolic tangent values of the input tensor computed element-wise</dd>
 </dl>
 
@@ -21080,14 +21080,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input for n-gram extraction</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T1</dt>
+<dt><tt>Y</tt> (non-differentiable) : T1</dt>
 <dd>Ngram results</dd>
 </dl>
 
@@ -21319,14 +21319,14 @@ This version of the operator has been available since version 10 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -21526,18 +21526,18 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
-<dt><tt>K</tt> : tensor(int64)</dt>
+<dt><tt>K</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Values</tt> : T</dt>
+<dt><tt>Values</tt> (differentiable) : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
-<dt><tt>Indices</tt> : I</dt>
+<dt><tt>Indices</tt> (non-differentiable) : I</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 

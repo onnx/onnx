@@ -234,18 +234,16 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
     for (const TensorProto& tensor : sequence.tensor_values()) {
       check_tensor(tensor, ctx);
     }
-  }
-  else if (sequence.elem_type() == SequenceProto::SPARSE_TENSOR) {
-    for (const SparseTensorProto& sparse_tensor : sequence.sparse_tensor_values()) {
+  } else if (sequence.elem_type() == SequenceProto::SPARSE_TENSOR) {
+    for (const SparseTensorProto& sparse_tensor :
+         sequence.sparse_tensor_values()) {
       check_sparse_tensor(sparse_tensor, ctx);
     }
-  }
-  else if (sequence.elem_type() == SequenceProto::SEQUENCE) {
+  } else if (sequence.elem_type() == SequenceProto::SEQUENCE) {
     for (const SequenceProto& seq : sequence.sequence_values()) {
       check_sequence(seq, ctx);
     }
-  }
-  else if (sequence.elem_type() == SequenceProto::MAP) {
+  } else if (sequence.elem_type() == SequenceProto::MAP) {
     for (const MapProto& map : sequence.map_values()) {
       check_map(map, ctx);
     }
@@ -298,18 +296,15 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 
   if (map.values().elem_type() == SequenceProto::TENSOR) {
     num_values = map.values().tensor_values_size();
-  }
-  else if (map.values().elem_type() == SequenceProto::SPARSE_TENSOR) {
+  } else if (map.values().elem_type() == SequenceProto::SPARSE_TENSOR) {
     num_values = map.values().sparse_tensor_values_size();
-  }
-  else if (map.values().elem_type() == SequenceProto::SEQUENCE) {
+  } else if (map.values().elem_type() == SequenceProto::SEQUENCE) {
     num_values = map.values().sequence_values_size();
-  }
-  else if (map.values().elem_type() == SequenceProto::MAP) {
+  } else if (map.values().elem_type() == SequenceProto::MAP) {
     num_values = map.values().map_values_size();
   }
 
-  if (num_keys != num_values){
+  if (num_keys != num_values) {
     fail_check(
         "Length of map keys and map values are not the same (map name: ",
         map.name(),
@@ -436,8 +431,6 @@ void check_sparse_tensor(
 
   int dense_rank = sparse_tensor_proto.dims_size();
   if (dense_rank == 0) {
-    // TODO: Should we add a name field for a sparse-tensor-proto?
-    // Currently, values has a name, but message may be a bit confusing.
     fail_check(
         "Sparse tensor (", values.name(), ") must have a dense-rank > 0");
   }
@@ -589,8 +582,9 @@ void check_node(
 
   // If encounter experimental op, stop checking
   if (check_is_experimental_op(node.op_type())) {
-    std::cerr << "Warning: Checker does not support models with experimental ops: "
-          << node.op_type() << std::endl;
+    std::cerr
+        << "Warning: Checker does not support models with experimental ops: "
+        << node.op_type() << std::endl;
     return;
   }
 
@@ -610,7 +604,8 @@ void check_node(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN ||
-        node.domain() == "ai.onnx" || node.domain() == AI_ONNX_TRAINING_DOMAIN) {
+        node.domain() == "ai.onnx" ||
+        node.domain() == AI_ONNX_TRAINING_DOMAIN) {
       // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() +
@@ -663,27 +658,50 @@ void check_graph(
     lex_ctx.add(value_info.name());
   }
 
+  std::unordered_set<
+      std::reference_wrapper<const std::string>,
+      std::hash<std::string>, std::equal_to<std::string>>
+      initializer_name_checker;
+
   for (const auto& init : graph.initializer()) {
+    enforce_has_field(init, name);
+    const auto& name = init.name();
+    if (name.empty()) {
+      fail_check("Tensor initializers must have a non-empty name");
+    }
+
+    if (!initializer_name_checker.insert(std::cref(name)).second) {
+      fail_check(name + " initializer name is not unique");
+    }
+
+    check_tensor(init, ctx);
+
     if (ctx.get_ir_version() <= 0x00000003) {
       // Initializers are a subset of graph inputs for IR_VERSION <= 3
-      if (!lex_ctx.this_graph_has(init.name())) {
-        fail_check(init.name() + " in initializer but not in graph input");
+      if (!lex_ctx.this_graph_has(name)) {
+        fail_check(name + " in initializer but not in graph input");
       }
     } else {
       // An initializer is allowed to have the same name as an input,
       // but is not required to (for IR_VERSION >= 4)
-      lex_ctx.add(init.name());
+      lex_ctx.add(name);
     }
-    check_tensor(init, ctx);
   }
 
-  // TODO: Need to check that sparse-initializers names are distinct from
-  // initializer names. It looks like the existing checker does not check for
-  // certain duplication of names: e.g., two entries in the initializer list
-  // with same name. Will add a new integrated check.
   for (const auto& sparse_init : graph.sparse_initializer()) {
+    const auto& values = sparse_init.values();
+    enforce_has_field(values, name);
+    const auto& name = values.name();
+    if (name.empty()) {
+      fail_check("Sparse tensor initializers must have a non-empty name");
+    }
+    if (!initializer_name_checker.insert(std::cref(name)).second) {
+      fail_check(
+          name +
+          " sparse initializer name is not unique across initializers and sparse_initializers");
+    }
     check_sparse_tensor(sparse_init, ctx);
-    lex_ctx.add(sparse_init.values().name());
+    lex_ctx.add(name);
   }
 
   for (const auto& node : graph.node()) {
@@ -866,8 +884,9 @@ void check_model(const std::string& model_path) {
         model_path,
         ". Please check if it is a valid file.");
   }
-  std::string data{std::istreambuf_iterator<char>{model_stream},
-                   std::istreambuf_iterator<char>{}};
+  std::string data{
+      std::istreambuf_iterator<char>{model_stream},
+      std::istreambuf_iterator<char>{}};
   if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
     fail_check(
         "Unable to parse model from file:",
@@ -890,21 +909,21 @@ void check_model(const ModelProto& model) {
   check_model(model, ctx);
 }
 
-
-std::set<std::string> experimental_ops = {"ATen",
-                                          "Affine",
-                                          "ConstantFill",
-                                          "Crop",
-                                          "DynamicSlice",
-                                          "GRUUnit",
-                                          "GivenTensorFill",
-                                          "ImageScaler",
-                                          "ParametricSoftplus",
-                                          "Scale",
-                                          "ScaledTanh"};
+std::set<std::string> experimental_ops = {
+    "ATen",
+    "Affine",
+    "ConstantFill",
+    "Crop",
+    "DynamicSlice",
+    "GRUUnit",
+    "GivenTensorFill",
+    "ImageScaler",
+    "ParametricSoftplus",
+    "Scale",
+    "ScaledTanh"};
 
 bool check_is_experimental_op(std::string node_op_type) {
-  return (experimental_ops.count(node_op_type))? true:false;
+  return (experimental_ops.count(node_op_type)) ? true : false;
 }
 
 #undef fail_check
