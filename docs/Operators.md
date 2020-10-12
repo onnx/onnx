@@ -17020,14 +17020,14 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -18330,14 +18330,14 @@ Other versions of this operator: <a href="Changelog.md#Sign-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> (differentiable) : T</dt>
+<dt><tt>input</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
+<dt><tt>output</tt> (non-differentiable) : T</dt>
 <dd>The sign of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
 </dl>
 
