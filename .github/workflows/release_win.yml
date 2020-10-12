@@ -49,6 +49,7 @@ jobs:
         python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         pytest
+        # upload to PyPI automatically
     - uses: actions/upload-artifact@v1
       with:
         name: wheels

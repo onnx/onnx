@@ -31,7 +31,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest==5.4.3 nbval numpy wheel
+        pip install pytest==5.4.3 numpy wheel
         python -m pip install virtualenv
         python -m virtualenv py$(python.version)
         source py$(python.version)/bin/activate
@@ -46,6 +46,7 @@ jobs:
       run: |
         python setup.py bdist_wheel
         # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+        pip install dist/*.whl
         pytest
         # upload to PyPI automatically
     - uses: actions/upload-artifact@v1
