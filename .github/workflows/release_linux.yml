@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7] # [3.5, 3.6, 3.7, 3.8]
-        architecture: ['x64'] # ['x64', 'x86']s
+        python-version: [3.5, 3.6, 3.7, 3.8]
+        architecture: ['x64', 'x86']
     steps:
     - uses: actions/checkout@v2
     - name: Checkout submodules
@@ -46,8 +46,8 @@ jobs:
       run: |
         python setup.py bdist_wheel
         # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
-        # Remove pytest for now
-        # pytest
+        pytest
+        # # upload to PyPI automatically
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
