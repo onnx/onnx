@@ -333,7 +333,7 @@ static void InferShapesImpl(
   // Throw shape inference error if any
   if (!inference_errors.empty()) {
     std::cerr << "Shape inference error(s): ";
-    for (std::string error: inference_errors) {
+    for (const std::string &error: inference_errors) {
       std::cerr << error << std::endl;
     }
     throw std::runtime_error("");
@@ -494,7 +494,7 @@ void InferShapeForFunctionNode(
     }
   }
   for (int i = 0; i < func->output_size(); ++i) {
-    std::string output_name = func->output().Get(i);
+    const std::string &output_name = func->output().Get(i);
     // Skip if no type inferred for the tensor
     if (!temp_valueTypesByName.count(output_name)) {
       continue;
@@ -553,6 +553,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
+  graphOutputTypes.reserve(g_->output().size());
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
   }
