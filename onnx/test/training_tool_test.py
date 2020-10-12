@@ -7,7 +7,7 @@ import unittest
 import onnx
 import numpy as np
 from onnx.tools import update_model_dims
-from onnx import helper, numpy_helper, TensorProto
+from onnx import helper, numpy_helper, shape_inference, TensorProto
 
 
 class TestTrainingTool(unittest.TestCase):
@@ -15,14 +15,14 @@ class TestTrainingTool(unittest.TestCase):
         # Inference graph.
         A_shape = [2, 2]
         A_name = 'A'
-        A = np.array(A_shape).astype(np.float)
+        A = np.random.rand(*A_shape).astype(np.float32)
         A_initializer = numpy_helper.from_array(A, name=A_name)
         A_value_info = helper.make_tensor_value_info(
             A_name, TensorProto.FLOAT, A_shape)
 
         B_shape = [2, 2]
         B_name = 'B'
-        B = np.array(B_shape).astype(np.float)
+        B = np.random.rand(*B_shape).astype(np.float32)
         B_initializer = numpy_helper.from_array(B, name=B_name)
         B_value_info = helper.make_tensor_value_info(
             B_name, TensorProto.FLOAT, B_shape)
@@ -49,7 +49,7 @@ class TestTrainingTool(unittest.TestCase):
         # Training graph
         X_shape = [2, 2]
         X_name = 'X'
-        X = np.array(X_shape).astype(np.float)
+        X = np.random.rand(*X_shape).astype(np.float32)
         X_initializer = numpy_helper.from_array(X, name=X_name)
         X_value_info = helper.make_tensor_value_info(
             X_name, TensorProto.FLOAT, X_shape)
@@ -98,7 +98,8 @@ class TestTrainingTool(unittest.TestCase):
         
         # Wrap full training graph as a ModelProto so that we can run checker.
         full_training_model = helper.make_model(full_training_graph)
-        onnx.checker.check_model(full_training_model)
+        full_training_model_with_shapes = shape_inference.infer_shapes(full_training_model)
+        onnx.checker.check_model(full_training_model_with_shapes)
 
 if __name__ == '__main__':
     unittest.main()
