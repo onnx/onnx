@@ -245,6 +245,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
 
+"""
 class TestLarge2GBExternalData(TestLoadExternalDataBase):
 
     def setUp(self):  # type: () -> None
@@ -282,7 +283,7 @@ class TestLarge2GBExternalData(TestLoadExternalDataBase):
         with open(model_filename, "wb") as model_file:
             model_file.write(model.SerializeToString())
         return model_filename, model
-
+"""
 
 if __name__ == '__main__':
     unittest.main()
