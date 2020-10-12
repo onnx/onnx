@@ -604,14 +604,14 @@ Other versions of this operator: <a href="Changelog.md#ArgMax-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dt><tt>reduced</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -865,14 +865,14 @@ Other versions of this operator: <a href="Changelog.md#ArgMin-1">1</a>, <a href=
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int64)</dt>
+<dt><tt>reduced</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -13661,14 +13661,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -13860,14 +13860,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14072,14 +14072,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14190,14 +14190,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14401,14 +14401,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14581,14 +14581,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14762,14 +14762,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -14941,14 +14941,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -15118,16 +15118,16 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 #### Inputs (1 - 2)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>axes</tt> (optional) : tensor(int64)</dt>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
@@ -15334,14 +15334,14 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> (differentiable) : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
