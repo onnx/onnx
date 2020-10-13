@@ -736,7 +736,7 @@ def strip_doc_string(proto):  # type: (google.protobuf.message.Message) -> None
                 strip_doc_string(getattr(proto, descriptor.name))
 
 
-def make_training_info(algorithm, algorithm_bindings, initialization, initialization_bindings):  # type: (GraphProto, AssignmentBindingType, GraphProto, AssignmentBindingType) -> TrainingInfoProto
+def make_training_info(algorithm, algorithm_bindings, initialization, initialization_bindings):  # type: (GraphProto, AssignmentBindingType,  Optional[GraphProto], Optional[AssignmentBindingType]) -> TrainingInfoProto
     training_info = TrainingInfoProto()
     training_info.algorithm.CopyFrom(algorithm)
     for k, v in algorithm_bindings:
@@ -748,7 +748,7 @@ def make_training_info(algorithm, algorithm_bindings, initialization, initializa
         training_info.initialization.CopyFrom(initialization)
     if initialization_bindings:
         for k, v in initialization_bindings:
-            binding = training_info.initialization_binding
+            binding = training_info.initialization_binding.add()
             binding.key = k
             binding.value = v
 
