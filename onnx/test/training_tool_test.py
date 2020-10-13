@@ -95,11 +95,12 @@ class TestTrainingTool(unittest.TestCase):
             list(model.graph.input) + list(model.training_info[0].algorithm.input),
             list(model.graph.output) + list(model.training_info[0].algorithm.output),
             list(model.graph.initializer) + list(model.training_info[0].algorithm.initializer))
-        
+
         # Wrap full training graph as a ModelProto so that we can run checker.
         full_training_model = helper.make_model(full_training_graph)
         full_training_model_with_shapes = shape_inference.infer_shapes(full_training_model)
         onnx.checker.check_model(full_training_model_with_shapes)
+
 
 if __name__ == '__main__':
     unittest.main()

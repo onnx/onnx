@@ -751,5 +751,5 @@ def make_training_info(algorithm, algorithm_bindings, initialization, initializa
             binding = training_info.initialization_binding
             binding.key = k
             binding.value = v
-    
+
     return training_info
