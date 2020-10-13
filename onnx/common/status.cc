@@ -74,7 +74,7 @@ const Status& Status::OK() noexcept {
 }
 
 const std::string& Status::EmptyString() {
-  static std::string empty_str = "";
+  static std::string empty_str;
   return empty_str;
 }
 

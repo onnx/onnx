@@ -87,6 +87,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           std::vector<int> input_elem_types;
+          input_elem_types.reserve(numInputs);
           for (size_t i = 0; i < numInputs; ++i) {
             auto input_type = ctx.getInputType(i);
             if(nullptr == input_type){

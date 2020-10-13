@@ -41,7 +41,15 @@ False instead of True.)DOC";
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T");
+    schema.Input(
+        0, 
+        "data", 
+        "An input tensor.", 
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
@@ -58,7 +66,10 @@ False instead of True.)DOC";
           "else act as an Identity op when 'noop_with_empty_axes' is true. "
           "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
-          OpSchema::Optional);
+          OpSchema::Optional,
+          true,
+          1,
+          OpSchema::NonDifferentiable);
     } else {
       schema.Attr(
           "axes",
@@ -67,7 +78,15 @@ False instead of True.)DOC";
           AttributeProto::INTS,
           OPTIONAL_VALUE);
     }
-    schema.Output(0, "reduced", "Reduced output tensor.", "T");
+    schema.Output(
+        0, 
+        "reduced", 
+        "Reduced output tensor.", 
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
@@ -220,12 +239,24 @@ The type of the output tensor is integer.)DOC";
         "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
         AttributeProto::INT,
         static_cast<int64_t>(0));
-    schema.Input(0, "data", "An input tensor.", "T");
+    schema.Input(
+        0, 
+        "data", 
+        "An input tensor.", 
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.Output(
         0,
         "reduced",
         "Reduced output tensor with integer data type.",
-        "tensor(int64)");
+        "tensor(int64)",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.TypeConstraint(
         "T",
         OpSchema::all_numeric_types_with_bfloat(),
