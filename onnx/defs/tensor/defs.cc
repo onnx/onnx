@@ -567,6 +567,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("The input is not evenly splittable");
             }
             int chunk_size = split_dim_value / num_outputs;
+            split.reserve(ctx.getNumOutputs());
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
               split.push_back(chunk_size);
             }
@@ -910,6 +911,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
+            perm.reserve(shape.dim_size());
             for (int i = shape.dim_size() - 1; i >= 0; --i)
               perm.push_back(i);
           } else if (!perm.empty()) {
@@ -940,7 +942,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Scatter_ver13_doc = R"DOC(
+static const char* Scatter_ver11_doc = R"DOC(
 This operator is deprecated. Please use ScatterElements, which provides the same functionality.
 
 Scatter takes three inputs `data`, `updates`, and `indices` of the same
@@ -998,10 +1000,10 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scatter,
-    13,
+    11,
     OpSchema()
         .Deprecate()
-        .SetDoc(Scatter_ver13_doc)
+        .SetDoc(Scatter_ver11_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1047,7 +1049,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types(),
             "Input and output types can be of any tensor type.")
         .TypeConstraint(
             "Tind",
@@ -2007,7 +2009,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return;
         }));
 
-static const char* Upsample_ver13_doc = R"DOC(
+static const char* Upsample_ver10_doc = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
@@ -2015,7 +2017,7 @@ Each dimension value of the output tensor is:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
-    13,
+    10,
     OpSchema()
         .Deprecate()
         .Attr(
@@ -2044,9 +2046,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver13_doc)
+        .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference_opset7_to_10(ctx);
         }));

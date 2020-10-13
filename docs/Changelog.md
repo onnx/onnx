@@ -17627,66 +17627,6 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dd>Constrain roi type to float or double.</dd>
 </dl>
 
-### <a name="Scatter-13"></a>**Scatter-13** (deprecated)</a>
-
-  This operator is deprecated. Please use ScatterElements, which provides the same functionality.
-  
-  Scatter takes three inputs `data`, `updates`, and `indices` of the same
-  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
-  (by default, the outer-most axis, that is axis 0). The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value
-  to values specified by `updates` at specific index positions specified by
-  `indices`. Its output shape is the same as the shape of `data`.
-  
-  For each entry in `updates`, the target index in `data` is obtained by combining
-  the corresponding entry in `indices` with the index of the entry itself: the
-  index-value for dimension = axis is obtained from the value of the corresponding
-  entry in `indices` and the index-value for dimension != axis is obtained from the
-  index of the entry itself.
-  
-  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
-  is performed as below:
-  ```
-    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
-    output[i][indices[i][j]] = updates[i][j] if axis = 1,
-  ```
-  
-  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
-  Example 1:
-  ```
-    data = [
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-    ]
-    indices = [
-        [1, 0, 2],
-        [0, 2, 1],
-    ]
-    updates = [
-        [1.0, 1.1, 1.2],
-        [2.0, 2.1, 2.2],
-    ]
-    output = [
-        [2.0, 1.1, 0.0]
-        [1.0, 0.0, 2.2]
-        [0.0, 2.1, 1.2]
-    ]
-  ```
-  Example 2:
-  ```
-    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-    indices = [[1, 3]]
-    updates = [[1.1, 2.1]]
-    axis = 1
-    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
-  ```
-
-#### Version
-
-This version of the operator has been deprecated since version 13 of the default ONNX operator set.
-
 ### <a name="ScatterElements-13"></a>**ScatterElements-13**</a>
 
   ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
@@ -18537,16 +18477,6 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
-
-### <a name="Upsample-13"></a>**Upsample-13** (deprecated)</a>
-
-  Upsample the input tensor.
-  Each dimension value of the output tensor is:
-    output_dimension = floor(input_dimension * scale).
-
-#### Version
-
-This version of the operator has been deprecated since version 13 of the default ONNX operator set.
 
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set

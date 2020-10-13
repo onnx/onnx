@@ -122,7 +122,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
-|<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-13">13</a>, <a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
+|<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
 |<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
@@ -159,7 +159,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
 |<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
-|<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-13">13</a>, <a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
+|<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
@@ -17330,9 +17330,9 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 
 #### Version
 
-This version of the operator has been deprecated since version 13 of the default ONNX operator set.
+This version of the operator has been deprecated since version 11 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Scatter-9">9</a>, <a href="Changelog.md#Scatter-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Scatter-9">9</a>
 
 
 #### Examples
@@ -22125,9 +22125,9 @@ expect(node, inputs=[x, axes], outputs=[y],
 
 #### Version
 
-This version of the operator has been deprecated since version 13 of the default ONNX operator set.
+This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Upsample-7">7</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-10">10</a>
+Other versions of this operator: <a href="Changelog.md#Upsample-7">7</a>, <a href="Changelog.md#Upsample-9">9</a>
 
 
 #### Examples
