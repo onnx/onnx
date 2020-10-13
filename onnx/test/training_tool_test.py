@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import unittest
 import onnx
-import numpy as np
+import numpy as np  # type: ignore
 from onnx.tools import update_model_dims
 from onnx import helper, numpy_helper, shape_inference, TensorProto
 
