@@ -31,6 +31,7 @@ struct Upsample_9_8 final : public Adapter {
                   reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));
             }            
             std::vector<double> d_values;
+            d_values.reserve(value.size());
             for (size_t j = 0; j < value.size(); j++)
             {
               d_values.push_back(static_cast<double>(value[j]));
@@ -64,6 +65,7 @@ struct Upsample_9_8 final : public Adapter {
                 reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));
           }
           std::vector<double> d_values;
+          d_values.reserve(value.size());
           for (size_t j = 0; j < value.size(); j++)
           {
             d_values.push_back(static_cast<double>(value[j]));
