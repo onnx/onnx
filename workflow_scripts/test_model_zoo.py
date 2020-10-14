@@ -63,15 +63,18 @@ def main():
 
             # check onnx model
             model = onnx.load(model_path)
+            print('Finish load')
             # stricter onnx.checker with onnx.shape_inference
             onnx.checker.check_model(model, True)
+            print('Finish check')
 
             # remove the model to save space in CIs
             if os.path.exists(model_path):
                 os.remove(model_path)
+                print('Finish remove')
             # clean git lfs cache
             run_lfs_prune()
-
+            print('Finish prune')
             print('[PASS]: {} is checked by onnx. '.format(model_name))
 
         except Exception as e:
