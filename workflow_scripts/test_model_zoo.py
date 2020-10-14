@@ -1,4 +1,5 @@
 import argparse
+import config
 import onnx
 import os
 from pathlib import Path
@@ -47,7 +48,6 @@ def main():
                     onnx_model_path = os.path.join(root, file)
                     model_list.append(onnx_model_path)
                     print(onnx_model_path)
-
     # run lfs install before starting the tests
     run_lfs_install()
 
@@ -76,7 +76,9 @@ def main():
 
         except Exception as e:
             print('[FAIL]: {}'.format(e))
-            failed_models.append(model_path)
+            # if the model_path exists in the skip list, simply skip it
+            if model_path.replace('\\', '/') in config.SKIP_CHECKER_MODELS:
+                failed_models.append(model_path)
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
 
