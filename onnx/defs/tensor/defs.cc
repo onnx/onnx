@@ -1564,7 +1564,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data",
             "Tensors with at least max(dims) dimensions.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "axes",
@@ -1580,7 +1583,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "squeezed",
             "Reshaped tensor with same data as input.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -2124,13 +2130,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "N-D tensor",
             "T1",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "roi",
             "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
             "T2",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "scales",
@@ -2138,19 +2150,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
             " be the same as the rank of input 'X'. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
             "tensor(float)",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
             "tensor(int64)",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "Y",
             "N-D tensor after resizing",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -2216,7 +2238,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "condition",
@@ -2225,13 +2250,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "or the flattened input size if axis is not specified. "
             "In such cases data slices or elements exceeding the condition length are discarded.",
             "T1",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "output",
             "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
