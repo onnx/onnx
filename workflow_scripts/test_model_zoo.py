@@ -54,6 +54,7 @@ def main():
     print('=== Running ONNX Checker on {} models ==='.format(len(model_list)))
     # run checker on each model
     failed_models = []
+    failed_messages = []
     for model_path in model_list:
         start = time.time()
         model_name = model_path.split('/')[-1]
@@ -65,7 +66,7 @@ def main():
             model = onnx.load(model_path)
             print('Finish load')
             # stricter onnx.checker with onnx.shape_inference
-            onnx.checker.check_model(model, True)
+            onnx.checker.check_model(model)
             print('Finish check')
 
             # remove the model to save space in CIs
@@ -82,6 +83,7 @@ def main():
             # if the model_path exists in the skip list, simply skip it
             if model_path.replace('\\', '/') not in config.SKIP_CHECKER_MODELS:
                 failed_models.append(model_path)
+            failed_messages.append((model_name, e))
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
 
@@ -89,6 +91,8 @@ def main():
         print('{} models have been checked.'.format(len(model_list)))
     else:
         print('In all {} models, {} models failed.'.format(len(model_list), len(failed_models)))
+        for model, error in failed_messages:
+            print('{} failed because: {}'.format(model, error))
         sys.exit(1)
 
 
