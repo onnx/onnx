@@ -77,7 +77,7 @@ def main():
         except Exception as e:
             print('[FAIL]: {}'.format(e))
             # if the model_path exists in the skip list, simply skip it
-            if model_path.replace('\\', '/') in config.SKIP_CHECKER_MODELS:
+            if model_path.replace('\\', '/') not in config.SKIP_CHECKER_MODELS:
                 failed_models.append(model_path)
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
