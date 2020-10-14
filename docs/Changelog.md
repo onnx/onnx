@@ -10544,16 +10544,16 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>condition</tt> : T1</dt>
+<dt><tt>condition</tt> (non-differentiable) : T1</dt>
 <dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length along the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.</dd>
 </dl>
 
@@ -12744,14 +12744,14 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
@@ -17584,9 +17584,6 @@ x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
 if coordinate_transformation_mode is "asymmetric", <br/>
 x_original = x_resized / scale, <br/>
 
-if coordinate_transformation_mode is "tf_half_pixel_for_nn", <br/>
-x_original = (x_resized + 0.5) / scale, <br/>
-
 if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
 x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1).</dd>
 <dt><tt>cubic_coeff_a</tt> : float (default is -0.75)</dt>
@@ -17601,23 +17598,23 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dd>Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get "nearest" pixel in input tensor from x_original, so this attribute is valid only if "mode" is "nearest".</dd>
 </dl>
 
-#### Inputs (3 - 4)
+#### Inputs (1 - 4)
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> (differentiable) : T1</dt>
 <dd>N-D tensor</dd>
-<dt><tt>roi</tt> : T2</dt>
+<dt><tt>roi</tt> (optional, non-differentiable) : T2</dt>
 <dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
-<dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is specified, then set scales to empty data (zero shape) in this operator's input list.</dd>
-<dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
+<dt><tt>scales</tt> (optional, non-differentiable) : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
+<dt><tt>sizes</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T1</dt>
+<dt><tt>Y</tt> (differentiable) : T1</dt>
 <dd>N-D tensor after resizing</dd>
 </dl>
 
@@ -17629,66 +17626,6 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain roi type to float or double.</dd>
 </dl>
-
-### <a name="Scatter-13"></a>**Scatter-13** (deprecated)</a>
-
-  This operator is deprecated. Please use ScatterElements, which provides the same functionality.
-  
-  Scatter takes three inputs `data`, `updates`, and `indices` of the same
-  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
-  (by default, the outer-most axis, that is axis 0). The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value
-  to values specified by `updates` at specific index positions specified by
-  `indices`. Its output shape is the same as the shape of `data`.
-  
-  For each entry in `updates`, the target index in `data` is obtained by combining
-  the corresponding entry in `indices` with the index of the entry itself: the
-  index-value for dimension = axis is obtained from the value of the corresponding
-  entry in `indices` and the index-value for dimension != axis is obtained from the
-  index of the entry itself.
-  
-  For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
-  is performed as below:
-  ```
-    output[indices[i][j]][j] = updates[i][j] if axis = 0, 
-    output[i][indices[i][j]] = updates[i][j] if axis = 1,
-  ```
-  
-  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
-  Example 1:
-  ```
-    data = [
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-    ]
-    indices = [
-        [1, 0, 2],
-        [0, 2, 1],
-    ]
-    updates = [
-        [1.0, 1.1, 1.2],
-        [2.0, 2.1, 2.2],
-    ]
-    output = [
-        [2.0, 1.1, 0.0]
-        [1.0, 0.0, 2.2]
-        [0.0, 2.1, 1.2]
-    ]
-  ```
-  Example 2:
-  ```
-    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-    indices = [[1, 3]]
-    updates = [[1.1, 2.1]]
-    axis = 1
-    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
-  ```
-
-#### Version
-
-This version of the operator has been deprecated since version 13 of the default ONNX operator set.
 
 ### <a name="ScatterElements-13"></a>**ScatterElements-13**</a>
 
@@ -17944,14 +17881,14 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> (differentiable) : T</dt>
+<dt><tt>input</tt> (non-differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
+<dt><tt>output</tt> (non-differentiable) : T</dt>
 <dd>The sign of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
 </dl>
 
@@ -18313,7 +18250,7 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs (1 - 2)
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
@@ -18322,7 +18259,7 @@ This version of the operator has been available since version 13 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>squeezed</tt> : T</dt>
+<dt><tt>squeezed</tt> (differentiable) : T</dt>
 <dd>Reshaped tensor with same data as input.</dd>
 </dl>
 
@@ -18540,16 +18477,6 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
-
-### <a name="Upsample-13"></a>**Upsample-13** (deprecated)</a>
-
-  Upsample the input tensor.
-  Each dimension value of the output tensor is:
-    output_dimension = floor(input_dimension * scale).
-
-#### Version
-
-This version of the operator has been deprecated since version 13 of the default ONNX operator set.
 
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set

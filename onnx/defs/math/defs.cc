@@ -1060,6 +1060,7 @@ All inputs and outputs must have the same data type.
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       int num_inputs = static_cast<int>(ctx.getNumInputs());
       std::vector<const TensorShapeProto*> shapes;
+      shapes.reserve(num_inputs);
       for (int i = 0; i < num_inputs; ++i) {
         auto input_type = ctx.getInputType(i);
         if (nullptr == input_type || !input_type->has_tensor_type() ||
@@ -2231,7 +2232,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "output",
@@ -2241,7 +2242,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types_with_bfloat(),
@@ -2623,7 +2624,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .Output(
             0, 
             "Y", 
@@ -2632,7 +2633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
