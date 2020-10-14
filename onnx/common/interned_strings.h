@@ -107,6 +107,7 @@ namespace ONNX_NAMESPACE {
   _(eq)                           \
   _(equal)                        \
   _(Exp)                          \
+  _(ends)                         \
   _(expm1)                        \
   _(floor)                        \
   _(fmod)                         \
@@ -132,6 +133,7 @@ namespace ONNX_NAMESPACE {
   _(sinh)                         \
   _(Sqrt)                         \
   _(sub)                          \
+  _(starts)                       \
   _(tan)                          \
   _(trunc)                        \
   _(zeros)                        \
