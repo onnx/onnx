@@ -5993,11 +5993,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
     ]
     axis = 1,
     output = [
-        [
-            [1.0, 1.9],
-            [2.3, 3.9],
-            [4.5, 5.9],
-        ],
+            [[1.0, 1.9]],
+            [[2.3, 3.9]],
+            [[4.5, 5.9]],
     ]
   ```
 
@@ -6079,6 +6077,27 @@ y = np.take(data, indices, axis=1)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
+```
+
+</details>
+
+
+<details>
+<summary>gather_2d_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.random.randn(3, 3).astype(np.float32)
+indices = np.array([[0, 2]])
+y = np.take(data, indices, axis=1)
+
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+       name='test_gather_2d_indices')
 ```
 
 </details>
