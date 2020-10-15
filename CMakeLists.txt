@@ -240,6 +240,12 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
+          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
+          configure_file(
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
+            @ONLY)
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
         else()
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)

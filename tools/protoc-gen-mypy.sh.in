@@ -1,0 +1,3 @@
+#!/bin/bash
+# use PYTHON_EXECUTABLE from CMake to get the right python to execute
+@PYTHON_EXECUTABLE@ -u "$PWD"/../tools/protoc-gen-mypy.py
