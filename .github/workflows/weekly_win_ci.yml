@@ -55,6 +55,6 @@ jobs:
         cd ..
         git clone https://github.com/onnx/models.git
         cd models
-        python ../onnx/workflow_scripts/test_model_zoo.py
+        python ../onnx/workflow_scripts/test_model_zoo.py --test_dir vision/classification/vgg/
 
     
