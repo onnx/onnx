@@ -12,49 +12,53 @@ on:
     # run weekly on Sunday 23:59
     - cron:  '59 23 * * SUN'
 
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     strategy:
       matrix:
         python-version: [3.7]
         architecture: ['x64']
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.architecture }}
-    - name: Install python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest==5.4.3 numpy wheel nbval
-        python -m pip install virtualenv
-        python -m virtualenv py$(python.version)
-        source py$(python.version)/bin/activate
-        python -m pip install numpy protobuf
-        sudo apt-get install protobuf-compiler libprotoc-dev
-    - name: Build from the latest onnx
-      env:
-        ONNX_BUILD_TESTS: 1
-        USE_MSVC_STATIC_RUNTIME: 1
-        ONNX_ML: 1
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
-      run: |
-        python setup.py install
-    - name: Test all models with onnx.checker and onnx.shape_inference
-      run: |
-        cd ..
-        git clone https://github.com/onnx/models.git
-        cd models
-        python ../onnx/workflow_scripts/test_model_zoo.py --test_dir vision/classification/vgg/
+      - uses: actions/checkout@v2
+        name: Checkout repo
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+      - name: Install vcpkg dependencies
+        run: vcpkg install protobuf:${{ matrix.architecture }}-windows-static
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
+          # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
+          pip install pytest==5.4.3 nbval numpy wheel
+      - name: Install latest ONNX and dependencies
+        run: |
+          $Env:USE_MSVC_STATIC_RUNTIME=1
+          $Env:ONNX_ML=1
+          $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.architecture }}-windows-static"
+          python setup.py --quiet install
+      - name: Install latest ONNX and dependencies
+        run: |
+          $Env:USE_MSVC_STATIC_RUNTIME=1
+          $Env:ONNX_ML=1
+          $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.architecture }}-windows-static"
+          python setup.py --quiet install
+      - name: Test all models with onnx.checker and onnx.shape_inference
+        run: |
+          cd ..
+          git clone https://github.com/onnx/models.git
+          cd models
+          python ../onnx/workflow_scripts/test_model_zoo.py
 
     
