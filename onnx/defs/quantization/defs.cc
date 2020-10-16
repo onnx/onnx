@@ -118,7 +118,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               updateOutputShape(ctx, 0, input_shape);
             }));
 
-static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
+static const char* DynamicQuantizeLinear_ver13_doc = R"DOC(
 A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
@@ -145,9 +145,9 @@ y = saturate (round (x / y_scale) + y_zero_point)
 
 ONNX_OPERATOR_SET_SCHEMA(
     DynamicQuantizeLinear,
-    11,
+    13,
     OpSchema()
-        .SetDoc(DynamicQuantizeLinear_ver11_doc)
+        .SetDoc(DynamicQuantizeLinear_ver13_doc)
         .Input(0, "x", "Input tensor", "T1")
         .Output(0, "y", "Quantized output tensor", "T2")
         .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)")
