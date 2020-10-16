@@ -2710,7 +2710,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NegativeLogLikelihoodLoss_ver12_doc = R"DOC(
+static const char* NegativeLogLikelihoodLoss_ver13_doc = R"DOC(
 A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
 Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
 The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
@@ -3022,9 +3022,9 @@ bool BuildContextDependentFunctionBody(
 
 ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
-    12,
+    13,
     OpSchema()
-        .SetDoc(NegativeLogLikelihoodLoss_ver12_doc)
+        .SetDoc(NegativeLogLikelihoodLoss_ver13_doc)
         .Input(
             0,
             "input",
