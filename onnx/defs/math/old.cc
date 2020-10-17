@@ -889,6 +889,422 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* NegativeLogLikelihoodLoss_ver12_doc = R"DOC(
+A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
+Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
+The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
+The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
+or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
+The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+When an optional "weight" is provided, the sample loss is calculated as:
+    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+loss is zero for the case when target-value equals ignore_index.
+    
+    loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
+If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
+    mean(loss), if "weight" is not provided,
+or if weight is provided,
+    sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+If "reduction" attribute is set to "sum", the output is a scalar:
+    sum(loss).
+See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
+Example 1:
+    // negative log likelihood loss, "none" reduction
+    N, C, d1 = 2, 3, 2
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+    target = [[2, 1], [0, 2]]
+    loss = np.zeros((N, d1))
+    for n in range(N):
+        for d_1 in range(d1):
+            c = target[n][d_1]
+            loss[n][d_1] = -input[n][c][d_1]
+    // print(loss)
+    // [[-3. -2.]
+    //  [-0. -2.]]
+Example 2:
+    // weighted negative log likelihood loss, sum reduction
+    N, C, d1 = 2, 3, 2
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+    target = [[2, 1], [0, 2]]
+    weight = [0.2, 0.3, 0.1]
+    loss = np.zeros((N, d1))
+    for n in range(N):
+        for d_1 in range(d1):
+            c = target[n][d_1]
+            loss[n][d_1] = -input[n][c][d_1] * weight[c]
+    loss = np.sum(loss)
+    // print(loss)
+    // -1.1
+Example 3:
+    // weighted negative log likelihood loss, mean reduction
+    N, C, d1 = 2, 3, 2
+    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+    target = [[2, 1], [0, 2]]
+    weight = [0.2, 0.3, 0.1]
+    loss = np.zeros((N, d1))
+    weight_total = 0
+    for n in range(N):
+        for d_1 in range(d1):
+            c = target[n][d_1]
+            loss[n][d_1] = -input[n][c][d_1] * weight[c]
+            weight_total = weight_total + weight[c]
+    loss = np.sum(loss) / weight_total
+    // print(loss)
+    // -1.57
+)DOC";
+
+TensorProto ToDimensionOneFloatTensor_old(float value) {
+  auto t = ToTensor(std::vector<float>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+TensorProto ToDimensionOneTensor_old(int32_t value) {
+  auto t = ToTensor(std::vector<int32_t>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
+  auto t = ToTensor(std::vector<int64_t>({value}));
+  t.add_dims(1);
+  return t;
+}
+
+bool BuildContextDependentFunctionBody_opset12(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  std::vector<FunctionBodyHelper::NodeDef> body;
+  body.push_back(
+      {{"const_zero"},
+       "Constant",
+       {},
+       {MakeAttribute("value", ToDimensionOneTensor_old(0))}});
+
+  body.push_back(
+      {{"const_one"},
+       "Constant",
+       {},
+       {MakeAttribute("value", ToDimensionOneTensor_old(1))}});
+
+  body.push_back(
+      {{"expanded_target"},
+       "Unsqueeze",
+       {"target"},
+       {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+
+  if (ctx.getAttribute("ignore_index") == nullptr) {
+    body.push_back(
+        {{"input_gather_element"},
+         "GatherElements",
+         {"input", "expanded_target"},
+         {MakeAttribute("axis", (int64_t)1)}});
+
+    body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element"}});
+
+    body.push_back(
+        {{"loss_N1dd"},
+         "Slice",
+         {"loss_NCdd", "const_zero", "const_one", "const_one"}});
+
+    if (!ctx.hasInput(2)) {
+      if (ctx.getAttribute("reduction")->s() == "none") {
+        body.push_back(
+            {{"loss"},
+             "Squeeze",
+             {"loss_N1dd"},
+             {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+      } else {
+        body.push_back(
+            {{"loss_Ndd"},
+             "Squeeze",
+             {"loss_N1dd"},
+             {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+        if (ctx.getAttribute("reduction")->s() == "mean") {
+          body.push_back(
+              {{"loss"},
+               "ReduceMean",
+               {"loss_Ndd"},
+               {MakeAttribute("keepdims", (int64_t)0)}});
+        } else {
+          body.push_back(
+              {{"loss"},
+               "ReduceSum",
+               {"loss_Ndd"},
+               {MakeAttribute("keepdims", (int64_t)0)}});
+        }
+      }
+    } else {
+      body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
+      body.push_back(
+          {{"loss_unweighted"},
+           "Squeeze",
+           {"loss_N1dd"},
+           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+      if (ctx.getAttribute("reduction")->s() == "none") {
+        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      } else {
+        body.push_back(
+            {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        if (ctx.getAttribute("reduction")->s() == "mean") {
+          body.push_back(
+              {{"loss_sum"},
+               "ReduceSum",
+               {"loss_Ndd"},
+               {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back(
+              {{"weight_gather_sum"},
+               "ReduceSum",
+               {"weight_gather"},
+               {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+        } else {
+          body.push_back(
+              {{"loss"},
+               "ReduceSum",
+               {"loss_Ndd"},
+               {MakeAttribute("keepdims", (int64_t)0)}});
+        }
+      }
+    }
+  } else {
+    body.push_back(
+        {{"const_ignore_index"},
+         "Constant",
+         {},
+         {MakeAttribute(
+             "value",
+             ToDimensionOneInt64Tensor_old(
+                 ctx.getAttribute("ignore_index")->i()))}});
+
+    body.push_back(
+        {{"const_zero_target_typed"},
+         "Sub",
+         {"expanded_target", "expanded_target"}});
+    body.push_back(
+        {{"expanded_target_int64"},
+         "Cast",
+         {"expanded_target"},
+         {MakeAttribute(
+             "to",
+             (int64_t)TensorProto_DataType::TensorProto_DataType_INT64)}});
+
+    body.push_back(
+        {{"mask"}, "Equal", {"expanded_target_int64", "const_ignore_index"}});
+    body.push_back(
+        {{"transform_targets"},
+         "Where",
+         {"mask", "const_zero_target_typed", "expanded_target"}});
+    body.push_back(
+        {{"input_gather_element"},
+         "GatherElements",
+         {"input", "transform_targets"},
+         {MakeAttribute("axis", (int64_t)1)}});
+    body.push_back(
+        {{"const_zero_float"},
+         "Constant",
+         {},
+         {MakeAttribute("value", ToDimensionOneFloatTensor_old(0.0f))}});
+
+    body.push_back(
+        {{"input_gather_element_transform"},
+         "Where",
+         {"mask", "const_zero_float", "input_gather_element"}});
+    body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element_transform"}});
+    body.push_back(
+        {{"loss_N1dd"},
+         "Slice",
+         {"loss_NCdd", "const_zero", "const_one", "const_one"}});
+
+    if (!ctx.hasInput(2)) {
+      body.push_back(
+          {{"squeeze_mask"},
+           "Squeeze",
+           {"mask"},
+           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+
+      body.push_back(
+          {{"const_one_float"},
+           "Constant",
+           {},
+           {MakeAttribute("value", ToDimensionOneFloatTensor_old(1.0f))}});
+
+      body.push_back(
+          {{"weight_gather"},
+           "Where",
+           {"squeeze_mask", "const_zero_float", "const_one_float"}});
+
+    } else {
+      body.push_back(
+          {{"weight_gather_temp"}, "Gather", {"weight", "transform_targets"}});
+
+      body.push_back(
+          {{"weight_gather_temp_1"},
+           "Where",
+           {"mask", "const_zero_float", "weight_gather_temp"}});
+
+      body.push_back(
+          {{"weight_gather"},
+           "Squeeze",
+           {"weight_gather_temp_1"},
+           {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+    }
+
+    body.push_back(
+        {{"loss_unweighted"},
+         "Squeeze",
+         {"loss_N1dd"},
+         {MakeAttribute("axes", std::vector<int64_t>({1}))}});
+    if (ctx.getAttribute("reduction")->s() == "none") {
+      body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+    } else {
+      body.push_back(
+          {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      if (ctx.getAttribute("reduction")->s() == "mean") {
+        body.push_back(
+            {{"loss_sum"},
+             "ReduceSum",
+             {"loss_Ndd"},
+             {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back(
+            {{"weight_gather_sum"},
+             "ReduceSum",
+             {"weight_gather"},
+             {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+      } else {
+        body.push_back(
+            {{"loss"},
+             "ReduceSum",
+             {"loss_Ndd"},
+             {MakeAttribute("keepdims", (int64_t)0)}});
+      }
+    }
+  }
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+  for (const auto& node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NegativeLogLikelihoodLoss,
+    12,
+    OpSchema()
+        .SetDoc(NegativeLogLikelihoodLoss_ver12_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).",
+            "T")
+        .Input(
+            1,
+            "target",
+            "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C). "
+            "If ignore_index is specified, it may have a value outside [0, C) and the target values should either be "
+            "in the range [0, C) or have the value ignore_index.",
+            "Tind")
+        .Input(
+            2,
+            "weight",
+            "Optional rescaling weight tensor. "
+            "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.",
+            "T",
+            OpSchema::Optional)
+        .Output(0, "loss", "The negative log likelihood loss", "T")
+        .Attr(
+            "reduction",
+            "Type of reduction to apply to loss: none, sum, mean (default). "
+            "'none': the output is the loss for each sample. "
+            "'sum': the output will be summed. "
+            "'mean': the sum of the output will be divided by the sum of applied weights.",
+            AttributeProto::STRING,
+            std::string("mean"))
+        .Attr(
+            "ignore_index",
+            "Specifies a target value that is ignored and does not contribute to the input gradient. It's an optional value.",
+            AttributeProto::INT,
+            false)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input, weight, and output types to floating-point tensors.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain target to integer types")
+        .SetContextDependentFunctionBodyBuilder(
+            BuildContextDependentFunctionBody_opset12)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasNInputShapes(ctx, 2)) {
+            const TensorShapeProto& input_shape =
+                ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& target_shape =
+                ctx.getInputType(1)->tensor_type().shape();
+
+            const int input_rank = static_cast<int>(input_shape.dim_size());
+            const int target_rank = static_cast<int>(target_shape.dim_size());
+
+            if (input_rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+            if (target_rank != input_rank - 1) {
+              fail_shape_inference(
+                  "Target rank must be 1 less than the input rank.")
+            }
+
+            // match input dimensions (N, C, d1, ..., dk) with target
+            // dimensions of (C, d1, ..., dk)
+            for (int dim = 0; dim < target_rank; dim++) {
+              const auto input_dim =
+                  dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+              const auto target_dim = target_shape.dim(dim);
+              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
+                  input_dim.dim_value() != target_dim.dim_value())
+                fail_shape_inference(
+                    "Input and target dimension value mismatch.")
+            }
+
+            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
+              const TensorShapeProto& weight_shape =
+                  ctx.getInputType(2)->tensor_type().shape();
+              if (weight_shape.dim_size() != 1)
+                fail_shape_inference("Weight rank must be 1.")
+            }
+
+            TensorShapeProto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+            if (ctx.getAttribute("reduction")->s() == "none") {
+              // output tensor is of shape (N, d1, d2, ..., dk) if
+              // reduction attribute is "none".
+              for (int i = 0; i < input_rank - 1; i++) {
+                auto* dim = output_shape->add_dim();
+                if (i == 0)
+                  *dim = input_shape.dim(i);
+                else
+                  *dim = input_shape.dim(i + 1);
+              }
+            }
+            // otherwise output is a scalar.
+          }
+        }));
+
 const char* reduction_doc_sce_opset12 =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
