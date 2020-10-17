@@ -18,7 +18,7 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 
-from onnx.onnx_pb import NodeProto, AttributeProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto
 from onnx.onnx_operators_pb import FunctionProto
 
 
@@ -76,7 +76,7 @@ def function_expand_helper(node,  # type: NodeProto
     return node_list
 
 
-def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[NodeProto]
+def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List[TypeProto], Text) -> List[NodeProto]
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -84,7 +84,7 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     if schema.has_function:    # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:    # type: ignore
-        function_proto_str = schema.get_context_dependent_function(node.SerializeToString())  # type: ignore
+        function_proto_str = schema.get_context_dependent_function(node.SerializeToString(), [t.SerializeToString() for t in input_types])  # type: ignore
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
@@ -156,7 +156,16 @@ def expect(node,  # type: onnx.NodeProto
         atol=1e-7,
     ))
 
-    expanded_function_nodes = function_testcase_helper(node, name)
+    // Create list of types for node.input, filling a default TypeProto for missing inputs:
+    def merge (node_inputs, present_value_info):
+        if (node_inputs):
+            if (node_inputs[0] != ''):
+                [present_value_info[0].type] + merge(node_input[1:], present_value_info[1:])
+            else:
+                [TypeProto()] + merge(node_input[1:], present_value_info)
+        return []
+    merged_types =  merge(node.input, inputs_vi)
+    expanded_function_nodes = function_testcase_helper(node, merged_types, name)
     if expanded_function_nodes:
         function_test_name = name + '_expanded'
         graph = onnx.helper.make_graph(
