@@ -14913,7 +14913,8 @@ This version of the operator has been available since version 13 of the default 
   is selected if the max appears more than once in the input. Otherwise the index of the 
   first occurrence is selected.
   The type of the output tensor is integer.
-  complement_axis needs be used simultaneously with axis attribute. If complement_axis is True (default False), it will reduce other axes except the target axis (complementarily).
+  complement_axis needs be used simultaneously with axis attribute.
+  If complement_axis is True (default False), it will 
 
 #### Version
 
@@ -14962,7 +14963,8 @@ This version of the operator has been available since version 13 of the default 
   is selected if the min appears more than once in the input. Otherwise the index of the 
   first occurrence is selected.
   The type of the output tensor is integer.
-  complement_axis needs be used simultaneously with axis attribute. If complement_axis is True (default False), it will reduce other axes except the target axis (complementarily).
+  complement_axis needs be used simultaneously with axis attribute.
+  If complement_axis is True (default False), it will 
 
 #### Version
 
@@ -17419,6 +17421,8 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>complement_axis</tt> : int (default is 0)</dt>
+<dd>Whether to reduce axes complementarily, default is False (reduce target axis). This attribute needs be used simultaneously with axis attribute.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -17505,6 +17509,8 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>complement_axis</tt> : int (default is 0)</dt>
+<dd>Whether to reduce axes complementarily, default is False (reduce target axis). This attribute needs be used simultaneously with axis attribute.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>

@@ -24,7 +24,8 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(
 std::function<void(OpSchema&)> ReduceDocGenerator(
     const char* name,
     bool supports_8bit_datatypes = false,
-    bool axes_input = false) {
+    bool axes_input = false,
+    bool complement_axis = false) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -78,6 +79,15 @@ False instead of True.)DOC";
           AttributeProto::INTS,
           OPTIONAL_VALUE);
     }
+    if (complement_axis) {
+      schema.Attr(
+          "complement_axis",
+          "Whether to reduce axes complementarily, "
+          "default is False (reduce target axis). "
+          "This attribute needs be used simultaneously with axis attribute.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0));
+    }    
     schema.Output(
         0, 
         "reduced", 
@@ -144,6 +154,23 @@ False instead of True.)DOC";
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
+      // if complement_axis, reduce other axes (not specified)
+      // it is used by DynamicQuantizeLinear
+      auto complement_proto = ctx.getAttribute("complement_axis");
+      if (complement_proto) {
+        std::unordered_set<int64_t> complement_axes;
+        for (int i = 0 ; i < input_ndim; ++i) {
+          complement_axes.insert(i);
+        }
+        for (size_t i = 0; i < axes.size(); ++i) {
+          complement_axes.erase(axes[i]);
+        }
+        axes.clear();
+        // complementarily reduce axes
+        for (int64_t dim_index: complement_axes) {
+          axes.push_back(dim_index);
+        }
+      }
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() &&
@@ -164,12 +191,12 @@ False instead of True.)DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMax,
     13,
-    OpSchema().FillUsing(ReduceDocGenerator("max", true)));
+    OpSchema().FillUsing(ReduceDocGenerator("max", true, false, true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceMin,
     13,
-    OpSchema().FillUsing(ReduceDocGenerator("min", true)));
+    OpSchema().FillUsing(ReduceDocGenerator("min", true, false, true)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSum,
@@ -222,7 +249,8 @@ If select_last_index is True (default False), the index of the last occurrence o
 is selected if the {name} appears more than once in the input. Otherwise the index of the 
 first occurrence is selected.
 The type of the output tensor is integer.
-complement_axis needs be used simultaneously with axis attribute. If complement_axis is True (default False), it will reduce other axes except the target axis (complementarily).)DOC";
+complement_axis needs be used simultaneously with axis attribute.
+If complement_axis is True (default False), it will )DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
@@ -296,12 +324,9 @@ complement_axis needs be used simultaneously with axis attribute. If complement_
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      auto complement_proto = ctx.getAttribute("complement_axis");
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
-        // if not complement_axis, reduce specified axes
-        // if complement_axis, reduce other axes (not specified)
-        if ((!complement_proto && i != axis) || (complement_proto && i == axis)) {
+        if (i != axis) {
           auto dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
