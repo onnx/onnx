@@ -583,6 +583,7 @@ expect(node, inputs=[x, y], outputs=[z],
   is selected if the max appears more than once in the input. Otherwise the index of the 
   first occurrence is selected.
   The type of the output tensor is integer.
+  complement_axis needs be used simultaneously with axis attribute. If complement_axis is True (default False), it will reduce other axes except the target axis (complementarily).
 
 #### Version
 
@@ -595,6 +596,8 @@ Other versions of this operator: <a href="Changelog.md#ArgMax-1">1</a>, <a href=
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>complement_axis</tt> : int (default is 0)</dt>
+<dd>Whether to reduce axes complementarily, default is False (reduce target axis). This attribute needs be used simultaneously with axis attribute.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
@@ -844,6 +847,7 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
   is selected if the min appears more than once in the input. Otherwise the index of the 
   first occurrence is selected.
   The type of the output tensor is integer.
+  complement_axis needs be used simultaneously with axis attribute. If complement_axis is True (default False), it will reduce other axes except the target axis (complementarily).
 
 #### Version
 
@@ -856,6 +860,8 @@ Other versions of this operator: <a href="Changelog.md#ArgMin-1">1</a>, <a href=
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>complement_axis</tt> : int (default is 0)</dt>
+<dd>Whether to reduce axes complementarily, default is False (reduce target axis). This attribute needs be used simultaneously with axis attribute.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
@@ -4794,6 +4800,13 @@ expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_mask'
 This version of the operator has been available since version 13 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#DynamicQuantizeLinear-11">11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
+</dl>
 
 #### Inputs
 
