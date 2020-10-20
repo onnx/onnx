@@ -156,15 +156,15 @@ def expect(node,  # type: onnx.NodeProto
         atol=1e-7,
     ))
 
-    // Create list of types for node.input, filling a default TypeProto for missing inputs:
-    def merge (node_inputs, present_value_info):
+    # Create list of types for node.input, filling a default TypeProto for missing inputs:
+    def merge(node_inputs, present_value_info):
         if (node_inputs):
             if (node_inputs[0] != ''):
-                [present_value_info[0].type] + merge(node_input[1:], present_value_info[1:])
+                [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
             else:
-                [TypeProto()] + merge(node_input[1:], present_value_info)
+                [TypeProto()] + merge(node_inputs[1:], present_value_info)
         return []
-    merged_types =  merge(node.input, inputs_vi)
+    merged_types = merge(node.input, inputs_vi)
     expanded_function_nodes = function_testcase_helper(node, merged_types, name)
     if expanded_function_nodes:
         function_test_name = name + '_expanded'
