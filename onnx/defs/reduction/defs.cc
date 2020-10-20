@@ -221,7 +221,8 @@ If keepdims equal 0, then the resulting tensor have the reduced dimension pruned
 If select_last_index is True (default False), the index of the last occurrence of the {name} 
 is selected if the {name} appears more than once in the input. Otherwise the index of the 
 first occurrence is selected.
-The type of the output tensor is integer.)DOC";
+The type of the output tensor is integer.
+complement_axis needs be used simultaneously with axis attribute. If complement_axis is True (default False), it will reduce other axes except the target axis (complementarily).)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
@@ -237,6 +238,11 @@ The type of the output tensor is integer.)DOC";
     schema.Attr(
         "select_last_index",
         "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Attr(
+        "complement_axis",
+        "Whether to reduce axes complementarily, default is False (reduce target axis). This attribute needs be used simultaneously with axis attribute.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(
@@ -290,9 +296,12 @@ The type of the output tensor is integer.)DOC";
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
+      auto complement_proto = ctx.getAttribute("complement_axis");
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
-        if (i != axis) {
+        // if not complement_axis, reduce specified axes
+        // if complement_axis, reduce other axes (not specified)
+        if ((!complement_proto && i != axis) || (complement_proto && i == axis)) {
           auto dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
