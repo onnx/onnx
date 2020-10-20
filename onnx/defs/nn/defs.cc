@@ -1215,7 +1215,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       fail_shape_inference("Attribute pads has incorrect size");
     }
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
-    if (nullptr != auto_pad_attr) {
+    if (nullptr != auto_pad_attr && auto_pad_attr->s() != "NOTSET") {
       fail_shape_inference(
           "The pads attribute cannot be used simultaneously with auto_pad attribute");
     }
