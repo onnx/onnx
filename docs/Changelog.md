@@ -15431,7 +15431,7 @@ This version of the operator has been available since version 13 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (default is ['1'])</dt>
+<dt><tt>axis</tt> : int (default is 1)</dt>
 <dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
 </dl>
 

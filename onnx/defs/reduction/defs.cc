@@ -157,10 +157,9 @@ If complement_axis is True, all axes except the specified axis will be reduced.)
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
-      // if complement_axis, reduce other axes (not specified)
+      // if complement_axis and axes have been specified, reduce other axes (not specified)
       // it is used by DynamicQuantizeLinear
-      auto complement_proto = ctx.getAttribute("complement_axis");
-      if (complement_proto) {
+      if (ctx.getAttribute("complement_axis") && ctx.getAttribute("axes")) {
         std::unordered_set<int64_t> complement_axes;
         for (int i = 0 ; i < input_ndim; ++i) {
           complement_axes.insert(i);

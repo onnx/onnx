@@ -143,8 +143,6 @@ y = saturate (round (x / y_scale) + y_zero_point)
 ```
 )DOC";
 
-static std::vector<int64_t> default_axes = {1};
-
 ONNX_OPERATOR_SET_SCHEMA(
     DynamicQuantizeLinear,
     13,
@@ -155,35 +153,49 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)")
         .Output(2, "y_zero_point", "Output zero point. It's a scalar, which means a per-tensor/layer quantization.", "T2")
         .Attr(
-            "axes",
+            "axis",
             "(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)",
-            AttributeProto::INTS,
-            default_axes)
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeConstraint(
           "T1",
           {"tensor(float)"},
           "Constrain 'x' to float tensor.")
-      .TypeConstraint(
+        .TypeConstraint(
           "T2",
           {"tensor(uint8)"},
           "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
-      .FunctionBody(FunctionBodyHelper::BuildNodes(
-          {// nodes: {outputs, op, inputs, attributes}
-           FunctionBodyHelper::Const<float>("Q_Min", 0.f),
-           FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-           {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeRefAttribute("axes", "axis", AttributeProto::INTS), MakeAttribute("complement_axis", int64_t(1))}},
-           {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-           {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeRefAttribute("axes", "axis" , AttributeProto::INTS), MakeAttribute("complement_axis", int64_t(1))}},
-           {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
-           {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
-           {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
-           {{"Min_Scaled"}, "Div", {"X_Min_Adjusted", "Scale"}},
-           {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
-           {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
-           {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
-           {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
-           {{"y_scale"}, "Identity", {"Scale"}},
-           {{"y_zero_point"}, "Identity", {"Zeropoint"}},
-           {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}})));
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+                const OpSchema& schema,
+                FunctionProto& functionProto) -> bool {
+                const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : OPTIONAL_VALUE;
+                static std::vector<int64_t> single_axes = std::vector<int64_t>({axis});
+                auto func_nodes = FunctionBodyHelper::BuildNodes(
+                {// nodes: {outputs, op, inputs, attributes}
+                FunctionBodyHelper::Const<float>("Q_Min", 0.f),
+                FunctionBodyHelper::Const<float>("Q_Max", 255.f),
+                {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeAttribute("axes", single_axes), MakeAttribute("complement_axis", int64_t(1))}},
+                {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
+                {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeAttribute("axes", single_axes), MakeAttribute("complement_axis", int64_t(1))}},
+                {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
+                {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
+                {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
+                {{"Min_Scaled"}, "Div", {"X_Min_Adjusted", "Scale"}},
+                {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
+                {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
+                {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
+                {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
+                {{"y_scale"}, "Identity", {"Scale"}},
+                {{"y_zero_point"}, "Identity", {"Zeropoint"}},
+                {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}});
 
+                for (const auto& node : func_nodes) {
+                    auto new_node = functionProto.add_node();
+                    new_node->CopyFrom(node);
+                }
+
+                schema.BuildFunction(functionProto);
+                return true;
+            }));
 } // namespace ONNX_NAMESPACE
