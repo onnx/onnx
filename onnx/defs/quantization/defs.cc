@@ -169,7 +169,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                 const OpSchema& schema,
                 FunctionProto& functionProto) -> bool {
-                const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : false;
+                const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : static_cast<int64_t>(1);
                 static std::vector<int64_t> single_axes = std::vector<int64_t>({axis});
                 auto func_nodes = FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}

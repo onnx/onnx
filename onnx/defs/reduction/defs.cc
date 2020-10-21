@@ -21,24 +21,6 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(
   return OpSchema::numeric_types_for_math_reduction_with_bfloat();
 }
 
-inline std::string GenerateGeneralRedunctionDoc(std::string name) {
-  return "Computes the " + name + " of the input tensor's element along the provided axes. The resulted "
-"tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then "
-"the resulted tensor have the reduced dimension pruned.\n";
-}
-
-inline std::string GenerateOnlyKeepdimsDoc() {
-  return "\nThe above behavior is similar to numpy, with the exception that numpy default keepdims to "
-"False instead of True.";
-}
-
-inline std::string GenerateComplementAxesDoc() {
-  return "\nThe above behavior is similar to numpy, with the following exceptions:\n"
-"1. numpy defaults keepdims to False instead of True.\n"
-"2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced.\n"
-"The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.";
-}
-
 std::function<void(OpSchema&)> ReduceDocGenerator(
     const char* name,
     bool supports_8bit_datatypes = false,
@@ -46,14 +28,28 @@ std::function<void(OpSchema&)> ReduceDocGenerator(
     bool complement_axes = false) {
   return [=](OpSchema& schema) {
     std::string doc;
-    std::string whole_reduction_doc = GenerateGeneralRedunctionDoc(name);
     if (complement_axes) {
-      whole_reduction_doc += GenerateComplementAxesDoc();
+      // for reduction functions which have the complement_axes attribute (e.g., ReduceMax, ReduceMin)
+      POPULATE_OP_DOC_STR(doc = R"DOC(
+Computes the {name} of the input tensor's element along the provided axes. The resulted
+tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+the resulted tensor have the reduced dimension pruned.
+
+The above behavior is similar to numpy, with the following exceptions:
+1. numpy defaults keepdims to False instead of True.
+2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced.
+The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.)DOC";);
     } else {
-      whole_reduction_doc += GenerateOnlyKeepdimsDoc();
+      // for other reduction functions which do not have the complement_axes attribute
+      POPULATE_OP_DOC_STR(doc = R"DOC(
+Computes the {name} of the input tensor's element along the provided axes. The resulted
+tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+the resulted tensor have the reduced dimension pruned.
+
+The above behavior is similar to numpy, with the exception that numpy default keepdims to
+False instead of True.)DOC";);
     }
-    POPULATE_OP_DOC_STR(doc = R"DOC({whole_reduction_doc})DOC";
-                        ReplaceAll(doc, "{whole_reduction_doc}", whole_reduction_doc.c_str()););
+    ReplaceAll(doc, "{name}", name);
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "keepdims",
