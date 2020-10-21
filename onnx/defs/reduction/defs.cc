@@ -170,17 +170,18 @@ False instead of True.)DOC";);
       }
       // if complement_axes and axes have been specified, reduce other axes (not specified)
       // it is used by DynamicQuantizeLinear
-      if (ctx.getAttribute("complement_axes") && ctx.getAttribute("axes")) {
-        std::unordered_set<int64_t> complement_axes;
+      bool is_complement_axes = ctx.getAttribute("complement_axes") != nullptr ? ctx.getAttribute("complement_axes")->i() : false;
+      if (is_complement_axes && ctx.getAttribute("axes")) {
+        std::unordered_set<int64_t> complement_axes_set;
         for (int i = 0 ; i < input_ndim; ++i) {
-          complement_axes.insert(i);
+          complement_axes_set.insert(i);
         }
         for (size_t i = 0; i < axes.size(); ++i) {
-          complement_axes.erase(axes[i]);
+          complement_axes_set.erase(axes[i]);
         }
         axes.clear();
         // complementarily reduce axes
-        for (int64_t dim_index: complement_axes) {
+        for (int64_t dim_index: complement_axes_set) {
           axes.push_back(dim_index);
         }
       }
