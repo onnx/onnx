@@ -143,6 +143,8 @@ y = saturate (round (x / y_scale) + y_zero_point)
 ```
 )DOC";
 
+static std::vector<int64_t> default_axes = {1};
+
 ONNX_OPERATOR_SET_SCHEMA(
     DynamicQuantizeLinear,
     13,
@@ -153,10 +155,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)")
         .Output(2, "y_zero_point", "Output zero point. It's a scalar, which means a per-tensor/layer quantization.", "T2")
         .Attr(
-            "axis",
+            "axes",
             "(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))        
+            AttributeProto::INTS,
+            default_axes)
         .TypeConstraint(
           "T1",
           {"tensor(float)"},
@@ -169,9 +171,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           {// nodes: {outputs, op, inputs, attributes}
            FunctionBodyHelper::Const<float>("Q_Min", 0.f),
            FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-           {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeRefAttribute("axis", "axes", AttributeProto::INTS), MakeAttribute("complement_axis", int64_t(1))}},
+           {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeRefAttribute("axes", "axis", AttributeProto::INTS), MakeAttribute("complement_axis", int64_t(1))}},
            {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-           {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeRefAttribute("axis", "axes" , AttributeProto::INTS), MakeAttribute("complement_axis", int64_t(1))}},
+           {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeRefAttribute("axes", "axis" , AttributeProto::INTS), MakeAttribute("complement_axis", int64_t(1))}},
            {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
            {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
            {{"Scale"}, "Div", {"X_Range", "Q_Max"}},

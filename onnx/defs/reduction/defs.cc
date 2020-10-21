@@ -34,7 +34,10 @@ tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, 
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
-False instead of True.)DOC";
+False instead of True.
+
+The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
+If complement_axis is True, all axes except the specified axis will be reduced.)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
@@ -84,7 +87,7 @@ False instead of True.)DOC";
           "complement_axis",
           "Whether to reduce axes complementarily, "
           "default is False (reduce target axis). "
-          "This attribute needs be used simultaneously with axis attribute.",
+          "This attribute is used in conjunction with axis attribute.",
           AttributeProto::INT,
           static_cast<int64_t>(0));
     }    
@@ -248,9 +251,7 @@ If keepdims equal 0, then the resulting tensor have the reduced dimension pruned
 If select_last_index is True (default False), the index of the last occurrence of the {name} 
 is selected if the {name} appears more than once in the input. Otherwise the index of the 
 first occurrence is selected.
-The type of the output tensor is integer.
-complement_axis needs be used simultaneously with axis attribute.
-If complement_axis is True (default False), it will )DOC";
+The type of the output tensor is integer.)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
@@ -266,11 +267,6 @@ If complement_axis is True (default False), it will )DOC";
     schema.Attr(
         "select_last_index",
         "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
-        AttributeProto::INT,
-        static_cast<int64_t>(0));
-    schema.Attr(
-        "complement_axis",
-        "Whether to reduce axes complementarily, default is False (reduce target axis). This attribute needs be used simultaneously with axis attribute.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(
