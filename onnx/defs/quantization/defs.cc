@@ -169,15 +169,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                 const OpSchema& schema,
                 FunctionProto& functionProto) -> bool {
-                const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : OPTIONAL_VALUE;
+                const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : false;
                 static std::vector<int64_t> single_axes = std::vector<int64_t>({axis});
                 auto func_nodes = FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                 FunctionBodyHelper::Const<float>("Q_Min", 0.f),
                 FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-                {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeAttribute("axes", single_axes), MakeAttribute("complement_axis", int64_t(1))}},
+                {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeAttribute("axes", single_axes), MakeAttribute("complement_axes", int64_t(1))}},
                 {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-                {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeAttribute("axes", single_axes), MakeAttribute("complement_axis", int64_t(1))}},
+                {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0)), MakeAttribute("axes", single_axes), MakeAttribute("complement_axes", int64_t(1))}},
                 {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
                 {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
                 {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
@@ -188,7 +188,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
                 {{"y_scale"}, "Identity", {"Scale"}},
                 {{"y_zero_point"}, "Identity", {"Zeropoint"}},
-                {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}});
+                {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}, {MakeRefAttribute("axis", AttributeProto::INT)}}});
 
                 for (const auto& node : func_nodes) {
                     auto new_node = functionProto.add_node();

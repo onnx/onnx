@@ -17225,15 +17225,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17271,15 +17263,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17317,15 +17301,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17363,15 +17339,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17409,15 +17377,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17428,8 +17388,8 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
-<dt><tt>complement_axis</tt> : int (default is 0)</dt>
-<dd>Whether to reduce axes complementarily, default is False (reduce target axis). This attribute is used in conjunction with axis attribute.</dd>
+<dt><tt>complement_axes</tt> : int (default is 0)</dt>
+<dd>Whether to use complement of axes for reduction. default is False (reduce target axis). This attribute is used in conjunction with the axes attribute.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -17457,15 +17417,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17503,15 +17455,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17522,8 +17466,8 @@ This version of the operator has been available since version 13 of the default 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
-<dt><tt>complement_axis</tt> : int (default is 0)</dt>
-<dd>Whether to reduce axes complementarily, default is False (reduce target axis). This attribute is used in conjunction with axis attribute.</dd>
+<dt><tt>complement_axes</tt> : int (default is 0)</dt>
+<dd>Whether to use complement of axes for reduction. default is False (reduce target axis). This attribute is used in conjunction with the axes attribute.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -17551,15 +17495,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17597,15 +17533,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 
@@ -17645,15 +17573,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
-  False instead of True.
-  
-  The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-  If complement_axis is True, all axes except the specified axis will be reduced.
+  {whole_reduction_doc}
 
 #### Version
 

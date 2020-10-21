@@ -21,23 +21,33 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(
   return OpSchema::numeric_types_for_math_reduction_with_bfloat();
 }
 
+inline std::string GenerateGeneralRedunctionDoc(std::string name) {
+  return "Computes the " + name + " of the input tensor's element along the provided axes. The resulted"
+"tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then"
+"the resulted tensor have the reduced dimension pruned.\n"
+"The above behavior is similar to numpy, with the exception that numpy default keepdims to"
+"False instead of True.";
+}
+
+inline std::string GenerateComplementAxesDoc() {
+  return "\nThe above behavior is similar to numpy, with the following exceptions:"
+"1. numpy defaults keepdims to False instead of True"
+"2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced."
+"The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.";
+}
+
 std::function<void(OpSchema&)> ReduceDocGenerator(
     const char* name,
     bool supports_8bit_datatypes = false,
     bool axes_input = false,
-    bool complement_axis = false) {
+    bool complement_axes = false) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulted
-tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-the resulted tensor have the reduced dimension pruned.
-
-The above behavior is similar to numpy, with the exception that numpy default keepdims to
-False instead of True.
-
-The attribute complement_axis is used in conjunction with the axis attribute, and has a default value of False.
-If complement_axis is True, all axes except the specified axis will be reduced.)DOC";
+    std::string whole_reduction_doc = GenerateGeneralRedunctionDoc(name);
+    if (complement_axes) {
+      whole_reduction_doc += GenerateComplementAxesDoc();
+    }
+    POPULATE_OP_DOC_STR(doc = R"DOC({whole_reduction_doc})DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
@@ -82,12 +92,12 @@ If complement_axis is True, all axes except the specified axis will be reduced.)
           AttributeProto::INTS,
           OPTIONAL_VALUE);
     }
-    if (complement_axis) {
+    if (complement_axes) {
       schema.Attr(
-          "complement_axis",
-          "Whether to reduce axes complementarily, "
+          "complement_axes",
+          "Whether to use complement of axes for reduction. "
           "default is False (reduce target axis). "
-          "This attribute is used in conjunction with axis attribute.",
+          "This attribute is used in conjunction with the axes attribute.",
           AttributeProto::INT,
           static_cast<int64_t>(0));
     }    
@@ -157,9 +167,9 @@ If complement_axis is True, all axes except the specified axis will be reduced.)
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
-      // if complement_axis and axes have been specified, reduce other axes (not specified)
+      // if complement_axes and axes have been specified, reduce other axes (not specified)
       // it is used by DynamicQuantizeLinear
-      if (ctx.getAttribute("complement_axis") && ctx.getAttribute("axes")) {
+      if (ctx.getAttribute("complement_axes") && ctx.getAttribute("axes")) {
         std::unordered_set<int64_t> complement_axes;
         for (int i = 0 ; i < input_ndim; ++i) {
           complement_axes.insert(i);
