@@ -48,7 +48,7 @@ std::function<void(OpSchema&)> ReduceDocGenerator(
       whole_reduction_doc += GenerateComplementAxesDoc();
     }
     POPULATE_OP_DOC_STR(doc = R"DOC({whole_reduction_doc})DOC";
-                        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{whole_reduction_doc}", whole_reduction_doc.c_str()););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "keepdims",

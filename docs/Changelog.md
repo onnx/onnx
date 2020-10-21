@@ -17225,7 +17225,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
-  {whole_reduction_doc}
+  Computes the L1 norm of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17263,7 +17264,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
-  {whole_reduction_doc}
+  Computes the L2 norm of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17301,7 +17303,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
-  {whole_reduction_doc}
+  Computes the log sum of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17339,7 +17342,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
-  {whole_reduction_doc}
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17377,7 +17381,9 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
-  {whole_reduction_doc}
+  Computes the max of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
+  The above behavior is similar to numpy, with the following exceptions:1. numpy defaults keepdims to False instead of True2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced.The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.
 
 #### Version
 
@@ -17417,7 +17423,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
-  {whole_reduction_doc}
+  Computes the mean of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17455,7 +17462,9 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
-  {whole_reduction_doc}
+  Computes the min of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
+  The above behavior is similar to numpy, with the following exceptions:1. numpy defaults keepdims to False instead of True2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced.The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.
 
 #### Version
 
@@ -17495,7 +17504,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
-  {whole_reduction_doc}
+  Computes the product of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17533,7 +17543,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
-  {whole_reduction_doc}
+  Computes the sum of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -17573,7 +17584,8 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
-  {whole_reduction_doc}
+  Computes the sum square of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 

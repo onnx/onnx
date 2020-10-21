@@ -13666,7 +13666,8 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
 
-  {whole_reduction_doc}
+  Computes the L1 norm of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -13860,7 +13861,8 @@ expect(node, inputs=[data], outputs=[reduced],
 
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
-  {whole_reduction_doc}
+  Computes the L2 norm of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -14067,7 +14069,8 @@ expect(node, inputs=[data], outputs=[reduced],
 
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
-  {whole_reduction_doc}
+  Computes the log sum of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -14180,7 +14183,8 @@ expect(node, inputs=[data], outputs=[reduced],
 
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
-  {whole_reduction_doc}
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -14386,7 +14390,9 @@ expect(node, inputs=[data], outputs=[reduced],
 
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
-  {whole_reduction_doc}
+  Computes the max of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
+  The above behavior is similar to numpy, with the following exceptions:1. numpy defaults keepdims to False instead of True2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced.The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.
 
 #### Version
 
@@ -14563,7 +14569,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_negative_ax
 
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
-  {whole_reduction_doc}
+  Computes the mean of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -14739,7 +14746,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_negative_a
 
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
-  {whole_reduction_doc}
+  Computes the min of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
+  The above behavior is similar to numpy, with the following exceptions:1. numpy defaults keepdims to False instead of True2. This op uses complement_axes attribute which defaults to false but when set to true indicates all axes except the specified axes will be reduced.The attribute complement_axes is used in conjunction with the axes attribute, and has a default value of False.
 
 #### Version
 
@@ -14915,7 +14924,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_negative_ax
 
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
-  {whole_reduction_doc}
+  Computes the product of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -15087,7 +15097,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_negative_a
 
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
-  {whole_reduction_doc}
+  Computes the sum of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
@@ -15298,7 +15309,8 @@ expect(node, inputs=[data, axes], outputs=[reduced],
 
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
-  {whole_reduction_doc}
+  Computes the sum square of the input tensor's element along the provided axes. The resultedtensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, thenthe resulted tensor have the reduced dimension pruned.
+  The above behavior is similar to numpy, with the exception that numpy default keepdims toFalse instead of True.
 
 #### Version
 
