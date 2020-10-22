@@ -166,23 +166,32 @@ static void InferShapesImpl(
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
+  std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{
+      outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
 
   for (auto& vi : *g->mutable_value_info()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_input()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_output()) {
-    // Some output type might be undefined
-    // To assgin inferred type to them,
-    // Also save names of output with undefined types
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    // TODO: Remove this condition and undefinedValueTypesByName in the future
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    } else {
+      // Some output type might be undefined in subgraph. e.g., Loop Op
+      // To assgin inferred type to them,
+      // Also save names of output with undefined types
+      undefinedValueTypesByName[vi.name()] = vi.mutable_type();
+    } 
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -322,6 +331,13 @@ static void InferShapesImpl(
 
         // Make merged info available to further inference.
         valueTypesByName[n.output(i)] = existingType;
+
+        // For udefined output type, update both value_info and output for now
+        // If the output type is undefined, merge inferred type to it
+        iter = undefinedValueTypesByName.find(n.output(i));
+        if (iter != undefinedValueTypesByName.end()) {
+          mergeShapesAndTypes(*inferredType, iter->second);
+        }
       }
     } catch (const std::runtime_error& err) {
       std::cerr << getErrorWithNodeInfo(n, err) << std::endl;
@@ -336,7 +352,7 @@ static void InferShapesImpl(
     for (const std::string &error: inference_errors) {
       std::cerr << error << std::endl;
     }
-    throw std::runtime_error("");
+    throw ONNX_NAMESPACE::InferenceError("");
   }
 }
 
