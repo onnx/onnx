@@ -183,13 +183,11 @@ static void InferShapesImpl(
     }
   }
   for (auto& vi : *g->mutable_output()) {
-    // TODO: Remove this condition and undefinedValueTypesByName in the future
     if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
     } else {
       // Some output type might be undefined in subgraph. e.g., Loop Op
-      // To assgin inferred type to them,
-      // Also save names of output with undefined types
+      // Saving names of outputs with undefined types to allow assigning inferred types to them
       undefinedValueTypesByName[vi.name()] = vi.mutable_type();
     } 
   }
