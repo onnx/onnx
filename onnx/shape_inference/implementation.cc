@@ -321,9 +321,16 @@ static void InferShapesImpl(
         if (iter != valueTypesByName.end()) {
           existingType = iter->second;
         } else {
+          // Create a new value_info if defined type does not exist
           auto vi = g->add_value_info();
           vi->set_name(n.output(i));
           existingType = vi->mutable_type();
+          // For undefined output type, update both value_info and output for now
+          // Update existing output with undefined type: assign inferred type to it
+          iter = undefinedValueTypesByName.find(n.output(i));
+          if (iter != undefinedValueTypesByName.end()) {
+            *iter->second = *inferredType;
+          }
         }
 
         // Now we can merge pre-existing and inferred info
@@ -331,13 +338,6 @@ static void InferShapesImpl(
 
         // Make merged info available to further inference.
         valueTypesByName[n.output(i)] = existingType;
-
-        // For udefined output type, update both value_info and output for now
-        // If the output type is undefined, merge inferred type to it
-        iter = undefinedValueTypesByName.find(n.output(i));
-        if (iter != undefinedValueTypesByName.end()) {
-          mergeShapesAndTypes(*inferredType, iter->second);
-        }
       }
     } catch (const std::runtime_error& err) {
       std::cerr << getErrorWithNodeInfo(n, err) << std::endl;
