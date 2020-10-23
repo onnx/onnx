@@ -346,11 +346,11 @@ static void InferShapesImpl(
   deleteCreatedTypes(initializerTypeList);
   // Throw shape inference error if any
   if (!inference_errors.empty()) {
-    std::cerr << "Shape inference error(s): ";
+    std::string full_errors = "Shape inference error(s): ";
     for (const std::string &error: inference_errors) {
-      std::cerr << error << std::endl;
+      full_errors += error + "\n";
     }
-    throw ONNX_NAMESPACE::InferenceError("");
+    throw ONNX_NAMESPACE::InferenceError(full_errors);
   }
 }
 
