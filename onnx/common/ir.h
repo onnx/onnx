@@ -866,24 +866,45 @@ private:
 
   std::vector <OpSetID> opset_versions_;
 
-  bool isNameInAnyNode(const std::string& name) const {
-      auto f = [&name](const Value* v){ return v->uniqueName() == name; };
-      for(const Node* node : all_nodes) {
-          auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
-          auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
-          if(found_in != node->inputs().end() || found_out != node->outputs().end()) {
-              return true;
+  bool isExistingName(const std::string& name) const {
+    if (std::find(initializer_names_.begin(), initializer_names_.end(), name) !=
+        initializer_names_.end()) {
+      return true;
+    }
+    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
+    for (const Node* node : all_nodes) {
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          const auto& subgraph = node->g(attr);
+          if (subgraph->isExistingName(name)) {
+            return true;
           }
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            if (subgraph->isExistingName(name)) {
+              return true;
+            }
+          }
+        }
       }
-      return false;
+      const auto found_in =
+          std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      if (found_in != node->inputs().end()) {
+        return true;
+      }
+      const auto found_out =
+          std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      if (found_out != node->outputs().end()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  }
-  bool isNameInAnyInitializer(const std::string& name) const {
-      return std::find(initializer_names_.begin(), initializer_names_.end(), name) != initializer_names_.end();
-  }
+
   size_t getNextUnique() {
       std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
-      while(isNameInAnyInitializer(next_unique_name) || isNameInAnyNode(next_unique_name)) {
+      while(isExistingName(next_unique_name)) {
           next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
       }
       return next_unique_;
