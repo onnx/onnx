@@ -166,23 +166,30 @@ static void InferShapesImpl(
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
+  std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{
+      outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
 
   for (auto& vi : *g->mutable_value_info()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_input()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_output()) {
-    // Some output type might be undefined
-    // To assgin inferred type to them,
-    // Also save names of output with undefined types
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    } else {
+      // Some output type might be undefined in subgraph. e.g., Loop Op
+      // Saving names of outputs with undefined types to allow assigning inferred types to them
+      undefinedValueTypesByName[vi.name()] = vi.mutable_type();
+    } 
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -312,9 +319,16 @@ static void InferShapesImpl(
         if (iter != valueTypesByName.end()) {
           existingType = iter->second;
         } else {
+          // Create a new value_info if defined type does not exist
           auto vi = g->add_value_info();
           vi->set_name(n.output(i));
           existingType = vi->mutable_type();
+          // For undefined output type, update both value_info and output for now
+          // Update existing output with undefined type: assign inferred type to it
+          iter = undefinedValueTypesByName.find(n.output(i));
+          if (iter != undefinedValueTypesByName.end()) {
+            *iter->second = *inferredType;
+          }
         }
 
         // Now we can merge pre-existing and inferred info
@@ -332,11 +346,11 @@ static void InferShapesImpl(
   deleteCreatedTypes(initializerTypeList);
   // Throw shape inference error if any
   if (!inference_errors.empty()) {
-    std::cerr << "Shape inference error(s): ";
+    std::string full_errors = "Shape inference error(s): ";
     for (const std::string &error: inference_errors) {
-      std::cerr << error << std::endl;
+      full_errors += error + "\n";
     }
-    throw std::runtime_error("");
+    throw ONNX_NAMESPACE::InferenceError(full_errors);
   }
 }
 
