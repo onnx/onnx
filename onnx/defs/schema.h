@@ -67,12 +67,14 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
   }
 
   const TypeProto* getInputType(int i) const {
-    if (i >= input_types_.size())
+    if (i < 0) return nullptr;
+    size_t j = static_cast<size_t>(i);
+    if (j >= input_types_.size())
       return nullptr;
     // Convert default value (no variant set) into null.
-    if (input_types_[i].value_case() == TypeProto::ValueCase::VALUE_NOT_SET)
+    if (input_types_[j].value_case() == TypeProto::ValueCase::VALUE_NOT_SET)
       return nullptr;
-    return &input_types_[i];
+    return &input_types_[j];
   }
 
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
