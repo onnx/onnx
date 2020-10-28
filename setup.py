@@ -223,9 +223,9 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('cmake_build')
 
         self.copy_tree(os.path.join(CMAKE_BUILD_DIR,"install","include"),
-                os.path.join(TOP_DIR, self.build_lib, "include"))
+                os.path.join(TOP_DIR, self.build_lib, "onnx", "include"))
         self.copy_tree(os.path.join(CMAKE_BUILD_DIR,"install","lib"),
-                os.path.join(TOP_DIR, self.build_lib, "lib"))
+                os.path.join(TOP_DIR, self.build_lib, "onnx", "lib"))
         generated_python_files = \
             glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
             glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
