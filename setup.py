@@ -160,6 +160,7 @@ class cmake_build(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
+                '-DCMAKE_INSTALL_PREFIX={}/install'.format(CMAKE_BUILD_DIR),
                 '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
                 '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
                 '-DBUILD_ONNX_PYTHON=ON',
@@ -210,12 +211,21 @@ class cmake_build(setuptools.Command):
                 build_args.extend(['--', '-j', str(self.jobs)])
             subprocess.check_call(build_args)
 
+            install_args = [CMAKE, '--install', os.curdir]
+            if WINDOWS:
+                install_args.extend(['--config', build_type])
+            subprocess.check_call(install_args)
+
 
 class build_py(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command('create_version')
         self.run_command('cmake_build')
 
+        self.copy_tree(os.path.join(CMAKE_BUILD_DIR,"install","include"),
+                os.path.join(TOP_DIR, self.build_lib, "include"))
+        self.copy_tree(os.path.join(CMAKE_BUILD_DIR,"install","lib"),
+                os.path.join(TOP_DIR, self.build_lib, "lib"))
         generated_python_files = \
             glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
             glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
