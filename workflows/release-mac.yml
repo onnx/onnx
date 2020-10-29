@@ -46,7 +46,7 @@ jobs:
           pip install --quiet pytest==5.4.3 nbval
          
           echo "Starting protobuf install"
-          brew install protobuf
+          pip install protobuf==3.11.3
           echo PATH: $PATH                    
 
       - name: Build, install and test ONNX
