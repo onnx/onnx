@@ -49,9 +49,9 @@ jobs:
           brew install protobuf
           echo PATH: $PATH                    
 
-      -name: Build, install and test ONNX
-       shell: bash
-       run: |
+      - name: Build, install and test ONNX
+        shell: bash
+        run: |
           export CC=clang
           export CXX=clang++
           export ONNX_ML=1
