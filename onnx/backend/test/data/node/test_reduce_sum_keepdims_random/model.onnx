@@ -1,15 +1,19 @@
-backend-test:–
-8
-datareduced"	ReduceSum*
-axes@ *
+backend-test:£
+1
+data
+axesreduced"	ReduceSum*
 keepdims test_reduce_sum_keepdims_randomZ
 data
 
 
 
-b
+Z
+axes
+
+
+b
 reduced
 
 
 
-B	
+B

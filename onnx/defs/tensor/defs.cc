@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Split_ver13_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. Lengths of the parts can be specified using argument 'split'.
+'axis'. Lengths of the parts can be specified using input 'split'.
 Otherwise, the tensor is split to equal sized parts.
 )DOC";
 
@@ -465,6 +465,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            1,
+            "split",
+            "Optional length of each output. Values should be >= 0."
+            "Sum of the values must be equal to the dim value at 'axis' specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "outputs",
@@ -485,7 +495,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -524,7 +533,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          if (getRepeatedAttribute(ctx, "split", split)) {
+          size_t num_inputs = ctx.getNumInputs();
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
+            auto split_proto = ctx.getInputData(1);
+            if (split_proto == nullptr) {
+              // skip if split is not an initializer
+              return;
+            }
+            split = ParseData<int64_t>(split_proto);
             if (split.size() != ctx.getNumOutputs()) {
               fail_shape_inference(
                   "Mismatch between number of splits (",
@@ -545,12 +561,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                   split_dim_value,
                   ")");
             }
-          } else {
+          } else { // no value available for 'split'
             int num_outputs = static_cast<int>(ctx.getNumOutputs());
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
             }
             int chunk_size = split_dim_value / num_outputs;
+            split.reserve(ctx.getNumOutputs());
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
               split.push_back(chunk_size);
             }
@@ -894,6 +911,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
+            perm.reserve(shape.dim_size());
             for (int i = shape.dim_size() - 1; i >= 0; --i)
               perm.push_back(i);
           } else if (!perm.empty()) {
@@ -924,7 +942,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Scatter_ver13_doc = R"DOC(
+static const char* Scatter_ver11_doc = R"DOC(
 This operator is deprecated. Please use ScatterElements, which provides the same functionality.
 
 Scatter takes three inputs `data`, `updates`, and `indices` of the same
@@ -982,10 +1000,10 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scatter,
-    13,
+    11,
     OpSchema()
         .Deprecate()
-        .SetDoc(Scatter_ver13_doc)
+        .SetDoc(Scatter_ver11_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1019,7 +1037,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1031,7 +1049,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types(),
             "Input and output types can be of any tensor type.")
         .TypeConstraint(
             "Tind",
@@ -1134,7 +1152,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1247,7 +1265,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -1323,11 +1341,9 @@ output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j
   ]
   axis = 1,
   output = [
-      [
-          [1.0, 1.9],
-          [2.3, 3.9],
-          [4.5, 5.9],
-      ],
+          [[1.0, 1.9]],
+          [[2.3, 3.9]],
+          [[4.5, 5.9]],
   ]
 ```
 )DOC";
@@ -1531,7 +1547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Squeeze_ver13_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
-Takes a  parameter `axes` with a list of axes to squeeze.
+Takes an input `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
 the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 )DOC";
@@ -1540,25 +1556,35 @@ ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     13,
     OpSchema()
-        .Attr(
-            "axes",
-            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
         .SetDoc(Squeeze_ver13_doc)
         .Input(
             0,
             "data",
             "Tensors with at least max(dims) dimensions.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "axes",
+            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "squeezed",
             "Reshaped tensor with same data as input.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -1570,7 +1596,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          size_t num_inputs = ctx.getNumInputs();
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'axes' is input
+            auto axes_proto = ctx.getInputData(1);
+            if (axes_proto == nullptr) {
+              // skip if axes is not an initializer
+              return;
+            }
+            axes = ParseData<int64_t>(axes_proto);
+          } else { // axes not specified
             return;
           }
 
@@ -1607,13 +1641,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Unsqueeze_ver13_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
-Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
 For example:
   Given an input tensor (`data`) of shape [3, 4, 5], then
   Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
 
-The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
 The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
 Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
 The order of values in `axes` does not matter and can come in any order. 
@@ -1624,11 +1658,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     13,
     OpSchema()
-        .Attr(
-            "axes",
-            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
-            AttributeProto::INTS)
         .SetDoc(Unsqueeze_ver13_doc)
         .Input(
             0,
@@ -1639,6 +1668,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            1,
+            "axes",
+            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "expanded",
@@ -1657,12 +1696,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          auto axes_proto = ctx.getInputData(1);
+          if (axes_proto == nullptr) {
+            // skip if axes is not an initializer
             return;
           }
-
+          axes = ParseData<int64_t>(axes_proto);
+          
           // validate 'axes' for duplicate entries
           std::unordered_set<int64_t> unique_values;
           for (const auto val : axes) {
@@ -1972,7 +2013,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return;
         }));
 
-static const char* Upsample_ver13_doc = R"DOC(
+static const char* Upsample_ver10_doc = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
@@ -1980,7 +2021,7 @@ Each dimension value of the output tensor is:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
-    13,
+    10,
     OpSchema()
         .Deprecate()
         .Attr(
@@ -2009,9 +2050,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver13_doc)
+        .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference_opset7_to_10(ctx);
         }));
@@ -2039,9 +2080,6 @@ x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
 
 if coordinate_transformation_mode is "asymmetric", <br/>
 x_original = x_resized / scale, <br/>
-
-if coordinate_transformation_mode is "tf_half_pixel_for_nn", <br/>
-x_original = (x_resized + 0.5) / scale, <br/>
 
 if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
 x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1).)DOC";
@@ -2090,33 +2128,49 @@ ONNX_OPERATOR_SET_SCHEMA(
             "X",
             "N-D tensor",
             "T1",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "roi",
             "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
             "T2",
-            OpSchema::Single)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             2,
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is specified, then set scales to empty data (zero shape) in this operator's input list.",
+            " be the same as the rank of input 'X'. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
             "tensor(float)",
-            OpSchema::Single)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
             " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
             "tensor(int64)",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "Y",
             "N-D tensor after resizing",
-            "T1")
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -2182,7 +2236,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input",
             "Tensor of rank r >= 1.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             1,
             "condition",
@@ -2191,13 +2248,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "or the flattened input size if axis is not specified. "
             "In such cases data slices or elements exceeding the condition length are discarded.",
             "T1",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "output",
             "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.",
             "T",
-            OpSchema::Single)
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),

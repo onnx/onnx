@@ -1,9 +1,9 @@
-backend-test:‰
+backend-test:ÿ
 d
 input
 targetloss"NegativeLogLikelihoodLoss*
 ignore_indexûÿÿÿÿÿÿÿÿ *
-	reduction"none :test_nllloss_NCd1d2d3_none_no_weight_negative_ignore_indexZ#
+	reduction"none 0test_nllloss_NCd1d2d3_none_no_weight_negative_iiZ#
 input
 
 
@@ -22,4 +22,4 @@ d
 
 
 
-B
+B

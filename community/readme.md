@@ -21,14 +21,14 @@ The ONNX community adheres to the following principles:
 ## Community Roles
 
 ### Members
-Members are individuals who are interested in or participate in the ONNX community. Members are able to follow and participate in all public modes of communication used by the ONNX community including but not limited to GitHub, Gitter, Stack Overflow, email announcements and discussion aliases. Members are expected to adhere to the Code of Conduct but do not have any specific responsibilities.
+Members are individuals who are interested in or participate in the ONNX community. Members are able to follow and participate in all public modes of communication used by the ONNX community including but not limited to GitHub, Slack, Gitter, Stack Overflow, email announcements and discussion aliases. Members are expected to adhere to the Code of Conduct but do not have any specific responsibilities.
 
 ### Contributors
 Contributors are Members who are active contributors in the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors can be active in many ways including but not limited to:
 
 * Authoring or reviewing PRs on GitHub
 * Filing or commenting on issues on GitHub
-* Contributing to SIG, subproject, or community discussions (e.g. Gitter, meetings, email discussion forums, Stack Overflow, etc)
+* Contributing to SIG, subproject, or community discussions (e.g. Slack, Gitter, meetings, email discussion forums, Stack Overflow, etc)
 * Creator of content, promoting and advocating the ONNX specification
 
 A Member can become a Contributor by being sponsored by 2 existing Approvers from different companies. Contributors who are not active in the last 12 months will be removed.
@@ -72,7 +72,7 @@ The Steering Committee has a set of rights and responsibilities including the fo
 * Decide which functional areas and scope are part of the ONNX project, including accepting new or pruning old SIGs and Working Groups.
 * Decide how and when official releases of ONNX artifacts are made and what they include.
 * Declare releases when quality/feature/other requirements are met.
-* Control access to, establish processes regarding, and provide a final escalation path for any ONNX  repository, which currently includes all repositories under the ONNX GitHub organizations
+* Control access to, establish processes regarding, and provide a final escalation path for any ONNX repository, which currently includes all repositories under the ONNX GitHub organizations
 * Control and delegate access to and establish  processes regarding other project resources/assets, including artifact repositories, build and test infrastructure, web sites and their domains, blogs, social-media accounts, etc.
 * Define any certification process.
 * Manage the ONNX brand and any outbound marketing.
@@ -161,13 +161,15 @@ Working Groups are disbanded when there is no activity for more than *3 months* 
 All repositories under the ONNX github org:
 
 * Must adopt the ONNX Code of Conduct
-* All code projects use the MIT license. Documentation repositories must use the Creative Commons License version 4.0.
-* Must adopt the ONNX CLA bot
+* All code projects use the Apache 2.0 license. Documentation repositories must use the Creative Commons License version 4.0.
+* Must adopt the DCO bot
 * All OWNERS must be members of standing as defined by ability to vote in ONNX steering committee elections
 * Repository must be approved by the Steering Committee
 
 Repositories can be removed when they are inactive by archiving them.
 
-## CLA
+(Code repositories previously used the MIT license and moved to Apache 2.0 in October 2020.)
 
-All contributors must sign the ONNX CLA, described at https://cla-assistant.io/onnx/onnx. The Steering Committee will update the CLA to reflect the ONNX organization/ownership as needed.
+## CLA / DCO
+
+As of October 2020, the CLA (https://cla-assistant.io/onnx/onnx) has been retired. All commits are subject to the DCO (https://www.developercertificate.com/) and need to be signed.

@@ -28,11 +28,26 @@ class BroadcastForwardCompatibility final : public Adapter {
             n->addInput(inputs[1]);
             std::vector<int64_t> axes;
             std::vector<Dimension> new_sizes = B_sizes;
-            for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
+            auto size = A_sizes.size() > B_sizes.size() ? A_sizes.size() - B_sizes.size() : 0;
+            axes.reserve(size);
+            new_sizes.reserve(new_sizes.size() + size);
+            for (size_t i = 0; i < size; i++) {
               axes.emplace_back(B_sizes.size() + i);
               new_sizes.emplace_back(Dimension(1));
             }
-            n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
+            if (target_version().version() >= 13){ //Unsqueeze takes 'axes' input
+              Tensor t;
+              t.elem_type() = TensorProto_DataType_INT64;
+              t.sizes() = std::vector<int64_t>{static_cast<int64_t>(axes.size())};
+              auto& data = t.int64s();
+              for (auto a : axes) {
+                data.emplace_back(a);
+              }
+              Value* axes_value = graph->addInitializerAndInput(t);
+              n->addInput(axes_value);
+            } else { // Unsqueeze takes 'axes' attribute
+              n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
+            }
             // Move n before node
             n->insertBefore(node);
             // Set 2nd input to node to 1st of n and output of n to 2nd input to node
