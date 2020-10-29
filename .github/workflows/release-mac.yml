@@ -55,7 +55,7 @@ jobs:
           export CC=clang
           export CXX=clang++
           export ONNX_ML=1
-          export ONNX_NAMESPACE=ONNX_REL_1_7
+          export ONNX_NAMESPACE=ONNX_REL_1_8
           export MACOSX_DEPLOYMENT_TARGET=10.15
           
           python setup.py bdist_wheel
