@@ -46,7 +46,16 @@ jobs:
           pip install --quiet pytest==5.4.3 nbval
          
           echo "Starting protobuf install"
-          brew install protobuf@3.6
+          git clone https://github.com/protocolbuffers/protobuf.git
+          cd protobuf
+          git submodule update --init --recursive
+          ./autogen.sh
+          ./configure --with-protoc=protoc
+           make
+          make check
+          sudo make install
+          sudo ldconfig
+          pip install protobuf==3.11.3
           echo PATH: $PATH                    
 
       - name: Build, install and test ONNX
