@@ -163,6 +163,7 @@ def expect(node,  # type: onnx.NodeProto
     ))
 
     # Create list of types for node.input, filling a default TypeProto for missing inputs:
+    # E.g. merge(["x", "", "y"], [x-value-info, y-value-info]) will return [x-type, default-type, y-type]
     def merge(node_inputs, present_value_info):  # type: (List[Text], List[onnx.ValueInfoProto]) -> List[TypeProto]
         if (node_inputs):
             if (node_inputs[0] != ''):
