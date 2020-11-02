@@ -116,6 +116,12 @@ def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], 
         shape=input.shape)
 
 
+# In the case of ops with optional inputs and outputs, node.input and node.output indicate
+# which inputs/outputs are present and which are omitted. However, the parameter inputs
+# and outputs of this function include values only for inputs/outputs that are present.
+# E.g., for an op with 3 inputs, if the second parameter is optional and we wish to omit it,
+# node.inputs would look like ["Param1", "", "Param3"], while inputs would look like
+# [input-1-value, input-3-value]
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
@@ -164,7 +170,7 @@ def expect(node,  # type: onnx.NodeProto
             else:
                 [TypeProto()] + merge(node_inputs[1:], present_value_info)
         return []
-    merged_types = merge(node.input, inputs_vi)
+    merged_types = merge(list(node.input), inputs_vi)
     expanded_function_nodes = function_testcase_helper(node, merged_types, name)
     if expanded_function_nodes:
         function_test_name = name + '_expanded'
