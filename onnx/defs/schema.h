@@ -27,20 +27,20 @@ namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-  virtual bool hasInput(int i) const = 0;
-  virtual bool hasOutput(int i) const = 0;
+  virtual bool hasInput(int inputIndex) const = 0;
+  virtual bool hasOutput(int inputIndex) const = 0;
   // getInputType(i) should return null for missing optional inputs, or if
   // type-inference could not infer the input-type (erroneous model).
-  virtual const TypeProto* getInputType(int i) const = 0;
+  virtual const TypeProto* getInputType(int inputIndex) const = 0;
   virtual ~FunctionBodyBuildContext() {}
 };
 
 struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
   // Input_types: use a default TypeProto for missing types. We use a different convention
   // here (from FunctionBodyBuildContext) to simplify python interoperability.
-  FunctionBodyBuildContextImpl(NodeProto& node_proto, const std::vector<TypeProto>& input_types)
+  FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types)
       : node_proto_(node_proto), input_types_(input_types) {
-    for (auto& attr : *node_proto.mutable_attribute()) {
+    for (auto& attr : node_proto.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
   }
@@ -54,21 +54,21 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  bool hasInput(int i) const {
-    if (i >= node_proto_.input_size())
+  bool hasInput(int inputIndex) const {
+    if (inputIndex >= node_proto_.input_size())
       return false;
-    return node_proto_.input(i) != "";
+    return node_proto_.input(inputIndex) != "";
   }
 
-  bool hasOutput(int i) const {
-    if (i >= node_proto_.output_size())
+  bool hasOutput(int inputIndex) const {
+    if (inputIndex >= node_proto_.output_size())
       return false;
-    return node_proto_.output(i) != "";
+    return node_proto_.output(inputIndex) != "";
   }
 
-  const TypeProto* getInputType(int i) const {
-    if (i < 0) return nullptr;
-    size_t j = static_cast<size_t>(i);
+  const TypeProto* getInputType(int inputIndex) const {
+    if (inputIndex < 0) return nullptr;
+    size_t j = static_cast<size_t>(inputIndex);
     if (j >= input_types_.size())
       return nullptr;
     // Convert default value (no variant set) into null.
