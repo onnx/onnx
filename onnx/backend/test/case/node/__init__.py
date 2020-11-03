@@ -18,7 +18,7 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 
-from onnx.onnx_pb import NodeProto, AttributeProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto
 from onnx.onnx_operators_pb import FunctionProto
 
 
@@ -76,7 +76,7 @@ def function_expand_helper(node,  # type: NodeProto
     return node_list
 
 
-def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[NodeProto]
+def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List[TypeProto], Text) -> List[NodeProto]
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -84,7 +84,7 @@ def function_testcase_helper(node, name):  # type: (NodeProto, Text) -> List[Nod
     if schema.has_function:    # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:    # type: ignore
-        function_proto_str = schema.get_context_dependent_function(node.SerializeToString())  # type: ignore
+        function_proto_str = schema.get_context_dependent_function(node.SerializeToString(), [t.SerializeToString() for t in input_types])  # type: ignore
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
@@ -116,6 +116,12 @@ def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], 
         shape=input.shape)
 
 
+# In the case of ops with optional inputs and outputs, node.input and node.output indicate
+# which inputs/outputs are present and which are omitted. However, the parameter inputs
+# and outputs of this function include values only for inputs/outputs that are present.
+# E.g., for an op with 3 inputs, if the second parameter is optional and we wish to omit it,
+# node.inputs would look like ["Param1", "", "Param3"], while inputs would look like
+# [input-1-value, input-3-value]
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
@@ -156,7 +162,17 @@ def expect(node,  # type: onnx.NodeProto
         atol=1e-7,
     ))
 
-    expanded_function_nodes = function_testcase_helper(node, name)
+    # Create list of types for node.input, filling a default TypeProto for missing inputs:
+    # E.g. merge(["x", "", "y"], [x-value-info, y-value-info]) will return [x-type, default-type, y-type]
+    def merge(node_inputs, present_value_info):  # type: (List[Text], List[onnx.ValueInfoProto]) -> List[TypeProto]
+        if (node_inputs):
+            if (node_inputs[0] != ''):
+                [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
+            else:
+                [TypeProto()] + merge(node_inputs[1:], present_value_info)
+        return []
+    merged_types = merge(list(node.input), inputs_vi)
+    expanded_function_nodes = function_testcase_helper(node, merged_types, name)
     if expanded_function_nodes:
         function_test_name = name + '_expanded'
         graph = onnx.helper.make_graph(
