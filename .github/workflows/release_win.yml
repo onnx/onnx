@@ -71,7 +71,7 @@ jobs:
         mkdir protobuf_install
         cd ./protobuf/cmake
 
-        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -DCMAKE_BUILD_TYPE=Release -Dprotobuf_MSVC_STATIC_RUNTIME=ON -DProtobuf_USE_STATIC_LIBS=ON -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+        cmake -G "Visual Studio 15 2017" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -DCMAKE_BUILD_TYPE=Release -Dprotobuf_MSVC_STATIC_RUNTIME=ON -DProtobuf_USE_STATIC_LIBS=ON -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
         msbuild protobuf.sln /m /p:Configuration=Release
         msbuild INSTALL.vcxproj /p:Configuration=Release
         echo "Protobuf installation complete."
