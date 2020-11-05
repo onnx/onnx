@@ -350,7 +350,7 @@ static void InferShapesImpl(
     for (const std::string &error: inference_errors) {
       full_errors += error + "\n";
     }
-    throw ONNX_NAMESPACE::InferenceError(full_errors);
+    throw std::runtime_error(full_errors);
   }
 }
 
