@@ -1,4 +1,24 @@
-# ONNX Open Governance
+# ONNX Community Involvement and Open Governance
+
+# Best practices for community involvement
+
+## Meetings and Slack
+Join SIGS, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Join the ONNX slack channels at LF AI and Data, help answer questions and welcome new members.
+
+## Use Cases and Tools
+Develop use cases for ONNX and advocate for ONNX in developer conferences and meetups.  Develop tools that import and export using the ONNX spec, and help grow the community of ONNX users.  Become a champion for ONNX in your company or organization.
+
+## Roadmap and Features
+Understand the ONNX roadmap document, feature priorities, and help implement them.  Become an ONNX code and documentation contributor, and work towards committer status on important repos.
+
+## Releases and Model Zoo
+Help in achieving a release of ONNX, including increasing the number of models in the ONNX Model Zoo that exercise ONNX features.
+
+## Publications and Blogs
+Add to the growing number of arXiv papers that refer to ONNX.  Create blogs, presentations, books, articles and other materials that help increase the adoption of ONNX, and grow the community of users and contributors.
+
+## Steering Committee
+Attend ONNX Steering Committee meetings - they are open to all in the community. Help out where needed and appropriate on SC to-do items. Note that SIG and Working Groups leaders as well as others with demonstrated commitment and contributions to ONNX community may want to self-nominate during the annual SC election cycle.
 
 ## TL;DR
 
