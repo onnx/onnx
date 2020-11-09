@@ -1,8 +1,11 @@
 #include <iostream>
 #include "gtest/gtest.h"
+#include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+
+using namespace ONNX_NAMESPACE::checker;
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -88,12 +91,17 @@ void RegisterTwiceSchema() {
 
 TEST(FunctionAPITest, TypeContextTest) {
   RegisterTwiceSchema();
+
   const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, "");
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
   NodeProto nodeProto;
+  nodeProto.set_op_type("CustomFunTwice");
+  nodeProto.add_input("X");
+  nodeProto.add_output("Y");
+
   TypeProto floatTypeProto;
   floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
 
@@ -102,6 +110,10 @@ TEST(FunctionAPITest, TypeContextTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
+  LexicalScopeContext lexicalScope;
+  CheckerContext checkerCtx;
+  checkerCtx.set_ir_version(7);
+  check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 } // namespace Test
