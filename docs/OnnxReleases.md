@@ -4,23 +4,42 @@ Next expected release: May 15th
 
 Release Checklist: 
 
+## Preparation
+
 * Install Twine, a utility tool to interact with pypi. Do  - ``pip install twine``
-* Get hold of the username and password for the ‘onnx’ pypi account.
-* Pick a release tag for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
+* Get hold of the username and password for the ‘onnx’ pypi account. Release Manager should obtain this information from last Release Manager or certain private repo under onnx.
+* Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
 * Prepare a change log for the release – 
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
     * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
-* Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
-* Make sure that the Release version number information is up-to-date in the following places:
+* Create a release branch (rel-1.X.X) from master. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
+* In the release branch, make sure that the Release version number information is up-to-date in the following places:
 [VERSION_NUMBER file](https://github.com/onnx/onnx/blob/master/VERSION_NUMBER) and
 [version.h](../onnx/common/version.h)
 * Make sure that the IR version number and opset version numbers are up-to-date in
 [ONNX proto files](../onnx/onnx.in.proto),
-[Versioning.md](Versioning.md) and
-[helper.py](../onnx/helper.py).
+[Versioning.md](Versioning.md), 
+[schema.h](../onnx/defs/schema.h), 
+[helper.py](../onnx/helper.py) and [helper_test.py](../onnx/helper_test.py).
 * Make sure all operators version are even number, if opset version is odd number then increment it and update all corresponding OPs.
+* Start early to create the release summary (draft).
+
+## Test with TestPyPI
+**Wheel Files**
+* Windows
+  * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheel files for Windows.
+  * Upload the produced wheel files manually to TestPyPI: `twine upload --verbose *.whl --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`.
+* Linux and Mac
+  * Use Travis CI from https://github.com/onnx/wheel-builder to produce and automatiallcy upload wheel files for Linux and Mac.
+  * Update `BUILD_COMMIT` as the commit ID of latest release branch in `.travis.yml` and update `ONNX_NAMESPACE` as `ONNX_REL_1_X` in `config.sh `.
+  * Update `$PYPI_USERNAME` and `$PYPI_PASSWORD` as `- secure: ***` in `.travis.yml`. Create the encrypted variables for these variables by `travis encrypt` in your local machine.
+  Reference: https://docs.travis-ci.com/user/environment-variables/#defining-encrypted-variables-in-travisyml
+  * Only `pypi-test` branch will automatiallcy upload created wheel files to TestPyPI.
+  * Currently Python 3.5 cannot upload wheel successfully in Travis CI. In that case, you need to upload the created wheel files to AWS S3 bucket, get the wheel from AWS and upload it manually (same as Windows). To upload to AWS, updade your `ARTIFACTS_KEY`, `ARTIFACTS_SECRET` and `ARTIFACTS_BUCKET` by `travis encrypt`. Reference: https://docs.travis-ci.com/user/uploading-artifacts/
+
+**Source Distribution**
 * Make sure all the git submodules are updated
-    * ``git submodule update –init``
+    * ``git submodule update --init``
 * Make sure the git checkout is clean –
     * Do ``git clean -nxd`` and make sure that none of the auto-generated header files *like* the following are not present.
         * onnx/onnx-operators.pb.cc
@@ -45,13 +64,38 @@ repository=https://test.pypi.org/legacy/
 username=<username>
 password=<password>
 ```
-* Do ``twine upload dist/* -r pypitest`` to upload it to the test instance of pypi.
-* After uploading to pypitest, you can test the source distribution by doing ``pip install –index-url https://test.pypi.org/simple/ onnx`` in a new environment. Test this installation with different environments and versions of protobuf binaries.
-* *NOTE - Once a distribution is uploaded to pypi, you cannot overwrite it on the same pypi instance.*
-* Once completely verified do, ``twine upload dist/*``  to upload to the official pypi.
-* *Conda - *
-    * Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. You need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files for an example PR.) You will need to have uploaded to PyPi already, and update the version number and tarball hash of the PyPi uploaded tarball.
-* The release branch needs to be marked as a protected branch to preserve it. The branch corresponding to each release must be preserved. (You may need to ask an admin to do this)
+* Do ``twine upload dist/* pypitest`` to upload it to the test instance of pypi.
+* After uploading to pypitest, you can test the source distribution by doing ``pip install --index-url https://test.pypi.org/legacy/ onnx`` in a new environment. Test this installation with different environments and versions of protobuf binaries.
+
+
+## Upload to official PyPI
+**NOTE: Once uploading to PyPI, you cannot overwrite it on the same pypi instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
+
+**Wheel Files**
+* Windows
+  * Same as TestPyPi, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD` instead.
+* Linux and Mac
+  * Similar to TestPyPi. Merge `pypi-test` to main branch and create a new Release with main branch and tag to trigger Travis CI with uploading PyPI packages automatically. 
+
+
+**Source Distribution**
+* Once completely verified do, ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`  to upload to the official pypi.
+* Test with ``pip install --index-url https://upload.pypi.org/legacy/ onnx``
+
+## After PyPI Release 
+
+**Submit the release summary with the release tag and branch**
+
+**Announce**
+* Announce in slack, for instance, `onnx-general` channel.
+* Notify ONNX partners like converter team and runtime team.
+* Create a news by updating `js/news.json` under onnx/onnx.github.io.
+
+**Update conda-forge package with the new ONNX version**
+* Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. You need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files for an example PR.) You will need to have uploaded to PyPi already, and update the version number and tarball hash of the PyPi uploaded tarball.
+
+**Set protected branch**
+* The release branch needs to be marked as a protected branch to preserve it. The branch corresponding to each release must be preserved. (You may need to ask an admin to do this; `rel-*` branches are protected automatically)
 
 
  
