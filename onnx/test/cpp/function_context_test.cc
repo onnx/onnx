@@ -92,12 +92,15 @@ TEST(FunctionAPITest, TypeContextTest) {
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
+
   NodeProto nodeProto;
   TypeProto floatTypeProto;
-  
+  floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
+
   FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
   FunctionProto fnProto;
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
+  EXPECT_EQ(fnProto.node_size(), 2);
 
 }
 
