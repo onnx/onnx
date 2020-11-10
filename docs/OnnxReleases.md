@@ -27,11 +27,11 @@ Next expected release: May 15th
 * Use `VERSION_NUMBER` like `1.x.0rc1` as release candidate for verification before finally using targeted `VERSION_NUMBER`.
 * Windows
   * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheel files for Windows.
-  * After success, upload the produced wheel files manually to TestPyPI: `twine upload --verbose *.whl --repository-url https://test.PyPI.org/legacy/ -u PyPI_USERNAME -p PyPI_PASSWORD`.
+  * After success, upload the produced wheel files manually to TestPyPI: `twine upload --verbose *.whl --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`.
 * Linux and Mac
   * Use Travis CI from [onnx/wheel-builder](https://github.com/onnx/wheel-builder) repo to produce and automatiallcy upload wheel files for Linux and Mac.
   * Update `BUILD_COMMIT` as the commit ID of latest release branch in `.travis.yml` and update `ONNX_NAMESPACE` as `ONNX_REL_1_X` in `config.sh `.
-  * Update `$PyPI_USERNAME` and `$PyPI_PASSWORD` as `- secure: ***` in `.travis.yml`. Create the encrypted variables for these variables by `travis encrypt` in your local machine.
+  * Update `$PYPI_USERNAME` and `$PYPI_PASSWORD` as `- secure: ***` in `.travis.yml`. Create the encrypted variables for these variables by `travis encrypt` in your local machine.
   Reference: https://docs.travis-ci.com/user/environment-variables/#defining-encrypted-variables-in-travisyml
   * Only `PyPI-test` branch will automatiallcy upload created wheel files to TestPyPI.
   * Currently Python 3.5 cannot upload wheel successfully in Travis CI. In that case, you need to upload the created wheel files to AWS S3 bucket, get the wheel from AWS and upload it manually (same as Windows). To upload to AWS, updade your `ARTIFACTS_KEY`, `ARTIFACTS_SECRET` and `ARTIFACTS_BUCKET` by `travis encrypt`. Reference: https://docs.travis-ci.com/user/uploading-artifacts/
@@ -47,7 +47,7 @@ Next expected release: May 15th
         * onnx/onnx.pb.h
     * If they are present run ``git clean -ixd`` and remove those files from your local branch
 * Do ``python setup.py sdist`` to generate the source distribution.
-* Put the following content into ``~/.PyPIrc`` file:
+* Put the following content into ``~/.pypirc`` file:
 ```
 [distutils]
 index-servers =
@@ -59,28 +59,39 @@ username=<username>
 password=<password>
  
 [PyPItest]
-repository=https://test.PyPI.org/legacy/
+repository=https://test.pypi.org/legacy/
 username=<username>
 password=<password>
 ```
 * Do ``twine upload dist/* PyPItest`` to upload it to the test instance of PyPI.
-* After uploading to PyPItest, you can test the source distribution by doing ``pip install --index-url https://test.PyPI.org/legacy/ onnx`` in a new environment. Test this installation with different environments and versions of protobuf binaries.
+* After uploading to PyPItest, you can test the source distribution by doing ``pip install --index-url https://test.pypi.org/legacy/ onnx`` in a new environment. Test this installation with different environments and versions of protobuf binaries.
 
+## PyPI package verification
+**Test ONNX itself**
+* Test the PyPI package installation with different combinations of various Python versions, Protobuf versions and platforms.
+* After installing the PyPI package, run `pytest` in the release branch and test the ONNX basic functions like `load`, `checker.check_model` and `shape_inference.infer_shapes` on certain example ONNX model.
+
+**Test with onnxruntime**
+* onnxruntime uses ONNX as submodule so it cannot be tested with ONNX PyPI package. Instead, onnxruntime can be tested with ONNX's release commit. Update the commit ID in onnxruntime and check the status of CIs from onnxruntime.
+* To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
+
+**Test with ONNX converters**
+* Cooperate with the converter teams. Provide them with the produced ONNX PyPI packages and let converter teams use them with their converters to check whether there is any issue.
 
 ## Upload to official PyPI
 **NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
 
 **Wheel Files**
 * Windows
-  * Same as TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.PyPI.org/legacy/ -u PyPI_USERNAME -p PyPI_PASSWORD` instead.
+  * Same as TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD` instead.
 * Linux and Mac
   * Similar to TestPyPI. Merge `PyPI-test` branch to main branch and create a new Release with main branch and tag to trigger Travis CI with uploading PyPI packages automatically. 
 
 
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
-* Use ``twine upload --verbose dist/* --repository-url https://upload.PyPI.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --index-url https://upload.PyPI.org/legacy/ onnx``
+* Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
+* Test with ``pip install --index-url https://upload.pypi.org/legacy/ onnx``
 
 ## After PyPI Release 
 
