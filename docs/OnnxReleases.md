@@ -34,7 +34,7 @@ Next expected release: May 15th
   * Update `$PYPI_USERNAME` and `$PYPI_PASSWORD` as `- secure: ***` in `.travis.yml`. Create the encrypted variables for these variables by `travis encrypt` in your local machine.
   Reference: https://docs.travis-ci.com/user/environment-variables/#defining-encrypted-variables-in-travisyml
   * Only `PyPI-test` branch will automatiallcy upload created wheel files to TestPyPI.
-  * Currently Python 3.5 cannot upload wheel successfully in Travis CI. In that case, you need to upload the created wheel files to AWS S3 bucket, get the wheel from AWS and upload it manually (same as Windows). To upload to AWS, updade your `ARTIFACTS_KEY`, `ARTIFACTS_SECRET` and `ARTIFACTS_BUCKET` by `travis encrypt`. Reference: https://docs.travis-ci.com/user/uploading-artifacts/
+  * Currently Python 3.5 on Mac cannot upload wheel successfully in Travis CI. In that case, you need to upload the created wheel files to AWS S3 bucket, get the wheel from AWS and upload it manually (same as Windows). To upload to AWS, updade your `ARTIFACTS_KEY`, `ARTIFACTS_SECRET` and `ARTIFACTS_BUCKET` by `travis encrypt`. Reference: https://docs.travis-ci.com/user/uploading-artifacts/
 
 **Source Distribution**
 * Make sure all the git submodules are updated
@@ -51,19 +51,19 @@ Next expected release: May 15th
 ```
 [distutils]
 index-servers =
-  PyPI
-  PyPItest
+  pypi
+  pypitest
  
-[PyPI]
+[pypi]
 username=<username>
 password=<password>
  
-[PyPItest]
+[pypitest]
 repository=https://test.pypi.org/legacy/
 username=<username>
 password=<password>
 ```
-* Do ``twine upload dist/* PyPItest`` to upload it to the test instance of PyPI.
+* Do ``twine upload dist/* pypitest`` to upload it to the test instance of PyPI.
 * After uploading to PyPItest, you can test the source distribution by doing ``pip install --index-url https://test.pypi.org/legacy/ onnx`` in a new environment. Test this installation with different environments and versions of protobuf binaries.
 
 ## PyPI package verification
@@ -85,7 +85,7 @@ password=<password>
 * Windows
   * Same as TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD` instead.
 * Linux and Mac
-  * Similar to TestPyPI. Merge `PyPI-test` branch to main branch and create a new Release with main branch and tag to trigger Travis CI with uploading PyPI packages automatically. 
+  * Similar to TestPyPI. Merge `pypi-test` branch to main branch and create a new Release with main branch and tag to trigger Travis CI with uploading PyPI packages automatically. 
 
 
 **Source Distribution**
