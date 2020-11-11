@@ -127,8 +127,7 @@ jobs:
 
       # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
       pip uninstall -y onnx
-      pip install --no-use-pep517 -e .[mypy]
-      python setup.py --quiet typecheck
+      pip install mypy
       if [ $? -ne 0 ]; then
         echo "type check failed"
         exit 1
