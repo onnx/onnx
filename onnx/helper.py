@@ -3,12 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-try:
-    # python3
-    from collections import abc as collections_abc
-except ImportError:
-    # python2
-    import collections as collections_abc
+from collections.abc import Iterable
 
 import numbers
 from six import text_type, integer_types, binary_type
@@ -342,7 +337,7 @@ def make_attribute(
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections_abc.Iterable)
+    is_iterable = isinstance(value, Iterable)
     bytes_or_false = _to_bytes_or_false(value)
     # First, singular cases
     # float
