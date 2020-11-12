@@ -69,6 +69,15 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
  * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from ``.github/workflows/test_with_ort.py`` with installed onnxruntime package.
  
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
+   * https://github.com/pytorch/pytorch
+   * https://github.com/onnx/onnx-tensorflow
+   * https://github.com/onnx/tensorflow-onnx
+   * https://github.com/onnx/sklearn-onnx
+   * https://github.com/onnx/onnxmltools
+   * https://github.com/onnx/keras-onnx
+   * https://github.com/onnx/onnx-tensorrt
+   * https://github.com/onnx/onnx-coreml
+
 
 **Source distribution verification**
 * Test the source distribution by doing ``pip install --index-url https://test.pypi.org/legacy/ onnx`` in a new environment.
@@ -100,7 +109,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 * Create a news by updating `js/news.json` to announce ONNX release under [onnx/onnx.github.io](https://github.com/onnx/onnx.github.io) repo. For instance: https://github.com/onnx/onnx.github.io/pull/83.
 
 **Update conda-forge package with the new ONNX version**
-* Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. You need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files for an example PR.) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.
+* Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. If it does not happen automatically, you need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files or https://github.com/conda-forge/onnx-feedstock/pull/50/files for example PRs) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.
 
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent.
