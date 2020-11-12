@@ -114,3 +114,9 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent.
 
+## TODO list for next release
+* Remove `onnx.optimizer` in ONNX 1.9
+* Be aware of protobuf version gap issue (like building onnx with protobuf>=3.12 is not compatible with older protobuf)
+* (Optional) Move Linux and Mac release pipelines in onnx/wheel-builder to GitHub Action in onnx repo
+* (Optional) Deprecate Python 3.5. It has been officially deprecated by Python and some problems exist in Travis CI for Mac.
+* (Optional) Automatically upload created wheels for Windows
