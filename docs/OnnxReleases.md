@@ -9,7 +9,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
     * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
 * Increase `VERSION_NUMBER` in the main branch before creating a release branch.
-* Create a release branch (rel-1.X.X) from master. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
+* Create a release branch (please use rel-* as the branch name) from master. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
 * Create an issue in onnxruntime to update onnx commit in onnxruntime to the release branch commit and run all the CI and packaging pipelines.
 * In the release branch, make sure that the Release version number information is up-to-date in the following places:
 [VERSION_NUMBER file](https://github.com/onnx/onnx/blob/master/VERSION_NUMBER) and
@@ -66,7 +66,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 **Partner Validation**
 
- * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
+ * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from ``.github/workflows/test_with_ort.py`` with installed onnxruntime package.
  
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
 
@@ -101,9 +101,6 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 **Update conda-forge package with the new ONNX version**
 * Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. You need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files for an example PR.) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.
-
-**Set protected branch**
-* The release branch needs to be marked as a protected branch to preserve it. The branch corresponding to each release must be preserved. (You may need to ask an admin to do this; `rel-*` branches are protected automatically)
 
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent.
