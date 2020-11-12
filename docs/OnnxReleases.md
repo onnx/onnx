@@ -19,7 +19,6 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 [Versioning.md](Versioning.md), 
 [schema.h](../onnx/defs/schema.h), 
 [helper.py](../onnx/helper.py) and [helper_test.py](../onnx/helper_test.py).
-* Make sure all operators version are even number, if opset version is odd number then increment it and update all corresponding OPs.
 
 ## Upload to TestPyPI
 **Wheels**
