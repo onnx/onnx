@@ -30,7 +30,7 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   ::google::protobuf::io::ArrayInputStream input_stream(buffer, static_cast<int>(length));
   ::google::protobuf::io::CodedInputStream coded_stream(&input_stream);
   int total_bytes_limit = (2048LL << 20) - 1;
-#if GOOGLE_PROTOBUF_VERSION >= 3110000
+#if GOOGLE_PROTOBUF_VERSION >= 3011000
     // Only take one parameter since protobuf 3.11
     coded_stream.SetTotalBytesLimit(total_bytes_limit);
 #else
