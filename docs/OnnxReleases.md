@@ -6,7 +6,7 @@ Release Checklist:
 
 * Install Twine, a utility tool to interact with pypi. Do  - ``pip install twine``
 * Get hold of the username and password for the ‘onnx’ pypi account.
-* Pick a release tag for the new release through mutual consent – Gitter Room for Releases (https://gitter.im/onnx/Releases)
+* Pick a release tag for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
 * Prepare a change log for the release – 
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
     * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.

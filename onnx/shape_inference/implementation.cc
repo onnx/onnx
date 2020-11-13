@@ -1,6 +1,8 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 #include "onnx/checker.h"
+#include <fstream>
+
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
@@ -158,29 +160,36 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>&
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
-    const bool check_type,
+    const bool check_type,  // check the type-equality for input and output
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION  // default the latest one
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
+      outer_scope_value_types_by_name};
+  std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{
       outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
 
   for (auto& vi : *g->mutable_value_info()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_input()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_output()) {
-    // Some output type might be undefined
-    // To assgin inferred type to them,
-    // Also save names of output with undefined types
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    } else {
+      // Some output type might be undefined in subgraph. e.g., Loop Op
+      // Saving names of outputs with undefined types to allow assigning inferred types to them
+      undefinedValueTypesByName[vi.name()] = vi.mutable_type();
+    } 
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -292,6 +301,7 @@ static void InferShapesImpl(
 	}
 
     try {
+      // check the type-equality for input and output
       if (check_type) {
         schema->CheckInputOutputType(ctx);
       }
@@ -309,9 +319,16 @@ static void InferShapesImpl(
         if (iter != valueTypesByName.end()) {
           existingType = iter->second;
         } else {
+          // Create a new value_info if defined type does not exist
           auto vi = g->add_value_info();
           vi->set_name(n.output(i));
           existingType = vi->mutable_type();
+          // For undefined output type, update both value_info and output for now
+          // Update existing output with undefined type: assign inferred type to it
+          iter = undefinedValueTypesByName.find(n.output(i));
+          if (iter != undefinedValueTypesByName.end()) {
+            *iter->second = *inferredType;
+          }
         }
 
         // Now we can merge pre-existing and inferred info
@@ -329,11 +346,11 @@ static void InferShapesImpl(
   deleteCreatedTypes(initializerTypeList);
   // Throw shape inference error if any
   if (!inference_errors.empty()) {
-    std::cerr << "Shape inference error(s): ";
-    for (std::string error: inference_errors) {
-      std::cerr << error << std::endl;
+    std::string full_errors = "Shape inference error(s): ";
+    for (const std::string &error: inference_errors) {
+      full_errors += error + "\n";
     }
-    throw std::runtime_error("");
+    throw ONNX_NAMESPACE::InferenceError(full_errors);
   }
 }
 
@@ -369,6 +386,44 @@ void InferShapes(
       check_type,
       schema_registry,
       m.ir_version());
+}
+
+void InferShapes(
+  const std::string& model_path,
+  const bool check_type,
+  const std::string& save_path,
+  const ISchemaRegistry* schema_registry
+  ) {
+  ModelProto model;
+  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
+  if (!model_stream.good()) {
+    fail_check(
+        "Unable to open model file:",
+        model_path,
+        ". Please check if it is a valid file.");
+  }
+  std::string data{std::istreambuf_iterator<char>{model_stream},
+                   std::istreambuf_iterator<char>{}};
+  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
+    fail_check(
+        "Unable to parse model from file:",
+        model_path,
+        ". Please check if it is a valid protobuf file of model.");
+  }
+  InferShapes(model, check_type, schema_registry);
+  // Save the inferred model to the original model path
+  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
+  std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::string model_string;
+  try {
+    model.SerializeToString(&model_string);
+    output << model_string;
+  } catch (...) {
+    fail_check(
+    "Unable to save inferred model to the target path:",
+    save_path);
+  }
+  
 }
 
 void InferShapeForFunctionNode(
@@ -453,7 +508,7 @@ void InferShapeForFunctionNode(
     }
   }
   for (int i = 0; i < func->output_size(); ++i) {
-    std::string output_name = func->output().Get(i);
+    const std::string &output_name = func->output().Get(i);
     // Skip if no type inferred for the tensor
     if (!temp_valueTypesByName.count(output_name)) {
       continue;
@@ -512,6 +567,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
+  graphOutputTypes.reserve(g_->output().size());
   for (const ValueInfoProto& output : g_->output()) {
     graphOutputTypes.push_back(&output.type());
   }

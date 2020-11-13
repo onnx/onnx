@@ -41,20 +41,20 @@ class FunctionBodyHelper {
 
   struct NodeDef {
     NodeDef(
-        const std::vector<std::string>& outputs,
-        const std::string& op_type,
-        const std::vector<std::string>& inputs)
-        : outputs(outputs), op_type(op_type), inputs(inputs) {}
+        std::vector<std::string> outputs,
+        std::string op_type,
+        std::vector<std::string> inputs)
+        : outputs(std::move(outputs)), op_type(std::move(op_type)), inputs(std::move(inputs)) {}
 
     NodeDef(
-        const std::vector<std::string>& outputs,
-        const std::string& op_type,
-        const std::vector<std::string>& inputs,
-        const std::vector<AttributeProtoWrapper>& attributes)
-        : outputs(outputs),
-          op_type(op_type),
-          inputs(inputs),
-          attributes(attributes) {}
+        std::vector<std::string> outputs,
+        std::string op_type,
+        std::vector<std::string> inputs,
+        std::vector<AttributeProtoWrapper> attributes)
+        : outputs(std::move(outputs)),
+          op_type(std::move(op_type)),
+          inputs(std::move(inputs)),
+          attributes(std::move(attributes)) {}
 
     std::vector<std::string> outputs;
     std::string op_type;

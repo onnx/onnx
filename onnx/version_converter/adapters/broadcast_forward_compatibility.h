@@ -28,7 +28,10 @@ class BroadcastForwardCompatibility final : public Adapter {
             n->addInput(inputs[1]);
             std::vector<int64_t> axes;
             std::vector<Dimension> new_sizes = B_sizes;
-            for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
+            auto size = A_sizes.size() > B_sizes.size() ? A_sizes.size() - B_sizes.size() : 0;
+            axes.reserve(size);
+            new_sizes.reserve(new_sizes.size() + size);
+            for (size_t i = 0; i < size; i++) {
               axes.emplace_back(B_sizes.size() + i);
               new_sizes.emplace_back(Dimension(1));
             }
