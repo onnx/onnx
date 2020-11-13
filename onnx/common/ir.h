@@ -178,7 +178,7 @@ struct Attributes {
     return This();
   }
   bool hasAttributes() const {
-    return values_.size() > 0;
+    return !values_.empty();
   }
   // The names are returned in order, since name actually is the index.
   std::vector<Symbol> attributeNames() const {
@@ -418,7 +418,7 @@ protected:
   Node(Graph * graph_, NodeKind kind_); //defined after graph
 
 public:
-  bool has_name() {
+  bool has_name() const {
     return has_name_;
   }
   const std::string& name() const {
@@ -428,7 +428,7 @@ public:
     has_name_ = true;
     name_ = std::move(name);
   }
-  bool has_domain() {
+  bool has_domain() const {
     return has_domain_;
   }
   const std::string& domain() const {
@@ -441,7 +441,7 @@ public:
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -494,7 +494,7 @@ public:
   }
   bool hasUses() const {
     for(auto o : outputs()) {
-      if(o->uses().size() > 0)
+      if(!o->uses().empty())
         return true;
     }
     return false;
@@ -875,7 +875,7 @@ public:
   , has_name_(false)
   , has_doc_string_(false) {}
 
-  bool has_doc_string() {
+  bool has_doc_string() const {
     return has_doc_string_;
   }
   const std::string& docString() {
@@ -890,7 +890,7 @@ public:
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
   }
-  void eraseInitializer(std::string name) {
+  void eraseInitializer(const std::string &name) {
     initializers_.erase(
         std::remove_if(
             initializers_.begin(),
@@ -1046,7 +1046,7 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(std::move(initializerCopy), name);
+    addInitializer(std::move(initializerCopy), std::move(name));
     return new_init;
   }
 
@@ -1085,7 +1085,7 @@ public:
 
   void setName(std::string name) {
     has_name_ = true;
-    name_ = name;
+    name_ = std::move(name);
   }
 
   friend std::ostream& operator<<(std::ostream & out, const Graph & g);
@@ -1131,6 +1131,7 @@ inline const Graph * Value::owningGraph() const {
 
 inline void Value::replaceAllUsesWith(Value * newValue) {
   ONNX_ASSERT(owningGraph() == newValue->owningGraph());
+  newValue->uses_.reserve(uses().size());
   for(auto u : uses()) {
     u.user->inputs_[u.offset] = newValue;
     newValue->uses_.push_back(u);
@@ -1150,7 +1151,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
 
 inline void Node::eraseOutput(size_t i) {
   ONNX_ASSERT(i < outputs_.size());
-  ONNX_ASSERT(outputs_[i]->uses().size() == 0);
+  ONNX_ASSERT(outputs_[i]->uses().empty());
   Value * n = outputs_[i];
   outputs_.erase(outputs_.begin() + i);
   owningGraph()->freeValue(n);
@@ -1183,7 +1184,7 @@ inline bool Node::isBefore(Node* n) {
 
 inline void Node::destroy() {
   ONNX_ASSERT(inGraphList());
-  while(outputs().size() > 0)
+  while(!outputs().empty())
     eraseOutput(outputs().size() - 1);
   removeAllInputs();
   removeFromList();
