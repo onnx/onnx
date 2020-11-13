@@ -30,13 +30,13 @@ class SequenceInsert(Base):
     @staticmethod
     def export():  # type: () -> None
         test_cases = {
-            'at_back': [np.array([10, 11, 12])],
-            'at_front': [np.array([-2, -1, 0]), np.array([0])]
+            'at_back': [np.array([10, 11, 12]).astype(np.int64)],
+            'at_front': [np.array([-2, -1, 0]), np.array([0]).astype(np.int64)]
         }
-        sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
+        sequence = [np.array([1, 2, 3, 4]).astype(np.int64), np.array([5, 6, 7]).astype(np.int64), np.array([8, 9]).astype(np.int64)]
 
         for test_name, test_inputs in test_cases.items():
-            tensor = test_inputs[0]
+            tensor = test_inputs[0].astype(np.int64)
 
             if len(test_inputs) > 1:
                 node = onnx.helper.make_node(

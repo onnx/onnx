@@ -1,1 +1,1 @@
-{"atol": 1e-07, "model_name": "squeezenet", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_9/squeezenet.tar.gz"}
+{"atol": 1e-07, "model_name": "squeezenet", "rtol": 0.001, "url": "https://s3.amazonaws.com/download.onnx/models/opset_10/squeezenet.tar.gz"}

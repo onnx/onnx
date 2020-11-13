@@ -85,7 +85,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C = 3, 5
         np.random.seed(0)
         input = np.random.rand(N, C).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, ))
+        target = np.random.randint(0, high=C, size=(N, )).astype(np.int64)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -105,7 +105,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -125,7 +125,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -145,7 +145,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -165,7 +165,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -186,7 +186,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -207,7 +207,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -230,7 +230,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         target[0][0][0] = np.int64(0)
         weight = np.random.rand(C).astype(np.float32)
 
@@ -254,7 +254,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         target[0][0][0] = np.int64(1)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
@@ -275,7 +275,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, d1 = 3, 5, 2
         np.random.seed(0)
         input = np.random.rand(N, C, d1).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, d1))
+        target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -295,7 +295,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, d1 = 3, 5, 2
         np.random.seed(0)
         input = np.random.rand(N, C, d1).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, d1))
+        target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -318,7 +318,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, d1 = 3, 5, 2
         np.random.seed(0)
         input = np.random.rand(N, C, d1).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, d1))
+        target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
         target[0][0] = np.int64(1)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
@@ -341,7 +341,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, d1 = 3, 5, 2
         np.random.seed(0)
         input = np.random.rand(N, C, d1).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, d1))
+        target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
         target[0][0] = np.int64(1)
         weight = np.random.rand(C).astype(np.float32)
 
@@ -363,7 +363,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
@@ -387,7 +387,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                             target,
@@ -411,7 +411,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1 = 3, 5, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1))
+        target = np.random.randint(0, high=C, size=(N, dim1)).astype(np.int64)
         target[0][0] = -1
         weight = np.random.rand(C).astype(np.float32)
 
@@ -439,7 +439,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
         target[0][0][0][0] = -5
 
         negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
@@ -465,7 +465,7 @@ class NegativeLogLikelihoodLoss(Base):
         N, C = 3, 5
         np.random.seed(0)
         input = np.random.rand(N, C).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N))
+        target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
         target[0] = 10
         weight = np.random.rand(C).astype(np.float32)
 

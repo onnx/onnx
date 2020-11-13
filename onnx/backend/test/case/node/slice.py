@@ -129,7 +129,7 @@ class Slice(Base):
         starts = np.array([20, 10, 4], dtype=np.int64)
         ends = np.array([0, 0, 1], dtype=np.int64)
         axes = np.array([0, 1, 2], dtype=np.int64)
-        steps = np.array([-1, -3, -2])
+        steps = np.array([-1, -3, -2], dtype=np.int64)
         y = x[20:0:-1, 10:0:-3, 4:1:-2]
 
         expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
