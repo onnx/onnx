@@ -103,7 +103,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Reshape_ver13_doc = R"DOC(
+static const char* Reshape_ver14_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
@@ -114,9 +114,17 @@ dimension will be set explicitly to zero (i.e. not taken from input tensor))DOC"
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
-    13,
+    14,
     OpSchema()
-        .SetDoc(Reshape_ver13_doc)
+        .SetDoc(Reshape_ver14_doc)
+        .Attr(
+            "allowzero",
+            "(Optional) By default, when any value in the 'shape' input is equal to zero "
+            "the corresponding dimension value is copied from the input tensor dynamically. "
+            "allowzero=1 indicates that if any value in the 'shape' input is set to zero, "
+            "the zero value is honored, similar to NumPy.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(0,
             "data",
             "An input tensor.",
