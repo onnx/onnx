@@ -3,9 +3,6 @@ name: WindowsRelease
 on:
    push:
     branches: [ master, rel-* ]
-   pull_request:
-    branches: [ master, rel-* ]
-
 
 jobs:
   build:
