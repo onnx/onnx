@@ -866,6 +866,50 @@ private:
 
   std::vector <OpSetID> opset_versions_;
 
+  bool isNameUnique(const std::string& name) const {
+    if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) !=
+        initializer_names_.cend()) {
+      return false;
+    }
+    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
+    for (const Node* node : all_nodes) {
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          const auto& subgraph = node->g(attr);
+          if (!subgraph->isNameUnique(name)) {
+            return false;
+          }
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            if (!subgraph->isNameUnique(name)) {
+              return false;
+            }
+          }
+        }
+      }
+      const auto found_in =
+          std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      if (found_in != node->inputs().end()) {
+        return false;
+      }
+      const auto found_out =
+          std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      if (found_out != node->outputs().end()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+
+  size_t getNextUnique() {
+      std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      while(!isNameUnique(next_unique_name)) {
+          next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      }
+      return next_unique_;
+  }
+
 public:
   Graph()
   : next_unique_(0)
@@ -1051,7 +1095,7 @@ public:
   }
 
   Value* addInitializerAndInput(const Tensor &initializer) {
-    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(next_unique_++));
+    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(getNextUnique()));
   }
 
 
@@ -1114,7 +1158,7 @@ private:
 };
 
 inline Value::Value(Node *node_, size_t offset_)
-    : node_(node_), offset_(offset_), unique_(node_->graph_->next_unique_++),
+    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()),
       stage_(node_->graph_->new_node_stage_), has_unique_name_(false),
       elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
       has_sizes_(false) {
