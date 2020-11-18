@@ -3,7 +3,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 ## Preparation
 
 * Install Twine, a utility tool to interact with PyPI. Do  - ``pip install twine``
-* Get hold of the username and password for the ‘onnx’ PyPI account. Release Manager should obtain this information from last Release Manager or certain private repo under onnx.
+* Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx pypi account credentials from steering committee or from previous release manager.
 * Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
 * Prepare a change log for the release – 
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
