@@ -869,20 +869,20 @@ private:
   bool isNameUnique(const std::string& name) const {
     if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) !=
         initializer_names_.cend()) {
-      return true;
+      return false;
     }
     const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
     for (const Node* node : all_nodes) {
       for (const auto& attr : node->attributeNames()) {
         if (node->kindOf(attr) == AttributeKind::g) {
           const auto& subgraph = node->g(attr);
-          if (subgraph->isNameUnique(name)) {
-            return true;
+          if (!subgraph->isNameUnique(name)) {
+            return false;
           }
         } else if (node->kindOf(attr) == AttributeKind::gs) {
           for (const auto& subgraph : node->gs(attr)) {
-            if (subgraph->isNameUnique(name)) {
-              return true;
+            if (!subgraph->isNameUnique(name)) {
+              return false;
             }
           }
         }
@@ -890,21 +890,21 @@ private:
       const auto found_in =
           std::find_if(node->inputs().begin(), node->inputs().end(), f);
       if (found_in != node->inputs().end()) {
-        return true;
+        return false;
       }
       const auto found_out =
           std::find_if(node->outputs().begin(), node->outputs().end(), f);
       if (found_out != node->outputs().end()) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
 
   size_t getNextUnique() {
       std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
-      while(isNameUnique(next_unique_name)) {
+      while(!isNameUnique(next_unique_name)) {
           next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
       }
       return next_unique_;
