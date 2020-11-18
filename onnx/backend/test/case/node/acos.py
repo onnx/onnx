@@ -20,12 +20,12 @@ class Acos(Base):
             outputs=['y'],
         )
 
-        x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+        x = np.array([-0.5, 0, 0.5]).astype(np.float64)
         y = np.arccos(x)
         expect(node, inputs=[x], outputs=[y],
                name='test_acos_example')
 
-        x = np.random.rand(3, 4, 5).astype(np.float32)
+        x = np.random.rand(3, 4, 5).astype(np.float64)
         y = np.arccos(x)
         expect(node, inputs=[x], outputs=[y],
                name='test_acos')

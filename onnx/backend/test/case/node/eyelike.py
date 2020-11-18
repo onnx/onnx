@@ -21,7 +21,7 @@ class EyeLike(Base):
             outputs=['y'],
         )
 
-        x = np.random.randint(0, 100, size=shape, dtype=np.int32).astype(np.int64)
+        x = np.random.randint(0, 100, size=shape, dtype=np.int32)
         y = np.eye(shape[0], shape[1], dtype=np.int32)
         expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 
@@ -35,7 +35,7 @@ class EyeLike(Base):
             dtype=onnx.TensorProto.DOUBLE,
         )
 
-        x = np.random.randint(0, 100, size=shape, dtype=np.int32).astype(np.int64)
+        x = np.random.randint(0, 100, size=shape, dtype=np.int32)
         y = np.eye(shape[0], shape[1], dtype=np.float64)
         expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
 
@@ -51,6 +51,6 @@ class EyeLike(Base):
             dtype=onnx.TensorProto.FLOAT,
         )
 
-        x = np.random.randint(0, 100, size=shape, dtype=np.int32).astype(np.int64)
+        x = np.random.randint(0, 100, size=shape, dtype=np.int32)
         y = np.eye(shape[0], shape[1], k=off_diagonal_offset, dtype=np.float32)
         expect(node, inputs=[x], outputs=[y], name='test_eyelike_populate_off_main_diagonal')

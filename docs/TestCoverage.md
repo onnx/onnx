@@ -48,12 +48,12 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+x = np.array([-0.5, 0, 0.5]).astype(np.float64)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos_example')
 
-x = np.random.rand(3, 4, 5).astype(np.float32)
+x = np.random.rand(3, 4, 5).astype(np.float64)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
@@ -3457,7 +3457,7 @@ node = onnx.helper.make_node(
     dtype=onnx.TensorProto.FLOAT,
 )
 
-x = np.random.randint(0, 100, size=shape, dtype=np.int32).astype(np.int64)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
 y = np.eye(shape[0], shape[1], k=off_diagonal_offset, dtype=np.float32)
 expect(node, inputs=[x], outputs=[y], name='test_eyelike_populate_off_main_diagonal')
 ```
@@ -3475,7 +3475,7 @@ node = onnx.helper.make_node(
     dtype=onnx.TensorProto.DOUBLE,
 )
 
-x = np.random.randint(0, 100, size=shape, dtype=np.int32).astype(np.int64)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
 y = np.eye(shape[0], shape[1], dtype=np.float64)
 expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
 ```
@@ -3492,7 +3492,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(0, 100, size=shape, dtype=np.int32).astype(np.int64)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
 y = np.eye(shape[0], shape[1], dtype=np.int32)
 expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 ```
