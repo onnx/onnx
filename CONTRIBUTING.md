@@ -41,6 +41,6 @@ git checkout -b temporary_patch              # create a new branch as temporary
 git merge --squash original_patch            # copy from old branch
 git branch -d original_patch                 # remove old branch
 git checkout -b original_patch               # create a new branch with the same name (override)
-git commit -m ‘type your own commit msg’ -s  # signoff that single commit
+git commit -m 'type your own commit msg' -s  # signoff that single commit
 git push origin original_patch -f            # forcibly override the old branch`
 ```
