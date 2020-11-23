@@ -8,17 +8,17 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 * Prepare a change log for the release – 
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
     * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
-* Increase `VERSION_NUMBER` in the main branch before creating a release branch.
-* Create a release branch (please use rel-* as the branch name) from master. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
-* Create an issue in onnxruntime to update onnx commit in onnxruntime to the release branch commit and run all the CI and packaging pipelines.
-* In the release branch, make sure that the Release version number information is up-to-date in the following places:
-[VERSION_NUMBER file](https://github.com/onnx/onnx/blob/master/VERSION_NUMBER) and
+* Before creating the release branch, increase `VERSION_NUMBER` in the main branch. The following files will be updated: [VERSION_NUMBER file](https://github.com/onnx/onnx/blob/master/VERSION_NUMBER) and
 [version.h](../onnx/common/version.h)
+
 * Make sure that the IR version number and opset version numbers are up-to-date in
 [ONNX proto files](../onnx/onnx.in.proto),
 [Versioning.md](Versioning.md), 
 [schema.h](../onnx/defs/schema.h), 
-[helper.py](../onnx/helper.py) and [helper_test.py](../onnx/helper_test.py).
+[helper.py](../onnx/helper.py) and [helper_test.py](../onnx/helper_test.py). Please note that this also needs to be happened in the main branch before creating the release branch.
+
+* Create a release branch (please use rel-* as the branch name) from master. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
+* Create an issue in onnxruntime to update onnx commit in onnxruntime to the release branch commit and run all the CI and packaging pipelines.
 
 ## Upload to TestPyPI
 **Wheels**
