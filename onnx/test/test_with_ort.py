@@ -1,12 +1,12 @@
 # This file is for testing ONNX with ONNXRuntime during ONNX Release
 # Create a general scenario to use ONNXRuntime with ONNX
 
-def example_test_with_ort():
+def example_test_with_ort():  # type: () -> None
     import onnx
-    import numpy
-    import onnxruntime as rt
-    from onnxruntime.datasets import get_example
-    import numpy.random
+    import numpy  # type: ignore
+    import onnxruntime as rt  # type: ignore
+    from onnxruntime.datasets import get_example  # type: ignore
+    import numpy.random  # type: ignore
 
     # get certain example model from ORT
     example1 = get_example("sigmoid.onnx")
@@ -26,4 +26,4 @@ def example_test_with_ort():
     x = numpy.random.random((3, 4, 5))
     x = x.astype(numpy.float32)
 
-    res = sess.run([output_name], {input_name: x})
+    sess.run([output_name], {input_name: x})
