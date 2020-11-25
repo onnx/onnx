@@ -7,7 +7,7 @@ We don't currently have a PGP key, unfortunately.
 
 An ONNX committer will send you a response indicating the next steps in handling your report. After the initial reply to your report, the committer will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
 
-Important: Please don't disclose the vulnerability before it have been fixed and announced, to protect our users.
+Important: Please don't disclose the vulnerability before it has been fixed and announced, to protect our users.
 
 ## Security announcements
 Please subscribe to the [announcements mailing list](https://lists.lfaidata.foundation/g/onnx-announce), where we post notifications and remediation details for security vulnerabilities.
