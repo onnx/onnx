@@ -16,8 +16,9 @@ def run_lfs_install():
 
 
 def pull_lfs_file(file_name):
-    result = subprocess.run(['git', 'lfs', 'pull', '--include', file_name, '--exclude', '\'\''], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(['git', 'lfs', 'pull', '--include', file_name, '--exclude', '\'\''], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     print('LFS pull completed with return code= {}'.format(result.returncode))
+    print(result)
 
 
 def run_lfs_prune():
@@ -62,10 +63,8 @@ def main():
         try:
             pull_lfs_file(model_path)
 
-            # check onnx model
-            model = onnx.load(model_path)
             # stricter onnx.checker with onnx.shape_inference
-            onnx.checker.check_model(model)
+            onnx.checker.check_model(model_path, True)
 
             # remove the model to save space in CIs
             if os.path.exists(model_path):
