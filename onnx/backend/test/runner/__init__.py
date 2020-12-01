@@ -290,7 +290,7 @@ class Runner(object):
                                             atol=model_test.atol)
 
             for test_data_dir in glob.glob(
-                os.path.join(model_dir, "test_data_set*")):
+                    os.path.join(model_dir, "test_data_set*")):
                 inputs = []
                 inputs_num = len(glob.glob(os.path.join(test_data_dir, 'input_*.pb')))
                 for i in range(inputs_num):
@@ -307,7 +307,6 @@ class Runner(object):
                                             atol=model_test.atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
-
 
     def _load_proto(self, proto_filename, target_list):
         with open(proto_filename, 'rb') as f:
