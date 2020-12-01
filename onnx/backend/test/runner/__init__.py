@@ -290,26 +290,38 @@ class Runner(object):
                                             atol=model_test.atol)
 
             for test_data_dir in glob.glob(
-                    os.path.join(model_dir, "test_data_set*")):
+                os.path.join(model_dir, "test_data_set*")):
                 inputs = []
                 inputs_num = len(glob.glob(os.path.join(test_data_dir, 'input_*.pb')))
                 for i in range(inputs_num):
                     input_file = os.path.join(test_data_dir, 'input_{}.pb'.format(i))
-                    tensor = onnx.TensorProto()
-                    with open(input_file, 'rb') as f:
-                        tensor.ParseFromString(f.read())
-                    inputs.append(numpy_helper.to_array(tensor))
+                    self._load_proto(input_file, inputs)
                 ref_outputs = []
                 ref_outputs_num = len(glob.glob(os.path.join(test_data_dir, 'output_*.pb')))
                 for i in range(ref_outputs_num):
                     output_file = os.path.join(test_data_dir, 'output_{}.pb'.format(i))
-                    tensor = onnx.TensorProto()
-                    with open(output_file, 'rb') as f:
-                        tensor.ParseFromString(f.read())
-                    ref_outputs.append(numpy_helper.to_array(tensor))
+                    self._load_proto(output_file, ref_outputs)
                 outputs = list(prepared_model.run(inputs))
                 self.assert_similar_outputs(ref_outputs, outputs,
                                             rtol=model_test.rtol,
                                             atol=model_test.atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
+
+
+    def _load_proto(self, proto_filename, target_list):
+        with open(proto_filename, 'rb') as f:
+            protobuf_content = f.read()
+            tensor = onnx.TensorProto()
+            tensor.ParseFromString(protobuf_content)
+            # this proto is a SequenceProto
+            if tensor.HasField('segment'):
+                sequence = onnx.SequenceProto()
+                sequence.ParseFromString(protobuf_content)
+                target_list.append(numpy_helper.to_list(sequence))
+            # empty sequence
+            elif not tensor.HasField('raw_data'):
+                target_list.append([])
+            # TensorProto
+            else:
+                target_list.append(numpy_helper.to_array(tensor))
