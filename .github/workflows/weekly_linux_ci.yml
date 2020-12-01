@@ -43,10 +43,10 @@ jobs:
         sudo apt-get install protobuf-compiler libprotoc-dev
     - name: Install latest ONNX and dependencies
       run: |
-        $Env:ONNX_BUILD_TESTS=1
-        $Env:USE_MSVC_STATIC_RUNTIME=1
-        $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+        export ONNX_BUILD_TESTS=1
+        export USE_MSVC_STATIC_RUNTIME=1
+        export ONNX_ML=1
+        export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         python setup.py --quiet install
     - name: Test all models with onnx.checker and onnx.shape_inference
       run: |
