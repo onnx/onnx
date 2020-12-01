@@ -308,7 +308,7 @@ class Runner(object):
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
 
-    def _load_proto(self, proto_filename, target_list):
+    def _load_proto(self, proto_filename, target_list):  # type: (Text, List[Union[np.ndarray[Any], List[Any]]]) -> None
         with open(proto_filename, 'rb') as f:
             protobuf_content = f.read()
             tensor = onnx.TensorProto()
