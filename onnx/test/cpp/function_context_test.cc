@@ -92,7 +92,7 @@ void RegisterTwiceSchema() {
 TEST(FunctionAPITest, TypeContextTest) {
   RegisterTwiceSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, "");
+  const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
@@ -112,6 +112,8 @@ TEST(FunctionAPITest, TypeContextTest) {
 
   LexicalScopeContext lexicalScope;
   CheckerContext checkerCtx;
+  std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
+  checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
   check_function(fnProto, checkerCtx, lexicalScope);
 }

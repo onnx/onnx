@@ -625,6 +625,12 @@ void check_node(
         ONNX_NAMESPACE::to_string(domain_version));
   } else {
     schema->Verify(node);
+
+    // If this is a function then verify function as well.
+    // TODO add verification for context dependenant function as well.
+    if(schema->HasFunction()) {
+      check_function(*(schema->GetFunction()), ctx, lex_ctx);
+    }
   }
 }
 
@@ -756,14 +762,25 @@ void check_function(
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
+  const auto& model_opset_imports = ctx.get_opset_imports();
   CheckerContext ctx_copy = ctx;
-  std::unordered_map<std::string, int> opsets;
+
+  // Merge opset imports from function proto with the model level opset imports
+  std::unordered_map<std::string, int> func_opset_imports{model_opset_imports};
   for (auto& relied_opset : function.opset_import()) {
     auto& domain = relied_opset.domain();
-    auto version = relied_opset.version();
-    opsets[domain] = static_cast<int>(version);
+    int version = static_cast<int>(relied_opset.version());
+    auto it = func_opset_imports.find(domain);
+    if(it == func_opset_imports.end()) {
+      func_opset_imports[domain] = version;
+    } else {
+      if(it->second != version) {
+        fail_check("Onnx models do not support importing multiple opset versions of same domain.");
+      }
+    }
   }
-  ctx_copy.set_opset_imports(opsets);
+
+  ctx_copy.set_opset_imports(func_opset_imports);
 
   LexicalScopeContext lex_ctx{parent_lex};
 
