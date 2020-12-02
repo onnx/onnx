@@ -60,7 +60,7 @@ def main():
         start = time.time()
         model_name = model_path.split('/')[-1]
         # if the model_path exists in the skip list, simply skip it
-        if model_path.replace('\\', '/') not in config.SKIP_CHECKER_MODELS:
+        if model_path.replace('\\', '/') in config.SKIP_CHECKER_MODELS:
             print('Skip model: {}'.format(model_path))
             continue
         print('-----------------Testing: {}-----------------'.format(model_name))
