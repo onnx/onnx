@@ -40,7 +40,10 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install numpy
         pip install --quiet pytest==5.4.3 nbval
-        pip install protobuf==3.11.3                 
+        # Install protobuf 3.11.3 due to compatibility
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
+        brew install protobuf.rb
+        pip install protobuf==3.11.3           
     - name: Build, install and test ONNX
       shell: bash
       run: |
