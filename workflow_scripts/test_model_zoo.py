@@ -59,6 +59,10 @@ def main():
     for model_path in model_list:
         start = time.time()
         model_name = model_path.split('/')[-1]
+        # if the model_path exists in the skip list, simply skip it
+        if model_path.replace('\\', '/') not in config.SKIP_CHECKER_MODELS:
+            print('Skip model: {}'.format(model_path))
+            continue
         print('-----------------Testing: {}-----------------'.format(model_name))
         try:
             pull_lfs_file(model_path)
@@ -74,9 +78,7 @@ def main():
 
         except Exception as e:
             print('[FAIL]: {}'.format(e))
-            # if the model_path exists in the skip list, simply skip it
-            if model_path.replace('\\', '/') not in config.SKIP_CHECKER_MODELS:
-                failed_models.append(model_path)
+            failed_models.append(model_path)
             failed_messages.append((model_name, e))
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
