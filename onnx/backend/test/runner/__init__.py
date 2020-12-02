@@ -18,7 +18,7 @@ import unittest
 import numpy as np  # type: ignore
 
 import onnx
-from onnx import helper, numpy_helper, NodeProto, ModelProto
+from onnx import helper, numpy_helper, NodeProto, ModelProto, TypeProto
 from onnx.backend.base import Backend
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_model_tests
@@ -295,12 +295,12 @@ class Runner(object):
                 inputs_num = len(glob.glob(os.path.join(test_data_dir, 'input_*.pb')))
                 for i in range(inputs_num):
                     input_file = os.path.join(test_data_dir, 'input_{}.pb'.format(i))
-                    self._load_proto(input_file, inputs)
+                    self._load_proto(input_file, inputs, model.graph.input[i].type)
                 ref_outputs = []
                 ref_outputs_num = len(glob.glob(os.path.join(test_data_dir, 'output_*.pb')))
                 for i in range(ref_outputs_num):
                     output_file = os.path.join(test_data_dir, 'output_{}.pb'.format(i))
-                    self._load_proto(output_file, ref_outputs)
+                    self._load_proto(output_file, ref_outputs, model.graph.output[i].type)
                 outputs = list(prepared_model.run(inputs))
                 self.assert_similar_outputs(ref_outputs, outputs,
                                             rtol=model_test.rtol,
@@ -308,19 +308,17 @@ class Runner(object):
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
 
-    def _load_proto(self, proto_filename, target_list):  # type: (Text, List[Union[np.ndarray[Any], List[Any]]]) -> None
+    def _load_proto(self, proto_filename, target_list, model_type_proto):  # type: (Text, List[Union[np.ndarray[Any], List[Any]]], TypeProto) -> None
         with open(proto_filename, 'rb') as f:
             protobuf_content = f.read()
-            tensor = onnx.TensorProto()
-            tensor.ParseFromString(protobuf_content)
+            type_proto_string = str(model_type_proto)
             # this proto is a SequenceProto
-            if tensor.HasField('segment'):
+            if 'sequence_type' in str(type_proto_string):
                 sequence = onnx.SequenceProto()
                 sequence.ParseFromString(protobuf_content)
                 target_list.append(numpy_helper.to_list(sequence))
-            # empty sequence
-            elif not tensor.HasField('raw_data'):
-                target_list.append([])
             # TensorProto
-            else:
+            elif 'tensor_type' in str(type_proto_string):
+                tensor = onnx.TensorProto()
+                tensor.ParseFromString(protobuf_content)
                 target_list.append(numpy_helper.to_array(tensor))
