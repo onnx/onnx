@@ -62,10 +62,9 @@ def main():
         print('-----------------Testing: {}-----------------'.format(model_name))
         try:
             pull_lfs_file(model_path)
-
+            model = onnx.load(model_path)
             # stricter onnx.checker with onnx.shape_inference
-            onnx.checker.check_model(model_path, True)
-
+            onnx.checker.check_model(model, True)
             # remove the model to save space in CIs
             if os.path.exists(model_path):
                 os.remove(model_path)
