@@ -288,7 +288,6 @@ class Runner(object):
                 self.assert_similar_outputs(ref_outputs, outputs,
                                             rtol=model_test.rtol,
                                             atol=model_test.atol)
-
             for test_data_dir in glob.glob(
                     os.path.join(model_dir, "test_data_set*")):
                 inputs = []
@@ -311,14 +310,11 @@ class Runner(object):
     def _load_proto(self, proto_filename, target_list, model_type_proto):  # type: (Text, List[Union[np.ndarray[Any], List[Any]]], TypeProto) -> None
         with open(proto_filename, 'rb') as f:
             protobuf_content = f.read()
-            type_proto_string = str(model_type_proto)
-            # this proto is a SequenceProto
-            if 'sequence_type' in str(type_proto_string):
+            if model_type_proto.HasField('sequence_type'):
                 sequence = onnx.SequenceProto()
                 sequence.ParseFromString(protobuf_content)
                 target_list.append(numpy_helper.to_list(sequence))
-            # TensorProto
-            elif 'tensor_type' in str(type_proto_string):
+            elif model_type_proto.HasField('tensor_type'):
                 tensor = onnx.TensorProto()
                 tensor.ParseFromString(protobuf_content)
                 target_list.append(numpy_helper.to_array(tensor))
