@@ -625,12 +625,6 @@ void check_node(
         ONNX_NAMESPACE::to_string(domain_version));
   } else {
     schema->Verify(node);
-
-    // If this is a function then verify function as well.
-    // TODO add verification for context dependenant function as well.
-    if(schema->HasFunction()) {
-      check_function(*(schema->GetFunction()), ctx, lex_ctx);
-    }
   }
 }
 
@@ -765,17 +759,31 @@ void check_function(
   const auto& model_opset_imports = ctx.get_opset_imports();
   CheckerContext ctx_copy = ctx;
 
-  // Merge opset imports from function proto with the model level opset imports
+  // A FunctionProto body (graph) may implicitly rely on the OperatorSet that
+  // this function belongs to or it can also explicitly rely on more OperatorSets
+  // specified in the opset_import field for FunctionProto. However the spec does not
+  // clarify how to treat inconsistencies between function level and model level OperatorSets imports.
+  // Right now we merge opset imports from function proto with the model level opset imports
+  // In case there is an inconsistency it is treated as an error.
+  // TODO: Clarify spec and revisit this check.
   std::unordered_map<std::string, int> func_opset_imports{model_opset_imports};
   for (auto& relied_opset : function.opset_import()) {
     auto& domain = relied_opset.domain();
     int version = static_cast<int>(relied_opset.version());
     auto it = func_opset_imports.find(domain);
-    if(it == func_opset_imports.end()) {
+    if (it == func_opset_imports.end()) {
       func_opset_imports[domain] = version;
     } else {
-      if(it->second != version) {
-        fail_check("Onnx models do not support importing multiple opset versions of same domain.");
+      if (it->second != version) {
+        fail_check(
+            "ONNX models do not support multiple opset version imports for a domain. Function ",
+            function.name(),
+            " imports opset version ",
+            std::to_string(version),
+            " for domain ",
+            (domain.empty() ? "ai.onnx" : domain),
+            " where as the model imports opset version ",
+            std::to_string(it->second));
       }
     }
   }
