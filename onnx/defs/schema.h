@@ -824,7 +824,9 @@ class OpSchema final {
   void Finalize();
 
   // Build function with information stored in opschema
-  void BuildFunction(FunctionProto& function_body) const;
+  void BuildFunction(
+      FunctionProto& function_body,
+      const std::vector<OperatorSetIdProto>& relied_opsets = {}) const;
 
  private:
   void ParseAndSetTypes(
