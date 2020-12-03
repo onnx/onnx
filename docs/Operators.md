@@ -116,7 +116,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|
-|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
+|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
@@ -15592,9 +15592,9 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_nega
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Relu-1">1</a>, <a href="Changelog.md#Relu-6">6</a>
+Other versions of this operator: <a href="Changelog.md#Relu-1">1</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-13">13</a>
 
 #### Inputs
 
@@ -15613,8 +15613,8 @@ Other versions of this operator: <a href="Changelog.md#Relu-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
 

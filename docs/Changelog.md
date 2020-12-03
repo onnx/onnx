@@ -18648,6 +18648,37 @@ This version of the operator has been available since version 14 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
+### <a name="Relu-14"></a>**Relu-14**</a>
+
+  Relu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
+  the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
