@@ -1,5 +1,6 @@
 import argparse
 import config
+import gc
 import onnx
 import os
 from pathlib import Path
@@ -27,6 +28,8 @@ def run_lfs_prune():
 
 
 def main():
+    # enable gc collection to prevent MemoryError by loading too many large models
+    gc.collect()
     parser = argparse.ArgumentParser(description='Test settings')
     # default: test all models in the repo
     # if test_dir is specified, only test files under that specified path
