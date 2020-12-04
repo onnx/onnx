@@ -42,7 +42,7 @@ jobs:
         run: |
           sw_vers -productVersion
           git submodule update --init --recursive
-          python -m pip install --upgrade setuptools
+          python -m pip install --upgrade pip setuptools wheel
           python -m pip install numpy
           brew update
           brew install protobuf
