@@ -54,6 +54,12 @@ jobs:
           export MACOSX_DEPLOYMENT_TARGET=11.0
           python setup.py bdist_wheel
 
+      - name: Install and test ONNX
+        shell: bash
+        run: |
+          for file in dist/*.whl; do pip install --upgrade $file; done
+          pytest
+
       - uses: actions/upload-artifact@v1
         with:
           name: wheels
