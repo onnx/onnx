@@ -41,6 +41,7 @@ jobs:
         shell: bash
         run: |
           sw_vers -productVersion
+          ls /Library/Developer/CommandLineTools/SDKs
           git submodule update --init --recursive
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install numpy
