@@ -40,6 +40,7 @@ jobs:
       - name: ONNX Package Creation
         shell: bash
         run: |
+          sw_vers -productVersion
           git submodule update --init --recursive
           python -m pip install --upgrade setuptools
           python -m pip install numpy
@@ -50,3 +51,9 @@ jobs:
           export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
           python setup.py install
+          python setup.py bdist_wheel
+
+      - uses: actions/upload-artifact@v1
+        with:
+          name: wheels
+          path: ./onnx/dist
