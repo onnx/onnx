@@ -36,33 +36,17 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      
-      - name: Install dependencies
+
+      - name: ONNX Package Creation
         shell: bash
         run: |
-          set -e
+          git submodule update --init --recursive
+          python -m pip install --upgrade setuptools
+          python -m pip install numpy
           brew update
           brew install protobuf
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install numpy
-          pip install --quiet pytest==5.4.3 nbval
-
-          echo PATH: $PATH
-
-      - name: Build, install and test ONNX
-        shell: bash
-        run: |
-          export CC=clang
-          export CXX=clang++
+          export ONNX_BUILD_TESTS=1
           export ONNX_ML=1
-          export ONNX_NAMESPACE=ONNX_REL_1_8
-          export MACOSX_DEPLOYMENT_TARGET=11.0
-          
-          python setup.py bdist_wheel
-          for file in dist/*.whl; do pip install --upgrade $file; done
-          pytest
-      
-      - uses: actions/upload-artifact@v1
-        with:
-          name: wheels
-          path: dist
+          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+          export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+          python setup.py --quiet install
