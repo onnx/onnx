@@ -57,7 +57,7 @@ jobs:
       - name: Install and test ONNX
         shell: bash
         run: |
-          for file in dist/*.whl; do pip install --upgrade $file; done
+          for file in dist/*.whl; do python -m pip install --upgrade $file; done
           pytest
 
       - uses: actions/upload-artifact@v1
