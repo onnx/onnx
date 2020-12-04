@@ -59,12 +59,14 @@ def main():
     # run checker on each model
     failed_models = []
     failed_messages = []
+    skip_models = []
     for model_path in model_list:
         start = time.time()
         model_name = model_path.split('/')[-1]
         # if the model_path exists in the skip list, simply skip it
         if model_path.replace('\\', '/') in config.SKIP_CHECKER_MODELS:
             print('Skip model: {}'.format(model_path))
+            skip_models.append(model_path)
             continue
         print('-----------------Testing: {}-----------------'.format(model_name))
         try:
@@ -87,9 +89,9 @@ def main():
         print('--------------Time used: {} secs-------------'.format(end - start))
 
     if len(failed_models) == 0:
-        print('{} models have been checked.'.format(len(model_list)))
+        print('{} models have been checked. {} models were skipped.'.format(len(model_list), len(skip_models)))
     else:
-        print('In all {} models, {} models failed.'.format(len(model_list), len(failed_models)))
+        print('In all {} models, {} models failed, {} models were skipped'.format(len(model_list), len(failed_models), len(skip_models)))
         for model, error in failed_messages:
             print('{} failed because: {}'.format(model, error))
         sys.exit(1)
