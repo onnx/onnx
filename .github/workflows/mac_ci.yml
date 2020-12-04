@@ -51,9 +51,10 @@ jobs:
           export ONNX_ML=1
           export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+          export MACOSX_DEPLOYMENT_TARGET=11.0
           python setup.py bdist_wheel
 
       - uses: actions/upload-artifact@v1
         with:
           name: wheels
-          path: ./onnx/dist
+          path: ./dist
