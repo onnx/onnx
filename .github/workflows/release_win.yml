@@ -3,6 +3,9 @@ name: WindowsRelease
 on:
    push:
     branches: [ master, rel-* ]
+   # adding for testing
+   pull_request:
+    branches: [ master, rel-* ]
 
 jobs:
   build:
