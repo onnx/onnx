@@ -11,7 +11,7 @@ import shutil
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
-from onnx import TensorProto
+from onnx import TensorProto, SequenceProto, MapProto
 from typing import Text
 import numpy as np
 
@@ -27,30 +27,36 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
             os.makedirs(path)
 
     def write_proto(proto_filename, numpy_proto, name):
-        update_file = True
-        if os.path.exists(proto_filename):
-            f = open(proto_filename, 'rb+')
-        else:
-            f = open(proto_filename, 'wb')
+        def is_different_proto(ref_proto, proto):
+            try:
+                if ref_proto.dtype == np.object:
+                    np.testing.assert_array_equal(ref_proto, proto)
+                else:
+                    np.testing.assert_allclose(ref_proto, proto, rtol=1e-3, atol=1e-5)
+                return False
+            except:
+                return True
+        need_update = True
+        f = open(proto_filename, 'rb+') if os.path.exists(proto_filename) else open(proto_filename, 'wb')
         if isinstance(numpy_proto, dict):
-            print('dict')
-            proto = numpy_helper.from_dict(numpy_proto, name)
+            dic = MapProto()
+            dic.ParseFromString(f.read())
+            dic_array = numpy_helper.to_dict(dic)
+            need_update = is_different_proto(dic_array, numpy_proto)
+            if need_update: proto = numpy_helper.from_dict(numpy_proto, name)
         elif isinstance(numpy_proto, list):
-            print('list')
-            proto = numpy_helper.from_list(numpy_proto, name)
+            sequence = SequenceProto()
+            sequence.ParseFromString(f.read())
+            sequence_array = numpy_helper.to_list(sequence)
+            need_update = is_different_proto(sequence_array, numpy_proto)
+            if need_update: proto = numpy_helper.from_list(numpy_proto, name)
         else:
             tensor = TensorProto()
             tensor.ParseFromString(f.read())
             tensor_array = numpy_helper.to_array(tensor)
-            try:
-                if tensor_array.dtype == np.object:
-                    np.testing.assert_array_equal(tensor_array, output)
-                else:
-                    np.testing.assert_allclose(tensor_array, output, rtol=1e-3, atol=1e-5)
-                update_file = False
-            except:
-                proto = numpy_helper.from_array(numpy_proto, name)
-        if update_file:
+            need_update = is_different_proto(tensor_array, numpy_proto)
+            if need_update: proto = numpy_helper.from_array(numpy_proto, name)
+        if need_update:
             f.seek(0)
             f.write(proto.SerializeToString())
             f.truncate()
