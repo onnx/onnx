@@ -1,7 +1,7 @@
 name: MacRelease
 
 # Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# events but only for the master and release brnaches
 on:
   push:
     branches: [ master, rel-* ]
@@ -43,15 +43,14 @@ jobs:
           sw_vers -productVersion
           ls /Library/Developer/CommandLineTools/SDKs
           git submodule update --init --recursive
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install numpy
+          python -m pip install --upgrade pip setuptools wheel numpy
           brew update
           brew install protobuf
+          git submodule update --init --recursive
           export ONNX_BUILD_TESTS=1
           export ONNX_ML=1
           export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-          export MACOSX_DEPLOYMENT_TARGET=11.0.1
           python setup.py bdist_wheel
 
       - name: Install and test ONNX
