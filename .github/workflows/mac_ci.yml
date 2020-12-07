@@ -44,7 +44,7 @@ jobs:
           ls /Library/Developer/CommandLineTools/SDKs
           git submodule update --init --recursive
           python -m pip install --upgrade pip setuptools wheel numpy
-          brew update
+          brew update --quiet
           brew install protobuf
           git submodule update --init --recursive
           export ONNX_BUILD_TESTS=1
@@ -56,7 +56,8 @@ jobs:
       - name: Install and test ONNX
         shell: bash
         run: |
-          python -c"from packaging import tags; print('\n'.join([str(t) for t in tags.sys_tags()]))" |head -5
+          python -m pip install packaging
+          python -c"from packaging import tags; print('\n'.join([str(t) for t in tags.sys_tags()]))"
           for file in dist/*.whl; do python -m pip install --upgrade $file; done
           pytest
 
