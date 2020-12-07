@@ -21,6 +21,7 @@ import onnx.utils  # noqa
 import google.protobuf.message
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
+from pathlib import Path
 from six import string_types
 
 
@@ -48,6 +49,8 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
     if isinstance(f, string_types):
         return os.path.abspath(f)
+    if isinstance(f, Path):
+        return f.absolute().as_posix()
     if hasattr(f, 'name'):
         return os.path.abspath(f.name)
     return None
