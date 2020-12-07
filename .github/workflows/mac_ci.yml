@@ -56,6 +56,7 @@ jobs:
       - name: Install and test ONNX
         shell: bash
         run: |
+          python -c"from packaging import tags; print('\n'.join([str(t) for t in tags.sys_tags()]))" |head -5
           for file in dist/*.whl; do python -m pip install --upgrade $file; done
           pytest
 
