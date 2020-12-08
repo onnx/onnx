@@ -1,6 +1,6 @@
 # Weekly ci workflow for model zoo.
 # Runs model checker for all models
-
+failed
 name: Weekly CI with latest onnx.checker
 
 # Triggers the workflow on push or pull request events but only for the master branch
