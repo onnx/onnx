@@ -12,7 +12,7 @@ import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
 from onnx import TensorProto, SequenceProto, MapProto
-from typing import Text, Any, 
+from typing import Text, Any
 import numpy as np  # type: ignore
 
 
