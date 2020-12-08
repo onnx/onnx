@@ -28,8 +28,6 @@ def run_lfs_prune():
 
 
 def main():
-    # enable gc collection to prevent MemoryError by loading too many large models
-    gc.collect()
     parser = argparse.ArgumentParser(description='Test settings')
     # default: test all models in the repo
     # if test_dir is specified, only test files under that specified path
@@ -87,6 +85,8 @@ def main():
             failed_messages.append((model_name, e))
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
+        # enable gc collection to prevent MemoryError by loading too many large models
+        gc.collect()
 
     if len(failed_models) == 0:
         print('{} models have been checked. {} models were skipped.'.format(len(model_list), len(skip_models)))
