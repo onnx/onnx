@@ -45,7 +45,7 @@ jobs:
           sw_vers -productVersion
           ls /Library/Developer/CommandLineTools/SDKs
           git submodule update --init --recursive
-          python -m pip install --upgrade pip setuptools wheel numpy pytest
+          python -m pip install --upgrade pip setuptools wheel numpy pytest nbval
           brew update --quiet
           brew install protobuf
           git submodule update --init --recursive
