@@ -12,7 +12,7 @@ import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
 from onnx import TensorProto, SequenceProto, MapProto
-from typing import Text, Any
+from typing import Text, Any, 
 import numpy as np  # type: ignore
 
 
@@ -28,7 +28,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
 
     def write_proto(proto_path, numpy_proto, name):  # type: (Text, Any, Text) -> None
         # write the produced proto to the target path
-        def is_different_proto(ref_proto, proto):  # type: (Any, Any) -> None
+        def is_different_proto(ref_proto, proto):  # type: (Any, Any) -> bool
             # check whether the produced proto is different from the existing one
             try:
                 if ref_proto.dtype == np.object:
