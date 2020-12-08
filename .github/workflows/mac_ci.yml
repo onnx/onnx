@@ -40,6 +40,10 @@ jobs:
       - name: ONNX Package Creation
         shell: bash
         run: |
+          echo "Current system compat version is"
+          echo $SYSTEM_VERSION_COMPAT
+          export SYSTEM_VERSION_COMPAT=0
+          echo $SYSTEM_VERSION_COMPAT
           sw_vers -productVersion
           ls /Library/Developer/CommandLineTools/SDKs
           git submodule update --init --recursive
