@@ -28,6 +28,8 @@ TP_DIR = os.path.join(TOP_DIR, 'third_party')
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
 
 WINDOWS = (os.name == 'nt')
+APPLE = (platform.uname().system == 'Darwin')
+PYTHON_ARCHITECTURE = platform.uname().machine
 
 CMAKE = find_executable('cmake3') or find_executable('cmake')
 MAKE = find_executable('make')
@@ -187,6 +189,12 @@ class cmake_build(setuptools.Command):
                     cmake_args.extend(['-A', 'x64', '-T', 'host=x64'])
                 else:
                     cmake_args.extend(['-A', 'Win32', '-T', 'host=x86'])
+            if APPLE:
+                # When running on Apple M1 machines through Rossetta
+                # It is important that we pick the arch python is running under
+                # and not the system architecture.
+                osx_arch = platform.uname().machine
+                cmake_args.append("-DCMAKE_OSX_ARCHITECTURES=%s" % osx_arch)
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
             if ONNX_VERIFY_PROTO3:
