@@ -42,8 +42,6 @@ jobs:
         run: |
           echo "Current system compat version is"
           echo $SYSTEM_VERSION_COMPAT
-          export SYSTEM_VERSION_COMPAT=0
-          echo $SYSTEM_VERSION_COMPAT
           sw_vers -productVersion
           ls /Library/Developer/CommandLineTools/SDKs
           git submodule update --init --recursive
@@ -62,6 +60,7 @@ jobs:
         run: |
           python -m pip install packaging
           python -c"from packaging import tags; print('\n'.join([str(t) for t in tags.sys_tags()]))"
+          mv dist/onnx-1.8.0-cp39-cp39-macosx_11_0_x86_64.whl dist/onnx-1.8.0-cp39-cp39-macosx_10_16_x86_64.whl
           for file in dist/*.whl; do python -m pip install --upgrade $file; done
           pytest
 
