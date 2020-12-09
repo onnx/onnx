@@ -61,6 +61,7 @@ def main():
     print('--------------Time used: {} secs-------------'.format(end - start))
     if failed:
         sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
