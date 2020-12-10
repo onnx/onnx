@@ -236,7 +236,7 @@ class TestShapeInference(unittest.TestCase):
 
     def test_reshape_static_shape_zero(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.UINT8, (1, 0, 0)),
+            [('x', TensorProto.UINT8, (1, 1, 1)),
              ('shape', TensorProto.INT64, (3,))],
             [make_node("Reshape", ['x', 'shape'], ['y'])],
             [],
