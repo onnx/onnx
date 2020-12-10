@@ -38,7 +38,10 @@ struct FunctionBodyBuildContext {
 struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
   // Input_types: use a default TypeProto for missing types. We use a different convention
   // here (from FunctionBodyBuildContext) to simplify python interoperability.
-  FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types)
+  // The default value for input_types is included only for backward compatibility.
+  // It can be used for functions that do not depend on the type-context, but
+  // will not be sufficient for functions that do use the type-context.
+  FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types = {})
       : node_proto_(node_proto), input_types_(input_types) {
     for (auto& attr : node_proto.attribute()) {
       attributesByName_[attr.name()] = &attr;
@@ -821,7 +824,9 @@ class OpSchema final {
   void Finalize();
 
   // Build function with information stored in opschema
-  void BuildFunction(FunctionProto& function_body) const;
+  void BuildFunction(
+      FunctionProto& function_body,
+      const std::vector<OperatorSetIdProto>& relied_opsets = {}) const;
 
  private:
   void ParseAndSetTypes(
