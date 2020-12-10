@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Development
 
 You will need to install protobuf and numpy to build ONNX. An easy

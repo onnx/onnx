@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -159,16 +163,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         "1 for the first maximum value, and 0 for all others")));
 
 static const char* Mod_doc_10 = R"DOC(
-  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+  Performs element-wise binary modulus (with Numpy-style broadcasting support).
     The sign of the remainder is the same as that of the Divisor.
-  
-    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
+
+    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
     (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-    This attribute is set to 0 by default causing the behavior to be like integer mod. 
+    This attribute is set to 0 by default causing the behavior to be like integer mod.
     Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
 
     If the input type is floating point, then `fmod` attribute must be set to 1.
-  
+
     In case of dividend being zero, the results will be platform dependent.
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -900,7 +904,7 @@ The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = ta
 When an optional "weight" is provided, the sample loss is calculated as:
     loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
 loss is zero for the case when target-value equals ignore_index.
-    
+
     loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
 If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
@@ -2985,7 +2989,7 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-   
+
 Given two equivalent values, this operator uses the indices along the axis  as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";

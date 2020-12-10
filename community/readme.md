@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Open Governance
 
 ## TL;DR
@@ -44,7 +46,7 @@ Member Companies are organizations that support ONNX in one or more of the follo
 * Hosting a workshop or meetup for ONNX
 * Providing resources for building or hosting ONNX assets
 * Doing media or PR activities to promote ONNX
-* Shipping a product that supports ONNX  
+* Shipping a product that supports ONNX
 
 Member Companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations. Being a Member Company does not by itself confer any compliance or certification to the Member Company's products.
 
@@ -96,7 +98,7 @@ A Steering Committee member can be removed due to Code of Conduct violations.
 
 #### Role
 
-The ONNX project is organized primarily into Special Interest Groups, or SIGs. Each SIG is comprised of individuals from multiple companies and organizations, with a common purpose of advancing the project with respect to a specific topic. 
+The ONNX project is organized primarily into Special Interest Groups, or SIGs. Each SIG is comprised of individuals from multiple companies and organizations, with a common purpose of advancing the project with respect to a specific topic.
 
 Our goal is to enable a distributed decision structure and code ownership, as well as providing focused forums for getting work done, making decisions, and on-boarding new contributors. Every identifiable part of the project (e.g., repository, subdirectory, API, test, issue, PR, Slack channel) is intended to be owned by some SIG. At the time of inception of this organizational structure, the following SIGs will be present:
 
@@ -122,8 +124,8 @@ A primary reason that SIGs exist is as forums for collaboration. Much work in a 
 * Announce meeting agenda and minutes after each meeting, on their SIG mailing list and/or Slack channel
 * Ensure the SIG's mailing list is archived (i.e on GitHub)
 * Report activity in overall ONNX community meetings
-* Participate in release planning meetings, retrospective, etc (if relevant) 
-* Actively triage issues, PRs, test failures, etc. related to code and tests owned by the SIG 
+* Participate in release planning meetings, retrospective, etc (if relevant)
+* Actively triage issues, PRs, test failures, etc. related to code and tests owned by the SIG
 * Use the above forums as the primary means of working, communicating, and collaborating, as opposed to private emails and meetings
 
 #### Decision making
