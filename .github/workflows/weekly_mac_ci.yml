@@ -4,9 +4,6 @@ name: Weekly CI with latest onnx.checker
 
 # Triggers the workflow on push or pull request events but only for the master branch
 on:
-  # test this PR for now, remove it before the merge
-  pull_request:
-    branches: [ master ]
   schedule:
     # run weekly on Sunday 23:59
     - cron:  '59 23 * * SUN'
