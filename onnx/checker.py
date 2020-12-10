@@ -24,7 +24,11 @@ from google.protobuf.message import Message
 from typing import TypeVar, Callable, Any, Type, cast, Union, Text
 from six import string_types
 import onnx.shape_inference
+import sys
 
+
+# Limitation of single protobuf file is 2GB
+MAXIMUM_PROTOBUF = 2000000000
 
 # TODO: This thing where we reserialize the protobuf back into the
 # string, only to deserialize it at the call site, is really goofy.
@@ -88,12 +92,17 @@ def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProt
 def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], bool) -> None
     if isinstance(model, string_types):
         C.check_model_path(model)
-        if full_check:
-            onnx.shape_inference.infer_shapes(onnx.load(model), True)
+        m = onnx.load(model)
     else:
-        C.check_model(model.SerializeToString())
-        if full_check:
-            onnx.shape_inference.infer_shapes(model, True)
+        # If the protobuf is larger than 2GB,
+        # remind users should use the model path to check
+        protobuf_string = model.SerializeToString()
+        if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
+            raise ValueError('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.')
+        C.check_model(protobuf_string)
+        m = model
+    if full_check:
+        onnx.shape_inference.infer_shapes(m, check_type=True)
 
 
 ValidationError = C.ValidationError

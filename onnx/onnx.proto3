@@ -100,7 +100,7 @@ enum Version {
   // - Add message TrainingInfoProto to store initialization
   //   method and training algorithm. The execution of TrainingInfoProto
   //   can modify the values of mutable variables.
-  // - Make inference graph callable from TrainingInfoProto via GraphCall operator.
+  // - Implicitly add inference graph into each TrainingInfoProto's algorithm.
   IR_VERSION = 0x0000000000000007;
 }
 
@@ -212,7 +212,7 @@ message NodeProto {
 // TrainingInfoProto stores information for training a model.
 // In particular, this defines two functionalities: an initialization-step
 // and a training-algorithm-step. Initialization resets the model
-// back to its original state as if no training has been consumed.
+// back to its original state as if no training has been performed.
 // Training algorithm improves the model based on input data.
 //
 // The semantics of the initialization-step is that the initializers
@@ -225,8 +225,8 @@ message NodeProto {
 // training algorithm's step. After the execution of a
 // TrainingInfoProto.algorithm, the initializers specified by "update_binding"
 // may be immediately updated. If the targeted training algorithm contains
-// consecutive update stages (such as block coordinate descent methods),
-// the user needs to create a TrainingInfoProto for each stage.
+// consecutive update steps (such as block coordinate descent methods),
+// the user needs to create a TrainingInfoProto for each step.
 message TrainingInfoProto {
   // This field describes a graph to compute the initial tensors
   // upon starting the training process. Initialization graph has no input
@@ -240,20 +240,38 @@ message TrainingInfoProto {
   // iteration to zero.
   //
   // By default, this field is an empty graph and its evaluation does not
-  // produce any output.
+  // produce any output. Thus, no initializer would be changed by default.
   GraphProto initialization = 1;
 
   // This field represents a training algorithm step. Given required inputs,
   // it computes outputs to update initializers in its own or inference graph's
-  // initializer lists. In general, this graph contains loss node, gradient node,
-  // optimizer node, increment of iteration count, and some calls to the inference
-  // graph.
+  // initializer lists. In general, this field contains loss node, gradient node,
+  // optimizer node, increment of iteration count.
   //
-  // The field algorithm.node is the only place the user can use GraphCall
-  // operator. The only callable graph is the one stored in ModelProto.graph.
+  // An execution of the training algorithm step is performed by executing the
+  // graph obtained by combining the inference graph (namely "ModelProto.graph")
+  // and the "algorithm" graph. That is, the actual the actual
+  // input/initializer/output/node/value_info/sparse_initializer list of
+  // the training graph is the concatenation of
+  // "ModelProto.graph.input/initializer/output/node/value_info/sparse_initializer"
+  // and "algorithm.input/initializer/output/node/value_info/sparse_initializer"
+  // in that order. This combined graph must satisfy the normal ONNX conditions.
+  // Now, let's provide a visualization of graph combination for clarity.
+  // Let the inference graph (i.e., "ModelProto.graph") be
+  //    tensor_a, tensor_b -> MatMul -> tensor_c -> Sigmoid -> tensor_d
+  // and the "algorithm" graph be
+  //    tensor_d -> Add -> tensor_e
+  // The combination process results
+  //    tensor_a, tensor_b -> MatMul -> tensor_c -> Sigmoid -> tensor_d -> Add -> tensor_e
+  //
+  // Notice that an input of a node in the "algorithm" graph may reference the
+  // output of a node in the inference graph (but not the other way round). Also, inference
+  // node cannot reference inputs of "algorithm". With these restrictions, inference graph 
+  // can always be run independently without training information.
   //
   // By default, this field is an empty graph and its evaluation does not
-  // produce any output.
+  // produce any output. Evaluating the default training step never
+  // update any initializers.
   GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
@@ -285,23 +303,16 @@ message TrainingInfoProto {
   // be multiple key-value pairs in "update_binding".
   //
   // The initializers appears as keys in "update_binding" are considered
-  // mutable and globally-visible variables. This implies some behaviors
+  // mutable variables. This implies some behaviors
   // as described below.
   //
-  //  1. We have only unique keys in all "update_binding"s so that two global
+  //  1. We have only unique keys in all "update_binding"s so that two
   //     variables may not have the same name. This ensures that one
-  //     global variable is assigned up to once.
+  //     variable is assigned up to once.
   //  2. The keys must appear in names of "ModelProto.graph.initializer" or
   //     "TrainingInfoProto.algorithm.initializer".
-  //  3. The values must be output names of "algorithm".
-  //  4. If an optional input of a graph is omitted when using GraphCall, the
-  //     global variable with the same name may be used.
-  //  5. When using GraphCall, the users always can pass values to optional 
-  //     inputs of the called graph even if the associated initializers appears
-  //     as keys in "update_binding"s.
-  //  6. The graphs in TrainingInfoProto's can use global variables as
-  //     their operator inputs.
-  //  7. Mutable variables are initialized to the value specified by the
+  //  3. The values must be output names of "algorithm" or "ModelProto.graph.output".
+  //  4. Mutable variables are initialized to the value specified by the
   //     corresponding initializer, and then potentially updated by
   //     "initializer_binding"s and "update_binding"s in "TrainingInfoProto"s.
   //
@@ -410,8 +421,9 @@ message GraphProto {
   string name = 2;   // namespace Graph
 
   // A list of named tensor values, used to specify constant inputs of the graph.
-  // Each TensorProto entry must have a distinct name (within the list) that
-  // MAY also appear in the input list.
+  // Each initializer (both TensorProto as well SparseTensorProto) MUST have a name.
+  // The name MUST be unique across both initializer and sparse_initializer,
+  // but the name MAY also appear in the input list.
   repeated TensorProto initializer = 5;
 
   // Initializers (see above) stored in sparse format.
@@ -590,6 +602,8 @@ message TensorProto {
 message SparseTensorProto {
   // The sequence of non-default values are encoded as a tensor of shape [NNZ].
   // The default-value is zero for numeric tensors, and empty-string for string tensors.
+  // values must have a non-empty name present which serves as a name for SparseTensorProto
+  // when used in sparse_initializer list.
   TensorProto values = 1;
 
   // The indices of the non-default values, which may be stored in one of two formats.

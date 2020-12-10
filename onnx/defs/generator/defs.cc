@@ -7,16 +7,16 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver12_doc = R"DOC(
+static const char* Constant_ver13_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    12,
+    13,
     OpSchema()
-        .SetDoc(Constant_ver12_doc)
+        .SetDoc(Constant_ver13_doc)
         .Attr(
             "value",
             "The value for the elements of the output tensor.",
@@ -64,7 +64,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto* value = ctx.getAttribute("value");
@@ -184,7 +184,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) The value of the output elements."
             "Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32",
             AttributeProto::TENSOR,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -231,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
             // output.
-            if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            if (hasInputShape(ctx, 0)) {
               auto& input_shape = getInputShape(ctx, 0);
               auto input_shape_dim_size = input_shape.dim_size();
               if (input_shape_dim_size > 1) {
@@ -241,15 +241,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (input_shape.dim(0).has_dim_value()) {
                 const auto& input_shape_dim_value =
                     input_shape.dim(0).dim_value();
-                if (input_shape_dim_value > 0) {
-                  auto final_output_shape = ctx.getOutputType(0)
-                                                ->mutable_tensor_type()
-                                                ->mutable_shape();
-                  for (int i = 0; i < input_shape_dim_value; ++i) {
-                    auto newdim = final_output_shape->add_dim();
-                    (void)(newdim); // To eliminate "unused variable" compiler
-                                    // warning.
-                  }
+                auto final_output_shape = ctx.getOutputType(0)
+                                              ->mutable_tensor_type()
+                                              ->mutable_shape();
+                for (int i = 0; i < input_shape_dim_value; ++i) {
+                  auto newdim = final_output_shape->add_dim();
+                  (void)(newdim); // To eliminate "unused variable" compiler
+                                  // warning.
                 }
               }
             }
@@ -313,7 +311,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the data type of the input tensor T1 is used. If input tensor T1 is also not"
             "specified, then type defaults to 'float'.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -397,7 +395,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.",
@@ -414,7 +412,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
@@ -447,7 +445,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "The data type for the elements of the output tensor. Default is TensorProto::FLOAT.",
@@ -464,7 +462,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
@@ -497,13 +495,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -562,13 +560,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor, if not specified, we will use "
             "the data type of the input tensor.",
             AttributeProto::INT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Input(
             0,
             "input",
@@ -617,7 +615,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::FLOAT,
-            OPTIONAL)
+            OPTIONAL_VALUE)
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.",

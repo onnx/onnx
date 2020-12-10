@@ -1,1 +1,0 @@
-	Btraining_modeJ

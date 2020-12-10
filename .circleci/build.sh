@@ -43,7 +43,7 @@ pip install ninja
 cd $PYTORCH_DIR
 ./scripts/onnx/install-develop.sh
 # install onnxruntime
-pip install -i https://test.pypi.org/simple/ ort-nightly==1.1.0.dev1228
+pip install -i https://test.pypi.org/simple/ ort-nightly==1.3.1.dev202006254
 
 # report sccache hit/miss stats
 if hash sccache 2>/dev/null; then

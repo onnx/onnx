@@ -1,0 +1,43 @@
+backend-test:È
+{ZSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionaxes"Constant*
+value*: 
+x
+x[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Max"	ReduceMax*
+axes@ 
+Â
+x
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Max[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Sub"Sub
+¿
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Sub[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Exp"Exp
+ 
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Exp
+ZSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionaxesZSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_RS"	ReduceSum
+›
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Exp
+ZSoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_RS[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Div"Div
+¿
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Div[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Log"Log
+²
+[SoftmaxCrossEntropyLoss_test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded_functionX_Log
+yz"NegativeLogLikelihoodLoss*
+	reduction"none *
+ignore_indexûÿÿÿÿÿÿÿÿ 5test_sce_NCd1d2d3_none_no_weight_negative_ii_expandedZ
+x
+
+
+
+
+
+Z
+y
+
+
+
+
+b
+z
+
+
+
+
+B

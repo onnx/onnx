@@ -6,10 +6,11 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
-#include "onnx/defs/operator_sets-training.h"
+#include "onnx/defs/operator_sets_training.h"
+#include "onnx/defs/operator_sets_preview.h"
 
 #ifdef ONNX_ML
-#include "onnx/defs/operator_sets-ml.h"
+#include "onnx/defs/operator_sets_ml.h"
 #endif
 
 #include "onnx/common/assertions.h"
@@ -27,36 +28,6 @@ DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
   return instance;
 }
 #endif
-
-OpSchema::FormalParameter::FormalParameter(
-    std::string name,
-    DataTypeSet allowed_type_set,
-    std::string type_str,
-    std::string description,
-    FormalParameterOption param_option,
-    bool is_homogeneous,
-    int min_arity)
-    : name_(std::move(name)),
-      type_set_(std::move(allowed_type_set)),
-      type_str_(std::move(type_str)),
-      description_(std::move(description)),
-      param_option_(param_option),
-      is_homogeneous_(is_homogeneous),
-      min_arity_(min_arity) {}
-
-OpSchema::FormalParameter::FormalParameter(
-    std::string name,
-    std::string description,
-    std::string type_str,
-    FormalParameterOption param_option,
-    bool is_homogeneous,
-    int min_arity)
-    : name_(std::move(name)),
-      type_str_(std::move(type_str)),
-      description_(std::move(description)),
-      param_option_(param_option),
-      is_homogeneous_(is_homogeneous),
-      min_arity_(min_arity) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -90,6 +61,10 @@ int OpSchema::FormalParameter::GetMinArity() const {
   return min_arity_;
 }
 
+OpSchema::DifferentiationCategory OpSchema::FormalParameter::GetDifferentiationCategory() const {
+  return differentiation_category_;
+}
+
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
   static OpSchemaRegistry instance;
   return &instance;
@@ -121,13 +96,15 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      if (type_constraints.find(type_str) == type_constraints.end()) {
-        type_constraints[type_str] = *type_proto;
-      } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(
+      auto p = type_constraints.emplace(type_str, *type_proto);
+      if (!p.second) {
+        // failed to insert a new element due to a duplication, now check consistency
+        if (p.first->second != *type_proto) {
+          fail_check(
             param.GetName(),
             " has inconsistent type ",
             *Utils::DataTypeUtils::ToType(*param_type));
+        }
       }
     }
   } // for inputs
@@ -235,7 +212,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
     if (in_idx >= static_cast<int>(inputs_.size())) {
-      if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
+      if (!inputs_.empty() && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
         break;
       } else {
@@ -261,7 +238,7 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
-      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
+      if (!outputs_.empty() && Variadic == outputs_.back().GetOption()) {
         // The last output formal parameter should be variadic.
         break;
       } else {
@@ -425,24 +402,19 @@ OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   num_outputs_allowed_ =
       [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
-    return allowed_output_nums.count(n);
+    return allowed_output_nums.count(n) > 0;
   };
   return *this;
 }
 
 OpSchema& OpSchema::TypeAndShapeInferenceFunction(
     InferenceFunction inferenceFunction) {
-  tensor_inference_function_ = inferenceFunction;
+  tensor_inference_function_ = std::move(inferenceFunction);
   return *this;
 }
 
 OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   support_ = support;
-  return *this;
-}
-
-OpSchema& OpSchema::SetDoc(std::string doc) {
-  doc_ = std::move(doc);
   return *this;
 }
 
@@ -607,21 +579,27 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
-    std::string description,
+    const std::string& description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
   inputs_[n] = FormalParameter(
       std::move(name),
-      std::move(description),
+#ifndef __ONNX_NO_DOC_STRINGS
+      description,
+#else
+      std::string(),
+#endif
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -632,35 +610,47 @@ OpSchema& OpSchema::Input(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Input(
       n,
       std::string(name),
+#ifndef __ONNX_NO_DOC_STRINGS
       std::string(description),
+#else
+      std::string(),
+#endif
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
-    std::string description,
+    const std::string& description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
   outputs_[n] = FormalParameter(
       std::move(name),
-      std::move(description),
+#ifndef __ONNX_NO_DOC_STRINGS
+      description,
+#else
+      std::string(),
+#endif
       std::move(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
   return *this;
 }
 
@@ -671,15 +661,21 @@ OpSchema& OpSchema::Output(
     const char* type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
-    int min_arity) {
+    int min_arity,
+    DifferentiationCategory differentiation_category) {
   return Output(
       n,
       std::string(name),
+#ifndef __ONNX_NO_DOC_STRINGS
       std::string(description),
+#else
+      std::string(),
+#endif
       std::string(type_str),
       param_option,
       is_homogeneous,
-      min_arity);
+      min_arity,
+      differentiation_category);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -733,7 +729,7 @@ void OpSchema::ParseAndSetTypes(
 
 OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
     ContextDependentFunctionBodyBuilder functionBuilder) {
-  functionBuilder_ = functionBuilder;
+  functionBuilder_ = std::move(functionBuilder);
   return *this;
 }
 
@@ -747,7 +743,7 @@ bool OpSchema::BuildContextDependentFunction(
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
-  for (const auto node : func_nodes) {
+  for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
     new_node->CopyFrom(node);
   }
@@ -775,7 +771,7 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction(FunctionProto& function_body) const {
+void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<OperatorSetIdProto>& relied_opsets) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
   function_body.set_since_version(this->since_version_);
@@ -789,11 +785,10 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   for (auto& a : attributes_) {
     function_body.add_attribute(a.first);
   }
-  // By default, the function body graph is relying on the OperatorSet this
-  // function belongs to.
-  auto relied_opset = function_body.mutable_opset_import()->Add();
-  relied_opset->set_domain(this->domain());
-  relied_opset->set_version(this->SinceVersion());
+
+  for (auto& relied_opset : relied_opsets) {
+    *(function_body.mutable_opset_import()->Add()) = relied_opset;
+  }
 }
 
 void OpSchema::Finalize() {
@@ -881,9 +876,9 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& name = p.GetName();
         const auto& description = p.GetDescription();
         const auto& type_str = p.GetTypeStr();
-        out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+        out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
+            << (!description.empty() ? description : "(no doc)") << " : "
+            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
@@ -897,9 +892,9 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& name = p.GetName();
         const auto& description = p.GetDescription();
         const auto& type_str = p.GetTypeStr();
-        out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+        out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
+            << (!description.empty() ? description : "(no doc)") << " : "
+            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
@@ -953,6 +948,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
       // Invoke register of training operators.
       RegisterOnnxTrainingOperatorSetSchema();
+
+      // Invoke register of experimental operators.
+      RegisterOnnxPreviewOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count =

@@ -6,7 +6,7 @@ As described in the ONNX [governance](https://github.com/onnx/onnx/tree/master/c
 New Working Groups are created when there is sufficient interest in a topic area and someone volunteers to be the chair for the group and submits a proposal to the steering committee. The chair facilitates the discussion and helps synthesize proposals and decisions. 
 
 ## Joining a working group
-Working Groups have most of their discussions on Gitter. If you are interested in participating, please join the discussion in the respective Gitter room. Details about any upcoming meetings will also be shared in the Gitter rooms. Working Group artifacts can be found in the [working-groups repository](https://github.com/onnx/working-groups).
+Working Groups have most of their discussions on Slack. If you are interested in participating, please join the discussion in the respective Slack channels. Details about any upcoming meetings will also be shared in the Slack channel. Working Group artifacts can be found in the [working-groups repository](https://github.com/onnx/working-groups).
 
 You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foundation/pages/viewpage.action?pageId=18481196)
 
@@ -14,8 +14,8 @@ You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foun
 
 | Working Group      | Objectives    |
 | ------------------ | ------------- |
-| [Training](https://gitter.im/onnx/training) | Expand ONNX to support training as well as inference |
-| [Data Pipelines](https://gitter.im/onnx/pipelines) | Define new operators for processing the data that goes in and comes out |
+| [Release](https://lfaifoundation.slack.com/archives/C018VGGJUGK) | Improve the release process for ONNX |
+| [Training](https://lfaifoundation.slack.com/archives/C018K560U14) | Expand ONNX to support training as well as inference |
 
 ## Completed working groups
 
@@ -31,3 +31,4 @@ You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foun
 | ------------------ | ------------- | ------ |
 | [Testing/Compliance](https://gitter.im/onnx/test_compliance) | Create tools, tests and APIs to ensure models and backends comply with the ONNX specification | became part of the ArchInfra SIG for now |
 | [Edge/Mobile](https://gitter.im/onnx/edge) | Enable deployment of ONNX models to edge platforms by identifying the ONNX operators that must be supported by mobile and IoT runtimes, defining tool chain requirements, and contributing to ONNX compatibility tests | Stopped as of January 2020 |
+| [Data Pipelines](https://gitter.im/onnx/pipelines) | Define new operators for processing the data that goes in and comes out | No recent activity |

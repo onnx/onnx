@@ -65,7 +65,7 @@ Because onnx.proto is expected to be consumed by multiple independent developers
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation. Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
 
-A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`). Nodes in graphs always refer to operators by their three-part identifier. Breaking opset changes include:
+A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`). Nodes in graphs always refer to operators by their three-part identifier. Breaking operator changes include:
 
 * Adding/removing/renaming an attribute. This even includes the case of adding a new optional attribute, where omitting the attribute would imply a default value yielding semantics identical to the previous operator version.
 
@@ -94,15 +94,17 @@ operator id MUST be greater than any extant `op_version` for the
 > 4. Register the new operator in the corresponding `operator_sets`
 >    header file.
 
-ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
-
-ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version). The empty string ("") domain indicates the operators defined as part of the ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
-
 How nodes bind to operator declarations is strictly defined, and are designed to increase model compatibility across ONNX implementations (appealing to the conservative clause of the robustness principle).
 
 How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification. Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
 
-### Operator Set and Operator Versioning Example
+### Operator sets
+
+ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as a version (referred to as the `opset` version). The opset version is largely independent of the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
+
+ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version). The empty string ("") domain indicates the operators defined as part of the ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
+
+### Example
 
 This section is not normative and informational only.
 
@@ -156,13 +158,19 @@ Assuming that there are no breaking changes to the signature of the model's grap
 
 ## Released Versions
 
-ONNX version|File format version|Operator set version ai.onnx|Operator set version ai.onnx.ml
-------------|-------------------|----------------------------|-------------------------------
-1.0|3|1|1
-1.1|3|5|1
-1.1.2|3|6|1
-1.2|3|7|1
-1.3|3|8|1
-1.4.1|4|9|1
-1.5.0|5|10|1
-1.6.0|6|11|2
+ONNX version|File format version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset version ai.onnx.training
+------------|-------------------|---------------------|------------------------|------------------------------
+1.0|3|1|1|-
+1.1|3|5|1|-
+1.1.2|3|6|1|-
+1.2|3|7|1|-
+1.3|3|8|1|-
+1.4.1|4|9|1|-
+1.5.0|5|10|1|-
+1.6.0|6|11|2|-
+1.7.0|7|12|2|1
+1.8.0|7|13|2|1
+
+A programmatically accessible version of the above table is available [here](../onnx/helper.py). Limited version number
+information is also maintained in [version.h](../onnx/common/version.h) and [schema.h](../onnx/defs/schema.h).
+Please update all whenever a new version of ONNX is released.
