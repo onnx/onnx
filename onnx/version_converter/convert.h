@@ -35,6 +35,7 @@
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
+#include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
@@ -333,6 +334,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
+      registerAdapter(make_unique<Slice_9_10>());
 
       /******** 10 -> 9 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
@@ -349,6 +351,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Constant",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Compress",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Conv",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ConvTranspose",
@@ -357,7 +361,11 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Flatten",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gather",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Hardmax",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax",
         OpSetID(10), OpSetID(11)));
@@ -383,7 +391,13 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ReduceSumSquare",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Scan",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Softmax",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Slice",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Squeeze",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
         OpSetID(10), OpSetID(11)));

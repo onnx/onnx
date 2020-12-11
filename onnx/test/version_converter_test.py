@@ -1196,6 +1196,25 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "ReduceSum"
         assert converted_model.opset_import[0].version == 13
 
+    # Test Slice Adapter: 9 -> 10
+    def test_slice_9_10(self):  # type: () -> None
+        nodes = [helper.make_node('Slice', ["X"], ["Y"],
+                                  axes=[0, 1],
+                                  starts=[0, 0],
+                                  ends=[3, 10])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (20, 10, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 10, 5))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 9), 10)
+
+        assert converted_model.graph.node[0].op_type == "Slice"
+        assert converted_model.opset_import[0].version == 10
+        assert len(converted_model.graph.node[0].input) == 4
+        assert len(converted_model.graph.node[0].attribute) == 0
+
     # Test RNN Adapter: 12 -> 13
     def test_rnn_12_13(self):  # type: () -> None
         from_opset = 12

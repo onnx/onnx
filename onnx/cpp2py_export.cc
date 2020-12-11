@@ -64,19 +64,27 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return py::bytes(bytes);
       })
       .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
-      .def("get_context_dependent_function", [](OpSchema* op, const py::bytes& bytes) -> py::bytes {
-        NodeProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-
-        std::string func_bytes = "";
-        if (op->HasContextDependentFunction()) {
-          FunctionBodyBuildContextImpl ctx(proto);
-          FunctionProto func_proto;
-          op->BuildContextDependentFunction(ctx, func_proto);
-          func_proto.SerializeToString(&func_bytes);
-        }
-        return py::bytes(func_bytes);
-      });
+      .def(
+          "get_context_dependent_function",
+          [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
+            NodeProto proto{};
+            ParseProtoFromPyBytes(&proto, bytes);
+            std::string func_bytes = "";
+            if (op->HasContextDependentFunction()) {
+              std::vector<TypeProto> input_types;
+              input_types.reserve(input_types_bytes.size());
+              for (auto& type_bytes : input_types_bytes) {
+                TypeProto type_proto{};
+                ParseProtoFromPyBytes(&type_proto, type_bytes);
+                input_types.push_back(type_proto);
+              }
+              FunctionBodyBuildContextImpl ctx(proto, input_types);
+              FunctionProto func_proto;
+              op->BuildContextDependentFunction(ctx, func_proto);
+              func_proto.SerializeToString(&func_bytes);
+            }
+            return py::bytes(func_bytes);
+          });
 ;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
@@ -325,6 +333,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     proto.SerializeToString(&out);
     return py::bytes(out);
   }, "bytes"_a, "check_type"_a = false);
+  
+  shape_inference.def(
+      "infer_shapes_path",
+      [](const std::string& model_path, const std::string& output_path, bool check_type)  -> void {
+        shape_inference::InferShapes(model_path, check_type, output_path);
+      });
 }
 
 } // namespace ONNX_NAMESPACE
