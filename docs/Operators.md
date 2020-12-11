@@ -52,7 +52,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-9">9</a>|
 |<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
-|<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-13">13</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
+|<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-14">14</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
 |<a href="#Gather">Gather</a>|<a href="Changelog.md#Gather-13">13</a>, <a href="Changelog.md#Gather-11">11</a>, <a href="Changelog.md#Gather-1">1</a>|
 |<a href="#GatherElements">GatherElements</a>|<a href="Changelog.md#GatherElements-13">13</a>, <a href="Changelog.md#GatherElements-11">11</a>|
 |<a href="#GatherND">GatherND</a>|<a href="Changelog.md#GatherND-13">13</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-11">11</a>|
@@ -69,7 +69,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
 |<a href="#LRN">LRN</a>|<a href="Changelog.md#LRN-13">13</a>, <a href="Changelog.md#LRN-1">1</a>|
-|<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-13">13</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
+|<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
@@ -99,7 +99,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
 |<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
-|<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-13">13</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
+|<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-1">1</a>|
 |<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-1">1</a>|
 |<a href="#RandomUniform">RandomUniform</a>|<a href="Changelog.md#RandomUniform-1">1</a>|
@@ -5782,7 +5782,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-7">7</a>
 
@@ -5796,7 +5796,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>batch_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
+<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, num_directions, batch_size, hidden_size] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, num_directions, seq_length, hidden_size] respectively.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -5813,24 +5813,24 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> (differentiable) : T</dt>
-<dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[3*hidden_size, input_size, num_directions]`.</dd>
+<dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> (differentiable) : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[3*hidden_size, hidden_size, num_directions]`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
-<dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[6*hidden_size, num_directions]`. Optional: If not specified - assumed to be 0</dd>
+<dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (0 - 2)
 
 <dl>
 <dt><tt>Y</tt> (optional, differentiable) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size, num_directions]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
 <dt><tt>Y_h</tt> (optional, differentiable) : T</dt>
-<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -5865,8 +5865,8 @@ node = onnx.helper.make_node(
     batch_major=batch_major
 )
 
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 gru = GRU_Helper(X=input, W=W, R=R, batch_major=batch_major)
 Y, Y_h = gru.step()
@@ -5894,8 +5894,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 gru = GRU_Helper(X=input, W=W, R=R)
 _, Y_h = gru.step()
@@ -5924,13 +5924,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((number_of_gates * hidden_size, 1)).astype(np.float32)
-R_B = np.zeros((number_of_gates * hidden_size, 1)).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=0)
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
@@ -5958,13 +5958,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = np.random.randn(number_of_gates * hidden_size, input_size, 1).astype(np.float32)
-R = np.random.randn(number_of_gates * hidden_size, hidden_size, 1).astype(np.float32)
+W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(np.float32)
+R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(np.float32)
 
 # Adding custom bias
-W_B = np.random.randn(number_of_gates * hidden_size, 1).astype(np.float32)
-R_B = np.random.randn(number_of_gates * hidden_size, 1).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=0)
+W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
+R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
@@ -8105,7 +8105,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="Changelog.md#LSTM-7">7</a>
 
@@ -8119,7 +8119,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>batch_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
+<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, num_directions, batch_size, hidden_size] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, num_directions, seq_length, hidden_size] respectively.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -8136,30 +8136,30 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> (differentiable) : T</dt>
-<dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[4*hidden_size, input_size, num_directions]`.</dd>
+<dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> (differentiable) : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[4*hidden_size, hidden_size, num_directions]`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[8*hidden_size, num_directions]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>initial_c</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
 <dt><tt>P</tt> (optional, differentiable) : T</dt>
-<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[3*hidde_size, num_directions]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (0 - 3)
 
 <dl>
 <dt><tt>Y</tt> (optional, differentiable) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size, num_directions]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
 <dt><tt>Y_h</tt> (optional, differentiable) : T</dt>
-<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_c</tt> (optional, differentiable) : T</dt>
-<dd>The last output value of the cell. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -8194,8 +8194,8 @@ node = onnx.helper.make_node(
     batch_major=batch_major
 )
 
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, batch_major=batch_major)
 Y, Y_h = lstm.step()
@@ -8223,8 +8223,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
@@ -8253,13 +8253,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((number_of_gates * hidden_size, 1)).astype(np.float32)
-R_B = np.zeros((number_of_gates * hidden_size, 1)).astype(np.float32)
-B = np.concatenate((W_B, R_B), 0)
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = lstm.step()
@@ -8289,13 +8289,13 @@ node = onnx.helper.make_node(
 )
 
 # Initializing Inputs
-W = weight_scale * np.ones((number_of_gates * hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((number_of_gates * hidden_size, hidden_size, 1)).astype(np.float32)
-B = np.zeros((2 * number_of_gates * hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
 seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
-init_h = np.zeros((input.shape[1], hidden_size, 1)).astype(np.float32)
-init_c = np.zeros((input.shape[1], hidden_size, 1)).astype(np.float32)
-P = weight_scale * np.ones((number_of_peepholes * hidden_size, 1)).astype(np.float32)
+init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
+init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
+P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
 _, Y_h = lstm.step()
@@ -13207,7 +13207,7 @@ expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Changelog.md#RNN-7">7</a>
 
@@ -13221,7 +13221,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 <dt><tt>activations</tt> : list of strings (default is ['Tanh', 'Tanh'])</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>batch_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, batch_size, hidden_size, num_directions] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, seq_length, hidden_size, num_directions] respectively.</dd>
+<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, num_directions, batch_size, hidden_size] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, num_directions, seq_length, hidden_size] respectively.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -13236,24 +13236,24 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> (differentiable) : T</dt>
-<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[hidden_size, input_size, num_directions]`.</dd>
+<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> (differentiable) : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[hidden_size, hidden_size, num_directions]`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[2*hidden_size, num_directions]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (0 - 2)
 
 <dl>
 <dt><tt>Y</tt> (optional, differentiable) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size, num_directions]`. </dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
 <dt><tt>Y_h</tt> (optional, differentiable) : T</dt>
-<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size, num_directions]`.</dd>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -13287,8 +13287,8 @@ node = onnx.helper.make_node(
     batch_major=batch_major
 )
 
-W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
 rnn = RNN_Helper(X=input, W=W, R=R, batch_major=batch_major)
 Y, Y_h = rnn.step()
@@ -13315,8 +13315,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
 rnn = RNN_Helper(X=input, W=W, R=R)
 _, Y_h = rnn.step()
@@ -13344,13 +13344,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((hidden_size, input_size, 1)).astype(np.float32)
-R = weight_scale * np.ones((hidden_size, hidden_size, 1)).astype(np.float32)
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((hidden_size, 1)).astype(np.float32)
-R_B = np.zeros((hidden_size, 1)).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=0)
+W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
+R_B = np.zeros((1, hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
@@ -13378,13 +13378,13 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = np.random.randn(hidden_size, input_size, 1).astype(np.float32)
-R = np.random.randn(hidden_size, hidden_size, 1).astype(np.float32)
+W = np.random.randn(1, hidden_size, input_size).astype(np.float32)
+R = np.random.randn(1, hidden_size, hidden_size).astype(np.float32)
 
 # Adding custom bias
-W_B = np.random.randn(hidden_size, 1).astype(np.float32)
-R_B = np.random.randn(hidden_size, 1).astype(np.float32)
-B = np.concatenate((W_B, R_B), axis=0)
+W_B = np.random.randn(1, hidden_size).astype(np.float32)
+R_B = np.random.randn(1, hidden_size).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
