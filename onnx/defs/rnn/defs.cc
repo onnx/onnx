@@ -547,7 +547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             6,
             "initial_c",
             "Optional initial value of the cell. If not specified - assumed "
-            "to be 0. It has shape `[batch_size, hidden_size, num_directions]`.",
+            "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
             "T",
             OpSchema::Optional,
             true,
