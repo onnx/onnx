@@ -1215,10 +1215,10 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].input) == 4
         assert len(converted_model.graph.node[0].attribute) == 0
 
-    # Test RNN Adapter: 12 -> 13
-    def test_rnn_12_13(self):  # type: () -> None
-        from_opset = 12
-        to_opset = 13
+    # Test RNN Adapter: 13 -> 14
+    def test_rnn_13_14(self):  # type: () -> None
+        from_opset = 13
+        to_opset = 14
         data_type = TensorProto.FLOAT
 
         seq_length = 1
@@ -1250,10 +1250,10 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].attribute) == 2
         assert converted_model.graph.node[0].attribute[1].name == "batch_major"
 
-    # Test RNN Adapter: 13 -> 12
-    def test_rnn_13_12(self):  # type: () -> None
-        from_opset = 13
-        to_opset = 12
+    # Test RNN Adapter: 14 -> 13
+    def test_rnn_14_13(self):  # type: () -> None
+        from_opset = 14
+        to_opset = 13
         data_type = TensorProto.FLOAT
 
         seq_length = 1

@@ -1,4 +1,4 @@
-// Adapter for RNN in default domain from version 12 to 13
+// Adapter for RNN in default domain from version 13 to 14
 
 #pragma once
 
@@ -6,18 +6,18 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct RNN_12_13 final : public Adapter {
-  explicit RNN_12_13()
-    : Adapter("RNN", OpSetID(12), OpSetID(13)) {
+struct RNN_13_14 final : public Adapter {
+  explicit RNN_13_14()
+    : Adapter("RNN", OpSetID(13), OpSetID(14)) {
     }
 
-  void adapt_rnn_12_13(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_rnn_13_14(std::shared_ptr<Graph> graph, Node* node) const {
       // Add the batch_major attribute
       node->i_(kbatch_major, 0);
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    adapt_rnn_12_13(graph, node);
+    adapt_rnn_13_14(graph, node);
   }
 };
 

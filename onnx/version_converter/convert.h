@@ -27,8 +27,8 @@
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
-#include "onnx/version_converter/adapters/rnn_12_13.h"
-#include "onnx/version_converter/adapters/rnn_13_12.h"
+#include "onnx/version_converter/adapters/rnn_13_14.h"
+#include "onnx/version_converter/adapters/rnn_14_13.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/set_is_test.h"
@@ -511,7 +511,6 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
           "Squeeze", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<AxesAttributeToInput>(
           "Unsqueeze", OpSetID(12), OpSetID(13)));
-      registerAdapter(make_unique<RNN_12_13>());
       registerAdapter(make_unique<Split_12_13>());
 
       /******** 13 -> 12 ********/
@@ -523,8 +522,13 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
           "Squeeze", OpSetID(13), OpSetID(12)));
       registerAdapter(make_unique<AxesInputToAttribute>(
           "Unsqueeze", OpSetID(13), OpSetID(12)));
-      registerAdapter(make_unique<RNN_13_12>());
       registerAdapter(make_unique<Split_13_12>());
+
+      /******** 13 -> 14 ********/
+      registerAdapter(make_unique<RNN_13_14>());
+
+      /******** 14 -> 13 ********/
+      registerAdapter(make_unique<RNN_14_13>());
     }
 
     ModelProto convert_version(
