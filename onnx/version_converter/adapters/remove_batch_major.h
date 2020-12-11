@@ -1,4 +1,4 @@
-// Adapter for RNN in default domain from version 14 to 13
+// Adapter for GRU/LSTM/RNN in default domain from version 14 to 13
 
 #pragma once
 
@@ -6,22 +6,22 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct RNN_14_13 final : public Adapter {
-  explicit RNN_14_13()
-    : Adapter("RNN", OpSetID(14), OpSetID(13)) {
+struct RemoveBatchMajor final : public Adapter {
+  explicit RemoveBatchMajor(const std::string& op_name)
+    : Adapter(op_name, OpSetID(14), OpSetID(13)) {
     }
 
-  void adapt_rnn_14_13(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_remove_batch_major(std::shared_ptr<Graph> graph, Node* node) const {
       // Remove the batch_major attribute
       if (node->hasAttribute(kbatch_major)) {
-        ONNX_ASSERTM(node->i(kbatch_major) == 0, "RNN in Opset "
+        ONNX_ASSERTM(node->i(kbatch_major) == 0, "GRU/LSTM/RNN in Opset "
             "Version 13 does not support batch major.");
         node->removeAttribute(kbatch_major);
       }
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    adapt_rnn_14_13(graph, node);
+    adapt_remove_batch_major(graph, node);
   }
 };
 

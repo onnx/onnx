@@ -27,8 +27,6 @@
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
-#include "onnx/version_converter/adapters/rnn_13_14.h"
-#include "onnx/version_converter/adapters/rnn_14_13.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/set_is_test.h"
@@ -39,6 +37,8 @@
 #include "onnx/version_converter/adapters/type_restriction.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/add_batch_major.h"
+#include "onnx/version_converter/adapters/remove_batch_major.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -525,10 +525,14 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<Split_13_12>());
 
       /******** 13 -> 14 ********/
-      registerAdapter(make_unique<RNN_13_14>());
+      registerAdapter(make_unique<AddBatchMajor>("GRU"));
+      registerAdapter(make_unique<AddBatchMajor>("LSTM"));
+      registerAdapter(make_unique<AddBatchMajor>("RNN"));
 
       /******** 14 -> 13 ********/
-      registerAdapter(make_unique<RNN_14_13>());
+      registerAdapter(make_unique<RemoveBatchMajor>("GRU"));
+      registerAdapter(make_unique<RemoveBatchMajor>("LSTM"));
+      registerAdapter(make_unique<RemoveBatchMajor>("RNN"));
     }
 
     ModelProto convert_version(
