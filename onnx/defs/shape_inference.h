@@ -397,6 +397,27 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
   *dim = input_type->tensor_type().shape().dim(static_cast<int>(fromDimIndex));
 }
 
+inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
+  if (TypeProto::kTensorType == from_type->value_case() &&
+      TypeProto::kTensorType == to_type->value_case()) {
+    // If input shape is "uknown", the corresponding should be "unknown" too.
+    // The way to make output shape unknown is not to assign it any value.
+    if (hasShape(*from_type)) {
+      *to_type->mutable_tensor_type()->mutable_shape() =
+          from_type->tensor_type().shape();
+    }
+  } else if (TypeProto::kSequenceType == input_type->value_case() &&
+      TypeProto::kSequenceType == output_type->value_case()) {
+    propagateShape(&input_type->sequence_type().elem_type(), output_type->mutable_sequence_type()->mutable_elem_type());
+  } else {
+    fail_shape_inference(
+        "Mismatch between source and target type. Source=",
+        input_type->value_case(),
+        " Target=",
+        output_type->value_case());
+  }
+}
+
 inline void propagateShapeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
@@ -404,18 +425,7 @@ inline void propagateShapeFromInputToOutput(
   auto output_type = ctx.getOutputType(outputIndex);
   auto input_type = ctx.getInputType(inputIndex);
 
-  if (TypeProto::kTensorType != input_type->value_case() ||
-      TypeProto::kTensorType != output_type->value_case()) {
-    fail_shape_inference(ONNX_NAMESPACE::to_string(
-        ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
-  }
-
-  // If input shape is "uknown", the corresponding should be "unknown" too.
-  // The way to make output shape unknown is not to assign it any value.
-  if (hasShape(*input_type)) {
-    *output_type->mutable_tensor_type()->mutable_shape() =
-        input_type->tensor_type().shape();
-  }
+  propagateShape(input_type, output_type);
 }
 
 inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {

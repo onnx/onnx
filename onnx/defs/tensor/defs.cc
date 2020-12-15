@@ -2195,7 +2195,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "input",
             "Input tensor",
-            "T",
+            "V",
             OpSchema::Single,
             true,
             1,
@@ -2204,15 +2204,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "Tensor to copy input into.",
-            "T",
+            "V",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
         .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output types to all tensor types.")
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types_with_bfloat();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "Constrain input and output types to all tensor and sequence types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Compress_ver11_doc = R"DOC(
