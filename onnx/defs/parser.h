@@ -56,6 +56,12 @@ class ParserBase {
       next_++;
   }
 
+  int NextChar(bool skipspace = true) {
+    if (skipspace)
+      SkipWhiteSpace();
+    return (next_ < end_) ? *next_ : 0;
+  }
+
   std::string ParseIdentifier() {
     SkipWhiteSpace();
     auto from = next_;
@@ -77,10 +83,21 @@ class ParserBase {
   };
 
   Token ParseValue() {
+    Token result;
     bool decimal_point = false;
-    SkipWhiteSpace();
+    auto nextch = NextChar();
     auto from = next_;
-    if ((next_ < end_) && (isdigit(*next_) || (*next_ == '-'))) {
+    if (nextch == '"') {
+      next_++;
+      // TODO: Handle escape characters
+      while ((next_ < end_) && (*next_ != '"')) {
+        next_++;
+      }
+      next_++;
+      result.type = TokenType::STRING_LITERAL;
+      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
+
+    } else if ((isdigit(nextch) || (nextch == '-'))) {
       next_++;
 
       while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
@@ -91,12 +108,13 @@ class ParserBase {
         }
         next_++;
       }
+
+      if (next_ == from)
+        parse_error("Value expected but not found.");
+
+      result.value = std::string(from, next_ - from);
+      result.type = decimal_point ? TokenType::FLOAT_LITERAL : TokenType::INT_LITERAL;
     }
-    if (next_ == from)
-      parse_error("Value expected but not found.");
-    Token result;
-    result.value = std::string(from, next_ - from);
-    result.type = decimal_point ? TokenType::FLOAT_LITERAL : TokenType::INT_LITERAL;
     return result;
   }
 
@@ -161,6 +179,10 @@ class OnnxParser : public ParserBase {
       case TokenType::FLOAT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_FLOAT);
         attr.set_f(static_cast<float>(std::stof(token.value)));
+        break;
+      case TokenType::STRING_LITERAL:
+        attr.set_type(AttributeProto_AttributeType_STRING);
+        attr.set_s(token.value);
         break;
       default:
         parse_error("Unexpected literal type.");

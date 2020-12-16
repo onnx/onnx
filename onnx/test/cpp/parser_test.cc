@@ -17,6 +17,9 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
     case AttributeProto_AttributeType_FLOAT:
       os << attr.f();
       break;
+    case AttributeProto_AttributeType_STRING:
+      os << "\"" << attr.s() << "\"";
+      break;
     default:
       break;
   }
@@ -108,7 +111,7 @@ TEST(ParserTest, AttrListTest) {
 }
 
 TEST(ParserTest, NodeAttrTest) {
-  const char* code = "x = foo { a = 100, b = 200.5 } (y, z)";
+  const char* code = "x = foo { a = 100, b = 200.5, c = \"astring\" } (y, z)";
   NodeProto n;
   OnnxParser::Parse(n, code);
 
