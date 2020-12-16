@@ -14,7 +14,7 @@ from . import expect
 def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (List[Any], np.ndarray, np.ndarray) -> List[Any]
     # make a copy of input sequence
     seq = list(sequence)
-    if position:
+    if position is not None:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
         # The position argument will be in the format np.array([pos_index])
         insert_position = position[0]

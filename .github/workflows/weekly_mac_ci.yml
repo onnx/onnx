@@ -1,0 +1,57 @@
+# Weekly ci workflow for model zoo.
+# Runs model checker for all models
+name: Weekly CI with latest onnx.checker
+
+# Triggers the workflow on push or pull request events but only for the master branch
+on:
+  schedule:
+    # run weekly on Sunday 23:59
+    - cron:  '59 23 * * SUN'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+        architecture: ['x64']
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout repo
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -e
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install numpy
+        pip install --quiet pytest==5.4.3 nbval
+        # Install protobuf 3.11.3 due to compatibility
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
+        brew install protobuf.rb
+        pip install protobuf==3.11.3           
+    - name: Build, install and test ONNX
+      shell: bash
+      run: |
+        export CC=clang
+        export CXX=clang++
+        export ONNX_ML=1
+        export ONNX_NAMESPACE=ONNX_REL_1_8
+        export MACOSX_DEPLOYMENT_TARGET=10.15
+        python setup.py --quiet install
+    - name: Test all models with onnx.checker and onnx.shape_inference
+      run: |
+        cd ..
+        git clone https://github.com/onnx/models.git
+        cd models
+        python ../onnx/workflow_scripts/test_model_zoo.py
