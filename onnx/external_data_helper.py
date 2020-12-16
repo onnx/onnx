@@ -98,7 +98,7 @@ def set_external_data(tensor,  # type: TensorProto
 
 
 def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=1024):
-    # type: (ModelProto, bool, Optional[Text], Optional[int]) -> None
+    # type: (ModelProto, bool, Optional[Text], int) -> None
     """
     Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
