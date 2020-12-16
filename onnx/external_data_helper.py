@@ -98,7 +98,7 @@ def set_external_data(tensor,  # type: TensorProto
 
 
 def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=1024):
-    # type: (ModelProto, bool, Optional[Text]) -> None
+    # type: (ModelProto, bool, Optional[Text], Optional[int]) -> None
     """
     Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
@@ -220,7 +220,7 @@ def uses_external_data(tensor):  # type: (TensorProto) -> bool
     return tensor.HasField("data_location") and tensor.data_location == TensorProto.EXTERNAL
 
 
-def _remove_external_data_field(tensor, field_key):  # type: (TensorProto, Text) -> None
+def remove_external_data_field(tensor, field_key):  # type: (TensorProto, Text) -> None
     """
     Remove a field from a Tensor's external_data key-value store.
 
