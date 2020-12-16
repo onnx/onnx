@@ -756,14 +756,39 @@ void check_function(
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
+  const auto& model_opset_imports = ctx.get_opset_imports();
   CheckerContext ctx_copy = ctx;
-  std::unordered_map<std::string, int> opsets;
+
+  // A FunctionProto body (graph) may implicitly rely on the OperatorSet that
+  // this function belongs to or it can also explicitly rely on more OperatorSets
+  // specified in the opset_import field for FunctionProto. However the spec does not
+  // clarify how to treat inconsistencies between function level and model level OperatorSets imports.
+  // Right now we merge opset imports from function proto with the model level opset imports
+  // In case there is an inconsistency it is treated as an error.
+  // TODO: Clarify spec and revisit this check.
+  std::unordered_map<std::string, int> func_opset_imports{model_opset_imports};
   for (auto& relied_opset : function.opset_import()) {
     auto& domain = relied_opset.domain();
-    auto version = relied_opset.version();
-    opsets[domain] = static_cast<int>(version);
+    int version = static_cast<int>(relied_opset.version());
+    auto it = func_opset_imports.find(domain);
+    if (it == func_opset_imports.end()) {
+      func_opset_imports[domain] = version;
+    } else {
+      if (it->second != version) {
+        fail_check(
+            "ONNX models do not support multiple opset version imports for a domain. Function ",
+            function.name(),
+            " imports opset version ",
+            std::to_string(version),
+            " for domain ",
+            (domain.empty() ? "ai.onnx" : domain),
+            " where as the model imports opset version ",
+            std::to_string(it->second));
+      }
+    }
   }
-  ctx_copy.set_opset_imports(opsets);
+
+  ctx_copy.set_opset_imports(func_opset_imports);
 
   LexicalScopeContext lex_ctx{parent_lex};
 
