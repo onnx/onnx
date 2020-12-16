@@ -786,8 +786,16 @@ void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<Ope
     function_body.add_attribute(a.first);
   }
 
-  for (auto& relied_opset : relied_opsets) {
-    *(function_body.mutable_opset_import()->Add()) = relied_opset;
+  if (!relied_opsets.empty()) {
+    for (auto& relied_opset : relied_opsets) {
+      *(function_body.mutable_opset_import()->Add()) = relied_opset;
+    }
+  } else {
+    // By default, the function body graph is relying on the OperatorSet this
+    // function belongs to.
+    auto relied_opset = function_body.mutable_opset_import()->Add();
+    relied_opset->set_domain(this->domain());
+    relied_opset->set_version(this->SinceVersion());
   }
 }
 
