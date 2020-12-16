@@ -97,7 +97,7 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=0):
+def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=1024):
     # type: (ModelProto, bool, Optional[Text]) -> None
     """
     Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
@@ -109,9 +109,7 @@ def convert_model_to_external_data(model, all_tensors_to_one_file=True, location
     location: specify the external file that all tensors to save to.
               If not specified, will use the model name.
     size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold
-    specified it will be converted to external data. Default = 0 means all tensor's with raw data
-    will be converted to external data. Can be used to skip tensor's with small data to be converted
-    to external data.
+    it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
     """
     if all_tensors_to_one_file:
         file_name = Text(uuid.uuid1())
