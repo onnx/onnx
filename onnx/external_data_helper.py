@@ -208,7 +208,7 @@ def _sanitize_path(path):  # type: (Text) -> Text
 def _is_valid_filename(filename):  # type: (Text) -> bool
     """Utility to check whether the provided filename is valid."""
     exp = re.compile("^[^<>:;,?\"*|/]+$")
-    match = exp.fullmatch(filename)
+    match = exp.match(filename)
     if match:
         return True
     else:
