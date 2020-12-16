@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-
 #
 # Add MSVC RunTime Flag
 function(add_msvc_runtime_flag lib)
   if(${ONNX_USE_MSVC_STATIC_RUNTIME})
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MT> $<$<CONFIG:Debug>:/MTd>)
+    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MT> $<$<CONFIG:Debug>:/MTd>)    
   else()
     target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MD> $<$<CONFIG:Debug>:/MDd>)
   endif()

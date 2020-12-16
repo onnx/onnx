@@ -63,9 +63,9 @@ function(AddTest)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                                  /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible
+                                         # protobuf::uint64' to 'int', possible 
                                          # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
+                                 /wd4267 # Conversion from 'size_t' to 'int', 
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                            )
