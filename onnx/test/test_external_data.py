@@ -258,6 +258,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
+
 # The following test will fail in some platforms
 # because >2GB proto python object is not allowed
 # Disable it for now and it should be fixed after 1.8 Release
