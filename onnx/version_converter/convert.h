@@ -35,6 +35,7 @@
 #include "onnx/version_converter/adapters/sum_8_7.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
+#include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 
@@ -240,6 +241,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<Gemm_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<Dropout_6_7>());
+      registerAdapter(make_unique<Upsample_6_7>());
 
       /******** 7 -> 6 ********/   
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
