@@ -545,8 +545,8 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Upsample"
         attribute_names = [attr.name for attr in converted_model.graph.node[0].attribute]
         assert 'scales' in attribute_names
-        assert not 'width_scale' in attribute_names
-        assert not 'height_scale' in attribute_names
+        assert 'width_scale' not in attribute_names
+        assert 'height_scale' not in attribute_names
         assert converted_model.opset_import[0].version == to_opset
 
     # Test MaxPool Adapter: 8 -> 1
