@@ -9,16 +9,40 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
+  const char* sep = "[";
+  const char* comma = ", ";
+
   os << attr.name() << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
       os << attr.i();
       break;
+    case AttributeProto_AttributeType_INTS:
+      for (auto v : attr.ints()) {
+        os << sep << v;
+        sep = comma;
+      }
+      os << "]";
+      break;
     case AttributeProto_AttributeType_FLOAT:
       os << attr.f();
       break;
+    case AttributeProto_AttributeType_FLOATS:
+      for (auto v : attr.floats()) {
+        os << sep << v;
+        sep = comma;
+      }
+      os << "]";
+      break;
     case AttributeProto_AttributeType_STRING:
       os << "\"" << attr.s() << "\"";
+      break;
+    case AttributeProto_AttributeType_STRINGS:
+      for (auto v : attr.strings()) {
+        os << sep << "\"" << v << "\"";
+        sep = comma;
+      }
+      os << "]";
       break;
     default:
       break;
@@ -110,8 +134,16 @@ TEST(ParserTest, AttrListTest) {
   std::cout << node.attribute();
 }
 
-TEST(ParserTest, NodeAttrTest) {
-  const char* code = "x = foo { a = 100, b = 200.5, c = \"astring\" } (y, z)";
+TEST(ParserTest, NodeAttrTest1) {
+  const char* code = "x = foo { a = 100, b = 200.5, c = \"astring\"} (y, z)";
+  NodeProto n;
+  OnnxParser::Parse(n, code);
+
+  std::cout << n << "\n";
+}
+
+TEST(ParserTest, NodeAttrTest2) {
+  const char* code = "x = foo { d = [5, 10], e = [0.55, 0.66], f = [\"str1\", \"str2\"] } (y, z)";
   NodeProto n;
   OnnxParser::Parse(n, code);
 

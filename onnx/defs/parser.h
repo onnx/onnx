@@ -167,9 +167,8 @@ class OnnxParser : public ParserBase {
     }
   }
 
-  void ParseAttribute(AttributeProto& attr) {
-    attr.set_name(ParseIdentifier());
-    Match('=');
+  void ParseSingleAttributeValue(AttributeProto& attr) {
+    // Parse a single-value
     auto token = ParseValue();
     switch (token.type) {
       case TokenType::INT_LITERAL:
@@ -186,6 +185,40 @@ class OnnxParser : public ParserBase {
         break;
       default:
         parse_error("Unexpected literal type.");
+    }
+  }
+
+  void ParseAttribute(AttributeProto& attr) {
+    attr.set_name(ParseIdentifier());
+    Match('=');
+    if (NextChar() == '[') {
+      // Parse a list of values
+      std::vector<Token> vals;
+      Match('[');
+      bool first_time = true;
+      while (!Matches(']')) {
+        AttributeProto nextval;
+        ParseSingleAttributeValue(nextval);
+        switch (nextval.type()) {
+          case AttributeProto_AttributeType_INT:
+            attr.set_type(AttributeProto_AttributeType_INTS);
+            attr.add_ints(nextval.i());
+            break;
+          case AttributeProto_AttributeType_FLOAT:
+            attr.set_type(AttributeProto_AttributeType_FLOATS);
+            attr.add_floats(nextval.f());
+            break;
+          case AttributeProto_AttributeType_STRING:
+            attr.add_strings(nextval.s());
+            attr.set_type(AttributeProto_AttributeType_STRINGS);
+            break;
+          default:
+            break;
+        }
+        (void)Matches(',');
+      }
+    } else {
+      ParseSingleAttributeValue(attr);
     }
   }
 
