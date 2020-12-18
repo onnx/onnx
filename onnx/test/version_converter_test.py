@@ -517,6 +517,38 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "MaxPool"
         assert converted_model.opset_import[0].version == 8
 
+    # Test Upsample Adapter: 6 -> 7
+    def test_upsample_6_7(self):    # type: () -> None
+        from_opset = 6
+        to_opset = 7
+        data_type = TensorProto.FLOAT
+
+        nodes = [onnx.helper.make_node(
+            "Upsample",
+            inputs=["X"],
+            outputs=["Y"],
+            mode="nearest",
+            width_scale=3.0,
+            height_scale=2.0
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_upsample_6_7",
+            [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])]
+        )
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert len(converted_model.graph.node) == 1
+        assert converted_model.graph.node[0].op_type == "Upsample"
+        attribute_names = [attr.name for attr in converted_model.graph.node[0].attribute]
+        assert 'scales' in attribute_names
+        assert not 'width_scale' in attribute_names
+        assert not 'height_scale' in attribute_names
+        assert converted_model.opset_import[0].version == to_opset
+
     # Test MaxPool Adapter: 8 -> 1
     def test_maxpool_down(self):  # type: () -> None
         nodes = [helper.make_node('MaxPool', ["X"], ["Y"], kernel_shape=[1, 1])]

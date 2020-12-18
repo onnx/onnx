@@ -19,11 +19,8 @@ struct Upsample_6_7 final: public Adapter {
     auto height_scale = node->f(height_scale_symbol);
     
     auto input_shape = node->inputs()[0]->sizes();
-    ONNX_ASSERTM(input_shape.size() >= 2, "Upsample in opset 1 needs at least 2D input tensor");
-    std::vector<double> scales(input_shape.size(), 1.0);
-    // height_scale and width_scale must last two elements in scales array [..., height_scale, width_scale]
-    *scales.rbegin()     = width_scale;
-    *(scales.rbegin()+1) = height_scale;
+    ONNX_ASSERTM(input_shape.size() == 4, "Upsample in opset 1 supports only 4D input tensor");
+    std::vector<double> scales = {1.0, 1.0, height_scale, width_scale};
             
     node->fs_(kscales, std::move(scales));
     node->removeAttribute(width_scale_symbol);
