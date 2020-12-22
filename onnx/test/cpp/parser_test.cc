@@ -8,6 +8,45 @@ using namespace ONNX_NAMESPACE::Utils;
 namespace ONNX_NAMESPACE {
 namespace Test {
 
+std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& dim) {
+  if (dim.has_dim_value())
+    os << dim.dim_value();
+  else if (dim.has_dim_param())
+    os << dim.dim_param();
+  else
+    os << "?";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const TensorShapeProto& shape) {
+  const char* sep = "";
+  const char* comma = ", ";
+  os << "[";
+  for (auto& dim : shape.dim()) {
+    os << sep << dim;
+    sep = comma;
+  }
+  os << "]";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype) {
+  os << TensorProto_DataType_Name(static_cast<TensorProto_DataType>(tensortype.elem_type()));
+  if (tensortype.has_shape()) {
+    if (tensortype.shape().dim_size() > 0)
+      os << tensortype.shape();
+  } else
+    os << "[...]";
+
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
+  if (type.has_tensor_type())
+    os << type.tensor_type();
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
   const char* sep = "[";
   const char* comma = ", ";
@@ -89,6 +128,27 @@ std::ostream& operator<<(std::ostream& os, const NodeList& nodelist) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const GraphProto& graph) {
+  os << graph.name() << " (";
+  os << ") ";
+  os << graph.node();
+  return os;
+}
+
+TEST(ParserTest, TypeTest) {
+  TypeProto type;
+  OnnxParser::Parse(type, "FLOAT[N]");
+  std::cout << type << "\n";
+  OnnxParser::Parse(type, "FLOAT");
+  std::cout << type << "\n";
+  OnnxParser::Parse(type, "FLOAT[]");
+  std::cout << type << "\n";
+  OnnxParser::Parse(type, "FLOAT[N,M,K]");
+  std::cout << type << "\n";
+  OnnxParser::Parse(type, "FLOAT[N,?,K]");
+  std::cout << type << "\n";
+}
+
 TEST(ParserTest, NodeTest) {
   const char* code = "x = foo(y, z)";
   NodeProto n;
@@ -148,6 +208,25 @@ TEST(ParserTest, NodeAttrTest2) {
   OnnxParser::Parse(n, code);
 
   std::cout << n << "\n";
+}
+
+// (float[N] y, float[N] z) => (float[N] w)
+
+TEST(ParserTest, GraphTest) {
+  const char* code = R"ONNX(
+agraph ()
+{
+    x = foo(y, z);
+    w = bar(x, y);
+}
+)ONNX";
+
+  GraphProto graph;
+  OnnxParser::Parse(graph, code);
+
+  EXPECT_EQ(graph.node_size(), 2);
+
+  std::cout << graph;
 }
 
 } // namespace Test

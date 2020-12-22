@@ -82,6 +82,17 @@ class ParserBase {
     std::string value;
   };
 
+  bool ParseIntValue(uint64_t& val) {
+    SkipWhiteSpace();
+    auto from = next_;
+    while ((next_ < end_) && (isdigit(*next_)))
+      next_++;
+    if (next_ == from)
+      return false;
+    val = std::stol(std::string(from, next_ - from));
+    return true;
+  }
+
   Token ParseValue() {
     Token result;
     bool decimal_point = false;
@@ -167,6 +178,45 @@ class OnnxParser : public ParserBase {
     }
   }
 
+  void Parse(TensorShapeProto& shape) {
+    shape.clear_dim();
+    do {
+      auto ch = NextChar();
+      uint64_t dimval;
+      if (Matches('?')) {
+        shape.add_dim();
+      } else if (ParseIntValue(dimval)) {
+        shape.add_dim()->set_dim_value(dimval);
+      } else {
+        shape.add_dim()->set_dim_param(ParseIdentifier());
+      }
+    } while (Matches(','));
+  }
+
+  void Parse(TypeProto& typeProto) {
+    std::string id = ParseIdentifier();
+    TensorProto_DataType dtype = TensorProto_DataType::TensorProto_DataType_UNDEFINED;
+    if (TensorProto_DataType_Parse(id, &dtype)) {
+      auto* tensortype = typeProto.mutable_tensor_type();
+      tensortype->set_elem_type((int)dtype);
+      tensortype->clear_shape();
+      // Grammar:
+      // FLOAT indicates scalar (rank 0)
+      // FLOAT [] indicates unknown rank tensor
+      // FLOAT [one-or-more-dimensions] indicates tensor of known rank > 0.
+      if (Matches('[')) {
+        if (!Matches(']')) {
+          Parse(*tensortype->mutable_shape());
+          Match(']');
+        }
+      } else {
+        // Create shape with zero dimensions for scalar
+        (void) (tensortype->mutable_shape());
+      }
+    } else
+      parse_error("Unexpected type.");
+  }
+
   void ParseSingleAttributeValue(AttributeProto& attr) {
     // Parse a single-value
     auto token = ParseValue();
@@ -188,7 +238,7 @@ class OnnxParser : public ParserBase {
     }
   }
 
-  void ParseAttribute(AttributeProto& attr) {
+  void Parse(AttributeProto& attr) {
     attr.set_name(ParseIdentifier());
     Match('=');
     if (NextChar() == '[') {
@@ -222,50 +272,48 @@ class OnnxParser : public ParserBase {
     }
   }
 
-  void ParseOptionalAttributeList(AttrList& attrlist) {
+  void Parse(AttrList& attrlist) {
     attrlist.Clear();
     if (Matches('{')) {
       while (!Matches('}')) {
-        ParseAttribute(*attrlist.Add());
+        Parse(*attrlist.Add());
         (void)Matches(','); // skip optional comma if present
       }
     }
   }
 
-  static void Parse(AttrList& attrlist, const char* input) {
-    OnnxParser parser(input);
-    parser.ParseOptionalAttributeList(attrlist);
-  }
-
-  void ParseNode(NodeProto& node) {
+  void Parse(NodeProto& node) {
     ParseIdList(*node.mutable_output());
     Match('=');
     node.set_op_type(ParseIdentifier());
-    ParseOptionalAttributeList(*node.mutable_attribute());
+    Parse(*node.mutable_attribute());
     Match('(');
     ParseIdList(*node.mutable_input());
     Match(')');
   }
 
-  static void Parse(NodeProto& node, const char* input) {
-    OnnxParser parser(input);
-    parser.ParseNode(node);
-  }
-
-  void ParseNodeList(NodeList& nodelist) {
+  void Parse(NodeList& nodelist) {
     nodelist.Clear();
     Match('{');
     while (!Matches('}')) {
-      ParseNode(*nodelist.Add());
+      Parse(*nodelist.Add());
       (void)Matches(';'); // skip optional semicolon if present
     }
   }
 
-  static void Parse(NodeList& node, const char* input) {
-    OnnxParser parser(input);
-    parser.ParseNodeList(node);
+  void Parse(GraphProto& graph) {
+    graph.set_name(ParseIdentifier());
+    Match('(');
+    Match(')');
+    Parse(*graph.mutable_node());
   }
-};
+
+  template <typename T>
+  static void Parse(T& parsedData, const char* input) {
+    OnnxParser parser(input);
+    parser.Parse(parsedData);
+  }
+}; // namespace Utils
 
 } // namespace Utils
 } // namespace ONNX_NAMESPACE
