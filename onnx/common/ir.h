@@ -325,11 +325,7 @@ public:
       return unique_name_;
     return ONNX_NAMESPACE::to_string(unique());
   }
-  Value* setUniqueName(std::string name) {
-    has_unique_name_ = true;
-    unique_name_ = std::move(name);
-    return this;
-  }
+  Value* setUniqueName(const std::string &name, bool rename_subgraph_captured_nodes=true);
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -1210,14 +1206,50 @@ inline const Graph * Value::owningGraph() const {
   return node()->owningGraph();
 }
 
+// `captured` nodes in subgraph determines which value it captures
+// by storing the value's unique name, so old unique names in `captured` nodes
+// should also be updated.
+inline Value* Value::setUniqueName(const std::string &name, bool rename_subgraph_captured_nodes) {
+  if (has_unique_name() && rename_subgraph_captured_nodes) {
+    Graph *graph = owningGraph();
+    graph->forEachNode([this, &name](Node *node) {
+      if (node->owningGraph() == this->owningGraph()) {
+        // skip non-subgraph
+        return;
+      }
+      if (node->kind() == kCaptured) {
+        Value *output = node->output();
+        if (output->uniqueName() == this->uniqueName()) {
+          output->setUniqueName(name, false);
+        }
+      }
+    });
+  }
+  unique_name_ = name;
+  has_unique_name_ = true;
+  return this;
+}
+
 inline void Value::replaceAllUsesWith(Value * newValue) {
   ONNX_ASSERT(owningGraph() == newValue->owningGraph());
+  // propagate sizes and elem type
+  if (this->has_sizes()) {
+    newValue->setSizes(this->sizes());
+  }
+  if (this->elemType() != ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
+    newValue->setElemType(this->elemType());
+  }
+  Graph* graph = owningGraph();
+  // We do not want the optimization to change the graph output name
+  if (std::find(graph->outputs().rbegin(), graph->outputs().rend(),
+                this) != graph->outputs().rend()) {
+    newValue->setUniqueName(this->uniqueName());
+  }
   newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
   for(auto u : uses_in_current_graph_) {
     u.user->inputs_[u.offset] = newValue;
     newValue->uses_in_current_graph_.push_back(u);
   }
-  Graph *graph = owningGraph();
   graph->forEachNode([this, &newValue](Node *node) {
     if (node->owningGraph() == this->owningGraph()) {
       // skip non-subgraph
