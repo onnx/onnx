@@ -161,6 +161,8 @@ using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
 using AttrList = google::protobuf::RepeatedPtrField<AttributeProto>;
 
+using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
+
 class OnnxParser : public ParserBase {
  public:
   OnnxParser(const char* cstr) : ParserBase(cstr) {}
@@ -211,10 +213,24 @@ class OnnxParser : public ParserBase {
         }
       } else {
         // Create shape with zero dimensions for scalar
-        (void) (tensortype->mutable_shape());
+        (void)(tensortype->mutable_shape());
       }
     } else
       parse_error("Unexpected type.");
+  }
+
+  void Parse(ValueInfoProto& valueinfo) {
+    Parse(*valueinfo.mutable_type());
+    valueinfo.set_name(ParseIdentifier());
+  }
+
+  void Parse(ValueInfoList& vilist) {
+    vilist.Clear();
+    Match('(');
+    while (!Matches(')')) {
+      Parse(*vilist.Add());
+      (void)Matches(','); // skip optional comma if present
+    }
   }
 
   void ParseSingleAttributeValue(AttributeProto& attr) {
@@ -274,8 +290,8 @@ class OnnxParser : public ParserBase {
 
   void Parse(AttrList& attrlist) {
     attrlist.Clear();
-    if (Matches('{')) {
-      while (!Matches('}')) {
+    if (Matches('<')) {
+      while (!Matches('>')) {
         Parse(*attrlist.Add());
         (void)Matches(','); // skip optional comma if present
       }
@@ -303,8 +319,10 @@ class OnnxParser : public ParserBase {
 
   void Parse(GraphProto& graph) {
     graph.set_name(ParseIdentifier());
-    Match('(');
-    Match(')');
+    Parse(*graph.mutable_input());
+    Match('=');
+    Match('>', false);
+    Parse(*graph.mutable_output());
     Parse(*graph.mutable_node());
   }
 

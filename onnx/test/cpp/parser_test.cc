@@ -47,6 +47,23 @@ std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const ValueInfoProto& value_info) {
+  os << value_info.type() << " " << value_info.name();
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
+  const char* sep = "";
+  const char* comma = ", ";
+  os << "(";
+  for (auto& vi : vilist) {
+    os << sep << vi;
+    sep = comma;
+  }
+  os << ")";
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
   const char* sep = "[";
   const char* comma = ", ";
@@ -91,12 +108,12 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
 
 std::ostream& operator<<(std::ostream& os, const AttrList& attrlist) {
   const char* sep = "";
-  os << "{";
+  os << "<";
   for (auto& attr : attrlist) {
     os << sep << attr;
     sep = ", ";
   }
-  os << "}";
+  os << ">";
   return os;
 }
 
@@ -129,8 +146,7 @@ std::ostream& operator<<(std::ostream& os, const NodeList& nodelist) {
 }
 
 std::ostream& operator<<(std::ostream& os, const GraphProto& graph) {
-  os << graph.name() << " (";
-  os << ") ";
+  os << graph.name() << " " << graph.input() << " => " << graph.output() << " ";
   os << graph.node();
   return os;
 }
@@ -182,10 +198,10 @@ TEST(ParserTest, NodeListTest) {
 
 TEST(ParserTest, AttrListTest) {
   const char* code = R"ONNX(
-{
+<
     x = 2,
     w = 3
-}
+>
 )ONNX";
 
   NodeProto node;
@@ -195,7 +211,7 @@ TEST(ParserTest, AttrListTest) {
 }
 
 TEST(ParserTest, NodeAttrTest1) {
-  const char* code = "x = foo { a = 100, b = 200.5, c = \"astring\"} (y, z)";
+  const char* code = "x = foo <a = 100, b = 200.5, c = \"astring\"> (y, z)";
   NodeProto n;
   OnnxParser::Parse(n, code);
 
@@ -203,18 +219,16 @@ TEST(ParserTest, NodeAttrTest1) {
 }
 
 TEST(ParserTest, NodeAttrTest2) {
-  const char* code = "x = foo { d = [5, 10], e = [0.55, 0.66], f = [\"str1\", \"str2\"] } (y, z)";
+  const char* code = "x = foo <d = [5, 10], e = [0.55, 0.66], f = [\"str1\", \"str2\"]> (y, z)";
   NodeProto n;
   OnnxParser::Parse(n, code);
 
   std::cout << n << "\n";
 }
 
-// (float[N] y, float[N] z) => (float[N] w)
-
 TEST(ParserTest, GraphTest) {
   const char* code = R"ONNX(
-agraph ()
+agraph (FLOAT[N] y, FLOAT[N] z) => (FLOAT[N] w)
 {
     x = foo(y, z);
     w = bar(x, y);
