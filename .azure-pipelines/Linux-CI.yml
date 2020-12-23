@@ -68,7 +68,7 @@ jobs:
       source py$(python.version)/bin/activate
 
       # lint python code
-      pip install --quiet flake8
+      python -m pip install --quiet flake8
       flake8 onnx
       if [ $? -ne 0 ]; then
         echo "flake8 returned failures"
@@ -103,7 +103,7 @@ jobs:
       # onnx python api tests
       # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
       # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      pip install --quiet pytest==5.4.3 nbval
+      python -m pip install --quiet pytest==5.4.3 nbval
 
       pytest
       if [ $? -ne 0 ]; then
@@ -126,15 +126,15 @@ jobs:
       fi
 
       # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-      pip uninstall -y onnx
-      pip install --no-use-pep517 -e .[mypy]
+      python -m pip uninstall -y onnx
+      python -m pip install --no-use-pep517 -e .[mypy]
       python setup.py --quiet typecheck
       if [ $? -ne 0 ]; then
         echo "type check failed"
         exit 1
       fi
-      pip uninstall -y onnx
+      python -m pip uninstall -y onnx
       rm -rf .setuptools-cmake-build
-      pip install .
+      python -m pip install .
 
     displayName: 'Run ONNX tests'
