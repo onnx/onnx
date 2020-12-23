@@ -13,8 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-        architecture: ['x64', 'x86']
+        #python-version: [3.6, 3.7, 3.8, 3.9] 
+        python-version: [3.8] # test
+        architecture: ['x64']
     steps:
     - uses: actions/checkout@v2
     - name: Checkout submodules
@@ -31,33 +32,35 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest==5.4.3 nbval numpy wheel
+        pip install pytest==5.4.3 nbval numpy
         python -m pip install virtualenv
         python -m virtualenv py$(python.version)
         source py$(python.version)/bin/activate
-        python -m pip install numpy protobuf
+        python -m pip install numpy protobuf==3.11.3
         sudo apt-get install protobuf-compiler libprotoc-dev
-    - name: Build wheel
+
+    - name: Build manylinux Python wheels
       env:
         ONNX_BUILD_TESTS: 1
         USE_MSVC_STATIC_RUNTIME: 1
         ONNX_ML: 1
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
-      run: |
-        python setup.py bdist_wheel
-        # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
-        pytest
-        # # upload to PyPI automatically
-
-    - name: Build manylinux Python wheels
       uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64
       with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38m'
+        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38'
+        build-requirements: 'numpy protobuf'
+        system-packages: 'cmake3 python-devel'
+        pre-build-command: 'sh workflow_scripts/install_linux_proto.sh'
 
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
         path: dist
+    # TODO
+    #- name: Test wheel
+      #run: |
+        #pip install dist/*-manylinux*.whl
+        #pytest
 
     #- name: Publish wheels to PyPI
     #  env:
