@@ -1300,6 +1300,10 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
 
+// Returns a list about which nodes are using this value,
+// nodes in subgraph are also included.
+// This method is usually used to check whether it is
+// safe to delete a Value.
 inline const use_list Value::uses() const {
   use_list all_uses = uses_in_current_graph_;
   owningGraph()->forEachNode([this, &all_uses](const Node* node) {
