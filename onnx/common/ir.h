@@ -900,14 +900,6 @@ private:
   }
 
 
-  size_t getNextUnique() {
-      std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
-      while(!isNameUnique(next_unique_name)) {
-          next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
-      }
-      return next_unique_;
-  }
-
 public:
   Graph()
   : next_unique_(0)
@@ -988,6 +980,14 @@ public:
 
   std::vector<OpSetID>& opset_versions_mutable() {
     return opset_versions_;
+  }
+
+  size_t getNextUnique() {
+      std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      while(!isNameUnique(next_unique_name)) {
+          next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      }
+      return next_unique_;
   }
 
   // These invocations of begin() on output of function are OK
@@ -1240,29 +1240,34 @@ inline void Value::replaceAllUsesWith(Value * newValue) {
     newValue->setElemType(this->elemType());
   }
   Graph* graph = owningGraph();
+  const std::string unique_name = this->uniqueName();
   // We do not want the optimization to change the graph output name
   if (std::find(graph->outputs().rbegin(), graph->outputs().rend(),
                 this) != graph->outputs().rend()) {
-    newValue->setUniqueName(this->uniqueName());
+    newValue->setUniqueName(unique_name);
+    // The "unique" semantic of unique_name should be kept or uses()
+    // will return an incorrect result when the value is used in subgraph
+    this->setUniqueName(ONNX_NAMESPACE::to_string(graph->getNextUnique()), false);
   }
   newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
   for(auto u : uses_in_current_graph_) {
     u.user->inputs_[u.offset] = newValue;
     newValue->uses_in_current_graph_.push_back(u);
   }
-  graph->forEachNode([this, &newValue](Node *node) {
+  graph->forEachNode([this, &newValue, &unique_name](Node *node) {
     if (node->owningGraph() == this->owningGraph()) {
       // skip non-subgraph
       return;
     }
     if (node->kind() == kCaptured) {
       Value *output = node->output();
-      if (output->uniqueName() == this->uniqueName()) {
+      if (output->uniqueName() == unique_name) {
         output->setUniqueName(newValue->uniqueName());
       }
     }
   });
   uses_in_current_graph_.clear();
+  assert(this->uses().empty());
 }
 
 inline Node::Node(Graph * graph_, NodeKind kind_) :
