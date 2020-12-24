@@ -27,15 +27,23 @@ namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-  virtual bool hasInput(int i) const = 0;
-  virtual bool hasOutput(int i) const = 0;
+  virtual bool hasInput(int inputIndex) const = 0;
+  virtual bool hasOutput(int inputIndex) const = 0;
+  // getInputType(i) should return null for missing optional inputs, or if
+  // type-inference could not infer the input-type (erroneous model).
+  virtual const TypeProto* getInputType(int inputIndex) const = 0;
   virtual ~FunctionBodyBuildContext() {}
 };
 
 struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
-  FunctionBodyBuildContextImpl(NodeProto& node_proto)
-      : node_proto_(node_proto) {
-    for (auto& attr : *node_proto.mutable_attribute()) {
+  // Input_types: use a default TypeProto for missing types. We use a different convention
+  // here (from FunctionBodyBuildContext) to simplify python interoperability.
+  // The default value for input_types is included only for backward compatibility.
+  // It can be used for functions that do not depend on the type-context, but
+  // will not be sufficient for functions that do use the type-context.
+  FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types = {})
+      : node_proto_(node_proto), input_types_(input_types) {
+    for (auto& attr : node_proto.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
   }
@@ -49,21 +57,33 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  bool hasInput(int i) const {
-    if (i >= node_proto_.input_size())
+  bool hasInput(int inputIndex) const {
+    if (inputIndex >= node_proto_.input_size())
       return false;
-    return node_proto_.input(i) != "";
+    return node_proto_.input(inputIndex) != "";
   }
 
-  bool hasOutput(int i) const {
-    if (i >= node_proto_.output_size())
+  bool hasOutput(int inputIndex) const {
+    if (inputIndex >= node_proto_.output_size())
       return false;
-    return node_proto_.output(i) != "";
+    return node_proto_.output(inputIndex) != "";
+  }
+
+  const TypeProto* getInputType(int inputIndex) const {
+    if (inputIndex < 0) return nullptr;
+    size_t j = static_cast<size_t>(inputIndex);
+    if (j >= input_types_.size())
+      return nullptr;
+    // Convert default value (no variant set) into null.
+    if (input_types_[j].value_case() == TypeProto::ValueCase::VALUE_NOT_SET)
+      return nullptr;
+    return &input_types_[j];
   }
 
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 
   NodeProto node_proto_;
+  std::vector<TypeProto> input_types_;
 };
 
 using FunctionBodyQueryFunction =
@@ -804,7 +824,9 @@ class OpSchema final {
   void Finalize();
 
   // Build function with information stored in opschema
-  void BuildFunction(FunctionProto& function_body) const;
+  void BuildFunction(
+      FunctionProto& function_body,
+      const std::vector<OperatorSetIdProto>& relied_opsets = {}) const;
 
  private:
   void ParseAndSetTypes(
@@ -876,7 +898,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 12;
+      last_release_version_map_[ONNX_DOMAIN] = 13;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 2;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;

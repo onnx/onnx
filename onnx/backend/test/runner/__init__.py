@@ -18,7 +18,7 @@ import unittest
 import numpy as np  # type: ignore
 
 import onnx
-from onnx import helper, numpy_helper, NodeProto, ModelProto
+from onnx import helper, numpy_helper, NodeProto, ModelProto, TypeProto
 from onnx.backend.base import Backend
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_model_tests
@@ -165,15 +165,15 @@ class Runner(object):
 
     @classmethod
     def assert_similar_outputs(cls, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
-        np.testing.assert_equal(len(ref_outputs), len(outputs))
+        np.testing.assert_equal(len(outputs), len(ref_outputs))
         for i in range(len(outputs)):
-            np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
+            np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
             if ref_outputs[i].dtype == np.object:
-                np.testing.assert_array_equal(ref_outputs[i], outputs[i])
+                np.testing.assert_array_equal(outputs[i], ref_outputs[i])
             else:
                 np.testing.assert_allclose(
-                    ref_outputs[i],
                     outputs[i],
+                    ref_outputs[i],
                     rtol=rtol,
                     atol=atol)
 
@@ -288,28 +288,35 @@ class Runner(object):
                 self.assert_similar_outputs(ref_outputs, outputs,
                                             rtol=model_test.rtol,
                                             atol=model_test.atol)
-
             for test_data_dir in glob.glob(
                     os.path.join(model_dir, "test_data_set*")):
                 inputs = []
                 inputs_num = len(glob.glob(os.path.join(test_data_dir, 'input_*.pb')))
                 for i in range(inputs_num):
                     input_file = os.path.join(test_data_dir, 'input_{}.pb'.format(i))
-                    tensor = onnx.TensorProto()
-                    with open(input_file, 'rb') as f:
-                        tensor.ParseFromString(f.read())
-                    inputs.append(numpy_helper.to_array(tensor))
+                    self._load_proto(input_file, inputs, model.graph.input[i].type)
                 ref_outputs = []
                 ref_outputs_num = len(glob.glob(os.path.join(test_data_dir, 'output_*.pb')))
                 for i in range(ref_outputs_num):
                     output_file = os.path.join(test_data_dir, 'output_{}.pb'.format(i))
-                    tensor = onnx.TensorProto()
-                    with open(output_file, 'rb') as f:
-                        tensor.ParseFromString(f.read())
-                    ref_outputs.append(numpy_helper.to_array(tensor))
+                    self._load_proto(output_file, ref_outputs, model.graph.output[i].type)
                 outputs = list(prepared_model.run(inputs))
                 self.assert_similar_outputs(ref_outputs, outputs,
                                             rtol=model_test.rtol,
                                             atol=model_test.atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
+
+    def _load_proto(self, proto_filename, target_list, model_type_proto):  # type: (Text, List[Union[np.ndarray[Any], List[Any]]], TypeProto) -> None
+        with open(proto_filename, 'rb') as f:
+            protobuf_content = f.read()
+            if model_type_proto.HasField('sequence_type'):
+                sequence = onnx.SequenceProto()
+                sequence.ParseFromString(protobuf_content)
+                target_list.append(numpy_helper.to_list(sequence))
+            elif model_type_proto.HasField('tensor_type'):
+                tensor = onnx.TensorProto()
+                tensor.ParseFromString(protobuf_content)
+                target_list.append(numpy_helper.to_array(tensor))
+            else:
+                print('Loading proto of that specific type (Map/Sparse Tensor) is currently not supported')

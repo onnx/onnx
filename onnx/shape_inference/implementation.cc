@@ -166,23 +166,30 @@ static void InferShapesImpl(
     ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{
       outer_scope_value_types_by_name};
+  std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{
+      outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry};
 
   for (auto& vi : *g->mutable_value_info()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_input()) {
-    if (vi.has_type())
+    if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
+    }
   }
   for (auto& vi : *g->mutable_output()) {
-    // Some output type might be undefined
-    // To assgin inferred type to them,
-    // Also save names of output with undefined types
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    } else {
+      // Some output type might be undefined in subgraph. e.g., Loop Op
+      // Saving names of outputs with undefined types to allow assigning inferred types to them
+      undefinedValueTypesByName[vi.name()] = vi.mutable_type();
+    } 
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -275,8 +282,29 @@ static void InferShapesImpl(
       }
     } else if (schema->HasFunction()) {
       try {
-        InferShapeForFunctionNode(
-          schema->GetFunction(), schema_registry, ctx);
+        const auto func_proto = schema->GetFunction();
+        if (func_proto && func_proto->opset_import_size() > 0) {
+          // If function proto imports operator sets then merge them with model level opset imports.
+          std::unordered_map<std::string, int> function_opset_imports{opset_imports};
+          for (const auto& opset_import : func_proto->opset_import()) {
+            auto it = function_opset_imports.find(opset_import.domain());
+            if(it == function_opset_imports.end()){
+              function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+            } else {
+              if (it->second != opset_import.version()) {
+                throw ONNX_NAMESPACE::InferenceError(
+                    "ONNX models do not support multiple opset version imports for a domain. Function " +
+                            schema->Name() + " imports opset version " + std::to_string(opset_import.version()) +
+                            " for domain " + (opset_import.domain().empty() ? "ai.onnx" : opset_import.domain()) +
+                            " where as the model imports opset version " + std::to_string(it->second));
+              }
+            }
+          }
+          InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx);
+        } else {
+          // If the function proto does not import operator sets then simply use the model level opset imports.
+          InferShapeForFunctionNode(func_proto, opset_imports, schema_registry, ctx);
+        }
       } catch (const ONNX_NAMESPACE::InferenceError& function_ex) {
 
         // checker does not support unsupported/experimental operators
@@ -291,7 +319,7 @@ static void InferShapesImpl(
     } else {
       // Continue with inference for remaining nodes
       continue;
-	}
+  }
 
     try {
       // check the type-equality for input and output
@@ -312,9 +340,16 @@ static void InferShapesImpl(
         if (iter != valueTypesByName.end()) {
           existingType = iter->second;
         } else {
+          // Create a new value_info if defined type does not exist
           auto vi = g->add_value_info();
           vi->set_name(n.output(i));
           existingType = vi->mutable_type();
+          // For undefined output type, update both value_info and output for now
+          // Update existing output with undefined type: assign inferred type to it
+          iter = undefinedValueTypesByName.find(n.output(i));
+          if (iter != undefinedValueTypesByName.end()) {
+            *iter->second = *inferredType;
+          }
         }
 
         // Now we can merge pre-existing and inferred info
@@ -332,11 +367,11 @@ static void InferShapesImpl(
   deleteCreatedTypes(initializerTypeList);
   // Throw shape inference error if any
   if (!inference_errors.empty()) {
-    std::cerr << "Shape inference error(s): ";
+    std::string full_errors = "Shape inference error(s): ";
     for (const std::string &error: inference_errors) {
-      std::cerr << error << std::endl;
+      full_errors += error + "\n";
     }
-    throw std::runtime_error("");
+    throw std::runtime_error(full_errors);
   }
 }
 
@@ -414,9 +449,9 @@ void InferShapes(
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
+    const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx) {
-  int domain_version = (int)func->since_version();
   GraphProto g;
   // Get a temporary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
@@ -440,6 +475,12 @@ void InferShapeForFunctionNode(
   }
 
   for (auto& n : func->node()) {
+    // Resolve domain for node
+    auto it = func_opset_imports.find(n.domain());
+    if (it == func_opset_imports.end()) {
+      return;
+    }
+    auto domain_version = it->second;
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     if (!schema) {
@@ -504,6 +545,17 @@ void InferShapeForFunctionNode(
     auto type = ctx.getOutputType(i)->mutable_tensor_type();
     type->CopyFrom(temp_valueTypesByName[output_name]->tensor_type());
   }
+}
+
+void InferShapeForFunctionNode(
+    const FunctionProto* func,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx) {
+  std::unordered_map<std::string, int> opset_imports;
+  for (const auto& opset_import : func->opset_import()) {
+    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+  }
+  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx);
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
