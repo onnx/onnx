@@ -132,10 +132,6 @@ void convPoolShapeInference(
         int64_t total_pad = residual == 0
             ? effective_kernel_shape[i] - stride
             : effective_kernel_shape[i] - residual;
-        if (stride > 1 && input_shape.dim(2 + i).dim_value()) {
-          auto output_dim = ceil(static_cast<float>(input_shape.dim(2 + i).dim_value() / stride));
-          total_pad -= input_shape.dim(2 + i).dim_value() - static_cast<int>(output_dim);
-        }
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -1257,9 +1253,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
         int64_t total_pad = residual == 0
             ? effective_kernel_shape[i] - stride
             : effective_kernel_shape[i] - residual;
-        if (stride > 1 && input_shape.dim(2 + i).dim_value()) {
-          total_pad += input_shape.dim(2 + i).dim_value() * (stride -1);
-        }
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;

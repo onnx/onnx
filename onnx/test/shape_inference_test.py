@@ -726,7 +726,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_tensor_value_info('Y', TensorProto.FLOAT, (30, 50, 4, 4, 4))],
+            [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 4, 3, 4))],
             opset_imports=[make_opsetid(ONNX_DOMAIN, 14)])
 
     def test_conv_auto_pad_dilation(self):  # type: () -> None
@@ -1578,7 +1578,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 32, 32))],
+            [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 32, 32))],
             opset_imports=[make_opsetid(ONNX_DOMAIN, 14)])
 
     def test_mvn_function_output_shape(self):  # type: () -> None
