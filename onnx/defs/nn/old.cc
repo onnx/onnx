@@ -1190,6 +1190,115 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema().FillUsing(ConvOpSchemaGenerator_10("a filter")));
 
+std::function<void(OpSchema&)> ConvOpSchemaGenerator_11(const char* filter_desc) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
+The convolution operator consumes an input tensor and {filter_desc}, and
+computes the output.)DOC";
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "X",
+        "Input data tensor from previous layer; "
+        "has size (N x C x H x W), where N is the batch size, "
+        "C is the number of channels, and H and W are the "
+        "height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
+        "Optionally, if dimension denotation is "
+        "in effect, the operation expects input data tensor "
+        "to arrive with the dimension denotation of [DATA_BATCH, "
+        "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(
+        1,
+        "W",
+        "The weight tensor that will be used in the "
+        "convolutions; has size (M x C/group x kH x kW), where C "
+        "is the number of channels, and kH and kW are the "
+        "height and width of the kernel, and M is the number "
+        "of feature maps. For more than 2 dimensions, the "
+        "kernel shape will be (M x C/group x k1 x k2 x ... x kn), "
+        "where (k1 x k2 x ... kn) is the dimension of the kernel. "
+        "Optionally, if dimension denotation is in effect, "
+        "the operation expects the weight tensor to arrive "
+        "with the dimension denotation of [FILTER_OUT_CHANNEL, "
+        "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
+        "X.shape[1] == (W.shape[1] * group) == C "
+        "(assuming zero based indices for the shape array). "
+        "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(
+        2,
+        "B",
+        "Optional 1D bias to be added to the convolution, has size of M.",
+        "T",
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Output(
+        0,
+        "Y",
+        "Output data tensor that contains the result of the "
+        "convolution. The output dimensions are functions "
+        "of the kernel size, stride size, and pad lengths.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.Attr(
+        "kernel_shape",
+        "The shape of the convolution kernel. If not present, should be inferred from input W.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "dilations",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "auto_pad",
+        auto_pad_doc2,
+        AttributeProto::STRING,
+        std::string("NOTSET"));
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
+    schema.Attr(
+        "group",
+        "number of groups input channels and output channels are divided into.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      convPoolShapeInference1(ctx, true, false, 0, 1);
+    });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Conv,
+    11,
+    OpSchema().FillUsing(ConvOpSchemaGenerator_11("a filter")));
+
 void convTransposeShapeInference1(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -1455,6 +1564,138 @@ ONNX_OPERATOR_SET_SCHEMA(
     ConvTranspose,
     1,
     OpSchema().FillUsing(ConvTransposeOpSchemaGenerator_10("a filter")));
+
+std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_11(
+    const char* filter_desc) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
+The convolution transpose operator consumes an input tensor and {filter_desc},
+and computes the output.
+
+If the pads parameter is provided the shape of the output is calculated via the following equation:
+
+  output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
+
+output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
+
+  total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
+  If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+  Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
+
+    )DOC";
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "X",
+        "Input data tensor from previous layer; has size (N x C x H x W)"
+        ", where N is the batch size, C is the number of channels, and"
+        " H and W are the height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(
+        1,
+        "W",
+        "The weight tensor that will be used in the "
+        "convolutions; has size (C x M/group x kH x kW), where C "
+        "is the number of channels, and kH and kW are the "
+        "height and width of the kernel, and M is the number "
+        "of feature maps. For more than 2 dimensions, the "
+        "weight shape will be (C x M/group x k1 x k2 x ... x kn), "
+        "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(
+        2,
+        "B",
+        "Optional 1D bias to be added to the convolution, has size of M.",
+        "T",
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Output(
+        0,
+        "Y",
+        "Output data tensor that contains the result of the convolution. The "
+        "output dimensions are functions of the kernel size, stride size, "
+        "pad lengths and group count. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.Attr(
+        "kernel_shape",
+        "The shape of the convolution kernel. If not present, should be inferred from input W.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "output_shape",
+        "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
+        "pads values are ignored. See doc for details for equations to generate pads",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "output_padding",
+        "Additional elements added to the side with higher coordinate indices in the output. "
+        "Each padding value in \"output_padding\" must be less than the corresponding stride/dilation dimension. "
+        "By default, this attribute is a zero vector. "
+        "Note that this attribute doesn't directly affect the computed output values. "
+        "It only controls the selection of the computed values, "
+        "so changing this attribute only adds or removes output elements. "
+        "If \"output_shape\" is explicitly provided, "
+        "\"output_padding\" does not contribute additional size to \"output_shape\" but "
+        "participates in the computation of the needed padding amount. "
+        "This is also called adjs or adjustment in some frameworks.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "dilations",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "auto_pad",
+        auto_pad_doc2,
+        AttributeProto::STRING,
+        std::string("NOTSET"));
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
+    schema.Attr(
+        "group",
+        "number of groups input channels and output channels are divided into.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { convTransposeShapeInference1(ctx); });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ConvTranspose,
+    11,
+    OpSchema().FillUsing(ConvTransposeOpSchemaGenerator_11("a filter")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     GlobalLpPool,
