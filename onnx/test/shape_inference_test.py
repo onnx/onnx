@@ -718,6 +718,16 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 7, 6, 4))])
 
+    def test_conv_auto_pads(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 7, 6, 4)),
+             ('y', TensorProto.FLOAT, (50, 4, 4, 3, 2))],
+            [make_node('Conv', ['x', 'y'], 'z', auto_pad='SAME_UPPER', strides=[2, 2, 1])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 4, 3, 4))])
+
     def test_conv_auto_pad_dilation(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (30, 4, 65, 64, 63)),
@@ -1558,6 +1568,16 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ConvTranspose', ['X', 'W', 'B'], 'Y', auto_pad="SAME_UPPER", strides=[1, 1], pads=[0, 1, 1, 0])],
             [])
         self.assertRaises(RuntimeError, onnx.shape_inference.infer_shapes, helper.make_model(graph))
+
+    def test_conv_transpose_auto_pads(self):  # type: () -> None
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', auto_pad="SAME_UPPER", strides=[2, 2])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 32, 32))])
 
     def test_mvn_function_output_shape(self):  # type: () -> None
         graph = self._make_graph(

@@ -15,10 +15,18 @@ const char* pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-const char* auto_pad_doc =
+const char* conv_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
-    "SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input."
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. "
+    "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
+    "beginning for SAME_LOWER. VALID mean no padding.";
+const char* conv_transpose_auto_pad_doc =
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = input_shape[i] * strides[i]` for each axis `i`. "
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding.";
 
@@ -258,7 +266,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -587,7 +595,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -833,7 +841,7 @@ computes the output.)DOC";
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -962,7 +970,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain bias type to 32-bit integer tensor.")
         .Attr(
             "auto_pad",
-            auto_pad_doc,
+            conv_auto_pad_doc,
             AttributeProto::STRING,
             std::string("NOTSET"))
         .Attr(
@@ -1101,7 +1109,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output y data type to 32-bit integer tensor.")
         .Attr(
             "auto_pad",
-            auto_pad_doc,
+            conv_auto_pad_doc,
             AttributeProto::STRING,
             std::string("NOTSET"))
         .Attr(
@@ -1426,7 +1434,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_transpose_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
