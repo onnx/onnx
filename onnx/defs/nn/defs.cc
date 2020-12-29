@@ -21,6 +21,20 @@ const char* auto_pad_doc =
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding.";
+const char* conv_auto_pad_14_doc =
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. "
+    "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
+    "beginning for SAME_LOWER. VALID mean no padding.";
+const char* conv_transpose_auto_pad_14_doc =
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = input_shape[i] * strides[i]` for each axis `i`. "
+    "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
+    "beginning for SAME_LOWER. VALID mean no padding.";
 
 void convPoolShapeInference(
     InferenceContext& ctx,
@@ -833,7 +847,7 @@ computes the output.)DOC";
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_14_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -851,7 +865,7 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Conv,
-    11,
+    14,
     OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
 static const char* QLinearConv_ver10_doc = R"DOC(
@@ -1426,7 +1440,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_transpose_auto_pad_14_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -1442,7 +1456,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConvTranspose,
-    11,
+    14,
     OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
 // For GlobalPool operations.
