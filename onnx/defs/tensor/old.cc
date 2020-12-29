@@ -3591,12 +3591,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
-          if (axis < 0 || axis >= rank) {
+          if (axis < -rank || axis >= rank) {
             fail_type_inference(
                 "Invalid value of attribute 'axis'. Rank=",
                 rank,
                 " Value=",
                 axis);
+          }
+          if (axis < 0) {
+            axis += rank;
           }
           const auto& split_dim = shape.dim(axis);
           if (!split_dim.has_dim_value()) {
