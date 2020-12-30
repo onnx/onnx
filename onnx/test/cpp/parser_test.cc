@@ -1,168 +1,90 @@
-#include <iostream>
 #include "gtest/gtest.h"
 
 #include "onnx/defs/parser.h"
+#include "onnx/defs/printer.h"
 
 using namespace ONNX_NAMESPACE::Utils;
 
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& dim) {
-  if (dim.has_dim_value())
-    os << dim.dim_value();
-  else if (dim.has_dim_param())
-    os << dim.dim_param();
-  else
-    os << "?";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const TensorShapeProto& shape) {
-  const char* sep = "";
-  const char* comma = ", ";
-  os << "[";
-  for (auto& dim : shape.dim()) {
-    os << sep << dim;
-    sep = comma;
-  }
-  os << "]";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype) {
-  os << TensorProto_DataType_Name(static_cast<TensorProto_DataType>(tensortype.elem_type()));
-  if (tensortype.has_shape()) {
-    if (tensortype.shape().dim_size() > 0)
-      os << tensortype.shape();
-  } else
-    os << "[...]";
-
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
-  if (type.has_tensor_type())
-    os << type.tensor_type();
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const ValueInfoProto& value_info) {
-  os << value_info.type() << " " << value_info.name();
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
-  const char* sep = "";
-  const char* comma = ", ";
-  os << "(";
-  for (auto& vi : vilist) {
-    os << sep << vi;
-    sep = comma;
-  }
-  os << ")";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
-  const char* sep = "[";
-  const char* comma = ", ";
-
-  os << attr.name() << " = ";
-  switch (attr.type()) {
-    case AttributeProto_AttributeType_INT:
-      os << attr.i();
-      break;
-    case AttributeProto_AttributeType_INTS:
-      for (auto v : attr.ints()) {
-        os << sep << v;
-        sep = comma;
-      }
-      os << "]";
-      break;
-    case AttributeProto_AttributeType_FLOAT:
-      os << attr.f();
-      break;
-    case AttributeProto_AttributeType_FLOATS:
-      for (auto v : attr.floats()) {
-        os << sep << v;
-        sep = comma;
-      }
-      os << "]";
-      break;
-    case AttributeProto_AttributeType_STRING:
-      os << "\"" << attr.s() << "\"";
-      break;
-    case AttributeProto_AttributeType_STRINGS:
-      for (auto v : attr.strings()) {
-        os << sep << "\"" << v << "\"";
-        sep = comma;
-      }
-      os << "]";
-      break;
-    default:
-      break;
-  }
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const AttrList& attrlist) {
-  const char* sep = "";
-  os << "<";
-  for (auto& attr : attrlist) {
-    os << sep << attr;
-    sep = ", ";
-  }
-  os << ">";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const NodeProto& node) {
-  const char* sep = "";
-  for (auto& v : node.output()) {
-    os << sep << v;
-    sep = ", ";
-  }
-  os << " = " << node.op_type();
-  if (node.attribute_size() > 0)
-    os << node.attribute();
-  os << "(";
-  sep = "";
-  for (auto& v : node.input()) {
-    os << sep << v;
-    sep = ", ";
-  }
-  os << ")";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const NodeList& nodelist) {
-  os << "{\n";
-  for (auto& n : nodelist) {
-    os << n << "\n";
-  }
-  os << "}\n";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const GraphProto& graph) {
-  os << graph.name() << " " << graph.input() << " => " << graph.output() << " ";
-  os << graph.node();
-  return os;
-}
-
 TEST(ParserTest, TypeTest) {
   TypeProto type;
+
+  // 1-dimensional tensor type with symbolic dimension:
   OnnxParser::Parse(type, "FLOAT[N]");
-  std::cout << type << "\n";
+  EXPECT_TRUE(type.has_tensor_type());
+  int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
+  EXPECT_EQ(type.tensor_type().elem_type(), float_type);
+  EXPECT_TRUE(type.tensor_type().has_shape());
+  EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
+  EXPECT_EQ(type.tensor_type().shape().dim(0).dim_param(), "N");
+
+  // scalar type:
   OnnxParser::Parse(type, "FLOAT");
-  std::cout << type << "\n";
+  EXPECT_TRUE(type.has_tensor_type());
+  EXPECT_EQ(type.tensor_type().elem_type(), float_type);
+  EXPECT_TRUE(type.tensor_type().has_shape());
+  EXPECT_EQ(type.tensor_type().shape().dim_size(), 0);
+
+  // tensor type with unknown rank:
   OnnxParser::Parse(type, "FLOAT[]");
-  std::cout << type << "\n";
+  EXPECT_TRUE(type.has_tensor_type());
+  EXPECT_EQ(type.tensor_type().elem_type(), float_type);
+  EXPECT_FALSE(type.tensor_type().has_shape());
+
+  // 3-dimensional tensor
   OnnxParser::Parse(type, "FLOAT[N,M,K]");
-  std::cout << type << "\n";
+  EXPECT_EQ(type.tensor_type().shape().dim_size(), 3);
+
+  // Unspecified dimension (neither symbolic nor constant)
   OnnxParser::Parse(type, "FLOAT[N,?,K]");
-  std::cout << type << "\n";
+  EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
+  EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
+}
+
+TEST(ParserTest, AttributeTest) {
+  AttributeProto attr;
+
+  OnnxParser::Parse(attr, "x = 2");
+  EXPECT_EQ(attr.name(), "x");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
+  EXPECT_EQ(attr.i(), 2);
+
+  OnnxParser::Parse(attr, "x = 0.625");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_FLOAT_EQ(attr.f(), 0.625);
+
+  OnnxParser::Parse(attr, "x = [2, 4, 6]");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  EXPECT_EQ(attr.ints_size(), 3);
+
+  OnnxParser::Parse(attr, "x = [0.125, 0.625]");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
+  EXPECT_EQ(attr.floats_size(), 2);
+
+  OnnxParser::Parse(attr, "x = \"astring\"");
+  EXPECT_EQ(attr.name(), "x");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
+  EXPECT_EQ(attr.s(), "astring");
+
+  OnnxParser::Parse(attr, "x = [\"abc\", \"def\"]");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
+}
+
+TEST(ParserTest, AttrListTest) {
+  const char* code = R"ONNX(
+<
+    x = 2,
+    w = 3
+>
+)ONNX";
+
+  AttrList attributes;
+  OnnxParser::Parse(attributes, code);
+  EXPECT_EQ(attributes.size(), 2);
+  EXPECT_EQ(attributes.Get(0).name(), "x");
+  EXPECT_EQ(attributes.Get(1).name(), "w");
 }
 
 TEST(ParserTest, NodeTest) {
@@ -176,8 +98,6 @@ TEST(ParserTest, NodeTest) {
   EXPECT_EQ(n.output_size(), 1);
   EXPECT_EQ(n.output(0), "x");
   EXPECT_EQ(n.op_type(), "foo");
-
-  std::cout << n << "\n";
 }
 
 TEST(ParserTest, NodeListTest) {
@@ -192,22 +112,8 @@ TEST(ParserTest, NodeListTest) {
   OnnxParser::Parse(*graph.mutable_node(), code);
 
   EXPECT_EQ(graph.node_size(), 2);
-
-  std::cout << graph.node();
-}
-
-TEST(ParserTest, AttrListTest) {
-  const char* code = R"ONNX(
-<
-    x = 2,
-    w = 3
->
-)ONNX";
-
-  NodeProto node;
-  OnnxParser::Parse(*node.mutable_attribute(), code);
-
-  std::cout << node.attribute();
+  EXPECT_EQ(graph.node(0).op_type(), "foo");
+  EXPECT_EQ(graph.node(1).op_type(), "bar");
 }
 
 TEST(ParserTest, NodeAttrTest1) {
@@ -215,15 +121,17 @@ TEST(ParserTest, NodeAttrTest1) {
   NodeProto n;
   OnnxParser::Parse(n, code);
 
-  std::cout << n << "\n";
+  EXPECT_EQ(n.attribute_size(), 3);
+  EXPECT_EQ(n.attribute(0).name(), "a");
+  EXPECT_EQ(n.attribute(1).name(), "b");
+  EXPECT_EQ(n.attribute(2).name(), "c");
 }
 
 TEST(ParserTest, NodeAttrTest2) {
   const char* code = "x = foo <d = [5, 10], e = [0.55, 0.66], f = [\"str1\", \"str2\"]> (y, z)";
   NodeProto n;
   OnnxParser::Parse(n, code);
-
-  std::cout << n << "\n";
+  EXPECT_EQ(n.attribute_size(), 3);
 }
 
 TEST(ParserTest, GraphTest) {
@@ -238,9 +146,9 @@ agraph (FLOAT[N] y, FLOAT[N] z) => (FLOAT[N] w)
   GraphProto graph;
   OnnxParser::Parse(graph, code);
 
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
   EXPECT_EQ(graph.node_size(), 2);
-
-  std::cout << graph;
 }
 
 } // namespace Test
