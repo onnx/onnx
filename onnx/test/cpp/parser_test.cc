@@ -146,9 +146,39 @@ agraph (FLOAT[N] y, FLOAT[N] z) => (FLOAT[N] w)
   GraphProto graph;
   OnnxParser::Parse(graph, code);
 
+  EXPECT_EQ(graph.name(), "agraph");
   EXPECT_EQ(graph.input_size(), 2);
   EXPECT_EQ(graph.output_size(), 1);
   EXPECT_EQ(graph.node_size(), 2);
+}
+
+TEST(ParserTest, ModelTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 7
+  opset_import: [ 
+    "ai.onnx.ml" : 10
+  ]
+  producer_name: "ParserTest"
+  producer_version: "1.0"
+  domain: "ai.onnx.ml"
+  model_version: 1
+  doc_string: "A parser test case model."
+  metadata_props: [ "somekey" : "somevalue" ]
+>
+agraph (FLOAT[N] y, FLOAT[N] z) => (FLOAT[N] w)
+{
+    x = foo(y, z);
+    w = bar(x, y);
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser::Parse(model, code);
+
+  EXPECT_EQ(model.graph().input_size(), 2);
+  EXPECT_EQ(model.graph().output_size(), 1);
+  EXPECT_EQ(model.graph().node_size(), 2);
 }
 
 } // namespace Test
