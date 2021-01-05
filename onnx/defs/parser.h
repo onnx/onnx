@@ -7,7 +7,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <strstream>
 #include <unordered_map>
 
 #include "onnx/onnx_pb.h"
@@ -32,9 +31,7 @@ class ParseError final : public std::runtime_error {
   }
 
   void AppendContext(const std::string& context) {
-    expanded_message_ = context;
-    // ONNX_NAMESPACE::MakeString(
-    // std::runtime_error::what(), "\n\n==> Context: ", context);
+    expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
  private:
