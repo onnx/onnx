@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <strstream>
+#include <unordered_map>
 
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
@@ -209,8 +210,8 @@ class ParserBase {
   }
 
  protected:
-  const char* next_;
   const char* start_;
+  const char* next_;
   const char* end_;
 };
 
@@ -233,16 +234,15 @@ class OnnxParser : public ParserBase {
     std::string id = ParseIdentifier();
     if (id.empty())
       return;
-    idlist.Add(std::move(id));
+    *idlist.Add() = id;
     while (Matches(',')) {
-      idlist.Add(ParseIdentifier());
+      *idlist.Add() = ParseIdentifier();
     }
   }
 
   void Parse(TensorShapeProto& shape) {
     shape.clear_dim();
     do {
-      auto ch = NextChar();
       uint64_t dimval;
       if (Matches('?')) {
         shape.add_dim();
@@ -320,7 +320,6 @@ class OnnxParser : public ParserBase {
       // Parse a list of values
       std::vector<Token> vals;
       Match('[');
-      bool first_time = true;
       while (!Matches(']')) {
         AttributeProto nextval;
         ParseSingleAttributeValue(nextval);
