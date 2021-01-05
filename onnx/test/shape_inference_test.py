@@ -768,6 +768,15 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, None)])
 
+    def test_average_pool_auto_pads(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 7, 6, 4))],
+            [make_node('AveragePool', ['x'], 'z', auto_pad='SAME_UPPER', kernel_shape=[4, 3, 2], strides=[2, 2, 1])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 4, 3, 4))])
+
     def test_relu(self):  # type: () -> None
         self._identity_prop('Relu')
 
