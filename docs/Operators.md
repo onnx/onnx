@@ -37,7 +37,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
-|<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-11">11</a>|
+|<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
@@ -1362,7 +1362,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
@@ -3096,7 +3096,7 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
@@ -3188,6 +3188,39 @@ expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
 
 
 <details>
+<summary>conv_with_autopad_same</summary>
+
+```python
+
+x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+W = np.array([[[[1., 1., 1.],  # (1, 1, 3, 3) tensor for convolution weights
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+# Convolution with auto_pad='SAME_LOWER' and strides=2
+node = onnx.helper.make_node(
+    'Conv',
+    inputs=['x', 'W'],
+    outputs=['y'],
+    auto_pad='SAME_LOWER',
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+)
+y = np.array([[[[ 12.,  27.,  24.],
+             [ 63., 108.,  81.],
+             [ 72., 117.,  84.]]]]).astype(np.float32)
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_conv_with_autopad_same')
+```
+
+</details>
+
+
+<details>
 <summary>conv_with_strides</summary>
 
 ```python
@@ -3267,7 +3300,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
@@ -3375,7 +3408,7 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = input_shape[i] * strides[i]` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = input_shape[i] * strides[i]` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
@@ -3652,6 +3685,43 @@ expect(node, inputs=[x, W], outputs=[y],
 
 
 <details>
+<summary>convtranspose_autopad_same</summary>
+
+```python
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], auto_pad="SAME_LOWER", strides=[2, 2])
+
+y = np.array([[[[ 0.,  0.,  1.,  1.,  3.,  2.],
+                [ 0.,  0.,  1.,  1.,  3.,  2.],
+                [ 3.,  3.,  8.,  5., 12.,  7.],
+                [ 3.,  3.,  7.,  4.,  9.,  5.],
+                [ 9.,  9., 20., 11., 24., 13.],
+                [ 6.,  6., 13.,  7., 15.,  8.]],
+
+               [[ 0.,  0.,  1.,  1.,  3.,  2.],
+                [ 0.,  0.,  1.,  1.,  3.,  2.],
+                [ 3.,  3.,  8.,  5., 12.,  7.],
+                [ 3.,  3.,  7.,  4.,  9.,  5.],
+                [ 9.,  9., 20., 11., 24., 13.],
+                [ 6.,  6., 13.,  7., 15.,  8.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_autopad_same')
+```
+
+</details>
+
+
+<details>
 <summary>convtranspose_dilations</summary>
 
 ```python
@@ -3853,7 +3923,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#CumSum-11">11</a>
 
 #### Attributes
 
@@ -3883,8 +3955,8 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Input can be of any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
@@ -9164,7 +9236,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
@@ -9479,7 +9551,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>ceil_mode</tt> : int (default is 0)</dt>
 <dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
@@ -12749,7 +12821,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
-<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
