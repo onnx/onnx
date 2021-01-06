@@ -2581,15 +2581,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {"tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(float16)",
-             "tensor(bfloat16)"},
-            "Input can be of any tensor type.")
+            OpSchema::numeric_types_for_math_reduction_with_bfloat(),
+            "Constrain input and output types to high-precision numeric tensors.")
         .TypeConstraint(
             "T2",
             {"tensor(int32)", "tensor(int64)"},
