@@ -3591,33 +3591,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto axisAttr = ctx.getAttribute("axis");
-          int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
-          if (axis < 0) {
-            return;
-          }
-          std::vector<int64_t> split;
-          if (!getRepeatedAttribute(ctx, "split", split)) {
-            if (!ctx.getInputType(0)->tensor_type().has_shape()) {
-              return;
-            }
-            const auto& shape = ctx.getInputType(0)->tensor_type().shape();
-            if (axis >= shape.dim_size()) {
-              fail_type_inference("Invalid value of attribute 'axis'");
-            }
-            const auto& splitDim = shape.dim(axis);
-            if (!splitDim.has_dim_value()) {
-              return;
-            }
-            int splitDimValue = static_cast<int>(splitDim.dim_value());
-            int chunkSize =
-                splitDimValue / static_cast<int>(ctx.getNumOutputs());
-            int leftOver = splitDimValue -
-                (chunkSize * static_cast<int>(ctx.getNumOutputs()));
-            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
-            }
 
+          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          int rank = shape.dim_size();
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          if (axis < -rank || axis >= rank) {
+            fail_type_inference(
+                "Invalid value of attribute 'axis'. Rank=",
+                rank,
+                " Value=",
+                axis);
+          }
+          // Previously Split-2 does not mention how to deal with negative axis
+          // However, there is an existing test onnx/backend/test/data/pytorch-converted/test_GLU
+          // using Split-2 with negative axis and it is hard to be regenerated. 
+          // To compromise, handle negative axis for Split-2 here. 
+          if (axis < 0) {
+            axis += rank;
+          }
+          const auto& split_dim = shape.dim(axis);
+          if (!split_dim.has_dim_value()) {
             for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
               *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
                   shape;
@@ -3625,8 +3618,52 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ->mutable_tensor_type()
                   ->mutable_shape()
                   ->mutable_dim(axis)
-                  ->set_dim_value(split[i]);
+                  ->Clear();
             }
+            return;
+          }
+          int split_dim_value = static_cast<int>(split_dim.dim_value());
+
+          std::vector<int64_t> split;
+          if (getRepeatedAttribute(ctx, "split", split)) {
+            if (split.size() != ctx.getNumOutputs()) {
+              fail_shape_inference(
+                  "Mismatch between number of splits (",
+                  split.size(),
+                  ") and outputs (",
+                  ctx.getNumOutputs(),
+                  ")");
+            }
+            int64_t total_dim = 0;
+            for (int64_t d : split) {
+              total_dim += d;
+            }
+            if (total_dim != split_dim_value) {
+              fail_shape_inference(
+                  "Mismatch between the sum of 'split' (",
+                  total_dim,
+                  ") and the split dimension of the input (",
+                  split_dim_value,
+                  ")");
+            }
+          } else {
+            int num_outputs = static_cast<int>(ctx.getNumOutputs());
+            if (split_dim_value % num_outputs != 0) {
+              fail_shape_inference("The input is not evenly splittable");
+            }
+            int chunk_size = split_dim_value / num_outputs;
+            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+              split.push_back(chunk_size);
+            }
+          }
+          for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+            *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
+                shape;
+            ctx.getOutputType(i)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim(axis)
+                ->set_dim_value(split[i]);
           }
         }));
 
