@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-16.04
     strategy:
       matrix:
         python-version: [3.8]
@@ -60,7 +60,7 @@ jobs:
       run: |
         python -m virtualenv py36
         source py36/bin/activate
-        pip install dist/*-cp36-cp36m-manylinux2010_x86_64.whl
+        pip install dist/*-cp36-cp36m-manylinux_x86_64.whl
         pytest
     - name: Test python3.7 wheel
       run: |
