@@ -2020,7 +2020,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Conv
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>conv</summary>
 
@@ -2066,6 +2066,37 @@ y_without_padding = np.array([[[[54., 63., 72.],  # (1, 1, 3, 3) output tensor
                                 [144., 153., 162.]]]]).astype(np.float32)
 expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
        name='test_basic_conv_without_padding')
+```
+
+</details>
+<details>
+<summary>conv_with_autopad_same</summary>
+
+```python
+
+x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+W = np.array([[[[1., 1., 1.],  # (1, 1, 3, 3) tensor for convolution weights
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+# Convolution with auto_pad='SAME_LOWER' and strides=2
+node = onnx.helper.make_node(
+    'Conv',
+    inputs=['x', 'W'],
+    outputs=['y'],
+    auto_pad='SAME_LOWER',
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+)
+y = np.array([[[[12., 27., 24.],
+             [63., 108., 81.],
+             [72., 117., 84.]]]]).astype(np.float32)
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_conv_with_autopad_same')
 ```
 
 </details>
@@ -2173,7 +2204,7 @@ expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_wi
 
 
 ### ConvTranspose
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>convtranspose</summary>
 
@@ -2394,6 +2425,41 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[x, W], outputs=[y],
        name='test_convtranspose_kernel_shape')
+```
+
+</details>
+<details>
+<summary>convtranspose_autopad_same</summary>
+
+```python
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], auto_pad="SAME_LOWER", strides=[2, 2])
+
+y = np.array([[[[0., 0., 1., 1., 3., 2.],
+                [0., 0., 1., 1., 3., 2.],
+                [3., 3., 8., 5., 12., 7.],
+                [3., 3., 7., 4., 9., 5.],
+                [9., 9., 20., 11., 24., 13.],
+                [6., 6., 13., 7., 15., 8.]],
+
+               [[0., 0., 1., 1., 3., 2.],
+                [0., 0., 1., 1., 3., 2.],
+                [3., 3., 8., 5., 12., 7.],
+                [3., 3., 7., 4., 9., 5.],
+                [9., 9., 20., 11., 24., 13.],
+                [6., 6., 13., 7., 15., 8.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_autopad_same')
 ```
 
 </details>
