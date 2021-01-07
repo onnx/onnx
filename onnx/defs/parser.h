@@ -1,5 +1,6 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -42,6 +43,52 @@ class ParseError final : public std::runtime_error {
   do {                                                                                                            \
     throw ParseError(ONNX_NAMESPACE::MakeString("[ParseError at position ", (next_ - start_), "]", __VA_ARGS__)); \
   } while (0)
+
+class PrimitiveTypeNameMap {
+ public:
+  PrimitiveTypeNameMap() {
+    map_["float"] = 1;
+    map_["uint8"] = 2;
+    map_["int8"] = 3;
+    map_["uint16"] = 4;
+    map_["int16"] = 5;
+    map_["int32"] = 6;
+    map_["int64"] = 7;
+    map_["string"] = 8;
+    map_["bool"] = 9;
+    map_["float16"] = 10;
+    map_["double"] = 11;
+    map_["uint32"] = 12;
+    map_["uint64"] = 13;
+    map_["complex64"] = 14;
+    map_["complex128"] = 15;
+    map_["bfloat16"] = 16;
+  }
+
+  static const std::unordered_map<std::string, int32_t>& Instance() {
+    static PrimitiveTypeNameMap instance;
+    return instance.map_;
+  }
+
+  static int32_t Lookup(const std::string& dtype) {
+    auto it = Instance().find(dtype);
+    if (it != Instance().end())
+      return it->second;
+    return 0;
+  }
+
+  static const std::string& ToString(int32_t dtype) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == dtype)
+        return pair.first;
+    }
+    return undefined;
+  }
+
+ private:
+  std::unordered_map<std::string, int32_t> map_;
+};
 
 class KeyWordMap {
  public:
@@ -253,10 +300,10 @@ class OnnxParser : public ParserBase {
 
   void Parse(TypeProto& typeProto) {
     std::string id = ParseIdentifier();
-    TensorProto_DataType dtype = TensorProto_DataType::TensorProto_DataType_UNDEFINED;
-    if (TensorProto_DataType_Parse(id, &dtype)) {
+    int dtype = PrimitiveTypeNameMap::Lookup(id);
+    if (dtype != 0) {
       auto* tensortype = typeProto.mutable_tensor_type();
-      tensortype->set_elem_type((int)dtype);
+      tensortype->set_elem_type(dtype);
       tensortype->clear_shape();
       // Grammar:
       // FLOAT indicates scalar (rank 0)

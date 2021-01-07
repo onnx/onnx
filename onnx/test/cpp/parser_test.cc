@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "gtest/gtest.h"
 
 #include "onnx/defs/parser.h"
@@ -12,7 +16,7 @@ TEST(ParserTest, TypeTest) {
   TypeProto type;
 
   // 1-dimensional tensor type with symbolic dimension:
-  OnnxParser::Parse(type, "FLOAT[N]");
+  OnnxParser::Parse(type, "float[N]");
   EXPECT_TRUE(type.has_tensor_type());
   int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
   EXPECT_EQ(type.tensor_type().elem_type(), float_type);
@@ -21,24 +25,24 @@ TEST(ParserTest, TypeTest) {
   EXPECT_EQ(type.tensor_type().shape().dim(0).dim_param(), "N");
 
   // scalar type:
-  OnnxParser::Parse(type, "FLOAT");
+  OnnxParser::Parse(type, "float");
   EXPECT_TRUE(type.has_tensor_type());
   EXPECT_EQ(type.tensor_type().elem_type(), float_type);
   EXPECT_TRUE(type.tensor_type().has_shape());
   EXPECT_EQ(type.tensor_type().shape().dim_size(), 0);
 
   // tensor type with unknown rank:
-  OnnxParser::Parse(type, "FLOAT[]");
+  OnnxParser::Parse(type, "float[]");
   EXPECT_TRUE(type.has_tensor_type());
   EXPECT_EQ(type.tensor_type().elem_type(), float_type);
   EXPECT_FALSE(type.tensor_type().has_shape());
 
   // 3-dimensional tensor
-  OnnxParser::Parse(type, "FLOAT[N,M,K]");
+  OnnxParser::Parse(type, "float[N,M,K]");
   EXPECT_EQ(type.tensor_type().shape().dim_size(), 3);
 
   // Unspecified dimension (neither symbolic nor constant)
-  OnnxParser::Parse(type, "FLOAT[N,?,K]");
+  OnnxParser::Parse(type, "float[N,?,K]");
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
 }
@@ -136,7 +140,7 @@ TEST(ParserTest, NodeAttrTest2) {
 
 TEST(ParserTest, GraphTest) {
   const char* code = R"ONNX(
-agraph (FLOAT[N] y, FLOAT[N] z) => (FLOAT[N] w)
+agraph (float[N] y, float[N] z) => (float[N] w)
 {
     x = foo(y, z);
     w = bar(x, y);
@@ -166,7 +170,7 @@ TEST(ParserTest, ModelTest) {
   doc_string: "A parser test case model."
   metadata_props: [ "somekey" : "somevalue" ]
 >
-agraph (FLOAT[N] y, FLOAT[N] z) => (FLOAT[N] w)
+agraph (float[N] y, float[N] z) => (float[N] w)
 {
     x = foo(y, z);
     w = bar(x, y);

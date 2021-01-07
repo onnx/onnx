@@ -1,5 +1,6 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "onnx/defs/printer.h"
 
@@ -29,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, const TensorShapeProto& shape) {
 }
 
 std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype) {
-  os << TensorProto::DataType_Name(static_cast<TensorProto_DataType>(tensortype.elem_type()));
+  os << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
   if (tensortype.has_shape()) {
     if (tensortype.shape().dim_size() > 0)
       os << tensortype.shape();
