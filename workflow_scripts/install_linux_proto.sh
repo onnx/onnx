@@ -11,3 +11,5 @@ make -j${NUMCORES}
 make check
 make install
 ldconfig
+
+pip install protobuf==3.11.3

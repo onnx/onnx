@@ -58,30 +58,25 @@ jobs:
 
     - name: Test python3.6 wheel
       run: |
-        python -m virtualenv py36
-        source py36/bin/activate
-        pip install dist/*-cp36-cp36m-manylinux2010_x86_64.whl
+        python -m pip install dist/*-cp36-cp36m-manylinux2010_x86_64.whl
         pytest
     - name: Test python3.7 wheel
       run: |
         python -m virtualenv py37
         source py37/bin/activate
-        pip uninstall onnx -y
-        pip install dist/*-cp37-cp37m-manylinux2010_x86_64.whl
+        python -m pip install dist/*-cp37-cp37m-manylinux2010_x86_64.whl
         pytest
     - name: Test python3.8 wheel
       run: |
         python -m virtualenv py38
         source py38/bin/activate
-        pip uninstall onnx -y
-        pip install dist/*-cp38-cp38-manylinux2010_x86_64.whl
+        python -m pip install dist/*-cp38-cp38-manylinux2010_x86_64.whl
         pytest
     - name: Test python3.9 wheel
       run: |
         python -m virtualenv py39
         source py39/bin/activate
-        pip uninstall onnx -y
-        pip install dist/*-cp39-cp39-manylinux2010_x86_64.whl
+        python -m pip install dist/*-cp39-cp39-manylinux2010_x86_64.whl
         pytest  
 
     #- name: Publish wheels to PyPI
