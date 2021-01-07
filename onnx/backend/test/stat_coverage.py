@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -221,6 +224,11 @@ def gen_overall_test_coverage(schemas, f, ml):
     f.write('## To be filled.\n')
 
 
+def gen_spdx(f):
+    # type: (IO[Any]) -> None
+    f.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
+
+
 def main():
     # type: () -> None
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
@@ -231,6 +239,7 @@ def main():
     has_ml = is_ml(schemas)
     fname = os.path.join(docs_dir, 'TestCoverage.md')
     with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
+        gen_spdx(f)
         gen_outlines(f, False)
         gen_node_test_coverage(schemas, f, False)
         gen_model_test_coverage(schemas, f, False)
@@ -239,6 +248,7 @@ def main():
     if has_ml:
         fname = os.path.join(docs_dir, 'TestCoverage-ml.md')
         with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
+            gen_spdx(f)
             gen_outlines(f, True)
             gen_node_test_coverage(schemas, f, True)
             gen_model_test_coverage(schemas, f, True)

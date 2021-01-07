@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Interface for Op Version Adapters
 
 #pragma once
