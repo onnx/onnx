@@ -138,8 +138,8 @@ class Conv(Base):
             kernel_shape=[3, 3],
             strides=[2, 2],
         )
-        y = np.array([[[[12.,  27.,  24.],
-                     [63., 108.,  81.],
-                     [72., 117.,  84.]]]]).astype(np.float32)
+        y = np.array([[[[12., 27., 24.],
+                     [63., 108., 81.],
+                     [72., 117., 84.]]]]).astype(np.float32)
         expect(node, inputs=[x, W], outputs=[y],
                name='test_conv_with_autopad_same')
