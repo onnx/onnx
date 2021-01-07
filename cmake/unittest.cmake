@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(ONNXIFI_TEST_DRIVER onnxifi_test_driver_gtests)

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 #include "onnx/checker.h"
@@ -189,7 +193,7 @@ static void InferShapesImpl(
       // Some output type might be undefined in subgraph. e.g., Loop Op
       // Saving names of outputs with undefined types to allow assigning inferred types to them
       undefinedValueTypesByName[vi.name()] = vi.mutable_type();
-    } 
+    }
   }
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
@@ -444,7 +448,7 @@ void InferShapes(
     "Unable to save inferred model to the target path:",
     save_path);
   }
-  
+
 }
 
 void InferShapeForFunctionNode(

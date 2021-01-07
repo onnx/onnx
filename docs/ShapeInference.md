@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Shape Inference
 
 ONNX provides an optional implementation of shape inference on ONNX

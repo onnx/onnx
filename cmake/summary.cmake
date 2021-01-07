@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # Prints accumulated ONNX configuration summary
 function (onnx_print_configuration_summary)
   message(STATUS "")

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Default converter for ONNX models between different opset versions
 // in the default domain ("" or "ai.onnx").
 
@@ -224,7 +228,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(6), OpSetID(5)));
       /******** 6 -> 7 ********/
       registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
-        OpSetID(6), OpSetID(7)));      
+        OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Div",
@@ -234,14 +238,14 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Pow",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<CompatibleAdapter>("PRelu",
-        OpSetID(6), OpSetID(7)));    
+        OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Sub",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<Gemm_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<Dropout_6_7>());
 
-      /******** 7 -> 6 ********/   
+      /******** 7 -> 6 ********/
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Div",
@@ -251,7 +255,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Pow",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<CompatibleAdapter>("PRelu",
-        OpSetID(7), OpSetID(6)));  
+        OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Sub",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<SetIsTest>("BatchNormalization",
@@ -261,7 +265,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<Gemm_7_6>());
       registerAdapter(make_unique<AveragePool_7_6>());
 
-      /******** 7 -> 8 ********/  
+      /******** 7 -> 8 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Max",
         OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<CompatibleAdapter>("Min",
@@ -273,17 +277,17 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(7), OpSetID(8)));
 
-      /******** 8 -> 7 ********/  
+      /******** 8 -> 7 ********/
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Max",
         OpSetID(8), OpSetID(7)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Min",
         OpSetID(8), OpSetID(7)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mean",
-        OpSetID(8), OpSetID(7)));      
+        OpSetID(8), OpSetID(7)));
       registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<MaxPool_8_7>());
 
-      /******** 8 -> 9 ********/  
+      /******** 8 -> 9 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Flatten",
         OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<CompatibleAdapter>("Constant",
@@ -295,7 +299,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<CompatibleAdapter>("PRelu",
         OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<CompatibleAdapter>("Greater",
-        OpSetID(8), OpSetID(9)));      
+        OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<CompatibleAdapter>("Less",
         OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<CompatibleAdapter>("Cast",
@@ -306,7 +310,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
 
       /******** 9 -> 8 ********/
       registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
-        OpSetID(9), OpSetID(8)));  
+        OpSetID(9), OpSetID(8)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Flatten",
         OpSetID(9), OpSetID(8)));
       registerAdapter(make_unique<ExtendSupportedTypes>("Constant",
@@ -487,17 +491,17 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<ArgMaxArgMin_12_11>("ArgMin"));
       registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
         OpSetID(12), OpSetID(11)));
-      registerAdapter(make_unique<TypeRestriction>("Clip", 
+      registerAdapter(make_unique<TypeRestriction>("Clip",
         OpSetID(12), OpSetID(11), int_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Min", 
+      registerAdapter(make_unique<TypeRestriction>("Min",
         OpSetID(12), OpSetID(11), int_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("Max", 
+      registerAdapter(make_unique<TypeRestriction>("Max",
         OpSetID(12), OpSetID(11), int_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("MaxPool", 
+      registerAdapter(make_unique<TypeRestriction>("MaxPool",
         OpSetID(12), OpSetID(11), maxpool_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("ReduceMax", 
+      registerAdapter(make_unique<TypeRestriction>("ReduceMax",
         OpSetID(12), OpSetID(11), maxpool_unallowed_types));
-      registerAdapter(make_unique<TypeRestriction>("ReduceMin", 
+      registerAdapter(make_unique<TypeRestriction>("ReduceMin",
         OpSetID(12), OpSetID(11), maxpool_unallowed_types));
 
       /******** 12 -> 13 ********/

@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # A Short Guide on the Differentiability Tag for ONNX Operators
 
 ## Differentiability Tag
@@ -59,7 +61,7 @@ with open('model.onnx', 'wb') as f:
 ```
 
 ### Method 2: Manually Do the Math
-The second way is formally proving the existence of the Jacobian matrix (or tensor) from outputs to inputs with at least two numerical examples. In this case, the reviewer should go through the math and confirm if the numerical result is correct. The author should add enough details so that any STEM graduated student can easily review it. 
+The second way is formally proving the existence of the Jacobian matrix (or tensor) from outputs to inputs with at least two numerical examples. In this case, the reviewer should go through the math and confirm if the numerical result is correct. The author should add enough details so that any STEM graduated student can easily review it.
 
 For example, to show the differentiability of Add, the author may first write down its equation:
 ```

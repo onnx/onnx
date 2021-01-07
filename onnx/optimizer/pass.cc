@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnx/optimizer/pass.h"
 #include "onnx/common/assertions.h"
 

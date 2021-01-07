@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Optimizer
 
 **WARNING: ONNX Optimizer has been moved to https://github.com/onnx/optimizer.**
