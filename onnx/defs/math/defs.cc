@@ -2512,7 +2512,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           matmulShapeInference(ctx, 0, 1);
         }));
-static const char* CumSum_ver11_doc = R"DOC(
+static const char* CumSum_ver14_doc = R"DOC(
 Performs cumulative sum of the input elements along the given axis.
 By default, it will do the sum inclusively meaning the first element is copied as is.
 Through an `exclusive` attribute, this behavior can change to exclude the first element.
@@ -2536,9 +2536,9 @@ output = [5, 3, 0]
 
 ONNX_OPERATOR_SET_SCHEMA(
     CumSum,
-    11,
+    14,
     OpSchema()
-        .SetDoc(CumSum_ver11_doc)
+        .SetDoc(CumSum_ver14_doc)
         .Attr(
             "exclusive",
             "If set to 1 will return exclusive sum in which the top element is not included."
@@ -2581,13 +2581,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {"tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(float)",
-             "tensor(double)"},
-            "Input can be of any tensor type.")
+            OpSchema::numeric_types_for_math_reduction_with_bfloat(),
+            "Constrain input and output types to high-precision numeric tensors.")
         .TypeConstraint(
             "T2",
             {"tensor(int32)", "tensor(int64)"},
