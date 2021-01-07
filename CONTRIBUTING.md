@@ -5,7 +5,7 @@
 ONNX is a community project and we welcome your contributions! In addition to contributing code, you can also contribute in many other ways:
 
 * Meetings and Discussions
-Join SIGS, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Participate in [ONNX technical discussions](https://github.com/onnx/onnx/discussions) on GitHub.  Join the ONNX slack channels at LF AI and Data, help answer questions and welcome new members.
+Join SIGS, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Participate in [ONNX technical discussions](https://github.com/onnx/onnx/discussions) on GitHub.  Join the ONNX Slack channels at LF AI and Data, help answer questions and welcome new members.
 
 * Use Cases and Tools
 Develop use cases for ONNX and advocate for ONNX in developer conferences and meetups.  Develop tools that import and export using the ONNX spec, and help grow the community of ONNX users.  Become a champion for ONNX in your company or organization.
