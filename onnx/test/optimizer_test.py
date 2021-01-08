@@ -15,7 +15,6 @@ import onnx.optimizer
 import unittest
 
 
-@unittest.skip("ONNX optimizer is maintained in onnx/optimizer repo. Tests here are deprecated")
 class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, opts, fixed_point=False, **kwargs):  # type: (GraphProto, Sequence[Text], bool, **Any) -> ModelProto
