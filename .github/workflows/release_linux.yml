@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.6]
@@ -32,9 +32,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest==5.4.3 nbval numpy
-        python -m pip install virtualenv
-        python -m virtualenv py$(python.version)
-        source py$(python.version)/bin/activate
         python -m pip install numpy protobuf==3.11.3
         sudo apt-get install protobuf-compiler libprotoc-dev
 
@@ -43,12 +40,12 @@ jobs:
         ONNX_BUILD_TESTS: 1
         USE_MSVC_STATIC_RUNTIME: 1
         ONNX_ML: 1
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/cp36-cp36m/include/python3.6m -DPYTHON_LIBRARY=/usr/lib64/librt.so"
       uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64
       with:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
-        build-requirements: 'numpy protobuf==3.11.3'
-        system-packages: 'cmake3 python-devel'
+        build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
+        system-packages: 'cmake3'
         pre-build-command: 'sh workflow_scripts/install_linux_proto.sh'
 
     - uses: actions/upload-artifact@v1
@@ -59,25 +56,7 @@ jobs:
     - name: Test python3.6 wheel
       run: |
         python -m pip install dist/*-cp36-cp36m-manylinux2010_x86_64.whl
-        pytest
-    - name: Test python3.7 wheel
-      run: |
-        python -m virtualenv py37
-        source py37/bin/activate
-        python -m pip install dist/*-cp37-cp37m-manylinux2010_x86_64.whl
-        pytest
-    - name: Test python3.8 wheel
-      run: |
-        python -m virtualenv py38
-        source py38/bin/activate
-        python -m pip install dist/*-cp38-cp38-manylinux2010_x86_64.whl
-        pytest
-    - name: Test python3.9 wheel
-      run: |
-        python -m virtualenv py39
-        source py39/bin/activate
-        python -m pip install dist/*-cp39-cp39-manylinux2010_x86_64.whl
-        pytest  
+        pytest 
 
     #- name: Publish wheels to PyPI
     #  env:
