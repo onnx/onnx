@@ -1,23 +1,25 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Community Involvement and Contribution Guidelines
 
 ONNX is a community project and we welcome your contributions! In addition to contributing code, you can also contribute in many other ways:
 
-* Meetings and Discussions  
-Join SIGS, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Participate in [ONNX technical discussions](https://github.com/onnx/onnx/discussions) on GitHub.  Join the ONNX slack channels at LF AI and Data, help answer questions and welcome new members.
+* Meetings and Discussions
+Join SIGS, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Participate in [ONNX technical discussions](https://github.com/onnx/onnx/discussions) on GitHub.  Join the ONNX Slack channels at LF AI and Data, help answer questions and welcome new members.
 
-* Use Cases and Tools  
+* Use Cases and Tools
 Develop use cases for ONNX and advocate for ONNX in developer conferences and meetups.  Develop tools that import and export using the ONNX spec, and help grow the community of ONNX users.  Become a champion for ONNX in your company or organization.
 
-* Roadmap and Features  
+* Roadmap and Features
 Understand the ONNX roadmap document, feature priorities, and help implement them.  Become an ONNX code and documentation contributor, and work towards committer status on important repos.
 
-* Releases and Model Zoo  
+* Releases and Model Zoo
 Help in achieving a release of ONNX, including increasing the number of models in the ONNX Model Zoo that exercise ONNX features.
 
-* Publications and Blogs  
+* Publications and Blogs
 Add to the growing number of arXiv papers that refer to ONNX.  Create blogs, presentations, books, articles and other materials that help increase the adoption of ONNX, and grow the community of users and contributors.
 
-* Steering Committee  
+* Steering Committee
 Attend ONNX Steering Committee meetings - they are open to all in the community. Help out where needed and appropriate on SC to-do items. Note that SIG and Working Groups leaders as well as others with demonstrated commitment and contributions to ONNX community may want to self-nominate during the annual SC election cycle.
 
 ## Contributing code
@@ -34,7 +36,7 @@ If you are using a GUI like the GitHub web site or GitHub Desktop, you'll need t
 NOTE: the sign-off is needed for each commit in the PR, not at the PR level.
 
 If you have old commits that are not signed, use the following commands to squash the old PR (original branch) into a single commit. This is an easier way to signoff old commits in old PR.
-	
+
 ```bash
 git checkout master
 git checkout -b temporary_patch              # create a new branch as temporary

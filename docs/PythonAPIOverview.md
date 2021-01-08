@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Python API Overview
 
 ## Loading an ONNX Model
@@ -140,7 +142,7 @@ Runnable IPython notebooks:
 - [check_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/check_model.ipynb)
 
 ### Checking a Large ONNX Model >2GB
-Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory. 
+Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
 
 ```python
 import onnx

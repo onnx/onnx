@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <climits>
@@ -333,7 +337,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     proto.SerializeToString(&out);
     return py::bytes(out);
   }, "bytes"_a, "check_type"_a = false);
-  
+
   shape_inference.def(
       "infer_shapes_path",
       [](const std::string& model_path, const std::string& output_path, bool check_type)  -> void {
