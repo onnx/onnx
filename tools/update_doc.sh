@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: Apache-2.0
+
+
 # export ONNX_ML=0, # if you need to disable ONNX_ML
 
 python_exist=`command -v python`

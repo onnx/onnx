@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -870,7 +874,7 @@ a quantized filter, its scale and zero point, and output's scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
 It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
 Each input or output and its related zero point must have same type.
-When bias is present it must be quantized using scale = input scale * weight scale and 
+When bias is present it must be quantized using scale = input scale * weight scale and
 zero point as 0.
 )DOC";
 
@@ -1631,8 +1635,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Input(
             1,
-            "scale", 
-            "Scale tensor of shape (C).", 
+            "scale",
+            "Scale tensor of shape (C).",
             "T",
             OpSchema::Single,
             true,
