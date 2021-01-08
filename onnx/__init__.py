@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,9 +15,10 @@ from .onnx_data_pb import * # noqa
 from .version import version as __version__  # noqa
 
 # Import common subpackages so they're available when you 'import onnx'
-import onnx.helper  # noqa
 import onnx.checker  # noqa
 import onnx.defs  # noqa
+import onnx.helper  # noqa
+import onnx.utils  # noqa
 
 import google.protobuf.message
 

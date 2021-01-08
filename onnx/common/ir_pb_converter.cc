@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -338,8 +342,10 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(
-        mp.opset_import(i).domain(), mp.opset_import(i).version());
-    g->opset_versions_mutable().emplace_back(std::move(new_opset_version));
+      mp.opset_import(i).domain(), mp.opset_import(i).version());
+    g->forSelfAndEachSubGraph([&new_opset_version](Graph* graph) {
+      graph->opset_versions_mutable().emplace_back(new_opset_version);
+    });
   }
   return g;
 }

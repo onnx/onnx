@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -2004,7 +2008,7 @@ static const char* BatchNormalization_ver7_doc = R"DOC(
     Carries out batch normalization as described in the paper
     https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
     there are multiple cases for the number of outputs, which we list below:
-    
+
     Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
     Output case #2: Y (test mode)
         )DOC";

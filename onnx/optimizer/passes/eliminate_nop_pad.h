@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -27,7 +31,7 @@ struct EliminateNopPad final : public PredicateBasedPass {
       for (size_t i = 0; i < pads.size(); i++) {
         // if pad constant_value is non-zero, this is not a nop pad
         if (pads[i] != 0) {
-          return false;      			
+          return false;
         }
       }
       return true;
@@ -47,7 +51,7 @@ struct EliminateNopPad final : public PredicateBasedPass {
           // if pad constant_value is non-zero, this is not a nop pad
           if (val != 0) {
             return false;
-          }      
+          }
         }
         return true;
       }

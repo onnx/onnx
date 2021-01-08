@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -27,15 +31,23 @@ namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-  virtual bool hasInput(int i) const = 0;
-  virtual bool hasOutput(int i) const = 0;
+  virtual bool hasInput(int inputIndex) const = 0;
+  virtual bool hasOutput(int inputIndex) const = 0;
+  // getInputType(i) should return null for missing optional inputs, or if
+  // type-inference could not infer the input-type (erroneous model).
+  virtual const TypeProto* getInputType(int inputIndex) const = 0;
   virtual ~FunctionBodyBuildContext() {}
 };
 
 struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
-  FunctionBodyBuildContextImpl(NodeProto& node_proto)
-      : node_proto_(node_proto) {
-    for (auto& attr : *node_proto.mutable_attribute()) {
+  // Input_types: use a default TypeProto for missing types. We use a different convention
+  // here (from FunctionBodyBuildContext) to simplify python interoperability.
+  // The default value for input_types is included only for backward compatibility.
+  // It can be used for functions that do not depend on the type-context, but
+  // will not be sufficient for functions that do use the type-context.
+  FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types = {})
+      : node_proto_(node_proto), input_types_(input_types) {
+    for (auto& attr : node_proto.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
   }
@@ -49,21 +61,33 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  bool hasInput(int i) const {
-    if (i >= node_proto_.input_size())
+  bool hasInput(int inputIndex) const {
+    if (inputIndex >= node_proto_.input_size())
       return false;
-    return node_proto_.input(i) != "";
+    return node_proto_.input(inputIndex) != "";
   }
 
-  bool hasOutput(int i) const {
-    if (i >= node_proto_.output_size())
+  bool hasOutput(int inputIndex) const {
+    if (inputIndex >= node_proto_.output_size())
       return false;
-    return node_proto_.output(i) != "";
+    return node_proto_.output(inputIndex) != "";
+  }
+
+  const TypeProto* getInputType(int inputIndex) const {
+    if (inputIndex < 0) return nullptr;
+    size_t j = static_cast<size_t>(inputIndex);
+    if (j >= input_types_.size())
+      return nullptr;
+    // Convert default value (no variant set) into null.
+    if (input_types_[j].value_case() == TypeProto::ValueCase::VALUE_NOT_SET)
+      return nullptr;
+    return &input_types_[j];
   }
 
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 
   NodeProto node_proto_;
+  std::vector<TypeProto> input_types_;
 };
 
 using FunctionBodyQueryFunction =
@@ -149,10 +173,10 @@ class OpSchema final {
     // non-differentiable variables.
     Unknown = 0,
     // This formal parameter is differentiable. That is, this formal
-    // parameter can be differentiable input of Gradient operator. 
+    // parameter can be differentiable input of Gradient operator.
     Differentiable = 1,
     // This formal parameter is not differentiable. That is, this formal
-    // parameter can not be differentiable input of Gradient operator. 
+    // parameter can not be differentiable input of Gradient operator.
     NonDifferentiable = 2
   };
 
@@ -182,6 +206,9 @@ class OpSchema final {
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
           differentiation_category_(differentiation_category) {
+#ifdef __ONNX_NO_DOC_STRINGS
+      ONNX_UNUSED_PARAMETER(description);
+#endif
     }
 
     explicit FormalParameter(
@@ -201,6 +228,9 @@ class OpSchema final {
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
           differentiation_category_(differentiation_category) {
+#ifdef __ONNX_NO_DOC_STRINGS
+      ONNX_UNUSED_PARAMETER(description);
+#endif
     }
 
     // Get formal parameter name.
@@ -572,16 +602,17 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
-    static const std::vector<std::string> numeric_types_for_math_reduction_with_bfloat = {
-        "tensor(uint32)",
-        "tensor(uint64)",
-        "tensor(int32)",
-        "tensor(int64)",
-        "tensor(float16)",
-        "tensor(float)",
-        "tensor(double)",
-        "tensor(bfloat16)"};
+  static const std::vector<std::string>&
+  numeric_types_for_math_reduction_with_bfloat() {
+    static const std::vector<std::string>
+        numeric_types_for_math_reduction_with_bfloat = {"tensor(uint32)",
+                                                        "tensor(uint64)",
+                                                        "tensor(int32)",
+                                                        "tensor(int64)",
+                                                        "tensor(float16)",
+                                                        "tensor(float)",
+                                                        "tensor(double)",
+                                                        "tensor(bfloat16)"};
     return numeric_types_for_math_reduction_with_bfloat;
   }
 
@@ -797,7 +828,9 @@ class OpSchema final {
   void Finalize();
 
   // Build function with information stored in opschema
-  void BuildFunction(FunctionProto& function_body) const;
+  void BuildFunction(
+      FunctionProto& function_body,
+      const std::vector<OperatorSetIdProto>& relied_opsets = {}) const;
 
  private:
   void ParseAndSetTypes(
@@ -859,7 +892,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 13);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 14);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -867,9 +900,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // Version corresponding last release of ONNX. Update this to match with
-      // the max version above in a *release* version of ONNX. But in other versions,
-      // the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 12;
+      // the max version above in a *release* version of ONNX. But in other
+      // versions, the max version may be ahead of the last-release-version.
+      last_release_version_map_[ONNX_DOMAIN] = 13;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 2;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
@@ -898,10 +931,13 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       std::lock_guard<std::mutex> lock(mutex_);
       assert(map_.end() == map_.find(domain));
       map_[domain] = std::make_pair(min_version, max_version);
-      // If a last-release-version is not explicitly specified, use max as last-release-version.
+      // If a last-release-version is not explicitly specified, use max as
+      // last-release-version.
       if (last_release_version == -1)
         last_release_version = max_version;
-      assert(last_release_version_map_.end() == last_release_version_map_.find(domain));
+      assert(
+          last_release_version_map_.end() ==
+          last_release_version_map_.find(domain));
       last_release_version_map_[domain] = last_release_version;
     }
 
@@ -912,7 +948,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     std::unordered_map<std::string, std::pair<int, int>> map_;
 
     // Key: domain. Value: most recent release opset version. Note that
-    // the highest opset version may be ahead of the most recent release's opset version.
+    // the highest opset version may be ahead of the most recent release's opset
+    // version.
     std::unordered_map<std::string, int> last_release_version_map_;
 
     std::mutex mutex_;

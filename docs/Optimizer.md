@@ -1,4 +1,12 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Optimizer
+
+**WARNING: ONNX Optimizer has been moved to https://github.com/onnx/optimizer.**
+
+**All further enhancements and fixes to optimizers will be done in this new repo.**
+
+**The optimizer code in onnx/onnx repo will be removed in 1.9 release.**
 
 ONNX provides a C++ library for performing arbitrary optimizations on
 ONNX models, as well as a growing list of prepackaged optimization

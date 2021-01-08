@@ -1,9 +1,13 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
  * ONNX wrapper api discovers vendor-specific implementations installed in
  * the system and exposes them under a single interface.
  *
- * 
- * 
+ *
+ *
  */
 
 #include <stdlib.h>

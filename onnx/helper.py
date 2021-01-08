@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -10,7 +12,7 @@ from six import text_type, integer_types, binary_type
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION
+    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -19,6 +21,7 @@ import numpy as np  # type: ignore
 
 VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
 VersionTableType = List[VersionRowType]
+AssignmentBindingType = List[Tuple[Text, Text]]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
@@ -32,7 +35,8 @@ VERSION_TABLE = [
     ('1.4.1', 4, 9, 1),
     ('1.5.0', 5, 10, 1),
     ('1.6.0', 6, 11, 2),
-    ('1.7.0', 7, 12, 2, 1)
+    ('1.7.0', 7, 12, 2, 1),
+    ('1.8.0', 7, 13, 2, 1)
 ]  # type: VersionTableType
 
 VersionMapType = Dict[Tuple[Text, int], int]
@@ -133,9 +137,12 @@ def make_graph(
     initializer=None,  # type: Optional[Sequence[TensorProto]]
     doc_string=None,  # type: Optional[Text]
     value_info=[],  # type: Sequence[ValueInfoProto]
+    sparse_initializer=None,  # type: Optional[Sequence[SparseTensorProto]]
 ):  # type: (...) -> GraphProto
     if initializer is None:
         initializer = []
+    if sparse_initializer is None:
+        sparse_initializer = []
     if value_info is None:
         value_info = []
     graph = GraphProto()
@@ -144,6 +151,7 @@ def make_graph(
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
+    graph.sparse_initializer.extend(sparse_initializer)
     graph.value_info.extend(value_info)
     if doc_string:
         graph.doc_string = doc_string
@@ -358,13 +366,15 @@ def make_attribute(
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
-        if all(isinstance(v, float) for v in value):
-            attr.floats.extend(value)
-            attr.type = AttributeProto.FLOATS
-        elif all(isinstance(v, numbers.Integral) for v in value):
+        if all(isinstance(v, numbers.Integral) for v in value):
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
+        elif all(isinstance(v, numbers.Real) for v in value):
+            # Since ints and floats are members of Real, this allows a mix of ints and floats
+            # (and converts the ints to floats).
+            attr.floats.extend(float(v) for v in value)
+            attr.type = AttributeProto.FLOATS
         elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
             attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
@@ -727,3 +737,22 @@ def strip_doc_string(proto):  # type: (google.protobuf.message.Message) -> None
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
                 strip_doc_string(getattr(proto, descriptor.name))
+
+
+def make_training_info(algorithm, algorithm_bindings, initialization, initialization_bindings):  # type: (GraphProto, AssignmentBindingType,  Optional[GraphProto], Optional[AssignmentBindingType]) -> TrainingInfoProto
+    training_info = TrainingInfoProto()
+    training_info.algorithm.CopyFrom(algorithm)
+    for k, v in algorithm_bindings:
+        binding = training_info.update_binding.add()
+        binding.key = k
+        binding.value = v
+
+    if initialization:
+        training_info.initialization.CopyFrom(initialization)
+    if initialization_bindings:
+        for k, v in initialization_bindings:
+            binding = training_info.initialization_binding.add()
+            binding.key = k
+            binding.value = v
+
+    return training_info

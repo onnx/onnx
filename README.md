@@ -1,9 +1,12 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=master)
 [![Build Status](https://img.shields.io/jenkins/s/http/powerci.osuosl.org/onnx-ppc64le-nightly-build.svg?label=Linux%20ppc64le)](http://powerci.osuosl.org/job/onnx-ppc64le-nightly-build/)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
@@ -36,8 +39,7 @@ If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
 
 # Discuss
-We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use Gitter for more real-time discussion:
-[![Join the chat at https://gitter.im/onnx/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/onnx/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://slack.lfai.foundation/) for more real-time discussion
 
 # Follow Us
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
@@ -172,7 +174,7 @@ to verify it works.
 
 **CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
 
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.
 If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
 
 Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
@@ -203,7 +205,7 @@ Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/
 
 # License
 
-[MIT License](LICENSE)
+[Apache License v2.0](LICENSE)
 
 # Code of Conduct
 

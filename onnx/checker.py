@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """onnx checker
 
 This implements graphalities that allows us to check whether a serialized
@@ -102,7 +104,7 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text], boo
         C.check_model(protobuf_string)
         m = model
     if full_check:
-        onnx.shape_inference.infer_shapes(m, True)
+        onnx.shape_inference.infer_shapes(m, check_type=True)
 
 
 ValidationError = C.ValidationError

@@ -1,3 +1,5 @@
+:: SPDX-License-Identifier: Apache-2.0
+
 :: Run this script from ONNX root directory under Anaconda.
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 set ONNX_ML=1

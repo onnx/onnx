@@ -7,11 +7,6 @@ jobs:
     vmImage: 'Ubuntu-16.04'
   strategy:
     matrix:
-      py27:
-        python.version: '2.7'
-        onnx_ml: 0
-        onnx_debug: 0
-        onnx_lite: 1
       py36:
         python.version: '3.6'
         onnx_ml: 0
@@ -73,7 +68,7 @@ jobs:
       source py$(python.version)/bin/activate
 
       # lint python code
-      pip install --quiet flake8
+      python -m pip install --quiet flake8
       flake8 onnx
       if [ $? -ne 0 ]; then
         echo "flake8 returned failures"
@@ -106,13 +101,9 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
       # onnx python api tests
-      if [ "$(python.version)" == "2.7" ]; then
-        pip install --quiet pytest nbval
-      else
-        # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-        # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-        pip install --quiet pytest==5.4.3 nbval
-      fi
+      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
+      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
+      python -m pip install --quiet pytest==5.4.3 nbval
 
       pytest
       if [ $? -ne 0 ]; then
@@ -134,18 +125,16 @@ jobs:
         exit 1
       fi
 
-      # Mypy only works with Python 3
-      if [ "$(python.version)" != "2.7" ]; then
-        # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-        pip uninstall -y onnx
-        pip install --no-use-pep517 -e .[mypy]
-        python setup.py --quiet typecheck
-        if [ $? -ne 0 ]; then
-          echo "type check failed"
-          exit 1
-        fi
-        pip uninstall -y onnx
-        rm -rf .setuptools-cmake-build
-        pip install .
+      # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
+      python -m pip uninstall -y onnx
+      python -m pip install --no-use-pep517 -e .[mypy]
+      python setup.py --quiet typecheck
+      if [ $? -ne 0 ]; then
+        echo "type check failed"
+        exit 1
       fi
+      python -m pip uninstall -y onnx
+      rm -rf .setuptools-cmake-build
+      python -m pip install .
+
     displayName: 'Run ONNX tests'

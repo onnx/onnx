@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 include (ExternalProject)
 
 set(googletest_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/include)
