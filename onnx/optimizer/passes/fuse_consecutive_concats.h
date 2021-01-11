@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -56,9 +60,9 @@ struct FuseConsecutiveConcats final : public PredicateBasedPass {
           cur_input_node->hasAttribute(kaxis) &&
           cur_input_node->i(kaxis) == concat_node->i(kaxis)) {
         transform_ran = true;
-        // Inserts n inputs of cur_input_node at index i+1~i+1+(n-1), 
-        // and remove cur_input_node at index i. 
-        // As a result, cur_input_node is replaced by its inputs inplace, 
+        // Inserts n inputs of cur_input_node at index i+1~i+1+(n-1),
+        // and remove cur_input_node at index i.
+        // As a result, cur_input_node is replaced by its inputs inplace,
         // instead of always appending its inputs at the end.
         for (size_t j = 0; j < cur_input_node->inputs().size(); j++) {
           Value* value = cur_input_node->input(j);

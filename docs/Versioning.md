@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX versioning
 
 This document describes the rules for versioning ONNX. Like the rest of the ONNX

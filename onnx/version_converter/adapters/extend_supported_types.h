@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter indicating compatibility of op between opsets with separate
 // definitions
 
@@ -12,10 +16,10 @@ struct ExtendSupportedTypes final : public Adapter {
         initial, const OpSetID& target): Adapter(op_name, initial, target) {}
 
     Node *create_cast_op(
-        std::shared_ptr<Graph> graph, 
-        ArrayRef<Value *> inputs, 
-        const int to_type, 
-        const std::vector<Dimension>& output_shape, 
+        std::shared_ptr<Graph> graph,
+        ArrayRef<Value *> inputs,
+        const int to_type,
+        const std::vector<Dimension>& output_shape,
         const std::string& name) const{
         Node *node = graph->create(kCast, inputs);
         node->i_(kto, to_type);
@@ -25,7 +29,7 @@ struct ExtendSupportedTypes final : public Adapter {
         return node;
     }
 
-    void adapt_type_extension(std::shared_ptr<Graph> graph, Node* node) const{    
+    void adapt_type_extension(std::shared_ptr<Graph> graph, Node* node) const{
         const ArrayRef<Value*>& inputs = node->inputs();
         const ArrayRef<Value*>& outputs = node->outputs();
         const std::string original_output_name = node->output()->uniqueName();
@@ -39,7 +43,7 @@ struct ExtendSupportedTypes final : public Adapter {
             TensorProto_DataType::TensorProto_DataType_DOUBLE,
         };
 
-        const std::unordered_set<int> &unsupported_version9_types = { 
+        const std::unordered_set<int> &unsupported_version9_types = {
             TensorProto_DataType::TensorProto_DataType_COMPLEX128,
             TensorProto_DataType::TensorProto_DataType_COMPLEX64,
             TensorProto_DataType::TensorProto_DataType_STRING,

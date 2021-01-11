@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -21,8 +25,8 @@ result 100. There are some string literals reserved for special floating-point v
 "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
 Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
 this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
-to string tensors, plain floating-point representation (such as "314.15926") would be used. 
-Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+to string tensors, plain floating-point representation (such as "314.15926") would be used.
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
 of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
 
 Conversion from a numerical type to any numerical type is always allowed.
@@ -592,9 +596,9 @@ slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represents number of elements before the end of that
 dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
-end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX`
 when sclicing forward and 'INT_MIN' when slicing backward.
-If a negative value is passed for step, it represents slicing backward. 
+If a negative value is passed for step, it represents slicing backward.
 However step value cannot be 0.
 If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
@@ -819,7 +823,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ->mutable_tensor_type()
                   ->mutable_shape()
                   ->mutable_dim(static_cast<int>(axis))
-                  ->clear_dim_param();     
+                  ->clear_dim_param();
               continue;
             }
 
@@ -961,7 +965,7 @@ index of the entry itself.
 For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
 is performed as below:
 ```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
   output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
 
@@ -1190,7 +1194,7 @@ index of the entry itself.
 For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
 is performed as below:
 ```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
   output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
 
@@ -1442,7 +1446,7 @@ Its output shape is the same as the shape of `indices` and consists of one value
 (gathered from the `data`) for each element in `indices`.
 
 For instance, in the 3-D case (r = 3), the output produced is determined
-by the following equations: 
+by the following equations:
 ```
   out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
   out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
@@ -1649,8 +1653,8 @@ For example:
 
 The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
 The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
-Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
-The order of values in `axes` does not matter and can come in any order. 
+Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
+The order of values in `axes` does not matter and can come in any order.
 
 )DOC";
 
@@ -1703,7 +1707,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
           axes = ParseData<int64_t>(axes_proto);
-          
+
           // validate 'axes' for duplicate entries
           std::unordered_set<int64_t> unique_values;
           for (const auto val : axes) {
@@ -2066,7 +2070,7 @@ Each dimension value of the output tensor is:
 static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
-The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example. 
+The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
 Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, length_original as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", scale = length_resized / length_original, <br/>
 
 if coordinate_transformation_mode is "half_pixel", <br/>
@@ -2753,16 +2757,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Unique_ver11_doc = R"DOC(
-Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned. 
-Otherwise the input tensor is flattened and unique values of the flattened tensor are returned. 
+Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
+Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
 
-This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs. 
-The first output tensor 'Y' contains all unique values or subtensors of the input. 
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'.. 
-The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ". 
-The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input. 
+This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
+The first output tensor 'Y' contains all unique values or subtensors of the input.
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
+The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
+The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
-Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input. 
+Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
 
 https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
 
@@ -2794,36 +2798,36 @@ Example 3:
   output_counts = [2, 1]
 
 Example 4:
-  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]], 
+  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
   attribute_sorted = 1
   attribute_axis = 1
 
-  intermediate data are presented below for better understanding: 
-  
+  intermediate data are presented below for better understanding:
+
   there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-  A: [[1, 1], [1, 1]], 
-     [[0, 1], [0, 1]], 
-     [[2, 1], [2, 1]], 
+  A: [[1, 1], [1, 1]],
+     [[0, 1], [0, 1]],
+     [[2, 1], [2, 1]],
      [[0, 1], [0, 1]].
-  
-  there are 3 unique subtensors: 
-  [[1, 1], [1, 1]], 
-  [[0, 1], [0, 1]], 
+
+  there are 3 unique subtensors:
+  [[1, 1], [1, 1]],
+  [[0, 1], [0, 1]],
   [[2, 1], [2, 1]].
-  
+
   sorted unique subtensors:
-  B: [[0, 1], [0, 1]], 
-     [[1, 1], [1, 1]], 
+  B: [[0, 1], [0, 1]],
+     [[1, 1], [1, 1]],
      [[2, 1], [2, 1]].
-  
+
   output_Y is constructed from B:
-  [[[0. 1.], [1. 1.], [2. 1.]], 
+  [[[0. 1.], [1. 1.], [2. 1.]],
    [[0. 1.], [1. 1.], [2. 1.]]]
 
   output_indices is to map from B to A:
   [1, 0, 2]
-  
+
   output_inverse_indices is to map from A to B:
   [1, 0, 2, 0]
 
@@ -2954,7 +2958,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if(!xTensorProto->tensor_type().has_shape()) {
               return;
             }
-            const TensorShapeProto& input_shape = 
+            const TensorShapeProto& input_shape =
                 xTensorProto->tensor_type().shape();
             int rank = input_shape.dim_size();
             if (axis < 0)
@@ -2976,24 +2980,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GatherND_ver13_doc = R"DOC(
-Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
+Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
 slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
-`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
+`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
 where each element defines a slice of `data`
 
-`batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of 
-`data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension. 
+`batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
+`data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
 
 Some salient points about the inputs' rank and shape:
- 
+
 1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
 
 2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
 3) b < min(q, r) is to be honored.
 
-4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
 
 5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
    It is an error if any of the index values are out of bounds.
@@ -3001,17 +3005,17 @@ Some salient points about the inputs' rank and shape:
 The output is computed as follows:
 
 The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
- 
+
 1) If `indices_shape[-1] > r-b` => error condition
 
 2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-   containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions 
-   of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]` 
+   containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
+   of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
    is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
 
 3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
-   containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding 
-   to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor 
+   containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
+   to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
    to form the `output` tensor (Examples 2, 3, 4 and 5 below)
 
 This operator is the inverse of `ScatterND`.
@@ -3044,7 +3048,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
 
-  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
+  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
 
 `Example 4`
 
@@ -3054,7 +3058,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
 
-  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
+  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
 
 `Example 5`
 
@@ -3064,7 +3068,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[1],[0]]             # indices_shape = [2, 1]
 
-  output  = [[2,3],[4,5]]             # output_shape = [2, 2] 
+  output  = [[2,3],[4,5]]             # output_shape = [2, 2]
 
 
 )DOC";
@@ -3167,7 +3171,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Pad_ver13_doc = R"DOC(
-Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
+Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
 The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
@@ -3182,12 +3186,12 @@ The three supported `modes` are (similar to corresponding modes supported by `nu
 Example 1 (`constant` mode):
   Insert 0 pads to the beginning of the second dimension.
 
-  data = 
+  data =
   [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ] 
+  ]
 
   pads = [0, 2, 0, 0]
 
@@ -3195,7 +3199,7 @@ Example 1 (`constant` mode):
 
   constant_value = 0.0
 
-  output = 
+  output =
   [
       [0.0, 0.0, 1.0, 1.2],
       [0.0, 0.0, 2.3, 3.4],
@@ -3204,18 +3208,18 @@ Example 1 (`constant` mode):
 
 
 Example 2 (`reflect` mode):
-  data = 
+  data =
   [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ] 
+  ]
 
   pads = [0, 2, 0, 0]
 
   mode = 'reflect'
 
-  output = 
+  output =
   [
       [1.0, 1.2, 1.0, 1.2],
       [2.3, 3.4, 2.3, 3.4],
@@ -3224,18 +3228,18 @@ Example 2 (`reflect` mode):
 
 
 Example 3 (`edge` mode):
-  data = 
+  data =
   [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ] 
+  ]
 
   pads = [0, 2, 0, 0]
 
   mode = 'edge'
 
-  output = 
+  output =
   [
       [1.0, 1.0, 1.0, 1.2],
       [2.3, 2.3, 2.3, 3.4],

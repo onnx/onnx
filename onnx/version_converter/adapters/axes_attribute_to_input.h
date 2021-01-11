@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for all ops that remove consumed_inputs
 
 #pragma once

@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Version Converter
 
 ONNX provides a library for converting ONNX models between different
@@ -14,7 +16,7 @@ conversion methods, dependent on the nature of relevant breaking changes.
 
 ## Invoking The Version Converter
 
-The version converter may be invoked either via C++ or Python. 
+The version converter may be invoked either via C++ or Python.
 
 The Python API
 is described, with example,
@@ -41,7 +43,7 @@ You can implement a new adapter by subclassing `Adapter`, and registering
 your new adapter with `VersionConverter::registerAdapter()`. Adapters operate
 on an in-memory graph representation defined in [ir.h](/onnx/common/ir.h).
 There are a number of examples in the [adapters](/onnx/version_converter/adapters)
-directory.  Please ensure that all adapters convert from opset version i to i + 1 
+directory.  Please ensure that all adapters convert from opset version i to i + 1
 or i - 1, i.e. from Version 6 to Version 5 or vice versa, even if the 2 versions
 being converted between are Version 1 and Version 6.
 

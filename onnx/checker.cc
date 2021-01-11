@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"

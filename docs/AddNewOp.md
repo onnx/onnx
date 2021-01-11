@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Table of Contents
 1. [New Operator or Function](#new_operator_or_function)
     1. [Step 1: Proposing a new operator/function](#step1_new_operator_or_function)
@@ -43,16 +45,16 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
 2. Write a reference implementation in Python, this reference implementation should cover all the expected behavior of the operator. Only in extremely rare case, we will waive this requirement.
 3. Operator version: check out our
 [versioning doc](https://github.com/fdwr/onnx/blob/master/docs/Versioning.md#operator-versioning)
-4. Write unit test, that cover main usage and corner cases. 
-    1. The testing examples will be extracted to the doc. 
-    2. We also generate binary data for it. 
+4. Write unit test, that cover main usage and corner cases.
+    1. The testing examples will be extracted to the doc.
+    2. We also generate binary data for it.
     3. Example: https://github.com/onnx/onnx/blob/master/onnx/backend/test/case/node/abs.py
 5. Update the documentation and generate the test data.
     1. Running [the script](https://github.com/onnx/onnx/blob/master/tools/update_doc.sh)
 to update the doc and generate the test data.
-6. Shape Inference function 
+6. Shape Inference function
     1. Please provide a shape inference function in cases where it is meaningful and applicable.
-    2. In cases where shape inference is not possible, it must have logic to perform 
+    2. In cases where shape inference is not possible, it must have logic to perform
 rank inference at the very least (adding right amount of dimensions to the output shape)
     3. Shape inference functions must be accompanied by unit tests (https://github.com/onnx/onnx/blob/master/onnx/test/shape_inference_test.py).
     4. You can refer to the shape inference function for the `TopK` operator while implementing your own function (https://github.com/onnx/onnx/blob/master/onnx/defs/math/defs.cc#L943)

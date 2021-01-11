@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # External Data
 
 ## Loading an ONNX Model with External Data
@@ -27,7 +29,7 @@ load_external_data_for_model(onnx_model, 'data/directory/path/')
 Current checker supports checking models with external data. Specify either loaded onnx model or model path to the checker.
 
 ### Large models >2GB
-However, for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory. 
+However, for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
 
 ```python
 import onnx
