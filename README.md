@@ -125,7 +125,7 @@ git submodule update --init --recursive
 # Set environment variables to find protobuf and turn off static linking of ONNX to runtime library.
 # Even better option is to add it to user\system PATH so this step can be performed only once.
 # For more details check https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=vs-2017
-set PATH=<protobuf_install_dir>\bin;%PATH%
+set PATH=<protobuf_install_dir>\bin;<protobuf_install_dir>\include;<protobuf_install_dir>\libs;%PATH%
 set USE_MSVC_STATIC_RUNTIME=0
 
 # use the static installed protobuf
