@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
@@ -182,7 +184,7 @@ to verify it works.
 
 **CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
 
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.
 If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
 
 Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
@@ -213,7 +215,7 @@ Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/
 
 # License
 
-[MIT License](LICENSE)
+[Apache License v2.0](LICENSE)
 
 # Code of Conduct
 

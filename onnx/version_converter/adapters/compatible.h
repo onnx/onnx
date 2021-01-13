@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter indicating compatibility of op between opsets with separate
 // definitions
 

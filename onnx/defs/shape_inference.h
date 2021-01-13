@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include "onnx/defs/data_type_utils.h"

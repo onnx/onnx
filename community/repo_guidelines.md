@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Repositories under ONNX GitHub organization
 
 The ONNX GitHub organization contains a number of repositories. Every repository is owned by a SIG and the Steering Committee is responsible for managing these repos. Requests for creating, transferring, modifying, or archiving repositories can be made by filing an issue a request against https://github.com/onnx/steering-committee.
@@ -30,4 +32,4 @@ If you want to contribute a repository, you should first work with the SIG that 
 
 ## Archiving repos
 
-Repositories that are inactive or unneeded will be archived. The SIG that owns the repo is responsible for deciding when it should be archived. SIGs should regularly validate the repos they own are still active and necessary. 
+Repositories that are inactive or unneeded will be archived. The SIG that owns the repo is responsible for deciding when it should be archived. SIGs should regularly validate the repos they own are still active and necessary.

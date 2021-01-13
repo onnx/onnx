@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Broadcasting in ONNX
 
 In ONNX, element-wise operators can take inputs with different shape,
@@ -54,7 +56,7 @@ each dimensions is either a common length or B's length is 1.
 - Tensor B has too few dimensions, and B can have its shapes prepended
 with a dimension of length 1 to satisfy property 2.
 
-When unidirectional broadcasting happens, the output's shape is the same as 
+When unidirectional broadcasting happens, the output's shape is the same as
 the shape of A (i.e., the larger shape of two input tensors).
 
 In the following examples, tensor B is unidirectional broadcastable to tensor A:
