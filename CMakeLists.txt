@@ -77,6 +77,8 @@ if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
 endif()
 
+find_package(PythonInterp ${PY_VERSION} REQUIRED)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
 endif()
@@ -195,11 +197,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
     endif()
 
-    if("${PYTHON_EXECUTABLE}" STREQUAL "")
-      set(_python_exe "python")
-    else()
-      set(_python_exe "${PYTHON_EXECUTABLE}")
-    endif()
     set(GEN_PROTO_ARGS
         -p
         "${ONNX_NAMESPACE}"
@@ -221,7 +218,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -447,7 +444,6 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
     find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
