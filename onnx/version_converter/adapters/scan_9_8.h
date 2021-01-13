@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Scan in default domain from version 9 to 8
 
 #pragma once
@@ -53,14 +57,14 @@ struct Scan_9_8 final : public Adapter {
     }
 
     // Handling Input and Ouput Changes
-    
+
     node->removeAllInputs();
-    
+
     Value* v = new Value(node, 0);
     v->setUniqueName("");
     v->setElemType(TensorProto_DataType::TensorProto_DataType_INT32);
     node->addInput(v);
-    
+
     for (Value* input: inputs){
       std::vector<Dimension> new_sizes {Dimension(1)};
       new_sizes.insert(new_sizes.end(), input->sizes().begin(), input->sizes().end());

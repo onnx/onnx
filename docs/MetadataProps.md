@@ -1,15 +1,17 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Metadata
 # Metadata
 
-In addition to the core metadata recommendations listed in the [extensibility documentation](IR.md#optional-metadata) there is additional experimental metadata to help provide information for model inputs and outputs.  
+In addition to the core metadata recommendations listed in the [extensibility documentation](IR.md#optional-metadata) there is additional experimental metadata to help provide information for model inputs and outputs.
 
 This metadata applies to all input and output tensors of a given category.  The first such category we define is: `Image`.
 
 ## Motivation
 
-The motivation of such a mechanism is to allow model authors to convey to model consumers enough information for them to consume the model.  
+The motivation of such a mechanism is to allow model authors to convey to model consumers enough information for them to consume the model.
 
-In the case of images there are many option for providing valid image data.  However a model which consumes images was trained with a particular set of these options which must 
+In the case of images there are many option for providing valid image data.  However a model which consumes images was trained with a particular set of these options which must
 be used during inferencing.
 
 The goal is this proposal is to provide enough metadata that the model consumer can perform their own featurization prior to running the model and provide a compatible input or retrive an output and know what its format is.
@@ -30,4 +32,4 @@ Specifically, we define here the following set image metadata:
 |`Image.NominalPixelRange`|__string__|Specifies the range that pixel values are stored. Possible values: <ul><li>`NominalRange_0_255`:  [0...255] for 8bpp samples</li><li>`Normalized_0_1`: [0...1] pixel data is stored normalized</li><li>`Normalized_1_1`: [-1...1] pixel data is stored normalized</li><li>`NominalRange_16_235`: [16...235] for 8bpp samples</li></ul>|
 
 
-		
+

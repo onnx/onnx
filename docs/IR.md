@@ -1,9 +1,11 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 Open Neural Network Exchange - ONNX
 =========
 
 __Purpose__
 
-This document contains the normative specification of the semantics of ONNX. 
+This document contains the normative specification of the semantics of ONNX.
 
 The `.proto` and `.proto3` files found under the ‘onnx’ folder form the normative specification of its syntax authored in the [Protocol Buffers](https://developers.google.com/protocol-buffers) definition language. Commentary found in the `.proto` and `.proto3` files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
 
@@ -35,9 +37,9 @@ Upto IR version 6, the ONNX specification and model format addressed only infere
 
 ## Runtime Agnostic
 
-ONNX does not pre-suppose or imply any particular method of runtime implementation. 
+ONNX does not pre-suppose or imply any particular method of runtime implementation.
 
-For example, an implementation may consist of a rich runtime which interprets the model; it may be a code generator that translates the model in its entirety to executable code for some target programming language; it may be a hardware implementation; it may be a combination of two or three of those. 
+For example, an implementation may consist of a rich runtime which interprets the model; it may be a code generator that translates the model in its entirety to executable code for some target programming language; it may be a hardware implementation; it may be a combination of two or three of those.
 
 Nothing in this specification should be construed as advocating one implementation approach over any other; any comments on the inner workings of concrete implementations are to be interpreted as examples.
 
@@ -93,7 +95,7 @@ Each model has the following components:
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
- 
+
 __Note: Exploring an ONNX file__
 
 You can use the `protoc` tool that is part of the Protocol Buffers distribution to examine the contents of an ONNX file, you do so like this:
@@ -114,7 +116,7 @@ The semantics of a training-model is that of a _stateful object_, with the state
 
 ### Optional Metadata
 
-The 'metadata_props' field in the model is available for any kind of optional metadata that a tool or model developer chooses to place there. The following are the defined “standard” optional metadata properties of a model. 
+The 'metadata_props' field in the model is available for any kind of optional metadata that a tool or model developer chooses to place there. The following are the defined “standard” optional metadata properties of a model.
 
 Name|Type|Format|Description
 |---|---|---|---|
@@ -139,7 +141,7 @@ ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
 ir_build_metadata|string|The build metadata of this version of the operator set.
 domain|string|The domain of the operator set. Must be unique among all sets.
-opset_version|int64|The version of the set of operators. 
+opset_version|int64|The version of the set of operators.
 doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
 operator|Operator[]|The operators of this operator set.
 
@@ -179,7 +181,7 @@ Graphs have the following properties:
 |---|---|---|
 name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies. It is in topological order.
-initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value. It may not be in topological order. 
+initializer|Tensor[]|A list of named tensor values. When an initializer has the same name as a graph input, it specifies a default value for that input. When an initializer has a name different from all graph inputs, it specifies a constant value. It may not be in topological order.
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
@@ -224,7 +226,7 @@ Shape|The names of tensor shape variables – scoped to the value information re
 
 ### Nodes
 
-Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes. 
+Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes.
 
 Input and outputs are positionally associated with operator inputs and outputs. Attributes are associated with operator attributes by name.
 
@@ -245,7 +247,7 @@ A name belonging to the Value namespace may appear in multiple places, namely as
 A value name used in a graph must have a unique definition site, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
 
 When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
- 
+
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
 The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
@@ -292,16 +294,16 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 
 #### Variadic Inputs and Outputs
- 
+
 The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values. A variadic operator has an associated minimum arity, which specifies the minimum number of operands that must be specified.
 
-For each variadic operator input, N or more node inputs must be specified where N is the minimum arity of the operator. For each variadic operator output, N or more node outputs must be specified where N is the minimum arity of the operator. 
+For each variadic operator input, N or more node inputs must be specified where N is the minimum arity of the operator. For each variadic operator output, N or more node outputs must be specified where N is the minimum arity of the operator.
 
 #### Optional Inputs and Outputs
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
-Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs. 
+Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs.
 
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
@@ -325,7 +327,7 @@ Primitive numeric, string, and Boolean types MUST be used as elements of tensors
 
 ### Tensor Element Types
 
-|Group|Types|Description| 
+|Group|Types|Description|
 |---|---|---|
 Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
 Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
@@ -338,7 +340,7 @@ Other|bool|Boolean values represent data with only two values, typically true an
 
 The following types are used to define the types of graph and node inputs and outputs.
 
-|Variant | Type | Description | 
+|Variant | Type | Description |
 |---|---|---|
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
 ONNX|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
@@ -392,7 +394,7 @@ For example, a graph that performs matrix cross-product may be defined as taking
 Shapes MAY be defined using a combination of integers and variables.
 
 _Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
-* The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set. 
+* The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set.
 * The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
 * A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
 * ONNXML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables local to a type may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
@@ -413,7 +415,7 @@ Thus, the state variables of the training-model consist of a subset of the initi
 
 All state variables are pre-initialized to the value specified in the corresponding initializer. A subsequent call to perform the initialization-step (using the appropriate API exposed by a runtime) updates the values of the state variables as described above. If the training-model more than one instance of TrainingInfoProto, the initialization-step corresponding to each is performed in order. A TrainingInfoProto.initialization MAY be omitted (only if there are no initialization_bindings). For the training-step, it is expected that a runtime MAY allow users to invoke any one of the TrainingInfoProto.algorithm, allowing the training process to interleave the different algorithms as desired. The order in which the different TrainingProto.algorithms are called affects the training result, and it is the callers responsibility to call them in the correct order.
 
-## Other Specification Documents 
+## Other Specification Documents
 
 The ONNX specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining standard operator semantics and the IR syntax. The latter is specified as Protobuf v2 and v3 schema files.
 

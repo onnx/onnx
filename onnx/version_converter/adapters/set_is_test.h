@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for BatchNormalization and Dropout in default domain from version 7 to 6
 
 #pragma once

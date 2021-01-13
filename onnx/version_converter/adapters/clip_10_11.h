@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Clip in default domain from version 10 to 11
 
 #pragma once
@@ -26,7 +30,7 @@ class Clip_10_11 final : public Adapter {
       }
     }
 
-    void attrToInput(std::shared_ptr<Graph> graph, Node *node, const std::string name, 
+    void attrToInput(std::shared_ptr<Graph> graph, Node *node, const std::string name,
       float val) const {
       Tensor t;
       t.elem_type() = TensorProto_DataType_FLOAT;
@@ -34,7 +38,7 @@ class Clip_10_11 final : public Adapter {
       data.emplace_back(val);
       Value* v;
       v = graph->addInitializerAndInput(t, name);
-      node->addInput(v);      
+      node->addInput(v);
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

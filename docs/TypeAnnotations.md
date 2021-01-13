@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Type annotations for ONNX
 
 At Facebook, we work with community best practices to ensure high code quality, readability and reliability. In line with this, we just added type annotations to our python code to help ONNX developers more easily contribute to the project.
@@ -47,14 +49,14 @@ We can't use PEP484 annotations, because we have to support python 2. So we're w
 
     def myfunc(arg):  # type: (int) -> bool
       return arg == 2
-    
+
     class MyClass(object):
       def __init__(self):  # type: () -> None
         pass
-        
+
       def myfunc(self, arg):  # type: (int) -> bool
         return arg == 2
-        
+
       # Alternative notation for many parameters
       def myfunc(
         arg1,  # type: int
