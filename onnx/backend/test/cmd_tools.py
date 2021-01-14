@@ -27,7 +27,13 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
             shutil.rmtree(path)
         os.makedirs(path)
 
-    cases = model_test.collect_testcases() + node_test.collect_testcases()
+    cases = model_test.collect_testcases()
+    if args.node is None:
+        # include all of the testcases
+        cases += node_test.collect_testcases()
+    else:
+        # only include those testcases including the given operator
+        cases += node_test.collect_specific_testcases(args.node)
     for case in cases:
         output_dir = os.path.join(
             args.output, case.kind, case.name)
@@ -80,6 +86,8 @@ def parse_args():  # type: () -> argparse.Namespace
     subparser = subparsers.add_parser('generate-data', help='convert testcases to test data')
     subparser.add_argument('-o', '--output', default=DATA_DIR,
                            help='output directory (default: %(default)s)')
+    subparser.add_argument('-n', '--node', default=None,
+                           help='specify the node to exclude other testcases (default: %(default)s)')
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()
