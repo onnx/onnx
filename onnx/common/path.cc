@@ -5,8 +5,6 @@
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
-#pragma once
-
 #include "onnx/common/path.h"
 #include "onnx/string_utils.h"
 
