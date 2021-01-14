@@ -13,6 +13,12 @@
 #include <iterator>
 #include <unordered_set>
 
+#ifdef _WIN32
+#include <direct.h>
+#else  // POSIX
+#include <sys/stat.h>
+#endif
+
 namespace ONNX_NAMESPACE {
 namespace checker {
 

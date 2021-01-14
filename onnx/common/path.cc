@@ -9,7 +9,6 @@
 
 #include "onnx/common/path.h"
 #include "onnx/string_utils.h"
-#include <iostream>
 
 namespace ONNX_NAMESPACE {
 
