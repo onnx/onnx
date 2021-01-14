@@ -6,6 +6,7 @@
 
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
+#include "onnx/checker.h"
 
 using namespace ONNX_NAMESPACE::Utils;
 
@@ -183,6 +184,26 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(model.graph().input_size(), 2);
   EXPECT_EQ(model.graph().output_size(), 1);
   EXPECT_EQ(model.graph().node_size(), 2);
+}
+
+TEST(ParserTest, ModelCheckTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 7
+  opset_import: [ "" : 10 ]
+>
+agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+{
+    T = MatMul(X, W);
+    S = Add(T, B);
+    C = Softmax(S);
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser::Parse(model, code);
+
+  checker::check_model(model);
 }
 
 } // namespace Test

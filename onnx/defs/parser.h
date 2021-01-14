@@ -403,6 +403,7 @@ class OnnxParser : public ParserBase {
   void Parse(NodeProto& node) {
     ParseIdList(*node.mutable_output());
     Match('=');
+    node.set_domain(""); // TODO
     node.set_op_type(ParseIdentifier());
     Parse(*node.mutable_attribute());
     Match('(');
