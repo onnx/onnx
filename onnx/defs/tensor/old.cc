@@ -2,8 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #include <algorithm>
 #include <cmath>
@@ -3604,8 +3602,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Previously Split-2 does not mention how to deal with negative axis
           // However, there is an existing test onnx/backend/test/data/pytorch-converted/test_GLU
-          // using Split-2 with negative axis and it is hard to be regenerated. 
-          // To compromise, handle negative axis for Split-2 here. 
+          // using Split-2 with negative axis and it is hard to be regenerated.
+          // To compromise, handle negative axis for Split-2 here.
           if (axis < 0) {
             axis += rank;
           }
