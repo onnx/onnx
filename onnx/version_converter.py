@@ -64,6 +64,10 @@ Supported adapters:
     --Dropout from Opset 5 to Opset 6
     --RNN from Opset 13 to Opset 14
     --RNN from Opset 14 to Opset 13
+    --GRU from Opset 13 to Opset 14
+    --GRU from Opset 14 to Opset 13
+    --LSTM from Opset 13 to Opset 14
+    --LSTM from Opset 14 to Opset 13
 
 Unsupported adapters:
     --Min from Opset 8 to Opset 7

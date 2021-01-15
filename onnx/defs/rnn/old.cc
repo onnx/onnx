@@ -715,7 +715,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 } // namespace ONNX_NAMESPACE
 
-// Versions 7 to 12 of RNN/LSTM/GRU
+// Versions 7 to 13 of RNN/LSTM/GRU
 
 namespace ONNX_NAMESPACE {
 void RNNShapeInference2(InferenceContext& ctx) {
