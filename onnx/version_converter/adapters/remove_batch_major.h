@@ -11,7 +11,7 @@ struct RemoveBatchMajor final : public Adapter {
     : Adapter(op_name, OpSetID(14), OpSetID(13)) {
     }
 
-  void adapt_remove_batch_major(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_remove_batch_major(Node* node) const {
       // Remove the batch_major attribute
       if (node->hasAttribute(kbatch_major)) {
         ONNX_ASSERTM(node->i(kbatch_major) == 0, "GRU/LSTM/RNN in Opset "
@@ -20,8 +20,8 @@ struct RemoveBatchMajor final : public Adapter {
       }
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    adapt_remove_batch_major(graph, node);
+  void adapt(std::shared_ptr<Graph> , Node* node) const override {
+    adapt_remove_batch_major(node);
   }
 };
 

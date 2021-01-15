@@ -11,13 +11,13 @@ struct AddBatchMajor final : public Adapter {
     : Adapter(op_name, OpSetID(13), OpSetID(14)) {
     }
 
-  void adapt_add_batch_major(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_add_batch_major(Node* node) const {
       // Add the batch_major attribute
       node->i_(kbatch_major, 0);
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    adapt_add_batch_major(graph, node);
+  void adapt(std::shared_ptr<Graph> , Node* node) const override {
+    adapt_add_batch_major(node);
   }
 };
 
