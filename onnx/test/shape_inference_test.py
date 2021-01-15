@@ -1009,7 +1009,7 @@ class TestShapeInference(unittest.TestCase):
         self._rnn_batchwise(64, 32, 10, 4)
         self._rnn_batchwise(64, 32, 10, 4, 'bidirectional')
 
-    def _rnn_batchwise(self, seqlen, batchsize, inpsize, hiddensize, direction='forward'):  # type: (int, int, int, int, string) -> None
+    def _rnn_batchwise(self, seqlen, batchsize, inpsize, hiddensize, direction='forward'):  # type: (int, int, int, int, Text) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (batchsize, seqlen, inpsize)),
              ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
