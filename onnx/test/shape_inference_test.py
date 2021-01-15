@@ -1005,6 +1005,26 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 2, batchsize, hiddensize)),
             make_tensor_value_info('last', TensorProto.FLOAT, (2, batchsize, hiddensize))])
 
+    def test_rnn_batchwise(self):  # type: () -> None
+        self._rnn_batchwise(64, 32, 10, 4)
+        self._rnn_batchwise(64, 32, 10, 4, 'bidirectional')
+
+    def _rnn_batchwise(self, seqlen, batchsize, inpsize, hiddensize, direction='forward'):  # type: (int, int, int, int, Text) -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (batchsize, seqlen, inpsize)),
+             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
+                batch_major=1, direction=direction)],
+            [])
+        if(direction == 'bidirectional'):
+            num_directions = 2
+        else:
+            num_directions = 1
+        self._assert_inferred(graph, [
+            make_tensor_value_info('all', TensorProto.FLOAT, (batchsize, num_directions, seqlen, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (num_directions, batchsize, hiddensize))])
+
     def test_rnn_bidirectional(self):  # type: () -> None
         self._rnn_bidirectional(64, 32, 10, 4)
 

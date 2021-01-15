@@ -23,13 +23,15 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (hidden_size_value > 0)
     hidden_size.set_dim_value(hidden_size_value);
 
+  auto batch_major_value = getAttribute(ctx, "batch_major", 0);
+
   if (hasInputShape(ctx, 0)) {
     auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    seq_length = first_input_shape.dim((batch_major_value == 0) ? 0 : 1);
+    batch_size = first_input_shape.dim((batch_major_value == 0) ? 1 : 0);
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -37,8 +39,14 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (num_outputs > 0) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    updateOutputShape(
-        ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
+
+    if (batch_major_value == 0) {      
+      auto dims = {seq_length, num_directions, batch_size, hidden_size};
+      updateOutputShape(ctx, 0, dims);
+    } else {
+      auto dims = {batch_size, num_directions, seq_length, hidden_size};
+      updateOutputShape(ctx, 0, dims);
+    }
   }
 
   if (num_outputs > 1) {
@@ -62,6 +70,15 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
         std::string("forward"));
+    schema.Attr(
+        "batch_major",
+        "The shape format of the input X and output Y. "
+        "If 0, the shapes are [seq_length, batch_size, input_size] and "
+        "[seq_length, num_directions, batch_size, hidden_size] respectively."
+        "If not 0, the shapes are [batch_size, seq_length, input_size] and "
+        "[batch_size, num_directions, seq_length, hidden_size] respectively.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
     schema.Attr(
         "hidden_size",
         "Number of neurons in the hidden layer",
@@ -150,7 +167,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver7_doc = R"DOC(
+static const char* RNN_ver14_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -215,10 +232,10 @@ Equations (Default: f=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
-    7,
+    14,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(RNN_ver7_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -262,7 +279,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver7_doc = R"DOC(
+static const char* GRU_ver14_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -339,10 +356,10 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
-    7,
+    14,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(GRU_ver7_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -394,7 +411,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver7_doc = R"DOC(
+static const char* LSTM_ver14_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -479,10 +496,10 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
-    7,
+    14,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(LSTM_ver7_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
