@@ -2,8 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #include <algorithm>
 #include <functional>
@@ -462,9 +460,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     14,
     OpSchema()
         .SetDoc(Relu_ver14_doc)
-        .Input(0, 
-            "X", 
-            "Input tensor", 
+        .Input(0,
+            "X",
+            "Input tensor",
             "T",
             OpSchema::Single,
             true,
