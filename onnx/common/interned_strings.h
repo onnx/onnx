@@ -174,9 +174,7 @@ namespace ONNX_NAMESPACE {
   _(Upsample)                     \
   _(RNN)                          \
   _(batch_major)
- 
 
->>>>>>> master
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)
