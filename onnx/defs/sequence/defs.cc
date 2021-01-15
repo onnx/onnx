@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -179,7 +183,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference(
                 "Input Sequence and Tensor are expected to have type info. Current type is null.");
           }
-          const auto seq_elem_type = 
+          const auto seq_elem_type =
               input0_type->sequence_type().elem_type().tensor_type().elem_type();
           const auto tensor_elem_type =
               input1_type->tensor_type().elem_type();
@@ -202,7 +206,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          *(output_tensor_type->mutable_shape()) = 
+          *(output_tensor_type->mutable_shape()) =
               input0_type->sequence_type().elem_type().tensor_type().shape();
 
           UnionShapeInfo(input1_type->tensor_type().shape(), *output_tensor_type);
@@ -501,7 +505,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (keepdims) {
-            auto* outputShape = 
+            auto* outputShape =
                 ctx.getOutputType(0)
                     ->mutable_sequence_type()
                     ->mutable_elem_type()

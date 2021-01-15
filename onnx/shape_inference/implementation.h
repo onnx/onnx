@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include "onnx/defs/function.h"
@@ -17,13 +21,13 @@ struct GraphInferenceContext {
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
         schema_registry{schema_registry_in} {}
-        
+
 
   const std::unordered_map<std::string, TypeProto*>*
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
-  
+
 };
 
 class GraphInferencerImpl : public GraphInferencer {

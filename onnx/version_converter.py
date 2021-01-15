@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """onnx version converter
 
 This enables users to convert their models between different opsets within the

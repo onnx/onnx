@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 #
 # Add MSVC RunTime Flag
 function(add_msvc_runtime_flag lib)

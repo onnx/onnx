@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Copyright (c) ONNX Project Contributors.
 // Licensed under the MIT license.
 
@@ -20,8 +24,8 @@ result 100. There are some string literals reserved for special floating-point v
 "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
 Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
 this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
-to string tensors, plain floating-point representation (such as "314.15926") would be used. 
-Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+to string tensors, plain floating-point representation (such as "314.15926") would be used.
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
 of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
 
 Conversion from a numerical type to any numerical type is always allowed.
@@ -493,9 +497,9 @@ slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represents number of elements before the end of that
 dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
-end of a dimension with unknown size, it is recommended to pass in `INT_MAX` 
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX`
 when sclicing forward and 'INT_MIN' when slicing backward.
-If a negative value is passed for step, it represents slicing backward. 
+If a negative value is passed for step, it represents slicing backward.
 However step value cannot be 0.
 If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
@@ -896,7 +900,7 @@ index of the entry itself.
 For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
 is performed as below:
 ```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0, 
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
   output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
 
@@ -1106,7 +1110,7 @@ Its output shape is the same as the shape of `indices` and consists of one value
 (gathered from the `data`) for each element in `indices`.
 
 For instance, in the 3-D case (r = 3), the output produced is determined
-by the following equations: 
+by the following equations:
 ```
   out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
   out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
@@ -1269,8 +1273,8 @@ For example:
 
 The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
 The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
-Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1]. 
-The order of values in `axes` does not matter and can come in any order. 
+Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
+The order of values in `axes` does not matter and can come in any order.
 
 )DOC";
 
@@ -1591,7 +1595,7 @@ Each dimension value of the output tensor is:
 static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
-The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example. 
+The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
 Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, length_original as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", scale = length_resized / length_original, <br/>
 
 if coordinate_transformation_mode is "half_pixel", <br/>
@@ -1743,24 +1747,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GatherND_ver12_doc = R"DOC(
-Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers 
+Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
 slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
-`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
+`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
 where each element defines a slice of `data`
 
-`batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of 
-`data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension. 
+`batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
+`data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
 
 Some salient points about the inputs' rank and shape:
- 
+
 1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
 
 2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
 3) b < min(q, r) is to be honored.
 
-4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive) 
+4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
 
 5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
    It is an error if any of the index values are out of bounds.
@@ -1768,17 +1772,17 @@ Some salient points about the inputs' rank and shape:
 The output is computed as follows:
 
 The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
- 
+
 1) If `indices_shape[-1] > r-b` => error condition
 
 2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-   containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions 
-   of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]` 
+   containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
+   of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
    is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
 
 3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
-   containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding 
-   to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor 
+   containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
+   to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
    to form the `output` tensor (Examples 2, 3, 4 and 5 below)
 
 This operator is the inverse of `ScatterND`.
@@ -1811,7 +1815,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
 
-  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
+  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
 
 `Example 4`
 
@@ -1821,7 +1825,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
 
-  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
+  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
 
 `Example 5`
 
@@ -1831,7 +1835,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[1],[0]]             # indices_shape = [2, 1]
 
-  output  = [[2,3],[4,5]]             # output_shape = [2, 2] 
+  output  = [[2,3],[4,5]]             # output_shape = [2, 2]
 
 
 )DOC";
@@ -1918,7 +1922,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Pad_ver11_doc = R"DOC(
-Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`, 
+Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
 The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
@@ -1933,12 +1937,12 @@ The three supported `modes` are (similar to corresponding modes supported by `nu
 Example 1 (`constant` mode):
   Insert 0 pads to the beginning of the second dimension.
 
-  data = 
+  data =
   [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ] 
+  ]
 
   pads = [0, 2, 0, 0]
 
@@ -1946,7 +1950,7 @@ Example 1 (`constant` mode):
 
   constant_value = 0.0
 
-  output = 
+  output =
   [
       [0.0, 0.0, 1.0, 1.2],
       [0.0, 0.0, 2.3, 3.4],
@@ -1955,18 +1959,18 @@ Example 1 (`constant` mode):
 
 
 Example 2 (`reflect` mode):
-  data = 
+  data =
   [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ] 
+  ]
 
   pads = [0, 2, 0, 0]
 
   mode = 'reflect'
 
-  output = 
+  output =
   [
       [1.0, 1.2, 1.0, 1.2],
       [2.3, 3.4, 2.3, 3.4],
@@ -1975,18 +1979,18 @@ Example 2 (`reflect` mode):
 
 
 Example 3 (`edge` mode):
-  data = 
+  data =
   [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
-  ] 
+  ]
 
   pads = [0, 2, 0, 0]
 
   mode = 'edge'
 
-  output = 
+  output =
   [
       [1.0, 1.0, 1.0, 1.2],
       [2.3, 2.3, 2.3, 3.4],
@@ -2991,8 +2995,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Scatter_ver9_doc = R"DOC(
-Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
-into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
+Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates`
+into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`.
 For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
 for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
 data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
@@ -3587,33 +3591,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto axisAttr = ctx.getAttribute("axis");
-          int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
-          if (axis < 0) {
-            return;
-          }
-          std::vector<int64_t> split;
-          if (!getRepeatedAttribute(ctx, "split", split)) {
-            if (!ctx.getInputType(0)->tensor_type().has_shape()) {
-              return;
-            }
-            const auto& shape = ctx.getInputType(0)->tensor_type().shape();
-            if (axis >= shape.dim_size()) {
-              fail_type_inference("Invalid value of attribute 'axis'");
-            }
-            const auto& splitDim = shape.dim(axis);
-            if (!splitDim.has_dim_value()) {
-              return;
-            }
-            int splitDimValue = static_cast<int>(splitDim.dim_value());
-            int chunkSize =
-                splitDimValue / static_cast<int>(ctx.getNumOutputs());
-            int leftOver = splitDimValue -
-                (chunkSize * static_cast<int>(ctx.getNumOutputs()));
-            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
-            }
 
+          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          int rank = shape.dim_size();
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          if (axis < -rank || axis >= rank) {
+            fail_type_inference(
+                "Invalid value of attribute 'axis'. Rank=",
+                rank,
+                " Value=",
+                axis);
+          }
+          // Previously Split-2 does not mention how to deal with negative axis
+          // However, there is an existing test onnx/backend/test/data/pytorch-converted/test_GLU
+          // using Split-2 with negative axis and it is hard to be regenerated. 
+          // To compromise, handle negative axis for Split-2 here. 
+          if (axis < 0) {
+            axis += rank;
+          }
+          const auto& split_dim = shape.dim(axis);
+          if (!split_dim.has_dim_value()) {
             for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
               *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
                   shape;
@@ -3621,8 +3618,52 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ->mutable_tensor_type()
                   ->mutable_shape()
                   ->mutable_dim(axis)
-                  ->set_dim_value(split[i]);
+                  ->Clear();
             }
+            return;
+          }
+          int split_dim_value = static_cast<int>(split_dim.dim_value());
+
+          std::vector<int64_t> split;
+          if (getRepeatedAttribute(ctx, "split", split)) {
+            if (split.size() != ctx.getNumOutputs()) {
+              fail_shape_inference(
+                  "Mismatch between number of splits (",
+                  split.size(),
+                  ") and outputs (",
+                  ctx.getNumOutputs(),
+                  ")");
+            }
+            int64_t total_dim = 0;
+            for (int64_t d : split) {
+              total_dim += d;
+            }
+            if (total_dim != split_dim_value) {
+              fail_shape_inference(
+                  "Mismatch between the sum of 'split' (",
+                  total_dim,
+                  ") and the split dimension of the input (",
+                  split_dim_value,
+                  ")");
+            }
+          } else {
+            int num_outputs = static_cast<int>(ctx.getNumOutputs());
+            if (split_dim_value % num_outputs != 0) {
+              fail_shape_inference("The input is not evenly splittable");
+            }
+            int chunk_size = split_dim_value / num_outputs;
+            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+              split.push_back(chunk_size);
+            }
+          }
+          for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+            *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
+                shape;
+            ctx.getOutputType(i)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim(axis)
+                ->set_dim_value(split[i]);
           }
         }));
 
@@ -3717,17 +3758,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GatherND_ver11_doc = R"DOC(
-Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers 
+Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers
 slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
 
-`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`, 
+`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
 where each element defines a slice of `data`
 
 Some salient points about the inputs' rank and shape:
- 
+
 1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
 
-2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive) 
+2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive)
 
 3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
    It is an error if any of the index values are out of bounds.
@@ -3735,17 +3776,17 @@ Some salient points about the inputs' rank and shape:
 The output is computed as follows:
 
 The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
- 
+
 1) If `indices_shape[-1] > r` => error condition
 
 2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-   containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`. 
-   Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+   containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`.
+   Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor
    to form the `output` tensor (Example 1 below)
 
 3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
-   containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`. 
-   Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor 
+   containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`.
+   Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor
    to form the `output` tensor (Examples 2, 3, and 4 below)
 
 This operator is the inverse of `ScatterND`.
@@ -3772,7 +3813,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
 
-  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]   
+  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
 
 `Example 4`
 
@@ -3780,7 +3821,7 @@ This operator is the inverse of `ScatterND`.
 
   indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
 
-  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2] 
+  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
 
 )DOC";
 
