@@ -1215,7 +1215,7 @@ inline const Graph * Value::owningGraph() const {
 // should also be updated.
 inline Value* Value::setUniqueName(const std::string &name, bool rename_subgraph_captured_nodes) {
   if (has_unique_name() && rename_subgraph_captured_nodes) {
-    Graph *graph = owningGraph();
+    auto *graph = owningGraph();
     graph->forEachNode([this, &name](Node *node) {
       if (node->owningGraph() == this->owningGraph()) {
         // skip non-subgraph
@@ -1235,7 +1235,8 @@ inline Value* Value::setUniqueName(const std::string &name, bool rename_subgraph
 }
 
 inline void Value::replaceAllUsesWith(Value * newValue) {
-  ONNX_ASSERT(owningGraph() == newValue->owningGraph());
+  auto* graph = owningGraph();
+  ONNX_ASSERT(graph == newValue->owningGraph());
   // propagate sizes and elem type
   if (this->has_sizes()) {
     newValue->setSizes(this->sizes());
@@ -1243,8 +1244,7 @@ inline void Value::replaceAllUsesWith(Value * newValue) {
   if (this->elemType() != ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
     newValue->setElemType(this->elemType());
   }
-  Graph* graph = owningGraph();
-  const std::string unique_name = this->uniqueName();
+  const auto unique_name = this->uniqueName();
   // We do not want the optimization to change the graph output name
   if (std::find(graph->outputs().rbegin(), graph->outputs().rend(),
                 this) != graph->outputs().rend()) {
