@@ -327,7 +327,7 @@ setuptools.setup(
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
-    license='MIT',
+    license='Apache License v2.0',
     include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
