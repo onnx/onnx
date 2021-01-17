@@ -28,6 +28,9 @@ class TestVersionConverter(unittest.TestCase):
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
                 target_version)
+        print(str(orig_model))
+        print("---------")
+        print(str(converted_model))
         checker.check_model(converted_model)
         return converted_model
 
@@ -1117,22 +1120,22 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("scan_out", data_type, [2])]
         )
 
+        no_sequence_lens = ''   # optional input, not supplied
         nodes = [onnx.helper.make_node(
             "Scan",
-            inputs=["", "initial", "x"],
+            inputs=[no_sequence_lens, "initial", "x"],
             outputs=["y", "z"],
             body=g,
             num_scan_inputs=1,
         )]
 
-        seq_lens = onnx.helper.make_empty_tensor_value_info(" ")
         initial = onnx.helper.make_tensor_value_info("initial", data_type, [1, 2])
         x = onnx.helper.make_tensor_value_info("x", data_type, [1, 3, 2])
         y = onnx.helper.make_tensor_value_info("y", data_type, [1, 2])
         z = onnx.helper.make_tensor_value_info("z", data_type, [1, 3, 2])
 
         graph = onnx.helper.make_graph(
-            nodes, "test_scan_8_9", [seq_lens, initial, x], [y, z]
+            nodes, "test_scan_8_9", [initial, x], [y, z]
         )
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
