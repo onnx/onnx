@@ -406,6 +406,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<Clip_10_11>());
+      registerAdapter(make_unique<Resize_10_11>());
 
       /******** 11 -> 10 ********/
       std::vector<TensorProto_DataType> equal_unallowed_types = {
