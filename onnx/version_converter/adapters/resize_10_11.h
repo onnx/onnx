@@ -13,7 +13,7 @@ class Resize_10_11 final : public Adapter {
     explicit Resize_10_11()
       : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
-    void adapt_resize_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+    void adapt_resize_10_11(Node* node) const {
       Value* scales_input = node->inputs()[1];
       node->addInput(scales_input);
       Value* dummy = new Value(node, 1);
@@ -21,8 +21,8 @@ class Resize_10_11 final : public Adapter {
       node->replaceInput(1, dummy);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-      adapt_resize_10_11(graph, node);
+    void adapt(std::shared_ptr<Graph> , Node* node) const override {
+      adapt_resize_10_11(node);
     }
 };
 

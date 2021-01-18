@@ -43,9 +43,6 @@
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
-#include "onnx/version_converter/adapters/topk_10_11.h"
-#include "onnx/version_converter/adapters/nonmaxsuppression_10_11.h"
-#include "onnx/version_converter/adapters/scatter_10_11.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -379,6 +376,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("NonMaxSuppression",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ReduceL1",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ReduceL2",
@@ -401,19 +400,22 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Scan",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Scatter",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Softmax",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Slice",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Split",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Squeeze",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("TopK",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<Clip_10_11>());
       registerAdapter(make_unique<Resize_10_11>());
-      registerAdapter(make_unique<TopK_10_11>());
-      registerAdapter(make_unique<NonMaxSuppression_10_11>());
-      registerAdapter(make_unique<Scatter_10_11>());
 
       /******** 11 -> 10 ********/
       std::vector<TensorProto_DataType> equal_unallowed_types = {
