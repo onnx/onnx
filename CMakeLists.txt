@@ -81,7 +81,7 @@ endif()
 # Use the following command in the future; now this is only compatible with the latest pybind11
 # find_package(Python ${PY_VERSION} COMPONENTS Interpreter DevelopmentREQUIRED)
 find_package(PythonInterp ${PY_VERSION} REQUIRED)
-find_package(PythonLibs ${PY_VERSION})
+find_package(PythonLibs ${PY_VERSION} REQUIRED)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
