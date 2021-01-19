@@ -13,16 +13,28 @@ class Resize_10_11 final : public Adapter {
     explicit Resize_10_11()
       : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
-    void adapt_resize_10_11(Node* node) const {
+    void adapt_resize_10_11(std::shared_ptr<Graph> graph, Node* node) const {
       Value* scales_input = node->inputs()[1];
       node->addInput(scales_input);
-      Value* dummy = new Value(node, 1);
-      dummy->setUniqueName("");
-      node->replaceInput(1, dummy);
+
+      Tensor t;
+      t.elem_type() = TensorProto_DataType_FLOAT;
+      auto& data = t.floats();
+
+      int input_rank = node->inputs()[0]->sizes().size();
+      for(int i = 0; i < input_rank; i++)
+        data.emplace_back(0);
+      for(int i = 0; i < input_rank; i++)
+        data.emplace_back(1);
+
+      Value* roi_input;
+      roi_input = graph->addInitializerAndInput(t);
+  
+      node->replaceInput(1, roi_input);
     }
 
-    void adapt(std::shared_ptr<Graph> , Node* node) const override {
-      adapt_resize_10_11(node);
+    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+      adapt_resize_10_11(graph, node);
     }
 };
 
