@@ -28,9 +28,6 @@ class TestVersionConverter(unittest.TestCase):
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
                 target_version)
-        print(str(orig_model))
-        print("---------")
-        print(str(converted_model))
         checker.check_model(converted_model)
         return converted_model
 
