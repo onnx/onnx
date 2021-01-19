@@ -3,7 +3,7 @@ name: MacRelease
 on:
   push:
     branches:
-      - test-release-mac
+      - rel-*
   # test this PR for now, remove it before the merge
   pull_request:
     branches: [ master ]
