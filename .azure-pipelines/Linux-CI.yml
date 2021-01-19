@@ -7,11 +7,6 @@ jobs:
     vmImage: 'Ubuntu-16.04'
   strategy:
     matrix:
-      py27:
-        python.version: '2.7'
-        onnx_ml: 0
-        onnx_debug: 0
-        onnx_lite: 1
       py36:
         python.version: '3.6'
         onnx_ml: 0
