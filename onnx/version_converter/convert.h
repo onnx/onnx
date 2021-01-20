@@ -44,6 +44,7 @@
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
+#include "onnx/version_converter/adapters/pad_10_11.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -430,6 +431,7 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<Clip_10_11>());
       registerAdapter(make_unique<Resize_10_11>());
+      registerAdapter(make_unique<Pad_10_11>());
 
       /******** 11 -> 10 ********/
       std::vector<TensorProto_DataType> equal_unallowed_types = {
