@@ -34,7 +34,6 @@ jobs:
         pip install pytest==5.4.3 numpy wheel nbval
         brew update
         brew install protobuf
-        pip install protobuf==3.11.3
     - name: Build wheel
       env:
         ONNX_BUILD_TESTS: 1
