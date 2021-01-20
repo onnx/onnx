@@ -364,6 +364,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ConvTranspose",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("DepthToSpace",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Equal",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Flatten",
@@ -374,11 +376,21 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Hardmax",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("If",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("Loop",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("LpPool",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("MaxUnpool",
+        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("NonMaxSuppression",
+        OpSetID(10), OpSetID(11)));
+      registerAdapter(make_unique<CompatibleAdapter>("OneHot",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("ReduceL1",
         OpSetID(10), OpSetID(11)));
@@ -483,6 +495,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<CompatibleAdapter>("Constant",
         OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<CompatibleAdapter>("Clip",
+        OpSetID(11), OpSetID(12)));
+      registerAdapter(make_unique<CompatibleAdapter>("GatherND",
         OpSetID(11), OpSetID(12)));
       registerAdapter(make_unique<CompatibleAdapter>("Min",
         OpSetID(11), OpSetID(12)));
