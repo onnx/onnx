@@ -33,8 +33,8 @@ jobs:
         python -m pip install --upgrade setuptools
         pip install pytest==5.4.3 numpy wheel nbval
         brew update
-        # brew install protobuf==3.11.4
-        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/f690d4501313bada203f819338033c5f4a96dc47/Formula/protobuf.rb
+        # install protobuf 3.11.3
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
         brew install protobuf.rb
         pip install protobuf==3.11.3
     - name: Build wheel
@@ -42,7 +42,7 @@ jobs:
         ONNX_BUILD_TESTS: 1
         USE_MSVC_STATIC_RUNTIME: 1
         ONNX_ML: 1
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+        CMAKE_ARGS: "-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
         python setup.py bdist_wheel
         # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
