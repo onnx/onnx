@@ -341,6 +341,8 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
+      registerAdapter(make_unique<CompatibleAdapter>("Upsample",
+        OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<Slice_9_10>());
       registerAdapter(make_unique<TopK_9_10>());
 
