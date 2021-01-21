@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include <algorithm>
 #include <cmath>
@@ -15,12 +17,22 @@ const char* pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-const char* auto_pad_doc =
+const char* conv_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
-    "SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input."
-    "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-    "beginning for SAME_LOWER. VALID mean no padding.";
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. "
+    "The padding is split between the two sides equally or almost equally (depending "
+    "on whether it is even or odd). In case the padding is an odd number, the extra "
+    "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
+const char* conv_transpose_auto_pad_doc =
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = input_shape[i] * strides[i]` for each axis `i`. "
+    "The padding is split between the two sides equally or almost equally (depending "
+    "on whether it is even or odd). In case the padding is an odd number, the extra "
+    "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
 
 void convPoolShapeInference(
     InferenceContext& ctx,
@@ -258,7 +270,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -587,7 +599,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -833,7 +845,7 @@ computes the output.)DOC";
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -860,7 +872,7 @@ a quantized filter, its scale and zero point, and output's scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
 It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
 Each input or output and its related zero point must have same type.
-When bias is present it must be quantized using scale = input scale * weight scale and 
+When bias is present it must be quantized using scale = input scale * weight scale and
 zero point as 0.
 )DOC";
 
@@ -962,7 +974,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain bias type to 32-bit integer tensor.")
         .Attr(
             "auto_pad",
-            auto_pad_doc,
+            conv_auto_pad_doc,
             AttributeProto::STRING,
             std::string("NOTSET"))
         .Attr(
@@ -1101,7 +1113,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output y data type to 32-bit integer tensor.")
         .Attr(
             "auto_pad",
-            auto_pad_doc,
+            conv_auto_pad_doc,
             AttributeProto::STRING,
             std::string("NOTSET"))
         .Attr(
@@ -1225,20 +1237,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t residual = 0;
-        int64_t stride = strides[i];
-        if (stride > 1) {
-          if (!input_shape.dim(2 + i).has_dim_value()) {
-            continue;
-          }
-          residual = input_shape.dim(2 + i).dim_value();
-          while (residual >= stride) {
-            residual -= stride;
-          }
-        }
-        int64_t total_pad = residual == 0
-            ? effective_kernel_shape[i] - stride
-            : effective_kernel_shape[i] - residual;
+        int64_t total_pad = effective_kernel_shape[i] - strides[i];
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -1426,7 +1425,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OPTIONAL_VALUE);
     schema.Attr(
         "auto_pad",
-        auto_pad_doc,
+        conv_transpose_auto_pad_doc,
         AttributeProto::STRING,
         std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
@@ -1634,8 +1633,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Input(
             1,
-            "scale", 
-            "Scale tensor of shape (C).", 
+            "scale",
+            "Scale tensor of shape (C).",
             "T",
             OpSchema::Single,
             true,

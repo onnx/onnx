@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Interface for Framework Integration (ONNXIFI)
 
 ONNXIFI is a cross-platform API for loading and executing ONNX graphs on optimized backends. High-level frameworks and applications can use this API to execute neural network and machine learning models. Hardware vendors can implement this API to expose specialized hardware accelerators and highly optimized software infrastructure to the users.
@@ -29,7 +31,7 @@ ONNXIFI is a cross-platform API for loading and executing ONNX graphs on optimiz
 6. Initialize an `inputFence` structure of type `onnxMemoryFenceV1`: set `tag` to `ONNXIFI_TAG_MEMORY_FENCE_V1`, `type` to `ONNXIFI_SYNCHRONIZATION_EVENT`, and call `onnxInitEvent` to initiaze the `event` member.
 7. Initialize an `outputFence` structure of type `onnxMemoryFenceV1`: set `tag` to `ONNXIFI_TAG_MEMORY_FENCE_V1`, `type` to `ONNXIFI_SYNCHRONIZATION_EVENT`, and `event` to null.
 8. Call `onnxRunGraph` with the initialized `inputFence` and `outputFence` structures to enable execution of the graph. The call to `onnxRunGraph` will populate `event` member of the `outputFence` with a newly created event object, asynchronously execute the graph once `inputFence`'s `event` is signalled, and then signal the `outputFence`'s `event`.
-9. Call `onnxSignalEvent` with `event` member of `inputFence` to signal to the backend that the inputs are ready to be consumed. 
+9. Call `onnxSignalEvent` with `event` member of `inputFence` to signal to the backend that the inputs are ready to be consumed.
 10. Call `onnxWaitEvent` (alternatively, repeatedly call `onnxGetEventState` in a loop until the event state is `ONNXIFI_EVENT_STATE_SIGNALLED`) with `event` member of `outputFence` to wait until graph outputs are ready to be consumed. Release events for inputs and outputs using `onnxReleaseEvent`.
 11. If your model works with fixed-size inputs and outputs, and shape and location of inputs and outputs does not change, one call to `onnxSetGraphIO` is sufficient for multiple `onnxRunGraph` calls. The previous call to `onnxRunGraph`, however, must have finished before a user calls `onnxRunGraph` again, because concurrent execution with the same input and output locations is not allowed. For models with variable-size inputs or outputs, you'd need to call `onnxSetGraphIO` before each `onnxRunGraph` call.
 12. When done using the model, release the model graph(s) with `onnxReleaseGraph`, then release the backend with `onnxReleaseBackend` and backend ID with `onnxReleaseBackendID`.

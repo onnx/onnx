@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnx/optimizer/pass_manager.h"
 
 namespace ONNX_NAMESPACE {

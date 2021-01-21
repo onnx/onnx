@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """onnx shape inference. Shape inference is not guaranteed to be
 complete.
 
@@ -29,10 +31,10 @@ Return:
 """
 
 
-def infer_shapes(model, check_type=False):  # type: (ModelProto, bool) -> ModelProto
+def infer_shapes(model, check_type=False, strict_mode=False):  # type: (ModelProto, bool, bool) -> ModelProto
     if isinstance(model, ModelProto):
         model_str = model.SerializeToString()
-        inferred_model_str = C.infer_shapes(model_str, check_type)
+        inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode)
         return onnx.load_from_string(inferred_model_str)
     elif isinstance(model, string_types):
         raise TypeError('infer_shapes only accepts ModelProto,'
@@ -42,7 +44,7 @@ def infer_shapes(model, check_type=False):  # type: (ModelProto, bool) -> ModelP
                          'incorrect type: {}'.format(type(model)))
 
 
-def infer_shapes_path(model_path, output_path='', check_type=False):  # type: (Text, Text, bool) -> None
+def infer_shapes_path(model_path, output_path='', check_type=False, strict_mode=False):  # type: (Text, Text, bool, bool) -> None
     """
     Take model path for shape_inference same as infer_shape; it support >2GB models
     Directly output the inferred model to the output_path; Default is the original model path
@@ -55,7 +57,10 @@ def infer_shapes_path(model_path, output_path='', check_type=False):  # type: (T
         # If output_path is not defined, default output_path would be the original model path
         if output_path == '':
             output_path = model_path
-        C.infer_shapes_path(model_path, output_path, check_type)
+        C.infer_shapes_path(model_path, output_path, check_type, strict_mode)
     else:
         raise TypeError('infer_shapes_path only accepts model path (String), '
                          'incorrect type: {}'.format(type(model_path)))
+
+
+InferenceError = C.InferenceError

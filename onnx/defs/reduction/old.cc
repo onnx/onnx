@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include <algorithm>
 #include <functional>
@@ -153,11 +155,11 @@ std::function<void(OpSchema&)> ArgReduceDocGenerator_opset12(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the 
-provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
-If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-If select_last_index is True (default False), the index of the last occurrence of the {name} 
-is selected if the {name} appears more than once in the input. Otherwise the index of the 
+Computes the indices of the {name} elements of the input tensor's element along the
+provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
+If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+If select_last_index is True (default False), the index of the last occurrence of the {name}
+is selected if the {name} appears more than once in the input. Otherwise the index of the
 first occurrence is selected.
 The type of the output tensor is integer.)DOC";
                         ReplaceAll(doc, "{name}", name););
@@ -462,9 +464,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 std::function<void(OpSchema&)> ArgReduceDocGenerator_opset11(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the 
-provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
-If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
+Computes the indices of the {name} elements of the input tensor's element along the
+provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
+If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
 The type of the output tensor is integer.)DOC";
     ReplaceAll(doc, "{name}", name);
     schema.SetDoc(doc.c_str());

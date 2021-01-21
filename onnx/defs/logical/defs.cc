@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -30,13 +32,13 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
             doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
-        0, 
-        "A", 
-        "First input operand for the logical operator.", 
-        "T", 
-        OpSchema::Single, 
-        true, 
-        1, 
+        0,
+        "A",
+        "First input operand for the logical operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
         OpSchema::NonDifferentiable);
     schema.Input(
         1,
@@ -48,9 +50,9 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         1,
         OpSchema::NonDifferentiable);
     schema.Output(
-        0, 
-        "C", 
-        "Result tensor.", 
+        0,
+        "C",
+        "Result tensor.",
         "T1",
         OpSchema::Single,
         true,
@@ -207,7 +209,7 @@ Bitwise shift operator performs element-wise operation. For each input element, 
  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
- 
+
  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
  not necessarily identical.
 )DOC";

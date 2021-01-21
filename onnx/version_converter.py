@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """onnx version converter
 
 This enables users to convert their models between different opsets within the
@@ -165,3 +167,6 @@ def convert_version(model, target_version):  # type: (ModelProto, int) -> ModelP
     model_str = model.SerializeToString()
     converted_model_str = C.convert_version(model_str, target_version)
     return onnx.load_from_string(converted_model_str)
+
+
+ConvertError = C.ConvertError
