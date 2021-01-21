@@ -38,7 +38,7 @@ jobs:
         brew install autoconf && brew install automake
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-all-3.11.3.tar.gz
         tar -xvf protobuf-all-3.11.3.tar.gz
-        cd protobuf-all-3.11.3
+        cd protobuf-3.11.3
         make check
         sudo make install
         which protoc
