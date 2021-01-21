@@ -31,7 +31,7 @@ jobs:
         architecture: ${{ matrix.architecture }}
     - name: Install python dependencies
       run: |
-        python -m pip install -q --upgrade
+        python -m pip install -q --upgrade pip
         pip install -q pytest==5.4.3 numpy wheel nbval setuptools
         # install protobuf 3.11.3
         brew update
