@@ -46,6 +46,7 @@ jobs:
         # install protobuf 3.11.3
         brew update
         brew install autoconf && brew install automake
+        cd ..
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
         tar -xvf protobuf-cpp-3.11.3.tar.gz
         cd protobuf-3.11.3
@@ -54,6 +55,7 @@ jobs:
         make
         make check
         sudo make install
+        cd ../onnx
         python setup.py bdist_wheel
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
