@@ -43,7 +43,9 @@ jobs:
       run: conda list
     - name: Install python dependencies
       run: |
-        conda install protobuf==3.11.3
+        brew update
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
+        brew install protobuf.rb
         python -m pip install --upgrade pip
         pip install numpy nbval wheel setuptools pytest==5.4.3
     - name: Build wheel
