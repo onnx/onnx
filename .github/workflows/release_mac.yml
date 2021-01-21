@@ -7,7 +7,8 @@ on:
   # test this PR for now, remove it before the merge
   pull_request:
     branches: [ master ]
-
+env:
+  MACOSX_DEPLOYMENT_TARGET: 10.9
 jobs:
   build:
     runs-on: macos-10.15
@@ -43,7 +44,6 @@ jobs:
         USE_MSVC_STATIC_RUNTIME: 1
         ONNX_ML: 1
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-        MACOSX_DEPLOYMENT_TARGET: 10.12
       run: |
         python setup.py bdist_wheel
         # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
