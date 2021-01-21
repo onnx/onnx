@@ -7,15 +7,14 @@ on:
   # test this PR for now, remove it before the merge
   pull_request:
     branches: [ master ]
-
+env:
+  MACOSX_DEPLOYMENT_TARGET: 10.12
 jobs:
   build:
     runs-on: macos-10.15
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        architecture: ['x64']
-        macosx_deployment_target: [10.12]
     steps:
     - uses: actions/checkout@v2
     - name: Checkout submodules
