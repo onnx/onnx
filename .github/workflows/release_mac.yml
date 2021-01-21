@@ -43,7 +43,9 @@ jobs:
       run: conda list
     - name: Install python dependencies
       run: |
-        conda install protobuf==3.11.3 pytest==5.4.3 numpy wheel nbval setuptools
+        conda install protobuf==3.11.3 pytest==5.4.3 numpy wheel setuptools
+        python -m pip install --upgrade pip
+        pip install nbval
     - name: Build wheel
       env:
         ONNX_BUILD_TESTS: 1
