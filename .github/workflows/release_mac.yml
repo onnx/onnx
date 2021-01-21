@@ -31,6 +31,11 @@ jobs:
         architecture: ${{ matrix.architecture }}
         miniconda-version: latest
     - name: Install python dependencies
+      env:
+        ONNX_BUILD_TESTS: 1
+        USE_MSVC_STATIC_RUNTIME: 1
+        ONNX_ML: 1
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
         conda create -qy -n py${{ matrix.python-version }} python=${{ matrix.python-version }} -c anaconda
         conda init bash
@@ -49,19 +54,10 @@ jobs:
         make
         make check
         sudo make install
-    - name: Build wheel and install
-      env:
-        ONNX_BUILD_TESTS: 1
-        USE_MSVC_STATIC_RUNTIME: 1
-        ONNX_ML: 1
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-      run: |
-        git submodule update --init --recursive
         python setup.py bdist_wheel
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
-    - name: Test the installed wheel
-      run: |    
         pytest
+
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
