@@ -44,9 +44,6 @@ jobs:
         make
         make check
         sudo make install
-        sudo ldconfig
-        which protoc
-        protoc --version
     - name: Build wheel
       env:
         ONNX_BUILD_TESTS: 1
