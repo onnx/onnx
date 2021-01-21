@@ -31,9 +31,12 @@ jobs:
         architecture: ${{ matrix.architecture }}
     - name: Install python dependencies
       run: |
+        brew update
+        brew install pyenv
+        pyenv install 3.7.6
+        pyenv global 3.7.6
         python -m pip install --upgrade setuptools
         pip install pytest==5.4.3 numpy wheel nbval
-        brew update
         # install protobuf 3.11.3
         wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
         brew install protobuf.rb
@@ -45,7 +48,7 @@ jobs:
         ONNX_ML: 1
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
-        MACOSX_DEPLOYMENT_TARGET=10.12 python setup.py bdist_wheel
+        python setup.py bdist_wheel
         # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         pip install dist/*.whl
         pytest
