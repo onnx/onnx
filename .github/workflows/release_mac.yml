@@ -36,11 +36,15 @@ jobs:
         # install protobuf 3.11.3
         brew update
         brew install autoconf && brew install automake
-        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-all-3.11.3.tar.gz
-        tar -xvf protobuf-all-3.11.3.tar.gz
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
+        tar -xvf protobuf-cpp-3.11.3.tar.gz
         cd protobuf-3.11.3
+        ./autogen.sh
+        ./configure
+        make
         make check
         sudo make install
+        sudo ldconfig
         which protoc
         protoc --version
     - name: Build wheel
