@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 ### ONNX Backend Test
 
 #### What is ONNX Backend Test

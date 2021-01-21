@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Upsample in default domain from version 9 to 8
 
 #pragma once
@@ -17,7 +21,7 @@ struct Upsample_9_8 final : public Adapter {
 
       ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.");
       std::string scale_input_name = node->inputs()[1]->uniqueName();
-    
+
       for(size_t i = 0; i < initializers.size(); i++)
       {
           if(initializers[i].name() == inputs[1]->uniqueName())
@@ -29,7 +33,7 @@ struct Upsample_9_8 final : public Adapter {
                   value.end(),
                   reinterpret_cast<const float*>(bytes.c_str()),
                   reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));
-            }            
+            }
             std::vector<double> d_values;
             d_values.reserve(value.size());
             for (size_t j = 0; j < value.size(); j++)
@@ -37,9 +41,9 @@ struct Upsample_9_8 final : public Adapter {
               d_values.push_back(static_cast<double>(value[j]));
             }
             node->fs_(kscales, const_cast<std::vector<double>&&>(d_values));
-            
+
             node->removeInput(1);
-            graph->eraseInitializer(initializers[i].name());            
+            graph->eraseInitializer(initializers[i].name());
             for(size_t j = 0; j < graph->inputs().size(); j++)
             {
               if(graph->inputs()[j]->uniqueName() == scale_input_name)
@@ -51,7 +55,7 @@ struct Upsample_9_8 final : public Adapter {
             return;
           }
       }
-    
+
       for(Node *op : graph->nodes())
       {
         if (op->kind() == kConstant && op->outputs()[0]->uniqueName() == scale_input_name)
@@ -69,7 +73,7 @@ struct Upsample_9_8 final : public Adapter {
           for (size_t j = 0; j < value.size(); j++)
           {
             d_values.push_back(static_cast<double>(value[j]));
-          }            
+          }
           node->fs_(kscales, const_cast<std::vector<double>&&>(d_values));
           node->removeInput(1);
           op->destroy();

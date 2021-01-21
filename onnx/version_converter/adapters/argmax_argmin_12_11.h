@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for ArgMax/ArgMin in default domain from version 12 to 11
 
 #pragma once

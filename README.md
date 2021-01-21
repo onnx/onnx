@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
@@ -59,6 +61,8 @@ conda install -c conda-forge onnx
 
 ## Source
 
+If you have installed onnx on your machine, please `pip uninstall onnx` first before the following process of build from source. 
+
 ### Linux and MacOS
 You will need an install of Protobuf and NumPy to build ONNX.  One easy
 way to get these dependencies is via
@@ -94,15 +98,19 @@ pip install onnx
 ### Windows
 If you are building ONNX from source on Windows, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static library.
 
+Note that the instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "Developer Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent.
+
 #### Build Protobuf and ONNX on Windows
 Step 1: Build Protobuf locally
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout 3.9.x
+git checkout 3.11.x
 cd cmake
 # Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
-cmake -G "Visual Studio 15 2017 Win64" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
+cmake -G -A -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
+# For example:
+# cmake -G "Visual Studio 16 2019" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=..\install
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
@@ -117,8 +125,11 @@ git submodule update --init --recursive
 # Set environment variables to find protobuf and turn off static linking of ONNX to runtime library.
 # Even better option is to add it to user\system PATH so this step can be performed only once.
 # For more details check https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=vs-2017
-set PATH=<protobuf_install_dir>\bin;%PATH%
+set PATH=<protobuf_install_dir>\bin;<protobuf_install_dir>\include;<protobuf_install_dir>\libs;%PATH%
 set USE_MSVC_STATIC_RUNTIME=0
+
+# use the static installed protobuf
+set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON
 
 # Optional: Set environment variable `ONNX_ML=1` for onnx-ml
 
@@ -141,7 +152,7 @@ git submodule update --init --recursive
 
 # Set environment variable for ONNX to use protobuf shared lib
 set USE_MSVC_STATIC_RUNTIME=0
-set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 
 # Build ONNX
 # Optional: Set environment variable `ONNX_ML=1` for onnx-ml
@@ -167,12 +178,13 @@ python -c "import onnx"
 
 to verify it works.
 
+
 #### Common Errors
 **Environment variables**: `USE_MSVC_STATIC_RUNTIME` (should be 1 or 0, not ON or OFF)
 
 **CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
 
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.
 If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
 
 Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
@@ -203,7 +215,7 @@ Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/
 
 # License
 
-[MIT License](LICENSE)
+[Apache License v2.0](LICENSE)
 
 # Code of Conduct
 
