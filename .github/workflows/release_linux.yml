@@ -35,18 +35,20 @@ jobs:
         python -m pip install numpy protobuf==3.11.3
         sudo apt-get install protobuf-compiler libprotoc-dev
 
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Build manylinux Python wheels
-      env:
-        ONNX_BUILD_TESTS: 1
-        USE_MSVC_STATIC_RUNTIME: 1
-        ONNX_ML: 1
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/cp36-cp36m/include/python3.6m -DPYTHON_LIBRARY=/usr/lib64/librt.so"
-      uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64
+      uses: ./ # Uses an action in the root directory
       with:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
         build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
         system-packages: 'cmake3'
         pre-build-command: 'sh workflow_scripts/install_linux_proto.sh'
+      env:
+        ONNX_BUILD_TESTS: 1
+        USE_MSVC_STATIC_RUNTIME: 1
+        ONNX_ML: 1
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/cp36-cp36m/include/python3.6m -DPYTHON_LIBRARY=/usr/lib64/librt.so"  
 
     - uses: actions/upload-artifact@v1
       with:

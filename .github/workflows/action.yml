@@ -1,0 +1,39 @@
+# action.yml to manylinux docker
+
+name: 'manylinux docker'
+description: 'Run manylinux docker to build wheel'
+inputs:
+  python-versions:
+    description: 'Python versions to target, space-separated'
+    required: true
+    default: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
+  build-requirements:
+    description: 'pip packages required at build time, space-separated'
+    required: false
+    default: ''
+  system-packages:
+    description: 'yum packages to install, space-separated'
+    required: false
+    default: ''
+  pre-build-command:
+    description: 'command to run before build, e.g. the execution of a script to perform additional build-environment setup'
+    required: false
+    default: ''
+  package-path:
+    description: 'path to python package to build, relative to repository root'
+    required: false
+    default: ''
+  pip-wheel-args:
+    description: 'extra arguments to pass to the `pip wheel` command, passed paths are relative to `package-path`'
+    required: false
+    default: '-w ./dist --no-deps'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.python-versions }}
+    - ${{ inputs.build-requirements }}
+    - ${{ inputs.system-packages }}
+    - ${{ inputs.pre-build-command }}
+    - ${{ inputs.package-path }}
+    - ${{ inputs.pip-wheel-args}}
