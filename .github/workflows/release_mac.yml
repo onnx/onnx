@@ -29,18 +29,21 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
+
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+    - name: Conda info
+      shell: bash -l {0}
+      run: conda info
+    - name: Conda list
+      shell: pwsh
+      run: conda list
     - name: Install python dependencies
       run: |
-        brew update
-        brew install pyenv
-        pyenv install 3.7.6
-        pyenv global 3.7.6
-        python -m pip install --upgrade setuptools
-        pip install pytest==5.4.3 numpy wheel nbval
-        # install protobuf 3.11.3
-        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
-        brew install protobuf.rb
-        pip install protobuf==3.11.3
+        conda install protobuf==3.11.3 pytest==5.4.3 numpy wheel nbval setuptools
     - name: Build wheel
       env:
         ONNX_BUILD_TESTS: 1
