@@ -38,7 +38,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build manylinux Python wheels
-      uses: ./ # Uses an action in the root directory
+      uses: ./.github/workflows/manylinux
       with:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
         build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
