@@ -15,6 +15,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         architecture: ['x64']
+        macosx_deployment_target: [10.12]
     steps:
     - uses: actions/checkout@v2
     - name: Checkout submodules
@@ -33,7 +34,10 @@ jobs:
         python -m pip install --upgrade setuptools
         pip install pytest==5.4.3 numpy wheel nbval
         brew update
-        brew install protobuf
+        # install protobuf 3.11.3
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
+        brew install protobuf.rb
+        pip install protobuf==3.11.3
     - name: Build wheel
       env:
         ONNX_BUILD_TESTS: 1
