@@ -13,6 +13,10 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 cmake_policy(SET CMP0063 NEW)
 
+if (APPLE)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Use 10.12" FORCE)
+endif()
+
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)

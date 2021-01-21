@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ master ]
 env:
-  MACOSX_DEPLOYMENT_TARGET: 10.9
+  MACOSX_DEPLOYMENT_TARGET: 10.12
 jobs:
   build:
     runs-on: macos-10.15
@@ -45,7 +45,7 @@ jobs:
         ONNX_ML: 1
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
-        python setup.py bdist_wheel
+        MACOSX_DEPLOYMENT_TARGET=10.12 python setup.py bdist_wheel
         # Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
         pip install dist/*.whl
         pytest
