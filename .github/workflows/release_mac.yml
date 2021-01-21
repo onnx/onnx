@@ -32,12 +32,12 @@ jobs:
         miniconda-version: latest
     - name: Install python dependencies
       run: |
-        conda create -qy -n py${{ matrix.python-version }} python=${{ matrix.python-version }} wheel -c anaconda
+        conda create -qy -n py${{ matrix.python-version }} python=${{ matrix.python-version }} -c anaconda
         conda init bash
         source ~/.bash_profile
         conda activate py${{ matrix.python-version }}
         python -m pip install -q --upgrade pip
-        pip install -q pytest==5.4.3 numpy nbval setuptools
+        pip install -q pytest==5.4.3 numpy nbval setuptools wheel
         # install protobuf 3.11.3
         brew update
         brew install autoconf && brew install automake
