@@ -14,7 +14,7 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.5, 3.6, 3.7, 3.8]
         architecture: ['x64']
     steps:
     - uses: actions/checkout@v2
@@ -33,7 +33,6 @@ jobs:
     - name: Install python dependencies
       env:
         ONNX_BUILD_TESTS: 1
-        USE_MSVC_STATIC_RUNTIME: 1
         ONNX_ML: 1
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
@@ -47,8 +46,6 @@ jobs:
         # Install protobuf 3.11.3 due to compatibility
         wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
         brew install protobuf.rb
-        pip install protobuf
-        cd ../onnx
         python setup.py bdist_wheel
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
