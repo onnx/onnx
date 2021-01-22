@@ -15,6 +15,7 @@ jobs:
       matrix:
         python-version: [3.5, 3.6, 3.7, 3.8]
         architecture: ['x64']
+
     steps:
     - uses: actions/checkout@v2
     - name: Checkout submodules
@@ -23,15 +24,17 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
+
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest==5.4.3 nbval numpy
+        python -m pip install numpy
         python -m pip install numpy protobuf==3.11.3
         sudo apt-get install protobuf-compiler libprotoc-dev
 
@@ -51,12 +54,6 @@ jobs:
 
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
+        python -m pip pytest==5.4.3 nbval
         python -m pip install dist/*-manylinux2010_x86_64.whl
-        pytest 
-
-    #- name: Publish wheels to PyPI
-    #  env:
-    #    TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-    #    TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-    #  run: |
-    #    twine upload dist/*-manylinux*.whl
+        pytest

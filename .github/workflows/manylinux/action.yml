@@ -15,18 +15,7 @@ inputs:
     description: 'yum packages to install, space-separated'
     required: false
     default: ''
-  pre-build-command:
-    description: 'command to run before build, e.g. the execution of a script to perform additional build-environment setup'
-    required: false
-    default: ''
-  package-path:
-    description: 'path to python package to build, relative to repository root'
-    required: false
-    default: ''
-  pip-wheel-args:
-    description: 'extra arguments to pass to the `pip wheel` command, passed paths are relative to `package-path`'
-    required: false
-    default: '-w ./dist --no-deps'
+
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -34,6 +23,3 @@ runs:
     - ${{ inputs.python-versions }}
     - ${{ inputs.build-requirements }}
     - ${{ inputs.system-packages }}
-    - ${{ inputs.pre-build-command }}
-    - ${{ inputs.package-path }}
-    - ${{ inputs.pip-wheel-args}}

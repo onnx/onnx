@@ -5,18 +5,11 @@ set -e -x
 PY_VERSIONS=$1
 BUILD_REQUIREMENTS=$2
 SYSTEM_PACKAGES=$3
-PRE_BUILD_COMMAND=$4
-PACKAGE_PATH=$5
-PIP_WHEEL_ARGS=$6
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 if [ ! -z "$SYSTEM_PACKAGES" ]; then
     yum install -y ${SYSTEM_PACKAGES}  || { echo "Installing yum package(s) failed."; exit 1; }
-fi
-
-if [ ! -z "$PRE_BUILD_COMMAND" ]; then
-    $PRE_BUILD_COMMAND || { echo "Pre-build command failed."; exit 1; }
 fi
 
 # Build protobuf
@@ -33,8 +26,6 @@ make -j${NUM_PROCESSOR}
 make check
 make install
 ldconfig
-
-
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
