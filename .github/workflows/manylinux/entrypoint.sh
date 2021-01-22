@@ -19,6 +19,23 @@ if [ ! -z "$PRE_BUILD_COMMAND" ]; then
     $PRE_BUILD_COMMAND || { echo "Pre-build command failed."; exit 1; }
 fi
 
+# Build protobuf
+export NUM_PROCESSOR=`grep -c ^processor /proc/cpuinfo`
+
+git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git checkout 3.11.x
+git submodule update --init --recursive
+./autogen.sh --disable-shared --enable-pic
+
+CFLAGS="-fPIC -g -O2" CXXFLAGS="-fPIC -g -O2" ./configure --disable-shared
+make -j${NUM_PROCESSOR}
+make check
+make install
+ldconfig
+
+
+
 # Compile wheels
 # Need to be updated if there is a new Python Version
 declare -A python_map=( ["3.5"]="cp35-cp35m" ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
