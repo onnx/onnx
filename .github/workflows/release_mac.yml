@@ -7,6 +7,7 @@ on:
   pull_request:
     branches: [ master ]
 
+# Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.12
 
@@ -16,7 +17,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.5, 3.6, 3.7, 3.8]
-        architecture: ['x86_64']
+        architecture: ['x64']
 
     steps:
     - uses: actions/checkout@v2
