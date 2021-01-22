@@ -57,7 +57,7 @@ jobs:
           export CXX=clang++
           export ONNX_ML=1
           export ONNX_NAMESPACE=ONNX_REL_1_8_1
-          export MACOSX_DEPLOYMENT_TARGET: 10.9
+          export MACOSX_DEPLOYMENT_TARGET=10.9
           
           python setup.py bdist_wheel
           for file in dist/*.whl; do pip install --upgrade $file; done
