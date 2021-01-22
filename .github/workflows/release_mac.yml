@@ -43,10 +43,12 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install numpy
           pip install --quiet pytest==5.4.3 nbval
-         
+          brew update
+          brew install protobuf
+
           echo "Starting protobuf install"
-          pip install protobuf==3.11.3
-          echo PATH: $PATH                    
+          pip install protobuf
+          echo PATH: $PATH                
 
       - name: Build, install and test ONNX
         shell: bash
