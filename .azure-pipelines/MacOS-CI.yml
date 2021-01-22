@@ -58,7 +58,10 @@ jobs:
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      # python setup.py --quiet install
+      python setup.py bdist_wheel
+      for file in dist/*.whl; do pip install --upgrade $file; done
+      pytest
     displayName: 'Install dependencies and ONNX'
 
   - script: |
@@ -120,3 +123,5 @@ jobs:
       fi
 
     displayName: 'Run ONNX Tests'
+
+  - publish: $(System.DefaultWorkingDirectory)/dist
