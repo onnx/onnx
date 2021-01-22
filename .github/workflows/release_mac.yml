@@ -1,0 +1,66 @@
+name: MacRelease
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master, rel-* ]
+  # adding for testing
+  pull_request:
+    branches: [ master, rel-* ]
+
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        python-version: [3.8]
+        architecture: ['x86_64']
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+          
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install numpy
+          pip install --quiet pytest==5.4.3 nbval
+         
+          echo "Starting protobuf install"
+          pip install protobuf==3.11.3
+          echo PATH: $PATH                    
+
+      - name: Build, install and test ONNX
+        shell: bash
+        run: |
+          export CC=clang
+          export CXX=clang++
+          export ONNX_ML=1
+          export ONNX_NAMESPACE=ONNX_REL_1_8_1
+          
+          python setup.py bdist_wheel
+          for file in dist/*.whl; do pip install --upgrade $file; done
+          pytest
+      
+      - uses: actions/upload-artifact@v1
+        with:
+          name: wheels
+          path: dist
