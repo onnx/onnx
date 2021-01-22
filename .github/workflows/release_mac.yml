@@ -33,6 +33,8 @@ jobs:
     - name: Install python dependencies
       env:
         ONNX_ML: 1
+        CMAKE_ARGS: "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON"
+        USE_MSVC_STATIC_RUNTIME: 0
       run: |
         conda create -qy -n py${{ matrix.python-version }} python=${{ matrix.python-version }} -c anaconda
         conda init bash
