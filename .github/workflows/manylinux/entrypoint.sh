@@ -15,6 +15,7 @@ fi
 # Build protobuf
 export NUM_PROCESSOR=`grep -c ^processor /proc/cpuinfo`
 
+cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout 3.11.x
@@ -26,6 +27,7 @@ make -j${NUM_PROCESSOR}
 make check
 make install
 ldconfig
+cd ../onnx
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
