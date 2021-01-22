@@ -43,18 +43,11 @@ jobs:
         conda activate py${{ matrix.python-version }}
         python -m pip install -q --upgrade pip
         pip install -q pytest==5.4.3 numpy nbval setuptools wheel
-        # install protobuf 3.11.3
         brew update
-        brew install autoconf && brew install automake
-        cd ..
-        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
-        tar -xvf protobuf-cpp-3.11.3.tar.gz
-        cd protobuf-3.11.3
-        ./autogen.sh
-        ./configure
-        make
-        make check
-        sudo make install
+        # Install protobuf 3.11.3 due to compatibility
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
+        brew install protobuf.rb
+        pip install protobuf
         cd ../onnx
         python setup.py bdist_wheel
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
