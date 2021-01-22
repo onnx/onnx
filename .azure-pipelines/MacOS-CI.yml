@@ -7,31 +7,11 @@ jobs:
     vmImage: 'macOS-10.14'
   strategy:
     matrix:
-      py27:
-        python.version: '2.7'
-        onnx_ml: 0
-        onnx_debug: 0
-        onnx_lite: 1
-      py27-ml:
-        python.version: '2.7'
+      py38:
+        python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
         onnx_lite: 1
-      py36:
-        python.version: '3.6'
-        onnx_ml: 0
-        onnx_debug: 0
-        onnx_lite: 1
-      py36-ml:
-        python.version: '3.6'
-        onnx_ml: 1
-        onnx_debug: 0
-        onnx_lite: 1
-      py36-ml-debug:
-        python.version: '3.6'
-        onnx_ml: 1
-        onnx_debug: 1
-        onnx_lite: 0
     maxParallel: 6
 
   steps:
@@ -43,7 +23,7 @@ jobs:
       git submodule update --init --recursive
       python -m pip install --upgrade setuptools
       python -m pip install numpy
-      conda install -y -c conda-forge pybind11 protobuf
+      # conda install -y -c conda-forge pybind11 protobuf
       brew update
       brew install protobuf
       export ONNX_BUILD_TESTS=1
