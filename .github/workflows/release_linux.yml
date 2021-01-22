@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.5, 3.6, 3.7, 3.8]
         architecture: ['x64']
     steps:
     - uses: actions/checkout@v2
@@ -40,7 +40,7 @@ jobs:
     - name: Build manylinux Python wheels
       uses: ./.github/workflows/manylinux
       with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
+        python-versions: ${{ matrix.python-version }}
         build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
         system-packages: 'cmake3'
         pre-build-command: 'sh workflow_scripts/install_linux_proto.sh'
@@ -55,9 +55,9 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Test python3.6 wheel
+    - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
-        python -m pip install dist/*-cp36-cp36m-manylinux2010_x86_64.whl
+        python -m pip install dist/*-manylinux2010_x86_64.whl
         pytest 
 
     #- name: Publish wheels to PyPI

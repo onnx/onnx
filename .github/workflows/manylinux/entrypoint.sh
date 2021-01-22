@@ -9,8 +9,6 @@ PRE_BUILD_COMMAND=$4
 PACKAGE_PATH=$5
 PIP_WHEEL_ARGS=$6
 
-# Temporary workaround for LD_LIBRARY_PATH issue. See
-# https://github.com/RalfG/python-wheels-manylinux-build/issues/26
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 if [ ! -z "$SYSTEM_PACKAGES" ]; then
@@ -22,19 +20,20 @@ if [ ! -z "$PRE_BUILD_COMMAND" ]; then
 fi
 
 # Compile wheels
-arrPY_VERSIONS=(${PY_VERSIONS// / })
-for PY_VER in "${arrPY_VERSIONS[@]}"; do
-    # Update pip
-    /opt/python/"${PY_VER}"/bin/pip install --upgrade --no-cache-dir pip
+# Need to be updated if there is a new Python Version
+declare -A python_map=( ["3.5"]="cp35-cp35m" ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 
-    # Check if requirements were passed
-    if [ ! -z "$BUILD_REQUIREMENTS" ]; then
-        /opt/python/"${PY_VER}"/bin/pip install --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
-    fi
+PY_VER=${python_map[$PY_VERSIONS]}
+# Update pip
+/opt/python/"${PY_VER}"/bin/pip install --upgrade --no-cache-dir pip
 
-    # Build wheels
-    /opt/python/"${PY_VER}"/bin/pip wheel . ${PIP_WHEEL_ARGS} || { echo "Building wheels failed."; exit 1; }
-done
+# Check if requirements were passed
+if [ ! -z "$BUILD_REQUIREMENTS" ]; then
+    /opt/python/"${PY_VER}"/bin/pip install --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
+fi
+
+# Build wheels
+/opt/python/"${PY_VER}"/bin/pip wheel . ${PIP_WHEEL_ARGS} || { echo "Building wheels failed."; exit 1; }
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures
