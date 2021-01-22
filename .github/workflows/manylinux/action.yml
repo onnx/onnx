@@ -6,7 +6,7 @@ inputs:
   python-versions:
     description: 'Python versions to target, space-separated'
     required: true
-    default: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
+    default: '3.7'
   build-requirements:
     description: 'pip packages required at build time, space-separated'
     required: false

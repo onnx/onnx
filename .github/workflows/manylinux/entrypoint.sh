@@ -48,7 +48,7 @@ if [ ! -z "$BUILD_REQUIREMENTS" ]; then
 fi
 
 # Build wheels
-/opt/python/"${PY_VER}"/bin/pip wheel . "${PIP_WHEEL_ARGS}" || { echo "Building wheels failed."; exit 1; }
+/opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures
