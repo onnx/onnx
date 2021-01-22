@@ -43,7 +43,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install numpy
           pip install --quiet pytest==5.4.3 nbval
-          brew update
+          brew update --quiet
           brew install protobuf
 
           echo "Starting protobuf install"
@@ -57,12 +57,20 @@ jobs:
           export CXX=clang++
           export ONNX_ML=1
           export ONNX_NAMESPACE=ONNX_REL_1_8_1
+          export MACOSX_DEPLOYMENT_TARGET: 10.9
           
           python setup.py bdist_wheel
           for file in dist/*.whl; do pip install --upgrade $file; done
           pytest
-      
+
       - uses: actions/upload-artifact@v1
         with:
           name: wheels
           path: dist
+      
+      - name: Test onnx with different versions of protobuf
+        shell: bash
+        run: |
+          pip uninstall protobuf
+          pip install protobuf==3.11.3
+          pytest
