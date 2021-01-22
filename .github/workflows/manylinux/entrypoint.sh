@@ -15,6 +15,7 @@ fi
 # Build protobuf
 export NUM_PROCESSOR=`grep -c ^processor /proc/cpuinfo`
 
+ONNX_PATH=$(pwd)
 cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
@@ -27,7 +28,7 @@ make -j${NUM_PROCESSOR}
 make check
 make install
 ldconfig
-cd ../onnx
+cd $ONNX_PATH
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
