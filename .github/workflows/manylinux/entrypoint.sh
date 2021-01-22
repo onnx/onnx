@@ -22,6 +22,7 @@ fi
 # Compile wheels
 # Need to be updated if there is a new Python Version
 declare -A python_map=( ["3.5"]="cp35-cp35m" ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
+declare -A python_include=( ["3.5"]="3.5m" ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
 
 PY_VER=${python_map[$PY_VERSIONS]}
 # Update pip
@@ -31,6 +32,12 @@ PY_VER=${python_map[$PY_VERSIONS]}
 if [ ! -z "$BUILD_REQUIREMENTS" ]; then
     /opt/python/"${PY_VER}"/bin/pip install --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
 fi
+
+# set ONNX build environments
+export ONNX_BUILD_TESTS=1
+export USE_MSVC_STATIC_RUNTIME=1
+export ONNX_ML=1
+export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include} -DPYTHON_LIBRARY=/usr/lib64/librt.so"
 
 # Build wheels
 /opt/python/"${PY_VER}"/bin/pip wheel . ${PIP_WHEEL_ARGS} || { echo "Building wheels failed."; exit 1; }
