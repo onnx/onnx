@@ -66,10 +66,3 @@ jobs:
         with:
           name: wheels
           path: dist
-      
-      - name: Test onnx with different versions of protobuf
-        shell: bash
-        run: |
-          pip uninstall -y protobuf
-          pip install protobuf==3.11.3
-          pytest
