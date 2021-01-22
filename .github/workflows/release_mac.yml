@@ -32,9 +32,7 @@ jobs:
         miniconda-version: latest
     - name: Install python dependencies
       env:
-        ONNX_BUILD_TESTS: 1
         ONNX_ML: 1
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
       run: |
         conda create -qy -n py${{ matrix.python-version }} python=${{ matrix.python-version }} -c anaconda
         conda init bash
