@@ -538,7 +538,153 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
 
       /******** 12 -> 13 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
+          "Abs", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Add", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ArgMin", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ArgMax", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Cast", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Ceil", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Clip", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Concat", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
           "Constant", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "DepthToSpace", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "DequantizeLinear", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Div", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Dropout", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Equal", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Erf", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Exp", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Expand", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Flatten", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Floor", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Gather", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "GatherElements", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "GatherND", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Gemm", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Greater", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Hardmax", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Identity", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "If", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "IsNaN", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Less", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Log", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "LogSoftmax", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Loop", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "LRN", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "MatMul", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Max", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Mean", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "MeanVarianceNormalization", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Min", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Mod", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Mul", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Neg", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "NonZero", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Pow", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Pad", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "QuantizeLinear", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Reciprocal", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceL1", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceL2", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceLogSum", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceLogSumExp", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceMean", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceMax", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceMin", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceProd", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceSumSquare", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ReduceSum", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Relu", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Reshape", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Resize", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ScatterElements", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ScatterND", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Shape", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sigmoid", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sign", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Size", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Slice", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "SoftmaxCrossEntropyLoss", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "SpaceToDepth", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sqrt", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sub", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sum", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Tanh", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Tile", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Transpose", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<AxesAttributeToInput>(
           "ReduceSum", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<AxesAttributeToInput>(
@@ -557,6 +703,12 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<AxesInputToAttribute>(
           "Unsqueeze", OpSetID(13), OpSetID(12)));
       registerAdapter(make_unique<Split_13_12>());
+
+      /******** 13 -> 14 ********/
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "CumSum", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Relu", OpSetID(13), OpSetID(14)));
     }
 
     ModelProto convert_version(
