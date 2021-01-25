@@ -172,7 +172,8 @@ namespace ONNX_NAMESPACE {
   _(Less)                         \
   _(scales)                       \
   _(Upsample)                     \
-  _(k)
+  _(k)                            \
+  _(Flatten)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

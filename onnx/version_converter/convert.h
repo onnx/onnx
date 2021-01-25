@@ -45,6 +45,7 @@
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
+#include "onnx/version_converter/adapters/softmax_12_13.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -692,6 +693,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<AxesAttributeToInput>(
           "Unsqueeze", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<Split_12_13>());
+      registerAdapter(make_unique<Softmax_12_13>());
 
       /******** 13 -> 12 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
