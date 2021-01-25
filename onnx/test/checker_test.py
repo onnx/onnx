@@ -7,7 +7,7 @@ import unittest
 from typing import Sequence, Text
 import numpy as np  # type: ignore
 
-from onnx import checker, helper
+from onnx import checker, helper, shape_inference
 from onnx import TensorProto, GraphProto, SparseTensorProto
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
@@ -404,7 +404,7 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node('Add', ['X', 'Y'], ['Z'])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
-        self.assertRaises(checker.ValidationError, checker.check_model, model, True)
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
     def test_check_model_inconsistent_type(self):  # type: () -> None
         N = 10
@@ -415,7 +415,7 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node('Add', ['X', 'Y'], ['Z'])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
-        self.assertRaises(checker.ValidationError, checker.check_model, model, True)
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
     def test_check_model_unsupported_output_type(self):  # type: () -> None
         N = 10
@@ -426,7 +426,7 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node('Add', ['X', 'Y'], ['Z'])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
-        self.assertRaises(RuntimeError, checker.check_model, model, True)
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
 
 if __name__ == '__main__':

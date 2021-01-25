@@ -52,7 +52,7 @@ void checkShapesAndTypes(
     ss << "Inferred elem type differs from existing elem type: ("
        << getElemTypeString(inferredType) << ") vs ("
        << getElemTypeString(existingType) << ")";
-    throw std::runtime_error(ss.str());
+    fail_type_inference(ss.str());
   }
 
   if (!inferredType.has_shape() || !existingType.has_shape()) {
@@ -64,7 +64,7 @@ void checkShapesAndTypes(
     ss << "Inferred shape and existing shape differ in rank: ("
        << inferredType.shape().dim_size() << ") vs ("
        << existingType.shape().dim_size() << ")";
-    throw std::runtime_error(ss.str());
+    fail_shape_inference(ss.str());
   }
 
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
@@ -76,7 +76,7 @@ void checkShapesAndTypes(
       ss << "Inferred shape and existing shape differ in dimension " << i
          << ": (" << inferredDim.dim_value() << ") vs ("
          << existingDim.dim_value() << ")";
-      throw std::runtime_error(ss.str());
+      fail_shape_inference(ss.str());
     }
   }
 }
@@ -161,6 +161,7 @@ static void InferShapesImpl(
         outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type,  // check the type-equality for input and output
+    const int error_mode,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION  // default the latest one
     ) {
@@ -338,19 +339,24 @@ static void InferShapesImpl(
         valueTypesByName[n.output(i)] = existingType;
       }
     } catch (const std::runtime_error& err) {
-      std::cerr << getErrorWithNodeInfo(n, err) << std::endl;
       deleteCreatedTypes(initializerTypeList);
-      throw;
+      fail_shape_inference(getErrorWithNodeInfo(n, err));
     }
   }
   deleteCreatedTypes(initializerTypeList);
   // Throw shape inference error if any
-  if (!inference_errors.empty()) {
+  // Error node right now only supports 0 and 1
+  // When set to 0, any node level shape inference errors
+  // are not thrown. This is to support backward compatiblity 
+  // with 1.7 and earlier releases. When set to 1 it will throw
+  // all exceptions.
+  // TODO: Add a more granular way for exception handling.
+  if (error_mode > 0 && !inference_errors.empty()) {
     std::string full_errors = "Shape inference error(s): ";
     for (const std::string &error: inference_errors) {
       full_errors += error + "\n";
     }
-    throw std::runtime_error(full_errors);
+    fail_shape_inference(full_errors);
   }
 }
 
@@ -358,20 +364,23 @@ void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type,
-    const ISchemaRegistry* schema_registry
+    const ISchemaRegistry* schema_registry,
+    const int error_mode
     ) {
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       check_type,
+      error_mode,
       schema_registry);
 }
 
 void InferShapes(
     ModelProto& m,
     const bool check_type,
-    const ISchemaRegistry* schema_registry
+    const ISchemaRegistry* schema_registry,
+    const int error_mode
     ) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
@@ -384,16 +393,18 @@ void InferShapes(
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       check_type,
+      error_mode,
       schema_registry,
       m.ir_version());
 }
 
 void InferShapes(
-  const std::string& model_path,
-  const bool check_type,
-  const std::string& save_path,
-  const ISchemaRegistry* schema_registry
-  ) {
+    const std::string& model_path,
+    const bool check_type,
+    const std::string& save_path,
+    const ISchemaRegistry* schema_registry,
+    const int error_mode
+    ) {
   ModelProto model;
   std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
   if (!model_stream.good()) {
@@ -410,7 +421,7 @@ void InferShapes(
         model_path,
         ". Please check if it is a valid protobuf file of model.");
   }
-  InferShapes(model, check_type, schema_registry);
+  InferShapes(model, check_type, schema_registry, error_mode);
   // Save the inferred model to the original model path
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
   std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
@@ -563,6 +574,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
+      false,
       false,
       context_->schema_registry);
 
