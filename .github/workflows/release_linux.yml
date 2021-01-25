@@ -39,7 +39,16 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build manylinux Python wheels
-      uses: ./.github/workflows/manylinux
+      uses: ./.github/workflows/manylinux/i686
+      with:
+        python-versions: ${{ matrix.python-version }}
+        build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
+        system-packages: 'cmake3'
+
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Build manylinux Python wheels
+      uses: ./.github/workflows/manylinux/x86_64
       with:
         python-versions: ${{ matrix.python-version }}
         build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
