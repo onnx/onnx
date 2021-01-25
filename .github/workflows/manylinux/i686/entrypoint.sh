@@ -1,3 +1,5 @@
+#  Same as x86_64
+
 #!/bin/bash
 set -e -x
 

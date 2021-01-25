@@ -1,4 +1,4 @@
-# action.yml to manylinux docker
+# action.yml to manylinux docker; Same as x86_64
 
 name: 'manylinux docker'
 description: 'Run manylinux docker to build wheel'
@@ -18,7 +18,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'Dockerfile_i686'
+  image: 'Dockerfile'
   args:
     - ${{ inputs.python-versions }}
     - ${{ inputs.build-requirements }}

@@ -38,7 +38,7 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Build manylinux Python wheels
+    - name: Build i686 manylinux Python wheels
       uses: ./.github/workflows/manylinux/i686
       with:
         python-versions: ${{ matrix.python-version }}
@@ -47,7 +47,7 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Build manylinux Python wheels
+    - name: Build x86_64 manylinux Python wheels
       uses: ./.github/workflows/manylinux/x86_64
       with:
         python-versions: ${{ matrix.python-version }}
