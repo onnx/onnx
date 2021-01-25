@@ -545,7 +545,12 @@ def main():
     test_op_upgrade('Slice', 1, [[3, 4, 5]], [[3, 2, 2]], 
         attrs={'axes': [1, 2], 'starts': [0, 1], 'ends': [2, 3]}
     )
-    test_op_upgrade('Softmax', 1)
+    test_op_upgrade('Softmax', 1, attrs={'axis': 0}, suffix='axis-0')
+    test_op_upgrade('Softmax', 1, attrs={'axis': 1}, suffix='axis-1')
+    test_op_upgrade('Softmax', 1, attrs={'axis': 2}, suffix='axis-2')
+    test_op_upgrade('Softmax', 1, attrs={'axis': -1}, suffix='axis-neg-1')
+    test_op_upgrade('Softmax', 1, attrs={'axis': -2}, suffix='axis-neg-2')
+    test_op_upgrade('Softmax', 1, attrs={'axis': -3}, suffix='axis-neg-3')
     test_op_upgrade('Softplus', 1)
     test_op_upgrade('Softsign', 1)
     test_op_upgrade('SoftmaxCrossEntropyLoss', 12, [[3, 4, 5, 6], [3, 6]], [[]], 
