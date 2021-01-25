@@ -222,13 +222,13 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<TypeRestriction>("Neg",
         OpSetID(6), OpSetID(5), neg_unallowed_types));
       registerAdapter(make_unique<BatchNormalization_6_5>());
-registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
         OpSetID(6), OpSetID(5)));
-registerAdapter(make_unique<CompatibleAdapter>("Relu",
+      registerAdapter(make_unique<CompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
-registerAdapter(make_unique<CompatibleAdapter>("Sum",
+      registerAdapter(make_unique<CompatibleAdapter>("Sum",
         OpSetID(6), OpSetID(5)));
-registerAdapter(make_unique<CompatibleAdapter>("Dropout",
+      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(6), OpSetID(5)));
       /******** 6 -> 7 ********/
       registerAdapter(make_unique<CompatibleAdapter>("AveragePool",

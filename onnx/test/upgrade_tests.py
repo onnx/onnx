@@ -284,80 +284,45 @@ def main():
     )
     test_op_upgrade('Log', 1, attrs={'consumed_inputs': [0]})
     test_op_upgrade('LogSoftmax', 1)
-    y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
-    y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
-    scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])
-    cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
-    cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
     iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
-    x_const_node = onnx.helper.make_node(
-        'Constant',
-        inputs=[],
-        outputs=['x'],
-        value=onnx.helper.make_tensor(
-            name='const_tensor_x',
-            data_type=onnx.TensorProto.FLOAT,
-            dims=[5],
-            vals=np.array([1, 2, 3, 4, 5]).astype(np.float32),
-        )
-    )
-    one_const_node = onnx.helper.make_node(
+    cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+    x_in = onnx.helper.make_tensor_value_info('x_in', onnx.TensorProto.FLOAT, [1])
+    cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+    x_out = onnx.helper.make_tensor_value_info('x_out', onnx.TensorProto.FLOAT, [1])
+    x_scan = onnx.helper.make_tensor_value_info('x_scan', onnx.TensorProto.FLOAT, [1])
+    const = onnx.helper.make_node(
         'Constant',
         inputs=[],
         outputs=['one'],
         value=onnx.helper.make_tensor(
-            name='const_tensor_one',
-            data_type=onnx.TensorProto.INT64,
-            dims=(),
-            vals=[1]
+            name='value',
+            data_type=onnx.TensorProto.FLOAT,
+            dims=[1],
+            vals=np.array([1]).astype(np.float32).astype(float),
         )
     )
-    i_add_node = onnx.helper.make_node(
+    add = onnx.helper.make_node(
         'Add',
-        inputs=['iter_count', 'one'],
-        outputs=['end']
+        inputs=['x_in', 'one'],
+        outputs=['x_out']
     )
-    start_unsqueeze_node = onnx.helper.make_node(
-        'Unsqueeze',
-        inputs=['iter_count'],
-        outputs=['slice_start'],
-        axes=[0]
+    id_1 = onnx.helper.make_node(
+        'Identity',
+        inputs=['x_out'],
+        outputs=['x_scan']
     )
-    end_unsqueeze_node = onnx.helper.make_node(
-        'Unsqueeze',
-        inputs=['end'],
-        outputs=['slice_end'],
-        axes=[0]
-    )
-    slice_node = onnx.helper.make_node(
-        'Slice',
-        inputs=['x', 'slice_start', 'slice_end'],
-        outputs=['slice_out']
-    )
-    y_add_node = onnx.helper.make_node(
-        'Add',
-        inputs=['y_in', 'slice_out'],
-        outputs=['y_out']
-    )
-    identity_node = onnx.helper.make_node(
+    id_2 = onnx.helper.make_node(
         'Identity',
         inputs=['cond_in'],
         outputs=['cond_out']
     )
-    scan_identity_node = onnx.helper.make_node(
-        'Identity',
-        inputs=['y_out'],
-        outputs=['scan_out']
-    )
     loop_body = onnx.helper.make_graph(
-        [identity_node, x_const_node, one_const_node, i_add_node,
-         start_unsqueeze_node, end_unsqueeze_node, slice_node, y_add_node,
-         scan_identity_node],
+        [const, add, id_1, id_2],
         'loop_body',
-        [iter_count, cond_in, y_in],
-        [cond_out, y_out, scan_out]
+        [iter_count, cond_in, x_in],
+        [cond_out, x_out, x_scan]
     )
-    test_op_upgrade('Loop', 11, [[], [], [1]], [[1], [5, 1]], 
+    test_op_upgrade('Loop', 1, [[], '', [1]], [[1], [5, 1]], 
         [TensorProto.INT64, TensorProto.BOOL, TensorProto.FLOAT], 
         attrs={'body': loop_body}
     )
