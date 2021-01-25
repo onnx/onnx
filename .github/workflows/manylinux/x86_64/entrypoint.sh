@@ -1,6 +1,6 @@
-#  Same as i686
-
 #!/bin/bash
+# Same as i686
+
 set -e -x
 
 # CLI arguments

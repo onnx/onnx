@@ -1,6 +1,6 @@
-#  Same as x86_64
-
 #!/bin/bash
+# Same as x86_64
+
 set -e -x
 
 # CLI arguments
