@@ -1,0 +1,77 @@
+name: MacRelease
+
+on:
+  push:
+    branches: [ master, rel-*]
+  pull_request:
+    branches: [ rel-* ]
+
+# Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
+env:
+  MACOSX_DEPLOYMENT_TARGET: 10.12
+
+jobs:
+  build:
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8]
+        architecture: ['x64']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q numpy==1.16.6 setuptools wheel
+
+    - name: Install protobuf dependencies
+      run: |
+        # Install protobuf 3.11.3
+        export NUM_CORES=`sysctl -n hw.ncpu`
+        echo Using $NUM_CORES cores
+        brew update
+        brew install autoconf && brew install automake
+        export ONNX_PATH=$(pwd)
+        cd ..
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
+        tar -xvf protobuf-cpp-3.11.3.tar.gz
+        cd protobuf-3.11.3
+        ./autogen.sh
+        ./configure --disable-shared
+        make -j${NUM_CORES} && make check && make install
+        cd $ONNX_PATH
+
+    - name: Build wheel and install
+      env:
+        CC: "clang"
+        CXX: "clang++"
+        ONNX_ML: 1
+      run: |
+        # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
+        # Change -p if MACOSX_DEPLOYMENT_TARGET is different
+        python setup.py bdist_wheel -p macosx_10_12_x86_64
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+
+    - name: Test the installed wheel
+      run: |
+        python -m pip install -q pytest==5.4.3 nbval
+        pytest
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: dist

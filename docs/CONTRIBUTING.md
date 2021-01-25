@@ -90,7 +90,7 @@ python setup.py typecheck
 
 # License
 
-[MIT License](https://github.com/onnx/onnx/blob/master/LICENSE)
+[Apache License v2.0](https://github.com/onnx/onnx/blob/master/LICENSE)
 
 # Code of Conduct
 
