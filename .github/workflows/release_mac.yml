@@ -3,9 +3,8 @@ name: MacRelease
 on:
   push:
     branches: [ master, rel-*]
-  # test this PR for now, remove it before the merge
   pull_request:
-    branches: [ master ]
+    branches: [ rel-* ]
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
