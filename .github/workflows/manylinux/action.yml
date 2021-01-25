@@ -1,0 +1,25 @@
+# action.yml to manylinux docker
+
+name: 'manylinux docker'
+description: 'Run manylinux docker to build wheel'
+inputs:
+  python-versions:
+    description: 'Python versions to target, space-separated'
+    required: true
+    default: '3.7'
+  build-requirements:
+    description: 'pip packages required at build time, space-separated'
+    required: false
+    default: ''
+  system-packages:
+    description: 'yum packages to install, space-separated'
+    required: false
+    default: ''
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.python-versions }}
+    - ${{ inputs.build-requirements }}
+    - ${{ inputs.system-packages }}
