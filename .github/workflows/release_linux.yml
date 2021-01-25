@@ -44,7 +44,7 @@ jobs:
         python-versions: ${{ matrix.python-version }}
         build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
         system-packages: 'cmake3'
-
+    # Currently we only test x86_64 packages; i686 packages are not tested
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
         python -m pip install dist/*-manylinux2010_x86_64.whl

@@ -18,7 +18,15 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'Dockerfile_i686'
+  args:
+    - ${{ inputs.python-versions }}
+    - ${{ inputs.build-requirements }}
+    - ${{ inputs.system-packages }}
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile_x86_64'
   args:
     - ${{ inputs.python-versions }}
     - ${{ inputs.build-requirements }}
