@@ -1,10 +1,12 @@
 #!/bin/bash
+
 set -e -x
 
 # CLI arguments
 PY_VERSIONS=$1
-BUILD_REQUIREMENTS=$2
-SYSTEM_PACKAGES=$3
+PLAT=$2
+BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
+SYSTEM_PACKAGES='cmake3'
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
