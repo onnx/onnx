@@ -1,12 +1,12 @@
 #!/bin/bash
-# Same as x86_64
 
 set -e -x
 
 # CLI arguments
 PY_VERSIONS=$1
-BUILD_REQUIREMENTS=$2
-SYSTEM_PACKAGES=$3
+PLAT=$2
+BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
+SYSTEM_PACKAGES='cmake3'
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
@@ -53,7 +53,11 @@ if [ ! -z "$BUILD_REQUIREMENTS" ]; then
 fi
 
 # Build wheels
-/opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
+if [ "$PLAT" = "i686" ]; then
+    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist_i686 --no-deps || { echo "Building wheels failed."; exit 1; }
+else
+    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
+fi
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures

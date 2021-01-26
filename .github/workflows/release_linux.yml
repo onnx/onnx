@@ -36,23 +36,23 @@ jobs:
         python -m pip install numpy protobuf==3.11.3
         sudo apt-get install protobuf-compiler libprotoc-dev
 
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Build i686 manylinux Python wheels
-      uses: ./.github/workflows/manylinux/i686
+    - name: Build manylinux2010_i686
+      uses: docker://quay.io/pypa/manylinux2010_i686
       with:
-        python-versions: ${{ matrix.python-version }}
-        build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
-        system-packages: 'cmake3'
+        entrypoint: bash
+        args: manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686
 
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Build x86_64 manylinux Python wheels
-      uses: ./.github/workflows/manylinux/x86_64
+    - uses: actions/upload-artifact@v1
       with:
-        python-versions: ${{ matrix.python-version }}
-        build-requirements: 'numpy==1.16.6 protobuf==3.11.3'
-        system-packages: 'cmake3'
+        name: wheels
+        path: dist_i686
+
+    - name: Build manylinux2010_x86_64
+      uses: docker://quay.io/pypa/manylinux2010_x86_64
+      with:
+        entrypoint: bash
+        args: manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_x86_64
+
     # Currently we only test x86_64 packages; i686 packages are not tested
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
