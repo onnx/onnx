@@ -5,7 +5,7 @@ on:
     branches: [ master, rel-*]
   # test this PR for now, remove it before the merge
   pull_request:
-    branches: [ master-* ]
+    branches: [ master ]
 
 jobs:
   build:
