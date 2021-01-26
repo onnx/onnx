@@ -1,4 +1,4 @@
-name: LinuxRelease
+name: LinuxRelease_x86_64
 
 on:
   push:

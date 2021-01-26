@@ -68,7 +68,7 @@ if [[ -f "$failed_wheels" ]]; then
 fi
 
 # Remove useless *-linux*.whl; only keep -manylinux*.whl
-rm -f "*-linux*.whl"
+rm -f "dist/*-linux*.whl"
 
 echo "Succesfully build wheels:"
 find . -type f -iname "*-manylinux*.whl"
