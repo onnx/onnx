@@ -53,11 +53,7 @@ if [ ! -z "$BUILD_REQUIREMENTS" ]; then
 fi
 
 # Build wheels
-if [ "$PLAT" = "manylinux2010_i686" ]; then
-    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist_i686 --no-deps || { echo "Building wheels failed."; exit 1; }
-else
-    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
-fi
+/opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures

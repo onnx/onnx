@@ -45,7 +45,11 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
-        path: dist_i686
+        path: dist
+
+    - name: Remove installed i686 dist/ to keep it empty for x86_64
+      run: |
+        rm -rf dist/
 
     - name: Build manylinux2010_x86_64
       uses: docker://quay.io/pypa/manylinux2010_x86_64
