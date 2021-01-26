@@ -1,11 +1,11 @@
-name: LinuxRelease
+name: LinuxRelease_x86_64
 
 on:
   push:
     branches: [ master, rel-*]
   # test this PR for now, remove it before the merge
   pull_request:
-    branches: [ rel-* ]
+    branches: [ master-* ]
 
 jobs:
   build:

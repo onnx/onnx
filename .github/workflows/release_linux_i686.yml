@@ -1,11 +1,11 @@
-name: LinuxRelease
+name: LinuxRelease_i686
 
 on:
   push:
     branches: [ master, rel-*]
   # test this PR for now, remove it before the merge
   pull_request:
-    branches: [ rel-* ]
+    branches: [ master-* ]
 
 jobs:
   build:
@@ -46,10 +46,5 @@ jobs:
       with:
         name: wheels
         path: dist
-
     # Currently we only test x86_64 packages; i686 packages are not tested
-    - name: Test wheel with Python ${{ matrix.python-version }}
-      run: |
-        python -m pip install dist/*-manylinux2010_x86_64.whl
-        python -m pip install pytest==5.4.3 nbval
-        pytest
+    # TODO test it via i686 docker
