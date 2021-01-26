@@ -53,27 +53,22 @@ if [ ! -z "$BUILD_REQUIREMENTS" ]; then
 fi
 
 # Build wheels
-if [ "$PLAT" = "manylinux2010_i686" ]; then
-    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist_i686 --no-deps || { echo "Building wheels failed."; exit 1; }
-else
-    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
-fi
+/opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures
 failed_wheels=$PWD/failed-wheels
 rm -f "$failed_wheels"
-if [ "$PLAT" = "manylinux2010_i686" ]; then
-    find . -type f -iname "dist_i686/*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> "$failed_wheels"; }" \;
-else
-    find . -type f -iname "dist/*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> "$failed_wheels"; }" \;
-fi
+find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> "$failed_wheels"; }" \;
 
 if [[ -f "$failed_wheels" ]]; then
     echo "Repairing wheels failed:"
     cat failed-wheels
     exit 1
 fi
+
+# Remove useless *-linux*.whl; only keep -manylinux*.whl
+rm -f "*-linux*.whl"
 
 echo "Succesfully build wheels:"
 find . -type f -iname "*-manylinux*.whl"
