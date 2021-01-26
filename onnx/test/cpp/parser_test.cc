@@ -105,6 +105,15 @@ TEST(ParserTest, NodeTest) {
   EXPECT_EQ(n.op_type(), "foo");
 }
 
+TEST(ParserTest, QualifiedOpNameTest) {
+  const char* code = "x = com.example.foo(y, z)";
+  NodeProto n;
+  OnnxParser::Parse(n, code);
+
+  EXPECT_EQ(n.domain(), "com.example");
+  EXPECT_EQ(n.op_type(), "foo");
+}
+
 TEST(ParserTest, NodeListTest) {
   const char* code = R"ONNX(
 {

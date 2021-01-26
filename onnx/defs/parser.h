@@ -403,8 +403,16 @@ class OnnxParser : public ParserBase {
   void Parse(NodeProto& node) {
     ParseIdList(*node.mutable_output());
     Match('=');
-    node.set_domain(""); // TODO
-    node.set_op_type(ParseIdentifier());
+    std::string domain("");
+    auto id = ParseIdentifier();
+    while (Matches('.')) {
+      if (!domain.empty())
+        domain += ".";
+      domain += id;
+      id = ParseIdentifier();
+    }
+    node.set_domain(domain); // TODO
+    node.set_op_type(id);
     Parse(*node.mutable_attribute());
     Match('(');
     ParseIdList(*node.mutable_input());
