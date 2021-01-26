@@ -53,18 +53,10 @@ if [ ! -z "$BUILD_REQUIREMENTS" ]; then
 fi
 
 # Build wheels
-/opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
-
-# Bundle external shared libraries into the wheels
-# find -exec does not preserve failed exit codes, so use an output file for failures
-failed_wheels=$PWD/failed-wheels
-rm -f "$failed_wheels"
-find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> "$failed_wheels"; }" \;
-
-if [[ -f "$failed_wheels" ]]; then
-    echo "Repairing wheels failed:"
-    cat failed-wheels
-    exit 1
+if [ "$PLAT" = "manylinux2010_i686" ]; then
+    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist_i686 --no-deps || { echo "Building wheels failed."; exit 1; }
+else
+    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
 fi
 
 echo "Succesfully build wheels:"
