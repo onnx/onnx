@@ -40,7 +40,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2010_i686
       with:
         entrypoint: bash
-        args: manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686
 
     - uses: actions/upload-artifact@v1
       with:
@@ -51,7 +51,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2010_x86_64
       with:
         entrypoint: bash
-        args: manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_x86_64
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_x86_64
 
     # Currently we only test x86_64 packages; i686 packages are not tested
     - name: Test wheel with Python ${{ matrix.python-version }}
