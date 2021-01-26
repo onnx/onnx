@@ -119,6 +119,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
         }
       }
 
+      /******** 1 -> 2 ********/
+      // Missing in this group: GlobalLpPool, LpPool, Pad, Split
+
+      /******** 2 -> 3 ********/
+      // Missing in this group: GRU
+
       /******** 3 -> 4 ********/
       registerAdapter(make_unique<Concat_3_4>());
 
@@ -139,6 +145,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Reshape_5_4>());
 
       /******** 5 -> 6 ********/
+      // Missing in this group: Cast, Tile
       registerAdapter(make_unique<RemoveConsumedInputs>("Add",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
@@ -231,10 +238,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(6), OpSetID(5)));
+
       /******** 6 -> 7 ********/
-      registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
-        OpSetID(6), OpSetID(7)));
+      // Missing in this group: And, Equal, Greater, GRU, Less, LSTM, Or, RNN, Upsample, Xor
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Div",
         OpSetID(6), OpSetID(7)));

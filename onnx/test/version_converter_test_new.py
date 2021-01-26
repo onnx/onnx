@@ -76,7 +76,8 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('Acosh', 9)
     def test_Acos(self):    
         self._test_op_upgrade('Acos', 7)
-    def test_And(self):    
+    def test_And(self):
+        # 6->7 adapter is missing 
         self._test_op_upgrade('And', 7, [[2, 3], [2, 3]], [[2, 3]], 
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
@@ -137,7 +138,8 @@ class TestVersionConverterNew(unittest.TestCase):
             [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3], [3], [3]], 
             attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1}
         )
-    def test_Cast(self):    
+    def test_Cast(self):
+        # 5->6 adapter is missing
         self._test_op_upgrade('Cast', 6, [[2, 3]], [[2, 3]], [TensorProto.INT64], attrs={'to': 1})
     def test_Ceil(self):    
         self._test_op_upgrade('Ceil', 1, attrs={'consumed_inputs': [0]})
@@ -221,7 +223,8 @@ class TestVersionConverterNew(unittest.TestCase):
         )
     def test_Elu(self):    
         self._test_op_upgrade('Elu', 1, attrs={'consumed_inputs': [0]})
-    def test_Equal(self):    
+    def test_Equal(self):
+        # 6->7 adapter is missing
         self._test_op_upgrade('Equal', 7, [[2, 3], [2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
     def test_Erf(self):    
         self._test_op_upgrade('Erf', 9)
@@ -260,32 +263,37 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('GlobalAveragePool', 1, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
     def test_GlobalMaxPool(self):    
         self._test_op_upgrade('GlobalMaxPool', 1, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
-    def test_GlobalLpPool(self):    
+    def test_GlobalLpPool(self):
+        # 1->2 adapter is missing
         self._test_op_upgrade('GlobalLpPool', 2, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
-    def test_GRU_1(self):    
-        self._test_op_upgrade('GRU', 7, 
-            [[5, 3, 4], [1, 18, 4], [1, 18, 4]], [[5, 1, 3, 6], [1, 3, 6]], 
-            attrs={'hidden_size': 6}
-        )
-    def test_GRU_2(self):    
-        self._test_op_upgrade('GRU', 7, 
-            [[5, 3, 4], [2, 18, 4], [2, 18, 4]], [[5, 2, 3, 6], [2, 3, 6]], 
-            attrs={'hidden_size': 6, 'direction': 'bidirectional'}
-        )
-    def test_GRU_3(self):    
-        self._test_op_upgrade('GRU', 7, 
-            [[5, 3, 4], [1, 18, 4], [1, 18, 4], [1, 24], [5], [1, 5, 6]], 
-            [[5, 1, 3, 6], [1, 3, 6]], 
-            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT], 
-            attrs={'hidden_size': 6}
-        )
-    def test_Greater(self):    
+    def test_Greater(self):
+        # 6->7 adapter is missing
         self._test_op_upgrade('Greater', 7, [[2, 3], [2, 3]], [[2, 3]], 
             output_types=[TensorProto.BOOL]
         )
     def test_GreaterOrEqual(self):    
         self._test_op_upgrade('GreaterOrEqual', 12, [[2, 3], [2, 3]], [[2, 3]], 
             output_types=[TensorProto.BOOL]
+        )
+    def test_GRU_1(self):
+        # 2->3, 6->7 adapters are missing
+        self._test_op_upgrade('GRU', 7, 
+            [[5, 3, 4], [1, 18, 4], [1, 18, 4]], [[5, 1, 3, 6], [1, 3, 6]], 
+            attrs={'hidden_size': 6}
+        )
+    def test_GRU_2(self):
+        # 2->3, 6->7 adapters are missing 
+        self._test_op_upgrade('GRU', 7, 
+            [[5, 3, 4], [2, 18, 4], [2, 18, 4]], [[5, 2, 3, 6], [2, 3, 6]], 
+            attrs={'hidden_size': 6, 'direction': 'bidirectional'}
+        )
+    def test_GRU_3(self):
+        # 2->3, 6->7 adapters are missing 
+        self._test_op_upgrade('GRU', 7, 
+            [[5, 3, 4], [1, 18, 4], [1, 18, 4], [1, 24], [5], [1, 5, 6]], 
+            [[5, 1, 3, 6], [1, 3, 6]], 
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT], 
+            attrs={'hidden_size': 6}
         )
     def test_HardSigmoid(self):    
         self._test_op_upgrade('HardSigmoid', 1, attrs={'consumed_inputs': [0]})
@@ -324,7 +332,8 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('IsNaN', 9, [[2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
     def test_LeakyRelu(self):    
         self._test_op_upgrade('LeakyRelu', 1, attrs={'consumed_inputs': [0]})
-    def test_Less(self):    
+    def test_Less(self):
+        # 6->7 adapter is missing  
         self._test_op_upgrade('Less', 7, [[2, 3], [2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
     def test_LessOrEqual(self):    
         self._test_op_upgrade('LessOrEqual', 12, [[2, 3], [2, 3]], [[2, 3]], 
@@ -379,7 +388,8 @@ class TestVersionConverterNew(unittest.TestCase):
         )
     def test_LpNormalization(self):    
         self._test_op_upgrade('LpNormalization', 1)
-    def test_LpPool(self):    
+    def test_LpPool(self):
+        # 1->2 adapter is missing
         self._test_op_upgrade('LpPool', 2, [[1, 1, 5, 5]], [[1, 1, 4, 4]], 
             attrs={'kernel_shape': [2, 2]}
         )
@@ -389,19 +399,22 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('LRN', 1, [[2, 3, 4, 5]], [[2, 3, 4, 5]],
             attrs={'size': 3}
         )
-    def test_LSTM_1(self):    
+    def test_LSTM_1(self):
+        # 6->7 adapter is missing   
         self._test_op_upgrade('LSTM', 7, 
             [[5, 3, 4], [1, 24, 4], [1, 24, 4]], 
             [[5, 1, 3, 6], [1, 3, 6], [1, 3, 6]], 
             attrs={'hidden_size': 6}
         )
-    def test_LSTM_2(self):    
+    def test_LSTM_2(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('LSTM', 7, 
             [[5, 3, 4], [2, 24, 4], [2, 24, 4]], 
             [[5, 2, 3, 6], [2, 3, 6], [2, 3, 6]], 
             attrs={'hidden_size': 6, 'direction': 'bidirectional'}
         )
-    def test_LSTM_3(self):    
+    def test_LSTM_3(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('LSTM', 7, 
             [[5, 3, 4], [1, 24, 4], [1, 24, 4], [1, 48], [5], [1, 5, 6], [1, 5, 6], [1, 18]], 
             [[5, 1, 3, 6], [1, 3, 6], [1, 3, 6]], 
@@ -491,11 +504,13 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('Not', 1, [[2, 3]], [[2, 3]], [TensorProto.BOOL], [TensorProto.BOOL])
     def test_OneHot(self):    
         self._test_op_upgrade('OneHot', 9, [[3, 4, 5], [], [2]], [[3, 4, 5, 6]])
-    def test_Or(self):    
+    def test_Or(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('Or', 7, [[2, 3], [2, 3]], [[2, 3]], 
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
-    def test_Pad(self):    
+    def test_Pad(self):
+        # 1->2 adapter is missing    
         self._test_op_upgrade('Pad', 2, [[3, 4]], [[5, 8]], 
             attrs={'pads': [1, 2, 1, 2], 'value': 1.5}
         )
@@ -580,15 +595,18 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('ReverseSequence', 10, [[3, 4, 5], [4]], [[3, 4, 5]], 
             [TensorProto.FLOAT, TensorProto.INT64]
         )
-    def test_RNN_1(self):    
+    def test_RNN_1(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('RNN', 7, [[5, 3, 4], [1, 6, 4], [1, 6, 4]], [[5, 1, 3, 6], [1, 3, 6]], 
             attrs={'hidden_size': 6}
         )
-    def test_RNN_2(self):    
+    def test_RNN_2(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('RNN', 7, [[5, 3, 4], [2, 6, 4], [2, 6, 4]], [[5, 2, 3, 6], [2, 3, 6]], 
             attrs={'hidden_size': 6, 'direction': 'bidirectional'}
         )
-    def test_RNN_3(self):    
+    def test_RNN_3(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('RNN', 7, 
             [[5, 3, 4], [1, 6, 4], [1, 6, 4], [1, 12], [5], [1, 5, 6]], 
             [[5, 1, 3, 6], [1, 3, 6]], 
@@ -684,7 +702,8 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('SpaceToDepth', 1, [[1, 3, 8, 8]], [[1, 12, 4, 4]], 
             attrs={'blocksize': 2}
         )
-    def test_Split(self):    
+    def test_Split(self):
+        # 1->2 adapter is missing    
         self._test_op_upgrade('Split', 2, [[3, 4, 7]], [[3, 4, 2], [3, 4, 1], [3, 4, 4]], 
             attrs={'axis': 2, 'split': [2, 1, 4]}
         )
@@ -716,6 +735,7 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_ThresholdedRelu(self):    
         self._test_op_upgrade('ThresholdedRelu', 10)
     def test_Tile(self):
+        # 5->6 adapter is missing
         repeats = helper.make_tensor('b', TensorProto.INT64, dims=[3], vals=np.array([1, 2, 3]))
         self._test_op_upgrade('Tile', 6, [[3, 4, 5], [3]], [[3, 8, 15]], 
             [TensorProto.FLOAT, TensorProto.INT64], 
@@ -738,7 +758,8 @@ class TestVersionConverterNew(unittest.TestCase):
         )
     def test_Unsqueeze(self):    
         self._test_op_upgrade('Unsqueeze', 1, [[3, 4, 5]], [[3, 4, 1, 5]], attrs={'axes': [2]})
-    def test_Upsample(self):    
+    def test_Upsample(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('Upsample', 7, [[3, 4, 5]], [[6, 6, 10]], 
             attrs={'scales': [2., 1.5, 2.]}
         )
@@ -746,7 +767,8 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('Where', 9, [[2, 3], [2, 3], [2, 3]], [[2, 3]], 
             [TensorProto.BOOL, TensorProto.FLOAT, TensorProto.FLOAT]
         )
-    def test_Xor(self):    
+    def test_Xor(self):
+        # 6->7 adapter is missing    
         self._test_op_upgrade('Xor', 7, [[2, 3], [2, 3]], [[2, 3]], 
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
