@@ -45,7 +45,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
-        path: dists_i686
+        path: dist_i686
 
     - name: Build manylinux2010_x86_64
       uses: docker://quay.io/pypa/manylinux2010_x86_64
