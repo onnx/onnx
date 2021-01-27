@@ -2,10 +2,9 @@ name: LinuxRelease_i686
 
 on:
   push:
-    branches: [ master, rel-*]
-  # test this PR for now, remove it before the merge
+    branches: [master, rel-*]
   pull_request:
-    branches: [ master ]
+    branches: [rel-*]
 
 jobs:
   build:
@@ -42,7 +41,7 @@ jobs:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686
 
-    - name: Build manylinux2010_i686
+    - name: Test manylinux2010_i686 package in a clean docker environment
       uses: docker://quay.io/pypa/manylinux2010_i686
       with:
         entrypoint: bash
