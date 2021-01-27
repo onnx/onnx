@@ -18587,7 +18587,6 @@ This version of the operator has been available since version 13 of the default 
 </dl>
 
 ## Version 14 of the default ONNX operator set
-<<<<<<< HEAD
 ### <a name="CumSum-14"></a>**CumSum-14**</a>
 
   Performs cumulative sum of the input elements along the given axis.
@@ -18610,17 +18609,6 @@ This version of the operator has been available since version 13 of the default 
   output = [5, 3, 0]
   ```
    
-=======
-### <a name="Reshape-14"></a>**Reshape-14**</a>
-
-  Reshape the input tensor similar to numpy.reshape.
-  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
-  At most one dimension of the new shape can be -1. In this case, the value is
-  inferred from the size of the tensor and the remaining dimensions. A dimension
-  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
-  dimension will be set explicitly to zero (i.e. not taken from input tensor)
->>>>>>> update test case
 
 #### Version
 
@@ -18629,49 +18617,31 @@ This version of the operator has been available since version 14 of the default 
 #### Attributes
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>exclusive</tt> : int (default is 0)</dt>
 <dd>If set to 1 will return exclusive sum in which the top element is not included. In other terms, if set to 1, the j-th output element would be the sum of the first (j-1) elements. Otherwise, it would be the sum of the first j elements.</dd>
 <dt><tt>reverse</tt> : int (default is 0)</dt>
 <dd>If set to 1 will perform the sums in reverse direction.</dd>
-=======
-<dt><tt>allowzero</tt> : int (default is 0)</dt>
-<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any value in the 'shape' input is set to zero, the zero value is honored, similar to NumPy.</dd>
->>>>>>> update test case
 </dl>
 
 #### Inputs
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>x</tt> (differentiable) : T</dt>
 <dd>An input tensor that is to be processed.</dd>
 <dt><tt>axis</tt> (non-differentiable) : T2</dt>
 <dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
-=======
-<dt><tt>data</tt> (differentiable) : T</dt>
-<dd>An input tensor.</dd>
-<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Specified shape for output.</dd>
->>>>>>> update test case
 </dl>
 
 #### Outputs
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>y</tt> (differentiable) : T</dt>
 <dd>Output tensor of the same type as 'x' with cumulative sums of the x's elements</dd>
-=======
-<dt><tt>reshaped</tt> (differentiable) : T</dt>
-<dd>Reshaped data.</dd>
->>>>>>> update test case
 </dl>
 
 #### Type Constraints
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
@@ -18707,10 +18677,50 @@ This version of the operator has been available since version 14 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to signed numeric tensors.</dd>
-=======
+</dl>
+
+### <a name="Reshape-14"></a>**Reshape-14**</a>
+
+  Reshape the input tensor similar to numpy.reshape.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
+  At most one dimension of the new shape can be -1. In this case, the value is
+  inferred from the size of the tensor and the remaining dimensions. A dimension
+  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
+  from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
+  dimension will be set explicitly to zero (i.e. not taken from input tensor)
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>allowzero</tt> : int (default is 0)</dt>
+<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any value in the 'shape' input is set to zero, the zero value is honored, similar to NumPy.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>An input tensor.</dd>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Specified shape for output.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reshaped</tt> (differentiable) : T</dt>
+<dd>Reshaped data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
->>>>>>> update test case
 </dl>
 
 # ai.onnx.preview.training

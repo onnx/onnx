@@ -116,13 +116,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|
-<<<<<<< HEAD
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
-|<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
-=======
-|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
->>>>>>> update test case
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-10">10</a>|
@@ -584,11 +579,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
-  Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-  If select_last_index is True (default False), the index of the last occurrence of the max 
-  is selected if the max appears more than once in the input. Otherwise the index of the 
+  Computes the indices of the max elements of the input tensor's element along the
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  If select_last_index is True (default False), the index of the last occurrence of the max
+  is selected if the max appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
   The type of the output tensor is integer.
 
@@ -845,11 +840,11 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
-  Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-  If select_last_index is True (default False), the index of the last occurrence of the min 
-  is selected if the min appears more than once in the input. Otherwise the index of the 
+  Computes the indices of the min elements of the input tensor's element along the
+  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
+  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  If select_last_index is True (default False), the index of the last occurrence of the min
+  is selected if the min appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
   The type of the output tensor is integer.
 
@@ -1967,15 +1962,7 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
    Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
    and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
    X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-   
->>>>>>> Upgrade to opset 14
    Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
    not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -2395,17 +2382,8 @@ expect(node, inputs=[x], outputs=[y],
 
   Continuously Differentiable Exponential Linear Units:
   Perform the linear unit element-wise on the input tensor X
-<<<<<<< HEAD
   using formula:
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  using formula: 
-  
->>>>>>> Upgrade to opset 14
   ```
   max(0,x) + min(0,alpha*(exp(x/alpha)-1))
   ```
@@ -6410,8 +6388,6 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
   where each element defines a slice of `data`
@@ -6421,59 +6397,21 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   
   Some salient points about the inputs' rank and shape:
   
-=======
-
-=======
-  
->>>>>>> Upgrade to opset 14
-  `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
-  where each element defines a slice of `data`
-  
-  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
-  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
-  
-  Some salient points about the inputs' rank and shape:
-<<<<<<< HEAD
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
   
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
   
   3) b < min(q, r) is to be honored.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
   4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
   
-=======
-
-  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
-  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
-  
->>>>>>> Upgrade to opset 14
   5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
   
   The output is computed as follows:
   
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
   1) If `indices_shape[-1] > r-b` => error condition
   
   2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
@@ -6515,21 +6453,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
     indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
     output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
   
-=======
-
-    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
-    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-  
->>>>>>> Upgrade to opset 14
   `Example 4`
   
     batch_dims = 0
@@ -6537,21 +6463,9 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
   
-=======
-
-    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
-    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-  
->>>>>>> Upgrade to opset 14
   `Example 5`
   
     batch_dims = 1
@@ -6559,24 +6473,10 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
   
     indices = [[1],[0]]             # indices_shape = [2, 1]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
     output  = [[2,3],[4,5]]             # output_shape = [2, 2]
   
   
-=======
-
-    output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
-    output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-  
-  
->>>>>>> Upgrade to opset 14
 
 #### Version
 
@@ -7439,8 +7339,8 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">1</a>, <a href
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-Describes the dimension Hardmax will be performed on. 
-Negative value means counting dimensions 
+Describes the dimension Hardmax will be performed on.
+Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
@@ -8741,8 +8641,8 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a h
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-Describes the dimension LogSoftmax will be performed on. 
-Negative value means counting dimensions 
+Describes the dimension LogSoftmax will be performed on.
+Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
@@ -10601,33 +10501,16 @@ for op_dtype in all_numeric_dtypes:
 
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
-  Performs element-wise binary modulus (with Numpy-style broadcasting support). 
+  Performs element-wise binary modulus (with Numpy-style broadcasting support).
       The sign of the remainder is the same as that of the Divisor.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
       Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-=======
-    
-      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend 
->>>>>>> Upgrade to opset 14
       (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-      This attribute is set to 0 by default causing the behavior to be like integer mod. 
+      This attribute is set to 0 by default causing the behavior to be like integer mod.
       Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
   
       If the input type is floating point, then `fmod` attribute must be set to 1.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-    
->>>>>>> Upgrade to opset 14
       In case of dividend being zero, the results will be platform dependent.
   
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -11148,15 +11031,7 @@ expect(node, inputs=[x], outputs=[y],
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
   
   loss is zero for the case when target-value equals ignore_index.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-      
->>>>>>> Upgrade to opset 14
       loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
   
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
@@ -12614,44 +12489,20 @@ expect(node, inputs=[x, slope], outputs=[y],
   
   Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     data =
     [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     pads = [0, 2, 0, 0]
   
     mode = 'constant'
   
     constant_value = 0.0
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     output =
     [
         [0.0, 0.0, 1.0, 1.2],
@@ -12667,27 +12518,11 @@ expect(node, inputs=[x, slope], outputs=[y],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     pads = [0, 2, 0, 0]
   
     mode = 'reflect'
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     output =
     [
         [1.0, 1.2, 1.0, 1.2],
@@ -12703,27 +12538,11 @@ expect(node, inputs=[x, slope], outputs=[y],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     pads = [0, 2, 0, 0]
   
     mode = 'edge'
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     output =
     [
         [1.0, 1.0, 1.0, 1.2],
@@ -12994,7 +12813,7 @@ expect(node, inputs=[x, y], outputs=[z],
   and computes the quantized output. Each scale and zero-point pair must have same shape.
   It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
   Each input or output and its related zero point must have same type.
-  When bias is present it must be quantized using scale = input scale * weight scale and 
+  When bias is present it must be quantized using scale = input scale * weight scale and
   zero point as 0.
 
 #### Version
@@ -19079,8 +18898,8 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>
-Describes the dimension Softmax will be performed on. 
-Negative value means counting dimensions 
+Describes the dimension Softmax will be performed on.
+Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
@@ -22005,35 +21824,15 @@ expect(node, inputs=[data], outputs=[transposed],
 
   Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
   Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
   The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
   The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
   
-=======
-
-  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
-  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
-  
->>>>>>> Upgrade to opset 14
   https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
   
   Example 1:
@@ -22068,76 +21867,32 @@ expect(node, inputs=[data], outputs=[transposed],
                [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
     attribute_sorted = 1
     attribute_axis = 1
-<<<<<<< HEAD
-<<<<<<< HEAD
   
     intermediate data are presented below for better understanding:
   
-=======
-
-    intermediate data are presented below for better understanding:
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
-    intermediate data are presented below for better understanding:
-  
->>>>>>> Upgrade to opset 14
     there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
     A: [[1, 1], [1, 1]],
        [[0, 1], [0, 1]],
        [[2, 1], [2, 1]],
        [[0, 1], [0, 1]].
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     there are 3 unique subtensors:
     [[1, 1], [1, 1]],
     [[0, 1], [0, 1]],
     [[2, 1], [2, 1]].
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     sorted unique subtensors:
     B: [[0, 1], [0, 1]],
        [[1, 1], [1, 1]],
        [[2, 1], [2, 1]].
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     output_Y is constructed from B:
     [[[0. 1.], [1. 1.], [2. 1.]],
      [[0. 1.], [1. 1.], [2. 1.]]]
   
     output_indices is to map from B to A:
     [1, 0, 2]
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
     output_inverse_indices is to map from A to B:
     [1, 0, 2, 0]
   
@@ -22351,15 +22106,7 @@ expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], n
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-  
->>>>>>> Upgrade to opset 14
 
 #### Version
 
@@ -22765,30 +22512,13 @@ expect(node, inputs=[x, y], outputs=[z],
   
       Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
       some parameters:
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-       
->>>>>>> Upgrade to opset 14
        - The initial learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
        - A L2-norm regularization coefficient "norm_coefficient".
        - A learning-rate decay factor "decay_factor".
-<<<<<<< HEAD
        - A small constant "epsilon" to avoid dividing-by-zero.
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-       - A small constant "epsilon" to avoid dividing-by-zero. 
-  
->>>>>>> Upgrade to opset 14
       At each ADAGRAD iteration, the optimized tensors are moved along a direction
       computed based on their estimated gradient and accumulated squared gradient. Assume
       that only a single tensor "X" is updated by this operator. We need the value of "X",
@@ -22968,34 +22698,18 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
   
       Let's define the behavior of this operator. First of all, Adam requires
       some parameters:
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-       
->>>>>>> Upgrade to opset 14
        - The learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
        - A L2-norm regularization coefficient "norm_coefficient".
-       - A small constant "epsilon" to avoid dividing-by-zero. 
+       - A small constant "epsilon" to avoid dividing-by-zero.
        - Two coefficients, "alpha" and "beta".
   
       At each Adam iteration, the optimized tensors are moved along a direction
       computed based on their exponentially-averaged historical gradient and
       exponentially-averaged historical squared gradient. Assume that only a tensor
       "X" is being optimized. The rest of required information is
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-      
->>>>>>> Upgrade to opset 14
        - the value of "X",
        - "X"'s gradient (denoted by "G"),
        - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
@@ -23005,17 +22719,8 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
       are stored as this operator's attributes. Specifically, this operator's input tensor
       list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
       the second input, and so on. Other parameters are given as attributes because they
-<<<<<<< HEAD
       are constants. Moreover, the corresponding output tensors are
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-      are constants. Moreover, the corresponding output tensors are 
-      
->>>>>>> Upgrade to opset 14
        - the new value of "X" (called "X_new"),
        - the new exponentially-averaged historical gradient (denoted by "V_new"), and
        - the new exponentially-averaged historical squared gradient (denoted by "H_new").
@@ -23045,17 +22750,8 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, h1, h2],
         X_new = X - R_adjusted * V_new / H_sqrt
   
         // Post-update regularization.
-<<<<<<< HEAD
         X_final = (1 - norm_coefficient_post) * X_new
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-        X_final = (1 - norm_coefficient_post) * X_new 
-  
->>>>>>> Upgrade to opset 14
       If there are multiple inputs to be optimized, the pseudo code will be applied
       independently to each of them.
 
@@ -23310,7 +23006,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
   The tensors named in attributes "xs", "zs", and "y" define the differentiated
   computation graph, and the inputs to Gradient node define the values at
   which the gradient is computed. We can feed different tensors to the identified
-  graph. For example, one can compute the gradient of Y with respect to H at 
+  graph. For example, one can compute the gradient of Y with respect to H at
   a specific value of H, H_1, by providing that value as an input to the Gradient
   node.
   
@@ -23484,15 +23180,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
   
       Let's define the behavior of this operator. As you can imagine, SG with momentum requires
       several parameters:
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-       
->>>>>>> Upgrade to opset 14
        - The learning-rate "R".
        - The update count "T". That is, the number of conducted training iterations. It should
          be zero in the first training iteration.
@@ -23506,15 +23194,7 @@ expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
       Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
       Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
       momentum (called "V_new").
-<<<<<<< HEAD
-<<<<<<< HEAD
   
-=======
-
->>>>>>> Add 'allowzero' flag to reshape operator
-=======
-      
->>>>>>> Upgrade to opset 14
       This operator supports two different momentum algorithms. Set the attribute "mode" to
       "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
       "standard" to use standard momentum. Computation details are described subsequently.
