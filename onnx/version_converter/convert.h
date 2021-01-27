@@ -658,8 +658,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>(
           "ReduceSumSquare", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
-          "ReduceSum", OpSetID(12), OpSetID(13)));
-      registerAdapter(make_unique<CompatibleAdapter>(
           "Relu", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Reshape", OpSetID(12), OpSetID(13)));
