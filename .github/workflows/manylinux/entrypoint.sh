@@ -39,10 +39,8 @@ declare -A python_include=( ["3.5"]="3.5m" ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]
 PY_VER=${python_map[$PY_VERSIONS]}
 
 # set ONNX build environments
-export ONNX_BUILD_TESTS=1
-export USE_MSVC_STATIC_RUNTIME=1
 export ONNX_ML=1
-export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSIONS]} -DPYTHON_LIBRARY=/usr/lib64/librt.so"
+export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSIONS]}"
 
 # Update pip
 /opt/python/"${PY_VER}"/bin/pip install --upgrade --no-cache-dir pip
