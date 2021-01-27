@@ -193,16 +193,14 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('Concat', 1, [[2, 3], [2, 4]], [[2, 7]])
 
     def test_constant(self):
-        self._test_op_upgrade('Constant', 1, [],
-            attrs={
-                'value': helper.make_tensor(
-                    'Value',
-                    TensorProto.FLOAT,
-                    dims=[3, 4, 5],
-                    vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(), raw=True
-                )
-            }
+        value = helper.make_tensor(
+            'Value',
+            TensorProto.FLOAT,
+            dims=[3, 4, 5],
+            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(), 
+            raw=True
         )
+        self._test_op_upgrade('Constant', 1, [], attrs={'value': value})
 
     def test_ConstantOfShape(self):
         self._test_op_upgrade('ConstantOfShape', 9, [[3]])
@@ -986,4 +984,3 @@ class TestVersionConverterNew(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    
