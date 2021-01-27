@@ -17,6 +17,6 @@ const std::string k_preferred_path_separator = "\\";
 const std::string k_preferred_path_separator = "/";
 #endif
 
-const std::string path_join(const std::string& origin, const std::string& append);
+std::string path_join(std::string& origin, std::string& append);
 
 } // namespace ONNX_NAMESPACE

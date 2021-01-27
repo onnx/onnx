@@ -137,10 +137,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        std::string data_path = path_join(ctx.get_model_dir(), entry.value());
+        std::string data_path = path_join(ctx.get_model_dir(), const_cast<std::string&>(entry.value()));
         // use stat to check whether the file exists
         struct stat buffer;
-        if (stat((data_path).c_str(), &buffer) < 0) {
+        if (stat((data_path).c_str(), &buffer) != 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),

@@ -10,13 +10,11 @@
 
 namespace ONNX_NAMESPACE {
 
-const std::string path_join(const std::string& origin, const std::string& append) {
-    std::string new_path = origin;
-    if (new_path.length() >= k_preferred_path_separator.length() && 
-        new_path.substr(new_path.length () - k_preferred_path_separator.length(), k_preferred_path_separator.length()) != k_preferred_path_separator) {
-        new_path += k_preferred_path_separator;
+std::string path_join(std::string& origin, std::string& append) {
+    if (origin.find_last_of(k_preferred_path_separator) == origin.length() - k_preferred_path_separator.length()) {
+        origin += k_preferred_path_separator;
     }
-    return new_path + append;
+    return origin + append;
 }
 
 } // namespace ONNX_NAMESPACE
