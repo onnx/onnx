@@ -3,7 +3,7 @@
 set -e -x
 
 # CLI arguments
-PY_VERSIONS=$1
+PY_VERSION=$1
 PLAT=$2
 BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
 SYSTEM_PACKAGES='cmake3'
@@ -36,13 +36,13 @@ cd $ONNX_PATH
 # Need to be updated if there is a new Python Version
 declare -A python_map=( ["3.5"]="cp35-cp35m" ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 declare -A python_include=( ["3.5"]="3.5m" ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
-PY_VER=${python_map[$PY_VERSIONS]}
+PY_VER=${python_map[$PY_VERSION]}
 
 # set ONNX build environments
 export ONNX_BUILD_TESTS=1
 export USE_MSVC_STATIC_RUNTIME=1
 export ONNX_ML=1
-export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSIONS]} -DPYTHON_LIBRARY=/usr/lib64/librt.so"
+export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSION]} -DPYTHON_LIBRARY=/usr/lib64/librt.so"
 
 # Update pip
 /opt/python/"${PY_VER}"/bin/pip install --upgrade --no-cache-dir pip

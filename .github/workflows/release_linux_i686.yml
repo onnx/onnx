@@ -42,9 +42,14 @@ jobs:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686
 
+    - name: Build manylinux2010_i686
+      uses: docker://quay.io/pypa/manylinux2010_i686
+      with:
+        entrypoint: bash
+        args: .github/workflows/manylinux/test_package_i686.sh ${{ matrix.python-version }}
+
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
         path: dist
-    # Currently we only test x86_64 packages; i686 packages are not tested
-    # TODO test it via i686 docker
+
