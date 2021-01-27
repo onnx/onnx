@@ -197,7 +197,7 @@ class TestVersionConverterNew(unittest.TestCase):
             'Value',
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(), 
+            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
             raw=True
         )
         self._test_op_upgrade('Constant', 1, [], attrs={'value': value})
