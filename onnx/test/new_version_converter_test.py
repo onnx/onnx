@@ -2,8 +2,9 @@
 
 import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter
+from typing import Sequence, Text, Tuple, List, Callable
 import string
-import numpy as np
+import numpy as np # type: ignore
 import unittest
 
 #####################################################################################
@@ -20,17 +21,17 @@ class TestVersionConverterNew(unittest.TestCase):
 
     def _test_op_upgrade(
         self,
-        op,
-        from_opset,
-        input_shapes=[[3, 4, 5]],
-        output_shapes=[[3, 4, 5]],
-        input_types=None,
-        output_types=None,
-        initializer=[],
-        attrs={},
-        seq_inputs=[],
-        seq_outputs=[]
-    ):
+        op, # type: str
+        from_opset, # type: int
+        input_shapes=[[3, 4, 5]], #type: list
+        output_shapes=[[3, 4, 5]], #type: list
+        input_types=None, #type: list
+        output_types=None, #type: list
+        initializer=[], #type: list
+        attrs={}, #type: dict
+        seq_inputs=[], #type: list
+        seq_outputs=[] #type: list
+    ): # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
 
@@ -75,124 +76,124 @@ class TestVersionConverterNew(unittest.TestCase):
         onnx.checker.check_model(converted)
         shape_inference.infer_shapes(converted)
 
-    def test_Abs(self):
+    def test_Abs(self):  # type: () -> None
         self._test_op_upgrade('Abs', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Acosh(self):
+    def test_Acosh(self):  # type: () -> None
         self._test_op_upgrade('Acosh', 9)
 
-    def test_Acos(self):
+    def test_Acos(self):  # type: () -> None
         self._test_op_upgrade('Acos', 7)
 
-    def test_And(self):
+    def test_And(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('And', 7, [[2, 3], [2, 3]], [[2, 3]],
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
 
-    def test_Asinh(self):
+    def test_Asinh(self):  # type: () -> None
         self._test_op_upgrade('Asinh', 9)
 
-    def test_Atanh(self):
+    def test_Atanh(self):  # type: () -> None
         self._test_op_upgrade('Atanh', 9)
 
-    def test_Add_1(self):
+    def test_Add_1(self):  # type: () -> None
         self._test_op_upgrade('Add', 1,
             [[3, 4, 5], [3, 4, 5]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_Add_2(self):
+    def test_Add_2(self):  # type: () -> None
         self._test_op_upgrade('Add', 1, [[3, 4, 5], [5]],
             attrs={'consumed_inputs': [0], 'broadcast': 1}
         )
 
-    def test_Add_3(self):
+    def test_Add_3(self):  # type: () -> None
         self._test_op_upgrade('Add', 1, [[3, 4, 5], [3]],
             attrs={'consumed_inputs': [0], 'broadcast': 1, 'axis': 0}
         )
 
-    def test_ArgMax_1(self):
+    def test_ArgMax_1(self):  # type: () -> None
         self._test_op_upgrade('ArgMax', 7, [[2, 3, 4]], [[1, 3, 4]],
             output_types=[TensorProto.INT64]
         )
 
-    def test_ArgMax_2(self):
+    def test_ArgMax_2(self):  # type: () -> None
         self._test_op_upgrade('ArgMax', 7, [[2, 3, 4]], [[2, 1, 4]],
             output_types=[TensorProto.INT64],
             attrs={'axis': 1}
         )
 
-    def test_ArgMin_1(self):
+    def test_ArgMin_1(self):  # type: () -> None
         self._test_op_upgrade('ArgMin', 7, [[2, 3, 4]], [[1, 3, 4]],
             output_types=[TensorProto.INT64]
         )
 
-    def test_ArgMin_2(self):
+    def test_ArgMin_2(self):  # type: () -> None
         self._test_op_upgrade('ArgMin', 7, [[2, 3, 4]], [[2, 1, 4]],
             output_types=[TensorProto.INT64],
             attrs={'axis': 1}
         )
 
-    def test_Asin(self):
+    def test_Asin(self):  # type: () -> None
         self._test_op_upgrade('Asin', 7)
 
-    def test_Atan(self):
+    def test_Atan(self):  # type: () -> None
         self._test_op_upgrade('Atan', 7)
 
-    def test_AveragePool(self):
+    def test_AveragePool(self):  # type: () -> None
         self._test_op_upgrade('AveragePool', 1, [[1, 1, 5, 5]], [[1, 1, 4, 4]],
             attrs={'kernel_shape': [2, 2]}
         )
 
-    def test_BitShift(self):
+    def test_BitShift(self):  # type: () -> None
         self._test_op_upgrade('BitShift', 11, [[2, 3], [2, 3]], [[2, 3]],
             [TensorProto.UINT8, TensorProto.UINT8], [TensorProto.UINT8],
             attrs={'direction': 'RIGHT'}
         )
 
-    def test_BatchNormalization_1(self):
+    def test_BatchNormalization_1(self):  # type: () -> None
         self._test_op_upgrade('BatchNormalization', 1, [[1, 3], [3], [3], [3], [3]], [[1, 3]],
             attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1}
         )
 
-    def test_BatchNormalization_2(self):
+    def test_BatchNormalization_2(self):  # type: () -> None
         self._test_op_upgrade('BatchNormalization', 1,
             [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3], [3], [3]],
             attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1}
         )
 
-    def test_Cast(self):
+    def test_Cast(self):  # type: () -> None
         # 5->6 adapter is missing
         self._test_op_upgrade('Cast', 6, [[2, 3]], [[2, 3]], [TensorProto.INT64], attrs={'to': 1})
 
-    def test_Ceil(self):
+    def test_Ceil(self):  # type: () -> None
         self._test_op_upgrade('Ceil', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Celu(self):
+    def test_Celu(self):  # type: () -> None
         self._test_op_upgrade('Celu', 12)
 
-    def test_Clip_1(self):
+    def test_Clip_1(self):  # type: () -> None
         self._test_op_upgrade('Clip', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Clip_2(self):
+    def test_Clip_2(self):  # type: () -> None
         self._test_op_upgrade('Clip', 1, attrs={'consumed_inputs': [0], 'min': -1.4})
 
-    def test_Clip_3(self):
+    def test_Clip_3(self):  # type: () -> None
         self._test_op_upgrade('Clip', 1, attrs={'consumed_inputs': [0], 'max': 2.6})
 
-    def test_Clip_4(self):
+    def test_Clip_4(self):  # type: () -> None
         self._test_op_upgrade('Clip', 1, attrs={'consumed_inputs': [0], 'min': -1.4, 'max': 2.6})
 
-    def test_Compress(self):
+    def test_Compress(self):  # type: () -> None
         self._test_op_upgrade('Compress', 9, [[6, 7], [3]], [[3]],
             [TensorProto.FLOAT, TensorProto.BOOL], [TensorProto.FLOAT]
         )
 
-    def test_Concat(self):
+    def test_Concat(self):  # type: () -> None
         self._test_op_upgrade('Concat', 1, [[2, 3], [2, 4]], [[2, 7]])
 
-    def test_constant(self):
+    def test_constant(self):  # type: () -> None
         value = helper.make_tensor(
             'Value',
             TensorProto.FLOAT,
@@ -202,89 +203,89 @@ class TestVersionConverterNew(unittest.TestCase):
         )
         self._test_op_upgrade('Constant', 1, [], attrs={'value': value})
 
-    def test_ConstantOfShape(self):
+    def test_ConstantOfShape(self):  # type: () -> None
         self._test_op_upgrade('ConstantOfShape', 9, [[3]])
 
-    def test_Conv_1(self):
+    def test_Conv_1(self):  # type: () -> None
         self._test_op_upgrade('Conv', 1, [[1, 3, 5, 5], [4, 3, 2, 2], [4]], [[1, 4, 4, 4]])
 
-    def test_Conv_2(self):
+    def test_Conv_2(self):  # type: () -> None
         self._test_op_upgrade('Conv', 1, [[1, 3, 5, 5], [4, 3, 2, 2], [4]], [[1, 4, 4, 4]])
 
-    def test_Conv_3(self):
+    def test_Conv_3(self):  # type: () -> None
         self._test_op_upgrade('Conv', 1, [[1, 3, 5, 5], [4, 1, 2, 2], [4]], [[1, 4, 3, 7]],
             attrs={'dilations': [1, 2], 'group': 3, 'pads': [0, 1, 2, 3], 'strides': [2, 1]})
 
-    def test_Convinteger(self):
+    def test_Convinteger(self):  # type: () -> None
         self._test_op_upgrade('ConvInteger', 10, [[1, 3, 5, 5], [4, 3, 2, 2], [4]], [[1, 4, 4, 4]],
             [TensorProto.UINT8, TensorProto.UINT8, TensorProto.UINT8], [TensorProto.INT32]
         )
 
-    def test_ConvTranspose(self):
+    def test_ConvTranspose(self):  # type: () -> None
         self._test_op_upgrade('ConvTranspose', 1, [[1, 1, 5, 5], [1, 1, 3, 3]], [[1, 1, 7, 7]])
 
-    def test_Cosh(self):
+    def test_Cosh(self):  # type: () -> None
         self._test_op_upgrade('Cosh', 9)
 
-    def test_Cos(self):
+    def test_Cos(self):  # type: () -> None
         self._test_op_upgrade('Cos', 7)
 
-    def test_Cumsum(self):
+    def test_Cumsum(self):  # type: () -> None
         self._test_op_upgrade('CumSum', 11, [[3, 4, 5], []], [[3, 4, 5]],
             [TensorProto.FLOAT, TensorProto.INT64]
         )
 
-    def test_DepthToSpace(self):
+    def test_DepthToSpace(self):  # type: () -> None
         self._test_op_upgrade('DepthToSpace', 1, [[1, 8, 3, 3]], [[1, 2, 6, 6]],
             attrs={'blocksize': 2}
         )
 
-    def test_DequantizeLinear(self):
+    def test_DequantizeLinear(self):  # type: () -> None
         self._test_op_upgrade('DequantizeLinear', 10, [[2, 3], [], []], [[2, 3]],
             [TensorProto.INT8, TensorProto.FLOAT, TensorProto.INT8]
         )
 
-    def test_Det_1(self):
+    def test_Det_1(self):  # type: () -> None
         self._test_op_upgrade('Det', 11, [[3, 5, 5]], [[3]])
 
-    def test_Det_2(self):
+    def test_Det_2(self):  # type: () -> None
         self._test_op_upgrade('Det', 11, [[5, 5]], [[]])
 
-    def test_DynamicQuantizeLinear(self):
+    def test_DynamicQuantizeLinear(self):  # type: () -> None
         self._test_op_upgrade('DynamicQuantizeLinear', 11, [[3, 4, 5]], [[3, 4, 5], [], []],
             output_types=[TensorProto.UINT8, TensorProto.FLOAT, TensorProto.UINT8]
         )
 
-    def test_Div(self):
+    def test_Div(self):  # type: () -> None
         self._test_op_upgrade('Div', 1, [[3, 4, 5], [3, 1, 5]], attrs={'consumed_inputs': [0]})
 
-    def test_Dropout(self):
+    def test_Dropout(self):  # type: () -> None
         self._test_op_upgrade('Dropout', 1, attrs={'consumed_inputs': [0], 'is_test': 1})
 
-    def test_Einsum_1(self):
+    def test_Einsum_1(self):  # type: () -> None
         self._test_op_upgrade('Einsum', 12, [[3, 4, 5], [3, 5, 6]], [[3, 4, 6]],
             attrs={'equation': 'bij, bjk -> bik'}
         )
 
-    def test_Einsum_2(self):
+    def test_Einsum_2(self):  # type: () -> None
         self._test_op_upgrade('Einsum', 12, [[4, 5]], [[5, 4]],
             attrs={'equation': 'ij->ji'}
         )
 
-    def test_Elu(self):
+    def test_Elu(self):  # type: () -> None
         self._test_op_upgrade('Elu', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Equal(self):
+    def test_Equal(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('Equal', 7, [[2, 3], [2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
 
-    def test_Erf(self):
+    def test_Erf(self):  # type: () -> None
         self._test_op_upgrade('Erf', 9)
 
-    def test_Exp(self):
+    def test_Exp(self):  # type: () -> None
         self._test_op_upgrade('Exp', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Expand(self):
+    def test_Expand(self):  # type: () -> None
         shape = helper.make_tensor(
             'b',
             TensorProto.INT64,
@@ -296,67 +297,67 @@ class TestVersionConverterNew(unittest.TestCase):
             initializer=[shape]
         )
 
-    def test_EyeLike(self):
+    def test_EyeLike(self):  # type: () -> None
         self._test_op_upgrade('EyeLike', 9, [[4, 5]], [[4, 5]])
 
-    def test_Flatten(self):
+    def test_Flatten(self):  # type: () -> None
         self._test_op_upgrade('Flatten', 1, [[3, 4, 5]], [[3, 20]], attrs={'axis': 1})
 
-    def test_Floor(self):
+    def test_Floor(self):  # type: () -> None
         self._test_op_upgrade('Floor', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Gather(self):
+    def test_Gather(self):  # type: () -> None
         self._test_op_upgrade('Gather', 1, [[3, 4, 5], [6, 7]], [[6, 7, 4, 5]],
             [TensorProto.FLOAT, TensorProto.INT64]
         )
 
-    def test_GatherElements(self):
+    def test_GatherElements(self):  # type: () -> None
         self._test_op_upgrade('GatherElements', 11, [[3, 4, 5], [6, 7]], [[6, 7]],
             [TensorProto.FLOAT, TensorProto.INT64]
         )
 
-    def test_GatherND(self):
+    def test_GatherND(self):  # type: () -> None
         self._test_op_upgrade('GatherND', 11, [[1, 2, 3], [1, 2, 3]], [[1, 2]])
 
-    def test_Gemm(self):
+    def test_Gemm(self):  # type: () -> None
         self._test_op_upgrade('Gemm', 1, [[5, 4], [4, 3], [3]], [[5, 3]])
 
-    def test_GlobalAveragePool(self):
+    def test_GlobalAveragePool(self):  # type: () -> None
         self._test_op_upgrade('GlobalAveragePool', 1, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
 
-    def test_GlobalMaxPool(self):
+    def test_GlobalMaxPool(self):  # type: () -> None
         self._test_op_upgrade('GlobalMaxPool', 1, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
 
-    def test_GlobalLpPool(self):
+    def test_GlobalLpPool(self):  # type: () -> None
         # 1->2 adapter is missing
         self._test_op_upgrade('GlobalLpPool', 2, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
 
-    def test_Greater(self):
+    def test_Greater(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('Greater', 7, [[2, 3], [2, 3]], [[2, 3]],
             output_types=[TensorProto.BOOL]
         )
 
-    def test_GreaterOrEqual(self):
+    def test_GreaterOrEqual(self):  # type: () -> None
         self._test_op_upgrade('GreaterOrEqual', 12, [[2, 3], [2, 3]], [[2, 3]],
             output_types=[TensorProto.BOOL]
         )
 
-    def test_GRU_1(self):
+    def test_GRU_1(self):  # type: () -> None
         # 2->3, 6->7 adapters are missing
         self._test_op_upgrade('GRU', 7,
             [[5, 3, 4], [1, 18, 4], [1, 18, 4]], [[5, 1, 3, 6], [1, 3, 6]],
             attrs={'hidden_size': 6}
         )
 
-    def test_GRU_2(self):
+    def test_GRU_2(self):  # type: () -> None
         # 2->3, 6->7 adapters are missing
         self._test_op_upgrade('GRU', 7,
             [[5, 3, 4], [2, 18, 4], [2, 18, 4]], [[5, 2, 3, 6], [2, 3, 6]],
             attrs={'hidden_size': 6, 'direction': 'bidirectional'}
         )
 
-    def test_GRU_3(self):
+    def test_GRU_3(self):  # type: () -> None
         # 2->3, 6->7 adapters are missing
         self._test_op_upgrade('GRU', 7,
             [[5, 3, 4], [1, 18, 4], [1, 18, 4], [1, 24], [5], [1, 5, 6]],
@@ -365,16 +366,16 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'hidden_size': 6}
         )
 
-    def test_HardSigmoid(self):
+    def test_HardSigmoid(self):  # type: () -> None
         self._test_op_upgrade('HardSigmoid', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Hardmax(self):
+    def test_Hardmax(self):  # type: () -> None
         self._test_op_upgrade('Hardmax', 1)
 
-    def test_Identity(self):
+    def test_Identity(self):  # type: () -> None
         self._test_op_upgrade('Identity', 1)
 
-    def test_If(self):
+    def test_If(self):  # type: () -> None
         sub_output = [helper.make_tensor_value_info('out', TensorProto.FLOAT, [3, 4, 5])]
         then_tensor = helper.make_tensor(
             'Value',
@@ -396,36 +397,36 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'then_branch': then_graph, 'else_branch': else_graph}
         )
 
-    def test_InstanceNormalization(self):
+    def test_InstanceNormalization(self):  # type: () -> None
         self._test_op_upgrade('InstanceNormalization', 1, [[1, 3], [3], [3]], [[1, 3]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_IsInf(self):
+    def test_IsInf(self):  # type: () -> None
         self._test_op_upgrade('IsInf', 10, [[2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
 
-    def test_IsNaN(self):
+    def test_IsNaN(self):  # type: () -> None
         self._test_op_upgrade('IsNaN', 9, [[2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
 
-    def test_LeakyRelu(self):
+    def test_LeakyRelu(self):  # type: () -> None
         self._test_op_upgrade('LeakyRelu', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Less(self):
+    def test_Less(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('Less', 7, [[2, 3], [2, 3]], [[2, 3]], output_types=[TensorProto.BOOL])
 
-    def test_LessOrEqual(self):
+    def test_LessOrEqual(self):  # type: () -> None
         self._test_op_upgrade('LessOrEqual', 12, [[2, 3], [2, 3]], [[2, 3]],
             output_types=[TensorProto.BOOL]
         )
 
-    def test_Log(self):
+    def test_Log(self):  # type: () -> None
         self._test_op_upgrade('Log', 1, attrs={'consumed_inputs': [0]})
 
-    def test_LogSoftmax(self):
+    def test_LogSoftmax(self):  # type: () -> None
         self._test_op_upgrade('LogSoftmax', 1)
 
-    def test_Loop(self):
+    def test_Loop(self):  # type: () -> None
         iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
         cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
         x_in = onnx.helper.make_tensor_value_info('x_in', onnx.TensorProto.FLOAT, [1])
@@ -469,24 +470,24 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'body': loop_body}
         )
 
-    def test_LpNormalization(self):
+    def test_LpNormalization(self):  # type: () -> None
         self._test_op_upgrade('LpNormalization', 1)
 
-    def test_LpPool(self):
+    def test_LpPool(self):  # type: () -> None
         # 1->2 adapter is missing
         self._test_op_upgrade('LpPool', 2, [[1, 1, 5, 5]], [[1, 1, 4, 4]],
             attrs={'kernel_shape': [2, 2]}
         )
 
-    def test_LRN_1(self):
+    def test_LRN_1(self):  # type: () -> None
         self._test_op_upgrade('LRN', 1, attrs={'size': 3})
 
-    def test_LRN_2(self):
+    def test_LRN_2(self):  # type: () -> None
         self._test_op_upgrade('LRN', 1, [[2, 3, 4, 5]], [[2, 3, 4, 5]],
             attrs={'size': 3}
         )
 
-    def test_LSTM_1(self):
+    def test_LSTM_1(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('LSTM', 7,
             [[5, 3, 4], [1, 24, 4], [1, 24, 4]],
@@ -494,7 +495,7 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'hidden_size': 6}
         )
 
-    def test_LSTM_2(self):
+    def test_LSTM_2(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('LSTM', 7,
             [[5, 3, 4], [2, 24, 4], [2, 24, 4]],
@@ -502,7 +503,7 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'hidden_size': 6, 'direction': 'bidirectional'}
         )
 
-    def test_LSTM_3(self):
+    def test_LSTM_3(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('LSTM', 7,
             [[5, 3, 4], [1, 24, 4], [1, 24, 4], [1, 48], [5], [1, 5, 6], [1, 5, 6], [1, 18]],
@@ -511,150 +512,150 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'hidden_size': 6}
         )
 
-    def test_MatMul_1(self):
+    def test_MatMul_1(self):  # type: () -> None
         self._test_op_upgrade('MatMul', 1, [[2, 3], [3, 4]], [[2, 4]])
 
-    def test_MatMul_2(self):
+    def test_MatMul_2(self):  # type: () -> None
         self._test_op_upgrade('MatMul', 1, [[5, 2, 3], [5, 3, 4]], [[5, 2, 4]])
 
-    def test_MatMulInteger_1(self):
+    def test_MatMulInteger_1(self):  # type: () -> None
         self._test_op_upgrade('MatMulInteger', 10, [[2, 3], [3, 4]], [[2, 4]],
             [TensorProto.INT8, TensorProto.INT8], [TensorProto.INT32]
         )
 
-    def test_MatMulInteger_2(self):
+    def test_MatMulInteger_2(self):  # type: () -> None
         self._test_op_upgrade('MatMulInteger', 10, [[2, 3], [3, 4], [], []], [[2, 4]],
             [TensorProto.INT8, TensorProto.INT8, TensorProto.INT8, TensorProto.INT8],
             [TensorProto.INT32]
         )
 
-    def test_MatMulInteger_3(self):
+    def test_MatMulInteger_3(self):  # type: () -> None
         self._test_op_upgrade('MatMulInteger', 10, [[2, 3], [3, 4], [2], [4]], [[2, 4]],
             [TensorProto.INT8, TensorProto.INT8, TensorProto.INT8, TensorProto.INT8],
             [TensorProto.INT32]
         )
 
-    def test_Max(self):
+    def test_Max(self):  # type: () -> None
         self._test_op_upgrade('Max', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_MaxPool_1(self):
+    def test_MaxPool_1(self):  # type: () -> None
         self._test_op_upgrade('MaxPool', 1, [[1, 1, 5, 5]], [[1, 1, 4, 4]],
             attrs={'kernel_shape': [2, 2]}
         )
 
-    def test_MaxPool_2(self):
+    def test_MaxPool_2(self):  # type: () -> None
         self._test_op_upgrade('MaxPool', 8, [[1, 1, 5, 5]], [[1, 1, 4, 4], [1, 1, 4, 4]],
             output_types=[TensorProto.FLOAT, TensorProto.INT64],
             attrs={'kernel_shape': [2, 2]}
         )
 
-    def test_MaxRoiPool(self):
+    def test_MaxRoiPool(self):  # type: () -> None
         self._test_op_upgrade('MaxRoiPool', 1, [[2, 3, 20, 20], [4, 5]], [[4, 3, 3, 3]],
             attrs={'pooled_shape': [3, 3]}
         )
 
-    def test_MaxUnpool(self):
+    def test_MaxUnpool(self):  # type: () -> None
         self._test_op_upgrade('MaxUnpool', 9, [[1, 1, 5, 5], [1, 1, 5, 5]], [[1, 1, 6, 6]],
             [TensorProto.FLOAT, TensorProto.INT64],
             attrs={'kernel_shape': [2, 2]}
         )
 
-    def test_Mean(self):
+    def test_Mean(self):  # type: () -> None
         self._test_op_upgrade('Mean', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_MeanVarianceNormalization(self):
+    def test_MeanVarianceNormalization(self):  # type: () -> None
         self._test_op_upgrade('MeanVarianceNormalization', 9, attrs={'axes': [1, 2]})
 
-    def test_Min(self):
+    def test_Min(self):  # type: () -> None
         self._test_op_upgrade('Min', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_Mod_1(self):
+    def test_Mod_1(self):  # type: () -> None
         self._test_op_upgrade('Mod', 10, [[2, 3], [2, 3]], [[2, 3]])
 
-    def test_Mod_2(self):
+    def test_Mod_2(self):  # type: () -> None
         self._test_op_upgrade('Mod', 10, [[2, 3], [2, 3]], [[2, 3]], attrs={'fmod': 1})
 
-    def test_Mul(self):
+    def test_Mul(self):  # type: () -> None
         self._test_op_upgrade('Mul', 1, [[2, 3, 4], [2, 1, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_Multinomial(self):
+    def test_Multinomial(self):  # type: () -> None
         self._test_op_upgrade('Multinomial', 7, [[3, 5]], [[3, 7]],
             output_types=[TensorProto.INT32],
             attrs={'sample_size': 7}
         )
 
-    def test_Neg(self):
+    def test_Neg(self):  # type: () -> None
         self._test_op_upgrade('Neg', 1, attrs={'consumed_inputs': [0]})
 
-    # def test_NegativeLogLikelihoodLoss_1(self):
+    # def test_NegativeLogLikelihoodLoss_1(self):  # type: () -> None
     #     self._test_op_upgrade('NegativeLogLikelihoodLoss', 12, [[3, 4, 5], [3, 5]], [[]],
     #         [TensorProto.FLOAT, TensorProto.INT64]
     #     )
 
-    # def test_NegativeLogLikelihoodLoss_2(self):
+    # def test_NegativeLogLikelihoodLoss_2(self):  # type: () -> None
     #     self._test_op_upgrade('NegativeLogLikelihoodLoss', 12, [[3, 4, 5], [3, 5], [4]], [[]],
     #         [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT]
     #     )
 
-    def test_NonMaxSuppression(self):
+    def test_NonMaxSuppression(self):  # type: () -> None
         self._test_op_upgrade('NonMaxSuppression', 10, [[2, 3, 4], [3, 5, 6]], [[2, 3]],
             output_types=[TensorProto.INT64]
         )
 
-    def test_NonZero(self):
+    def test_NonZero(self):  # type: () -> None
         self._test_op_upgrade('NonZero', 9, [[3, 3]], [[2, 4]], output_types=[TensorProto.INT64])
 
-    def test_Not(self):
+    def test_Not(self):  # type: () -> None
         self._test_op_upgrade('Not', 1, [[2, 3]], [[2, 3]], [TensorProto.BOOL], [TensorProto.BOOL])
 
-    def test_OneHot(self):
+    def test_OneHot(self):  # type: () -> None
         self._test_op_upgrade('OneHot', 9, [[3, 4, 5], [], [2]], [[3, 4, 5, 6]])
 
-    def test_Or(self):
+    def test_Or(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('Or', 7, [[2, 3], [2, 3]], [[2, 3]],
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
 
-    def test_Pad(self):
+    def test_Pad(self):  # type: () -> None
         # 1->2 adapter is missing
         self._test_op_upgrade('Pad', 2, [[3, 4]], [[5, 8]],
             attrs={'pads': [1, 2, 1, 2], 'value': 1.5}
         )
 
-    def test_Pow(self):
+    def test_Pow(self):  # type: () -> None
         self._test_op_upgrade('Pow', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]])
 
-    def test_PRelu(self):
+    def test_PRelu(self):  # type: () -> None
         self._test_op_upgrade('PRelu', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_QLinearConv(self):
+    def test_QLinearConv(self):  # type: () -> None
         self._test_op_upgrade('QLinearConv', 10,
             [[1, 3, 5, 5], [], [], [4, 3, 2, 2], [], [], [], []], [[1, 4, 4, 4]]
         )
 
-    def test_QLinearMatMul(self):
+    def test_QLinearMatMul(self):  # type: () -> None
         self._test_op_upgrade('QLinearMatMul', 10, [[2, 3], [], [], [3, 4], [], [], [], []], [[2, 4]])
 
-    def test_QuantizeLinear(self):
+    def test_QuantizeLinear(self):  # type: () -> None
         self._test_op_upgrade('QuantizeLinear', 10, [[3, 4, 5], [], []], [[3, 4, 5]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.UINT8], [TensorProto.UINT8]
         )
 
-    def test_RandomNormal(self):
+    def test_RandomNormal(self):  # type: () -> None
         self._test_op_upgrade('RandomNormal', 1, [], [[3, 4, 5]], attrs={'shape': [3, 4, 5]})
 
-    def test_RandomNormalLike(self):
+    def test_RandomNormalLike(self):  # type: () -> None
         like = helper.make_tensor(
             'a',
             TensorProto.FLOAT,
@@ -665,10 +666,10 @@ class TestVersionConverterNew(unittest.TestCase):
             initializer=[like]
         )
 
-    def test_RandomUniform(self):
+    def test_RandomUniform(self):  # type: () -> None
         self._test_op_upgrade('RandomUniform', 1, [], [[3, 4, 5]], attrs={'shape': [3, 4, 5]})
 
-    def test_RandomUniformLike(self):
+    def test_RandomUniformLike(self):  # type: () -> None
         like = helper.make_tensor(
             'a',
             TensorProto.FLOAT,
@@ -679,7 +680,7 @@ class TestVersionConverterNew(unittest.TestCase):
             initializer=[like]
         )
 
-    def test_Range(self):
+    def test_Range(self):  # type: () -> None
         start = helper.make_tensor('a', TensorProto.FLOAT, dims=[], vals=np.array([0]))
         end = helper.make_tensor('b', TensorProto.FLOAT, dims=[], vals=np.array([12]))
         step = helper.make_tensor('c', TensorProto.FLOAT, dims=[], vals=np.array([2]))
@@ -687,68 +688,68 @@ class TestVersionConverterNew(unittest.TestCase):
             initializer=[start, end, step]
         )
 
-    def test_Reciprocal(self):
+    def test_Reciprocal(self):  # type: () -> None
         self._test_op_upgrade('Reciprocal', 1, attrs={'consumed_inputs': [0]})
 
-    def test_ReduceL1(self):
+    def test_ReduceL1(self):  # type: () -> None
         self._test_op_upgrade('ReduceL1', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceL2(self):
+    def test_ReduceL2(self):  # type: () -> None
         self._test_op_upgrade('ReduceL2', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceLogSum(self):
+    def test_ReduceLogSum(self):  # type: () -> None
         self._test_op_upgrade('ReduceLogSum', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceLogSumExp(self):
+    def test_ReduceLogSumExp(self):  # type: () -> None
         self._test_op_upgrade('ReduceLogSumExp', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceMean(self):
+    def test_ReduceMean(self):  # type: () -> None
         self._test_op_upgrade('ReduceMean', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceMax(self):
+    def test_ReduceMax(self):  # type: () -> None
         self._test_op_upgrade('ReduceMax', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceMin(self):
+    def test_ReduceMin(self):  # type: () -> None
         self._test_op_upgrade('ReduceMin', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceProd(self):
+    def test_ReduceProd(self):  # type: () -> None
         self._test_op_upgrade('ReduceProd', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceSum(self):
+    def test_ReduceSum(self):  # type: () -> None
         self._test_op_upgrade('ReduceSum', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_ReduceSumSquare(self):
+    def test_ReduceSumSquare(self):  # type: () -> None
         self._test_op_upgrade('ReduceSumSquare', 1, [[3, 4, 5]], [[1, 1, 1]])
 
-    def test_Relu(self):
+    def test_Relu(self):  # type: () -> None
         self._test_op_upgrade('Relu', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Reshape(self):
+    def test_Reshape(self):  # type: () -> None
         self._test_op_upgrade('Reshape', 1, [[3, 4, 5]], [[3, 10, 2]],
             attrs={'consumed_inputs': [0], 'shape': [3, 10, 2]}
         )
 
-    def test_Resize(self):
+    def test_Resize(self):  # type: () -> None
         self._test_op_upgrade('Resize', 10, [[3, 4, 5], [3]], [[3, 8, 15]])
 
-    def test_ReverseSequence(self):
+    def test_ReverseSequence(self):  # type: () -> None
         self._test_op_upgrade('ReverseSequence', 10, [[3, 4, 5], [4]], [[3, 4, 5]],
             [TensorProto.FLOAT, TensorProto.INT64]
         )
 
-    def test_RNN_1(self):
+    def test_RNN_1(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('RNN', 7, [[5, 3, 4], [1, 6, 4], [1, 6, 4]], [[5, 1, 3, 6], [1, 3, 6]],
             attrs={'hidden_size': 6}
         )
 
-    def test_RNN_2(self):
+    def test_RNN_2(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('RNN', 7, [[5, 3, 4], [2, 6, 4], [2, 6, 4]], [[5, 2, 3, 6], [2, 3, 6]],
             attrs={'hidden_size': 6, 'direction': 'bidirectional'}
         )
 
-    def test_RNN_3(self):
+    def test_RNN_3(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('RNN', 7,
             [[5, 3, 4], [1, 6, 4], [1, 6, 4], [1, 12], [5], [1, 5, 6]],
@@ -757,33 +758,33 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'hidden_size': 6}
         )
 
-    def test_RoiAlign(self):
+    def test_RoiAlign(self):  # type: () -> None
         self._test_op_upgrade('RoiAlign', 10, [[2, 3, 20, 20], [10, 4], [10]], [[10, 3, 1, 1]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64]
         )
 
-    def test_Round(self):
+    def test_Round(self):  # type: () -> None
         self._test_op_upgrade('Round', 11)
 
-    # def test_Scatter(self):
+    # def test_Scatter(self):  # type: () -> None
     #     self._test_op_upgrade('Scatter', 9, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
     #         [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
     #         [TensorProto.FLOAT]
     #     )
 
-    def test_ScatterElements(self):
+    def test_ScatterElements(self):  # type: () -> None
         self._test_op_upgrade('ScatterElements', 11, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT]
         )
 
-    def test_ScatterND(self):
+    def test_ScatterND(self):  # type: () -> None
         self._test_op_upgrade('ScatterND', 11, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT]
         )
 
-    def test_Scan(self):
+    def test_Scan(self):  # type: () -> None
         sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
         next_in = onnx.helper.make_tensor_value_info('next_in', onnx.TensorProto.FLOAT, [2])
         sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
@@ -808,112 +809,112 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'body': body, 'num_scan_inputs': 1}
         )
 
-    def test_Selu(self):
+    def test_Selu(self):  # type: () -> None
         self._test_op_upgrade('Selu', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Shape(self):
+    def test_Shape(self):  # type: () -> None
         self._test_op_upgrade('Shape', 1, [[3, 4, 5]], [[3]], output_types=[TensorProto.INT64])
 
-    def test_Shrink(self):
+    def test_Shrink(self):  # type: () -> None
         self._test_op_upgrade('Shrink', 9)
 
-    def test_Sigmoid(self):
+    def test_Sigmoid(self):  # type: () -> None
         self._test_op_upgrade('Sigmoid', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Sign(self):
+    def test_Sign(self):  # type: () -> None
         self._test_op_upgrade('Sign', 9)
 
-    def test_Sinh(self):
+    def test_Sinh(self):  # type: () -> None
         self._test_op_upgrade('Sinh', 9)
 
-    def test_Sin(self):
+    def test_Sin(self):  # type: () -> None
         self._test_op_upgrade('Sin', 7)
 
-    def test_Size(self):
+    def test_Size(self):  # type: () -> None
         self._test_op_upgrade('Size', 1, [[3, 4, 5]], [[]], output_types=[TensorProto.INT64])
 
-    def test_Slice(self):
+    def test_Slice(self):  # type: () -> None
         self._test_op_upgrade('Slice', 1, [[3, 4, 5]], [[3, 2, 2]],
             attrs={'axes': [1, 2], 'starts': [0, 1], 'ends': [2, 3]}
         )
 
-    def test_Softmax_0(self):
+    def test_Softmax_0(self):  # type: () -> None
         self._test_op_upgrade('Softmax', 1, attrs={'axis': 0})
 
-    def test_Softmax_1(self):
+    def test_Softmax_1(self):  # type: () -> None
         self._test_op_upgrade('Softmax', 1, attrs={'axis': 1})
 
-    def test_Softmax_2(self):
+    def test_Softmax_2(self):  # type: () -> None
         self._test_op_upgrade('Softmax', 1, attrs={'axis': 2})
 
-    def test_Softmax_3(self):
+    def test_Softmax_3(self):  # type: () -> None
         self._test_op_upgrade('Softmax', 1, attrs={'axis': -1})
 
-    def test_Softmax_4(self):
+    def test_Softmax_4(self):  # type: () -> None
         self._test_op_upgrade('Softmax', 1, attrs={'axis': -2})
 
-    def test_Softmax_5(self):
+    def test_Softmax_5(self):  # type: () -> None
         self._test_op_upgrade('Softmax', 1, attrs={'axis': -3})
 
-    def test_Softplus(self):
+    def test_Softplus(self):  # type: () -> None
         self._test_op_upgrade('Softplus', 1)
 
-    def test_Softsign(self):
+    def test_Softsign(self):  # type: () -> None
         self._test_op_upgrade('Softsign', 1)
 
-    def test_SoftmaxCrossEntropyLoss(self):
+    def test_SoftmaxCrossEntropyLoss(self):  # type: () -> None
         self._test_op_upgrade('SoftmaxCrossEntropyLoss', 12, [[3, 4, 5, 6], [3, 6]], [[]],
             [TensorProto.FLOAT, TensorProto.INT64]
         )
 
-    def test_SpaceToDepth(self):
+    def test_SpaceToDepth(self):  # type: () -> None
         self._test_op_upgrade('SpaceToDepth', 1, [[1, 3, 8, 8]], [[1, 12, 4, 4]],
             attrs={'blocksize': 2}
         )
 
-    def test_Split(self):
+    def test_Split(self):  # type: () -> None
         # 1->2 adapter is missing
         self._test_op_upgrade('Split', 2, [[3, 4, 7]], [[3, 4, 2], [3, 4, 1], [3, 4, 4]],
             attrs={'axis': 2, 'split': [2, 1, 4]}
         )
 
-    def test_Sqrt(self):
+    def test_Sqrt(self):  # type: () -> None
         self._test_op_upgrade('Sqrt', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Squeeze(self):
+    def test_Squeeze(self):  # type: () -> None
         self._test_op_upgrade('Squeeze', 1, [[2, 1, 3, 4, 1]], [[2, 3, 4]])
 
-    def test_StringNormalizer(self):
+    def test_StringNormalizer(self):  # type: () -> None
         self._test_op_upgrade('StringNormalizer', 10, [[1, 3]], [[1, 3]],
             [TensorProto.STRING], [TensorProto.STRING],
             attrs={'case_change_action': 'LOWER'}
         )
 
-    def test_Sub(self):
+    def test_Sub(self):  # type: () -> None
         self._test_op_upgrade('Sub', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_Sum(self):
+    def test_Sum(self):  # type: () -> None
         self._test_op_upgrade('Sum', 1, [[2, 3, 4], [2, 3, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
 
-    def test_Tanh(self):
+    def test_Tanh(self):  # type: () -> None
         self._test_op_upgrade('Tanh', 1, attrs={'consumed_inputs': [0]})
 
-    def test_Tan(self):
+    def test_Tan(self):  # type: () -> None
         self._test_op_upgrade('Tan', 7)
 
-    def test_TfIdfVectorizer(self):
+    def test_TfIdfVectorizer(self):  # type: () -> None
         self._test_op_upgrade('TfIdfVectorizer', 9, [[3]], [[5]],
             attrs={'max_gram_length': 3, 'max_skip_count': 1, 'min_gram_length': 2, 'mode': 'TFIDF', 'ngram_counts': [0, 20], 'ngram_indexes': [3, 4]}
         )
 
-    def test_ThresholdedRelu(self):
+    def test_ThresholdedRelu(self):  # type: () -> None
         self._test_op_upgrade('ThresholdedRelu', 10)
 
-    def test_Tile(self):
+    def test_Tile(self):  # type: () -> None
         # 5->6 adapter is missing
         repeats = helper.make_tensor('b', TensorProto.INT64, dims=[3], vals=np.array([1, 2, 3]))
         self._test_op_upgrade('Tile', 6, [[3, 4, 5], [3]], [[3, 8, 15]],
@@ -921,46 +922,46 @@ class TestVersionConverterNew(unittest.TestCase):
             initializer=[repeats]
         )
 
-    def test_TopK(self):
+    def test_TopK(self):  # type: () -> None
         self._test_op_upgrade('TopK', 1, [[3, 4, 5]], [[3, 4, 2], [3, 4, 2]],
             output_types=[TensorProto.FLOAT, TensorProto.INT64],
             attrs={'k': 2}
         )
 
-    def test_Transpose(self):
+    def test_Transpose(self):  # type: () -> None
         self._test_op_upgrade('Transpose', 1, [[1, 2, 5, 3, 7]], [[1, 7, 5, 2, 3]],
             attrs={'perm': [0, 4, 2, 1, 3]}
         )
 
-    def test_Unique_1(self):
+    def test_Unique_1(self):  # type: () -> None
         self._test_op_upgrade('Unique', 11, [[3, 4, 5]], [[None]])
 
-    def test_Unique_2(self):
+    def test_Unique_2(self):  # type: () -> None
         self._test_op_upgrade('Unique', 11, [[3, 4, 5]], [[3, None, 5]],
             attrs={'axis': 1}
         )
 
-    def test_Unsqueeze(self):
+    def test_Unsqueeze(self):  # type: () -> None
         self._test_op_upgrade('Unsqueeze', 1, [[3, 4, 5]], [[3, 4, 1, 5]], attrs={'axes': [2]})
 
-    # def test_Upsample(self):
+    # def test_Upsample(self):  # type: () -> None
     #     # 6->7 adapter is missing
     #     self._test_op_upgrade('Upsample', 7, [[3, 4, 5]], [[6, 6, 10]],
     #         attrs={'scales': [2., 1.5, 2.]}
     #     )
 
-    def test_Where(self):
+    def test_Where(self):  # type: () -> None
         self._test_op_upgrade('Where', 9, [[2, 3], [2, 3], [2, 3]], [[2, 3]],
             [TensorProto.BOOL, TensorProto.FLOAT, TensorProto.FLOAT]
         )
 
-    def test_Xor(self):
+    def test_Xor(self):  # type: () -> None
         # 6->7 adapter is missing
         self._test_op_upgrade('Xor', 7, [[2, 3], [2, 3]], [[2, 3]],
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
 
-    def test_ops_tested(self):
+    def test_ops_tested(self):  # type: () -> None
         all_schemas = onnx.onnx_cpp2py_export.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
         seq_ops = [
