@@ -4,7 +4,7 @@ import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter
 from typing import Sequence, Text, Tuple, List, Callable
 import string
-import numpy as np # type: ignore
+import numpy as np  # type: ignore
 import unittest
 
 #####################################################################################
@@ -21,17 +21,17 @@ class TestVersionConverterNew(unittest.TestCase):
 
     def _test_op_upgrade(
         self,
-        op, # type: str
-        from_opset, # type: int
-        input_shapes=[[3, 4, 5]], #type: list
-        output_shapes=[[3, 4, 5]], #type: list
-        input_types=None, #type: list
-        output_types=None, #type: list
-        initializer=[], #type: list
-        attrs={}, #type: dict
-        seq_inputs=[], #type: list
-        seq_outputs=[] #type: list
-    ): # type: (...) -> None
+        op,  # type: str
+        from_opset,  # type: int
+        input_shapes=[[3, 4, 5]],  # type: list
+        output_shapes=[[3, 4, 5]],  # type: list
+        input_types=None,  # type: list
+        output_types=None,  # type: list
+        initializer=[],  # type: list
+        attrs={},  # type: dict
+        seq_inputs=[],  # type: list
+        seq_outputs=[]  # type: list
+    ):  # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
 
