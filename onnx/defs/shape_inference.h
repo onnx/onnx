@@ -406,15 +406,15 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
       *to_type->mutable_tensor_type()->mutable_shape() =
           from_type->tensor_type().shape();
     }
-  } else if (TypeProto::kSequenceType == input_type->value_case() &&
-      TypeProto::kSequenceType == output_type->value_case()) {
-    propagateShape(&input_type->sequence_type().elem_type(), output_type->mutable_sequence_type()->mutable_elem_type());
+  } else if (TypeProto::kSequenceType == from_type->value_case() &&
+      TypeProto::kSequenceType == to_type->value_case()) {
+    propagateShape(&from_type->sequence_type().elem_type(), to_type->mutable_sequence_type()->mutable_elem_type());
   } else {
     fail_shape_inference(
         "Mismatch between source and target type. Source=",
-        input_type->value_case(),
+        from_type->value_case(),
         " Target=",
-        output_type->value_case());
+        to_type->value_case());
   }
 }
 
