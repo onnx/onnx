@@ -75,7 +75,6 @@ class TestVersionConverterNew(unittest.TestCase):
         onnx.checker.check_model(converted)
         shape_inference.infer_shapes(converted)
 
-
     def test_Abs(self):
         self._test_op_upgrade('Abs', 1, attrs={'consumed_inputs': [0]})
 
@@ -121,7 +120,7 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_ArgMax_2(self):
         self._test_op_upgrade('ArgMax', 7, [[2, 3, 4]], [[2, 1, 4]],
             output_types=[TensorProto.INT64],
-            attrs={'axis':1}
+            attrs={'axis': 1}
         )
 
     def test_ArgMin_1(self):
@@ -132,7 +131,7 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_ArgMin_2(self):
         self._test_op_upgrade('ArgMin', 7, [[2, 3, 4]], [[2, 1, 4]],
             output_types=[TensorProto.INT64],
-            attrs={'axis':1}
+            attrs={'axis': 1}
         )
 
     def test_Asin(self):
@@ -581,7 +580,7 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('Mod', 10, [[2, 3], [2, 3]], [[2, 3]])
 
     def test_Mod_2(self):
-        self._test_op_upgrade('Mod', 10, [[2, 3], [2, 3]], [[2, 3]], attrs={'fmod':1})
+        self._test_op_upgrade('Mod', 10, [[2, 3], [2, 3]], [[2, 3]], attrs={'fmod': 1})
 
     def test_Mul(self):
         self._test_op_upgrade('Mul', 1, [[2, 3, 4], [2, 1, 4]], [[2, 3, 4]],
@@ -808,7 +807,7 @@ class TestVersionConverterNew(unittest.TestCase):
             [sum_out, scan_out]
         )
         self._test_op_upgrade('Scan', 8, ['', [1, 2], [1, 3, 2]], [[1, 2], [1, 3, 2]],
-            attrs={'body': body, 'num_scan_inputs':1}
+            attrs={'body': body, 'num_scan_inputs': 1}
         )
 
     def test_Selu(self):
@@ -840,7 +839,7 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'axes': [1, 2], 'starts': [0, 1], 'ends': [2, 3]}
         )
 
-    def test_Softmax_1(self):
+    def test_Softmax_0(self):
         self._test_op_upgrade('Softmax', 1, attrs={'axis': 0})
 
     def test_Softmax_1(self):
@@ -963,7 +962,6 @@ class TestVersionConverterNew(unittest.TestCase):
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
 
-
     def test_ops_tested(self):
         all_schemas = onnx.onnx_cpp2py_export.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
@@ -985,5 +983,7 @@ class TestVersionConverterNew(unittest.TestCase):
         untested_ops = set(all_op_names) - set(tested_ops)
         assert len(untested_ops) == 0
 
+
 if __name__ == '__main__':
     unittest.main()
+    
