@@ -5870,8 +5870,8 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
-<dt><tt>batch_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, num_directions, batch_size, hidden_size] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, num_directions, seq_length, hidden_size] respectively.</dd>
+<dt><tt>batch_major</tt> : int (default is 0)</dt>
+<dd>The shape format of inputs X, initial_h and outputs Y, Y_h. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = [num_directions, batch_size, hidden_size]. If not 0, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, num_directions, seq_length, hidden_size], initial_h.shape = Y_h.shape = [batch_size, num_directions, hidden_size].</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -8193,8 +8193,8 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
-<dt><tt>batch_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, num_directions, batch_size, hidden_size] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, num_directions, seq_length, hidden_size] respectively.</dd>
+<dt><tt>batch_major</tt> : int (default is 0)</dt>
+<dd>The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size]. If not 0, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, num_directions, seq_length, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size].</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>
@@ -13295,8 +13295,8 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings (default is ['Tanh', 'Tanh'])</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
-<dt><tt>batch_major</tt> : int (default is 1)</dt>
-<dd>The shape format of the input X and output Y. If 0, the shapes are [seq_length, batch_size, input_size] and [seq_length, num_directions, batch_size, hidden_size] respectively.If not 0, the shapes are [batch_size, seq_length, input_size] and [batch_size, num_directions, seq_length, hidden_size] respectively.</dd>
+<dt><tt>batch_major</tt> : int (default is 0)</dt>
+<dd>The shape format of inputs X, initial_h and outputs Y, Y_h. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = [num_directions, batch_size, hidden_size]. If not 0, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, num_directions, seq_length, hidden_size], initial_h.shape = Y_h.shape = [batch_size, num_directions, hidden_size].</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (default is forward)</dt>

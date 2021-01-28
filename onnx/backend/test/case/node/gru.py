@@ -95,7 +95,13 @@ class GRU_Helper():
         if self.num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
-        return Y if self.BM == 0 else np.swapaxes(Y, 0, 2), Y[-1]
+        if self.BM == 0:
+            Y_h = Y[-1]
+        else:
+            Y = np.swapaxes(Y, 0, 2)
+            Y_h = Y[:, :, -1, :]
+
+        return Y, Y_h
 
 
 class GRU(Base):

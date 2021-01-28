@@ -1023,7 +1023,7 @@ class TestShapeInference(unittest.TestCase):
             num_directions = 1
         self._assert_inferred(graph, [
             make_tensor_value_info('all', TensorProto.FLOAT, (batchsize, num_directions, seqlen, hiddensize)),
-            make_tensor_value_info('last', TensorProto.FLOAT, (num_directions, batchsize, hiddensize))])
+            make_tensor_value_info('last', TensorProto.FLOAT, (batchsize, num_directions, hiddensize))])
 
     def test_rnn_bidirectional(self):  # type: () -> None
         self._rnn_bidirectional(64, 32, 10, 4)
