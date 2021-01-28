@@ -204,13 +204,13 @@ def collect_testcases():  # type: () -> List[TestCase]
     return _NodeTestCases
 
 
-def collect_testcases_by_operator(operator_name):  # type: (Text) -> List[TestCase]
+def collect_testcases_by_operator(op_type):  # type: (Text) -> List[TestCase]
     '''Collect node test cases which include specific operator
     '''
-    import_recursive(sys.modules[__name__])
+    import_recursive(sys.modules[__name__], op_type)
     # only keep those tests related to this operator
     specific_testcases = []
     for testcase in _NodeTestCases:
-        if testcase.model.graph.node[0].op_type == operator_name:
+        if testcase.model.graph.node[0].op_type == op_type:
             specific_testcases.append(testcase)
     return specific_testcases
