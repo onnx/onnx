@@ -14,7 +14,7 @@ import numpy as np  # type: ignore
 import onnx
 import onnx.mapping
 
-from ..utils import import_recursive
+from ..utils import import_recursive, import_recursive_by_operator
 from ..test_case import TestCase
 
 
@@ -207,7 +207,7 @@ def collect_testcases():  # type: () -> List[TestCase]
 def collect_testcases_by_operator(op_type):  # type: (Text) -> List[TestCase]
     '''Collect node test cases which include specific operator
     '''
-    import_recursive(sys.modules[__name__], op_type)
+    import_recursive_by_operator(sys.modules[__name__], op_type)
     # only keep those tests related to this operator
     specific_testcases = []
     for testcase in _NodeTestCases:
