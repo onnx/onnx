@@ -76,7 +76,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "If not 0, the shapes are [batch_size, seq_length, input_size] and "
         "[batch_size, num_directions, seq_length, hidden_size] respectively.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(0));
     schema.Attr(
         "hidden_size",
         "Number of neurons in the hidden layer",
