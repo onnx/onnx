@@ -28,9 +28,9 @@ def import_recursive(package, op_type=None):  # type: (ModuleType) -> None
     module_location = package.__name__
     for (_module_loader, name, ispkg) in pkgutil.iter_modules(pkg_dir):
         module_name = "{}.{}".format(module_location, name)  # Module/package
-        # module_name is onnx.backend.test.case.node.op_type
-        # only import if op_type is in python test filename
-        if op_type and op_type in name:
+        # import if op_type is not specified
+        # or if op_type is specified and in python test filename
+        if op_type is None or op_type in name:
             module = importlib.import_module(module_name)
         if ispkg:
             import_recursive(module)
