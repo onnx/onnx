@@ -1,6 +1,8 @@
 from typing import Text, Dict, Tuple, Sequence, Optional, Set, overload
 from onnx import AttributeProto
 
+class SchemaError(Exception):
+    ...
 
 class OpSchema(object):
     @property
