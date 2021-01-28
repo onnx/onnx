@@ -2,7 +2,7 @@
 
 import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter
-from typing import Sequence, Text, Tuple, List, Callable
+from typing import Text, List, Dict, Any, Union, Callable, Optional, cast
 import string
 import numpy as np  # type: ignore
 import unittest
@@ -21,16 +21,16 @@ class TestVersionConverterNew(unittest.TestCase):
 
     def _test_op_upgrade(
         self,
-        op,  # type: str
+        op,  # type: Text
         from_opset,  # type: int
-        input_shapes=[[3, 4, 5]],  # type: list
-        output_shapes=[[3, 4, 5]],  # type: list
-        input_types=None,  # type: list
-        output_types=None,  # type: list
-        initializer=[],  # type: list
-        attrs={},  # type: dict
-        seq_inputs=[],  # type: list
-        seq_outputs=[]  # type: list
+        input_shapes=[[3, 4, 5]],  # type: List[Union[List[Optional[int]], Text]]
+        output_shapes=[[3, 4, 5]],  # type: List[List[Optional[int]]]
+        input_types=None,  # type: Union[List[Any], None]
+        output_types=None,  # type: Union[List[Any], None]
+        initializer=[],  # type: List[Any]
+        attrs={},  # type: Dict[Text, Any]
+        seq_inputs=[],  # type: List[int]
+        seq_outputs=[]  # type: List[int]
     ):  # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
@@ -43,11 +43,16 @@ class TestVersionConverterNew(unittest.TestCase):
         if input_types is None:
             input_types = [TensorProto.FLOAT] * n_inputs
         is_sequence = [0 if id not in seq_inputs else 1 for id in range(n_inputs)]
+        # turn empty strings into [0] to ease type analysis, even though those entries
+        # will be ignored
+        input_shapes_cast = cast(List[List[int]],
+                [[0] if isinstance(shape, str) else shape for shape in input_shapes]
+        )
         inputs = [
             helper.make_tensor_value_info(name, ttype, shape) if is_seq == 0
             else helper.make_sequence_value_info(name, ttype, shape)
             for (name, ttype, shape, is_seq)
-            in zip(input_names, input_types, input_shapes, is_sequence) if name != ''
+            in zip(input_names, input_types, input_shapes_cast, is_sequence) if name != ''
         ]
 
         n_outputs = len(output_shapes)
@@ -55,11 +60,14 @@ class TestVersionConverterNew(unittest.TestCase):
         if output_types is None:
             output_types = [TensorProto.FLOAT] * n_outputs
         is_sequence = [0 if id not in seq_outputs else 1 for id in range(n_outputs)]
+        output_shapes_cast = cast(List[List[int]],
+                [[0] if isinstance(shape, str) else shape for shape in output_shapes]
+        )
         outputs = [
             helper.make_tensor_value_info(name, ttype, shape) if is_seq == 0
             else helper.make_sequence_value_info(name, ttype, shape)
             for (name, ttype, shape, is_seq)
-            in zip(output_names, output_types, output_shapes, is_sequence)
+            in zip(output_names, output_types, output_shapes_cast, is_sequence)
         ]
 
         node = helper.make_node(op, input_names, output_names, **attrs)
