@@ -33,7 +33,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
         cases += node_test.collect_testcases()
     else:
         # only include those testcases including the given operator
-        cases += node_test.collect_specific_testcases(args.node)
+        cases += node_test.collect_testcases_by_operator(args.node)
     for case in cases:
         output_dir = os.path.join(
             args.output, case.kind, case.name)
@@ -86,8 +86,8 @@ def parse_args():  # type: () -> argparse.Namespace
     subparser = subparsers.add_parser('generate-data', help='convert testcases to test data')
     subparser.add_argument('-o', '--output', default=DATA_DIR,
                            help='output directory (default: %(default)s)')
-    subparser.add_argument('-n', '--node', default=None,
-                           help='specify the node to exclude other testcases (default: %(default)s)')
+    subparser.add_argument('-t', '--op_type', default=None,
+                           help='specify the node to exclude other testcases -> generates test data only for the specified op_type')
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()

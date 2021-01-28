@@ -204,7 +204,7 @@ def collect_testcases():  # type: () -> List[TestCase]
     return _NodeTestCases
 
 
-def collect_specific_testcases(operator_name):  # type: (Text) -> List[TestCase]
+def collect_testcases_by_operator(operator_name):  # type: (Text) -> List[TestCase]
     '''Collect node test cases which include specific operator
     '''
     import_recursive(sys.modules[__name__])
