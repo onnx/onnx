@@ -970,7 +970,7 @@ class TestVersionConverterNew(unittest.TestCase):
         )
 
     def test_ops_tested(self):  # type: () -> None
-        all_schemas = onnx.onnx_cpp2py_export.defs.get_all_schemas()
+        all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
         seq_ops = [
             'ConcatFromSequence',
