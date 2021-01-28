@@ -56,7 +56,7 @@ class LSTM_Helper():
             self.P = p
             self.H_0 = h_0
             self.C_0 = c_0
-            self.BM = BM
+            self.BM = bm
 
         else:
             raise NotImplementedError()
