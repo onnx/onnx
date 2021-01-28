@@ -19,7 +19,7 @@ all_numeric_dtypes = [
 ]
 
 
-def import_recursive(package, op_type=None):  # type: (ModuleType) -> None
+def import_recursive(package, op_type=None):  # type: (ModuleType, Text) -> None
     """
     Takes a package and imports all modules underneath it
     """
