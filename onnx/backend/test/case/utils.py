@@ -7,7 +7,7 @@ from __future__ import print_function
 import importlib
 import pkgutil
 from types import ModuleType
-from typing import Optional, List
+from typing import Optional, List, Text
 
 import numpy as np  # type: ignore
 
