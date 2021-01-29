@@ -79,7 +79,7 @@ endif()
 
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
 # Use the following command in the future; now this is only compatible with the latest pybind11
-# find_package(Python ${PY_VERSION} COMPONENTS Interpreter DevelopmentREQUIRED)
+# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
 find_package(PythonInterp ${PY_VERSION} REQUIRED)
 find_package(PythonLibs ${PY_VERSION})
 
