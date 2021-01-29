@@ -77,6 +77,12 @@ if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
 endif()
 
+# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
+# Use the following command in the future; now this is only compatible with the latest pybind11
+# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
+find_package(PythonInterp ${PY_VERSION} REQUIRED)
+find_package(PythonLibs ${PY_VERSION})
+
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
 endif()
@@ -195,11 +201,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
     endif()
 
-    if("${PYTHON_EXECUTABLE}" STREQUAL "")
-      set(_python_exe "python")
-    else()
-      set(_python_exe "${PYTHON_EXECUTABLE}")
-    endif()
     set(GEN_PROTO_ARGS
         -p
         "${ONNX_NAMESPACE}"
@@ -221,7 +222,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -239,11 +240,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
-          # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is
-          # missing the +x flag. Add it.
-          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-        else(NOT WIN32)
+          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
+          configure_file(
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
+            @ONLY)
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+        else()
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
         list(APPEND PROTOC_ARGS
@@ -447,8 +451,6 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP

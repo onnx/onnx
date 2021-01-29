@@ -57,7 +57,7 @@ jobs:
         python -m pip install --upgrade pip
         # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
         # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-        pip install pytest==5.4.3 nbval numpy wheel          
+        pip install pytest==5.4.3 nbval numpy==1.16.6 wheel          
             
     - name: Build ONNX wheel
       run: |        
