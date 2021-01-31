@@ -2,8 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #include "onnx/defs/tensor/utils.h"
 
@@ -3176,7 +3174,7 @@ a padded tensor (`output`) is generated.
 
 The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
-1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
+1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
 2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
 
@@ -3284,7 +3282,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "constant_value",
-            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0).",
+            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, "
+            "empty string or False).",
             "T",
             OpSchema::Optional,
             true,
@@ -3302,7 +3301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
-            "Constrains input and output to only numeric types.")
+            "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);

@@ -2,8 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #include <algorithm>
 #include <functional>
@@ -451,7 +449,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Relu_ver13_doc = R"DOC(
+static const char* Relu_ver14_doc = R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
 the tensor elementwise.
@@ -459,9 +457,9 @@ the tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Relu,
-    13,
+    14,
     OpSchema()
-        .SetDoc(Relu_ver13_doc)
+        .SetDoc(Relu_ver14_doc)
         .Input(0,
             "X",
             "Input tensor",
@@ -480,11 +478,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)",
-             "tensor(float)",
+            {"tensor(float)",
+             "tensor(int32)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int64)",
+             "tensor(float16)",
              "tensor(double)",
              "tensor(bfloat16)"},
-            "Constrain input and output types to float tensors.")
+            "Constrain input and output types to signed numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver6_doc = R"DOC(

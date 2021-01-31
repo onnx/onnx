@@ -487,7 +487,9 @@ void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
 void encodeTypeProtoTensorType(
     ONNX_NAMESPACE::TypeProto_Tensor* tensor_type,
     Value* n) {
-  tensor_type->set_elem_type(n->elemType());
+  if (n->elemType() != 0) {
+    tensor_type->set_elem_type(n->elemType());
+  }
   if (n->has_sizes()) {
     ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
     for (const Dimension& d : n->sizes()) {
@@ -503,9 +505,11 @@ void encodeTypeProtoTensorType(
 
 void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   v->set_name(value_name(n));
-  ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
-  ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
-  encodeTypeProtoTensorType(tensor_type, n);
+  if (n->elemType() != 0 && n->has_sizes()) {
+    ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
+    ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
+    encodeTypeProtoTensorType(tensor_type, n);
+  }
 }
 
 void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
