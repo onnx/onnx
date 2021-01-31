@@ -41,11 +41,12 @@ jobs:
       addToPath: true
 
   - script: |
-      python -m pip install --upgrade pip
       python -m pip install virtualenv
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
+      python -m pip install --upgrade pip
       python -m pip install numpy protobuf
+      python -m pip numpy
       sudo apt-get install protobuf-compiler libprotoc-dev
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       git submodule update --init --recursive
