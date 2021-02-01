@@ -314,7 +314,7 @@ tests_require.append('tabulate')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.600']
+    extras_require['mypy'] = ['mypy==0.700']
 
 ################################################################################
 # Final

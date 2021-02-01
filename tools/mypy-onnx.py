@@ -12,7 +12,7 @@ def main():  # type: () -> None
         root_folder = os.path.realpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         os.chdir(root_folder)
 
-        subprocess.check_call(["mypy", "."])
+        subprocess.check_call(["mypy", ".", "--follow-imports", "silent"])
         subprocess.check_call(["mypy", "--py2", "."])
 
         exit(0)
