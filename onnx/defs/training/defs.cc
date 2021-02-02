@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include <algorithm>
 #include <cmath>
@@ -109,7 +111,7 @@ W --> Gemm --> Y --> Loss --> O
 The tensors named in attributes "xs", "zs", and "y" define the differentiated
 computation graph, and the inputs to Gradient node define the values at
 which the gradient is computed. We can feed different tensors to the identified
-graph. For example, one can compute the gradient of Y with respect to H at 
+graph. For example, one can compute the gradient of Y with respect to H at
 a specific value of H, H_1, by providing that value as an input to the Gradient
 node.
 
@@ -202,12 +204,12 @@ static const char* Adagrad_ver1_doc = R"DOC(
 
     Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
     some parameters:
-     
+
      - The initial learning-rate "R".
      - The update count "T". That is, the number of training iterations conducted.
      - A L2-norm regularization coefficient "norm_coefficient".
      - A learning-rate decay factor "decay_factor".
-     - A small constant "epsilon" to avoid dividing-by-zero. 
+     - A small constant "epsilon" to avoid dividing-by-zero.
 
     At each ADAGRAD iteration, the optimized tensors are moved along a direction
     computed based on their estimated gradient and accumulated squared gradient. Assume
@@ -339,7 +341,7 @@ static const char* Momentum_ver1_doc = R"DOC(
 
     Let's define the behavior of this operator. As you can imagine, SG with momentum requires
     several parameters:
-     
+
      - The learning-rate "R".
      - The update count "T". That is, the number of conducted training iterations. It should
        be zero in the first training iteration.
@@ -353,7 +355,7 @@ static const char* Momentum_ver1_doc = R"DOC(
     Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
     Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
     momentum (called "V_new").
-    
+
     This operator supports two different momentum algorithms. Set the attribute "mode" to
     "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
     "standard" to use standard momentum. Computation details are described subsequently.
@@ -489,18 +491,18 @@ static const char* Adam_ver1_doc = R"DOC(
 
     Let's define the behavior of this operator. First of all, Adam requires
     some parameters:
-     
+
      - The learning-rate "R".
      - The update count "T". That is, the number of training iterations conducted.
      - A L2-norm regularization coefficient "norm_coefficient".
-     - A small constant "epsilon" to avoid dividing-by-zero. 
+     - A small constant "epsilon" to avoid dividing-by-zero.
      - Two coefficients, "alpha" and "beta".
 
     At each Adam iteration, the optimized tensors are moved along a direction
     computed based on their exponentially-averaged historical gradient and
     exponentially-averaged historical squared gradient. Assume that only a tensor
     "X" is being optimized. The rest of required information is
-    
+
      - the value of "X",
      - "X"'s gradient (denoted by "G"),
      - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
@@ -510,8 +512,8 @@ static const char* Adam_ver1_doc = R"DOC(
     are stored as this operator's attributes. Specifically, this operator's input tensor
     list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
     the second input, and so on. Other parameters are given as attributes because they
-    are constants. Moreover, the corresponding output tensors are 
-    
+    are constants. Moreover, the corresponding output tensors are
+
      - the new value of "X" (called "X_new"),
      - the new exponentially-averaged historical gradient (denoted by "V_new"), and
      - the new exponentially-averaged historical squared gradient (denoted by "H_new").
@@ -541,7 +543,7 @@ static const char* Adam_ver1_doc = R"DOC(
       X_new = X - R_adjusted * V_new / H_sqrt
 
       // Post-update regularization.
-      X_final = (1 - norm_coefficient_post) * X_new 
+      X_final = (1 - norm_coefficient_post) * X_new
 
     If there are multiple inputs to be optimized, the pseudo code will be applied
     independently to each of them.

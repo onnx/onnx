@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -338,8 +342,10 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(
-        mp.opset_import(i).domain(), mp.opset_import(i).version());
-    g->opset_versions_mutable().emplace_back(std::move(new_opset_version));
+      mp.opset_import(i).domain(), mp.opset_import(i).version());
+    g->forSelfAndEachSubGraph([&new_opset_version](Graph* graph) {
+      graph->opset_versions_mutable().emplace_back(new_opset_version);
+    });
   }
   return g;
 }
@@ -481,7 +487,9 @@ void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
 void encodeTypeProtoTensorType(
     ONNX_NAMESPACE::TypeProto_Tensor* tensor_type,
     Value* n) {
-  tensor_type->set_elem_type(n->elemType());
+  if (n->elemType() != 0) {
+    tensor_type->set_elem_type(n->elemType());
+  }
   if (n->has_sizes()) {
     ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
     for (const Dimension& d : n->sizes()) {
@@ -497,9 +505,11 @@ void encodeTypeProtoTensorType(
 
 void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   v->set_name(value_name(n));
-  ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
-  ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
-  encodeTypeProtoTensorType(tensor_type, n);
+  if (n->elemType() != 0 && n->has_sizes()) {
+    ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
+    ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
+    encodeTypeProtoTensorType(tensor_type, n);
+  }
 }
 
 void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {

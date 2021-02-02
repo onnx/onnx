@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include <algorithm>
 #include <functional>
@@ -42,9 +44,9 @@ False instead of True.)DOC";
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(
-        0, 
-        "data", 
-        "An input tensor.", 
+        0,
+        "data",
+        "An input tensor.",
         "T",
         OpSchema::Single,
         true,
@@ -79,9 +81,9 @@ False instead of True.)DOC";
           OPTIONAL_VALUE);
     }
     schema.Output(
-        0, 
-        "reduced", 
-        "Reduced output tensor.", 
+        0,
+        "reduced",
+        "Reduced output tensor.",
         "T",
         OpSchema::Single,
         true,
@@ -215,11 +217,11 @@ std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the 
-provided axis. The resulting tensor has the same rank as the input if keepdims equal 1. 
-If keepdims equal 0, then the resulting tensor have the reduced dimension pruned. 
-If select_last_index is True (default False), the index of the last occurrence of the {name} 
-is selected if the {name} appears more than once in the input. Otherwise the index of the 
+Computes the indices of the {name} elements of the input tensor's element along the
+provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
+If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+If select_last_index is True (default False), the index of the last occurrence of the {name}
+is selected if the {name} appears more than once in the input. Otherwise the index of the
 first occurrence is selected.
 The type of the output tensor is integer.)DOC";
                         ReplaceAll(doc, "{name}", name););
@@ -240,9 +242,9 @@ The type of the output tensor is integer.)DOC";
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Input(
-        0, 
-        "data", 
-        "An input tensor.", 
+        0,
+        "data",
+        "An input tensor.",
         "T",
         OpSchema::Single,
         true,

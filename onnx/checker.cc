@@ -1,4 +1,9 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnx/checker.h"
+#include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
@@ -7,6 +12,12 @@
 #include <fstream>
 #include <iterator>
 #include <unordered_set>
+
+#ifdef _WIN32
+#include <direct.h>
+#else  // POSIX
+#include <sys/stat.h>
+#endif
 
 namespace ONNX_NAMESPACE {
 namespace checker {
@@ -126,12 +137,15 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        if (!std::ifstream(ctx.get_model_dir() + entry.value())) {
+        std::string data_path = path_join(ctx.get_model_dir(), entry.value());
+        // use stat to check whether the file exists
+        struct stat buffer;
+        if (stat((data_path).c_str(), &buffer) != 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
               ") should be stored in ",
-              ctx.get_model_dir() + entry.value(),
+              data_path,
               ", but it doesn't exist or is not accessible.");
         }
       }

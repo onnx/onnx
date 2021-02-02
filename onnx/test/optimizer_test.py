@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,6 +15,7 @@ import onnx.optimizer
 import unittest
 
 
+@unittest.skip("ONNX optimizer is maintained in onnx/optimizer repo. Tests here are deprecated")
 class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, opts, fixed_point=False, **kwargs):  # type: (GraphProto, Sequence[Text], bool, **Any) -> ModelProto
