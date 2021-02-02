@@ -12,8 +12,8 @@ def main():  # type: () -> None
         root_folder = os.path.realpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         os.chdir(root_folder)
         # Use silent to prevent mypy catching other typecheck errors which are not related to ONNX itself
-        subprocess.check_call(["mypy", ".", "--no-site-packages", "--follow-imports", "silent"])
-        subprocess.check_call(["mypy", "--py2", ".", "--no-site-packages", "--follow-imports", "silent"])
+        subprocess.check_call(["mypy", ".", "--follow-imports", "silent"])
+        subprocess.check_call(["mypy", "--py2", ".", "--follow-imports", "silent"])
 
         exit(0)
     except subprocess.CalledProcessError:
