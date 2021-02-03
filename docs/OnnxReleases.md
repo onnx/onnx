@@ -27,14 +27,15 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 * In release branch update the version number in file [VERSION_NUMBER] to something like `1.x.0rc1` as release candidate for verification before finally using the targeted version number for this release.
 * Windows
   * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheels for Windows.
-  * After success, upload the produced wheels manually to TestPyPI: `twine upload --verbose *.whl --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`.
-* Linux and Mac
-  * Use Travis CI from [onnx/wheel-builder](https://github.com/onnx/wheel-builder) repo to produce and automatiallcy upload wheels for Linux and Mac.
-  * Update `BUILD_COMMIT` as the commit ID of latest release branch in `.travis.yml` and update `ONNX_NAMESPACE` as `ONNX_REL_1_X` in `config.sh `. For example: https://github.com/onnx/wheel-builder/pull/27.
-  * Update `$PYPI_USERNAME` and `$PYPI_PASSWORD` as `- secure: ***` in `.travis.yml`. Create the encrypted variables for these variables by `travis encrypt` in your local machine.
-  Reference: https://docs.travis-ci.com/user/environment-variables/#defining-encrypted-variables-in-travisyml
-  * Only `pypi-test` branch will automatiallcy upload created wheels to TestPyPI.
-  * Currently Python 3.5 on Mac cannot upload wheel successfully in Travis CI. In that case, you need to upload the created wheels to AWS S3 bucket, get the wheel from AWS and upload it manually (same as Windows). To upload to AWS, updade your `ARTIFACTS_KEY`, `ARTIFACTS_SECRET` and `ARTIFACTS_BUCKET` by `travis encrypt`. Reference: https://docs.travis-ci.com/user/uploading-artifacts/
+
+* Linux
+  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_i686.yml`) under onnx repo to produce x64/i686 wheels for Linux.
+
+* Mac
+  * Use GitHub Action (`.github/workflows/release_mac.yml`) under onnx repo to produce wheels for Mac.
+
+* After success, upload the produced wheels manually to TestPyPI: `twine upload --verbose *.whl --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`.
+
 
 **Source Distribution**
 * Make sure all the git submodules are updated
@@ -81,17 +82,14 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 
 **Source distribution verification**
-* Test the source distribution by doing ``pip install --index-url https://test.pypi.org/legacy/ onnx`` in a new environment.
+* Test the source distribution by doing ``pip install -i https://test.pypi.org/simple/ onnx`` in a new environment.
 
 ## Upload to official PyPI
 **NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
 
 **Wheels**
-* Windows
+* Windows/Linux/Mac
   * Same as TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD` instead.
-* Linux and Mac
-  * Similar to TestPyPI. In wheel-builder repo, merge `pypi-test` branch to main branch and create a new Release with main branch and tag to trigger Travis CI. This will automatically upload PyPI packages after successful CI run.
-
 
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
@@ -102,7 +100,8 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 **Release summary**
 * Upload the source distribution, `.tar.gz` and `.zip`, in the release summary.
-* Create release in github with the right tag and upload the release summary along with .tar.gz and .zip
+* Create release in github with the r
+ight tag and upload the release summary along with .tar.gz and .zip
 
 **Announce**
 * Announce in slack, for instance, `onnx-general` channel.
@@ -118,6 +117,5 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 ## TODO list for next release
 * Remove `onnx.optimizer` in ONNX 1.9
 * Be aware of protobuf version gap issue (like building onnx with protobuf>=3.12 is not compatible with older protobuf)
-* (Optional) Move Linux and Mac release pipelines in onnx/wheel-builder to GitHub Action in onnx repo
-* (Optional) Deprecate Python 3.5. It has been officially deprecated by Python and some problems exist in Travis CI for Mac.
+* (Optional) Deprecate Python 3.5 and add Python 3.9.
 * (Optional) Automatically upload created wheels for Windows
