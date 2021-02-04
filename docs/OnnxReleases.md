@@ -102,8 +102,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 **Release summary**
 * Upload the source distribution, `.tar.gz` and `.zip`, in the release summary.
-* Create release in github with the r
-ight tag and upload the release summary along with .tar.gz and .zip
+* Create release in github with the right tag and upload the release summary along with .tar.gz and .zip
 
 **Announce**
 * Announce in slack, for instance, `onnx-general` channel.
