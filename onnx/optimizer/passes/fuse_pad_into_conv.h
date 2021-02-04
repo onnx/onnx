@@ -161,6 +161,11 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       conv_pads[conv_pads_size / 2 + j] += pads[pads_size / 2 + i];
     }
 
+    // Clean the auto_pad
+    if (conv->hasAttribute(Symbol("auto_pad"))){
+      conv->removeAttribute(Symbol("auto_pad"));
+    }
+
     conv->is_(kpads, std::move(conv_pads));
     conv->replaceInput(0, pad->inputs()[0]);
     pad->destroy();
