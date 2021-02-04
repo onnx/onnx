@@ -503,6 +503,8 @@ public:
     ONNX_ASSERT(outputs().size() == n->outputs().size());
     size_t nOutputs = outputs().size();
     for(size_t i = 0; i < nOutputs; i++) {
+      std::string unique_name = outputs()[i]->uniqueName();
+      n->outputs()[i]->setUniqueName(unique_name);
       outputs()[i]->replaceAllUsesWith(n->outputs()[i]);
     }
   }
