@@ -297,7 +297,7 @@ packages = setuptools.find_packages()
 
 install_requires.extend([
     'protobuf',
-    'numpy',
+    'numpy>=1.16.6',
     'six',
     'typing>=3.6.4; python_version < "3.5"',
     'typing-extensions>=3.6.2.1',
