@@ -782,6 +782,22 @@ class TestShapeInference(unittest.TestCase):
     def test_relu(self):  # type: () -> None
         self._identity_prop('Relu')
 
+    def test_identity(self):  # type: () -> None
+        self._identity_prop('Identity')
+
+    def test_identity_sequence(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (2, 3, 4)),
+             ('input2', TensorProto.FLOAT, (2, 3, 4)),
+             ('input3', TensorProto.FLOAT, (2, 5, 4))],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('Identity', ['in_sequence'], ['output_sequence'])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 4)),  # type: ignore
+             make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, 4))])  # type: ignore
+
     def test_add(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (30, 4, 5)),
