@@ -7473,22 +7473,22 @@ Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> (differentiable) : T</dt>
+<dt><tt>input</tt> (differentiable) : V</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
+<dt><tt>output</tt> (differentiable) : V</dt>
 <dd>Tensor to copy input into.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain input and output types to all tensor and sequence types.</dd>
 </dl>
 
 
@@ -7511,6 +7511,33 @@ data = np.array([[[
 
 expect(node, inputs=[data], outputs=[data],
        name='test_identity')
+```
+
+</details>
+
+
+<details>
+<summary>sequence</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Identity',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+data = [
+    np.array([[[
+        [1, 2],
+        [3, 4],
+    ]]], dtype=np.float32),
+    np.array([[[
+        [2, 3],
+        [1, 5],
+    ]]], dtype=np.float32)]
+
+expect(node, inputs=[data], outputs=[data], name='test_identity_sequence',
+    opset_imports=[onnx.helper.make_opsetid("", 13)])
 ```
 
 </details>
