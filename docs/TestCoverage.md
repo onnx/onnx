@@ -9631,7 +9631,33 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Reshape
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>allowzero</summary>
+
+```python
+original_shape = [0, 3, 4]
+test_cases = {
+    'allowzero_reordered': np.array([3, 4, 0], dtype=np.int64),
+}
+data = np.random.random_sample(original_shape).astype(np.float32)
+
+for test_name, shape in test_cases.items():
+    node = onnx.helper.make_node(
+        'Reshape',
+        inputs=['data', 'shape'],
+        outputs=['reshaped'],
+        allowzero=1,  # if allowzero=1, final shape = (3, 4, 0)
+                      # if allowzero=0, final shape = (3, 4, 4)
+    )
+
+    reshaped = reshape_reference_implementation(data, shape, allowzero=1)
+
+    expect(node, inputs=[data, shape], outputs=[reshaped],
+           name='test_reshape_' + test_name)
+```
+
+</details>
 <details>
 <summary>reshape</summary>
 
