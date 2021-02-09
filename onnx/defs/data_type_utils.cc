@@ -116,8 +116,7 @@ const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   auto it = GetTypeStrToProtoMap().find(*data_type);
   if (GetTypeStrToProtoMap().end() == it) {
-    static const TypeProto empty_type_proto;
-    return empty_type_proto;
+    ONNX_THROW_EX(std::invalid_argument("Invalid data type " + *data_type));
   }
   return it->second;
 }
@@ -177,7 +176,7 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
   if (t.TensorDataTypeToTypeStr().end() == iter) {
-    return "";
+    ONNX_THROW_EX(std::invalid_argument("Invalid tensor data type " + tensor_data_type));
   }
   return iter->second;
 }
@@ -255,7 +254,9 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 void DataTypeUtils::FromDataTypeString(
     const std::string& type_str,
     int32_t& tensor_data_type) {
-  assert(IsValidDataTypeString(type_str));
+  if (!IsValidDataTypeString(type_str)) {
+    ONNX_THROW_EX(std::invalid_argument("DataTypeUtils::FromDataTypeString - Received invalid data type string " + type_str));
+  }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   tensor_data_type = t.TypeStrToTensorDataType()[type_str];

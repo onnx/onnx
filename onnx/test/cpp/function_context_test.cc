@@ -77,6 +77,22 @@ BuildTwiceFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema&
   return BuildFunctionProto(functionProto, schema, body);
 }
 
+static bool
+BuildTwiceFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  // Create a scalar-tensor constant 2.0 of input-type:
+  auto* tp = ctx.getInputType(0);
+  if ((tp == nullptr) || (!tp->has_tensor_type()))
+    return false;
+  auto elem_type = (TensorProto_DataType)tp->tensor_type().elem_type();
+  auto two_as_tensor = ToTensor(2.0, elem_type);
+
+  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
+                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
+                                                {{"Y"}, "Mul", {"X", "Two"}}};
+
+  return BuildFunctionProto(functionProto, schema, body);
+}
+
 void RegisterTwiceFloatSchema() {
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFunTwice")
@@ -91,7 +107,24 @@ void RegisterTwiceFloatSchema() {
   (void)unused;
 }
 
+void RegisterTwiceSchema() {
+  ONNX_NAMESPACE::OpSchema schema;
+  schema.SetName("CustomFunTwice")
+      .SetDomain(ONNX_DOMAIN)
+      .SinceVersion(12)
+      .SetDoc("This operator returns an output tensor that is twice the input tensor.")
+      .Input(0, "X", "Input tensor", "T", OpSchema::Single)
+      .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
+      .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
+      .SetContextDependentFunctionBodyBuilder(BuildTwiceFunctionBody);
+#ifndef ONNX_NO_EXCEPTIONS
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
+  (void)unused;
+#endif
+}
+
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
+  // Does not test registering schema twice when no exceptions are enabled.
   RegisterTwiceFloatSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);
@@ -122,37 +155,8 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 
 // A polymorphic context-dependent function test-case.
 
-static bool
-BuildTwiceFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-  // Create a scalar-tensor constant 2.0 of input-type:
-  auto* tp = ctx.getInputType(0);
-  if ((tp == nullptr) || (!tp->has_tensor_type()))
-    return false;
-  auto elem_type = (TensorProto_DataType)tp->tensor_type().elem_type();
-  auto two_as_tensor = ToTensor(2.0, elem_type);
-
-  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
-                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-                                                {{"Y"}, "Mul", {"X", "Two"}}};
-
-  return BuildFunctionProto(functionProto, schema, body);
-}
-
-void RegisterTwiceSchema() {
-  ONNX_NAMESPACE::OpSchema schema;
-  schema.SetName("CustomFunTwice")
-      .SetDomain(ONNX_DOMAIN)
-      .SinceVersion(12)
-      .SetDoc("This operator returns an output tensor that is twice the input tensor.")
-      .Input(0, "X", "Input tensor", "T", OpSchema::Single)
-      .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
-      .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildTwiceFunctionBody);
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
-  (void)unused;
-}
-
 TEST(FunctionAPITest, TypeContextTest) {
+  // Does not test registering schema twice when no exceptions are enabled.
   RegisterTwiceSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);

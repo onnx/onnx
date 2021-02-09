@@ -34,9 +34,12 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...)                           \
-  throw ONNX_NAMESPACE::checker::ValidationError( \
-      ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+#ifdef ONNX_NO_EXCEPTIONS
+#define fail_check(...) std::cerr << ONNX_NAMESPACE::MakeString(__VA_ARGS__);\
+abort();
+#else
+#define fail_check(...) throw ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+#endif
 
 class CheckerContext final {
  public:

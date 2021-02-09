@@ -25,6 +25,7 @@
 #include "onnx/common/interned_strings.h"
 #include "onnx/common/graph_node_list.h"
 #include "onnx/common/tensor.h"
+#include "onnx/common/common.h"
 
 
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -809,12 +810,14 @@ class OpSetID final {
 
     // target must be in the form "<domain>&<version>"
     static OpSetID fromString(const std::string& target) {
-      try {
+      ONNX_TRY {
         std::string new_domain = target.substr(0, target.find("$"));
         int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
         return OpSetID(std::move(new_domain), new_version);
-      } catch (const std::runtime_error& e) {
-        ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+      } ONNX_CATCH (const std::runtime_error& e) {
+        ONNX_HANDLE_EXCEPTION([&]() {
+          ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+        });
       }
     }
 

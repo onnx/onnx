@@ -25,6 +25,7 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNXIFI_ENABLE_EXT "Enable onnxifi extensions." OFF)
+option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
     set(DEFAULT_ONNX_ML $ENV{ONNX_ML})
@@ -75,6 +76,17 @@ endif()
 
 if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
+endif()
+
+if(MSVC)
+  if(NOT ONNX_DISABLE_EXCEPTIONS)
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
+    string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
+  endif()
+endif()
+
+if(ONNX_DISABLE_EXCEPTIONS)
+  add_compile_definitions("ONNX_NO_EXCEPTIONS")
 endif()
 
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12

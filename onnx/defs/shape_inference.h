@@ -46,13 +46,22 @@ class InferenceError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_type_inference(...)        \
-  throw ONNX_NAMESPACE::InferenceError( \
-      ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__));
+#ifdef ONNX_NO_EXCEPTIONS
+#define fail_type_inference(...)                                                 \
+  std::cerr << ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__); \
+  abort();
 
-#define fail_shape_inference(...)       \
-  throw ONNX_NAMESPACE::InferenceError( \
-      ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__));
+#define fail_shape_inference(...)                                                 \
+  std::cerr << ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__); \
+  abort();
+#else
+
+#define fail_type_inference(...) \
+  throw ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__));
+
+#define fail_shape_inference(...) \
+  throw ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__));
+#endif
 
 struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
@@ -61,8 +70,7 @@ struct InferenceContext {
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
-  virtual GraphInferencer* getGraphAttributeInferencer(
-      const std::string& attribute_name) = 0;
+  virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
 };
 
