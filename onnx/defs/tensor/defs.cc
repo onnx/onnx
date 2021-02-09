@@ -103,19 +103,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Reshape_ver13_doc = R"DOC(
+static const char* Reshape_ver14_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
+dimension will be set explicitly to zero (i.e. not taken from input tensor))DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
-    13,
+    14,
     OpSchema()
-        .SetDoc(Reshape_ver13_doc)
+        .SetDoc(Reshape_ver14_doc)
+        .Attr(
+            "allowzero",
+            "(Optional) By default, when any value in the 'shape' input is equal to zero "
+            "the corresponding dimension value is copied from the input tensor dynamically. "
+            "allowzero=1 indicates that if any value in the 'shape' input is set to zero, "
+            "the zero value is honored, similar to NumPy.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(0,
             "data",
             "An input tensor.",
@@ -152,6 +161,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!targetShapeInitializer) {
             return;
           }
+          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
           std::vector<int64_t> targetShape;
@@ -167,9 +177,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Iterate through targetShape, adding dimensions in the outputShape
-          // TensorProto. If the targertShape dimension is -1, we do not set the
+          // TensorProto. If the targetShape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension. If
-          // targertShape dimension is 0, we attempt to propagate the dimension
+          // targetShape dimension is 0, we attempt to propagate the dimension
           // value/param. If the value cannot be inferred, we set the flag in
           // the unresolveZeros vector. If targetShape dimension is positive, we
           // set the dimension value in the outputShape. We track the product of
@@ -190,7 +200,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // this dimension to potentially be filled in later.
               if (negativeOneDim) {
                 fail_shape_inference(
-                    "Target shape may not have multiple -1 dimensions");
+                    "Target shape may not have multiple -1 dimensions.");
               }
               negativeOneDim = new_dim;
             } else if (targetShape[i] == 0) {
@@ -198,22 +208,31 @@ ONNX_OPERATOR_SET_SCHEMA(
               // its bounds. If these conditions are satisfied, any dimension
               // value/param should be propogated. If dimension value cannot be
               // inferred, set the corresponding  unresolvedZeros flag to true.
-              unresolvedZeros[i] = true;
-              if (dataInputTensorType.has_shape()) {
-                if (i >= dataInputTensorType.shape().dim_size()) {
-                  fail_shape_inference("Invalid position of 0");
+              // If allowzero is set however, do not propagate values, since output
+              // dimension is explicitly zero.
+              if (allowzero == 0) {
+                unresolvedZeros[i] = true;
+                if (dataInputTensorType.has_shape()) {
+                  if (i >= dataInputTensorType.shape().dim_size()) {
+                    fail_shape_inference("Invalid position of 0.");
+                  }
+                  if (dataInputTensorType.shape().dim(i).has_dim_value()) {
+                    const auto& dim_value =
+                        dataInputTensorType.shape().dim(i).dim_value();
+                    new_dim->set_dim_value(dim_value);
+                    outputProduct *= dim_value;
+                    unresolvedZeros[i] = false;
+                  } else if (dataInputTensorType.shape()
+                                 .dim(i)
+                                 .has_dim_param()) {
+                    const auto& dim_param =
+                        dataInputTensorType.shape().dim(i).dim_param();
+                    new_dim->set_dim_param(dim_param);
+                  }
                 }
-                if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  const auto& dim_value =
-                      dataInputTensorType.shape().dim(i).dim_value();
-                  new_dim->set_dim_value(dim_value);
-                  outputProduct *= dim_value;
-                  unresolvedZeros[i] = false;
-                } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
-                  const auto& dim_param =
-                      dataInputTensorType.shape().dim(i).dim_param();
-                  new_dim->set_dim_param(dim_param);
-                }
+              } else {
+                new_dim->set_dim_value(targetShape[i]);
+                outputProduct *= targetShape[i];
               }
             } else if (targetShape[i] > 0) {
               // Set the dimension value to targetShape[i]
@@ -234,7 +253,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // that are not marked by unresolvedZeros. If not possible, set the
             // inputProductValid flag to false.
             if (!outputProduct) {
-              fail_shape_inference("Invalid Target shape product of 0");
+              fail_shape_inference("Invalid Target shape product of 0. Product cannot be 0 in combination with -1");
             }
             int64_t inputProduct = 1;
             bool inputProductValid = true;
@@ -2195,7 +2214,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "input",
             "Input tensor",
-            "T",
+            "V",
             OpSchema::Single,
             true,
             1,
@@ -2204,15 +2223,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "Tensor to copy input into.",
-            "T",
+            "V",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
         .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output types to all tensor types.")
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types_with_bfloat();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "Constrain input and output types to all tensor and sequence types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Compress_ver11_doc = R"DOC(
