@@ -148,10 +148,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   ONNX_CATCH(const std::exception& e) {
     ONNX_HANDLE_EXCEPTION([&]() {
       if (directory != NULL) {
-        if (closedir(directory) != 0) {
-          e.AppendContext(
-              "Warning: failed to close directory " + target_dir + " when fetching test data: " + strerror(errno));
-        }
+        closedir(directory);
       }
       ONNX_THROW_EX(e);
     });
