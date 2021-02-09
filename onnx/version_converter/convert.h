@@ -718,6 +718,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "CumSum", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Relu", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Reshape", OpSetID(13), OpSetID(14)));
     }
 
     ModelProto convert_version(
