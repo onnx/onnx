@@ -13,7 +13,7 @@ namespace ONNX_NAMESPACE {
 
 class OpSet_Versions {
 public:
-    void addOpset(std::string opset_name, std::string domain, int version, OpSchema& class_name) {
+    void addOpset(std::string opset_name, std::string domain, int version, OpSchema class_name) {
         // do we need to handle different domains?
         onnx_version_map[opset_name].push_back(version);
         op_class_map[toMapKey(opset_name, domain, version)] = class_name;
