@@ -23,7 +23,7 @@
 
 #else
 #define ONNX_THROW(...) throw std::runtime_error(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
-#define ORT_THROW_EX(ex, ...) throw ex(__VA_ARGS__)
+#define ONNX_THROW_EX(ex) throw ex
 
 #define ONNX_TRY try
 #define ONNX_CATCH(x) catch (x)
