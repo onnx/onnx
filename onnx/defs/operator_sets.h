@@ -903,7 +903,6 @@ class OpSet_Onnx_ver13 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Shape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Size)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Concat)>());
-
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Split)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Slice)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Transpose)>());
@@ -932,6 +931,7 @@ class OpSet_Onnx_ver13 {
 // Forward declarations for ai.onnx version 14
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, CumSum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Relu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Reshape);
 
 // Iterate over schema from ai.onnx version 14
 class OpSet_Onnx_ver14 {
@@ -939,6 +939,7 @@ class OpSet_Onnx_ver14 {
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, CumSum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Relu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Reshape)>());
   }
 };
 
