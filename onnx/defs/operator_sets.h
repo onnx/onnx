@@ -6,6 +6,7 @@
 #pragma once
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/operator_versions.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -956,6 +957,39 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver12>();
   RegisterOpSetSchema<OpSet_Onnx_ver13>();
   RegisterOpSetSchema<OpSet_Onnx_ver14>();
+}
+
+OpSet_Versions ops = OpSet_Versions();
+// TODO: add more versions
+class OpSet_Onnx_ver_latest_13 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema)> fn) {
+    std::vector<OpSchema> class_names = ops.getAllLatestVersion("Onnx", 13);
+    for (auto class_name : class_names) {
+      fn(class_name);
+    }
+  }
+};
+
+inline void RegisterOnnxOperatorSetSchema(int target_version) {
+  // TODO: add more operators
+  ops.addOpset("Abs", "Onnx", 1, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Abs)>());
+  ops.addOpset("Abs", "Onnx", 6, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 6, Abs)>());
+  ops.addOpset("Abs", "Onnx", 13, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Abs)>());
+
+  ops.addOpset("Acos", "Onnx", 7, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Acos)>());
+
+  ops.addOpset("Acosh", "Onnx", 9, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Acosh)>());
+
+  ops.addOpset("Add", "Onnx", 1, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Add)>());
+  ops.addOpset("Add", "Onnx", 6, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 6, Add)>());
+  ops.addOpset("Add", "Onnx", 7, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Add)>());
+  ops.addOpset("Add", "Onnx", 13, GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Add)>());
+
+  // TODO: add more versions
+  if (target_version == 13) {
+    RegisterOpSetSchema<OpSet_Onnx_ver_latest_13>();
+  }
 }
 
 } // namespace ONNX_NAMESPACE
