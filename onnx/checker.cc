@@ -293,8 +293,9 @@ void check_sparse_tensor_indices_1(
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
     dense_size *= sparse_tensor_proto.dims(i);
-  if (static_cast<size_t>(indices.dims(0)) != nnz)
+  if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
+  }
 
   // Check if indices appear in ascending order, and if they have valid
   // values. The i-th value in index_data is the linear index of the i-th
@@ -304,15 +305,9 @@ void check_sparse_tensor_indices_1(
   int64_t prev_index = -1;
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = index_data[i]; // linearized index of i-th value
-    if (curr_index < 0 || curr_index >= dense_size)
-      fail_check(
-          "Sparse tensor (",
-          indices.name(),
-          ") index value at position [",
-          i,
-          "] out of range [0, ",
-          dense_size - 1,
-          "]");
+    if (curr_index < 0 || curr_index >= dense_size) {
+      fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, "] out of range [0, ", dense_size - 1, "]");
+    }
     if (curr_index <= prev_index) {
       fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, "] not in sorted order.");
     }
@@ -328,22 +323,24 @@ void check_sparse_tensor_indices_2(
     const SparseTensorProto& sparse_tensor_proto,
     size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
-  if (static_cast<size_t>(indices.dims(0)) != nnz)
+  if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
-  if (indices.dims(1) != dense_rank)
+  }
+  if (indices.dims(1) != dense_rank) {
     fail_check("Sparse tensor indices (", indices.name(), ") second dimension size does not match rank of tensor.");
+  }
 
   // Check if indices appear in ascending order, and if they have valid
   // values.
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
-
   int64_t prev_index = -1;
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
       auto index_ij = index_data[i * dense_rank + j];
-      if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j)))
+      if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
         fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, ",", j, "] out of range.");
+      }
       curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
     }
     if (curr_index <= prev_index) {
@@ -365,24 +362,26 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
   // to be a single value. In the future, if there is a requirement,
   // we may extend this to permit the value to be a "sub-tensor", in which
   // case values will have dimension > 1.
-  if (values.dims_size() != 1)
+  if (values.dims_size() != 1) {
     fail_check("Sparse tensor values (", values.name(), ") must have rank 1.");
+  }
   size_t nnz = static_cast<size_t>(values.dims(0));
-
   int dense_rank = sparse_tensor_proto.dims_size();
   if (dense_rank == 0) {
     fail_check("Sparse tensor (", values.name(), ") must have a dense-rank > 0");
   }
   for (int i = 0; i < dense_rank; ++i) {
-    if (sparse_tensor_proto.dims(i) <= 0)
+    if (sparse_tensor_proto.dims(i) <= 0) {
       fail_check("Sparse tensor (", values.name(), ") dimensions are not positive.");
+    }
   }
 
   if (sparse_tensor_proto.has_indices()) {
     const TensorProto& indices = sparse_tensor_proto.indices();
     check_tensor(indices, ctx);
-    if (indices.data_type() != TensorProto::INT64)
+    if (indices.data_type() != TensorProto::INT64) {
       fail_check("Sparse tensor indices (", indices.name(), ") must have INT64 type.");
+    }
     switch (indices.dims().size()) {
       case 1:
         // Indices in linearized format
@@ -395,8 +394,9 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
       default:
         fail_check("Sparse tensor indices (", indices.name(), ") must have rank 1 or 2.");
     }
-  } else if (nnz != 0)
+  } else if (nnz != 0) {
     fail_check("Sparse tensor (", values.name(), ") has no index values.");
+  }
 }
 
 // NB: This is a generic "attribute well-formedness" check, it doesn't
@@ -779,13 +779,15 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
   if (model.ir_version() >= 3) {
-    if (opset_imports.empty())
+    if (opset_imports.empty()) {
       fail_check("model with IR version >= 3 must specify opset_import for ONNX");
+    }
   } else {
     if (opset_imports.empty())
       opset_imports[ONNX_DOMAIN] = 1;
-    else
+    else {
       fail_check("model with IR version < 3 cannot have opset_import specified");
+    }
   }
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;

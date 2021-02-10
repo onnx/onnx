@@ -536,8 +536,9 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TensorProto*>& inputData) {
   int numInputs = int(inputTypes.size());
 
-  if (g_->input_size() != numInputs)
+  if (g_->input_size() != numInputs) {
     fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided");
+  }
 
   for (int i = 0, end = numInputs; i < end; ++i) {
     const TypeProto* inferredInput = inputTypes[i];

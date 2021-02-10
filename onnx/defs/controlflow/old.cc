@@ -157,13 +157,14 @@ int handle_negative_axis_validate_opset9(
     const std::string& attrib,
     int axis,
     int rank) {
-  if (!(-rank <= axis && axis < rank))
+  if (!(-rank <= axis && axis < rank)) {
     fail_shape_inference(
         attrib,
         " axis value ",
         axis,
         " is invalid for a tensor of rank ",
         rank);
+  }
   return (axis >= 0 ? axis : axis + rank);
 }
 
@@ -177,25 +178,27 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
 
   std::vector<int64_t> axes, output_axes;
   if (getRepeatedAttribute(ctx, "scan_input_axes", axes)) {
-    if (axes.size() != num_scan_inputs)
+    if (axes.size() != num_scan_inputs) {
       fail_shape_inference(
           "Number of scan input axes specified (",
           axes.size(),
           ") is not equal to number of scan inputs (",
           num_scan_inputs,
           ").");
+    }
   } else {
     axes.insert(axes.end(), num_scan_inputs, 0);
   }
 
   if (getRepeatedAttribute(ctx, "scan_output_axes", output_axes)) {
-    if (output_axes.size() != num_scan_outputs)
+    if (output_axes.size() != num_scan_outputs) {
       fail_shape_inference(
           "Number of scan output axes specified (",
           output_axes.size(),
           ") is not equal to number of scan outputs (",
           num_scan_outputs,
           ").");
+    }
   } else {
     output_axes.insert(output_axes.end(), num_scan_outputs, 0);
   }

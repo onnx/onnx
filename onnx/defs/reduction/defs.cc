@@ -113,9 +113,9 @@ False instead of True.)DOC";
       std::vector<int64_t> axes;
       size_t num_inputs = ctx.getNumInputs();
       if ((num_inputs == 2) && ctx.getInputType(1)) { // axes is input
-        if (ctx.getAttribute("axes"))
-          fail_shape_inference(
-              "axes as an input and attribute cannot be specified at the same time.");
+        if (ctx.getAttribute("axes")) {
+          fail_shape_inference("axes as an input and attribute cannot be specified at the same time.");
+        }
 
         const TensorProto* axesInitializer = ctx.getInputData(1);
         if (axesInitializer == nullptr) {

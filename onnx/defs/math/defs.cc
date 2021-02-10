@@ -1719,8 +1719,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t axis = getAttribute(ctx, "axis", -1);
           if (axis < 0)
             axis += rank;
-          if (axis < 0 || axis >= rank)
+          if (axis < 0 || axis >= rank) {
             fail_shape_inference("Invalid value for attribute axis");
+          }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto* k = ctx.getInputData(1);
@@ -1733,18 +1734,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {
             int64_t k_value = 0;
-            if (k->dims_size() != 1 || k->dims(0) != 1)
-              fail_shape_inference(
-                  "K input must be a one-dimensional tensor of size 1.");
+            if (k->dims_size() != 1 || k->dims(0) != 1) {
+              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+            }
             if (k->data_type() == TensorProto::INT64) {
               const auto& data = ParseData<int64_t>(k);
               k_value = data[0];
-            } else
-              fail_shape_inference("K input must be of type int64.");
-
-            if (axis_dim.dim_value() < k_value)
-              fail_shape_inference(
-                  "Axis has less than the requested k elements.");
+            } else {
+                fail_shape_inference("K input must be of type int64.");
+            }
+            if (axis_dim.dim_value() < k_value) {
+              fail_shape_inference("Axis has less than the requested k elements.");
+            }
 
             TensorShapeProto result_shape = input_shape;
             result_shape.mutable_dim(static_cast<int>(axis))
@@ -2030,9 +2031,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& shape_initializer_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (shape_initializer_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'shape' input must be 1D tensor of type INT64");
+                shape_initializer->data_type() != TensorProto::INT64) {
+                    fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+                }
 
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
@@ -3125,8 +3126,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
               const TensorShapeProto& weight_shape =
                   ctx.getInputType(2)->tensor_type().shape();
-              if (weight_shape.dim_size() != 1)
+              if (weight_shape.dim_size() != 1) {
                 fail_shape_inference("Weight rank must be 1.")
+              }
             }
 
             TensorShapeProto* output_shape =

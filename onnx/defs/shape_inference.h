@@ -472,9 +472,10 @@ inline void propagateElemTypeFromAttributeToOutput(
     if (default_value != TensorProto::UNDEFINED) {
       updateOutputElemType(ctx, outputIndex, default_value);
       return;
-    } else
+    } else {
       fail_type_inference(
           "Value of attribute ", attributeName, " not specified");
+    }
   }
   if (!attr_proto->has_i()) {
     fail_type_inference(
@@ -497,8 +498,9 @@ inline TensorShapeProto* getOutputShape(InferenceContext& ctx, size_t n) {
       (output_type->value_case() == TypeProto::kTensorType ||
        output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
     return output_type->mutable_tensor_type()->mutable_shape();
-  } else
+  } else {
     fail_type_inference("Output ", n, " expected to have tensor type");
+  }
 }
 
 inline void appendDim(TensorShapeProto* shape, int64_t dim_value) {
@@ -776,14 +778,9 @@ checkInputRank(InferenceContext& ctx, size_t input_index, int expected_rank) {
   // We check the rank only if a rank is known for the input:
   if (hasInputShape(ctx, input_index)) {
     auto rank = getInputShape(ctx, input_index).dim_size();
-    if (rank != expected_rank)
-      fail_shape_inference(
-          "Input ",
-          input_index,
-          " expected to have rank ",
-          expected_rank,
-          " but has rank ",
-          rank);
+    if (rank != expected_rank) {
+      fail_shape_inference("Input ", input_index, " expected to have rank ", expected_rank, " but has rank ", rank);
+    }
   }
 }
 
@@ -795,9 +792,9 @@ checkInputRank(InferenceContext& ctx, size_t input_index, int expected_rank) {
 // support "const" and "mutable" dimensions/shapes in unification.
 
 inline void checkDimEquality(int64_t value1, int64_t value2) {
-  if (value1 != value2)
-    fail_shape_inference(
-        "Dimension mismatch in unification between ", value1, " and ", value2);
+  if (value1 != value2) {
+    fail_shape_inference("Dimension mismatch in unification between ", value1, " and ", value2);
+  }
 }
 
 inline void unifyDim(const Dim& dim1, const Dim& dim2) {
@@ -837,14 +834,10 @@ inline void unifyInputDim(
   if (hasInputShape(ctx, input_index)) {
     auto& input_shape = getInputShape(ctx, input_index);
     // This shape is expected to have rank > dim_index:
-    if (input_shape.dim_size() <= dim_index)
+    if (input_shape.dim_size() <= dim_index) {
       fail_shape_inference(
-          "Input ",
-          input_index,
-          " expected to have rank >",
-          dim_index,
-          " but has rank ",
-          input_shape.dim_size());
+          "Input ", input_index, " expected to have rank >", dim_index, " but has rank ", input_shape.dim_size());
+    }
     const Dim& input_dim = input_shape.dim(dim_index);
     // Now, unify dim and input_dim:
     unifyDim(input_dim, dim);
