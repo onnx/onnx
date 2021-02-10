@@ -78,7 +78,9 @@ ModelProto DefaultVersionConverter::convert_version(
     debug("curr_version: " + ONNX_NAMESPACE::to_string(curr_version) + ", next_version: " +
         ONNX_NAMESPACE::to_string(curr_version + step));
     // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
-    for (Node* op : nodes) {
+    for(auto it = nodes.begin(); it != nodes.end();) {
+      auto op = *it;
+      it++; //Increment iterator before convertion allows to destroy current element in converter
       debug(std::string("Finding schema for ") + std::string(op->kind().toString()));
       const std::string op_name = op->kind().toString();
       if (op_name == "ConstantFill")

@@ -42,6 +42,7 @@
 #include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/upsample_9_10.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -339,6 +340,11 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<Slice_9_10>());
+      registerAdapter(make_unique<Upsample_9_10>());
+      //HACK: In Upsample_9_10 Upsample was replaced with Resize (from opset10)
+      //But converter still that graph in opset9 while visiting Resize
+      registerAdapter(make_unique<CompatibleAdapter>("Resize",
+        OpSetID(9), OpSetID(10)));
 
       /******** 10 -> 9 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
