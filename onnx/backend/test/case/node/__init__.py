@@ -14,11 +14,12 @@ import numpy as np  # type: ignore
 import onnx
 import onnx.mapping
 
-from ..utils import import_recursive, import_recursive_by_operator
+from ..utils import import_recursive
 from ..test_case import TestCase
 
 
 _NodeTestCases = []
+TARGET_OP_TYPE = ""
 
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto
 from onnx.onnx_operators_pb import FunctionProto
@@ -130,6 +131,9 @@ def expect(node,  # type: onnx.NodeProto
            name,  # type: Text
            **kwargs  # type: Any
            ):  # type: (...) -> None
+    # skip if the node's op_type is not same as the given one
+    if TARGET_OP_TYPE and node.op_type != TARGET_OP_TYPE:
+        return
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
     input_types = [None] * len(inputs)
@@ -207,10 +211,8 @@ def collect_testcases():  # type: () -> List[TestCase]
 def collect_testcases_by_operator(op_type):  # type: (Text) -> List[TestCase]
     '''Collect node test cases which include specific operator
     '''
-    import_recursive_by_operator(sys.modules[__name__], op_type)
     # only keep those tests related to this operator
-    specific_testcases = []
-    for testcase in _NodeTestCases:
-        if testcase.model.graph.node[0].op_type == op_type:
-            specific_testcases.append(testcase)
-    return specific_testcases
+    global TARGET_OP_TYPE
+    TARGET_OP_TYPE = op_type
+    import_recursive(sys.modules[__name__])
+    return _NodeTestCases

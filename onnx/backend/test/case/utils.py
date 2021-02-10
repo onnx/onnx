@@ -32,18 +32,3 @@ def import_recursive(package):  # type: (ModuleType) -> None
         if ispkg:
             import_recursive(module)
 
-
-def import_recursive_by_operator(package, op_type):  # type: (ModuleType, Text) -> None
-    """
-    Takes a package and imports specified modules underneath it
-    """
-    pkg_dir = None  # type: Optional[List[str]]
-    pkg_dir = package.__path__  # type: ignore
-    module_location = package.__name__
-    for (_module_loader, name, ispkg) in pkgutil.iter_modules(pkg_dir):
-        module_name = "{}.{}".format(module_location, name)  # Module/package
-        # only import if op_type is specified and in python test filename
-        if op_type in name:
-            module = importlib.import_module(module_name)
-        if ispkg:
-            import_recursive_by_operator(module, op_type)
