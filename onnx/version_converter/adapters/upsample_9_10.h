@@ -8,6 +8,8 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
+#include <iostream>
+
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct Upsample_9_10 final: public Adapter {
@@ -20,16 +22,9 @@ struct Upsample_9_10 final: public Adapter {
     ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.");
     std::string scale_input_name = node->inputs()[1]->uniqueName();
 
-    Value* x = nullptr;
-    Value* scales = nullptr;
-    for(size_t i = 0; i < node->inputs().size(); i++) {
-      if(node->inputs()[i]->uniqueName() == "X")
-        x = node->inputs()[i];
-      else if(node->inputs()[i]->uniqueName() == "Scales")
-        scales = node->inputs()[i];
-    }
-    ONNX_ASSERTM(x && scales, "x or scale are not defined in Upsample input");
-
+    Value* x = node->inputs()[0];
+    Value* scales = node->inputs()[1];
+    
     Node* resizeNode = graph->create(kResize, 1);
     resizeNode->addInput(x);
     resizeNode->addInput(scales);
