@@ -15,6 +15,7 @@ from onnx import checker, helper
 from onnx import ModelProto, TensorProto
 from onnx.external_data_helper import set_external_data
 from onnx.external_data_helper import convert_model_to_external_data
+from onnx.external_data_helper import covert_and_save_model_to_external_data
 from onnx.external_data_helper import convert_model_from_external_data
 from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
@@ -203,19 +204,36 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def test_check_model(self):  # type: () -> None
         checker.check_model(self.model)
 
-    def test_convert_model_to_from_one_file(self):  # type: () -> None
+    def test_convert_model_to_external_data_with_size_threshold(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
-        external_data_file = str(uuid.uuid4())
-        convert_model_to_external_data(self.model, location=external_data_file, size_threshold=0)
+
+        convert_model_to_external_data(self.model, size_threshold=1024)
         onnx.save_model(self.model, model_file_path)
-        self.assertTrue(Path.isfile(model_file_path))
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, external_data_file)))
+
         model = onnx.load_model(model_file_path)
         initializer_tensor = model.graph.initializer[0]
+        self.assertFalse(initializer_tensor.HasField("data_location"))
+
+    def test_convert_model_to_external_data_without_size_threshold(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        convert_model_to_external_data(self.model, size_threshold=0)
+        onnx.save_model(self.model, model_file_path)
+
+        model = onnx.load_model(model_file_path)
+        initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(initializer_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
 
-        attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+    def test_convert_model_to_external_data_from_one_file_with_location(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        external_data_file = str(uuid.uuid4())
+
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=True, location=external_data_file)
+        onnx.save_model(self.model, model_file_path)
+
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, external_data_file)))
+
+        model = onnx.load_model(model_file_path)
 
         # test convert model from external data
         convert_model_from_external_data(model)
@@ -228,36 +246,93 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertFalse(len(initializer_tensor.external_data))
+        self.assertFalse(len(attribute_tensor.external_data))
         self.assertEqual(attribute_tensor.data_location, TensorProto.DEFAULT)
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def test_convert_model_to_external_data_one_file_per_tensor(self):  # type: () -> None
+    def test_convert_model_to_external_data_from_one_file_without_location_uses_model_name(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
-        convert_model_to_external_data(self.model, all_tensors_to_one_file=False, size_threshold=0)
+
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=True)
         onnx.save_model(self.model, model_file_path)
+
+        self.assertTrue(Path.isfile(model_file_path))
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, model_file_path)))
+
+    def test_convert_model_to_external_data_one_file_per_tensor_without_attribute(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=False, convert_attribute=False)
+        onnx.save_model(self.model, model_file_path)
+
+        self.assertTrue(Path.isfile(model_file_path))
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
+        self.assertFalse(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+
+    def test_convert_model_to_external_data_one_file_per_tensor_with_attribute(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=False, convert_attribute=True)
+        onnx.save_model(self.model, model_file_path)
+
         self.assertTrue(Path.isfile(model_file_path))
         self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
         self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+
+    def test_convert_model_to_external_data_does_not_convert_attribute_values(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+
+        convert_model_to_external_data(self.model, size_threshold=0, convert_attribute=False, all_tensors_to_one_file=False)
+        onnx.save_model(self.model, model_file_path)
+
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
+        self.assertFalse(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+
         model = onnx.load_model(model_file_path)
         initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(initializer_tensor.HasField("data_location"))
+
+        attribute_tensor = model.graph.node[0].attribute[0].t
+        self.assertFalse(attribute_tensor.HasField("data_location"))
+
+    def test_convert_model_to_external_data_converts_attribute_values(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+
+        convert_model_to_external_data(self.model, size_threshold=0, convert_attribute=True)
+        onnx.save_model(self.model, model_file_path)
+
+        model = onnx.load_model(model_file_path)
+
+        initializer_tensor = model.graph.initializer[0]
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
+        self.assertTrue(initializer_tensor.HasField("data_location"))
 
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        self.assertTrue(attribute_tensor.HasField("data_location"))
 
-    def test_convert_model_to_external_data_with_size_threshold(self):  # type: () -> None
+    def test_convert_and_save_model_to_external_data_saves_the_model(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
-        convert_model_to_external_data(self.model, all_tensors_to_one_file=False, size_threshold=1024)
-        onnx.save_model(self.model, model_file_path)
+        covert_and_save_model_to_external_data(self.model, model_file_path)
         self.assertTrue(Path.isfile(model_file_path))
-        self.assertFalse(Path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertFalse(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+
+    def test_convert_and_save_model_to_external_data_converts_the_model(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        covert_and_save_model_to_external_data(self.model,
+                                               model_file_path,
+                                               all_tensors_to_one_file=True,
+                                               location=None,
+                                               size_threshold=0,
+                                               convert_attribute=False)
+
         model = onnx.load_model(model_file_path)
+
         initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(initializer_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
 
         attribute_tensor = model.graph.node[0].attribute[0].t
+        self.assertFalse(attribute_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
 

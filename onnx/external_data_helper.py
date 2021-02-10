@@ -9,7 +9,9 @@ import os
 import re
 import sys
 from itertools import chain
-from typing import Iterable, Text, Optional
+from typing import Iterable, Text, Optional, Union, IO
+
+import onnx
 from .onnx_pb import TensorProto, ModelProto
 
 
@@ -99,8 +101,8 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=1024):
-    # type: (ModelProto, bool, Optional[Text], int) -> None
+def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=1024, convert_attribute=False):
+    # type: (ModelProto, bool, Optional[Text], int, bool) -> None
     """
     Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
@@ -112,21 +114,48 @@ def convert_model_to_external_data(model, all_tensors_to_one_file=True, location
               If not specified, will use the model name.
     size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold
     it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
+    convert_attribute: If true, convert all tensors to external data
+                       If false, convert only non-attribute tensors to external data
     """
+    tensors = _get_initializer_tensors(model)
+    if convert_attribute:
+        tensors = _get_all_tensors(model)
+
     if all_tensors_to_one_file:
         file_name = Text(uuid.uuid1())
         if location:
             file_name = location
-        for tensor in _get_all_tensors(model):
+        for tensor in tensors:
             if tensor.HasField("raw_data") and sys.getsizeof(tensor.raw_data) >= size_threshold:
                 set_external_data(tensor, file_name)
     else:
-        for tensor in _get_all_tensors(model):
+        for tensor in tensors:
             if tensor.HasField("raw_data") and sys.getsizeof(tensor.raw_data) >= size_threshold:
                 tensor_location = tensor.name
                 if not _is_valid_filename(tensor_location):
                     tensor_location = Text(uuid.uuid1())
                 set_external_data(tensor, tensor_location)
+
+
+def covert_and_save_model_to_external_data(model, model_file_path, all_tensors_to_one_file=True, location=None, size_threshold=1024, convert_attribute=False):
+    # type: (ModelProto, Union[IO[bytes], Text], bool, Optional[Text], int, bool) -> None
+    """
+    Call to set tensors with raw data as external data and save to a specified path.
+
+    @params
+    model: ModelProto to be converted.
+    all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
+                             If false, save each tensor to a file named with the tensor name.
+    location: specify the external file that all tensors to save to.
+              If not specified, will use the model name.
+    size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold
+    it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
+    convert_attribute: If true, convert all tensors to external data
+                       If false, convert only non-attribute tensors to external data
+    model_file_path: A string containing a file name
+    """
+    convert_model_to_external_data(model, all_tensors_to_one_file, location, size_threshold, convert_attribute)
+    onnx.save_model(model, model_file_path)
 
 
 def convert_model_from_external_data(model):  # type: (ModelProto) -> None
