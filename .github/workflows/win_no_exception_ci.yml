@@ -1,4 +1,4 @@
-name: WindowsRelease
+name: Windows_No_Exception_CI
 
 on:
    push:
