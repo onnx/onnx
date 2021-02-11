@@ -151,21 +151,43 @@ TEST(FunctionVerification, VerifyFunctionOps) {
             << function_counter << " Functions." << std::endl;
 }
 
+// Verify FunctionExpandHelper removes the node with a function after 
+// function expanding. 
+TEST(FunctionVerification, VerifyFunctionExpandHelperRemovesFunctionNode) {
+
+  GraphProto graph;
+  NodeProto* new_node = graph.add_node();
+  new_node->set_op_type("MeanVarianceNormalization");
+  auto function_node = graph.node(0);
+  
+  const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
+  const FunctionProto* function_proto = schema->GetFunction();
+
+  FunctionExpandHelper(function_node, *function_proto, graph);
+
+  for (const auto& node : graph.node())
+  {	            
+    if (node.op_type()=="MeanVarianceNormalization"){
+      FAIL() << "Function node has not been deleted after function expansion.";
+    }
+  }             
+} 
+
 // Verify that FunctionExpandHelper obtains missing default attributes
 // from schema and adds them to ops in expanded subgraph.
 TEST(FunctionVerification, VerifyFunctionExpandHelper) {
   GraphProto graph;
   NodeProto* new_node = graph.add_node();
   new_node->set_op_type("MeanVarianceNormalization");
+  auto function_node = graph.node(0);
 
   const auto* schema =
       OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   const FunctionProto* func = schema->GetFunction();
   const auto default_axes_attribute =
-      schema->attributes().at("axes").default_value;
+      schema->attributes().at("axes").default_value; 
 
-  FunctionExpandHelper(*new_node, *func, graph);
-
+  FunctionExpandHelper(function_node, *func, graph);
   for (const auto& node : graph.node()) {
     if (node.op_type() == "ReduceMean") {
       auto attr = node.attribute(0);

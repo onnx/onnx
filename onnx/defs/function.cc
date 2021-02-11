@@ -15,6 +15,10 @@ std::string InteralTensorNameGenerator(
   return new_name;
 }
 
+bool nodes_equal(const NodeProto& lhs, const NodeProto& rhs) {
+      return ProtoString(lhs) == ProtoString(rhs);
+}
+
 void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,
@@ -105,6 +109,15 @@ void FunctionExpandHelper(
         AttributeProto* new_attr = new_node->add_attribute();
         new_attr->CopyFrom(attr);
       }
+    }
+  }
+
+  // Remove function node from graph
+  for (int i = 0; i < g.node().size(); ++i) {
+    auto node_i = g.node(i);
+    if (nodes_equal(node, node_i)) {
+       g.mutable_node()->DeleteSubrange(i, 1);
+       break;
     }
   }
 }
