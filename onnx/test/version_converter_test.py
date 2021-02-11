@@ -1044,7 +1044,7 @@ class TestVersionConverter(unittest.TestCase):
 
         assert len(converted_model.graph.node) == 1
         assert converted_model.graph.node[0].op_type == "Resize"
-        assert len(converted_model.graph.node[0].attribute) == 0
+        assert len(converted_model.graph.node[0].attribute) == 1
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].input) == 2
 

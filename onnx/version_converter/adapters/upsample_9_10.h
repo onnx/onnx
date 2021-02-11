@@ -19,13 +19,18 @@ struct Upsample_9_10 final: public Adapter {
 
     const ArrayRef<Value*>& inputs = node->inputs();
 
+    Symbol mode = Symbol("mode");
+    ONNX_ASSERTM(node->hasAttribute(mode), "Upsample in opset9 need to have 'mode' attribute");
+    auto modeStr = node->s(mode);
+
     ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.");
     std::string scale_input_name = node->inputs()[1]->uniqueName();
 
     Value* x = node->inputs()[0];
     Value* scales = node->inputs()[1];
-    
+
     Node* resizeNode = graph->create(kResize, 1);
+    resizeNode->s_(mode, modeStr);
     resizeNode->addInput(x);
     resizeNode->addInput(scales);
     resizeNode->insertAfter(node);
