@@ -2,8 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #include <functional>
 #include "onnx/defs/schema.h"
@@ -354,17 +352,17 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Relu_ver13_doc)
-        .Input(0, 
-            "X", 
-            "Input tensor", 
+        .Input(0,
+            "X",
+            "Input tensor",
             "T",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
-        .Output(0, 
-            "Y", 
-            "Output tensor", 
+        .Output(0,
+            "Y",
+            "Output tensor",
             "T",
             OpSchema::Single,
             true,
@@ -969,9 +967,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
-            0, 
-            "x", 
-            "An input tensor that is to be processed.", 
+            0,
+            "x",
+            "An input tensor that is to be processed.",
             "T",
             OpSchema::Single,
             true,

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # Originally there are some checker failures in weekly-CI
 # Skip them in test_model_zoo.py for now
 # TODO: fix these checker failures
