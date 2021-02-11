@@ -31,4 +31,3 @@ def import_recursive(package):  # type: (ModuleType) -> None
         module = importlib.import_module(module_name)
         if ispkg:
             import_recursive(module)
-
