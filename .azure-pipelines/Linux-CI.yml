@@ -95,7 +95,7 @@ jobs:
       fi
 
       # checker.check_model all generated backend data
-      python workflow_scripts\test_generated_backend.py
+      python workflow_scripts/test_generated_backend.py
       if [ $? -ne 0 ]; then
         echo "check generated backend data failed"
         exit 1
