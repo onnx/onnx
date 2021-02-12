@@ -62,7 +62,7 @@ jobs:
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
-      backend-test-tools generate-data
+      python onnx\backend\test\cmd_tools.py generate-data
 
       # checker.check_model all generated backend data
       python workflow_scripts\test_generated_backend.py

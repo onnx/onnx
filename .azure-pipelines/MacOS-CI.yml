@@ -65,7 +65,7 @@ jobs:
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
       python onnx/backend/test/stat_coverage.py
-      backend-test-tools generate-data
+      python onnx/backend/test/cmd_tools.py generate-data
 
       git status
       git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
