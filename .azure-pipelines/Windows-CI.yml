@@ -62,6 +62,14 @@ jobs:
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
+      backend-test-tools generate-data
+
+      # checker.check_model all generated backend data
+      python workflow_scripts\test_generated_backend.py
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "check generated backend data failed"
+        EXIT 1
+      )     
 
       rm -rf .setuptools-cmake-build
       pip install --quiet -e .[mypy]

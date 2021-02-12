@@ -22,7 +22,12 @@ def main():
                     fail_count += 1
                     print("{} fail: {}".format(test_dir_name, e))
                 count += 1
-    print("{} failed in {} backend models.".format(fail_count, count))
+    if fail_count == 0:
+        print("{} backend models passed.".format(count))
+    else:
+        print("{} failed in {} backend models.".format(fail_count, count))
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
