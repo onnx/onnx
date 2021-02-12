@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "status.h"
 #include <assert.h>
 #include "onnx/string_utils.h"
@@ -74,7 +78,7 @@ const Status& Status::OK() noexcept {
 }
 
 const std::string& Status::EmptyString() {
-  static std::string empty_str = "";
+  static std::string empty_str;
   return empty_str;
 }
 

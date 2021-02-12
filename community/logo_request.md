@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 ## Member Company logos
 
 Member Companies as defined [here](readme.md#community-roles) can request their logo be displayed on https://onnx.ai and other materials.

@@ -1,4 +1,8 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
  * Dummy implementation of ONNX backend interface for manual test.
  * Prints the name of the called function and backend name on each call.
  */

@@ -47,8 +47,8 @@ endif()
 
  if (ONNX_USE_PROTOBUF_SHARED_LIBS)
   if(MSVC)
-    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work  
-    add_definitions(-DPROTOBUF_USE_DLLS)  
+    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
+    add_definitions(-DPROTOBUF_USE_DLLS)
   endif()
 endif()
 
@@ -76,6 +76,12 @@ endif()
 if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
 endif()
+
+# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
+# Use the following command in the future; now this is only compatible with the latest pybind11
+# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
+find_package(PythonInterp ${PY_VERSION} REQUIRED)
+find_package(PythonLibs ${PY_VERSION})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -163,7 +169,8 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     set(ABS_FILE ${ROOT_DIR}/${INFILE})
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
-    if(ONNX_ML)
+    # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
+    if(ONNX_ML AND NOT(FILE_WE STREQUAL "onnx-data"))
       if(ONNX_NAMESPACE STREQUAL "onnx")
         set(GENERATED_FILE_WE "${FILE_WE}-ml")
       else()
@@ -194,11 +201,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
     endif()
 
-    if("${PYTHON_EXECUTABLE}" STREQUAL "")
-      set(_python_exe "python")
-    else()
-      set(_python_exe "${PYTHON_EXECUTABLE}")
-    endif()
     set(GEN_PROTO_ARGS
         -p
         "${ONNX_NAMESPACE}"
@@ -220,7 +222,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -238,11 +240,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
-          # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is
-          # missing the +x flag. Add it.
-          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-        else(NOT WIN32)
+          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
+          configure_file(
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
+            @ONLY)
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+        else()
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
         list(APPEND PROTOC_ARGS
@@ -299,6 +304,15 @@ relative_protobuf_generate_cpp(gen_onnx_operators_proto
                                ${ONNX_ROOT}
                                gen_onnx_proto
                                onnx/onnx-operators.in.proto)
+list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
+
+relative_protobuf_generate_cpp(gen_onnx_data_proto
+                               __tmp_srcs
+                               __tmp_hdrs
+                               ${ONNX_ROOT}
+                               gen_onnx_proto
+                               onnx/onnx-data.in.proto)
 list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
 list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
@@ -437,8 +451,6 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
@@ -453,16 +465,16 @@ if(BUILD_ONNX_PYTHON)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                                  /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible 
+                                         # protobuf::uint64' to 'int', possible
                                          # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                 /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
     if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export 
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
-                                             # have dll-interface to be used by 
+      target_compile_options(onnx_cpp2py_export
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                             # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
     endif()
@@ -513,9 +525,9 @@ if(MSVC)
                                          # include\google\protobuf\wire_format_l
                                          # ite.h
                                  /wd4244 #'argument': conversion from 'google::
-                                         #protobuf::uint64' to 'int', possible 
+                                         #protobuf::uint64' to 'int', possible
                                          # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                 /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
@@ -529,20 +541,20 @@ if(MSVC)
                                  /wd4146 # unary minus operator applied to
                                          # unsigned type, result still unsigned
                                  /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible 
+                                         # protobuf::uint64' to 'int', possible
                                          # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                 /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
   if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto 
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
-                                             # have dll-interface to be used by 
+      target_compile_options(onnx_proto
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                             # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
-      target_compile_options(onnx 
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
+      target_compile_options(onnx
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
                                              # have dll-interface to be used by
                                              # clients of class 'type2'
                             )

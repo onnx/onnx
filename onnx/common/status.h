@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #pragma once
 
@@ -71,8 +73,8 @@ class Status {
 
  private:
   struct State {
-    State(StatusCategory cat_, int code_, const std::string& msg_)
-        : category(cat_), code(code_), msg(msg_) {}
+    State(StatusCategory cat_, int code_, std::string msg_)
+        : category(cat_), code(code_), msg(std::move(msg_)) {}
 
     StatusCategory category = StatusCategory::NONE;
     int code = 0;

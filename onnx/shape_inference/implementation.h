@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include "onnx/defs/function.h"
@@ -17,13 +21,13 @@ struct GraphInferenceContext {
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
         schema_registry{schema_registry_in} {}
-        
+
 
   const std::unordered_map<std::string, TypeProto*>*
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
-  
+
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -184,21 +188,41 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
-    bool check_type = false,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    const bool check_type = false,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const int error_mode = 0
     );
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    bool check_type = false,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()
+    const bool check_type = false,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const int error_mode = 0
+    );
+
+void InferShapes(
+    const std::string& model_path,
+    const bool check_type = false,
+    const std::string& save_path = "",
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const int error_mode = 0
     );
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
+
+void InferShapeForFunctionNode(
+    const FunctionProto* func,
+    const std::unordered_map<std::string, int>& func_opset_imports,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx);
+
+std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+
+void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -48,3 +50,6 @@ OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
 def get_function_ops():  # type: () -> List[OpSchema]
     schemas = C.get_all_schemas()
     return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
+
+
+SchemaError = C.SchemaError

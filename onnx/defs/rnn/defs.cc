@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include "onnx/defs/schema.h"
 
@@ -90,7 +92,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "X",
         "The input sequences packed (and potentially padded) into one 3-D "
         "tensor with the shape of `[seq_length, batch_size, input_size]`.",
-        "T");
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Input(
         4,
         "sequence_lens",
@@ -98,28 +104,40 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.Input(
         5,
         "initial_h",
         "Optional initial value of the hidden. If not specified - assumed "
         "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.Output(
         0,
         "Y",
         "A tensor that concats all the intermediate output values of the hidden. "
         "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.Output(
         1,
         "Y_h",
         "The last output value of the hidden. It has shape "
         "`[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -212,14 +230,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, input_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, hidden_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "B",
@@ -228,7 +254,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
             "to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
 static const char* GRU_ver7_doc = R"DOC(
@@ -333,14 +362,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, input_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, hidden_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "B",
@@ -349,7 +386,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
             "- assumed to be 0",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
 static const char* LSTM_ver7_doc = R"DOC(
@@ -460,14 +500,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for the gates. Concatenation of `W[iofc]` and "
             "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
             "`[num_directions, 4*hidden_size, input_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[iofc]` and "
             "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 4*hidden_size, hidden_size]`.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             3,
             "B",
@@ -476,14 +524,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
             "specified - assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .Input(
             6,
             "initial_c",
             "Optional initial value of the cell. If not specified - assumed "
             "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             7,
             "P",
@@ -492,7 +546,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
             "assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("LSTM"))
         .Output(
             2,
@@ -500,5 +557,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional));
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable));
 } // namespace ONNX_NAMESPACE

@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include "onnx/defs/schema.h"
 #include <stdexcept>
@@ -96,13 +98,15 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      if (type_constraints.find(type_str) == type_constraints.end()) {
-        type_constraints[type_str] = *type_proto;
-      } else if (type_constraints[type_str] != *type_proto) {
-        fail_check(
+      auto p = type_constraints.emplace(type_str, *type_proto);
+      if (!p.second) {
+        // failed to insert a new element due to a duplication, now check consistency
+        if (p.first->second != *type_proto) {
+          fail_check(
             param.GetName(),
             " has inconsistent type ",
             *Utils::DataTypeUtils::ToType(*param_type));
+        }
       }
     }
   } // for inputs
@@ -210,7 +214,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
     if (in_idx >= static_cast<int>(inputs_.size())) {
-      if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
+      if (!inputs_.empty() && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
         break;
       } else {
@@ -236,7 +240,7 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
-      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
+      if (!outputs_.empty() && Variadic == outputs_.back().GetOption()) {
         // The last output formal parameter should be variadic.
         break;
       } else {
@@ -400,14 +404,14 @@ OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   num_outputs_allowed_ =
       [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
-    return allowed_output_nums.count(n);
+    return allowed_output_nums.count(n) > 0;
   };
   return *this;
 }
 
 OpSchema& OpSchema::TypeAndShapeInferenceFunction(
     InferenceFunction inferenceFunction) {
-  tensor_inference_function_ = inferenceFunction;
+  tensor_inference_function_ = std::move(inferenceFunction);
   return *this;
 }
 
@@ -727,7 +731,7 @@ void OpSchema::ParseAndSetTypes(
 
 OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
     ContextDependentFunctionBodyBuilder functionBuilder) {
-  functionBuilder_ = functionBuilder;
+  functionBuilder_ = std::move(functionBuilder);
   return *this;
 }
 
@@ -769,7 +773,7 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction(FunctionProto& function_body) const {
+void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<OperatorSetIdProto>& relied_opsets) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
   function_body.set_since_version(this->since_version_);
@@ -783,11 +787,10 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   for (auto& a : attributes_) {
     function_body.add_attribute(a.first);
   }
-  // By default, the function body graph is relying on the OperatorSet this
-  // function belongs to.
-  auto relied_opset = function_body.mutable_opset_import()->Add();
-  relied_opset->set_domain(this->domain());
-  relied_opset->set_version(this->SinceVersion());
+
+  for (auto& relied_opset : relied_opsets) {
+    *(function_body.mutable_opset_import()->Add()) = relied_opset;
+  }
 }
 
 void OpSchema::Finalize() {
@@ -875,9 +878,9 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& name = p.GetName();
         const auto& description = p.GetDescription();
         const auto& type_str = p.GetTypeStr();
-        out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+        out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
+            << (!description.empty() ? description : "(no doc)") << " : "
+            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
@@ -891,9 +894,9 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& name = p.GetName();
         const auto& description = p.GetDescription();
         const auto& type_str = p.GetTypeStr();
-        out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
-            << ("" != type_str ? type_str : "(no type)") << std::endl;
+        out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
+            << (!description.empty() ? description : "(no doc)") << " : "
+            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;

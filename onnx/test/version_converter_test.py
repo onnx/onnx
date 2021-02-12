@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -253,7 +255,7 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,)),
                 helper.make_tensor_value_info("X3", TensorProto.FLOAT, (1,)),
                 helper.make_tensor_value_info("X4", TensorProto.FLOAT, (1,)),
@@ -268,11 +270,11 @@ class TestVersionConverter(unittest.TestCase):
     # Test Concat Adapter: 5 -> 3
     def test_concat_5_3(self):  # type: () -> None
         nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
-            "X4", "X5"], ["Y"])]
+            "X4", "X5"], ["Y"], axis=0)]
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,)),
                 helper.make_tensor_value_info("X3", TensorProto.FLOAT, (1,)),
                 helper.make_tensor_value_info("X4", TensorProto.FLOAT, (1,)),
@@ -378,8 +380,8 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 1), 8)
         # Assert equality of graph and converted_model
@@ -392,8 +394,8 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 8), 1)
         # Assert equality of graph and converted_model
@@ -509,13 +511,45 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 1), 8)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "MaxPool"
         assert converted_model.opset_import[0].version == 8
+
+    # Test Upsample Adapter: 6 -> 7
+    def test_upsample_6_7(self):    # type: () -> None
+        from_opset = 6
+        to_opset = 7
+        data_type = TensorProto.FLOAT
+
+        nodes = [onnx.helper.make_node(
+            "Upsample",
+            inputs=["X"],
+            outputs=["Y"],
+            mode="nearest",
+            width_scale=3.0,
+            height_scale=2.0
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_upsample_6_7",
+            [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])]
+        )
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert len(converted_model.graph.node) == 1
+        assert converted_model.graph.node[0].op_type == "Upsample"
+        attribute_names = [attr.name for attr in converted_model.graph.node[0].attribute]
+        assert 'scales' in attribute_names
+        assert 'width_scale' not in attribute_names
+        assert 'height_scale' not in attribute_names
+        assert converted_model.opset_import[0].version == to_opset
 
     # Test MaxPool Adapter: 8 -> 1
     def test_maxpool_down(self):  # type: () -> None
@@ -523,8 +557,8 @@ class TestVersionConverter(unittest.TestCase):
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5, 5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5, 5))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 8), 1)
         # Assert equality of graph and converted_model
@@ -1083,22 +1117,22 @@ class TestVersionConverter(unittest.TestCase):
              onnx.helper.make_tensor_value_info("scan_out", data_type, [2])]
         )
 
+        no_sequence_lens = ''   # optional input, not supplied
         nodes = [onnx.helper.make_node(
             "Scan",
-            inputs=["", "initial", "x"],
+            inputs=[no_sequence_lens, "initial", "x"],
             outputs=["y", "z"],
             body=g,
             num_scan_inputs=1,
         )]
 
-        seq_lens = onnx.helper.make_empty_tensor_value_info(" ")
         initial = onnx.helper.make_tensor_value_info("initial", data_type, [1, 2])
         x = onnx.helper.make_tensor_value_info("x", data_type, [1, 3, 2])
         y = onnx.helper.make_tensor_value_info("y", data_type, [1, 2])
         z = onnx.helper.make_tensor_value_info("z", data_type, [1, 3, 2])
 
         graph = onnx.helper.make_graph(
-            nodes, "test_scan_8_9", [seq_lens, initial, x], [y, z]
+            nodes, "test_scan_8_9", [initial, x], [y, z]
         )
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
@@ -1131,6 +1165,89 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Cast"
         assert converted_model.graph.output[0].type.tensor_type.elem_type == data_type_to
         assert converted_model.opset_import[0].version == to_opset
+
+    #Test Split Adapter: 13 -> 12
+    def test_split_13_12(self):  # type: () -> None
+        nodes = [helper.make_node('Constant', [], ["split"],
+                                  value=helper.make_tensor("", TensorProto.INT64, [2],
+                                                           [2, 3])),
+                 helper.make_node('Split', ["X", "split"], ["Y1", "Y2"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (2,)),
+             helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (3,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 13), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.opset_import[0].version == 12
+
+    # Test Split Adapter: 12 -> 13
+    def test_split_12_13(self):  # type: () -> None
+        nodes = [helper.make_node('Split', ["X"], ["Y1", "Y2"], split=[2, 3])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (2,)),
+             helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (3,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 12), 13)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.opset_import[0].version == 13
+
+    # Test AxesInputToAttribute Adapter: 13 -> 12
+    def test_axes_input_to_attr_13_12(self):  # type: () -> None
+        nodes = [helper.make_node('Constant', [], ["axes"],
+                                  value=helper.make_tensor("", TensorProto.INT64, [1],
+                                                           [0])),
+                 helper.make_node('ReduceSum', ["X", "axes"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 13), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "ReduceSum"
+        assert converted_model.opset_import[0].version == 12
+
+    # Test AxesAttributeToInput Adapter: 12 -> 13
+    def test_axes_attr_to_input_12_13(self):  # type: () -> None
+        nodes = [helper.make_node('ReduceSum', ["X"], ["Y"], axes=[0])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 12), 13)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "ReduceSum"
+        assert converted_model.opset_import[0].version == 13
+
+    # Test Slice Adapter: 9 -> 10
+    def test_slice_9_10(self):  # type: () -> None
+        nodes = [helper.make_node('Slice', ["X"], ["Y"],
+                                  axes=[0, 1],
+                                  starts=[0, 0],
+                                  ends=[3, 10])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (20, 10, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 10, 5))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 9), 10)
+
+        assert converted_model.graph.node[0].op_type == "Slice"
+        assert converted_model.opset_import[0].version == 10
+        assert len(converted_model.graph.node[0].input) == 4
+        assert len(converted_model.graph.node[0].attribute) == 0
 
 
 if __name__ == '__main__':

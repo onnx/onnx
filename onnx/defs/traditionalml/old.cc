@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include "onnx/defs/schema.h"
 
@@ -9,7 +11,7 @@ static const char* LabelEncoder_ver1_doc = R"DOC(
     Converts strings to integers and vice versa.<br>
     If the string default value is set, it will convert integers to strings.
     If the int default value is set, it will convert strings to integers.<br>
-    Each operator converts either integers to strings or strings to integers, depending 
+    Each operator converts either integers to strings or strings to integers, depending
     on which default value attribute is provided. Only one default value attribute
     should be defined.<br>
     When converting from integers to strings, the string is fetched from the

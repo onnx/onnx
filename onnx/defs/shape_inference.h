@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include "onnx/defs/data_type_utils.h"
@@ -153,9 +157,11 @@ multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
   return dim;
 }
 
-// propagate the element type from an input type to an output type.
-// if an existing output element type exists, validate it matches.
-inline void propagateElemTypeWithValidation(
+void propagateElemTypeWithValidation(
+    const TypeProto* input_type,
+    TypeProto* output_type);
+
+inline void propagateTensorElemTypeWithValidation(
     const TypeProto* input_type,
     TypeProto* output_type) {
   if (nullptr == input_type) {
@@ -197,11 +203,55 @@ inline void propagateElemTypeWithValidation(
   }
 }
 
+inline void propagateSequenceElemTypeWithValidation(
+    const TypeProto* input_type,
+    TypeProto* output_type) {
+  if (nullptr == input_type) {
+    fail_type_inference("Input type was null");
+  }
+
+  if (input_type->value_case() != TypeProto::kSequenceType) {
+    fail_type_inference(
+        "Input was expected to have sequence type. Got ",
+        input_type->value_case());
+  }
+
+  auto input_seq_type = input_type->sequence_type();
+
+  if (input_seq_type.has_elem_type()) {
+    propagateElemTypeWithValidation(
+        &input_seq_type.elem_type(),
+        output_type->mutable_sequence_type()->mutable_elem_type());
+  } else {
+    fail_type_inference("Element type of input was unknown");
+  }
+}
+
+// propagate the element type from an input type to an output type.
+// if an existing output element type exists, validate it matches.
+inline void propagateElemTypeWithValidation(
+    const TypeProto* input_type,
+    TypeProto* output_type) {
+  if (nullptr == input_type) {
+    fail_type_inference("Input type was null");
+  }
+
+  if (input_type->value_case() == TypeProto::kTensorType) {
+    propagateTensorElemTypeWithValidation(input_type, output_type);
+  } else if (input_type->value_case() == TypeProto::kSequenceType) {
+    propagateSequenceElemTypeWithValidation(input_type, output_type);
+  } else {
+    fail_type_inference(
+        "Input was expected to have either tensor or sequence type. Got ",
+        input_type->value_case());
+  }
+}
+
 // Note: for all methods below for propagating type or shape, callers are
 // responsible to handle optional inputs/outputs and ensure that the specified
 // index value is less than NumInputs/NumOutputs.
 
-inline void propagateElemTypeFromInputToOutput(
+inline void propagateElemTypeFromTensorInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex) {
@@ -222,6 +272,47 @@ inline void propagateElemTypeFromInputToOutput(
     // This is not expected to happen
     fail_type_inference(
         "Output ", outputIndex, " expected to have tensor type");
+  }
+}
+
+inline void propagateElemTypeFromSequenceInputToOutput(
+    InferenceContext& ctx,
+    size_t inputIndex,
+    size_t outputIndex) {
+  auto input_type = ctx.getInputType(inputIndex);
+  if (nullptr == input_type ||
+      input_type->value_case() != TypeProto::kSequenceType) {
+    fail_type_inference("Input ", inputIndex, " expected to have sequence type");
+  }
+  auto input_seq_type = input_type->sequence_type();
+  if (input_seq_type.has_elem_type() && input_seq_type.elem_type().has_tensor_type()) {
+    if (input_seq_type.elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED) {
+      fail_type_inference("Element type of input ", inputIndex, " unknown");
+    }
+    auto output_type = ctx.getOutputType(outputIndex);
+    if (output_type->value_case() == TypeProto::kSequenceType ||
+        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
+          input_seq_type.elem_type().tensor_type().elem_type());
+    } else {
+      fail_type_inference(
+          "Output ", outputIndex, " expected to have sequence type");
+    }
+  }
+}
+
+inline void propagateElemTypeFromInputToOutput(
+    InferenceContext& ctx,
+    size_t inputIndex,
+    size_t outputIndex) {
+  auto input_type = ctx.getInputType(inputIndex);
+  if (nullptr == input_type) {
+    fail_type_inference("Input ", inputIndex, " expected to have type but instead is null");
+  }
+  if (input_type->value_case() == TypeProto::kTensorType) {
+    propagateElemTypeFromTensorInputToOutput(ctx, inputIndex, outputIndex);
+  } else if (input_type->value_case() == TypeProto::kSequenceType) {
+    propagateElemTypeFromSequenceInputToOutput(ctx, inputIndex, outputIndex);
   }
 }
 
@@ -306,6 +397,27 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
   *dim = input_type->tensor_type().shape().dim(static_cast<int>(fromDimIndex));
 }
 
+inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
+  if (TypeProto::kTensorType == from_type->value_case() &&
+      TypeProto::kTensorType == to_type->value_case()) {
+    // If input shape is "uknown", the corresponding should be "unknown" too.
+    // The way to make output shape unknown is not to assign it any value.
+    if (hasShape(*from_type)) {
+      *to_type->mutable_tensor_type()->mutable_shape() =
+          from_type->tensor_type().shape();
+    }
+  } else if (TypeProto::kSequenceType == from_type->value_case() &&
+      TypeProto::kSequenceType == to_type->value_case()) {
+    propagateShape(&from_type->sequence_type().elem_type(), to_type->mutable_sequence_type()->mutable_elem_type());
+  } else {
+    fail_shape_inference(
+        "Mismatch between source and target type. Source=",
+        from_type->value_case(),
+        " Target=",
+        to_type->value_case());
+  }
+}
+
 inline void propagateShapeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
@@ -313,18 +425,7 @@ inline void propagateShapeFromInputToOutput(
   auto output_type = ctx.getOutputType(outputIndex);
   auto input_type = ctx.getInputType(inputIndex);
 
-  if (TypeProto::kTensorType != input_type->value_case() ||
-      TypeProto::kTensorType != output_type->value_case()) {
-    throw std::runtime_error(ONNX_NAMESPACE::to_string(
-        ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
-  }
-
-  // If input shape is "uknown", the corresponding should be "unknown" too.
-  // The way to make output shape unknown is not to assign it any value.
-  if (hasShape(*input_type)) {
-    *output_type->mutable_tensor_type()->mutable_shape() =
-        input_type->tensor_type().shape();
-  }
+  propagateShape(input_type, output_type);
 }
 
 inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
@@ -802,6 +903,53 @@ inline void UnionShapeInfo(
         dim->clear_dim_param();
       }
     }
+  }
+}
+
+// target-type = Union (target-type, source-type)
+// target and source are required to have the same type.
+// Example 1: same tensor type, different shape
+//    source: tensor elem_type: int64, shape: (2, 3, 4, 'x')
+//    target: tensor elem_type: int64, shape: (2, 'y', 5, 'x')
+//    output: tensor elem_type: int64, shape: (2, None, None, 'x')
+// Example 2: same sequence type, different shape
+//    source: sequence of tensor, elem_type: float, shape: (2, 3, 4)
+//    target: sequence of tensor, elem_type: float, shape: None
+//    output: sequence of tensor, elem_type: float, shape: None
+inline void UnionTypeInfo(
+    const TypeProto& source_type,
+    TypeProto& target_type) {
+  if (source_type.value_case() != target_type.value_case()) {
+    fail_type_inference(
+        "Mismatched type:",
+        " source=",
+        source_type.value_case(),
+        " target=",
+        target_type.value_case());
+  }
+
+  if (target_type.has_tensor_type()) {
+    auto source_elem_type = source_type.tensor_type().elem_type();
+    auto target_elem_type = target_type.tensor_type().elem_type();
+
+    if (source_elem_type != target_elem_type) {
+      fail_type_inference(
+          "Mismatched tensor element type:",
+          " source=",
+          source_elem_type,
+          " target=",
+          target_elem_type);
+    }
+
+    UnionShapeInfo(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
+  } else if (target_type.has_sequence_type()) {
+    if (!source_type.sequence_type().has_elem_type()) {
+      fail_type_inference("source sequence type missing element type.");
+    }
+    if (!target_type.sequence_type().has_elem_type()) {
+      fail_type_inference("target sequence type missing element type.");
+    }
+    UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
   }
 }
 

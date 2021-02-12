@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -10,12 +12,13 @@ from ..base import Base
 from . import expect
 
 
-def reshape_reference_implementation(data, shape):  # type: (np.ndarray, np.ndarray) -> np.ndarray
+def reshape_reference_implementation(data, shape, allowzero=0):  # type: (np.ndarray, np.ndarray, int) -> np.ndarray
     # replace zeros with corresponding dim size
-    # we need to do this because np.reshape doesn't support 0
+    # we need to do this because np.reshape doesn't support 0 by default unless 'allowzero' is set
     new_shape = np.copy(shape)
-    zeros_index = np.where(shape == 0)
-    new_shape[zeros_index] = np.array(data.shape)[zeros_index]
+    if allowzero == 0:
+        zeros_index = np.where(shape == 0)
+        new_shape[zeros_index] = np.array(data.shape)[zeros_index]
     reshaped = np.reshape(data, new_shape)
     return reshaped
 
@@ -23,7 +26,7 @@ def reshape_reference_implementation(data, shape):  # type: (np.ndarray, np.ndar
 class Reshape(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export_reshape():  # type: () -> None
         original_shape = [2, 3, 4]
         test_cases = {
             'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
@@ -46,6 +49,28 @@ class Reshape(Base):
             )
 
             reshaped = reshape_reference_implementation(data, shape)
+
+            expect(node, inputs=[data, shape], outputs=[reshaped],
+                   name='test_reshape_' + test_name)
+
+    @staticmethod
+    def export_allowzero():  # type: () -> None
+        original_shape = [0, 3, 4]
+        test_cases = {
+            'allowzero_reordered': np.array([3, 4, 0], dtype=np.int64),
+        }
+        data = np.random.random_sample(original_shape).astype(np.float32)
+
+        for test_name, shape in test_cases.items():
+            node = onnx.helper.make_node(
+                'Reshape',
+                inputs=['data', 'shape'],
+                outputs=['reshaped'],
+                allowzero=1,  # if allowzero=1, final shape = (3, 4, 0)
+                              # if allowzero=0, final shape = (3, 4, 4)
+            )
+
+            reshaped = reshape_reference_implementation(data, shape, allowzero=1)
 
             expect(node, inputs=[data, shape], outputs=[reshaped],
                    name='test_reshape_' + test_name)

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <cctype>
 #include <iostream>
 #include <iterator>
@@ -111,7 +115,10 @@ DataType DataTypeUtils::ToType(const std::string& type_str) {
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   auto it = GetTypeStrToProtoMap().find(*data_type);
-  assert(it != GetTypeStrToProtoMap().end());
+  if (GetTypeStrToProtoMap().end() == it) {
+    static const TypeProto empty_type_proto;
+    return empty_type_proto;
+  }
   return it->second;
 }
 
@@ -169,7 +176,9 @@ std::string DataTypeUtils::ToString(
 std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
-  assert(t.TensorDataTypeToTypeStr().end() != iter);
+  if (t.TensorDataTypeToTypeStr().end() == iter) {
+    return "";
+  }
   return iter->second;
 }
 

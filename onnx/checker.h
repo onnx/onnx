@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include <stdexcept>
@@ -6,6 +10,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-operators_pb.h"
+#include "onnx/onnx-data_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
@@ -120,6 +125,12 @@ void check_tensor(const TensorProto& tensor, const CheckerContext&);
 void check_sparse_tensor(
     const SparseTensorProto& sparse_tensor,
     const CheckerContext&);
+void check_sequence(
+    const SequenceProto& sequence,
+    const CheckerContext&);
+void check_map(
+    const MapProto& map,
+    const CheckerContext&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,
@@ -139,6 +150,8 @@ void check_function(
 
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
+
+bool check_is_experimental_op(std::string node_op_type);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

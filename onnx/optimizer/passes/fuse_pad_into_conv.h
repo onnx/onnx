@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -95,7 +99,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       // 'pad' node has the 'Constant_value' input which has not been initialized -
       // can't proceed with fusing
       if (value_initializer == graph.initializers().end()) {
-        return false;      
+        return false;
       }
 
       // parse 'Constant_value' data from the initialized input and stop optimizer if the
@@ -124,12 +128,12 @@ struct FusePadIntoConv final : public PredicateBasedPass {
             return false; // cannot fuse Pad into Conv
           else
             break;
-  
-        // TODO: Support more uncommon but valid types for Pad op (int8, uint8, int16, uint16, etc.)       
+
+        // TODO: Support more uncommon but valid types for Pad op (int8, uint8, int16, uint16, etc.)
 
         default:
           return false; // Either type of Constant_value is invalid or not yet supported by data parsing logic.
-                        // Since we canot validate the data present in 'Constant_value', we exit the optimizer   
+                        // Since we canot validate the data present in 'Constant_value', we exit the optimizer
       }
     }
 

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter indicating lack of a previous version of some op before a given
 // opset version.
 

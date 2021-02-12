@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -29,9 +31,33 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         ReplaceAll(
             doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
-    schema.Input(0, "A", "First input operand for the logical operator.", "T");
-    schema.Input(1, "B", "Second input operand for the logical operator.", "T");
-    schema.Output(0, "C", "Result tensor.", "T1");
+    schema.Input(
+        0,
+        "A",
+        "First input operand for the logical operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Input(
+        1,
+        "B",
+        "Second input operand for the logical operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Output(
+        0,
+        "C",
+        "Result tensor.",
+        "T1",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
       updateOutputElemType(ctx, 0, TensorProto::BOOL);
@@ -150,8 +176,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Not_ver1_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
@@ -167,7 +209,7 @@ Bitwise shift operator performs element-wise operation. For each input element, 
  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
- 
+
  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
  not necessarily identical.
 )DOC";
@@ -178,9 +220,33 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
             std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
-        .Input(0, "X", "First operand, input to be shifted.", "T")
-        .Input(1, "Y", "Second operand, amounts of shift.", "T")
-        .Output(0, "Z", "Output tensor", "T")
+        .Input(
+            0,
+            "X",
+            "First operand, input to be shifted.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "Y",
+            "Second operand, amounts of shift.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Z",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(uint8)",

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -295,7 +297,7 @@ packages = setuptools.find_packages()
 
 install_requires.extend([
     'protobuf',
-    'numpy',
+    'numpy>=1.16.6',
     'six',
     'typing>=3.6.4; python_version < "3.5"',
     'typing-extensions>=3.6.2.1',
@@ -325,7 +327,7 @@ setuptools.setup(
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
-    license='MIT',
+    license='Apache License v2.0',
     include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,

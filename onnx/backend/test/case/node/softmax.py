@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -10,8 +12,14 @@ from ..base import Base
 from . import expect
 
 
-class Softmax(Base):
+def softmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
+    x_max = np.max(x, axis=axis, keepdims=True)
+    tmp = np.exp(x - x_max)
+    s = np.sum(tmp, axis=axis, keepdims=True)
+    return tmp / s
 
+
+class Softmax(Base):
     @staticmethod
     def export():  # type: () -> None
         node = onnx.helper.make_node(
@@ -21,21 +29,18 @@ class Softmax(Base):
         )
         x = np.array([[-1, 0, 1]]).astype(np.float32)
         # expected output [[0.09003058, 0.24472848, 0.66524094]]
-        y = np.exp(x) / np.sum(np.exp(x), axis=1)
+        y = softmax(x, axis=1)
         expect(node, inputs=[x], outputs=[y],
                name='test_softmax_example')
 
     @staticmethod
     def export_softmax_axis():  # type: () -> None
-        def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
-            max_x = np.max(x, axis=1).reshape((-1, 1))
-            exp_x = np.exp(x - max_x)
-            return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
-
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-        # expected output [[0.0320586, 0.08714432, 0.23688284, 0.64391428],
-        #                 [0.0320586, 0.08714432, 0.23688284, 0.64391428]]
-        y = softmax_2d(x)
+        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]
+                     ).astype(np.float32)
+        # expected output
+        # [[0.032058604 0.08714432  0.23688284  0.6439143  ]
+        # [0.032058604 0.08714432  0.23688284  0.6439143  ]]
+        y = softmax(x)
 
         node = onnx.helper.make_node(
             'Softmax',
@@ -52,7 +57,7 @@ class Softmax(Base):
             outputs=['y'],
             axis=0,
         )
-        y = softmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
+        y = softmax(x, axis=0)
         expect(node, inputs=[x], outputs=[y],
                name='test_softmax_axis_0')
 
@@ -62,18 +67,9 @@ class Softmax(Base):
             outputs=['y'],
             axis=1,
         )
-        y = softmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
+        y = softmax(x, axis=1)
         expect(node, inputs=[x], outputs=[y],
                name='test_softmax_axis_1')
-
-        # default axis is 1
-        node = onnx.helper.make_node(
-            'Softmax',
-            inputs=['x'],
-            outputs=['y'],
-        )
-        expect(node, inputs=[x], outputs=[y],
-               name='test_softmax_default_axis')
 
         node = onnx.helper.make_node(
             'Softmax',
@@ -81,7 +77,7 @@ class Softmax(Base):
             outputs=['y'],
             axis=2,
         )
-        y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+        y = softmax(x, axis=2)
         expect(node, inputs=[x], outputs=[y],
                name='test_softmax_axis_2')
 
@@ -91,6 +87,15 @@ class Softmax(Base):
             outputs=['y'],
             axis=-1,
         )
-        y = softmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+        y = softmax(x, axis=-1)
         expect(node, inputs=[x], outputs=[y],
                name='test_softmax_negative_axis')
+
+        # default axis is -1
+        node = onnx.helper.make_node(
+            'Softmax',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        expect(node, inputs=[x], outputs=[y],
+               name='test_softmax_default_axis')
