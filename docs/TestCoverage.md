@@ -3672,20 +3672,20 @@ input_size = 2
 hidden_size = 6
 number_of_gates = 3
 weight_scale = 0.2
-batch_major = 1
+layout = 1
 
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R'],
     outputs=['Y', 'Y_h'],
     hidden_size=hidden_size,
-    batch_major=batch_major
+    layout=layout
 )
 
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R, batch_major=batch_major)
+gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = gru.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')
 ```
@@ -5001,20 +5001,20 @@ input_size = 2
 hidden_size = 7
 weight_scale = 0.3
 number_of_gates = 4
-batch_major = 1
+layout = 1
 
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R'],
     outputs=['Y', 'Y_h'],
     hidden_size=hidden_size,
-    batch_major=batch_major
+    layout=layout
 )
 
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, batch_major=batch_major)
+lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = lstm.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_lstm_batchwise')
 ```
@@ -8182,20 +8182,20 @@ input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 input_size = 2
 hidden_size = 4
 weight_scale = 0.5
-batch_major = 1
+layout = 1
 
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R'],
     outputs=['Y', 'Y_h'],
     hidden_size=hidden_size,
-    batch_major=batch_major
+    layout=layout
 )
 
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R, batch_major=batch_major)
+rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = rnn.step()
 expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')
 ```

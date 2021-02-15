@@ -21,15 +21,15 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (hidden_size_value > 0)
     hidden_size.set_dim_value(hidden_size_value);
 
-  auto batch_major_value = getAttribute(ctx, "batch_major", 0);
+  auto layout_value = getAttribute(ctx, "layout", 0);
 
   if (hasInputShape(ctx, 0)) {
     auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
-    seq_length = first_input_shape.dim((batch_major_value == 0) ? 0 : 1);
-    batch_size = first_input_shape.dim((batch_major_value == 0) ? 1 : 0);
+    seq_length = first_input_shape.dim((layout_value == 0) ? 0 : 1);
+    batch_size = first_input_shape.dim((layout_value == 0) ? 1 : 0);
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -38,11 +38,11 @@ void RNNShapeInference(InferenceContext& ctx) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-    if (batch_major_value == 0) {      
+    if (layout_value == 0) {      
       auto dims = {seq_length, num_directions, batch_size, hidden_size};
       updateOutputShape(ctx, 0, dims);
     } else {
-      auto dims = {batch_size, num_directions, seq_length, hidden_size};
+      auto dims = {batch_size, seq_length, num_directions, hidden_size};
       updateOutputShape(ctx, 0, dims);
     }
   }
@@ -51,7 +51,7 @@ void RNNShapeInference(InferenceContext& ctx) {
     // Y_h
     propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
-    if (batch_major_value == 0) {      
+    if (layout_value == 0) {      
       auto dims = {num_directions, batch_size, hidden_size};
       updateOutputShape(ctx, 1, dims);
     } else {
@@ -61,10 +61,10 @@ void RNNShapeInference(InferenceContext& ctx) {
   }
 
   if (num_outputs > 2) {
-    // Y_c
+    // Y_c : only in the case of LSTM
     propagateElemTypeFromInputToOutput(ctx, 0, 2);
 
-    if (batch_major_value == 0) {      
+    if (layout_value == 0) {      
       auto dims = {num_directions, batch_size, hidden_size};
       updateOutputShape(ctx, 2, dims);
     } else {
@@ -83,15 +83,15 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         AttributeProto::STRING,
         std::string("forward"));
     schema.Attr(
-        "batch_major",
+        "layout",
         "The shape format of inputs X, initial_h and outputs Y, Y_h. "
         "If 0, the following shapes are expected: "
         "X.shape = [seq_length, batch_size, input_size], "
         "Y.shape = [seq_length, num_directions, batch_size, hidden_size], "
         "initial_h.shape = Y_h.shape = [num_directions, batch_size, hidden_size]. "
-        "If not 0, the following shapes are expected: "
+        "If 1, the following shapes are expected: "
         "X.shape = [batch_size, seq_length, input_size], "
-        "Y.shape = [batch_size, num_directions, seq_length, hidden_size], "
+        "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
         "initial_h.shape = Y_h.shape = [batch_size, num_directions, hidden_size].",
         AttributeProto::INT,
         static_cast<int64_t>(0));
@@ -525,16 +525,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
       .Attr(
-          "batch_major",
+          "layout",
           "The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. "
           "If 0, the following shapes are expected: "
           "X.shape = [seq_length, batch_size, input_size], "
           "Y.shape = [seq_length, num_directions, batch_size, hidden_size], "
           "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
           "[num_directions, batch_size, hidden_size]. "
-          "If not 0, the following shapes are expected: "
+          "If 1, the following shapes are expected: "
           "X.shape = [batch_size, seq_length, input_size], "
-          "Y.shape = [batch_size, num_directions, seq_length, hidden_size], "
+          "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
           "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
           "[num_directions, batch_size, hidden_size].",
           AttributeProto::INT,

@@ -1270,7 +1270,7 @@ class TestVersionConverter(unittest.TestCase):
 
         graph = helper.make_graph(
             nodes,
-            "test_greater",
+            "test_rnn",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
              onnx.helper.make_tensor_value_info("W", data_type, [num_directions, hidden_size, input_size]),
              onnx.helper.make_tensor_value_info("R", data_type, [num_directions, hidden_size, hidden_size]),
@@ -1282,7 +1282,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "RNN"
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 2
-        assert converted_model.graph.node[0].attribute[1].name == "batch_major"
+        assert converted_model.graph.node[0].attribute[1].name == "layout"
 
     # Test GRU Adapter: 13 -> 14
     def test_gru_13_14(self):  # type: () -> None
@@ -1305,7 +1305,7 @@ class TestVersionConverter(unittest.TestCase):
 
         graph = helper.make_graph(
             nodes,
-            "test_greater",
+            "test_gru",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
              onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 3 * hidden_size, input_size]),
              onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 3 * hidden_size, hidden_size]),
@@ -1317,7 +1317,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "GRU"
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 2
-        assert converted_model.graph.node[0].attribute[1].name == "batch_major"
+        assert converted_model.graph.node[0].attribute[1].name == "layout"
 
     # Test LSTM Adapter: 13 -> 14
     def test_lstm_13_14(self):  # type: () -> None
@@ -1340,7 +1340,7 @@ class TestVersionConverter(unittest.TestCase):
 
         graph = helper.make_graph(
             nodes,
-            "test_greater",
+            "test_lstm",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
              onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 4 * hidden_size, input_size]),
              onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 4 * hidden_size, hidden_size]),
@@ -1352,7 +1352,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "LSTM"
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 2
-        assert converted_model.graph.node[0].attribute[1].name == "batch_major"
+        assert converted_model.graph.node[0].attribute[1].name == "layout"
 
     # Test RNN Adapter: 14 -> 13
     def test_rnn_14_13(self):  # type: () -> None
@@ -1371,12 +1371,12 @@ class TestVersionConverter(unittest.TestCase):
             inputs=['X', 'W', 'R'],
             outputs=['', 'Y_h'],
             hidden_size=hidden_size,
-            batch_major=0,
+            layout=0,
         )]
 
         graph = helper.make_graph(
             nodes,
-            "test_greater",
+            "test_rnn",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
              onnx.helper.make_tensor_value_info("W", data_type, [num_directions, hidden_size, input_size]),
              onnx.helper.make_tensor_value_info("R", data_type, [num_directions, hidden_size, hidden_size]),
@@ -1406,12 +1406,12 @@ class TestVersionConverter(unittest.TestCase):
             inputs=['X', 'W', 'R'],
             outputs=['', 'Y_h'],
             hidden_size=hidden_size,
-            batch_major=0,
+            layout=0,
         )]
 
         graph = helper.make_graph(
             nodes,
-            "test_greater",
+            "test_gru",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
              onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 3 * hidden_size, input_size]),
              onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 3 * hidden_size, hidden_size]),
@@ -1441,12 +1441,12 @@ class TestVersionConverter(unittest.TestCase):
             inputs=['X', 'W', 'R'],
             outputs=['', 'Y_h'],
             hidden_size=hidden_size,
-            batch_major=0,
+            layout=0,
         )]
 
         graph = helper.make_graph(
             nodes,
-            "test_greater",
+            "test_lstm",
             [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
              onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 4 * hidden_size, input_size]),
              onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 4 * hidden_size, hidden_size]),

@@ -1,10 +1,10 @@
-backend-test:Þ
->
+backend-test:Ù
+9
 X
 W
 RYY_h"RNN*
-batch_major *
-hidden_size test_simple_rnn_batchwiseZ
+hidden_size *
+layout test_simple_rnn_batchwiseZ
 X
 
 

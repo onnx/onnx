@@ -23,7 +23,7 @@ class LSTM_Helper():
         H_0 = str('initial_h')
         C_0 = str('initial_c')
         P = str('P')
-        BM = str('batch_major')
+        LAYOUT = str('layout')
         number_of_gates = 4
         number_of_peepholes = 3
 
@@ -41,9 +41,9 @@ class LSTM_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
-            bm = params[BM] if BM in params else 0
+            layout = params[LAYOUT] if LAYOUT in params else 0
             x = params[X]
-            x = x if bm == 0 else np.swapaxes(x, 0, 1)
+            x = x if layout == 0 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size, dtype=np.float32)
             p = params[P] if P in params else np.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
@@ -56,7 +56,7 @@ class LSTM_Helper():
             self.P = p
             self.H_0 = h_0
             self.C_0 = c_0
-            self.BM = bm
+            self.LAYOUT = layout
 
         else:
             raise NotImplementedError()
@@ -99,10 +99,10 @@ class LSTM_Helper():
         if self.num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
-        if self.BM == 0:
+        if self.LAYOUT == 0:
             Y_h = Y[-1]
         else:
-            Y = np.swapaxes(Y, 0, 2)
+            Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         return Y, Y_h
@@ -201,19 +201,19 @@ class LSTM(Base):
         hidden_size = 7
         weight_scale = 0.3
         number_of_gates = 4
-        batch_major = 1
+        layout = 1
 
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R'],
             outputs=['Y', 'Y_h'],
             hidden_size=hidden_size,
-            batch_major=batch_major
+            layout=layout
         )
 
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
-        lstm = LSTM_Helper(X=input, W=W, R=R, batch_major=batch_major)
+        lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
         Y, Y_h = lstm.step()
         expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_lstm_batchwise')

@@ -6,18 +6,18 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct AddBatchMajor final : public Adapter {
-  explicit AddBatchMajor(const std::string& op_name)
+struct AddLayout final : public Adapter {
+  explicit AddLayout(const std::string& op_name)
     : Adapter(op_name, OpSetID(13), OpSetID(14)) {
     }
 
-  void adapt_add_batch_major(Node* node) const {
-      // Add the batch_major attribute
-      node->i_(kbatch_major, 0);
+  void adapt_add_layout(Node* node) const {
+      // Add the layout attribute
+      node->i_(klayout, 0);
   }
 
   void adapt(std::shared_ptr<Graph> , Node* node) const override {
-    adapt_add_batch_major(node);
+    adapt_add_layout(node);
   }
 };
 

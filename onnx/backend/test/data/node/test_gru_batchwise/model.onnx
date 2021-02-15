@@ -1,10 +1,10 @@
-backend-test:×
->
+backend-test:Ò
+9
 X
 W
 RYY_h"GRU*
-batch_major *
-hidden_size test_gru_batchwiseZ
+hidden_size *
+layout test_gru_batchwiseZ
 X
 
 
