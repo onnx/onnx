@@ -117,14 +117,8 @@ class SchemaError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#ifdef ONNX_NO_EXCEPTIONS
 #define fail_schema(...) \
-std::cerr << ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)).what(); \
-abort();
-#else
-#define fail_schema(...) \
-  throw ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
-#endif
+  ONNX_THROW_EX(ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
 using OperatorSetVersion = int;
 
@@ -988,7 +982,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it's domain is not"
+              << op_schema.line() << ", but its domain is not"
               << " known by the checker." << std::endl;
 
           fail_schema(err.str());
@@ -1000,7 +994,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it's version is not "
+              << op_schema.line() << ", but its version is not "
               << "in the inclusive range [" << lower_bound_incl << ", "
               << upper_bound_incl << "] (usually, this means you "
               << "bumped the operator version but "

@@ -46,22 +46,11 @@ class InferenceError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#ifdef ONNX_NO_EXCEPTIONS
-#define fail_type_inference(...)                                                 \
-  std::cerr << ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__); \
-  abort();
-
-#define fail_shape_inference(...)                                                 \
-  std::cerr << ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__); \
-  abort();
-#else
-
 #define fail_type_inference(...) \
-  throw ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__));
+  ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__)));
 
 #define fail_shape_inference(...) \
-  throw ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__));
-#endif
+  ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__)));
 
 struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;

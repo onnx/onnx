@@ -703,21 +703,11 @@ void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<Ope
 }
 
 void OpSchema::Finalize() {
-#ifdef ONNX_NO_EXCEPTIONS
-#define ENFORCE(x)                                                                  \
-  do {                                                                              \
-    if (!(x)) {                                                                     \
-      std::cerr << "ONNX Schema " + name_ + ": failed validating the check: " + #x; \
-      abort();                                                                      \
-    }                                                                               \
+#define ENFORCE(x)                                                                                      \
+  do {                                                                                                  \
+    if (!(x))                                                                                           \
+      ONNX_THROW_EX(std::logic_error("ONNX Schema " + name_ + ": failed validating the check: " + #x)); \
   } while (0)
-#else
-#define ENFORCE(x)                                                                             \
-  do {                                                                                         \
-    if (!(x))                                                                                  \
-      throw std::logic_error("ONNX Schema " + name_ + ": failed validating the check: " + #x); \
-  } while (0)
-#endif
 
   // Calculate min/max number of inputs.
   // <Min number of inputs> = <number of "single" inputs> + <number of

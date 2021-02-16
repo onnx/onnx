@@ -11,7 +11,7 @@
   std::cerr << ONNX_NAMESPACE::MakeString(__VA_ARGS__); \
   abort();
 
-#define ONNX_THROW_EX(ex, ...)           \
+#define ONNX_THROW_EX(ex)                \
   do {                                   \
     std::cerr << ex.what() << std::endl; \
     abort();                             \

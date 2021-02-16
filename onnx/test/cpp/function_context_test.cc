@@ -66,19 +66,8 @@ bool BuildFunctionProto(
 // A monomorphic context-dependent function test-case.
 
 static bool
-BuildTwiceFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of float type:
-  auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
-
-  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
-                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-                                                {{"Y"}, "Mul", {"X", "Two"}}};
-
-  return BuildFunctionProto(functionProto, schema, body);
-}
-
-static bool
-BuildTwiceFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of input-type:
   auto* tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
@@ -93,7 +82,7 @@ BuildTwiceFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterTwiceFloatSchema() {
+void RegisterSchemaCustomFunc() {
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFunTwice")
       .SetDomain(ONNX_DOMAIN)
@@ -102,62 +91,14 @@ void RegisterTwiceFloatSchema() {
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildTwiceFloatFunctionBody);
+      .SetContextDependentFunctionBodyBuilder(BuildFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
 }
 
-void RegisterTwiceSchema() {
-  ONNX_NAMESPACE::OpSchema schema;
-  schema.SetName("CustomFunTwice")
-      .SetDomain(ONNX_DOMAIN)
-      .SinceVersion(12)
-      .SetDoc("This operator returns an output tensor that is twice the input tensor.")
-      .Input(0, "X", "Input tensor", "T", OpSchema::Single)
-      .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
-      .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildTwiceFunctionBody);
-#ifndef ONNX_NO_EXCEPTIONS
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
-  (void)unused;
-#endif
-}
-
-TEST(FunctionAPITest, ContextDependentFunctionTest) {
+void ContextDependentFuntionTest() {
   // Does not test registering schema twice when no exceptions are enabled.
-  RegisterTwiceFloatSchema();
-
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);
-  EXPECT_TRUE(schema);
-  EXPECT_FALSE(schema->HasFunction());
-  EXPECT_TRUE(schema->HasContextDependentFunction());
-
-  NodeProto nodeProto;
-  nodeProto.set_op_type("CustomFunTwice");
-  nodeProto.add_input("X");
-  nodeProto.add_output("Y");
-
-  TypeProto floatTypeProto;
-  floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
-
-  FunctionBodyBuildContextImpl ctx(nodeProto);
-  FunctionProto fnProto;
-  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
-  EXPECT_EQ(fnProto.node_size(), 2);
-
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
-  std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
-  checkerCtx.set_opset_imports(opset_imports);
-  checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
-}
-
-// A polymorphic context-dependent function test-case.
-
-TEST(FunctionAPITest, TypeContextTest) {
-  // Does not test registering schema twice when no exceptions are enabled.
-  RegisterTwiceSchema();
+  RegisterSchemaCustomFunc();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
@@ -184,6 +125,17 @@ TEST(FunctionAPITest, TypeContextTest) {
   checkerCtx.set_ir_version(7);
   check_function(fnProto, checkerCtx, lexicalScope);
 }
+
+TEST(FunctionAPITest, ContextDependentFunctionTest) {
+  ContextDependentFuntionTest();
+}
+
+// Does not test registering schema twice when no exceptions are enabled.
+#ifndef ONNX_NO_EXCEPTIONS
+TEST(FunctionAPITest, RegisterSchemTwiceTest) {
+  ContextDependentFuntionTest();
+}
+#endif
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE

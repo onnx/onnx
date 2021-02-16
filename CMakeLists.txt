@@ -87,7 +87,22 @@ endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
   add_compile_definitions("ONNX_NO_EXCEPTIONS")
+  # Disable C++ exceptions.
+  if(MSVC)
+    string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    add_definitions(-D_HAS_EXCEPTIONS=0)
+  else(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+  endif()
 endif()
+
+if(ONNX_WERROR)
+  if(MSVC)
+    string(APPEND CMAKE_CXX_FLAGS " /WX")
+  elseif(MSVC)
+    target_compile_options(onnx PRIVATE -Werror)
+  endif(MSVC)
+endif(ONNX_WERROR)
 
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
 # Use the following command in the future; now this is only compatible with the latest pybind11
@@ -585,9 +600,6 @@ elseif(APPLE)
 
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
-  if(${ONNX_WERROR})
-    target_compile_options(onnx PRIVATE -Werror)
-  endif()
 endif()
 
 if(APPLE)
