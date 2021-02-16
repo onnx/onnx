@@ -103,7 +103,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_int) {
             // OpSchema::Verify check ensures that the attribute value has_i():
             if (!value_int->has_i()) {
-              fail_shape_inference("Attribute 'value_int' expect an integer.")
+              fail_shape_inference("Attribute 'value_int' expect an integer.");
             }
             updateOutputElemType(ctx, 0, TensorProto::INT64);
             updateOutputShape(ctx, 0, TensorShapeProto());
@@ -114,7 +114,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // OpSchema::Verify check ensures that the attribute value has ints.
             if (value_ints->ints_size() < 1) {
               fail_shape_inference(
-                  "Attribute 'value_ints' expect a list of integers.")
+                  "Attribute 'value_ints' expect a list of integers.");
             }
             updateOutputElemType(ctx, 0, TensorProto::INT64);
             appendDim(getOutputShape(ctx, 0), value_ints->ints_size());
@@ -124,7 +124,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_float) {
             // OpSchema::Verify check ensures that the attribute value has_i():
             if (!value_float->has_f()) {
-              fail_shape_inference("Attribute 'value_float' expect a float.")
+              fail_shape_inference("Attribute 'value_float' expect a float.");
             }
             updateOutputElemType(ctx, 0, TensorProto::FLOAT);
             updateOutputShape(ctx, 0, TensorShapeProto());
@@ -135,7 +135,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // OpSchema::Verify check ensures that the attribute value has ints.
             if (value_floats->floats_size() < 1) {
               fail_shape_inference(
-                  "Attribute 'value_floats' expect a list of floats.")
+                  "Attribute 'value_floats' expect a list of floats.");
             }
             updateOutputElemType(ctx, 0, TensorProto::FLOAT);
             appendDim(getOutputShape(ctx, 0), value_floats->floats_size());
@@ -145,7 +145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_string) {
             // OpSchema::Verify check ensures that the attribute value has_i():
             if (!value_string->has_s()) {
-              fail_shape_inference("Attribute 'value_string' expect a string.")
+              fail_shape_inference("Attribute 'value_string' expect a string.");
             }
             updateOutputElemType(ctx, 0, TensorProto::STRING);
             updateOutputShape(ctx, 0, TensorShapeProto());
@@ -155,7 +155,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != value_strings) {
             // OpSchema::Verify check ensures that the attribute value has ints.
             if (value_strings->strings_size() < 1) {
-              fail_shape_inference("Attribute 'value_strings' expect a list of strings.")
+              fail_shape_inference("Attribute 'value_strings' expect a list of strings.");
             }
             updateOutputElemType(ctx, 0, TensorProto::STRING);
             appendDim(getOutputShape(ctx, 0), value_strings->strings_size());
@@ -177,7 +177,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           fail_shape_inference(
               "TypeAndShapeInferenceFunction implementation incomplete: "
-              "this line should never be reached.")
+              "this line should never be reached.");
         }));
 
 static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
@@ -299,7 +299,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
           fail_shape_inference(
-              "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.")
+              "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
         }));
 
 } // namespace ONNX_NAMESPACE

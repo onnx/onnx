@@ -2690,7 +2690,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.")
+              fail_shape_inference("Input rank must be >= 2.");
             }
 
             const auto mat_w = input_shape.dim(rank - 1);
@@ -3108,7 +3108,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             if (target_rank != input_rank - 1) {
               fail_shape_inference(
-                  "Target rank must be 1 less than the input rank.")
+                  "Target rank must be 1 less than the input rank.");
             }
 
             // match input dimensions (N, C, d1, ..., dk) with target
@@ -3120,14 +3120,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
                   input_dim.dim_value() != target_dim.dim_value())
                 fail_shape_inference(
-                    "Input and target dimension value mismatch.")
+                    "Input and target dimension value mismatch.");
             }
 
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
               const TensorShapeProto& weight_shape =
                   ctx.getInputType(2)->tensor_type().shape();
               if (weight_shape.dim_size() != 1) {
-                fail_shape_inference("Weight rank must be 1.")
+                fail_shape_inference("Weight rank must be 1.");
               }
             }
 
