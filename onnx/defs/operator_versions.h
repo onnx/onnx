@@ -22,7 +22,10 @@ public:
         if (domain == "Onnx") {
             std::vector<OpSchema> class_names;
             for (auto element : onnx_version_map) {
-                class_names.push_back(*getLatestVersionBeforeTarget(element.first, domain, target_version));
+                OpSchema* latestOpset = getLatestVersionBeforeTarget(element.first, domain, target_version);
+                if (latestOpset != NULL) {
+                    class_names.push_back(*latestOpset);
+                }
             }
             return class_names;
         }
@@ -33,13 +36,17 @@ private:
     std::unordered_map<std::string, std::vector<int>> onnx_version_map; // for Onnx domain
     std::unordered_map<std::string, OpSchema> op_class_map;
     OpSchema* getLatestVersionBeforeTarget(std::string opset_name, std::string domain, int target_version) {
+        OpSchema* latestOpset = NULL;
         for (auto version : onnx_version_map[opset_name]) {
-            if (version >= target_version) {
-                return &op_class_map[toMapKey(opset_name, domain, version)];
+            // have found the latest one
+            if (latestOpset != NULL) {
+                break;
+            } else if (version <= target_version) {
+                latestOpset = &op_class_map[toMapKey(opset_name, domain, version)];
             }
         }
-        // cannot find supported opset schema before target version
-        return NULL;
+        // if cannot find supported opset schema before target version; return NULL
+        return latestOpset;
     }
     std::string toMapKey(std::string opset_name, std::string domain, int version) {
         return opset_name + "_" + domain + "_" + std::to_string(version);
