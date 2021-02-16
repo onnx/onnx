@@ -306,21 +306,29 @@ std::unique_ptr<Graph> graphProtoToGraph(
       undef->outputs()[0]->setUniqueName(gp.output(i).name());
       value_by_name_of[gp.output(i).name()] = undef->outputs()[0];
     }
-    value_by_name_of[gp.output(i).name()]->setElemType(
-        gp.output(i).type().tensor_type().elem_type());
-    value_by_name_of[gp.output(i).name()]->setSizes(
-        tensorShapeProtoToDimensions(
-            gp.output(i).type().tensor_type().shape()));
+    const auto output_tensor_type = gp.output(i).type().tensor_type();
+    if (output_tensor_type.has_elem_type()) {
+      value_by_name_of[gp.output(i).name()]->setElemType(
+          output_tensor_type.elem_type());
+    }
+    if (output_tensor_type.has_shape()) {
+      value_by_name_of[gp.output(i).name()]->setSizes(
+          tensorShapeProtoToDimensions(
+              output_tensor_type.shape()));
+    }
     g->registerOutput(value_by_name_of[gp.output(i).name()]);
   }
 
   for (int i = 0; i < gp.value_info_size(); i++) {
-    value_by_name_of[gp.value_info(i).name()]->setElemType(
-        gp.value_info(i).type().tensor_type().elem_type());
-    if (gp.value_info(i).type().tensor_type().has_shape()) {
+    const auto tensor_type = gp.value_info(i).type().tensor_type();
+    if (tensor_type.has_elem_type()) {
+      value_by_name_of[gp.value_info(i).name()]->setElemType(
+          tensor_type.elem_type());
+    }
+    if (tensor_type.has_shape()) {
       value_by_name_of[gp.value_info(i).name()]->setSizes(
           tensorShapeProtoToDimensions(
-              gp.value_info(i).type().tensor_type().shape()));
+              tensor_type.shape()));
     }
   }
 
