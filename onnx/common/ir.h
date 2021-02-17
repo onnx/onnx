@@ -819,6 +819,14 @@ class OpSetID final {
           ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
         });
       }
+
+      // The control will never reach here. 
+      // In the default build where exceptions are turned on in case of any error
+      // the control will enter catch block where an exception will be thrown again.
+      // In case of "no exception build" the code aborts at the site of first exception.
+      // Adding this to appease the warning "control may reach end of non-void function"
+      // as the mac build fails when ONNX_WERROR==ON
+      return OpSetID("", 0);
     }
 
     const std::string& domain() const {
