@@ -194,10 +194,9 @@ class Mod(Base):
             outputs=['z'],
         )
 
-        x = np.arange(0, 30).reshape([3, 2, 5]).astype(np.int64)
-        y = np.array([7]).astype(np.int64)
-        z = np.mod(x, y).astype(np.int64)
-        z
+        x = np.arange(0, 30).reshape([3, 2, 5]).astype(np.int32)
+        y = np.array([7]).astype(np.int32)
+        z = np.mod(x, y)
         #   array([[[0, 1, 2, 3, 4],
         #     [5, 6, 0, 1, 2]],
 
