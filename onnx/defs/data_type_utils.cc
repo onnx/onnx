@@ -176,7 +176,7 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
   if (t.TensorDataTypeToTypeStr().end() == iter) {
-    ONNX_THROW_EX(std::invalid_argument("Invalid tensor data type " + tensor_data_type));
+    ONNX_THROW_EX(std::invalid_argument("Invalid tensor data type "));
   }
   return iter->second;
 }
