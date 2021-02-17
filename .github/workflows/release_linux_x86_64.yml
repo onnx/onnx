@@ -4,7 +4,7 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [rel-*, master] # test for now, remove it before merge
 
 jobs:
   build:
@@ -46,6 +46,14 @@ jobs:
         python -m pip install dist/*-manylinux2010_x86_64.whl
         python -m pip install pytest==5.4.3 nbval
         pytest
+
+    - name: Test backend test data
+      run: |
+        # onnx.checker all existing backend data
+        python workflow_scripts/test_generated_backend.py
+        # onnx.checker all generated backend data
+        python onnx/backend/test/cmd_tools.py generate-data
+        python workflow_scripts/test_generated_backend.py
 
     - uses: actions/upload-artifact@v1
       with:

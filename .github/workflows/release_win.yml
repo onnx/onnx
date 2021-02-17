@@ -88,11 +88,16 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON"
         python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+
+    - name: Test the installed wheel
+      run: |
+        cd onnx
         python -m pip install -q pytest==5.4.3 nbval
         pytest
 
     - name: Test the uploaded backend test data
       run: |
+        cd onnx
         # onnx.checker all existing backend data
         python workflow_scripts\test_generated_backend.py
         # onnx.checker all generated backend data
