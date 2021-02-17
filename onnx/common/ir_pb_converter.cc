@@ -180,8 +180,12 @@ std::vector<Dimension> tensorShapeProtoToDimensions(
   for (int i = 0; i < tsp.dim_size(); i++) {
     if (tsp.dim(i).has_dim_value()) {
       dims.push_back(Dimension(static_cast<int>(tsp.dim(i).dim_value())));
-    } else {
+    } else if (tsp.dim(i).has_dim_param()) {
       dims.push_back(Dimension(tsp.dim(i).dim_param()));
+    } else {
+      // a dimension that has neither dim_value nor dim_param set
+      // represents an unknown dimension unrelated to other unknown dimensions.
+      dims.push_back(Dimension());
     }
   }
   return dims;
@@ -502,10 +506,12 @@ void encodeTypeProtoTensorType(
     ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
     for (const Dimension& d : n->sizes()) {
       auto dim = shape->add_dim();
-      if (d.is_int) {
-        dim->set_dim_value(d.dim);
-      } else {
-        dim->set_dim_param(d.param);
+      if (!d.is_unknown) {
+        if (d.is_int) {
+          dim->set_dim_value(d.dim);
+        } else {
+          dim->set_dim_param(d.param);
+        }
       }
     }
   }
@@ -513,7 +519,7 @@ void encodeTypeProtoTensorType(
 
 void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   v->set_name(value_name(n));
-  if (n->elemType() != 0 && n->has_sizes()) {
+  if (n->elemType() != 0 || n->has_sizes()) {
     ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
     ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
     encodeTypeProtoTensorType(tensor_type, n);
