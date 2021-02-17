@@ -16,7 +16,7 @@ public:
     void addOpset(std::string opset_name, std::string domain, int version, OpSchema class_name) {
         // do we need to handle different domains?
         onnx_version_map[opset_name].push_back(version);
-        op_class_map[toMapKey(opset_name, domain, version)] = class_name;
+        op_class_map.insert({toMapKey(opset_name, domain, version), class_name});
     }
     std::vector<OpSchema> getAllLatestVersion(std::string domain, int target_version) {
         if (domain == "Onnx") {
