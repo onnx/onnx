@@ -101,9 +101,10 @@ if(ONNX_WERROR)
     string(APPEND CMAKE_CXX_FLAGS " /WX")
     string(APPEND CMAKE_C_FLAGS " /WX")
   else()
-    target_compile_options(onnx PRIVATE -Werror)
-  endif(MSVC)
-endif(ONNX_WERROR)
+    string(APPEND CMAKE_CXX_FLAGS " -Werror")
+    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+  endif()
+endif()
 
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
 # Use the following command in the future; now this is only compatible with the latest pybind11
