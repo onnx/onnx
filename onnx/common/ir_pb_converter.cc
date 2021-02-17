@@ -239,8 +239,13 @@ std::unique_ptr<Graph> graphProtoToGraph(
   for (int i = 0; i < gp.input_size(); i++) {
     auto vip = gp.input(i);
     auto v = g->addInput();
-    v->setElemType(vip.type().tensor_type().elem_type());
-    v->setSizes(tensorShapeProtoToDimensions(vip.type().tensor_type().shape()));
+    const auto& tensor_type = vip.type().tensor_type();
+    if (tensor_type.has_elem_type()) {
+      v->setElemType(tensor_type.elem_type());
+    }
+    if (tensor_type.has_shape()) {
+      v->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
+    }
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
   }
@@ -433,7 +438,7 @@ void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
       fail_convert("Unknown tensor data type");
   }
-  if (!tensor.raw().empty()) {
+  if (tensor.is_raw_data()) {
     p->set_raw_data(tensor.raw());
   }
 }
