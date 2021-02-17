@@ -91,7 +91,7 @@ if(ONNX_DISABLE_EXCEPTIONS)
   if(MSVC)
     string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     add_definitions(-D_HAS_EXCEPTIONS=0)
-  else(MSVC)
+  else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
   endif()
 endif()
@@ -99,7 +99,8 @@ endif()
 if(ONNX_WERROR)
   if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /WX")
-  elseif(MSVC)
+    string(APPEND CMAKE_C_FLAGS " /WX")
+  else()
     target_compile_options(onnx PRIVATE -Werror)
   endif(MSVC)
 endif(ONNX_WERROR)
@@ -156,7 +157,7 @@ else()
         NAMES protobuf-lite
         PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
         NO_DEFAULT_PATH)
-    else(ONNX_USE_LITE_PROTO)
+    else()
       find_library(Protobuf_LIBRARY
         NAMES protobuf
         PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
@@ -674,6 +675,11 @@ target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
 if(MSVC)
   add_msvc_runtime_flag(onnxifi_dummy)
+
+  target_compile_options(onnxifi_dummy
+                         PRIVATE /wd4113 # 'identifier1' differs in parameter
+                                         # lists from 'identifier2'
+                        )
 endif()
 
 include(GNUInstallDirs)
