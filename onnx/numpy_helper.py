@@ -110,6 +110,10 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
                 for s in e:
                     if isinstance(s, text_type):
                         tensor.string_data.append(s.encode('utf-8'))
+                    elif isinstance(s, bytes):
+                        tensor.string_data.append(s)
+            elif isinstance(e, bytes):
+                tensor.string_data.append(e)
             else:
                 raise NotImplementedError(
                     "Unrecognized object in the object array, expect a string, or array of bytes: ", str(type(e)))
