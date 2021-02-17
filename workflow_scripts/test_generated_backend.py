@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+
+import config
 import onnx
 import os
 import sys
@@ -10,16 +13,17 @@ def main():
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith('.onnx'):
+                test_dir_name = os.path.basename(os.path.normpath(root))
+                onnx_model_path = os.path.join(root, file)
                 try:
-                    onnx_model_path = os.path.join(root, file)
                     model = onnx.load(onnx_model_path)
-                    # check model
+                    # check model by ONNX checker
                     onnx.checker.check_model(model)
                     inferred_model = onnx.shape_inference.infer_shapes(model)
                     onnx.checker.check_model(inferred_model)
+
                 except Exception as e:
                     failed_count += 1
-                    test_dir_name = os.path.basename(os.path.normpath(root))
                     print("{} failed: {}".format(test_dir_name, e))
                 count += 1
     print('-----------------------------')
