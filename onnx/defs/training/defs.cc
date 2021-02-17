@@ -464,10 +464,11 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             auto num_adjustable_tensors = ctx.getNumInputs() - 2;
 
             // Check number of (optimized tensor, gradient, momentum) tuples.
-            if (num_adjustable_tensors % 3 != 0)
-              fail_shape_inference(
+            if (num_adjustable_tensors % 3 != 0) {
+                fail_shape_inference(
                   "The sum of optimized tensor count and momentum tensor count ",
                   "should be a multiple of 2 in the input list of Momentum operator");
+            }
 
             // The count of "X1" and "X2".
             auto num_optimized_tensors = num_adjustable_tensors / 3;
@@ -634,11 +635,12 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             auto num_adjustable_tensors = ctx.getNumInputs() - 2;
 
             // Check number of (optimized tensor, gradient, momentum) tuples.
-            if (num_adjustable_tensors % 4 != 0)
-              fail_shape_inference(
+            if (num_adjustable_tensors % 4 != 0) {
+                fail_shape_inference(
                   "The sum of optimized tensor count, gradient tensor count, momentum tensor count, ",
                   "accumulated squared-gradient tensor count should be a multiple of 4 in the ",
                   "\"inputs\" of Adam operator.");
+            }
 
             // The count of "X1" and "X2".
             auto num_optimized_tensors = num_adjustable_tensors / 4;
