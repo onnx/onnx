@@ -8,6 +8,7 @@
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
+#include "onnx/model_load_utils.h"
 
 #include <fstream>
 #include <iterator>
@@ -796,14 +797,10 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 
 void check_model(const std::string& model_path) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
-  }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
+  auto status = LoadModel(model_path, model);
+  if (!status.IsOK()) {
     fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
+        "Unable to load model from file:", model_path, ". Please check the file exists and it is in a valid protobuf format.");
   }
 
   CheckerContext ctx;

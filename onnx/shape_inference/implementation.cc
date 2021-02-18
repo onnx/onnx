@@ -6,6 +6,7 @@
 #include <fstream>
 #include "onnx/checker.h"
 #include "onnx/string_utils.h"
+#include "onnx/model_load_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
@@ -267,20 +268,16 @@ static void InferShapesImpl(
           // If function proto imports operator sets then merge them with model level opset imports.
           std::unordered_map<std::string, int> function_opset_imports{opset_imports};
           for (const auto& opset_import : func_proto->opset_import()) {
-            auto it = function_opset_imports.find(opset_import.domain());
-            if (it == function_opset_imports.end()) {
-              function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-            } else {
-              if (it->second != opset_import.version()) {
-                fail_shape_inference(
-                    "ONNX models don't support multiple opset version imports for a domain. Function ",
-                    schema->Name(),
-                    " imports opset version " + std::to_string(opset_import.version()),
-                    " for domain ",
-                    (opset_import.domain().empty() ? "ai.onnx" : opset_import.domain()),
-                    " where as the model imports opset version ",
-                    std::to_string(it->second));
-              }
+            auto result = function_opset_imports.insert({opset_import.domain(), static_cast<int>(opset_import.version())});
+            if (!result.second) {
+              fail_shape_inference(
+                  "ONNX models don't support multiple opset version imports for a domain. Function ",
+                  schema->Name(),
+                  " imports opset version " + std::to_string(opset_import.version()),
+                  " for domain ",
+                  (opset_import.domain().empty() ? "ai.onnx" : opset_import.domain()),
+                  " where as the model imports opset version ",
+                  std::to_string(result.first->second));
             }
           }
           InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx);
@@ -400,26 +397,18 @@ void InferShapes(
     const ISchemaRegistry* schema_registry,
     const int error_mode) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
+  auto load_status = LoadModel(model_path, model);
+  if (!load_status.IsOK()) {
+    fail_shape_inference(
+        "Unable to load model from file:", model_path, ". Please check the file exists and it is in a valid protobuf format.");
   }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
+
   InferShapes(model, check_type, schema_registry, error_mode);
+
   // Save the inferred model to the original model path
-  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
-  std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
-  std::string model_string;
-  ONNX_TRY {
-    model.SerializeToString(&model_string);
-    output << model_string;
-  }
-  ONNX_CATCH(...) {
-    fail_check("Unable to save inferred model to the target path:", save_path);
+  auto status = SaveModel(save_path, model);
+  if (!status.IsOK()){
+    fail_shape_inference("Unable to save inferred model to the target path: ", save_path);
   }
 }
 
