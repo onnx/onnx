@@ -23,6 +23,6 @@ class NonZero(Base):
         )
 
         condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
-        result = np.array((np.nonzero(condition))], dtype=np.int64)  # expected output [[0, 1, 1], [0, 0, 1]]
+        result = np.array(np.nonzero(condition), dtype=np.int64)  # expected output [[0, 1, 1], [0, 0, 1]]
         expect(node, inputs=[condition], outputs=[result],
                name='test_nonzero_example')
