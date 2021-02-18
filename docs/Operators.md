@@ -12057,7 +12057,7 @@ node = onnx.helper.make_node(
 )
 
 condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
-result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+result = np.array(np.nonzero(condition), dtype=np.int64)  # expected output [[0, 1, 1], [0, 0, 1]]
 expect(node, inputs=[condition], outputs=[result],
        name='test_nonzero_example')
 ```
@@ -21992,6 +21992,7 @@ indices = indices[argsorted_indices]
 y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [2.0, 1.0, 3.0, 4.0]
 # print(indices)
@@ -22021,6 +22022,7 @@ node_sorted = onnx.helper.make_node(
 
 x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -22052,6 +22054,7 @@ node_sorted = onnx.helper.make_node(
 x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -22085,6 +22088,7 @@ node_sorted = onnx.helper.make_node(
 
 x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 3]], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [[0. 1.]
 #  [0. 1.]
@@ -22114,6 +22118,7 @@ node_sorted = onnx.helper.make_node(
 
 x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
 ```
 

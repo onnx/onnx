@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def specify_int64(indices, inverse_indices, counts):
+def specify_int64(indices, inverse_indices, counts):  # type: ignore
     return np.array(indices, dtype=np.int64), np.array(inverse_indices, dtype=np.int64), np.array(counts, dtype=np.int64)
 
 

@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master, rel-*]
   pull_request:
-    branches: [ rel-*] # test for now, remove it before merge
+    branches: [ rel-*, master] # test for now, remove it before merge
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
