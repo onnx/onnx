@@ -27,7 +27,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace testing {
-const float onnxifi_testdata_eps = ONNXIFI_TESTDATA_EPS;
+const float onnxifi_testdata_eps = static_cast<float>(ONNXIFI_TESTDATA_EPS);
 
 template <typename T>
 class CompareOnnxifiData {
@@ -76,7 +76,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
 
   uint64_t GetDescriptorSize(const onnxTensorDescriptorV1* t) {
     uint64_t d_size = 1;
-    for (int i = 0; i < t->dimensions; i++) {
+    for (uint32_t i = 0; i < t->dimensions; i++) {
       d_size *= t->shape[i];
     }
     return d_size;
