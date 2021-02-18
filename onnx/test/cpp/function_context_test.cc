@@ -64,9 +64,8 @@ bool BuildFunctionProto(
 }
 
 // A monomorphic context-dependent function test-case.
-
 static bool
-BuildTwiceFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of float type:
   auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
 
@@ -77,35 +76,33 @@ BuildTwiceFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema&
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterTwiceFloatSchema() {
+void RegisterCustomFuncFloatSchema() {
   ONNX_NAMESPACE::OpSchema schema;
-  schema.SetName("CustomFunTwice")
+  schema.SetName("CustomFuncFloat")
       .SetDomain(ONNX_DOMAIN)
       .SinceVersion(12)
       .SetDoc("This operator returns an output tensor that is twice the input tensor.")
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildTwiceFloatFunctionBody);
+      .SetContextDependentFunctionBodyBuilder(BuildFloatFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
 }
 
+// Test for Context dependant function without type context
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
-  RegisterTwiceFloatSchema();
+  RegisterCustomFuncFloatSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);
+  const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
   NodeProto nodeProto;
-  nodeProto.set_op_type("CustomFunTwice");
+  nodeProto.set_op_type("CustomFuncFloat");
   nodeProto.add_input("X");
   nodeProto.add_output("Y");
-
-  TypeProto floatTypeProto;
-  floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
 
   FunctionBodyBuildContextImpl ctx(nodeProto);
   FunctionProto fnProto;
@@ -123,7 +120,7 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 // A polymorphic context-dependent function test-case.
 
 static bool
-BuildTwiceFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of input-type:
   auto* tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
@@ -138,30 +135,31 @@ BuildTwiceFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterTwiceSchema() {
+void RegisterCustomFunctionSchema() {
   ONNX_NAMESPACE::OpSchema schema;
-  schema.SetName("CustomFunTwice")
+  schema.SetName("CustomFunction")
       .SetDomain(ONNX_DOMAIN)
       .SinceVersion(12)
       .SetDoc("This operator returns an output tensor that is twice the input tensor.")
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildTwiceFunctionBody);
+      .SetContextDependentFunctionBodyBuilder(BuildFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
 }
 
+// Test for Context dependant function with type context
 TEST(FunctionAPITest, TypeContextTest) {
-  RegisterTwiceSchema();
+  RegisterCustomFunctionSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunTwice", 12, ONNX_DOMAIN);
+  const auto* schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
   NodeProto nodeProto;
-  nodeProto.set_op_type("CustomFunTwice");
+  nodeProto.set_op_type("CustomFunction");
   nodeProto.add_input("X");
   nodeProto.add_output("Y");
 

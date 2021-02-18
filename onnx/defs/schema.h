@@ -118,7 +118,7 @@ class SchemaError final : public std::runtime_error {
 };
 
 #define fail_schema(...) \
-  throw ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+  ONNX_THROW_EX(ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
 using OperatorSetVersion = int;
 
@@ -163,7 +163,6 @@ class OpSchema final {
     // the minimum value N is indicated separately (default value 1).
     Variadic = 2,
   };
-
   enum DifferentiationCategory : uint8_t {
     // Whether this formal parameter is differentiable or not cannot
     // be statically determined. It also covers variadic formal
@@ -956,7 +955,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   class OpSchemaRegisterOnce final {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema) {
-      try {
+      ONNX_TRY {
         op_schema.Finalize();
 
         auto& m = GetMapWithoutEnsuringRegistration();
@@ -983,7 +982,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it its domain is not"
+              << op_schema.line() << ", but its domain is not"
               << " known by the checker." << std::endl;
 
           fail_schema(err.str());
@@ -995,7 +994,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           err << "Trying to register schema with name " << op_name
               << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line "
-              << op_schema.line() << ", but it its version is not "
+              << op_schema.line() << ", but its version is not "
               << "in the inclusive range [" << lower_bound_incl << ", "
               << upper_bound_incl << "] (usually, this means you "
               << "bumped the operator version but "
@@ -1007,8 +1006,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         m[op_name][op_domain].insert(
             std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
-      } catch (const std::exception& e) {
-        std::cerr << "Schema error: " << e.what() << std::endl;
+      } ONNX_CATCH (const std::exception& e) {
+        ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });
       }
     }
   };

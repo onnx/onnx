@@ -3661,7 +3661,36 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### GRU
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>batchwise</summary>
+
+```python
+input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 6
+number_of_gates = 3
+weight_scale = 0.2
+layout = 1
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size,
+    layout=layout
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+Y, Y_h = gru.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')
+```
+
+</details>
 <details>
 <summary>defaults</summary>
 
@@ -3676,7 +3705,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -3704,7 +3733,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -3736,7 +3765,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -4961,7 +4990,36 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### LSTM
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>batchwise</summary>
+
+```python
+input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 7
+weight_scale = 0.3
+number_of_gates = 4
+layout = 1
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size,
+    layout=layout
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
+Y, Y_h = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_lstm_batchwise')
+```
+
+</details>
 <details>
 <summary>defaults</summary>
 
@@ -4976,7 +5034,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -5004,7 +5062,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -5037,7 +5095,7 @@ number_of_peepholes = 3
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -8113,7 +8171,35 @@ expect(node, inputs=[x, y_scale, y_zero_point], outputs=[y],
 
 
 ### RNN
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>batchwise</summary>
+
+```python
+input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.5
+layout = 1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y', 'Y_h'],
+    hidden_size=hidden_size,
+    layout=layout
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
+Y, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')
+```
+
+</details>
 <details>
 <summary>defaults</summary>
 
@@ -8127,7 +8213,7 @@ weight_scale = 0.1
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -8154,7 +8240,7 @@ weight_scale = 0.1
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
@@ -8186,7 +8272,7 @@ hidden_size = 5
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['', 'Y'],
+    outputs=['', 'Y_h'],
     hidden_size=hidden_size
 )
 
