@@ -1280,6 +1280,216 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].input) == 4
         assert len(converted_model.graph.node[0].attribute) == 0
 
+    # Test RNN Adapter: 13 -> 14
+    def test_rnn_13_14(self):  # type: () -> None
+        from_opset = 13
+        to_opset = 14
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_rnn",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 2 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "RNN"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "layout"
+
+    # Test GRU Adapter: 13 -> 14
+    def test_gru_13_14(self):  # type: () -> None
+        from_opset = 13
+        to_opset = 14
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'GRU',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_gru",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 3 * hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 3 * hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 6 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "GRU"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "layout"
+
+    # Test LSTM Adapter: 13 -> 14
+    def test_lstm_13_14(self):  # type: () -> None
+        from_opset = 13
+        to_opset = 14
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'LSTM',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_lstm",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 4 * hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 4 * hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 8 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "LSTM"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 2
+        assert converted_model.graph.node[0].attribute[1].name == "layout"
+
+    # Test RNN Adapter: 14 -> 13
+    def test_rnn_14_13(self):  # type: () -> None
+        from_opset = 14
+        to_opset = 13
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size,
+            layout=0,
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_rnn",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 2 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "RNN"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 1
+
+    # Test GRU Adapter: 14 -> 13
+    def test_gru_14_13(self):  # type: () -> None
+        from_opset = 14
+        to_opset = 13
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'GRU',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size,
+            layout=0,
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_gru",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 3 * hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 3 * hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 6 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "GRU"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 1
+
+    # Test LSTM Adapter: 14 -> 13
+    def test_lstm_14_13(self):  # type: () -> None
+        from_opset = 14
+        to_opset = 13
+        data_type = TensorProto.FLOAT
+
+        seq_length = 1
+        batch_size = 2
+        input_size = 3
+        num_directions = 1
+        hidden_size = 5
+
+        nodes = [onnx.helper.make_node(
+            'LSTM',
+            inputs=['X', 'W', 'R'],
+            outputs=['', 'Y_h'],
+            hidden_size=hidden_size,
+            layout=0,
+        )]
+
+        graph = helper.make_graph(
+            nodes,
+            "test_lstm",
+            [onnx.helper.make_tensor_value_info("X", data_type, [seq_length, batch_size, input_size]),
+             onnx.helper.make_tensor_value_info("W", data_type, [num_directions, 4 * hidden_size, input_size]),
+             onnx.helper.make_tensor_value_info("R", data_type, [num_directions, 4 * hidden_size, hidden_size]),
+             onnx.helper.make_tensor_value_info("B", data_type, [num_directions, 8 * hidden_size])],
+            [onnx.helper.make_tensor_value_info("Y_h", data_type, [num_directions, batch_size, hidden_size])])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert converted_model.graph.node[0].op_type == "LSTM"
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].attribute) == 1
+
 
 if __name__ == '__main__':
     unittest.main()
