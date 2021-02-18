@@ -93,7 +93,7 @@ class TestDriver {
   void SetDefaultDir(const std::string& s);
   std::vector<UnsolvedTestCase> testcases_;
   TestDriver(const std::string& default_dir = ".") {
-    default_dir_ = default_dir_;
+    default_dir_ = default_dir;
   }
   /**
    *	Fetch all test cases in target.
