@@ -94,16 +94,14 @@ struct InferenceContextImpl : public InferenceContext {
 
   const TypeProto* getInputType(size_t index) const override {
     if (index >= allInputTypes_.size()) {
-      throw std::runtime_error(
-          "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
     return allInputTypes_[index];
   }
 
   const TensorProto* getInputData(size_t index) const override {
     if (index >= allInputData_.size()) {
-      throw std::runtime_error(
-          "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
     return allInputData_[index];
   }
@@ -114,8 +112,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
-      throw std::runtime_error(
-          "output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
     return &allOutputTypes_[index];
   }

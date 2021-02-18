@@ -25,6 +25,7 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNXIFI_ENABLE_EXT "Enable onnxifi extensions." OFF)
+option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
     set(DEFAULT_ONNX_ML $ENV{ONNX_ML})
@@ -75,6 +76,34 @@ endif()
 
 if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
+endif()
+
+if(MSVC)
+  if(NOT ONNX_DISABLE_EXCEPTIONS)
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
+    string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
+  endif()
+endif()
+
+if(ONNX_DISABLE_EXCEPTIONS)
+  add_compile_definitions("ONNX_NO_EXCEPTIONS")
+  # Disable C++ exceptions.
+  if(MSVC)
+    string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    add_definitions(-D_HAS_EXCEPTIONS=0)
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+  endif()
+endif()
+
+if(ONNX_WERROR)
+  if(MSVC)
+    string(APPEND CMAKE_CXX_FLAGS " /WX")
+    string(APPEND CMAKE_C_FLAGS " /WX")
+  else()
+    string(APPEND CMAKE_CXX_FLAGS " -Werror")
+    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+  endif()
 endif()
 
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
@@ -129,7 +158,7 @@ else()
         NAMES protobuf-lite
         PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
         NO_DEFAULT_PATH)
-    else(ONNX_USE_LITE_PROTO)
+    else()
       find_library(Protobuf_LIBRARY
         NAMES protobuf
         PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
@@ -573,9 +602,6 @@ elseif(APPLE)
 
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
-  if(${ONNX_WERROR})
-    target_compile_options(onnx PRIVATE -Werror)
-  endif()
 endif()
 
 if(APPLE)
@@ -650,6 +676,11 @@ target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
 if(MSVC)
   add_msvc_runtime_flag(onnxifi_dummy)
+
+  target_compile_options(onnxifi_dummy
+                         PRIVATE /wd4113 # 'identifier1' differs in parameter
+                                         # lists from 'identifier2'
+                        )
 endif()
 
 include(GNUInstallDirs)
