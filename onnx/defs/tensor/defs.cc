@@ -2664,11 +2664,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          auto& input_shape = getInputShape(ctx, 0);
-          int64_t rank = input_shape.dim_size();
           // NonZero output is of rank 2.
+          auto* output_dim1 = output_shape->add_dim();
           // First dimension is same as input rank
-          output_shape->add_dim()->set_dim_value(rank);
+          if (hasInputShape(ctx, 0)) {
+              auto& input_shape = getInputShape(ctx, 0);
+              int64_t rank = input_shape.dim_size();
+              output_dim1->set_dim_value(rank);
+          }
           // Second dimension is determined based on actual non-zero's in the input data
           output_shape->add_dim();
         }));
