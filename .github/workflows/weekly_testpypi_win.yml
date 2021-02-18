@@ -1,10 +1,11 @@
 name: WindowsRelease
 
 on:
-   push:
-    branches: [ master, rel-* ]
-   pull_request:
-    branches: [ rel-*, master] # TODO test for now, remove master before the merge
+  pull_request:
+    branches: [master] # TODO test for now, remove master before the merge
+  schedule:
+    # run weekly on Sunday 23:59
+    - cron:  '59 23 * * SUN'
 jobs:
   build:
     runs-on: windows-latest
@@ -90,9 +91,19 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON"
         python setup.py bdist_wheel --weekly_build
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+  
+    - name: Test the installed wheel
+      run: |
+        cd onnx
+        python -m pip install -q pytest==5.4.3 nbval
         pytest
         
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
         path: ./onnx/dist
+
+    - name: Upload wheel to TestPyPI
+      run: |
+        python -m pip install -q twine
+        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u TESTPYPI_USERNAME -p TESTPYPI_PASSWORD
