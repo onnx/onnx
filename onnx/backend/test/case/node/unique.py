@@ -12,6 +12,10 @@ from ..base import Base
 from . import expect
 
 
+def specify_int64(indices, inverse_indices, counts):
+    return np.array(indices, dtype=np.int64), np.array(inverse_indices, dtype=np.int64), np.array(counts, dtype=np.int64)
+
+
 class Unique(Base):
 
     @staticmethod
@@ -123,6 +127,7 @@ class Unique(Base):
 
         x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 3]], dtype=np.float32)
         y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
+        indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
         # print(y)
         # [[0. 1.]
         #  [0. 1.]
