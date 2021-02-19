@@ -2,17 +2,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-//#include <google/protobuf/io/coded_stream.h>
-//#include <fcntl.h>
-//#include <io.h>
 #include "onnx/onnx_pb.h"
 #include "onnx/common/status.h"
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "onnx/file_utils.h"
 #include "onnx/common/common.h"
 #include "onnx/string_utils.h"
-
-using namespace onnx::Common;
 
 namespace ONNX_NAMESPACE {
 

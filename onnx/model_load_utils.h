@@ -8,10 +8,9 @@
 #include "onnx/file_utils.h"
 #include "onnx/onnx_pb.h"
 
+using namespace ONNX_NAMESPACE::Common;
+
 namespace ONNX_NAMESPACE {
-
-using namespace onnx::Common;
-
 Status LoadModel(const std::string& file_path, ModelProto& model_proto);
 
 Status SaveModel(const std::string& file_path, ModelProto& model_proto);

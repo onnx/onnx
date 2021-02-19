@@ -6,11 +6,9 @@
 
 #include "onnx/common/status.h"
 
+using namespace ONNX_NAMESPACE::Common;
 
 namespace ONNX_NAMESPACE {
-
-using namespace onnx::Common;
-
 #ifdef _WIN32
 Status FileOpenRd(const std::wstring& path, /*out*/ int& fd);
 
