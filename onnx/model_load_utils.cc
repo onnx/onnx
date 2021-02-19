@@ -35,17 +35,14 @@ Status LoadModel(const std::string& file_path, ModelProto& model_proto) {
   const bool result = model_proto.ParseFromZeroCopyStream(&input) && input.GetErrno() == 0;
 
 #else
-  // CNTK uses ORT as a submodule in order to use its GraphIR code.
-  // CNTK needs to be built with protobuf 3.1.0 for its version specific features.
-  // This code block is needed to support CNTK and any other
-  // GraphIR client that will be built with protobuf at a version older than 3.2.0.
-  FileInputStream fs(fd);
-  CodedInputStream cis(&fs);
+  // This code block is needed to support any client that will be built with 
+  // protobuf at a version older than 3.2.0.
+  ::google::protobuf::io::FileInputStream fs(fd);
+  ::google::protobuf::io::CodedInputStream cis(&fs);
 
   // Allows protobuf library versions < 3.2.0 to parse messages greater than 64MB.
   cis.SetTotalBytesLimit(INT_MAX);
   const bool result = model_proto.ParseFromCodedStream(&cis);
-
 #endif
 
   if (!result) {
