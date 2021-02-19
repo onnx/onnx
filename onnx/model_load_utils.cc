@@ -43,7 +43,8 @@ Status LoadModel(const std::string& file_path, ModelProto& model_proto) {
   ::google::protobuf::io::CodedInputStream cis(&fs);
 
   // Allows protobuf library versions < 3.2.0 to parse messages greater than 64MB.
-  cis.SetTotalBytesLimit(INT_MAX);
+  cis.SetTotalBytesLimit(INT_MAX, 512LL << 20);
+);
   const bool result = model_proto.ParseFromCodedStream(&cis);
 #endif
 
