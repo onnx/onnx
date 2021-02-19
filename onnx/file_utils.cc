@@ -6,6 +6,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <sys/stat.h>
+#include <limits>
 
 #include "onnx/common/status.h"
 #include "onnx/onnx_pb.h"
