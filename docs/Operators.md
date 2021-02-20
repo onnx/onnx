@@ -10657,10 +10657,9 @@ node = onnx.helper.make_node(
     outputs=['z'],
 )
 
-x = np.arange(0, 30).reshape([3, 2, 5])
-y = np.array([7])
+x = np.arange(0, 30).reshape([3, 2, 5]).astype(np.int32)
+y = np.array([7]).astype(np.int32)
 z = np.mod(x, y)
-z
 #   array([[[0, 1, 2, 3, 4],
 #     [5, 6, 0, 1, 2]],
 
@@ -11257,7 +11256,7 @@ node = onnx.helper.make_node(
 N, C = 3, 5
 np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, ))
+target = np.random.randint(0, high=C, size=(N, )).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -11283,7 +11282,7 @@ node = onnx.helper.make_node(
 N, C, d1 = 3, 5, 2
 np.random.seed(0)
 input = np.random.rand(N, C, d1).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, d1))
+target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -11311,7 +11310,7 @@ node = onnx.helper.make_node(
 N, C, d1 = 3, 5, 2
 np.random.seed(0)
 input = np.random.rand(N, C, d1).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, d1))
+target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
 target[0][0] = np.int64(1)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
@@ -11340,7 +11339,7 @@ node = onnx.helper.make_node(
 N, C, dim1 = 3, 5, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1))
+target = np.random.randint(0, high=C, size=(N, dim1)).astype(np.int64)
 target[0][0] = -1
 weight = np.random.rand(C).astype(np.float32)
 
@@ -11372,7 +11371,7 @@ node = onnx.helper.make_node(
 N, C, d1 = 3, 5, 2
 np.random.seed(0)
 input = np.random.rand(N, C, d1).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, d1))
+target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -11401,7 +11400,7 @@ node = onnx.helper.make_node(
 N, C, d1 = 3, 5, 2
 np.random.seed(0)
 input = np.random.rand(N, C, d1).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, d1))
+target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
 target[0][0] = np.int64(1)
 weight = np.random.rand(C).astype(np.float32)
 
@@ -11429,7 +11428,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -11457,7 +11456,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 target[0][0][0] = np.int64(1)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
@@ -11484,7 +11483,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -11536,7 +11535,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -11563,7 +11562,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -11590,7 +11589,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
@@ -11619,7 +11618,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 target[0][0][0] = np.int64(0)
 weight = np.random.rand(C).astype(np.float32)
 
@@ -11649,7 +11648,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
 target[0][0][0][0] = -5
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
@@ -11713,7 +11712,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
@@ -11743,7 +11742,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
                                                                     target,
@@ -18229,13 +18228,13 @@ This version of the operator has been available since version 11 of the default 
 
 ```python
 test_cases = {
-    'at_back': [np.array([10, 11, 12])],
-    'at_front': [np.array([-2, -1, 0]), np.array([0])]
+    'at_back': [np.array([10, 11, 12]).astype(np.int64)],
+    'at_front': [np.array([-2, -1, 0]), np.array([0]).astype(np.int64)]
 }
-sequence = [np.array([1, 2, 3, 4]), np.array([5, 6, 7]), np.array([8, 9])]
+sequence = [np.array([1, 2, 3, 4]).astype(np.int64), np.array([5, 6, 7]).astype(np.int64), np.array([8, 9]).astype(np.int64)]
 
 for test_name, test_inputs in test_cases.items():
-    tensor = test_inputs[0]
+    tensor = test_inputs[0].astype(np.int64)
 
     if len(test_inputs) > 1:
         node = onnx.helper.make_node(
@@ -18944,7 +18943,7 @@ x = np.random.randn(20, 10, 5).astype(np.float32)
 starts = np.array([20, 10, 4], dtype=np.int64)
 ends = np.array([0, 0, 1], dtype=np.int64)
 axes = np.array([0, 1, 2], dtype=np.int64)
-steps = np.array([-1, -3, -2])
+steps = np.array([-1, -3, -2]).astype(np.int64)
 y = x[20:0:-1, 10:0:-3, 4:1:-2]
 
 expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
@@ -19242,7 +19241,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1 = 3, 5, 6
 np.random.seed(0)
 x = np.random.rand(N, C, dim1).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1))
+labels = np.random.randint(0, high=C, size=(N, dim1)).astype(np.int64)
 labels[0][0] = -1
 weight = np.random.rand(C).astype(np.float32)
 
@@ -19274,7 +19273,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1 = 3, 5, 6
 np.random.seed(0)
 x = np.random.rand(N, C, dim1).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1))
+labels = np.random.randint(0, high=C, size=(N, dim1)).astype(np.int64)
 labels[0][0] = -1
 weight = np.random.rand(C).astype(np.float32)
 
@@ -19307,7 +19306,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
 np.random.seed(0)
 x = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
 labels[0][0][0][0] = -5
 
 sce = softmaxcrossentropy(x,
@@ -19337,7 +19336,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
 np.random.seed(0)
 x = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
 labels[0][0][0][0] = -5
 
 loss, log_prob = softmaxcrossentropy(x,
@@ -19368,7 +19367,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C = 3, 5
 np.random.seed(0)
 x = np.random.rand(N, C).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N))
+labels = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 labels[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
@@ -19400,7 +19399,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C = 3, 5
 np.random.seed(0)
 x = np.random.rand(N, C).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N))
+labels = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 labels[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
@@ -19431,7 +19430,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
 np.random.seed(0)
 x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 sce = softmaxcrossentropy(x,
@@ -19459,7 +19458,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
 np.random.seed(0)
 x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 weight = np.random.rand(C).astype(np.float32)
 
 loss, log_prob = softmaxcrossentropy(x,
@@ -19488,7 +19487,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
 np.random.seed(0)
 x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 
 sce = softmaxcrossentropy(x,
                         labels,
@@ -19514,7 +19513,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
 np.random.seed(0)
 x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 
 loss, log_prob = softmaxcrossentropy(x,
                         labels,
@@ -19543,7 +19542,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 sce = softmaxcrossentropy(x, labels)
@@ -19571,7 +19570,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2).astype(np.float32)
-y = np.random.randint(0, high=5, size=(3, 2))
+y = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 sce = softmaxcrossentropy(x, y)
@@ -19599,7 +19598,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2).astype(np.float32)
-y = np.random.randint(0, high=5, size=(3, 2))
+y = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 loss, log_prob = softmaxcrossentropy(x, y, get_log_prob=True)
@@ -19627,7 +19626,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 loss, log_prob = softmaxcrossentropy(x, labels, get_log_prob=True)
@@ -19657,7 +19656,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 labels[0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19688,7 +19687,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2))
+labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 labels[0][0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19719,7 +19718,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2))
+labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 labels[0][0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19750,7 +19749,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2, 7))
+labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
 labels[0][0][0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19781,7 +19780,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2, 7))
+labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
 labels[0][0][0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19812,7 +19811,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 labels[0] = np.int64(2)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19841,7 +19840,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -19872,7 +19871,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 labels[0] = np.int64(0)
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
@@ -19904,7 +19903,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2))
+labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 labels[0][0] = np.int64(1)
 weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -19936,7 +19935,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2))
+labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 labels[0][0] = np.int64(1)
 weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -19968,7 +19967,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2, 7))
+labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
 labels[0][0][0] = np.int64(2)
 weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -20000,7 +19999,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, 2, 7))
+labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
 labels[0][0][0] = np.int64(2)
 weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -20032,7 +20031,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 labels[0] = np.int64(0)
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
@@ -20062,7 +20061,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -20091,7 +20090,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 sce = softmaxcrossentropy(x, labels, reduction='none')
@@ -20119,7 +20118,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 loss, log_prob = softmaxcrossentropy(x, labels, reduction='none', get_log_prob=True)
@@ -20147,7 +20146,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -20176,7 +20175,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
 # Compute SoftmaxCrossEntropyLoss
@@ -20205,7 +20204,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 sce = softmaxcrossentropy(x, labels, reduction='sum')
@@ -20233,7 +20232,7 @@ node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
 # Define operator inputs.
 np.random.seed(0)
 x = np.random.rand(3, 5).astype(np.float32)
-labels = np.random.randint(0, high=5, size=(3, ))
+labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
 # Compute SoftmaxCrossEntropyLoss
 loss, log_prob = softmaxcrossentropy(x, labels, reduction='sum', get_log_prob=True)
