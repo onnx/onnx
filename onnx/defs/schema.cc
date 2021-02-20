@@ -19,9 +19,13 @@
 #include "onnx/common/stl_backports.h"
 
 namespace ONNX_NAMESPACE {
-
+// register all opset schema for all opset versions
 void RegisterSchema(OpSchema&& schema) {
   OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration = schema;
+}
+// register the latest opset schema; remove the old ones
+void RegisterSchemaLatest(OpSchema&& schema) {
+  OpSchemaRegistry::OpSchemaRegisterLatest ONNX_UNUSED registration = schema;
 }
 
 #ifndef NDEBUG

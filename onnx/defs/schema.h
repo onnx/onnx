@@ -952,10 +952,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
     std::mutex mutex_;
   };
-
-  class OpSchemaRegisterOnce final {
-   public:
-    OpSchemaRegisterOnce(OpSchema& op_schema) {
+  
+  static void OpSchemaRegister(OpSchema& op_schema, bool only_latest) {
       try {
         op_schema.Finalize();
 
@@ -1003,13 +1001,29 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << "in onnx/defs/schema.h)." << std::endl;
           fail_schema(err.str());
         }
-
+        // only keep the latest opeset_version, remove the previous one
+        if (only_latest) {
+          m[op_name][op_domain].clear();
+        }
         m[op_name][op_domain].insert(
             std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } catch (const std::exception& e) {
         std::cerr << "Schema error: " << e.what() << std::endl;
       }
+  }
+
+  class OpSchemaRegisterOnce final {
+   public:
+    OpSchemaRegisterOnce(OpSchema& op_schema) {
+      OpSchemaRegister(op_schema, false);
+    }
+  };
+
+  class OpSchemaRegisterLatest final {
+   public:
+    OpSchemaRegisterLatest(OpSchema& op_schema) {
+      OpSchemaRegister(op_schema, true);
     }
   };
 
@@ -1107,10 +1121,18 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
 void RegisterSchema(OpSchema&& schema);
 
-// Registers all schema of a given operator set
+// Register all schema of a given operator set for all opset versions
 template <class T>
 void RegisterOpSetSchema() {
   T::ForEachSchema(RegisterSchema);
+};
+
+void RegisterSchemaLatest(OpSchema&& schema);
+
+// Register the latest opset schema and remove the old ones
+template <class T>
+void RegisterOpSetSchemaLatest() {
+  T::ForEachSchema(RegisterSchemaLatest);
 };
 
 // Forward declaration for the non-specialized GetOpSchema method.  This
