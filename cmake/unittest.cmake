@@ -69,7 +69,13 @@ function(AddTest)
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                            )
-
+      if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+        target_compile_options(${_UT_TARGET}
+                               PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                               # have dll-interface to be used by
+                                               # clients of class 'type2'
+                              )
+      endif()
   endif()
 
   set(TEST_ARGS)

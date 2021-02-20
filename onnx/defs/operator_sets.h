@@ -931,6 +931,9 @@ class OpSet_Onnx_ver13 {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, CumSum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Relu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, GRU);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, LSTM);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, RNN);
 
 // Iterate over schema from ai.onnx version 14
 class OpSet_Onnx_ver14 {
@@ -939,6 +942,9 @@ class OpSet_Onnx_ver14 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, CumSum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Relu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, GRU)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, LSTM)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, RNN)>());
   }
 };
 
