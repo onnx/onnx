@@ -27,7 +27,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 # Programming utilities for working with ONNX Graphs
 * [Shape and Type Inference](docs/ShapeInference.md)
-* [Graph Optimization](docs/Optimizer.md)
+* [Graph Optimization](https://github.com/onnx/optimizer)
 * [Opset Version Conversion](docs/VersionConverter.md)
 
 # Contribute
