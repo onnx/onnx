@@ -42,6 +42,8 @@
 #include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/add_layout.h"
+#include "onnx/version_converter/adapters/remove_layout.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -527,6 +529,16 @@ registerAdapter(make_unique<CompatibleAdapter>("Dropout",
       registerAdapter(make_unique<AxesInputToAttribute>(
           "Unsqueeze", OpSetID(13), OpSetID(12)));
       registerAdapter(make_unique<Split_13_12>());
+
+      /******** 13 -> 14 ********/
+      registerAdapter(make_unique<AddLayout>("GRU"));
+      registerAdapter(make_unique<AddLayout>("LSTM"));
+      registerAdapter(make_unique<AddLayout>("RNN"));
+
+      /******** 14 -> 13 ********/
+      registerAdapter(make_unique<RemoveLayout>("GRU"));
+      registerAdapter(make_unique<RemoveLayout>("LSTM"));
+      registerAdapter(make_unique<RemoveLayout>("RNN"));
     }
 
     ModelProto convert_version(

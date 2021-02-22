@@ -50,6 +50,7 @@ ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
+ONNX_DISABLE_EXCEPTIONS = bool(os.getenv('ONNX_DISABLE_EXCEPTIONS') == '1')
 
 DEBUG = bool(os.getenv('DEBUG'))
 COVERAGE = bool(os.getenv('COVERAGE'))
@@ -195,6 +196,8 @@ class cmake_build(setuptools.Command):
                 cmake_args.append('-DONNX_VERIFY_PROTO3=1')
             if ONNX_BUILD_TESTS:
                 cmake_args.append('-DONNX_BUILD_TESTS=ON')
+            if ONNX_DISABLE_EXCEPTIONS:
+                cmake_args.append('-DONNX_DISABLE_EXCEPTIONS=ON')
             if 'CMAKE_ARGS' in os.environ:
                 extra_cmake_args = shlex.split(os.environ['CMAKE_ARGS'])
                 # prevent crossfire with downstream scripts
@@ -202,6 +205,9 @@ class cmake_build(setuptools.Command):
                 log.info('Extra cmake args: {}'.format(extra_cmake_args))
                 cmake_args.extend(extra_cmake_args)
             cmake_args.append(TOP_DIR)
+            log.info('Using cmake args: {}'.format(cmake_args))
+            if '-DONNX_DISABLE_EXCEPTIONS=ON' in cmake_args:
+                raise RuntimeError("-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled.")
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
