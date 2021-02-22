@@ -954,7 +954,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   };
   
   static void OpSchemaRegister(OpSchema& op_schema, bool only_latest) {
-      try {
+      ONNX_TRY {
         op_schema.Finalize();
 
         auto& m = GetMapWithoutEnsuringRegistration();
