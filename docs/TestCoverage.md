@@ -13591,7 +13591,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -13618,7 +13618,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(-1).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13646,7 +13646,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(3, 1, 5))
+x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
 # X:
 # [[[6, 2, 4, 1, 6]],
 #
@@ -13675,7 +13675,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(-7).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13702,7 +13702,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     upper=0,
 )
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(6).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13730,7 +13730,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(2).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13758,7 +13758,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(2, 3, 3))
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
 # X:
 # [[[0, 4, 3],
 #   [2, 0, 9],
@@ -13791,7 +13791,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(2, 3, 3))
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
 k = np.array(-1).astype(np.int32)
 # X:
 # [[[0, 4, 3],
@@ -13825,7 +13825,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 
-x = np.random.randint(10, size=(3, 0, 5))
+x = np.random.randint(10, size=(3, 0, 5)).astype(np.int64)
 k = np.array(6).astype(np.int32)
 # X:
 # []
@@ -13846,7 +13846,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -13872,7 +13872,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(-1).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13899,7 +13899,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(3, 1, 5))
+x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
 k = np.array(1).astype(np.int32)
 # X:
 # [[[1, 4, 9, 7, 1]],
@@ -13928,7 +13928,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(-7).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13955,7 +13955,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(6).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -13982,7 +13982,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(4, 5))
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
 k = np.array(2).astype(np.int32)
 # X:
 #  [[4, 7, 3, 7, 9],
@@ -14009,7 +14009,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(2, 3, 3))
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
 y = triu_reference_implementation(x)
 # X:
 # [[[4, 6, 9],
@@ -14041,7 +14041,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(2, 3, 3))
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
 k = np.array(-1).astype(np.int32)
 # X:
 # [[[4, 6, 9],
@@ -14074,7 +14074,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.random.randint(10, size=(0, 5))
+x = np.random.randint(10, size=(0, 5)).astype(np.int64)
 k = np.array(6).astype(np.int32)
 # X:
 # []

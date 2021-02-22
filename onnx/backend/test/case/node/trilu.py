@@ -12,11 +12,11 @@ from ..base import Base
 from . import expect
 
 
-def triu_reference_implementation(x, k=0):
+def triu_reference_implementation(x, k=0):  # type: ignore
     return np.triu(x, k)
 
 
-def tril_reference_implementation(x, k=0):
+def tril_reference_implementation(x, k=0):  # type: ignore
     return np.tril(x, k)
 
 
@@ -29,7 +29,7 @@ class Trilu(Base):
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         # X:
         #  [[4, 7, 3, 7, 9],
         #   [1, 2, 8, 6, 9],
@@ -44,14 +44,14 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_triu')
 
     @staticmethod
-    def export_triu_neg():
+    def export_triu_neg():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(-1).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -67,14 +67,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_neg')
 
     @staticmethod
-    def export_triu_out_neg_out():
+    def export_triu_out_neg_out():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(-7).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -90,14 +90,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_neg_out')
 
     @staticmethod
-    def export_triu_pos():
+    def export_triu_pos():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(2).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -113,14 +113,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_pos')
 
     @staticmethod
-    def export_triu_out_pos():
+    def export_triu_out_pos():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(6).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -136,14 +136,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_pos')
 
     @staticmethod
-    def export_triu_square():
+    def export_triu_square():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(2, 3, 3))
+        x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
         y = triu_reference_implementation(x)
         # X:
         # [[[4, 6, 9],
@@ -164,14 +164,14 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_triu_square')
 
     @staticmethod
-    def export_triu_square_neg():
+    def export_triu_square_neg():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(2, 3, 3))
+        x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
         k = np.array(-1).astype(np.int32)
         # X:
         # [[[4, 6, 9],
@@ -193,14 +193,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_square_neg')
 
     @staticmethod
-    def export_triu_one_row():
+    def export_triu_one_row():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(3, 1, 5))
+        x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
         k = np.array(1).astype(np.int32)
         # X:
         # [[[1, 4, 9, 7, 1]],
@@ -218,14 +218,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_one_row')
 
     @staticmethod
-    def export_triu_zero():
+    def export_triu_zero():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
         )
 
-        x = np.random.randint(10, size=(0, 5))
+        x = np.random.randint(10, size=(0, 5)).astype(np.int64)
         k = np.array(6).astype(np.int32)
         # X:
         # []
@@ -235,7 +235,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_zero')
 
     @staticmethod
-    def export_tril():
+    def export_tril():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -243,7 +243,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         # X:
         #  [[4, 7, 3, 7, 9],
         #   [1, 2, 8, 6, 9],
@@ -258,7 +258,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_tril')
 
     @staticmethod
-    def export_tril_neg():
+    def export_tril_neg():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -266,7 +266,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(-1).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -282,7 +282,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_neg')
 
     @staticmethod
-    def export_tril_out_neg():
+    def export_tril_out_neg():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -290,7 +290,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(-7).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -306,7 +306,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_neg')
 
     @staticmethod
-    def export_tril_pos():
+    def export_tril_pos():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -314,7 +314,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(2).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -330,14 +330,14 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_pos')
 
     @staticmethod
-    def export_tril_out_pos():
+    def export_tril_out_pos():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
             outputs=['y'],
             upper=0,
         )
-        x = np.random.randint(10, size=(4, 5))
+        x = np.random.randint(10, size=(4, 5)).astype(np.int64)
         k = np.array(6).astype(np.int32)
         # X:
         #  [[4, 7, 3, 7, 9],
@@ -353,7 +353,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_pos')
 
     @staticmethod
-    def export_tril_square():
+    def export_tril_square():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -361,7 +361,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(2, 3, 3))
+        x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
         # X:
         # [[[0, 4, 3],
         #   [2, 0, 9],
@@ -382,7 +382,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_tril_square')
 
     @staticmethod
-    def export_tril_square_neg():
+    def export_tril_square_neg():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -390,7 +390,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(2, 3, 3))
+        x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
         k = np.array(-1).astype(np.int32)
         # X:
         # [[[0, 4, 3],
@@ -412,7 +412,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_square_neg')
 
     @staticmethod
-    def export_tril_one_row():
+    def export_tril_one_row():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -420,7 +420,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(3, 1, 5))
+        x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
         # X:
         # [[[6, 2, 4, 1, 6]],
         #
@@ -437,7 +437,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_tril_one_row_neg')
 
     @staticmethod
-    def export_tril_zero():
+    def export_tril_zero():  # type: () -> None
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -445,7 +445,7 @@ class Trilu(Base):
             upper=0,
         )
 
-        x = np.random.randint(10, size=(3, 0, 5))
+        x = np.random.randint(10, size=(3, 0, 5)).astype(np.int64)
         k = np.array(6).astype(np.int32)
         # X:
         # []
