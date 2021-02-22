@@ -158,6 +158,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
+|<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
 |<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
@@ -21939,6 +21940,599 @@ node = onnx.helper.make_node(
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
        name='test_transpose_default')
+```
+
+</details>
+
+
+### <a name="Trilu"></a><a name="trilu">**Trilu**</a>
+
+  Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
+  The attribute "upper" determines whether the upper or lower part is retained. If set to true,
+  the upper triangular matrix is retained. Lower triangular matrix is retained otherwise.
+  Default value for the "upper" attribute is true.
+  Trilu takes one input tensor of shape [*, N, M], where * is zero or more batch dimensions. The upper triangular part consists
+  of the elements on and above the given diagonal (k). The lower triangular part consists of elements on and below the diagonal.
+  All other elements in the matrix are set to zero.
+  If k = 0, the triangular part on and above/below the main diagonal is retained.
+  If upper is set to true, a positive k retains the upper triangular matrix excluding k diagonals above
+  the main diagonal. A negative k value includes as many diagonals below the main diagonal.
+  If upper is set to false, a positive k retains the lower triangular matrix including k diagonals above
+  the main diagonal. A negative k value excludes as many diagonals below the main diagonal.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>upper</tt> : int (default is 1)</dt>
+<dd>Boolean. Indicates whether upper or lower part of matrix is retained. Default is true.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor of rank 2 or higher.</dd>
+<dt><tt>k</tt> (optional, non-differentiable) : tensor(int32)</dt>
+<dd>A 0-D tensor containing a single value corresponding to the number diagonals above or the main diagonal to exclude or include.Default value is 0 if it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor of the same type and shape as the input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tril</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5))
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 0, 0, 0, 0],
+#   [1, 2, 0, 0, 0],
+#   [9, 4, 1, 0, 0],
+#   [4, 3, 4, 2, 0]]
+y = tril_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_tril')
+```
+
+</details>
+
+
+<details>
+<summary>tril_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(-1).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 0, 0, 0],
+#   [1, 0, 0, 0, 0],
+#   [9, 4, 0, 0, 0],
+#   [4, 3, 4, 0, 0]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_neg')
+```
+
+</details>
+
+
+<details>
+<summary>tril_one_row</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(3, 1, 5))
+# X:
+# [[[6, 2, 4, 1, 6]],
+#
+#  [[8, 3, 8, 7, 0]],
+#
+#  [[2, 2, 9, 5, 9]]]
+# expect result:
+# [[[6, 0, 0, 0, 0]],
+#
+#  [[8, 0, 0, 0, 0]],
+#
+#  [[2, 0, 0, 0, 0]]]
+y = tril_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_tril_one_row_neg')
+```
+
+</details>
+
+
+<details>
+<summary>tril_out_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(-7).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_neg')
+```
+
+</details>
+
+
+<details>
+<summary>tril_out_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+x = np.random.randint(10, size=(4, 5))
+k = np.array(6).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_pos')
+```
+
+</details>
+
+
+<details>
+<summary>tril_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(2).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 0, 0],
+#   [1, 2, 8, 6, 0],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_pos')
+```
+
+</details>
+
+
+<details>
+<summary>tril_square</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(2, 3, 3))
+# X:
+# [[[0, 4, 3],
+#   [2, 0, 9],
+#   [8, 2, 5]],
+#
+#  [[2, 7, 2],
+#   [2, 6, 0],
+#   [2, 6, 5]]]
+# expect result:
+# [[[0, 0, 0],
+#   [2, 0, 0],
+#   [8, 2, 5]],
+#
+#  [[2, 0, 0],
+#   [2, 6, 0],
+#   [2, 6, 5]]]
+y = tril_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_tril_square')
+```
+
+</details>
+
+
+<details>
+<summary>tril_square_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(2, 3, 3))
+k = np.array(-1).astype(np.int32)
+# X:
+# [[[0, 4, 3],
+#   [2, 0, 9],
+#   [8, 2, 5]],
+#
+#  [[2, 7, 2],
+#   [2, 6, 0],
+#   [2, 6, 5]]]
+# expect result:
+# [[[0, 0, 0],
+#   [2, 0, 0],
+#   [8, 2, 0]],
+#
+#  [[0, 0, 0],
+#   [2, 0, 0],
+#   [2, 6, 0]]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_square_neg')
+```
+
+</details>
+
+
+<details>
+<summary>tril_zero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(3, 0, 5))
+k = np.array(6).astype(np.int32)
+# X:
+# []
+# expect result:
+# []
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_zero')
+```
+
+</details>
+
+
+<details>
+<summary>triu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5))
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [0, 2, 8, 6, 9],
+#   [0, 0, 0, 8, 7],
+#   [0, 0, 0, 2, 4]]
+y = triu_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_triu')
+```
+
+</details>
+
+
+<details>
+<summary>triu_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(-1).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [0, 4, 0, 8, 7],
+#   [0, 0, 4, 2, 4]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_neg')
+```
+
+</details>
+
+
+<details>
+<summary>triu_one_row</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(3, 1, 5))
+k = np.array(1).astype(np.int32)
+# X:
+# [[[1, 4, 9, 7, 1]],
+#
+#  [[9, 2, 8, 8, 4]],
+#
+#  [[3, 9, 7, 4, 2]]]
+# expect result:
+# [[[0, 4, 9, 7, 1]],
+#
+#  [[0, 2, 8, 8, 4]],
+#
+#  [[0, 9, 7, 4, 2]]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_one_row')
+```
+
+</details>
+
+
+<details>
+<summary>triu_out_neg_out</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(-7).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_neg_out')
+```
+
+</details>
+
+
+<details>
+<summary>triu_out_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(6).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_pos')
+```
+
+</details>
+
+
+<details>
+<summary>triu_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5))
+k = np.array(2).astype(np.int32)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 3, 7, 9],
+#   [0, 0, 0, 6, 9],
+#   [0, 0, 0, 0, 7],
+#   [0, 0, 0, 0, 0]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_pos')
+```
+
+</details>
+
+
+<details>
+<summary>triu_square</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(2, 3, 3))
+y = triu_reference_implementation(x)
+# X:
+# [[[4, 6, 9],
+#   [7, 5, 4],
+#   [8, 1, 2]],
+#
+#  [[1, 4, 9],
+#   [9, 6, 3],
+#   [8, 9, 8]]]
+# expect result:
+# [[[4, 6, 9],
+#   [0, 5, 4],
+#   [0, 0, 2]],
+#
+#  [[1, 4, 9],
+#   [0, 6, 3],
+#   [0, 0, 8]]]
+expect(node, inputs=[x], outputs=[y], name='test_triu_square')
+```
+
+</details>
+
+
+<details>
+<summary>triu_square_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(2, 3, 3))
+k = np.array(-1).astype(np.int32)
+# X:
+# [[[4, 6, 9],
+#   [7, 5, 4],
+#   [8, 1, 2]],
+#
+#  [[1, 4, 9],
+#   [9, 6, 3],
+#   [8, 9, 8]]]
+# expect result:
+# [[[4, 6, 9],
+#   [7, 5, 4],
+#   [0, 1, 2]],
+#
+#  [[1, 4, 9],
+#   [9, 6, 3],
+#   [0, 9, 8]]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_square_neg')
+```
+
+</details>
+
+
+<details>
+<summary>triu_zero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(0, 5))
+k = np.array(6).astype(np.int32)
+# X:
+# []
+# expect result:
+# []
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_zero')
 ```
 
 </details>
