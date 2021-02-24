@@ -1001,8 +1001,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           fail_schema(err.str());
         }
         // only keep the latest opeset_version, remove the previous one
-        auto iter = m[op_name][op_domain].begin();
-        if (!only_latest || only_latest && m[op_name][op_domain].empty()) {
+        if (!only_latest || (only_latest && m[op_name][op_domain].empty())) {
           m[op_name][op_domain].insert(
               std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
         }
