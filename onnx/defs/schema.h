@@ -1001,11 +1001,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           fail_schema(err.str());
         }
         // only keep the latest opeset_version, remove the previous one
-        if (only_latest) {
-          m[op_name][op_domain].clear();
+        auto iter = m[op_name][op_domain].begin();
+        if (!only_latest || only_latest && m[op_name][op_domain].empty()) {
+          m[op_name][op_domain].insert(
+              std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
         }
-        m[op_name][op_domain].insert(
-            std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } ONNX_CATCH (const std::exception& e) {
         ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });

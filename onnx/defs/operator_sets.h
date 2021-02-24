@@ -966,36 +966,50 @@ inline void RegisterOnnxOperatorSetSchema() {
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
-  // keep ordered; return early if target_version has been reached
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver1>();
-  if (target_version == 1) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver2>();
-  if (target_version == 2) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver3>();
-  if (target_version == 3) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver4>();
-  if (target_version == 4) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver5>();
-  if (target_version == 5) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver6>();
-  if (target_version == 6) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver7>();
-  if (target_version == 7) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver8>();
-  if (target_version == 8) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver9>();
-  if (target_version == 9) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver10>();
-  if (target_version == 10) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver11>();
-  if (target_version == 11) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver12>();
-  if (target_version == 12) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver13>();
-  if (target_version == 13) return;
-  RegisterOpSetSchemaLatest<OpSet_Onnx_ver14>();
-  if (target_version == 14) return;
+  // keep ordered by descending; return early if target_version has been reached
   // Update here if opset_version bumps
+  if (target_version >= 14) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver14>();
+  }
+  if (target_version >= 13) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver13>();
+  }
+  if (target_version >= 12) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver12>();
+  }
+  if (target_version >= 11) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver11>();
+  }
+  if (target_version >= 10) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver10>();
+  }
+  if (target_version >= 9) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver9>();
+  }
+  if (target_version >= 8) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver8>();
+  }
+  if (target_version >= 7) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver7>();
+  }
+  if (target_version >= 6) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver6>();
+  }
+  if (target_version >= 5) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver5>();
+  }
+  if (target_version >= 4) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver4>();
+  }
+  if (target_version >= 3) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver3>();
+  }
+  if (target_version >= 2) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver2>();
+  }
+  if (target_version >= 1) {
+    RegisterOpSetSchemaLatest<OpSet_Onnx_ver1>();
+  }
 }
 
 } // namespace ONNX_NAMESPACE
