@@ -19162,7 +19162,7 @@ This version of the operator has been available since version 14 of the default 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of rank 2 or higher.</dd>
-<dt><tt>k</tt> (optional, non-differentiable) : tensor(int32)</dt>
+<dt><tt>k</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. Default value is 0 if it's not specified.</dd>
 </dl>
 

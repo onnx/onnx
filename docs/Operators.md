@@ -21976,7 +21976,7 @@ This version of the operator has been available since version 14 of the default 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of rank 2 or higher.</dd>
-<dt><tt>k</tt> (optional, non-differentiable) : tensor(int32)</dt>
+<dt><tt>k</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. Default value is 0 if it's not specified.</dd>
 </dl>
 
@@ -22038,7 +22038,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(-1).astype(np.int32)
+k = np.array(-1).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22099,7 +22099,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(-7).astype(np.int32)
+k = np.array(-7).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22128,7 +22128,7 @@ node = onnx.helper.make_node(
     upper=0,
 )
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(6).astype(np.int32)
+k = np.array(6).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22158,7 +22158,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(2).astype(np.int32)
+k = np.array(2).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22223,7 +22223,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
-k = np.array(-1).astype(np.int32)
+k = np.array(-1).astype(np.int64)
 # X:
 # [[[0, 4, 3],
 #   [2, 0, 9],
@@ -22259,7 +22259,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(3, 0, 5)).astype(np.int64)
-k = np.array(6).astype(np.int32)
+k = np.array(6).astype(np.int64)
 # X:
 # []
 # expect result:
@@ -22310,7 +22310,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(-1).astype(np.int32)
+k = np.array(-1).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22339,7 +22339,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
-k = np.array(1).astype(np.int32)
+k = np.array(1).astype(np.int64)
 # X:
 # [[[1, 4, 9, 7, 1]],
 #
@@ -22370,7 +22370,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(-7).astype(np.int32)
+k = np.array(-7).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22399,7 +22399,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(6).astype(np.int32)
+k = np.array(6).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22428,7 +22428,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(4, 5)).astype(np.int64)
-k = np.array(2).astype(np.int32)
+k = np.array(2).astype(np.int64)
 # X:
 #  [[4, 7, 3, 7, 9],
 #   [1, 2, 8, 6, 9],
@@ -22491,7 +22491,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
-k = np.array(-1).astype(np.int32)
+k = np.array(-1).astype(np.int64)
 # X:
 # [[[4, 6, 9],
 #   [7, 5, 4],
@@ -22526,7 +22526,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randint(10, size=(0, 5)).astype(np.int64)
-k = np.array(6).astype(np.int32)
+k = np.array(6).astype(np.int64)
 # X:
 # []
 # expect result:

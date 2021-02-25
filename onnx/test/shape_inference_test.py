@@ -3424,36 +3424,35 @@ class TestShapeInference(unittest.TestCase):
     def test_trilu_upper(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5)),
-             ('k', TensorProto.INT32, ())],
+             ('k', TensorProto.INT64, ())],
             [make_node('Trilu', ['x', 'k'], ['y'])],
             [],
-            initializer=[make_tensor('k', TensorProto.INT32, (), (2,))])
+            initializer=[make_tensor('k', TensorProto.INT64, (), (2,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 5))])  # type: ignore
 
     def test_trilu_lower(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5)),
-             ('k', TensorProto.INT32, ())],
+             ('k', TensorProto.INT64, ())],
             [make_node('Trilu', ['x', 'k'], ['y'], upper=0)],
             [],
-            initializer=[make_tensor('k', TensorProto.INT32, (), (10,))])
+            initializer=[make_tensor('k', TensorProto.INT64, (), (10,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 5))])  # type: ignore
 
     def test_trilu_upper_zero(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT64, (0, 5)),
-             ('k', TensorProto.INT32, ())],
+             ('k', TensorProto.INT64, ())],
             [make_node('Trilu', ['x', 'k'], ['y'], upper=1)],
             [],
-            initializer=[make_tensor('k', TensorProto.INT32, (), (5,))])
+            initializer=[make_tensor('k', TensorProto.INT64, (), (5,))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (0, 5))])  # type: ignore
 
     def test_trilu_lower_one(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (3, 1, 5))],
-            [make_node('Trilu', ['x', 'k'], ['y'], upper=0)],
-            [],
-            initializer=[make_tensor('k', TensorProto.INT32, (), (10,))])
+            [make_node('Trilu', ['x'], ['y'], upper=0)],
+            [],)
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT32, (3, 1, 5))])  # type: ignore
 
 

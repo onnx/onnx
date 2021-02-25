@@ -3419,7 +3419,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "k",
             "A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. "
             "Default value is 0 if it's not specified.",
-            "tensor(int32)",
+            "tensor(int64)",
             OpSchema::Optional,
             true,
             1,
