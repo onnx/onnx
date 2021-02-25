@@ -21955,10 +21955,10 @@ expect(node, inputs=[data], outputs=[transposed],
   of the elements on and above the given diagonal (k). The lower triangular part consists of elements on and below the diagonal.
   All other elements in the matrix are set to zero.
   If k = 0, the triangular part on and above/below the main diagonal is retained.
-  If upper is set to true, a positive k retains the upper triangular matrix excluding k diagonals above
-  the main diagonal. A negative k value includes as many diagonals below the main diagonal.
-  If upper is set to false, a positive k retains the lower triangular matrix including k diagonals above
-  the main diagonal. A negative k value excludes as many diagonals below the main diagonal.
+  If upper is set to true, a positive k retains the upper triangular matrix excluding the main diagonal and (k-1) diagonals above it.
+  A negative k value retains the main diagonal and |k| diagonals below it.
+  If upper is set to false, a positive k retains the lower triangular matrix including the main diagonal and k diagonals above it.
+  A negative k value excludes the main diagonal and (|k|-1) diagonals below it.
 
 #### Version
 
@@ -21977,7 +21977,7 @@ This version of the operator has been available since version 14 of the default 
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of rank 2 or higher.</dd>
 <dt><tt>k</tt> (optional, non-differentiable) : tensor(int32)</dt>
-<dd>A 0-D tensor containing a single value corresponding to the number diagonals above or the main diagonal to exclude or include.Default value is 0 if it's not specified.</dd>
+<dd>A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. Default value is 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
