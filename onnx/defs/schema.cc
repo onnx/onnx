@@ -18,21 +18,27 @@
 #include "onnx/common/stl_backports.h"
 
 namespace ONNX_NAMESPACE {
+#ifndef NDEBUG
+DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
+  static DbgOperatorSetTracker instance;
+  return instance;
+}
+// Load all schema by default
+bool LOAD_PARTIAL_SCHEMA = false;
+#endif
+
 // register all opset schema for all opset versions
 void RegisterSchema(OpSchema&& schema) {
   OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration = schema;
 }
 // register the latest opset schema; remove the old ones
 void RegisterSchemaLatest(OpSchema&& schema) {
+#ifndef NDEBUG
+  // set to prevent the full operator check in Debug mode
+  LOAD_PARTIAL_SCHEMA = true;
+#endif
   OpSchemaRegistry::OpSchemaRegisterLatest ONNX_UNUSED registration = schema;
 }
-
-#ifndef NDEBUG
-DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
-  static DbgOperatorSetTracker instance;
-  return instance;
-}
-#endif
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -865,13 +871,15 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;
-
-      ONNX_ASSERTM(
-          dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-          "%u schema were exposed from operator sets and automatically placed into the static registry.  "
-          "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
-          dbg_registered_schema_count,
-          ONNX_DBG_GET_COUNT_IN_OPSETS());
+      // Don't check if the schema was partially loaded
+      if (!LOAD_PARTIAL_SCHEMA) {
+        ONNX_ASSERTM(
+            dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
+            "%u schema were exposed from operator sets and automatically placed into the static registry.  "
+            "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
+            dbg_registered_schema_count,
+            ONNX_DBG_GET_COUNT_IN_OPSETS());
+      }
 #endif
     }
 
