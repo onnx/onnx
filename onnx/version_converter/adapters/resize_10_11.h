@@ -14,14 +14,16 @@ class Resize_10_11 final : public Adapter {
       : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
     void adapt_resize_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+      int input_rank = node->inputs()[0]->sizes().size();
+
       Value* scales_input = node->inputs()[1];
       node->addInput(scales_input);
 
       Tensor t;
+      t.sizes() = std::vector<int64_t>{2 * input_rank};
       t.elem_type() = TensorProto_DataType_FLOAT;
       auto& data = t.floats();
 
-      int input_rank = node->inputs()[0]->sizes().size();
       for(int i = 0; i < input_rank; i++)
         data.emplace_back(0);
       for(int i = 0; i < input_rank; i++)
