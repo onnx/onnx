@@ -180,8 +180,12 @@ std::vector<Dimension> tensorShapeProtoToDimensions(
   for (int i = 0; i < tsp.dim_size(); i++) {
     if (tsp.dim(i).has_dim_value()) {
       dims.push_back(Dimension(static_cast<int>(tsp.dim(i).dim_value())));
-    } else {
+    } else if (tsp.dim(i).has_dim_param()) {
       dims.push_back(Dimension(tsp.dim(i).dim_param()));
+    } else {
+      // a dimension that has neither dim_value nor dim_param set
+      // represents an unknown dimension unrelated to other unknown dimensions.
+      dims.push_back(Dimension());
     }
   }
   return dims;
@@ -235,8 +239,13 @@ std::unique_ptr<Graph> graphProtoToGraph(
   for (int i = 0; i < gp.input_size(); i++) {
     auto vip = gp.input(i);
     auto v = g->addInput();
-    v->setElemType(vip.type().tensor_type().elem_type());
-    v->setSizes(tensorShapeProtoToDimensions(vip.type().tensor_type().shape()));
+    const auto& tensor_type = vip.type().tensor_type();
+    if (tensor_type.has_elem_type()) {
+      v->setElemType(tensor_type.elem_type());
+    }
+    if (tensor_type.has_shape()) {
+      v->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
+    }
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
   }
@@ -306,21 +315,29 @@ std::unique_ptr<Graph> graphProtoToGraph(
       undef->outputs()[0]->setUniqueName(gp.output(i).name());
       value_by_name_of[gp.output(i).name()] = undef->outputs()[0];
     }
-    value_by_name_of[gp.output(i).name()]->setElemType(
-        gp.output(i).type().tensor_type().elem_type());
-    value_by_name_of[gp.output(i).name()]->setSizes(
-        tensorShapeProtoToDimensions(
-            gp.output(i).type().tensor_type().shape()));
+    const auto& output_tensor_type = gp.output(i).type().tensor_type();
+    if (output_tensor_type.has_elem_type()) {
+      value_by_name_of[gp.output(i).name()]->setElemType(
+          output_tensor_type.elem_type());
+    }
+    if (output_tensor_type.has_shape()) {
+      value_by_name_of[gp.output(i).name()]->setSizes(
+          tensorShapeProtoToDimensions(
+              output_tensor_type.shape()));
+    }
     g->registerOutput(value_by_name_of[gp.output(i).name()]);
   }
 
   for (int i = 0; i < gp.value_info_size(); i++) {
-    value_by_name_of[gp.value_info(i).name()]->setElemType(
-        gp.value_info(i).type().tensor_type().elem_type());
-    if (gp.value_info(i).type().tensor_type().has_shape()) {
+    const auto& tensor_type = gp.value_info(i).type().tensor_type();
+    if (tensor_type.has_elem_type()) {
+      value_by_name_of[gp.value_info(i).name()]->setElemType(
+          tensor_type.elem_type());
+    }
+    if (tensor_type.has_shape()) {
       value_by_name_of[gp.value_info(i).name()]->setSizes(
           tensorShapeProtoToDimensions(
-              gp.value_info(i).type().tensor_type().shape()));
+              tensor_type.shape()));
     }
   }
 
@@ -421,7 +438,7 @@ void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
       fail_convert("Unknown tensor data type");
   }
-  if (!tensor.raw().empty()) {
+  if (tensor.is_raw_data()) {
     p->set_raw_data(tensor.raw());
   }
 }
@@ -494,10 +511,12 @@ void encodeTypeProtoTensorType(
     ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
     for (const Dimension& d : n->sizes()) {
       auto dim = shape->add_dim();
-      if (d.is_int) {
-        dim->set_dim_value(d.dim);
-      } else {
-        dim->set_dim_param(d.param);
+      if (!d.is_unknown) {
+        if (d.is_int) {
+          dim->set_dim_value(d.dim);
+        } else {
+          dim->set_dim_param(d.param);
+        }
       }
     }
   }
@@ -505,7 +524,7 @@ void encodeTypeProtoTensorType(
 
 void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   v->set_name(value_name(n));
-  if (n->elemType() != 0 && n->has_sizes()) {
+  if (n->elemType() != 0 || n->has_sizes()) {
     ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
     ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
     encodeTypeProtoTensorType(tensor_type, n);

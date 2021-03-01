@@ -42,6 +42,8 @@
 #include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/add_layout.h"
+#include "onnx/version_converter/adapters/remove_layout.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -720,6 +722,14 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "Relu", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Reshape", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<AddLayout>("GRU"));
+      registerAdapter(make_unique<AddLayout>("LSTM"));
+      registerAdapter(make_unique<AddLayout>("RNN"));
+
+      /******** 14 -> 13 ********/
+      registerAdapter(make_unique<RemoveLayout>("GRU"));
+      registerAdapter(make_unique<RemoveLayout>("LSTM"));
+      registerAdapter(make_unique<RemoveLayout>("RNN"));
     }
 
     ModelProto convert_version(

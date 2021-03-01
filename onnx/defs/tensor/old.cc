@@ -511,8 +511,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-            if (shape.dim_size() != rank)
+            if (shape.dim_size() != rank) {
               fail_shape_inference("All inputs to Concat must have same rank");
+            }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
@@ -832,11 +833,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
 
-            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
               fail_shape_inference("Input axes has invalid data");
+            }
 
-            if (unique_axes.find(axis) != unique_axes.end())
+            if (unique_axes.find(axis) != unique_axes.end()) {
               fail_shape_inference("'axes' has duplicates");
+            }
 
             unique_axes.insert(axis);
 
@@ -860,8 +863,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // process step
             auto step = steps[axis_index];
-            if (step == 0)
+            if (step == 0) {
               fail_shape_inference("'step' cannot be 0");
+            }
 
             // process start
             auto start = starts[axis_index];
@@ -1558,8 +1562,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1572,8 +1577,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) * (blocksize * blocksize),
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -1639,8 +1645,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1653,8 +1660,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) / (blocksize * blocksize),
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -1713,17 +1721,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& repeats_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (repeats_shape.dim_size() != 1 ||
-                repeats_inputs->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'Repeats' input must be 1D tensor of type int64");
+                repeats_inputs->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
+            }
 
             const auto& repeats_data = ParseData<int64_t>(repeats_inputs);
 
-            if (repeats_data.size() != static_cast<size_t>(input_rank))
+            if (repeats_data.size() != static_cast<size_t>(input_rank)) {
               fail_shape_inference(
                   "'Repeats' input has incorrect number of values. "
                   "The number of values in 'repeats' must be equal "
                   "to the number of input dimensions.");
+            }
 
             for (size_t i = 0; (int64_t)i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
@@ -2203,14 +2212,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
             if (pads_initializer->dims_size() != 1 ||
-                pads_initializer->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+                pads_initializer->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+            }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
-
-            if (pads_data.size() != static_cast<size_t>(2 * input_rank))
+            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
               fail_shape_inference("Pads has incorrect number of values");
+            }
 
             auto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -2429,8 +2438,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-            if (shape.dim_size() != rank)
+            if (shape.dim_size() != rank) {
               fail_shape_inference("All inputs to Concat must have same rank");
+            }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
@@ -3097,14 +3107,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
 
-            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
               fail_shape_inference("Input axes has invalid data");
+            }
 
-            if (unique_axes.find(axis) != unique_axes.end())
+            if (unique_axes.find(axis) != unique_axes.end()) {
               fail_shape_inference("'axes' has duplicates");
+            }
 
             unique_axes.insert(axis);
-
             auto input_dim =
                 ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
 
@@ -3117,8 +3128,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // process step
             auto step = steps[axis_index];
-            if (step == 0)
+            if (step == 0) {
               fail_shape_inference("'step' cannot be 0");
+            }
 
             // process start
             auto start = starts[axis_index];
@@ -3258,8 +3270,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -3272,8 +3285,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) / (blocksize * blocksize),
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -3883,8 +3897,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
           std::vector<int64_t> pads;
-          if (!getRepeatedAttribute(ctx, "pads", pads))
+          if (!getRepeatedAttribute(ctx, "pads", pads)) {
             fail_shape_inference("Attribute value for pads is required");
+          }
           if (pads.size() != static_cast<size_t>(input_shape.dim_size() * 2)) {
             fail_shape_inference("Attribute pads has incorrect length");
             ;
