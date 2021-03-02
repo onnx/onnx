@@ -61,7 +61,7 @@ class TestNumpyHelper(unittest.TestCase):
         np.testing.assert_equal(a, a_recover)
 
     def test_bool(self):  # type: () -> None
-        a = np.random.randint(2, size=(13, 37)).astype(np.bool)
+        a = np.random.randint(2, size=(13, 37)).astype(bool)
         tensor_def = numpy_helper.from_array(a, "test")
         self.assertEqual(tensor_def.name, "test")
         a_recover = numpy_helper.to_array(tensor_def)

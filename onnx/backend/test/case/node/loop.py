@@ -118,7 +118,7 @@ class Loop(Base):
 
         trip_count = np.array(5).astype(np.int64)
         res_y = np.array([13]).astype(np.float32)
-        cond = np.array(1).astype(np.bool)
+        cond = np.array(1).astype(bool)
         res_scan = np.array([-1, 1, 4, 8, 13]).astype(np.float32).reshape((5, 1))
         expect(node, inputs=[trip_count, cond, y], outputs=[res_y, res_scan],
                name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
@@ -233,7 +233,7 @@ class Loop(Base):
         trip_count = np.array(5).astype(np.int64)
         seq_empty = []  # type: List[Any]
         seq_res = [x[:int(i)] for i in x]
-        cond = np.array(1).astype(np.bool)
+        cond = np.array(1).astype(bool)
         expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
                name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
                input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
