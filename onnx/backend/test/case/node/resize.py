@@ -102,7 +102,7 @@ def interpolate_1d_with_x(data,                                             # ty
         :return: A tuple containing the indexes of neighbor elements (the index can be smaller than 0 or higher than
         len(data)) and the value of these elements
         """
-        pad_width = np.ceil(n / 2).astype(np.int)
+        pad_width = np.ceil(n / 2).astype(int)
         padded = np.pad(data, pad_width, mode='edge')
         x += pad_width
 
@@ -136,7 +136,7 @@ def interpolate_1d_with_x(data,                                             # ty
             x_ori = (x + 0.5) / scale_factor - 0.5
     else:  # coordinate_transformation_mode == 'half_pixel'
         x_ori = (x + 0.5) / scale_factor - 0.5
-    x_ori_int = np.floor(x_ori).astype(np.int).item()
+    x_ori_int = np.floor(x_ori).astype(int).item()
 
     # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`
     if x_ori.is_integer():
@@ -192,7 +192,7 @@ def interpolate_nd(data,                      # type: np.ndarray
     if output_size is not None:
         scale_factors = np.array(output_size) / np.array(data.shape)
     else:
-        output_size = (scale_factors * np.array(data.shape)).astype(np.int)
+        output_size = (scale_factors * np.array(data.shape)).astype(int)
     assert scale_factors is not None
 
     ret = np.zeros(output_size)
