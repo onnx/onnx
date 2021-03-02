@@ -54,7 +54,7 @@ class TestNumpyHelper(unittest.TestCase):
         self._test_numpy_helper_int_type(np.int64)
 
     def test_string(self):  # type: () -> None
-        a = np.array(['Amy', 'Billy', 'Cindy', 'David']).astype(np.object)
+        a = np.array(['Amy', 'Billy', 'Cindy', 'David']).astype(object)
         tensor_def = numpy_helper.from_array(a, "test")
         self.assertEqual(tensor_def.name, "test")
         a_recover = numpy_helper.to_array(tensor_def)

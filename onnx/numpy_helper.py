@@ -90,7 +90,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     if name:
         tensor.name = name
 
-    if arr.dtype == np.object:
+    if arr.dtype == object:
         # Special care for strings.
         tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
         # TODO: Introduce full string support.
@@ -99,7 +99,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         # object. If you want more complex shapes then follow the below instructions.
         # Unlike other types where the shape is automatically inferred from
         # nested arrays of values, the only reliable way now to feed strings
-        # is to put them into a flat array then specify type astype(np.object)
+        # is to put them into a flat array then specify type astype(object)
         # (otherwise all strings may have different types depending on their length)
         # and then specify shape .reshape([x, y, z])
         flat_array = arr.flatten()

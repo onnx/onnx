@@ -69,20 +69,20 @@ class Cast(Base):
                 input = np.random.random_sample(shape).astype(
                     TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
                 if ('STRING' == to_type):
-                    # Converting input to str, then give it np.object dtype for generating script
+                    # Converting input to str, then give it object dtype for generating script
                     ss = []
                     for i in input.flatten():
                         s = str(i).encode('utf-8')
                         su = s.decode('utf-8')
                         ss.append(su)
 
-                    output = np.array(ss).astype(np.object).reshape([3, 4])
+                    output = np.array(ss).astype(object).reshape([3, 4])
                 else:
                     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
             else:
                 input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
                     u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-                    u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+                    u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(object)).reshape([3, 4])
                 output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
             node = onnx.helper.make_node(
                 'Cast',

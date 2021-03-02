@@ -41,8 +41,8 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
-        y = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
+        y = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
 
         graph = make_graph(node, [4], [3])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
@@ -56,7 +56,7 @@ class NormalizeStrings(Base):
             is_case_sensitive=1
         )
 
-        x = np.array([u'monday', u'tuesday']).astype(np.object)
+        x = np.array([u'monday', u'tuesday']).astype(object)
         y = x
 
         graph = make_graph(node, [2], [2])
@@ -74,8 +74,8 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
-        y = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
+        y = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
 
         graph = make_graph(node, [4], [3])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
@@ -92,8 +92,8 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
-        y = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(np.object)
+        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
+        y = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(object)
 
         graph = make_graph(node, [4], [3])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
@@ -111,8 +111,8 @@ class NormalizeStrings(Base):
 
         input_shape = [1, 6]
         output_shape = [1, 4]
-        x = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape(input_shape)
-        y = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape(output_shape)
+        x = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(object).reshape(input_shape)
+        y = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(object).reshape(output_shape)
 
         graph = make_graph(node, input_shape, output_shape)
         model = onnx.helper.make_model(graph, producer_name='backend-test')
@@ -129,8 +129,8 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'monday']).astype(np.object)
-        y = np.array([u'']).astype(np.object)
+        x = np.array([u'monday', u'monday']).astype(object)
+        y = np.array([u'']).astype(object)
 
         graph = make_graph(node, [2], [1])
         model = onnx.helper.make_model(graph, producer_name='backend-test')
