@@ -1,0 +1,4 @@
+# Fixes wrong classification of Protocol Buffers as PureBasic
+# https://github.com/onnx/onnx/issues/3307
+
+*.pb linguist-language=Protobuf
