@@ -961,7 +961,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
   }
 
-  static const int GetSchemaVersion() {
+  static int GetSchemaVersion() {
     return specified_opset_version;
   }
 
