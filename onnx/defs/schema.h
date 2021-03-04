@@ -952,6 +952,20 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     std::mutex mutex_;
   };
 
+  static void SetSchemaVersion(int opset_version) {
+    specified_opset_version = opset_version;
+    // reset maps TODO: solve crash
+    /*
+    auto& m = map();
+    for (auto opset_name : m) {
+        m[opset_name.first][ONNX_DOMAIN].clear();
+    }*/
+  }
+
+  static const int GetSchemaVersion() {
+    return specified_opset_version;
+  }
+
   static void OpSchemaRegister(OpSchema& op_schema, bool only_latest) {
       ONNX_TRY {
         op_schema.Finalize();
@@ -1091,6 +1105,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
   static OpName_Domain_Version_Schema_Map& map();
+  // 0 means loading all opset versions
+  // -1 means no any opset schema has been loaded yet
+  static int specified_opset_version;
 
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
@@ -1119,7 +1136,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
 void RegisterSchema(OpSchema&& schema);
 
-// Register all schema of a given operator set for all opset versions
+// Registers all schema of a given operator set for all opset versions
 template <class T>
 void RegisterOpSetSchema() {
   T::ForEachSchema(RegisterSchema);
@@ -1127,7 +1144,7 @@ void RegisterOpSetSchema() {
 
 void RegisterSchemaLatest(OpSchema&& schema);
 
-// Register the latest opset schema and remove the old ones
+// Registers the latest opset schema and remove the old ones
 template <class T>
 void RegisterOpSetSchemaLatest() {
   T::ForEachSchema(RegisterSchemaLatest);

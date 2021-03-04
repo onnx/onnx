@@ -81,6 +81,8 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
   return &instance;
 }
 
+int OpSchemaRegistry::specified_opset_version = -1;
+
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // check all input types

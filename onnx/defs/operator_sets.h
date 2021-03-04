@@ -949,6 +949,11 @@ class OpSet_Onnx_ver14 {
 };
 
 inline void RegisterOnnxOperatorSetSchema() {
+  // if the given version has been set, simply return
+  if (OpSchemaRegistry::GetSchemaVersion() == 0) {
+    return;
+  }
+  OpSchemaRegistry::SetSchemaVersion(0);
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
@@ -966,8 +971,13 @@ inline void RegisterOnnxOperatorSetSchema() {
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
+  // if the given version has been set, simply return
+  if (OpSchemaRegistry::GetSchemaVersion() == target_version) {
+    return;
+  }
+  OpSchemaRegistry::SetSchemaVersion(target_version);
   // keep ordered by descending; return early if target_version has been reached
-  // Update here if opset_version bumps
+  // Update here if opset_version bumps  
   if (target_version >= 14) {
     RegisterOpSetSchemaLatest<OpSet_Onnx_ver14>();
   }
