@@ -18,27 +18,20 @@
 #include "onnx/common/stl_backports.h"
 
 namespace ONNX_NAMESPACE {
+// Load all schema by default
+bool OpSchemaRegistry::LOAD_PARTIAL_SCHEMA = false;
+
+// register all opset schema for all opset versions
+void RegisterSchema(OpSchema schema, int max_version) {
+  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, max_version);
+}
+
 #ifndef NDEBUG
 DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
   static DbgOperatorSetTracker instance;
   return instance;
 }
-// Load all schema by default
-bool LOAD_PARTIAL_SCHEMA = false;
 #endif
-
-// register all opset schema for all opset versions
-void RegisterSchema(OpSchema&& schema) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration = schema;
-}
-// register the latest opset schema; remove the old ones
-void RegisterSchemaLatest(OpSchema&& schema) {
-#ifndef NDEBUG
-  // set to prevent the full operator check in Debug mode
-  LOAD_PARTIAL_SCHEMA = true;
-#endif
-  OpSchemaRegistry::OpSchemaRegisterLatest ONNX_UNUSED registration = schema;
-}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -80,8 +73,6 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
   static OpSchemaRegistry instance;
   return &instance;
 }
-
-int OpSchemaRegistry::specified_opset_version = -1;
 
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;

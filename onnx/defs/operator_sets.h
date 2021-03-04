@@ -949,11 +949,6 @@ class OpSet_Onnx_ver14 {
 };
 
 inline void RegisterOnnxOperatorSetSchema() {
-  // if the given version has been set, simply return
-  if (OpSchemaRegistry::GetSchemaVersion() == 0) {
-    return;
-  }
-  OpSchemaRegistry::SetSchemaVersion(0);
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
@@ -971,55 +966,24 @@ inline void RegisterOnnxOperatorSetSchema() {
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
-  // if the given version has been set, simply return
-  if (OpSchemaRegistry::GetSchemaVersion() == target_version) {
-    return;
-  }
-  OpSchemaRegistry::SetSchemaVersion(target_version);
+  // set to prevent the full operator check in Debug mode
+  OpSchemaRegistry::LOAD_PARTIAL_SCHEMA = true;
   // keep ordered by descending; return early if target_version has been reached
   // Update here if opset_version bumps  
-  if (target_version >= 14) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver14>();
-  }
-  if (target_version >= 13) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver13>();
-  }
-  if (target_version >= 12) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver12>();
-  }
-  if (target_version >= 11) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver11>();
-  }
-  if (target_version >= 10) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver10>();
-  }
-  if (target_version >= 9) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver9>();
-  }
-  if (target_version >= 8) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver8>();
-  }
-  if (target_version >= 7) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver7>();
-  }
-  if (target_version >= 6) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver6>();
-  }
-  if (target_version >= 5) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver5>();
-  }
-  if (target_version >= 4) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver4>();
-  }
-  if (target_version >= 3) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver3>();
-  }
-  if (target_version >= 2) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver2>();
-  }
-  if (target_version >= 1) {
-    RegisterOpSetSchemaLatest<OpSet_Onnx_ver1>();
-  }
+  RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver13>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver12>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver11>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver10>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver9>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver8>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver7>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver6>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver5>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver4>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver3>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version);
 }
 
 } // namespace ONNX_NAMESPACE

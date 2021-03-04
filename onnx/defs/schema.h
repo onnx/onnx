@@ -952,20 +952,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     std::mutex mutex_;
   };
 
-  static void SetSchemaVersion(int opset_version) {
-    specified_opset_version = opset_version;
-    
-    auto& m = GetMapWithoutEnsuringRegistration();
-    for (auto opset_name : m) {
-        m[opset_name.first][ONNX_DOMAIN].clear();
-    }
-  }
-
-  static int GetSchemaVersion() {
-    return specified_opset_version;
-  }
-
-  static void OpSchemaRegister(OpSchema& op_schema, bool only_latest) {
+  class OpSchemaRegisterOnce final {
+   public:
+    OpSchemaRegisterOnce(OpSchema& op_schema, int max_version=0) {
       ONNX_TRY {
         op_schema.Finalize();
 
@@ -984,6 +973,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << op_schema.line() << ", but it is already registered from file "
               << schema.file() << " line " << schema.line() << std::endl;
           fail_schema(err.str());
+        }
+        // If max_version != 0, only keep the latest one before specified version
+        if (max_version != 0 && !m[op_name][op_domain].empty()) {
+          // Stops early because there is another newer OpSchema has been registered
+          return;
         }
 
         auto ver_range_map = DomainToVersionRange::Instance().Map();
@@ -1013,28 +1007,13 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << "in onnx/defs/schema.h)." << std::endl;
           fail_schema(err.str());
         }
-        // only keep the latest opeset_version, remove the previous one
-        if (!only_latest || (only_latest && m[op_name][op_domain].empty())) {
-          m[op_name][op_domain].insert(
-              std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
-        }
+
+        m[op_name][op_domain].insert(
+            std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
 
       } ONNX_CATCH (const std::exception& e) {
         ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });
       }
-  }
-
-  class OpSchemaRegisterOnce final {
-   public:
-    OpSchemaRegisterOnce(OpSchema& op_schema) {
-      OpSchemaRegister(op_schema, false);
-    }
-  };
-
-  class OpSchemaRegisterLatest final {
-   public:
-    OpSchemaRegisterLatest(OpSchema& op_schema) {
-      OpSchemaRegister(op_schema, true);
     }
   };
 
@@ -1086,6 +1065,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
+  // Load all schema by default
+  static bool LOAD_PARTIAL_SCHEMA;
 
  private:
   // OpSchemaRegistry should not need to be instantiated except statically
@@ -1104,9 +1085,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
   static OpName_Domain_Version_Schema_Map& map();
-  // 0 means loading all opset versions
-  // -1 means no any opset schema has been loaded yet
-  static int specified_opset_version;
 
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
@@ -1133,20 +1111,15 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   }
 };
 
-void RegisterSchema(OpSchema&& schema);
-
-// Registers all schema of a given operator set for all opset versions
-template <class T>
-void RegisterOpSetSchema() {
-  T::ForEachSchema(RegisterSchema);
-};
-
-void RegisterSchemaLatest(OpSchema&& schema);
+void RegisterSchema(OpSchema schema, int max_version=0);
 
 // Registers the latest opset schema and remove the old ones
+// By default max_version=0 means it will register all versions
 template <class T>
-void RegisterOpSetSchemaLatest() {
-  T::ForEachSchema(RegisterSchemaLatest);
+void RegisterOpSetSchema(int max_version=0) {
+  T::ForEachSchema([max_version](OpSchema&& schema) {
+    RegisterSchema(schema, max_version);
+  });
 };
 
 // Forward declaration for the non-specialized GetOpSchema method.  This
