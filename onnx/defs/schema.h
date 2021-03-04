@@ -954,12 +954,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static void SetSchemaVersion(int opset_version) {
     specified_opset_version = opset_version;
-    // reset maps TODO: solve crash
-    /*
-    auto& m = map();
+    
+    auto& m = GetMapWithoutEnsuringRegistration();
     for (auto opset_name : m) {
         m[opset_name.first][ONNX_DOMAIN].clear();
-    }*/
+    }
   }
 
   static const int GetSchemaVersion() {
