@@ -1065,9 +1065,12 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
-  // Load all schema by default
-  static bool LOAD_PARTIAL_SCHEMA;
-
+  static void SetLoadedSchemaVersion(int target_version) {
+    loaded_schema_version = target_version;
+  }
+  static int GetLoadedSchemaVersion() {
+    return loaded_schema_version;
+  }
  private:
   // OpSchemaRegistry should not need to be instantiated except statically
   // within this class
@@ -1085,6 +1088,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
   static OpName_Domain_Version_Schema_Map& map();
+  static int loaded_schema_version;
 
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {

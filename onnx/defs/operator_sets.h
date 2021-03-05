@@ -949,6 +949,8 @@ class OpSet_Onnx_ver14 {
 };
 
 inline void RegisterOnnxOperatorSetSchema() {
+  // 0 means all versions of ONNX schema have been loaded
+  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
@@ -966,8 +968,8 @@ inline void RegisterOnnxOperatorSetSchema() {
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
-  // set to prevent the full operator check in Debug mode
-  OpSchemaRegistry::LOAD_PARTIAL_SCHEMA = true;
+  // Sets to record the loaded version/ prevent the full operator check in Debug mode
+  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
   // keep ordered by descending; return early if target_version has been reached
   // Update here if opset_version bumps  
   RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);

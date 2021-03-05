@@ -18,8 +18,10 @@
 #include "onnx/common/stl_backports.h"
 
 namespace ONNX_NAMESPACE {
-// Load all schema by default
-bool OpSchemaRegistry::LOAD_PARTIAL_SCHEMA = false;
+// -1 means ONNX schema hasn't been loaded yet
+// 0 means all versions of ONNX schema have been loaded
+// Other positive integer means the latest ONNX schemas for that version have been loaded
+int OpSchemaRegistry::loaded_schema_version = -1;
 
 // register all opset schema for all opset versions
 void RegisterSchema(OpSchema schema, int max_version) {
@@ -865,7 +867,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #ifndef NDEBUG
       size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;
       // Don't check if the schema was partially loaded
-      if (!LOAD_PARTIAL_SCHEMA) {
+      if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() > 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
             "%u schema were exposed from operator sets and automatically placed into the static registry.  "
