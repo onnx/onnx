@@ -19,7 +19,7 @@ from ..test_case import TestCase
 
 
 _NodeTestCases = []
-TARGET_OP_TYPE = ""
+_TargetOpType = ""
 
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto
 from onnx.onnx_operators_pb import FunctionProto
@@ -132,7 +132,7 @@ def expect(node,  # type: onnx.NodeProto
            **kwargs  # type: Any
            ):  # type: (...) -> None
     # skip if the node's op_type is not same as the given one
-    if TARGET_OP_TYPE and node.op_type != TARGET_OP_TYPE:
+    if _TargetOpType and node.op_type.lower() != _TargetOpType.lower():
         return
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
@@ -212,7 +212,7 @@ def collect_testcases_by_operator(op_type):  # type: (Text) -> List[TestCase]
     '''Collect node test cases which include specific operator
     '''
     # only keep those tests related to this operator
-    global TARGET_OP_TYPE
-    TARGET_OP_TYPE = op_type
+    global _TargetOpType
+    _TargetOpType = op_type
     import_recursive(sys.modules[__name__])
     return _NodeTestCases

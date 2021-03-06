@@ -87,7 +87,7 @@ def parse_args():  # type: () -> argparse.Namespace
     subparser.add_argument('-o', '--output', default=DATA_DIR,
                            help='output directory (default: %(default)s)')
     subparser.add_argument('-t', '--op_type', default=None,
-                           help='specify the node (lowercase) to exclude other testcases -> generates test data only for the specified op_type')
+                           help='op_type for test case generation. (generates test data for the specified op_type only.)')
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()
