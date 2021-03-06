@@ -18,7 +18,7 @@ def main():
                 try:
                     model = onnx.load(onnx_model_path)
                     # check model by ONNX checker
-                    inferred_model = onnx.shape_inference.infer_shapes(model)
+                    inferred_model = onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
                     onnx.checker.check_model(inferred_model)
 
                 except Exception as e:
