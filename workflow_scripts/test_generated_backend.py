@@ -18,7 +18,6 @@ def main():
                 try:
                     model = onnx.load(onnx_model_path)
                     # check model by ONNX checker
-                    onnx.checker.check_model(model)
                     inferred_model = onnx.shape_inference.infer_shapes(model)
                     onnx.checker.check_model(inferred_model)
 
