@@ -169,7 +169,7 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
             porto3_dir = os.path.dirname(proto3)
             base_dir = os.path.dirname(porto3_dir)
             gen_proto3_code(protoc_path, proto3, base_dir, base_dir, base_dir)
-            pb3_files = glob.glob(os.path.join(porto3_dir, '*.proto3.*'))
+            pb3_files = glob.glob(os.path.join(porto3_dir, '{}.proto3.*'.format(proto_base)))
             for pb3_file in pb3_files:
                 print("Removing {}".format(pb3_file))
                 os.remove(pb3_file)
