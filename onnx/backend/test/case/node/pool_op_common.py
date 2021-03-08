@@ -24,20 +24,20 @@ def get_pad_shape(auto_pad,  # type: Text
 def get_output_shape(auto_pad,  # type: Text
                      input_spatial_shape,  # type: Sequence[int]
                      kernel_spatial_shape,  # type: Sequence[int]
-                     strides_spatial  # type: Sequence[int]
+                     strides_spatial,  # type: Sequence[int]
+                     ceil_mode=False  # type: bool
                      ):  # type: (...) -> Sequence[int]
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
-            out_shape[i] = int(
-                np.ceil(
+            out_shape[i] = ceil_or_floor(
                     float(
                         input_spatial_shape[i])
                     / float(
-                        strides_spatial[i])))
+                        strides_spatial[i]), ceil_mode)
     elif auto_pad == 'VALID':
         for i in range(len(input_spatial_shape)):
-            out_shape[i] = int(np.ceil(float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / float(strides_spatial[i])))
+            out_shape[i] = ceil_or_floor(float(input_spatial_shape[i] - kernel_spatial_shape[i]) / float(strides_spatial[i]) + 1, ceil_mode)
     return out_shape
 
 
@@ -74,3 +74,8 @@ def pool(padded,  # type: np.ndarray
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
     return y.astype(np.float32)
+
+def ceil_or_floor(input,  # type: np.ndarray
+                  ceil_mode  # type: bool
+                  ):
+    return int(np.ceil(input)) if ceil_mode else int(input)
