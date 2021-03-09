@@ -30,11 +30,7 @@ def get_output_shape(auto_pad,  # type: Text
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
-            out_shape[i] = ceil_or_floor(
-                    float(
-                        input_spatial_shape[i])
-                    / float(
-                        strides_spatial[i]), ceil_mode)
+            out_shape[i] = ceil_or_floor(float(input_spatial_shape[i]) / float(strides_spatial[i]) + 1, ceil_mode)
     elif auto_pad == 'VALID':
         for i in range(len(input_spatial_shape)):
             out_shape[i] = ceil_or_floor(float(input_spatial_shape[i] - kernel_spatial_shape[i]) / float(strides_spatial[i]) + 1, ceil_mode)
@@ -74,6 +70,7 @@ def pool(padded,  # type: np.ndarray
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
     return y.astype(np.float32)
+
 
 def ceil_or_floor(input,  # type: np.ndarray
                   ceil_mode  # type: bool
