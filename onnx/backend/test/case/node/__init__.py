@@ -132,7 +132,7 @@ def expect(node,  # type: onnx.NodeProto
            **kwargs  # type: Any
            ):  # type: (...) -> None
     # skip if the node's op_type is not same as the given one
-    if _TargetOpType and node.op_type.lower() != _TargetOpType.lower():
+    if _TargetOpType and node.op_type != _TargetOpType:
         return
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
