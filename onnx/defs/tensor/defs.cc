@@ -445,8 +445,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-            if (shape.dim_size() != rank)
+            if (shape.dim_size() != rank) {
               fail_shape_inference("All inputs to Concat must have same rank");
+            }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
@@ -820,11 +821,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
 
-            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
               fail_shape_inference("Input axes has invalid data");
+            }
 
-            if (unique_axes.find(axis) != unique_axes.end())
+            if (unique_axes.find(axis) != unique_axes.end()) {
               fail_shape_inference("'axes' has duplicates");
+            }
 
             unique_axes.insert(axis);
 
@@ -848,8 +851,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // process step
             auto step = steps[axis_index];
-            if (step == 0)
+            if (step == 0) {
               fail_shape_inference("'step' cannot be 0");
+            }
 
             // process start
             auto start = starts[axis_index];
@@ -1824,8 +1828,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1838,8 +1843,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) * (blocksize * blocksize),
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -1913,8 +1919,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1927,8 +1934,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) / (blocksize * blocksize),
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -2003,17 +2011,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& repeats_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (repeats_shape.dim_size() != 1 ||
-                repeats_inputs->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'Repeats' input must be 1D tensor of type int64");
+                repeats_inputs->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
+                }
 
             const auto& repeats_data = ParseData<int64_t>(repeats_inputs);
 
-            if (repeats_data.size() != static_cast<size_t>(input_rank))
+            if (repeats_data.size() != static_cast<size_t>(input_rank)) {
               fail_shape_inference(
                   "'Repeats' input has incorrect number of values. "
                   "The number of values in 'repeats' must be equal "
                   "to the number of input dimensions.");
+            }
 
             for (size_t i = 0; (int64_t)i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
@@ -3340,14 +3349,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
             if (pads_initializer->dims_size() != 1 ||
-                pads_initializer->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+                pads_initializer->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+            }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
-
-            if (pads_data.size() != static_cast<size_t>(2 * input_rank))
+            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
               fail_shape_inference("Pads has incorrect number of values");
+            }
 
             auto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -3370,6 +3379,77 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
           return;
+        }));
+
+static const char* Trilu_ver14_doc = R"DOC(
+Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
+The attribute "upper" determines whether the upper or lower part is retained. If set to true,
+the upper triangular matrix is retained. Lower triangular matrix is retained otherwise.
+Default value for the "upper" attribute is true.
+Trilu takes one input tensor of shape [*, N, M], where * is zero or more batch dimensions. The upper triangular part consists
+of the elements on and above the given diagonal (k). The lower triangular part consists of elements on and below the diagonal.
+All other elements in the matrix are set to zero.
+If k = 0, the triangular part on and above/below the main diagonal is retained.
+If upper is set to true, a positive k retains the upper triangular matrix excluding the main diagonal and (k-1) diagonals above it.
+A negative k value retains the main diagonal and |k| diagonals below it.
+If upper is set to false, a positive k retains the lower triangular matrix including the main diagonal and k diagonals above it.
+A negative k value excludes the main diagonal and (|k|-1) diagonals below it.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Trilu,
+    14,
+    OpSchema()
+        .SetDoc(Trilu_ver14_doc)
+        .Attr("upper",
+            "Boolean. Indicates whether upper or lower part of matrix is retained. Default is true.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(
+            0,
+            "input",
+            "Input tensor of rank 2 or higher.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "k",
+            "A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. "
+            "Default value is 0 if it's not specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+	          "Output tensor of the same type and shape as the input tensor.",
+	          "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference needs the input data shape
+          if (hasInputShape(ctx, 0)) {
+	          const TensorShapeProto& input_shape =
+	              ctx.getInputType(0)->tensor_type().shape();
+	          const int rank = static_cast<int>(input_shape.dim_size());
+	          if (rank < 2) {
+	            fail_shape_inference("Input rank must be >= 2.")
+	          }
+	          propagateShapeFromInputToOutput(ctx, 0, 0);
+	        }
         }));
 
 } // namespace ONNX_NAMESPACE
