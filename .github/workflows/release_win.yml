@@ -2,9 +2,9 @@ name: WindowsRelease
 
 on:
    push:
-    branches: [ master, rel-* ]
+    branches: [ master, rel-*]
    pull_request:
-    branches: [ rel-*]
+    branches: [ rel-*, master]
 jobs:
   build:
     runs-on: windows-latest

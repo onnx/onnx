@@ -27,7 +27,7 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
         # setting mode='clip' to deal with ignore_index > C or < 0 cases.
         # when the target value is > C or < 0, it doesn't matter which value we are
         # taking in gather_weight, since it will be set to 0 in the following if-block
-        # use np.int_ to make it compatible with x86 machines
+        # use np.int32 to make it compatible with x86 machines
         gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode='clip')
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
