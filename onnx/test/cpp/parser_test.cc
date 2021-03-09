@@ -4,11 +4,19 @@
 
 #include "gtest/gtest.h"
 
+#include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
-#include "onnx/checker.h"
 
-using namespace ONNX_NAMESPACE::Utils;
+using namespace ONNX_NAMESPACE;
+
+#define EXPECT_PARSER_FAILURE(_stmt_)   \
+  try {                                 \
+    _stmt_;                             \
+    EXPECT_TRUE(false);                 \
+  } catch (ParseError e) {              \
+    std::cout << e.what() << std::endl; \
+  }
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -46,6 +54,22 @@ TEST(ParserTest, TypeTest) {
   OnnxParser::Parse(type, "float[N,?,K]");
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
+}
+
+TEST(ParserTest, TensorProtoTest) {
+  TensorProto tensorProto;
+
+  // Concrete tensor-type with numeric dimensions expected:
+  EXPECT_PARSER_FAILURE(OnnxParser::Parse(tensorProto, "int32[] {1, 2, 3, 4, 5}"));
+
+  // Symbolic dimensions are not allowed.
+  EXPECT_PARSER_FAILURE(OnnxParser::Parse(tensorProto, "int32[N] {1, 2, 3, 4, 5}"));
+
+  OnnxParser::Parse(tensorProto, "int32[5] {1, 2, 3, 4, 5}");
+  std::cout << tensorProto << std::endl;
+
+  OnnxParser::Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
+  std::cout << tensorProto << std::endl;
 }
 
 TEST(ParserTest, AttributeTest) {
@@ -103,6 +127,22 @@ TEST(ParserTest, NodeTest) {
   EXPECT_EQ(n.output_size(), 1);
   EXPECT_EQ(n.output(0), "x");
   EXPECT_EQ(n.op_type(), "foo");
+
+  NodeList nl;
+  OnnxParser::Parse(nl, R"ONNX(
+      {
+       sub_result = Sub(limit, start)
+       sub_result_casted = Cast<to = 1>(sub_result)
+       delta_casted = Cast<to = 1>(delta)
+       div_result = Div(sub_result_casted, delta_casted)
+       ceil_result = Ceil(div_result)
+       ceil_result_relu = Relu(ceil_result)
+       ceil_result_relu_int = Cast<to = 7>(ceil_result_relu)
+       ceil_result_relu_bool = Cast<to = 9>(ceil_result_relu)
+       variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+       }
+       )ONNX");
+  std::cout << nl << "\n";
 }
 
 TEST(ParserTest, QualifiedOpNameTest) {
@@ -159,6 +199,7 @@ agraph (float[N] y, float[N] z) => (float[N] w)
 
   GraphProto graph;
   OnnxParser::Parse(graph, code);
+  std::cout << graph << "\n";
 
   EXPECT_EQ(graph.name(), "agraph");
   EXPECT_EQ(graph.input_size(), 2);

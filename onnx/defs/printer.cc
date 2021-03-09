@@ -3,9 +3,20 @@
  */
 
 #include "onnx/defs/printer.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
-namespace Utils {
+
+template <typename Collection>
+inline void print(std::ostream& os, const char* open, const char* separator, const char* close, Collection coll) {
+  const char* sep = "";
+  os << open;
+  for (auto& elt : coll) {
+    os << sep << elt;
+    sep = separator;
+  }
+  os << close;
+}
 
 std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& dim) {
   if (dim.has_dim_value())
@@ -18,14 +29,7 @@ std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& dim
 }
 
 std::ostream& operator<<(std::ostream& os, const TensorShapeProto& shape) {
-  const char* sep = "";
-  const char* comma = ", ";
-  os << "[";
-  for (auto& dim : shape.dim()) {
-    os << sep << dim;
-    sep = comma;
-  }
-  os << "]";
+  print(os, "[", ",", "]", shape.dim());
   return os;
 }
 
@@ -46,20 +50,35 @@ std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
+  os << PrimitiveTypeNameMap::ToString(tensor.data_type());
+  print(os, "[", ",", "]", tensor.dims());
+
+  switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
+    case TensorProto::DataType::TensorProto_DataType_INT32:
+      print(os, " {", ",", "}", tensor.int32_data());
+      break;
+    case TensorProto::DataType::TensorProto_DataType_INT64:
+      print(os, " {", ",", "}", tensor.int64_data());
+      break;
+    case TensorProto::DataType::TensorProto_DataType_FLOAT:
+      print(os, " {", ",", "}", tensor.float_data());
+      break;
+    default:
+      // TODO:
+      break;
+  }
+
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const ValueInfoProto& value_info) {
   os << value_info.type() << " " << value_info.name();
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
-  const char* sep = "";
-  const char* comma = ", ";
-  os << "(";
-  for (auto& vi : vilist) {
-    os << sep << vi;
-    sep = comma;
-  }
-  os << ")";
+  print(os, "(", ", ", ")", vilist);
   return os;
 }
 
@@ -73,31 +92,19 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
       os << attr.i();
       break;
     case AttributeProto_AttributeType_INTS:
-      for (auto v : attr.ints()) {
-        os << sep << v;
-        sep = comma;
-      }
-      os << "]";
+      print(os, "[", ", ", "]", attr.ints());
       break;
     case AttributeProto_AttributeType_FLOAT:
       os << attr.f();
       break;
     case AttributeProto_AttributeType_FLOATS:
-      for (auto v : attr.floats()) {
-        os << sep << v;
-        sep = comma;
-      }
-      os << "]";
+      print(os, "[", ", ", "]", attr.floats());
       break;
     case AttributeProto_AttributeType_STRING:
       os << "\"" << attr.s() << "\"";
       break;
     case AttributeProto_AttributeType_STRINGS:
-      for (auto v : attr.strings()) {
-        os << sep << "\"" << v << "\"";
-        sep = comma;
-      }
-      os << "]";
+      print(os, "[", ", ", "]", attr.strings());
       break;
     default:
       break;
@@ -106,41 +113,21 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
 }
 
 std::ostream& operator<<(std::ostream& os, const AttrList& attrlist) {
-  const char* sep = "";
-  os << "<";
-  for (auto& attr : attrlist) {
-    os << sep << attr;
-    sep = ", ";
-  }
-  os << ">";
+  print(os, "<", ", ", ">", attrlist);
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const NodeProto& node) {
-  const char* sep = "";
-  for (auto& v : node.output()) {
-    os << sep << v;
-    sep = ", ";
-  }
+  print(os, "", ", ", "", node.output());
   os << " = " << node.op_type();
   if (node.attribute_size() > 0)
     os << node.attribute();
-  os << "(";
-  sep = "";
-  for (auto& v : node.input()) {
-    os << sep << v;
-    sep = ", ";
-  }
-  os << ")";
+  print(os, "(", ", ", ")", node.input());
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const NodeList& nodelist) {
-  os << "{\n";
-  for (auto& n : nodelist) {
-    os << n << "\n";
-  }
-  os << "}\n";
+  print(os, "{\n", "\n", "\n}\n", nodelist);
   return os;
 }
 
@@ -150,5 +137,4 @@ std::ostream& operator<<(std::ostream& os, const GraphProto& graph) {
   return os;
 }
 
-} // namespace Utils
 } // namespace ONNX_NAMESPACE
