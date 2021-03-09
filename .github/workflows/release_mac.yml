@@ -2,9 +2,9 @@ name: MacRelease
 
 on:
   push:
-    branches: [ master, rel-*]
+    branches: [master, rel-*]
   pull_request:
-    branches: [ rel-*, master]
+    branches: [rel-*]
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
