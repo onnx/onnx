@@ -19131,6 +19131,55 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+### <a name="Trilu-14"></a>**Trilu-14**</a>
+
+  Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
+  The attribute "upper" determines whether the upper or lower part is retained. If set to true,
+  the upper triangular matrix is retained. Lower triangular matrix is retained otherwise.
+  Default value for the "upper" attribute is true.
+  Trilu takes one input tensor of shape [*, N, M], where * is zero or more batch dimensions. The upper triangular part consists
+  of the elements on and above the given diagonal (k). The lower triangular part consists of elements on and below the diagonal.
+  All other elements in the matrix are set to zero.
+  If k = 0, the triangular part on and above/below the main diagonal is retained.
+  If upper is set to true, a positive k retains the upper triangular matrix excluding the main diagonal and (k-1) diagonals above it.
+  A negative k value retains the main diagonal and |k| diagonals below it.
+  If upper is set to false, a positive k retains the lower triangular matrix including the main diagonal and k diagonals above it.
+  A negative k value excludes the main diagonal and (|k|-1) diagonals below it.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>upper</tt> : int (default is 1)</dt>
+<dd>Boolean. Indicates whether upper or lower part of matrix is retained. Default is true.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor of rank 2 or higher.</dd>
+<dt><tt>k</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. Default value is 0 if it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor of the same type and shape as the input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
