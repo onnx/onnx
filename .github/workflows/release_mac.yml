@@ -3,7 +3,7 @@ name: MacRelease
 on:
   schedule:
     # Run weekly on Sunday 23:59
-    - cron:  '59 23 * * SUN'
+    - cron:  '30 23 * * WED'
   push:
     branches: [master, rel-*]
   pull_request:
@@ -66,7 +66,11 @@ jobs:
       run: |
         # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
-        python setup.py bdist_wheel -p macosx_10_12_x86_64
+        if [ '${{ github.event_name }}' == 'schedule' ]; then
+          python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
+        else
+          python setup.py bdist_wheel -p macosx_10_12_x86_64
+        fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
 
     - name: Test the installed wheel

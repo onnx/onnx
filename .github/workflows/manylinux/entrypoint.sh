@@ -5,6 +5,7 @@ set -e -x
 # CLI arguments
 PY_VERSION=$1
 PLAT=$2
+GITHUB_EVENT_NAME=$3
 BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
 SYSTEM_PACKAGES='cmake3'
 
@@ -52,6 +53,13 @@ fi
 
 # Build wheels
 /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
+
+if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
+    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps --weekly_build || { echo "Building wheels failed."; exit 1; }
+else
+    /opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
+fi
+
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures

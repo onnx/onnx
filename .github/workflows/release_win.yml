@@ -3,7 +3,7 @@ name: WindowsRelease
 on:
   schedule:
     # Run weekly on Sunday 23:59
-    - cron:  '59 23 * * SUN'
+    - cron:  '30 23 * * WED'
   push:
     branches: [master, rel-*]
   pull_request:
@@ -95,7 +95,7 @@ jobs:
           echo "Build weekly TestPyPI package"
           python setup.py bdist_wheel --weekly_build
         } else {
-          python setup.py bdist_wheel         
+          python setup.py bdist_wheel
         }
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname} 
   

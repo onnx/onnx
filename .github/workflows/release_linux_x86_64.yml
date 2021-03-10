@@ -3,7 +3,7 @@ name: LinuxRelease_x86_64
 on:
   schedule:
     # Run weekly on Sunday 23:59
-    - cron:  '59 23 * * SUN'
+    - cron:  '30 23 * * WED'
   push:
     branches: [master, rel-*]
   pull_request:
@@ -42,7 +42,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2010_x86_64
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_x86_64
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_x86_64 '${{ github.event_name }}'
 
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
