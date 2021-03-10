@@ -11,9 +11,13 @@
 #include <unordered_map>
 
 #include "onnx/onnx_pb.h"
+
+#include "onnx/common/status.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
+
+using namespace ONNX_NAMESPACE::Common;
 
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
@@ -23,37 +27,22 @@ using AttrList = google::protobuf::RepeatedPtrField<AttributeProto>;
 
 using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 
-// Exception class used for handling parse errors
-
-class ParseError final : public std::runtime_error {
- public:
-  using std::runtime_error::runtime_error;
-
-  ParseError(const std::string& message) : std::runtime_error(message) {}
-
-  const char* what() const noexcept override {
-    if (!expanded_message_.empty()) {
-      return expanded_message_.c_str();
-    }
-    return std::runtime_error::what();
-  }
-
-  void AppendContext(const std::string& context) {
-    expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
-  }
-
- private:
-  std::string expanded_message_;
-};
-
-#define parse_error(...)                                                                                          \
-  do {                                                                                                            \
-    throw ParseError(ONNX_NAMESPACE::MakeString("[ParseError at position ", (next_ - start_), "]", __VA_ARGS__)); \
+#define PARSE_ERROR(...)                                                                                         \
+  do {                                                                                                           \
+    return Status(                                                                                               \
+        NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", (next_ - start_), "]", __VA_ARGS__)); \
   } while (0)
 
-#define parser_check(cond, msg) \
+#define PARSER_CHECK(cond, msg) \
   if (!(cond))                  \
-  parse_error(msg)
+  PARSE_ERROR(msg)
+
+#define CHECK_PARSER_STATUS(status) \
+  {                                 \
+    auto local_status_ = status;    \
+    if (!local_status_.IsOK())      \
+      return local_status_;         \
+  }
 
 class PrimitiveTypeNameMap {
  public:
@@ -159,50 +148,35 @@ class ParserBase {
     return (next_ < end_) ? *next_ : 0;
   }
 
-  std::string ParseIdentifier() {
-    SkipWhiteSpace();
-    auto from = next_;
-    if ((next_ < end_) && (isalpha(*next_) || (*next_ == '_'))) {
-      next_++;
-      while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
-        next_++;
+  bool Matches(char ch, bool skipspace = true) {
+    if (skipspace)
+      SkipWhiteSpace();
+    if ((next_ < end_) && (*next_ == ch)) {
+      ++next_;
+      return true;
     }
-    if (next_ == from)
-      parse_error("Identifier expected but not found.");
-    return std::string(from, next_ - from);
+    return false;
   }
 
-  KeyWordMap::KeyWord ParseKeyWord() {
-    return KeyWordMap::Lookup(ParseIdentifier());
+  Status Match(char ch, bool skipspace = true) {
+    if (!Matches(ch, skipspace))
+      PARSE_ERROR("Expected character ", ch, " not found", ch);
+    return Status::OK();
   }
 
-  enum class TokenType { INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
+  bool EndOfInput() {
+    SkipWhiteSpace();
+    return (next_ >= end_);
+  }
 
-  struct Token {
-    TokenType type;
+  enum class LiteralType { INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
+
+  struct Literal {
+    LiteralType type;
     std::string value;
   };
 
-  bool ParseIntValue(uint64_t& val) {
-    SkipWhiteSpace();
-    auto from = next_;
-    while ((next_ < end_) && (isdigit(*next_)))
-      next_++;
-    if (next_ == from)
-      return false;
-    val = std::stol(std::string(from, next_ - from));
-    return true;
-  }
-
-  uint64_t ParseIntValue() {
-    uint64_t result;
-    if (!ParseIntValue(result))
-      parse_error("Integer value expected but not found.");
-    return result;
-  }
-
-  Token ParseValue() {
-    Token result;
+  Status Parse(Literal& result) {
     bool decimal_point = false;
     auto nextch = NextChar();
     auto from = next_;
@@ -213,9 +187,8 @@ class ParserBase {
         next_++;
       }
       next_++;
-      result.type = TokenType::STRING_LITERAL;
+      result.type = LiteralType::STRING_LITERAL;
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-
     } else if ((isdigit(nextch) || (nextch == '-'))) {
       next_++;
 
@@ -229,51 +202,74 @@ class ParserBase {
       }
 
       if (next_ == from)
-        parse_error("Value expected but not found.");
+        PARSE_ERROR("Value expected but not found.");
 
       result.value = std::string(from, next_ - from);
-      result.type = decimal_point ? TokenType::FLOAT_LITERAL : TokenType::INT_LITERAL;
+      result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
     }
-    return result;
+    return Status::OK();
   }
 
-  float ParseFloatValue() {
-    auto token = ParseValue();
-    switch (token.type) {
-      case TokenType::INT_LITERAL:
-      case TokenType::FLOAT_LITERAL:
-        return std::stof(token.value);
+  Status Parse(int64_t& val) {
+    Literal literal;
+    CHECK_PARSER_STATUS(Parse(literal));
+    if (literal.type != LiteralType::INT_LITERAL)
+      PARSE_ERROR("Integer value expected, but not found.");
+    std::string s = literal.value;
+    val = std::stol(s);
+    return Status::OK();
+  }
+
+  Status Parse(float& val) {
+    Literal literal;
+    CHECK_PARSER_STATUS(Parse(literal));
+    switch (literal.type) {
+      case LiteralType::INT_LITERAL:
+      case LiteralType::FLOAT_LITERAL:
+        val = std::stof(literal.value);
         break;
       default:
-        parse_error("Unexpected literal type.");
+        PARSE_ERROR("Unexpected literal type.");
     }
+    return Status::OK();
   }
 
-  std::string ParseString() {
-    auto token = ParseValue();
-    if (token.type != TokenType::STRING_LITERAL)
-      parse_error("String value expected, but not found.");
-    return token.value;
+  // Parse a string-literal enclosed within doube-quotes.
+  Status Parse(std::string& val) {
+    Literal literal;
+    CHECK_PARSER_STATUS(Parse(literal));
+    if (literal.type != LiteralType::STRING_LITERAL)
+      PARSE_ERROR("String value expected, but not found.");
+    val = literal.value;
+    return Status::OK();
   }
 
-  bool Matches(char ch, bool skipspace = true) {
-    if (skipspace)
-      SkipWhiteSpace();
-    if ((next_ < end_) && (*next_ == ch)) {
-      ++next_;
-      return true;
-    }
-    return false;
-  }
-
-  void Match(char ch, bool skipspace = true) {
-    if (!Matches(ch, skipspace))
-      parse_error("Expected character %c but not found", ch);
-  }
-
-  bool EndOfInput() {
+  // Parse an identifier, including keywords. If none found, this will
+  // return an empty-string identifier.
+  Status ParseOptionalIdentifier(std::string& id) {
     SkipWhiteSpace();
-    return (next_ >= end_);
+    auto from = next_;
+    if ((next_ < end_) && (isalpha(*next_) || (*next_ == '_'))) {
+      next_++;
+      while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
+        next_++;
+    }
+    id = std::string(from, next_ - from);
+    return Status::OK();
+  }
+
+  Status ParseIdentifier(std::string& id) {
+    ParseOptionalIdentifier(id);
+    if (id.empty())
+      PARSE_ERROR("Identifier expected but not found.");
+    return Status::OK();
+  }
+
+  Status Parse(KeyWordMap::KeyWord& keyword) {
+    std::string id;
+    CHECK_PARSER_STATUS(ParseIdentifier(id));
+    keyword = KeyWordMap::Lookup(id);
+    return Status::OK();
   }
 
  protected:
@@ -286,36 +282,36 @@ class OnnxParser : public ParserBase {
  public:
   OnnxParser(const char* cstr) : ParserBase(cstr) {}
 
-  void ParseIdList(IdList& idlist);
+  Status Parse(IdList& idlist);
 
-  void Parse(TensorShapeProto& shape);
+  Status Parse(TensorShapeProto& shape);
 
-  void Parse(TypeProto& typeProto);
+  Status Parse(TypeProto& typeProto);
 
-  void Parse(TensorProto& tensorProto);
+  Status Parse(TensorProto& tensorProto);
 
-  void Parse(ValueInfoProto& valueinfo);
+  Status Parse(ValueInfoProto& valueinfo);
 
-  void Parse(ValueInfoList& vilist);
+  Status Parse(ValueInfoList& vilist);
 
-  void ParseSingleAttributeValue(AttributeProto& attr);
+  Status ParseSingleAttributeValue(AttributeProto& attr);
 
-  void Parse(AttributeProto& attr);
+  Status Parse(AttributeProto& attr);
 
-  void Parse(AttrList& attrlist);
+  Status Parse(AttrList& attrlist);
 
-  void Parse(NodeProto& node);
+  Status Parse(NodeProto& node);
 
-  void Parse(NodeList& nodelist);
+  Status Parse(NodeList& nodelist);
 
-  void Parse(GraphProto& graph);
+  Status Parse(GraphProto& graph);
 
-  void Parse(ModelProto& model);
+  Status Parse(ModelProto& model);
 
   template <typename T>
-  static void Parse(T& parsedData, const char* input) {
+  static Status Parse(T& parsedData, const char* input) {
     OnnxParser parser(input);
-    parser.Parse(parsedData);
+    return parser.Parse(parsedData);
   }
 };
 

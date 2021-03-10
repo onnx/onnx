@@ -11,37 +11,46 @@
 
 #include "onnx/defs/parser.h"
 
+#define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
+#define PARSE(x) CHECK_PARSER_STATUS(Parse(x))
+#define MATCH(...) CHECK_PARSER_STATUS(Match(__VA_ARGS__))
+
 namespace ONNX_NAMESPACE {
 
-void OnnxParser::ParseIdList(IdList& idlist) {
+Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
-  // Allow empty identifier (used for missing optional parameters) except
-  // in special case. TODO: fix this.
-  std::string id = ParseIdentifier();
+  std::string id;
+  ParseOptionalIdentifier(id);
   if (id.empty())
-    return;
+    return Status::OK(); // Treat as empty list of identifiers
   *idlist.Add() = id;
   while (Matches(',')) {
-    *idlist.Add() = ParseIdentifier();
+    ParseOptionalIdentifier(id);
+    *idlist.Add() = id;
   }
+  return Status::OK();
 }
 
-void OnnxParser::Parse(TensorShapeProto& shape) {
+Status OnnxParser::Parse(TensorShapeProto& shape) {
+  int64_t dimval;
   shape.clear_dim();
   do {
-    uint64_t dimval;
     if (Matches('?')) {
       shape.add_dim();
-    } else if (ParseIntValue(dimval)) {
+    } else if (ParserBase::Parse(dimval).IsOK()) {
       shape.add_dim()->set_dim_value(dimval);
     } else {
-      shape.add_dim()->set_dim_param(ParseIdentifier());
+      std::string id;
+      CHECK_PARSER_STATUS(ParseIdentifier(id));
+      shape.add_dim()->set_dim_param(id);
     }
   } while (Matches(','));
+  return Status::OK();
 }
 
-void OnnxParser::Parse(TypeProto& typeProto) {
-  std::string id = ParseIdentifier();
+Status OnnxParser::Parse(TypeProto& typeProto) {
+  std::string id;
+  CHECK_PARSER_STATUS(ParseIdentifier(id));
   int dtype = PrimitiveTypeNameMap::Lookup(id);
   if (dtype != 0) {
     auto* tensortype = typeProto.mutable_tensor_type();
@@ -53,42 +62,47 @@ void OnnxParser::Parse(TypeProto& typeProto) {
     // FLOAT [one-or-more-dimensions] indicates tensor of known rank > 0.
     if (Matches('[')) {
       if (!Matches(']')) {
-        Parse(*tensortype->mutable_shape());
-        Match(']');
+        PARSE(*tensortype->mutable_shape());
+        MATCH(']');
       }
     } else {
       // Create shape with zero dimensions for scalar
       (void)(tensortype->mutable_shape());
     }
   } else
-    parse_error("Unexpected type.");
+    PARSE_ERROR("Unexpected type.");
+  return Status::OK();
 }
 
-void OnnxParser::Parse(ValueInfoProto& valueinfo) {
-  Parse(*valueinfo.mutable_type());
-  valueinfo.set_name(ParseIdentifier());
+Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
+  PARSE(*valueinfo.mutable_type());
+  std::string name;
+  CHECK_PARSER_STATUS(ParseIdentifier(name));
+  valueinfo.set_name(name);
+  return Status::OK();
 }
 
-void OnnxParser::Parse(ValueInfoList& vilist) {
+Status OnnxParser::Parse(ValueInfoList& vilist) {
   vilist.Clear();
-  Match('(');
+  MATCH('(');
   while (!Matches(')')) {
-    Parse(*vilist.Add());
+    PARSE(*vilist.Add());
     (void)Matches(','); // skip optional comma if present
   }
+  return Status::OK();
 }
 
-void OnnxParser::Parse(TensorProto& tensorProto) {
+Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
-  Parse(typeProto);
-  parser_check(typeProto.has_tensor_type(), "Error parsing TensorProto (expected a tensor type).");
+  PARSE(typeProto);
+  PARSER_CHECK(typeProto.has_tensor_type(), "Error parsing TensorProto (expected a tensor type).");
   auto elem_type = typeProto.tensor_type().elem_type();
   tensorProto.set_data_type(elem_type);
-  parser_check(typeProto.tensor_type().has_shape(), "Error parsing TensorProto (expected a tensor shape).");
+  PARSER_CHECK(typeProto.tensor_type().has_shape(), "Error parsing TensorProto (expected a tensor shape).");
   uint64_t n = 1;
   for (auto& dim : typeProto.tensor_type().shape().dim()) {
-    parser_check(dim.has_dim_value(), "Error parsing TensorProto shape (expected numeric dimension).");
+    PARSER_CHECK(dim.has_dim_value(), "Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
     tensorProto.add_dims(dimval);
     n *= dimval;
@@ -96,57 +110,67 @@ void OnnxParser::Parse(TensorProto& tensorProto) {
 
   // tensorProto.mutable_int64_data()->Reserve(n);
   // Parse the actual values:
-  Match('{');
+  MATCH('{');
+  int64_t intval;
+  float floatval;
   while (!Matches('}')) {
     switch (static_cast<TensorProto::DataType>(elem_type)) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
-        tensorProto.add_int32_data(ParseIntValue());
+        PARSE_TOKEN(intval);
+        tensorProto.add_int32_data(intval);
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        tensorProto.add_int64_data(ParseIntValue());
+        PARSE_TOKEN(intval);
+        tensorProto.add_int64_data(intval);
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        tensorProto.add_float_data(ParseFloatValue());
+        PARSE_TOKEN(floatval);
+        tensorProto.add_float_data(floatval);
         break;
       default:
-        parse_error("Unhandled type: %d", elem_type);
+        PARSE_ERROR("Unhandled type: %d", elem_type);
     }
 
     (void)Matches(',');
   }
+  return Status::OK();
 }
 
-void OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
+Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   // Parse a single-value
-  auto token = ParseValue();
-  switch (token.type) {
-    case TokenType::INT_LITERAL:
+  Literal literal;
+  PARSE_TOKEN(literal);
+  switch (literal.type) {
+    case LiteralType::INT_LITERAL:
       attr.set_type(AttributeProto_AttributeType_INT);
-      attr.set_i(std::stol(token.value));
+      attr.set_i(std::stol(literal.value));
       break;
-    case TokenType::FLOAT_LITERAL:
+    case LiteralType::FLOAT_LITERAL:
       attr.set_type(AttributeProto_AttributeType_FLOAT);
-      attr.set_f(static_cast<float>(std::stof(token.value)));
+      attr.set_f(static_cast<float>(std::stof(literal.value)));
       break;
-    case TokenType::STRING_LITERAL:
+    case LiteralType::STRING_LITERAL:
       attr.set_type(AttributeProto_AttributeType_STRING);
-      attr.set_s(token.value);
+      attr.set_s(literal.value);
       break;
     default:
-      parse_error("Unexpected literal type.");
+      PARSE_ERROR("Unexpected literal type.");
   }
+  return Status::OK();
 }
 
-void OnnxParser::Parse(AttributeProto& attr) {
-  attr.set_name(ParseIdentifier());
-  Match('=');
+Status OnnxParser::Parse(AttributeProto& attr) {
+  std::string name;
+  CHECK_PARSER_STATUS(ParseIdentifier(name));
+  attr.set_name(name);
+  MATCH('=');
   if (NextChar() == '[') {
     // Parse a list of values
-    std::vector<Token> vals;
-    Match('[');
+    std::vector<Literal> vals;
+    MATCH('[');
     while (!Matches(']')) {
       AttributeProto nextval;
-      ParseSingleAttributeValue(nextval);
+      CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval));
       switch (nextval.type()) {
         case AttributeProto_AttributeType_INT:
           attr.set_type(AttributeProto_AttributeType_INTS);
@@ -166,109 +190,129 @@ void OnnxParser::Parse(AttributeProto& attr) {
       (void)Matches(',');
     }
   } else {
-    ParseSingleAttributeValue(attr);
+    CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr));
   }
+  return Status::OK();
 }
 
-void OnnxParser::Parse(AttrList& attrlist) {
+Status OnnxParser::Parse(AttrList& attrlist) {
   attrlist.Clear();
   if (Matches('<')) {
     while (!Matches('>')) {
-      Parse(*attrlist.Add());
+      PARSE(*attrlist.Add());
       (void)Matches(','); // skip optional comma if present
     }
   }
+  return Status::OK();
 }
 
-void OnnxParser::Parse(NodeProto& node) {
-  ParseIdList(*node.mutable_output());
-  Match('=');
+Status OnnxParser::Parse(NodeProto& node) {
+  PARSE(*node.mutable_output());
+  MATCH('=');
   std::string domain("");
-  auto id = ParseIdentifier();
+  std::string id;
+  ParseIdentifier(id);
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
     domain += id;
-    id = ParseIdentifier();
+    ParseIdentifier(id);
   }
   node.set_domain(domain); // TODO
   node.set_op_type(id);
-  Parse(*node.mutable_attribute());
-  Match('(');
-  ParseIdList(*node.mutable_input());
-  Match(')');
+  PARSE(*node.mutable_attribute());
+  MATCH('(');
+  PARSE(*node.mutable_input());
+  MATCH(')');
+  return Status::OK();
 }
 
-void OnnxParser::Parse(NodeList& nodelist) {
+Status OnnxParser::Parse(NodeList& nodelist) {
   nodelist.Clear();
-  Match('{');
+  MATCH('{');
   while (!Matches('}')) {
-    Parse(*nodelist.Add());
+    PARSE(*nodelist.Add());
     (void)Matches(';'); // skip optional semicolon if present
   }
+  return Status::OK();
 }
 
-void OnnxParser::Parse(GraphProto& graph) {
-  graph.set_name(ParseIdentifier());
-  Parse(*graph.mutable_input());
-  Match('=');
-  Match('>', false);
-  Parse(*graph.mutable_output());
-  Parse(*graph.mutable_node());
+Status OnnxParser::Parse(GraphProto& graph) {
+  std::string id;
+  ParseIdentifier(id);
+  graph.set_name(id);
+  PARSE(*graph.mutable_input());
+  MATCH('=');
+  MATCH('>', false);
+  PARSE(*graph.mutable_output());
+  return Parse(*graph.mutable_node());
 }
 
-void OnnxParser::Parse(ModelProto& model) {
+Status OnnxParser::Parse(ModelProto& model) {
+  std::string strval;
+  int64_t intval;
   if (Matches('<')) {
     while (!Matches('>')) {
-      auto keyword = ParseKeyWord();
-      Match(':');
+      KeyWordMap::KeyWord keyword;
+      PARSE_TOKEN(keyword);
+      MATCH(':');
       switch (keyword) {
         case KeyWordMap::KeyWord::IR_VERSION:
-          model.set_ir_version(ParseIntValue());
+          PARSE_TOKEN(intval);
+          model.set_ir_version(intval);
           break;
         case KeyWordMap::KeyWord::OPSET_IMPORT: {
           auto& imports = *model.mutable_opset_import();
-          Match('[');
+          MATCH('[');
           while (!Matches(']')) {
             auto* import = imports.Add();
-            import->set_domain(ParseString());
-            Match(':');
-            import->set_version(ParseIntValue());
+            PARSE_TOKEN(strval);
+            import->set_domain(strval);
+            MATCH(':');
+            PARSE_TOKEN(intval);
+            import->set_version(intval);
           }
           break;
         }
         case KeyWordMap::KeyWord::PRODUCER_NAME:
-          model.set_producer_name(ParseString());
+          PARSE_TOKEN(strval);
+          model.set_producer_name(strval);
           break;
         case KeyWordMap::KeyWord::PRODUCER_VERSION:
-          model.set_producer_version(ParseString());
+          PARSE_TOKEN(strval);
+          model.set_producer_version(strval);
           break;
         case KeyWordMap::KeyWord::DOMAIN_KW:
-          model.set_domain(ParseString());
+          PARSE_TOKEN(strval);
+          model.set_domain(strval);
           break;
         case KeyWordMap::KeyWord::MODEL_VERSION:
-          model.set_model_version(ParseIntValue());
+          PARSE_TOKEN(intval);
+          model.set_model_version(intval);
           break;
         case KeyWordMap::KeyWord::DOC_STRING:
-          model.set_doc_string(ParseString());
+          PARSE_TOKEN(strval);
+          model.set_doc_string(strval);
           break;
         case KeyWordMap::KeyWord::METADATA_PROPS: {
           auto& metadata_props = *model.mutable_metadata_props();
-          Match('[');
+          MATCH('[');
           while (!Matches(']')) {
             auto* metadata = metadata_props.Add();
-            metadata->set_key(ParseString());
-            Match(':');
-            metadata->set_value(ParseString());
+            PARSE_TOKEN(strval);
+            metadata->set_key(strval);
+            MATCH(':');
+            PARSE_TOKEN(strval);
+            metadata->set_value(strval);
           }
           break;
         }
         default:
-          parse_error("Unhandled keyword.");
+          PARSE_ERROR("Unhandled keyword.");
       }
     }
   }
-  Parse(*model.mutable_graph());
+  return Parse(*model.mutable_graph());
 }
 
 } // namespace ONNX_NAMESPACE
