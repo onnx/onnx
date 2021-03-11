@@ -3,7 +3,7 @@ name: WindowsRelease
 on:
   schedule:
     # Run weekly on Sunday 23:59
-    - cron:  '30 16 * * THU'
+    - cron:  '00 17 * * THU'
   push:
     branches: [master, rel-*]
   pull_request:
