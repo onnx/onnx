@@ -3,7 +3,7 @@ name: LinuxRelease_x86_64
 on:
   schedule:
     # Run weekly on Sunday 23:59
-    - cron:  '30 23 * * WED'
+    - cron:  '30 16 * * THU'
   push:
     branches: [master, rel-*]
   pull_request:
