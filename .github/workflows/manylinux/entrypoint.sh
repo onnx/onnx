@@ -21,7 +21,7 @@ ONNX_PATH=$(pwd)
 cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout 3.11.x
+git checkout v2.6.1
 git submodule update --init --recursive
 ./autogen.sh --disable-shared --enable-pic
 
@@ -64,9 +64,6 @@ if [[ -f "$failed_wheels" ]]; then
     cat failed-wheels
     exit 1
 fi
-
-# Remove useless *-linux*.whl; only keep -manylinux*.whl
-rm -f dist/*-linux*.whl
 
 echo "Succesfully build wheels:"
 find . -type f -iname "*-manylinux*.whl"
