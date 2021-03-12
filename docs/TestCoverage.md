@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 148/162 (91.36%, 5 generators excluded) common operators.
+Node tests have covered 149/163 (91.41%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3860,6 +3860,9 @@ y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_negative_indices')
+
+# print(y)
+# [0. 1. 0.]
 ```
 
 </details>
@@ -4527,6 +4530,29 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x * default_alpha + default_beta, 0, 1)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardsigmoid_default')
+```
+
+</details>
+
+
+### HardSwish
+There are 1 test cases, listed as following:
+<details>
+<summary>hardswish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HardSwish',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+alfa= float(1/6)
+beta = 0.5
+y = x*np.maximum(0, np.minimum(1,alfa*x+beta))
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardswish')
 ```
 
 </details>
@@ -7683,6 +7709,11 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
+
+# print(y)
+# [[3. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 ```
 
 </details>
