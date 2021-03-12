@@ -29,6 +29,7 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
+PACKAGE_NAME = 'onnx'
 
 WINDOWS = (os.name == 'nt')
 
@@ -71,6 +72,7 @@ with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
     if '--weekly_build' in sys.argv:
         today_number = date.today().strftime("%Y%m%d")
         VERSION_NUMBER += '.dev' + today_number
+        PACKAGE_NAME = 'onnx-weekly'
         sys.argv.remove('--weekly_build')
     VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
         version=VERSION_NUMBER,
@@ -333,7 +335,7 @@ if sys.version_info[0] == 3:
 ################################################################################
 
 setuptools.setup(
-    name="onnx",
+    name=PACKAGE_NAME,
     version=VersionInfo.version,
     description="Open Neural Network Exchange",
     ext_modules=ext_modules,
