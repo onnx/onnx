@@ -2,9 +2,9 @@ name: LinuxRelease_x86_64
 
 on:
   push:
-    branches: [master, rel-*]
+    branches: [master, rel-*, wheel]]
   pull_request:
-    branches: [rel-*, wheel]
+    branches: [rel-*]
 
 jobs:
   build:
