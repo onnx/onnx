@@ -2,7 +2,7 @@ name: LinuxRelease_i686
 
 on:
   push:
-    branches: [master, rel-*, wheel]]
+    branches: [master, rel-*, wheel]
   pull_request:
     branches: [rel-*]
 
