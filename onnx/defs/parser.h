@@ -216,7 +216,17 @@ class ParserBase {
     if (literal.type != LiteralType::INT_LITERAL)
       PARSE_ERROR("Integer value expected, but not found.");
     std::string s = literal.value;
-    val = std::stol(s);
+    val = std::stoll(s);
+    return Status::OK();
+  }
+
+    Status Parse(uint64_t& val) {
+    Literal literal;
+    CHECK_PARSER_STATUS(Parse(literal));
+    if (literal.type != LiteralType::INT_LITERAL)
+      PARSE_ERROR("Integer value expected, but not found.");
+    std::string s = literal.value;
+    val = std::stoull(s);
     return Status::OK();
   }
 
@@ -227,6 +237,20 @@ class ParserBase {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
         val = std::stof(literal.value);
+        break;
+      default:
+        PARSE_ERROR("Unexpected literal type.");
+    }
+    return Status::OK();
+  }
+
+  Status Parse(double& val) {
+    Literal literal;
+    CHECK_PARSER_STATUS(Parse(literal));
+    switch (literal.type) {
+      case LiteralType::INT_LITERAL:
+      case LiteralType::FLOAT_LITERAL:
+        val = std::stod(literal.value);
         break;
       default:
         PARSE_ERROR("Unexpected literal type.");

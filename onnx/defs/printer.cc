@@ -54,21 +54,42 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
   os << PrimitiveTypeNameMap::ToString(tensor.data_type());
   print(os, "[", ",", "]", tensor.dims());
 
+  // TODO: does not yet handle raw_data or FLOAT16 or externally stored data.
+  // TODO: does not yet handle name of tensor.
   switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
+    case TensorProto::DataType::TensorProto_DataType_INT8:
+    case TensorProto::DataType::TensorProto_DataType_INT16:
     case TensorProto::DataType::TensorProto_DataType_INT32:
+    case TensorProto::DataType::TensorProto_DataType_UINT8:
+    case TensorProto::DataType::TensorProto_DataType_UINT16:
+    case TensorProto::DataType::TensorProto_DataType_BOOL:
       print(os, " {", ",", "}", tensor.int32_data());
       break;
     case TensorProto::DataType::TensorProto_DataType_INT64:
       print(os, " {", ",", "}", tensor.int64_data());
       break;
+    case TensorProto::DataType::TensorProto_DataType_UINT32:
+    case TensorProto::DataType::TensorProto_DataType_UINT64:
+      print(os, " {", ",", "}", tensor.uint64_data());
+      break;
     case TensorProto::DataType::TensorProto_DataType_FLOAT:
       print(os, " {", ",", "}", tensor.float_data());
       break;
+    case TensorProto::DataType::TensorProto_DataType_DOUBLE:
+      print(os, " {", ",", "}", tensor.double_data());
+      break;
+    case TensorProto::DataType::TensorProto_DataType_STRING: {
+      const char* sep = "{";
+      for (auto& elt : tensor.string_data()) {
+        os << sep << "\"" << elt << "\"";
+        sep = ", ";
+      }
+      os << "}";
+      break;
+    }
     default:
-      // TODO:
       break;
   }
-
   return os;
 }
 
@@ -83,9 +104,6 @@ std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
 }
 
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
-  const char* sep = "[";
-  const char* comma = ", ";
-
   os << attr.name() << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
@@ -103,9 +121,15 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
     case AttributeProto_AttributeType_STRING:
       os << "\"" << attr.s() << "\"";
       break;
-    case AttributeProto_AttributeType_STRINGS:
-      print(os, "[", ", ", "]", attr.strings());
+    case AttributeProto_AttributeType_STRINGS: {
+      const char* sep = "[";
+      for (auto& elt : attr.strings()) {
+        os << sep << "\"" << elt << "\"";
+        sep = ", ";
+      }
+      os << "]";
       break;
+    }
     default:
       break;
   }

@@ -74,6 +74,8 @@ TEST(ParserTest, TensorProtoTest) {
   Parse(tensorProto, "int32[5] {1, 2, 3, 4, 5}");
 
   Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
+
+  Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
 }
 
 TEST(ParserTest, AttributeTest) {
