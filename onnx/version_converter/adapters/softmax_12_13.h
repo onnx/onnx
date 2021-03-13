@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Adapter for Softmax in default domain from version 12 to 13
+// Adapter for Softmax amd LogSoftmax in default domain from version 12 to 13
 
 #pragma once
 
@@ -12,8 +12,8 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class Softmax_12_13 final : public Adapter {
   public:
-    explicit Softmax_12_13()
-      : Adapter("Softmax", OpSetID(12), OpSetID(13)) {}
+    explicit Softmax_12_13(const std::string& op_name)
+      : Adapter(op_name, OpSetID(12), OpSetID(13)) {}
 
     void adapt_softmax_12_13(std::shared_ptr<Graph> graph, Node* node) const {
       int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;

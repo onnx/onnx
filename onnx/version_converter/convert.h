@@ -610,8 +610,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>(
           "Log", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
-          "LogSoftmax", OpSetID(12), OpSetID(13)));
-      registerAdapter(make_unique<CompatibleAdapter>(
           "Loop", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "LRN", OpSetID(12), OpSetID(13)));
@@ -702,7 +700,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<AxesAttributeToInput>(
           "Unsqueeze", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<Split_12_13>());
-      registerAdapter(make_unique<Softmax_12_13>());
+      registerAdapter(make_unique<Softmax_12_13>("Softmax"));
+      registerAdapter(make_unique<Softmax_12_13>("LogSoftmax"));
 
       /******** 13 -> 12 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
