@@ -941,6 +941,9 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'perm': [0, 4, 2, 1, 3]}
         )
 
+    def test_Trilu(self):  # type: () -> None
+        self._test_op_upgrade('Trilu', 14)
+
     def test_Unique_1(self):  # type: () -> None
         self._test_op_upgrade('Unique', 11, [[3, 4, 5]], [[None]])
 
