@@ -20,7 +20,7 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
         sorted_values = np.flip(sorted_values, axis=axis)
     topk_sorted_indices = np.take(sorted_indices, np.arange(k), axis=axis)
     topk_sorted_values = np.take(sorted_values, np.arange(k), axis=axis)
-    return topk_sorted_values, topk_sorted_indices
+    return topk_sorted_values, np.array(topk_sorted_indices, dtype=np.int64)
 
 
 class TopK(Base):
