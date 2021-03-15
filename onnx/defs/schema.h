@@ -963,6 +963,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
+        // Stops because the opset_version is higher than max_version
+        if (max_version != 0 && ver > max_version) {
+          return;
+        }
 
         if (m[op_name][op_domain].count(ver)) {
           const auto& schema = m[op_name][op_domain][ver];
