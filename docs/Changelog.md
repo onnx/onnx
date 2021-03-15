@@ -18587,6 +18587,94 @@ This version of the operator has been available since version 13 of the default 
 </dl>
 
 ## Version 14 of the default ONNX operator set
+### <a name="BatchNormalization-14"></a>**BatchNormalization-14**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  There is three required inputs 'X', 'mean' and 'var', in addition to one
+  optional input 'training_mode'.
+  Note that 'mean' and 'var' are expected to be the estimated statistics in
+  inference mode (training_mode=False, default),
+  and the running statistics in training mode (traning_mode=True).
+  There are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, mean, var, saved_mean, saved_var (training_mode=True)
+  Output case #2: Y (training_mode=False)
+  
+  The output and statistics are updated as follows when training_mode=True:
+  ```
+  saved_mean = ReducedMean(X, axis=all_except_channel_index)
+  saved_var =  ReducedVar(X, axis=all_except_channel_index)
+  
+  output_mean = mean * momentum + saved_mean * (1 - momentum)
+  output_var = var * momentum + saved_var * (1 - momentum)
+  
+  Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
+  ```
+  
+  When training_mode=False:
+  ```
+  Y = (X - mean) / sqrt(var + epsilon) * scale + B
+  ```
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+</dl>
+
+#### Inputs (5 - 6)
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> (differentiable) : T</dt>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Bias tensor of shape (C).</dd>
+<dt><tt>mean</tt> (differentiable) : T</dt>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
+<dt><tt>var</tt> (differentiable) : T</dt>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+<dt><tt>training_mode</tt> (optional, non-differentiable) : T1</dt>
+<dd>If set to true then it indicates BatchNormalization is being used for training. It is an optional value hence unless specified explicitly, it is false.</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>mean</tt> (optional, non-differentiable) : T</dt>
+<dd>The running mean after the BatchNormalization operator.</dd>
+<dt><tt>var</tt> (optional, non-differentiable) : T</dt>
+<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>saved_mean</tt> (optional, non-differentiable) : T</dt>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
+<dt><tt>saved_var</tt> (optional, non-differentiable) : T</dt>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain input training_mode to boolean tensors.</dd>
+</dl>
+
 ### <a name="CumSum-14"></a>**CumSum-14**</a>
 
   Performs cumulative sum of the input elements along the given axis.

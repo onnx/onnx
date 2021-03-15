@@ -1588,13 +1588,34 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
+static const char* BatchNormalization_ver14_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
+There is three required inputs 'X', 'mean' and 'var', in addition to one
+optional input 'training_mode'.
+Note that 'mean' and 'var' are expected to be the estimated statistics in
+inference mode (training_mode=False, default),
+and the running statistics in training mode (traning_mode=True).
+There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
+Output case #1: Y, mean, var, saved_mean, saved_var (training_mode=True)
+Output case #2: Y (training_mode=False)
+
+The output and statistics are updated as follows when training_mode=True:
+```
+saved_mean = ReducedMean(X, axis=all_except_channel_index)
+saved_var =  ReducedVar(X, axis=all_except_channel_index)
+
+output_mean = mean * momentum + saved_mean * (1 - momentum)
+output_var = var * momentum + saved_var * (1 - momentum)
+
+Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
+```
+
+When training_mode=False:
+```
+Y = (X - mean) / sqrt(var + epsilon) * scale + B
+```
 
 For previous (depreciated) non-spatial cases, implementors are suggested
 to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
@@ -1602,10 +1623,10 @@ to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    9,
+    14,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1667,6 +1688,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
+        .Input(
+            5,
+            "training_mode",
+            "If set to true then it indicates BatchNormalization is being used for training. It is an "
+            "optional value hence unless specified explicitly, it is false.",
+            "T1",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Output(
             0,
             "Y",
@@ -1718,10 +1749,102 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrain input training_mode to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
-          // TODO in training mode, it may be possible to infer some of
-          // the other outputs as well.
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+            auto& x_input_shape = getInputShape(ctx, 0);
+            int num_channels = 1;
+            if (static_cast<int>(x_input_shape.dim_size()) > 1 &&
+                x_input_shape.dim(1).has_dim_value()) {
+              num_channels = static_cast<int>(x_input_shape.dim(1).dim_value());
+            }
+
+            if (hasInputShape(ctx, 1)) {
+              auto& scale_input_shape = getInputShape(ctx, 1);
+              if (static_cast<int>(scale_input_shape.dim_size()) != 1 ||
+                  !scale_input_shape.dim(0).has_dim_value() ||
+                  static_cast<int>(scale_input_shape.dim(0).dim_value()) !=
+                      num_channels) {
+                fail_shape_inference(
+                    "All scale, B, mean and var must be tensors of shape C.");
+              }
+            }
+
+            if (hasInputShape(ctx, 2)) {
+              auto& b_input_shape = getInputShape(ctx, 2);
+              if (static_cast<int>(b_input_shape.dim_size()) != 1 ||
+                  !b_input_shape.dim(0).has_dim_value() ||
+                  static_cast<int>(b_input_shape.dim(0).dim_value()) !=
+                      num_channels) {
+                fail_shape_inference(
+                    "All scale, B, mean and var must be tensors of shape C.");
+              }
+            }
+
+            if (hasInputShape(ctx, 3)) {
+              auto& mean_input_shape = getInputShape(ctx, 3);
+              if (static_cast<int>(mean_input_shape.dim_size() != 1) ||
+                  !mean_input_shape.dim(0).has_dim_value() ||
+                  static_cast<int>(mean_input_shape.dim(0).dim_value()) !=
+                      num_channels) {
+                fail_shape_inference(
+                    "All scale, B, mean and var must be tensors of shape C.");
+              }
+            }
+
+            if (hasInputShape(ctx, 4)) {
+              auto& var_input_shape = getInputShape(ctx, 4);
+              if (static_cast<int>(var_input_shape.dim_size()) != 1 ||
+                  !var_input_shape.dim(0).has_dim_value() ||
+                  static_cast<int>(var_input_shape.dim(0).dim_value()) !=
+                      num_channels) {
+                fail_shape_inference(
+                    "All scale, B, mean and var must be tensors of shape C.");
+              }
+            }
+
+            if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
+              auto& mode_input_shape = getInputShape(ctx, 5);
+              // if mode is not scalar or tensor of rank 1, fail shape inference
+              if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
+                if (static_cast<int>(mode_input_shape.dim_size()) > 1 ||
+                    !mode_input_shape.dim(0).has_dim_value() ||
+                    static_cast<int>(mode_input_shape.dim(0).dim_value()) !=
+                        1) {
+                  fail_shape_inference(
+                      "Training_mode is not a scalar boolean.");
+                }
+              }
+            }
+
+            if (ctx.getNumOutputs() > 1) {
+              TensorShapeProto outputs_shape;
+              *outputs_shape.add_dim() = x_input_shape.dim(1); // channel
+
+              propagateElemTypeFromInputToOutput(ctx, 0, 1);
+              updateOutputShape(ctx, 1, outputs_shape);
+
+              if (ctx.getNumOutputs() > 2) {
+                propagateElemTypeFromInputToOutput(ctx, 0, 2);
+                updateOutputShape(ctx, 2, outputs_shape);
+              }
+
+              if (ctx.getNumOutputs() > 3) {
+                propagateElemTypeFromInputToOutput(ctx, 0, 3);
+                updateOutputShape(ctx, 3, outputs_shape);
+              }
+
+              if (ctx.getNumOutputs() > 4) {
+                propagateElemTypeFromInputToOutput(ctx, 0, 4);
+                updateOutputShape(ctx, 4, outputs_shape);
+              }
+            }
+          }
         }));
 
 static const char* InstanceNormalization_ver6_doc = R"DOC(
