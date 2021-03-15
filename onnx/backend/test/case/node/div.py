@@ -34,6 +34,12 @@ class Div(Base):
         expect(node, inputs=[x, y], outputs=[z],
                name='test_div')
 
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
+        z = x / y
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_div_uint8')
+
     @staticmethod
     def export_div_broadcast():  # type: () -> None
         node = onnx.helper.make_node(

@@ -34,6 +34,12 @@ class Mul(Base):
         expect(node, inputs=[x, y], outputs=[z],
                name='test_mul')
 
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+        z = x * y
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_mul_uint8')
+
     @staticmethod
     def export_mul_broadcast():  # type: () -> None
         node = onnx.helper.make_node(

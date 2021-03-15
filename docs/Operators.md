@@ -408,8 +408,8 @@ Other versions of this operator: <a href="Changelog.md#Add-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -448,6 +448,25 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y],
        name='test_add_bcast')
+```
+
+</details>
+
+
+<details>
+<summary>add_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_uint8')
 ```
 
 </details>
@@ -4472,8 +4491,8 @@ Other versions of this operator: <a href="Changelog.md#Div-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -4500,6 +4519,12 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div')
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
+z = x / y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div_uint8')
 ```
 
 </details>
@@ -10951,8 +10976,8 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -10979,6 +11004,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul')
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul_uint8')
 ```
 
 </details>
@@ -20967,8 +20998,8 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -20995,6 +21026,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_sub')
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub_uint8')
 ```
 
 </details>
