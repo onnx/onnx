@@ -26,7 +26,7 @@ class HardSwish(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         alfa= float(1/6)
         beta = 0.5
-        y = x*np.maximum(0, np.minimum(1,alfa*x+beta))
+        y = x * np.maximum(0, np.minimum(1, alfa * x + beta))
 
         expect(node, inputs=[x], outputs=[y],
                name='test_hardswish')
