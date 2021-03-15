@@ -7357,8 +7357,9 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="HardSwish"></a><a name="hardswish">**HardSwish**</a>
 
-  A HardSwish Function: Perform mean variance normalization
-        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+  HardSigmoid takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the HardSwish function, y = x * max(0, min(1, alpha * x + beta)),
+  where alpha = 1/6 and beta = 1/2, is applied to the tensor elementwise.
 
 #### Version
 
@@ -7381,10 +7382,8 @@ This version of the operator has been available since version 14 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 

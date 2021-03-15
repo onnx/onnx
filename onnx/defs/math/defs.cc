@@ -1029,16 +1029,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* hard_swish_ver14_doc = R"DOC(
-      A HardSwish Function: Perform mean variance normalization
-      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+static const char* HardSwish_ver14_doc = R"DOC(
+HardSigmoid takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the HardSwish function, y = x * max(0, min(1, alpha * x + beta)),
+where alpha = 1/6 and beta = 1/2, is applied to the tensor elementwise.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     HardSwish,
     14,
     OpSchema()
-        .SetDoc(hard_swish_ver14_doc)
+        .SetDoc(HardSwish_ver14_doc)
         .Input(
             0,
             "X",
@@ -1057,10 +1058,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
