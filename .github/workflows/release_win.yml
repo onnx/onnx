@@ -2,9 +2,10 @@ name: WindowsRelease
 
 on:
    push:
-    branches: [ master, rel-* ]
+    branches: [master, rel-*]
    pull_request:
-    branches: [ rel-* ]
+    branches: [rel-*]
+
 jobs:
   build:
     runs-on: windows-latest
@@ -53,9 +54,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-        # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-        pip install pytest==5.4.3 nbval numpy==1.16.6 wheel          
+        pip install numpy==1.16.6 wheel          
             
     - name: Build ONNX wheel
       run: |        
@@ -90,8 +89,22 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON"
         python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+
+    - name: Test the installed wheel
+      run: |
+        cd onnx
+        python -m pip install -q pytest==5.4.3 nbval
         pytest
-        
+
+    - name: Test the uploaded backend test data
+      run: |
+        cd onnx
+        # onnx.checker all existing backend data
+        python workflow_scripts\test_generated_backend.py
+        # onnx.checker all generated backend data
+        python onnx\backend\test\cmd_tools.py generate-data
+        python workflow_scripts\test_generated_backend.py
+
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
