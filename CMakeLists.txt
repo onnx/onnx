@@ -409,7 +409,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # So, create a object library
   add_library(onnx OBJECT ${ONNX_SRCS})
 else()
-  add_library(onnx ${ONNX_SRCS})
+  # onnx target doesn't export symbols
+  add_library(onnx STATIC ${ONNX_SRCS})
 endif()
 
 target_include_directories(onnx PUBLIC

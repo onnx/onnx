@@ -42,7 +42,7 @@
 //
 // This solution is similar to
 // https://github.com/pytorch/pytorch/blob/master/caffe2/core/common.h
-#if defined(ONNX_BUILD_SHARED_LIBS) || defined(ONNX_BUILD_MAIN_LIB)
+#if defined(ONNX_BUILD_MAIN_LIB)
 #define ONNX_API ONNX_EXPORT
 #else
 #define ONNX_API ONNX_IMPORT
