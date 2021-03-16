@@ -151,40 +151,6 @@ onnx.checker.check_model('path/to/the/model.onnx')
 # onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
 ```
 
-
-## Optimizing an ONNX Model
-```python
-import onnx
-from onnx import optimizer
-
-# Preprocessing: load the model to be optimized.
-model_path = 'path/to/the/model.onnx'
-original_model = onnx.load(model_path)
-
-print('The model before optimization:\n{}'.format(original_model))
-
-# A full list of supported optimization passes can be found using get_available_passes()
-all_passes = optimizer.get_available_passes()
-print("Available optimization passes:")
-for p in all_passes:
-    print(p)
-print()
-
-# Pick one pass as example
-passes = ['fuse_consecutive_transposes']
-
-# Apply the optimization on the original model
-optimized_model = optimizer.optimize(original_model, passes)
-
-print('The model after optimization:\n{}'.format(optimized_model))
-
-# One can also apply the default passes on the (serialized) model
-# Check the default passes here: https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L43
-optimized_model = optimizer.optimize(original_model)
-```
-Runnable IPython notebooks:
-- [optimize_onnx.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/optimize_onnx.ipynb)
-
 ## Running Shape Inference on an ONNX Model
 ```python
 import onnx
@@ -254,17 +220,6 @@ print('The model after conversion:\n{}'.format(converted_model))
 ```
 
 ## Utility Functions
-### Polishing the Model
-Function `polish_model` runs model checker, optimizer, shape inference engine on the model,
-and also strips the doc_string for you.
-```python
-import onnx
-
-
-model = onnx.load('path/to/the/model.onnx')
-polished_model = onnx.utils.polish_model(model)
-```
-
 ### Extracting Sub-model with Inputs Outputs Tensor Names
 
 Function `extract_model()` extracts sub-model from an ONNX model.
