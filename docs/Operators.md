@@ -7396,7 +7396,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-alfa= float(1/6)
+alfa = float(1 / 6)
 beta = 0.5
 y = x * np.maximum(0, np.minimum(1, alfa * x + beta))
 
