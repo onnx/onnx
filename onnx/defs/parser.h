@@ -77,6 +77,10 @@ class PrimitiveTypeNameMap {
     return 0;
   }
 
+  static bool IsTypeName(const std::string& dtype) {
+    return Lookup(dtype) != 0;
+  }
+
   static const std::string& ToString(int32_t dtype) {
     static std::string undefined("undefined");
     for (const auto& pair : Instance()) {
@@ -133,9 +137,17 @@ class KeyWordMap {
 
 class ParserBase {
  public:
-  ParserBase(const std::string& str) : start_(str.data()), next_(str.data()), end_(str.data() + str.length()) {}
+  ParserBase(const std::string& str) : start_(str.data()), next_(str.data()), end_(str.data() + str.length()), saved_pos_(next_) {}
 
-  ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)) {}
+  ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)), saved_pos_(next_) {}
+
+  void SavePos() {
+    saved_pos_ = next_;
+  }
+
+  void RestorePos() {
+    next_ = saved_pos_;
+  }
 
   void SkipWhiteSpace() {
     while ((next_ < end_) && (isspace(*next_)))
@@ -289,6 +301,13 @@ class ParserBase {
     return Status::OK();
   }
 
+  Status PeekIdentifier(std::string& id) {
+    SavePos();
+    ParseOptionalIdentifier(id);
+    RestorePos();
+    return Status::OK();
+  }
+
   Status Parse(KeyWordMap::KeyWord& keyword) {
     std::string id;
     CHECK_PARSER_STATUS(ParseIdentifier(id));
@@ -300,6 +319,7 @@ class ParserBase {
   const char* start_;
   const char* next_;
   const char* end_;
+  const char* saved_pos_;
 };
 
 class OnnxParser : public ParserBase {

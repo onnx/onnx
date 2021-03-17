@@ -27,6 +27,13 @@ static void ExpectParseFailure(T& parsedData, const char* input) {
   EXPECT_FALSE(status.IsOK());
 }
 
+static void CheckModel(const char* code) {
+  ModelProto model;
+  Parse(model, code);
+
+  checker::check_model(model);
+}
+
 TEST(ParserTest, TypeTest) {
   TypeProto type;
 
@@ -107,7 +114,7 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
 
   Parse(attr, R"ONNX(
-    body = (float[N] y, float[N] z) => (float[N] w)
+    body = somegraph (float[N] y, float[N] z) => (float[N] w)
       {
         x = foo(y, z)
         w = bar(x, y)
@@ -115,7 +122,6 @@ TEST(ParserTest, AttributeTest) {
 )ONNX");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_GRAPH);
   EXPECT_EQ(attr.g().node_size(), 2);
-  std::cout << attr << std::endl;
 }
 
 TEST(ParserTest, AttrListTest) {
@@ -222,6 +228,27 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(graph.node_size(), 2);
 }
 
+TEST(ParserTest, IfNodeTest) {
+  const char* code = R"ONNX(
+z = If (b) <
+    then_branch = g1 () => (float[N] z_then)
+      {
+        z_then = foo(y)
+      },
+    else_branch = g2 () => (float[N] z_else)
+      {
+        z_else = bar(x)
+      }
+    >
+)ONNX";
+
+  NodeProto node;
+  Parse(node, code);
+  EXPECT_EQ(node.input_size(), 1);
+  EXPECT_EQ(node.output_size(), 1);
+  EXPECT_EQ(node.attribute_size(), 2);
+}
+
 TEST(ParserTest, ModelTest) {
   const char* code = R"ONNX(
 <
@@ -265,10 +292,31 @@ agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
 }
 )ONNX";
 
-  ModelProto model;
-  Parse(model, code);
+  CheckModel(code);
+}
 
-  checker::check_model(model);
+TEST(ParserTest, IfModelTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 7
+  opset_import: [ "" : 13 ]
+>
+iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
+{
+  Z = If (b) <
+      then_branch = g1 () => (float[128] z_then)
+        {
+          z_then = Identity(X)
+        },
+      else_branch = g2 () => (float[128] z_else)
+        {
+          z_else = Identity(Y)
+        }
+      >
+}
+)ONNX";
+
+  CheckModel(code);
 }
 
 } // namespace Test

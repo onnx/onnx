@@ -161,10 +161,16 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   // Parse a single-value
   auto next = NextChar();
-  if (next == '(') {
-    attr.set_type(AttributeProto_AttributeType_GRAPH);
-    Parse("", *attr.mutable_g());
-  } else if (isalpha(next) || next == '_') {
+  if (isalpha(next) || next == '_') {
+    std::string id("");
+    (void)PeekIdentifier(id);
+    if (PrimitiveTypeNameMap::IsTypeName(id)) {
+      attr.set_type(AttributeProto_AttributeType_TENSOR);
+      Parse(*attr.mutable_t());
+    } else {
+      attr.set_type(AttributeProto_AttributeType_GRAPH);
+      Parse(*attr.mutable_g());
+    }
   } else {
     Literal literal;
     PARSE_TOKEN(literal);
@@ -253,6 +259,10 @@ Status OnnxParser::Parse(NodeProto& node) {
   MATCH('(');
   PARSE(*node.mutable_input());
   MATCH(')');
+  if (node.attribute_size() == 0) {
+    // Permit attributes to be specified before or after parameters.
+    PARSE(*node.mutable_attribute());
+  }
   return Status::OK();
 }
 
