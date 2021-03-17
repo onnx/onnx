@@ -27,7 +27,6 @@ mkdir build && cd build
 
 cmake ../cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_PROCESSOR}
-make check
 make install
 ldconfig
 cd $ONNX_PATH
