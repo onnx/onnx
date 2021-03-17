@@ -1030,9 +1030,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* HardSwish_ver14_doc = R"DOC(
-HardSigmoid takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the HardSwish function, y = x * max(0, min(1, alpha * x + beta)),
-where alpha = 1/6 and beta = 1/2, is applied to the tensor elementwise.
+HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
