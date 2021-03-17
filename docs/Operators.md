@@ -7354,9 +7354,9 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="HardSwish"></a><a name="hardswish">**HardSwish**</a>
 
-  HardSigmoid takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the HardSwish function, y = x * max(0, min(1, alpha * x + beta)),
-  where alpha = 1/6 and beta = 1/2, is applied to the tensor elementwise.
+  HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+  the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+  where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
 
 #### Version
 
@@ -7396,9 +7396,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-alfa = float(1 / 6)
-beta = 0.5
-y = x * np.maximum(0, np.minimum(1, alfa * x + beta))
+y = hardswish(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_hardswish')
