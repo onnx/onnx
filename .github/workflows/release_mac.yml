@@ -4,7 +4,7 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [rel-*, master]  # TODO: remove it before merge
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
@@ -50,9 +50,10 @@ jobs:
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
         tar -xvf protobuf-cpp-3.11.3.tar.gz
         cd protobuf-3.11.3
-        ./autogen.sh
-        ./configure --disable-shared
-        make -j${NUM_CORES} && make check && make install
+        mkdir build && cd build
+        cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+        make -j${NUM_CORES}
+        make install
         cd $ONNX_PATH
 
     - name: Build wheel and install
