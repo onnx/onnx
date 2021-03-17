@@ -54,6 +54,7 @@ jobs:
         cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
         make -j${NUM_CORES}
         make install
+        export PATH=$(pwd)/bin:$PATH
         cd $ONNX_PATH
 
     - name: Build wheel and install
