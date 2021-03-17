@@ -20,12 +20,13 @@
 namespace ONNX_NAMESPACE {
 // -1 means ONNX schema hasn't been loaded yet
 // 0 means all versions of ONNX schema have been loaded
-// Other positive integer means the latest ONNX schemas for that version have been loaded
+// Other positive integer means the latest ONNX schemas before that version have been loaded
 int OpSchemaRegistry::loaded_schema_version = -1;
 
-// register all opset schema for all opset versions
-void RegisterSchema(OpSchema schema, int max_version) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, max_version);
+// By default if opset_version_to_load=0, it registers all opset schema for all opset versions
+// Otherwise, it only registers the latest schema according to opset_version_to_load
+void RegisterSchema(OpSchema schema, int opset_version_to_load) {
+  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load);
 }
 
 #ifndef NDEBUG
@@ -866,8 +867,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;
-      // Don't check if the schema was partially loaded
-      if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() > 0) {
+      // Only checks if the schemas were entirely loaded
+      if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
             "%u schema were exposed from operator sets and automatically placed into the static registry.  "

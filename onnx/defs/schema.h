@@ -954,7 +954,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema& op_schema, int max_version=0) {
+    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load=0) {
       ONNX_TRY {
         op_schema.Finalize();
 
@@ -963,8 +963,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
-        // Stops because the opset_version is higher than max_version
-        if (max_version != 0 && ver > max_version) {
+        // Stops because the opset_version is higher than opset_version_to_load
+        if (opset_version_to_load != 0 && ver > opset_version_to_load) {
           return;
         }
 
@@ -978,8 +978,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << schema.file() << " line " << schema.line() << std::endl;
           fail_schema(err.str());
         }
-        // If max_version != 0, only keep the latest one before specified version
-        if (max_version != 0 && !m[op_name][op_domain].empty()) {
+        // If opset_version_to_load != 0, only keep the latest one before specified version
+        if (opset_version_to_load != 0 && !m[op_name][op_domain].empty()) {
           // Stops early because there is another newer OpSchema has been registered
           return;
         }
@@ -1119,14 +1119,14 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   }
 };
 
-void RegisterSchema(OpSchema schema, int max_version=0);
+void RegisterSchema(OpSchema schema, int opset_version_to_load=0);
 
-// Registers the latest opset schema and remove the old ones
-// By default max_version=0 means it will register all versions
+// Registers the latest opset schema before opset_version_to_load
+// By default opset_version_to_load=0 means it will register all versions
 template <class T>
-void RegisterOpSetSchema(int max_version=0) {
-  T::ForEachSchema([max_version](OpSchema&& schema) {
-    RegisterSchema(schema, max_version);
+void RegisterOpSetSchema(int opset_version_to_load=0) {
+  T::ForEachSchema([opset_version_to_load](OpSchema&& schema) {
+    RegisterSchema(schema, opset_version_to_load);
   });
 };
 
