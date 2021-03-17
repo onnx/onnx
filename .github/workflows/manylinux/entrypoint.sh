@@ -25,8 +25,7 @@ git checkout 3.11.x
 git submodule update --init --recursive
 ./autogen.sh --disable-shared --enable-pic
 
-cmake cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-CFLAGS="-fPIC -g -O2" CXXFLAGS="-fPIC -g -O2" ./configure --disable-shared
+CFLAGS="-fPIC -g -O2" CXXFLAGS="-fPIC -g -O2" protobuf_BUILD_TESTS="OFF" CMAKE_BUILD_TYPE="Release" ./configure --disable-shared
 make -j${NUM_PROCESSOR}
 make check
 make install
