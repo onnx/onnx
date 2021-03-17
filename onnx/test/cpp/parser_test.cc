@@ -105,6 +105,17 @@ TEST(ParserTest, AttributeTest) {
 
   Parse(attr, "x = [\"abc\", \"def\"]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
+
+  Parse(attr, R"ONNX(
+    body = (float[N] y, float[N] z) => (float[N] w)
+      {
+        x = foo(y, z)
+        w = bar(x, y)
+      }
+)ONNX");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_GRAPH);
+  EXPECT_EQ(attr.g().node_size(), 2);
+  std::cout << attr << std::endl;
 }
 
 TEST(ParserTest, AttrListTest) {
@@ -162,8 +173,8 @@ TEST(ParserTest, QualifiedOpNameTest) {
 TEST(ParserTest, NodeListTest) {
   const char* code = R"ONNX(
 {
-    x = foo(y, z);
-    w = bar(x, y);
+    x = foo(y, z)
+    w = bar(x, y)
 }
 )ONNX";
 
@@ -197,8 +208,8 @@ TEST(ParserTest, GraphTest) {
   const char* code = R"ONNX(
 agraph (float[N] y, float[N] z) => (float[N] w)
 {
-    x = foo(y, z);
-    w = bar(x, y);
+    x = foo(y, z)
+    w = bar(x, y)
 }
 )ONNX";
 
@@ -227,8 +238,8 @@ TEST(ParserTest, ModelTest) {
 >
 agraph (float[N] y, float[N] z) => (float[N] w)
 {
-    x = foo(y, z);
-    w = bar(x, y);
+    x = foo(y, z)
+    w = bar(x, y)
 }
 )ONNX";
 
@@ -248,9 +259,9 @@ TEST(ParserTest, ModelCheckTest) {
 >
 agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
 {
-    T = MatMul(X, W);
-    S = Add(T, B);
-    C = Softmax(S);
+    T = MatMul(X, W)
+    S = Add(T, B)
+    C = Softmax(S)
 }
 )ONNX";
 

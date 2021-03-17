@@ -220,7 +220,7 @@ class ParserBase {
     return Status::OK();
   }
 
-    Status Parse(uint64_t& val) {
+  Status Parse(uint64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal));
     if (literal.type != LiteralType::INT_LITERAL)
@@ -329,6 +329,8 @@ class OnnxParser : public ParserBase {
   Status Parse(NodeList& nodelist);
 
   Status Parse(GraphProto& graph);
+
+  Status Parse(std::string name, GraphProto& graph);
 
   Status Parse(ModelProto& model);
 

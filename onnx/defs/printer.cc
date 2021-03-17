@@ -130,6 +130,9 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
       os << "]";
       break;
     }
+    case AttributeProto_AttributeType_GRAPH:
+      os << attr.g();
+      break;
     default:
       break;
   }

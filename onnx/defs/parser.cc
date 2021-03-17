@@ -32,7 +32,7 @@ Status OnnxParser::Parse(IdList& idlist) {
 }
 
 Status OnnxParser::Parse(TensorShapeProto& shape) {
-  int64_t dimval;
+  int64_t dimval = 0;
   shape.clear_dim();
   do {
     if (Matches('?')) {
@@ -160,23 +160,30 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
 
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   // Parse a single-value
-  Literal literal;
-  PARSE_TOKEN(literal);
-  switch (literal.type) {
-    case LiteralType::INT_LITERAL:
-      attr.set_type(AttributeProto_AttributeType_INT);
-      attr.set_i(std::stol(literal.value));
-      break;
-    case LiteralType::FLOAT_LITERAL:
-      attr.set_type(AttributeProto_AttributeType_FLOAT);
-      attr.set_f(static_cast<float>(std::stof(literal.value)));
-      break;
-    case LiteralType::STRING_LITERAL:
-      attr.set_type(AttributeProto_AttributeType_STRING);
-      attr.set_s(literal.value);
-      break;
-    default:
-      PARSE_ERROR("Unexpected literal type.");
+  auto next = NextChar();
+  if (next == '(') {
+    attr.set_type(AttributeProto_AttributeType_GRAPH);
+    Parse("", *attr.mutable_g());
+  } else if (isalpha(next) || next == '_') {
+  } else {
+    Literal literal;
+    PARSE_TOKEN(literal);
+    switch (literal.type) {
+      case LiteralType::INT_LITERAL:
+        attr.set_type(AttributeProto_AttributeType_INT);
+        attr.set_i(std::stol(literal.value));
+        break;
+      case LiteralType::FLOAT_LITERAL:
+        attr.set_type(AttributeProto_AttributeType_FLOAT);
+        attr.set_f(static_cast<float>(std::stof(literal.value)));
+        break;
+      case LiteralType::STRING_LITERAL:
+        attr.set_type(AttributeProto_AttributeType_STRING);
+        attr.set_s(literal.value);
+        break;
+      default:
+        PARSE_ERROR("Unexpected literal type.");
+    }
   }
   return Status::OK();
 }
@@ -220,10 +227,10 @@ Status OnnxParser::Parse(AttributeProto& attr) {
 Status OnnxParser::Parse(AttrList& attrlist) {
   attrlist.Clear();
   if (Matches('<')) {
-    while (!Matches('>')) {
+    do {
       PARSE(*attrlist.Add());
-      (void)Matches(','); // skip optional comma if present
-    }
+    } while (Matches(','));
+    Match('>');
   }
   return Status::OK();
 }
@@ -254,7 +261,6 @@ Status OnnxParser::Parse(NodeList& nodelist) {
   MATCH('{');
   while (!Matches('}')) {
     PARSE(*nodelist.Add());
-    (void)Matches(';'); // skip optional semicolon if present
   }
   return Status::OK();
 }
@@ -262,7 +268,11 @@ Status OnnxParser::Parse(NodeList& nodelist) {
 Status OnnxParser::Parse(GraphProto& graph) {
   std::string id;
   ParseIdentifier(id);
-  graph.set_name(id);
+  return Parse(id, graph);
+}
+
+Status OnnxParser::Parse(std::string name, GraphProto& graph) {
+  graph.set_name(name);
   PARSE(*graph.mutable_input());
   MATCH('=');
   MATCH('>', false);
@@ -275,7 +285,7 @@ Status OnnxParser::Parse(ModelProto& model) {
   int64_t intval;
   if (Matches('<')) {
     while (!Matches('>')) {
-      KeyWordMap::KeyWord keyword;
+      KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
       PARSE_TOKEN(keyword);
       MATCH(':');
       switch (keyword) {
