@@ -30,7 +30,6 @@ class ConvInteger(Base):
         expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
                name='test_convinteger_without_padding')
 
-
     @staticmethod
     def export_with_padding():  # type: () -> None
 
