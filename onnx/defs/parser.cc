@@ -32,17 +32,22 @@ Status OnnxParser::Parse(IdList& idlist) {
 }
 
 Status OnnxParser::Parse(TensorShapeProto& shape) {
-  int64_t dimval = 0;
   shape.clear_dim();
   do {
     if (Matches('?')) {
       shape.add_dim();
-    } else if (ParserBase::Parse(dimval).IsOK()) {
-      shape.add_dim()->set_dim_value(dimval);
     } else {
+      // Check for a symbolic identifier ...
       std::string id;
-      CHECK_PARSER_STATUS(ParseIdentifier(id));
-      shape.add_dim()->set_dim_param(id);
+      CHECK_PARSER_STATUS(ParseOptionalIdentifier(id));
+      if (!id.empty()) {
+        shape.add_dim()->set_dim_param(id);
+      } else {
+        // ...or a integer value
+        int64_t dimval = 0;
+        PARSE_TOKEN(dimval);
+        shape.add_dim()->set_dim_value(dimval);
+      }
     }
   } while (Matches(','));
   return Status::OK();
