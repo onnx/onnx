@@ -5,6 +5,7 @@ set -e -x
 # CLI arguments
 PY_VERSION=$1
 PLAT=$2
+GITHUB_EVENT_NAME=$3
 BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
 SYSTEM_PACKAGES='cmake3'
 
@@ -36,21 +37,28 @@ cd $ONNX_PATH
 declare -A python_map=( ["3.5"]="cp35-cp35m" ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 declare -A python_include=( ["3.5"]="3.5m" ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
 PY_VER=${python_map[$PY_VERSION]}
+PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir"
+PYTHON_COMAND="/opt/python/"${PY_VER}"/bin/python"
 
 # set ONNX build environments
 export ONNX_ML=1
 export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSION]}"
 
 # Update pip
-/opt/python/"${PY_VER}"/bin/pip install --upgrade --no-cache-dir pip
+$PIP_COMMAND --upgrade --no-cache-dir pip
 
 # Check if requirements were passed
 if [ ! -z "$BUILD_REQUIREMENTS" ]; then
-    /opt/python/"${PY_VER}"/bin/pip install --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
+    $PIP_COMMAND --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
 fi
 
 # Build wheels
-/opt/python/"${PY_VER}"/bin/pip wheel . -w ./dist --no-deps || { echo "Building wheels failed."; exit 1; }
+if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
+    $PYTHON_COMAND setup.py bdist_wheel --weekly_build || { echo "Building wheels failed."; exit 1; }
+else
+    $PYTHON_COMAND setup.py bdist_wheel || { echo "Building wheels failed."; exit 1; }
+fi
+
 
 # Bundle external shared libraries into the wheels
 # find -exec does not preserve failed exit codes, so use an output file for failures

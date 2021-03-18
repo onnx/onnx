@@ -1,6 +1,9 @@
 name: MacRelease
 
 on:
+  schedule:
+    # Run weekly on Monday 00:00
+    - cron:  '00 00 * * MON'
   push:
     branches: [master, rel-*]
   pull_request:
@@ -67,7 +70,11 @@ jobs:
       run: |
         # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
-        python setup.py bdist_wheel -p macosx_10_12_x86_64
+        if [ '${{ github.event_name }}' == 'schedule' ]; then
+          python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
+        else
+          python setup.py bdist_wheel -p macosx_10_12_x86_64
+        fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
 
     - name: Test the installed wheel
@@ -87,3 +94,9 @@ jobs:
       with:
         name: wheels
         path: dist
+
+    - name: Upload wheel to TestPyPI weekly
+      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      run: |
+        python -m pip install -q twine
+        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
