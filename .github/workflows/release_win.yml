@@ -57,6 +57,9 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
+        # Latest setuptools-scm-6.0.1 (dependency of setuptools) does not support Python 3.5 anymore
+        # TODO: Remove this line if Python 3.5 is deprecated
+        python -m pip install -q setuptools-scm==5.0.2
         pip install numpy==1.16.6 wheel          
             
     - name: Build ONNX wheel
