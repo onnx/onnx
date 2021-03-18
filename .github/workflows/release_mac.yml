@@ -56,7 +56,7 @@ jobs:
         tar -xvf protobuf-cpp-3.11.3.tar.gz
         cd protobuf-3.11.3
         mkdir build_source && cd build_source
-        cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+        cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_EXAMPLES=OFF
         make -j${NUM_CORES}
         make install
         export PATH=$(pwd)/bin:$PATH

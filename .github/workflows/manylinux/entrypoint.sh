@@ -26,7 +26,7 @@ git checkout 3.11.x
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 
-cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_EXAMPLES=OFF
 make -j${NUM_PROCESSOR}
 make install
 ldconfig
@@ -34,8 +34,8 @@ cd $ONNX_PATH
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
-declare -A python_map=( ["3.5"]="cp35-cp35m" ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
-declare -A python_include=( ["3.5"]="3.5m" ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
+declare -A python_map=( ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
+declare -A python_include=( ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
 PY_VER=${python_map[$PY_VERSION]}
 PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir"
 PYTHON_COMAND="/opt/python/"${PY_VER}"/bin/python"
