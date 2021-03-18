@@ -6,7 +6,7 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
-BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
+BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3 setuptools-scm==5.0.2'
 SYSTEM_PACKAGES='cmake3'
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
