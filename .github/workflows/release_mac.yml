@@ -37,7 +37,7 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         # Latest setuptools does not support Python 3.5 anymore 
-        python -m pip install -q numpy==1.16.6 setuptools==53.0 wheel
+        python -m pip install -q numpy==1.16.6 setuptools==53.0.0 wheel
 
     - name: Install protobuf dependencies
       run: |
