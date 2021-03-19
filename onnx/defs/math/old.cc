@@ -11,6 +11,78 @@
 
 namespace ONNX_NAMESPACE {
 
+std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+)DOC";
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    schema.SetDoc(doc);
+    schema.Input(0,
+        "A",
+        "First operand.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(1,
+        "B",
+        "Second operand.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Output(0,
+        "C",
+        "Result, has same element type as two inputs",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T",
+        OpSchema::numeric_types_for_math_reduction_with_bfloat(),
+        "Constrain input and output types to all numeric tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2))
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Add,
+    13,
+    OpSchema().FillUsing(MathDocGenerator_opset13("addition")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sub,
+    13,
+    OpSchema().FillUsing(MathDocGenerator_opset13("subtraction")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mul,
+    13,
+    OpSchema().FillUsing(MathDocGenerator_opset13("multiplication")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    13,
+    OpSchema().FillUsing(MathDocGenerator_opset13("division")));
+
 std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;

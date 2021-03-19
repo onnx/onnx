@@ -151,12 +151,12 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("addition")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sub,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("subtraction")));
 
 static const char* Mod_doc = R"DOC(
@@ -224,12 +224,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("multiplication")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Div,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("division")));
 
 static const char* Neg_ver13_doc = R"DOC(
