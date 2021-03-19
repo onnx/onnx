@@ -1068,7 +1068,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {{"HS_X"},
              "HardSigmoid",
              {"X"},
-             {MakeAttribute("alpha", float(1/6)), MakeAttribute("beta", 0.5f)}},
+             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
             {{"Y"}, "Mul", {"X", "HS_X"}}})));
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
