@@ -1591,34 +1591,35 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* BatchNormalization_ver14_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-There is three required inputs 'X', 'mean' and 'var', in addition to one
-optional input 'training_mode'.
-Note that 'mean' and 'var' are expected to be the estimated statistics in
-inference mode (training_mode=False, default),
-and the running statistics in training mode (traning_mode=True).
+There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+'input_var', in addition to one optional input 'training_mode'.
+Note that 'input_mean' and 'input_var' are expected to be the estimated
+statistics in inference mode (training_mode=False, default),
+and the running statistics in training mode (training_mode=True).
 There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, mean, var, saved_mean, saved_var (training_mode=True)
+Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
 Output case #2: Y (training_mode=False)
 
-The output and statistics are updated as follows when training_mode=True:
+When training_mode=False, extra outputs are undefined and the user should not depend on those.
+The outputs are updated as follows when training_mode=True:
 ```
-saved_mean = ReducedMean(X, axis=all_except_channel_index)
-saved_var =  ReducedVar(X, axis=all_except_channel_index)
+current_mean = ReducedMean(X, axis=all_except_channel_index)
+current_var =  ReducedVar(X, axis=all_except_channel_index)
 
-output_mean = mean * momentum + saved_mean * (1 - momentum)
-output_var = var * momentum + saved_var * (1 - momentum)
+running_mean = mean * momentum + current_mean * (1 - momentum)
+running_var = var * momentum + current_var * (1 - momentum)
 
-Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
+Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
 ```
 
 When training_mode=False:
 ```
-Y = (X - mean) / sqrt(var + epsilon) * scale + B
+Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
 ```
 
 For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1672,7 +1673,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Input(
             3,
-            "mean",
+            "input_mean",
             "running (training) or estimated (testing) mean tensor of shape (C).",
             "T",
             OpSchema::Single,
@@ -1681,7 +1682,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Input(
             4,
-            "var",
+            "Input_var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
             "T",
             OpSchema::Single,
@@ -1709,7 +1710,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Output(
             1,
-            "mean",
+            "running_mean",
             "The running mean after the BatchNormalization operator.",
             "T",
             OpSchema::Optional,
@@ -1718,7 +1719,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(
             2,
-            "var",
+            "running_var",
             "The running variance after the BatchNormalization operator.",
             "T",
             OpSchema::Optional,
@@ -1727,8 +1728,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(
             3,
-            "saved_mean",
-            "Saved mean used during training to speed up gradient "
+            "current_mean",
+            "Current mean used during training to speed up gradient "
             "computation.",
             "T",
             OpSchema::Optional,
@@ -1737,8 +1738,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(
             4,
-            "saved_var",
-            "Saved variance used during training to speed up "
+            "current_var",
+            "Current variance used during training to speed up "
             "gradient computation.",
             "T",
             OpSchema::Optional,
@@ -1755,94 +1756,50 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input training_mode to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
-          if (hasInputShape(ctx, 0)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-            auto& x_input_shape = getInputShape(ctx, 0);
-            int num_channels = 1;
-            if (static_cast<int>(x_input_shape.dim_size()) > 1 &&
-                x_input_shape.dim(1).has_dim_value()) {
-              num_channels = static_cast<int>(x_input_shape.dim(1).dim_value());
-            }
+          propagateShapeFromInputToOutput(ctx, 0, 0);
 
-            if (hasInputShape(ctx, 1)) {
-              auto& scale_input_shape = getInputShape(ctx, 1);
-              if (static_cast<int>(scale_input_shape.dim_size()) != 1 ||
-                  !scale_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(scale_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
+          Dim num_channels;
+
+          unifyInputDim(ctx, 0, 1, num_channels);
+          unifyInputDim(ctx, 1, 0, num_channels);
+          unifyInputDim(ctx, 2, 0, num_channels);
+          unifyInputDim(ctx, 3, 0, num_channels);
+          unifyInputDim(ctx, 4, 0, num_channels);
+
+          if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
+            auto& mode_input_shape = getInputShape(ctx, 5);
+            // if mode is not scalar or tensor of rank 1, fail shape inference
+            if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
+              if (static_cast<int>(mode_input_shape.dim_size()) > 1 ||
+                  !mode_input_shape.dim(0).has_dim_value() ||
+                  static_cast<int>(mode_input_shape.dim(0).dim_value()) !=
+                      1) {
                 fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
+                    "Training_mode must be a scalar boolean, but it's not.");
               }
             }
+          }
 
-            if (hasInputShape(ctx, 2)) {
-              auto& b_input_shape = getInputShape(ctx, 2);
-              if (static_cast<int>(b_input_shape.dim_size()) != 1 ||
-                  !b_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(b_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
+          if (ctx.getNumOutputs() > 1) {
+            TensorShapeProto outputs_shape;
+            *outputs_shape.add_dim() = num_channels; // channel
+
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            updateOutputShape(ctx, 1, outputs_shape);
+
+            if (ctx.getNumOutputs() > 2) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 2);
+              updateOutputShape(ctx, 2, outputs_shape);
             }
 
-            if (hasInputShape(ctx, 3)) {
-              auto& mean_input_shape = getInputShape(ctx, 3);
-              if (static_cast<int>(mean_input_shape.dim_size() != 1) ||
-                  !mean_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(mean_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
+            if (ctx.getNumOutputs() > 3) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 3);
+              updateOutputShape(ctx, 3, outputs_shape);
             }
 
-            if (hasInputShape(ctx, 4)) {
-              auto& var_input_shape = getInputShape(ctx, 4);
-              if (static_cast<int>(var_input_shape.dim_size()) != 1 ||
-                  !var_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(var_input_shape.dim(0).dim_value()) !=
-                      num_channels) {
-                fail_shape_inference(
-                    "All scale, B, mean and var must be tensors of shape C.");
-              }
-            }
-
-            if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
-              auto& mode_input_shape = getInputShape(ctx, 5);
-              // if mode is not scalar or tensor of rank 1, fail shape inference
-              if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
-                if (static_cast<int>(mode_input_shape.dim_size()) > 1 ||
-                    !mode_input_shape.dim(0).has_dim_value() ||
-                    static_cast<int>(mode_input_shape.dim(0).dim_value()) !=
-                        1) {
-                  fail_shape_inference(
-                      "Training_mode is not a scalar boolean.");
-                }
-              }
-            }
-
-            if (ctx.getNumOutputs() > 1) {
-              TensorShapeProto outputs_shape;
-              *outputs_shape.add_dim() = x_input_shape.dim(1); // channel
-
-              propagateElemTypeFromInputToOutput(ctx, 0, 1);
-              updateOutputShape(ctx, 1, outputs_shape);
-
-              if (ctx.getNumOutputs() > 2) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 2);
-                updateOutputShape(ctx, 2, outputs_shape);
-              }
-
-              if (ctx.getNumOutputs() > 3) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 3);
-                updateOutputShape(ctx, 3, outputs_shape);
-              }
-
-              if (ctx.getNumOutputs() > 4) {
-                propagateElemTypeFromInputToOutput(ctx, 0, 4);
-                updateOutputShape(ctx, 4, outputs_shape);
-              }
+            if (ctx.getNumOutputs() > 4) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 4);
+              updateOutputShape(ctx, 4, outputs_shape);
             }
           }
         }));

@@ -1834,34 +1834,35 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  There is three required inputs 'X', 'mean' and 'var', in addition to one
-  optional input 'training_mode'.
-  Note that 'mean' and 'var' are expected to be the estimated statistics in
-  inference mode (training_mode=False, default),
-  and the running statistics in training mode (traning_mode=True).
+  There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+  'input_var', in addition to one optional input 'training_mode'.
+  Note that 'input_mean' and 'input_var' are expected to be the estimated
+  statistics in inference mode (training_mode=False, default),
+  and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
   
-  Output case #1: Y, mean, var, saved_mean, saved_var (training_mode=True)
+  Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
   Output case #2: Y (training_mode=False)
   
-  The output and statistics are updated as follows when training_mode=True:
+  When training_mode=False, extra outputs are undefined and the user should not depend on those.
+  The outputs are updated as follows when training_mode=True:
   ```
-  saved_mean = ReducedMean(X, axis=all_except_channel_index)
-  saved_var =  ReducedVar(X, axis=all_except_channel_index)
+  current_mean = ReducedMean(X, axis=all_except_channel_index)
+  current_var =  ReducedVar(X, axis=all_except_channel_index)
   
-  output_mean = mean * momentum + saved_mean * (1 - momentum)
-  output_var = var * momentum + saved_var * (1 - momentum)
+  running_mean = mean * momentum + current_mean * (1 - momentum)
+  running_var = var * momentum + current_var * (1 - momentum)
   
-  Y = (X - saved_mean) / sqrt(var + saved_epsilon) * scale + B
+  Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
   ```
   
   When training_mode=False:
   ```
-  Y = (X - mean) / sqrt(var + epsilon) * scale + B
+  Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
   ```
   
   For previous (depreciated) non-spatial cases, implementors are suggested
-  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -1888,9 +1889,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>mean</tt> (differentiable) : T</dt>
+<dt><tt>input_mean</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>var</tt> (differentiable) : T</dt>
+<dt><tt>Input_var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 <dt><tt>training_mode</tt> (optional, non-differentiable) : T1</dt>
 <dd>If set to true then it indicates BatchNormalization is being used for training. It is an optional value hence unless specified explicitly, it is false.</dd>
@@ -1901,14 +1902,14 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional, non-differentiable) : T</dt>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>var</tt> (optional, non-differentiable) : T</dt>
+<dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>saved_mean</tt> (optional, non-differentiable) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation.</dd>
-<dt><tt>saved_var</tt> (optional, non-differentiable) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation.</dd>
+<dt><tt>current_mean</tt> (optional, non-differentiable) : T</dt>
+<dd>Current mean used during training to speed up gradient computation.</dd>
+<dt><tt>current_var</tt> (optional, non-differentiable) : T</dt>
+<dd>Current variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
