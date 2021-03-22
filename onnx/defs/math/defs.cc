@@ -1029,6 +1029,48 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* HardSwish_ver14_doc = R"DOC(
+HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    HardSwish,
+    14,
+    OpSchema()
+        .SetDoc(HardSwish_ver14_doc)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(FunctionBodyHelper::BuildNodes({
+            // nodes: {outputs, op, inputs, attributes}
+            {{"HS_X"},
+             "HardSigmoid",
+             {"X"},
+             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
+            {{"Y"}, "Mul", {"X", "HS_X"}}})));
+
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
