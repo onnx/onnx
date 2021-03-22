@@ -34,7 +34,7 @@ class Mul(Base):
         expect(node, inputs=[x, y], outputs=[z],
                name='test_mul')
 
-        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+        x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
         y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
         z = x * y
         expect(node, inputs=[x, y], outputs=[z],
