@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 148/162 (91.36%, 5 generators excluded) common operators.
+Node tests have covered 149/163 (91.41%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4570,6 +4570,27 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x * default_alpha + default_beta, 0, 1)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardsigmoid_default')
+```
+
+</details>
+
+
+### HardSwish
+There are 1 test cases, listed as following:
+<details>
+<summary>hardswish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HardSwish',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = hardswish(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardswish')
 ```
 
 </details>

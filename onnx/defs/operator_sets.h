@@ -936,6 +936,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, LSTM);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, RNN);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Trilu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, BatchNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, HardSwish);
 
 // Iterate over schema from ai.onnx version 14
 class OpSet_Onnx_ver14 {
@@ -949,6 +950,7 @@ class OpSet_Onnx_ver14 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, RNN)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Trilu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, BatchNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, HardSwish)>());
   }
 };
 

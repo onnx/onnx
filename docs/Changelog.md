@@ -18873,6 +18873,37 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
+### <a name="HardSwish-14"></a>**HardSwish-14**</a>
+
+  HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+  the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+  where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="LSTM-14"></a>**LSTM-14**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
