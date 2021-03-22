@@ -7,14 +7,14 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [rel-*, master]  # TODO: remove it before merge
 
 jobs:
   build:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
         architecture: ['x64', 'x86']
     steps:         
     - name: Checkout Protobuf 
